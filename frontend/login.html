@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Acceso seguro al portal Versa Finanzas para el envío de facturas y tickets." />
+  <title>Acceso | Versa Finanzas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com" defer></script>
+  <link rel="stylesheet" href="./theme.css" />
+</head>
+<body class="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center p-6">
+  <main class="login-shell">
+    <section class="login-hero">
+      <span class="login-hero__badge">Portal Versa</span>
+      <div class="brand-lockup">
+        <span class="brand-lockup__mark" aria-hidden="true">
+          <img src="assets/logo.png" alt="Logo de Versa Finanzas" />
+        </span>
+        <div class="brand-lockup__copy">
+          <span class="brand-lockup__title">Versa Finanzas</span>
+          <span class="brand-lockup__subtitle">Portal corporativo</span>
+        </div>
+      </div>
+      <h1 class="login-hero__title">Entrá al centro neurálgico financiero</h1>
+      <p class="login-hero__text">
+        Conecta tu operación con un flujo de trabajo moderno para tickets, facturas y reportes. Al iniciar sesión tendrás acceso a herramientas diseñadas para equipos financieros exigentes.
+      </p>
+    </section>
+
+    <section class="login-card">
+      <div class="surface">
+        <h2 class="text-xl font-bold">Iniciar sesión</h2>
+        <p class="helper-text">
+          Accede con tu email corporativo y la contraseña que te asignó un administrador. Las credenciales se cifran en el
+          navegador antes de almacenarse.
+        </p>
+
+        <form id="loginForm" class="space-y-4 mt-4">
+          <div class="login-actions">
+            <label class="text-sm font-semibold" for="email">Email</label>
+            <input id="email" type="email" class="input w-full" placeholder="tu@versa.com" required />
+          </div>
+          <div class="login-actions">
+            <label class="text-sm font-semibold" for="password">Contraseña</label>
+            <input id="password" type="password" class="input w-full" placeholder="••••••••" required minlength="10" />
+          </div>
+          <p id="loginError" class="form-error" role="alert" hidden></p>
+          <button class="btn btn-brand w-full" type="submit">Entrar</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="./user-store.js" defer></script>
+  <script src="./auth.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Trabajadores - Goversa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      /* Estilos Generales (Reutilizados para consistencia) */
+      :root {
+        --brand-orange: #FF652B;
+        --brand-orange-strong: #FF7A45;
+        --surface-elevated: rgba(18, 18, 20, 0.96);
+        --surface-border: rgba(255, 255, 255, 0.08);
+        --surface-highlight: rgba(255, 255, 255, 0.04);
+        --dark-bg: #000000;
+        --surface-bg: #1a1a1a;
+        --border-color: #2a2a2a;
+        --input-bg: #333333;
+        --text-primary: #ffffff;
+        --text-secondary: #cccccc;
+        --success-color: #28a745;
+        --error-color: #dc3545;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--dark-bg);
+        font-family: "Montserrat", Arial, sans-serif;
+        color: var(--text-primary);
+      }
+      .container {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 20px 40px;
+      }
+
+      /* Header y Menú de Navegación */
+
+      header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 24px;
+          padding: 18px 28px;
+          margin-bottom: 30px;
+          border-radius: 18px;
+          border: 1px solid var(--surface-border);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+          box-shadow: 0 28px 60px -38px rgba(0, 0, 0, 0.9);
+          backdrop-filter: blur(18px);
+          flex-wrap: wrap;
+      }
+      .header-left {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          min-width: 180px;
+      }
+      .logo-badge {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 10px 20px;
+          border-radius: 18px;
+          background: radial-gradient(circle at top, rgba(255, 101, 43, 0.22), rgba(255, 101, 43, 0.05));
+          border: 1px solid rgba(255, 255, 255, 0.14);
+          box-shadow: 0 16px 40px -24px rgba(255, 101, 43, 0.9), 0 12px 28px -18px rgba(0, 0, 0, 0.85);
+      }
+      .logo-badge .logo-img {
+          height: 58px;
+          width: auto;
+          filter: drop-shadow(0 8px 16px rgba(255, 101, 43, 0.5));
+      }
+      .user-session {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 10px 18px;
+          border-radius: 14px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+          box-shadow: 0 20px 48px -34px rgba(0, 0, 0, 0.85);
+          color: #F5F6F8;
+          font-weight: 600;
+      }
+      .user-name {
+          font-size: 15px;
+          letter-spacing: 0.01em;
+      }
+      .logout-button {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 18px;
+          border-radius: 12px;
+          border: none;
+          font-weight: 700;
+          text-decoration: none;
+          color: #0B0B0D;
+          background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-strong));
+          box-shadow: 0 18px 35px -24px rgba(255, 122, 69, 0.9);
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .logout-button:hover,
+      .logout-button:focus-visible {
+          transform: translateY(-2px);
+          box-shadow: 0 22px 42px -22px rgba(255, 122, 69, 0.95);
+          color: #0B0B0D;
+      }
+      .logout-button:focus-visible {
+          outline: 2px solid rgba(255, 255, 255, 0.65);
+          outline-offset: 3px;
+      }
+      .main-nav {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-grow: 1;
+      }
+      .main-nav ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .main-nav .nav-item {
+        position: relative;
+      }
+      .main-nav .nav-item > a {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-weight: 600;
+        padding: 12px 16px;
+        display: block;
+        border-radius: 8px;
+        transition: transform 0.2s ease-in-out, background-color 0.2s;
+      }
+      .main-nav .nav-item > a:hover,
+      .main-nav .nav-item > a.active {
+        transform: translateY(-4px);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+      }
+      .nav-item .dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 220px;
+        padding: 12px 0;
+        z-index: 100;
+        flex-direction: column;
+        gap: 2px;
+        background: radial-gradient(circle at top, rgba(255, 101, 43, 0.1), transparent 55%), var(--surface-elevated);
+        border: 1px solid var(--surface-border);
+        border-radius: 14px;
+        box-shadow: 0 24px 65px -35px rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(18px);
+        overflow: hidden;
+      }
+      .nav-item.has-dropdown:hover .dropdown {
+        display: flex;
+      }
+      .dropdown li a {
+        padding: 12px 22px;
+        white-space: nowrap;
+        color: #F5F6F8;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        position: relative;
+        display: block;
+        z-index: 0;
+        transition: color 0.2s ease, background 0.25s ease, transform 0.25s ease;
+      }
+      .dropdown li a::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255, 101, 43, 0.18), rgba(255, 122, 69, 0.05));
+        opacity: 0;
+        z-index: -1;
+        transition: opacity 0.2s ease;
+      }
+      .dropdown li a:hover {
+        transform: translateY(0);
+        background-color: var(--brand-orange);
+      }
+      .dropdown li a.active {
+        background: linear-gradient(140deg, rgba(255, 101, 43, 0.35), rgba(255, 101, 43, 0.1));
+        color: #FFFFFF;
+      }
+      .dropdown .sub-item {
+        padding-left: 20px;
+      }
+
+      /* Estructura del formulario */
+      .form-container {
+        background-color: var(--surface-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 40px;
+      }
+      .form-main-title {
+        font-size: 28px;
+        font-weight: 800;
+        margin: 0 0 10px 0;
+      }
+      .form-section-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--brand-orange);
+        margin-top: 30px;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .form-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+      }
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        position: relative;
+      }
+      .form-group label {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+      .form-input,
+      .form-select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        background-color: var(--input-bg);
+        border: 1px solid #444;
+        color: var(--text-primary);
+        font-family: "Montserrat", Arial, sans-serif;
+        font-size: 15px;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+      }
+      .form-select {
+        background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23A0A0A0%22/%3E%3C/svg%3E');
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 20px;
+      }
+      .form-input:focus,
+      .form-select:focus {
+        outline: none;
+        border-color: var(--brand-orange);
+        box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.2);
+      }
+
+      .btn {
+        background-color: var(--brand-orange);
+        color: var(--text-primary);
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-family: "Montserrat", Arial, sans-serif;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+        border-radius: 8px;
+        padding: 12px 20px;
+      }
+      .btn:hover {
+        background-color: #e05300;
+      }
+
+      /* --- ESTILOS PARA MODAL DE ÉXITO --- */
+      .success-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s;
+      }
+      .success-modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+      }
+      .success-modal-content {
+        background-color: var(--surface-bg);
+        padding: 40px;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        width: 90%;
+        max-width: 450px;
+        text-align: center;
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+      }
+      .success-modal-overlay.show .success-modal-content {
+        transform: scale(1);
+      }
+      .success-modal-content h3 {
+        font-size: 24px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: var(--success-color);
+      }
+      .success-modal-content p {
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+      }
+      .success-modal-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        border: 4px solid var(--success-color);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .success-modal-icon svg {
+        width: 40px;
+        height: 40px;
+        color: var(--success-color);
+      }
+
+      @media (max-width: 768px) {
+        header { flex-direction: column; align-items: flex-start; }
+        .user-session {
+            width: 100%;
+            justify-content: space-between;
+            margin-top: 16px;
+        }
+        .user-session .logout-button {
+            width: auto;
+        }
+        .user-session .user-name {
+            font-size: 14px;
+        }
+
+        .main-nav { width: 100%; }
+        .main-nav ul { justify-content: flex-start; }
+        .form-section {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+</head>
+<body>
+  <div class="container">
+      <header class="app-header w-full max-w-6xl mx-auto px-4 py-3">
+          <div class="header-left">
+              <div class="logo-badge">
+                  <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo de Goversa" class="logo-img">
+              </div>
+          </div>
+          <nav class="main-nav">
+          <ul>
+              <li class="nav-item"><a href="index.html">Inicio</a></li>
+              <li class="nav-item has-dropdown">
+                  <a href="manager-taller.html">Taller</a>
+                  <ul class="dropdown">
+                      <li><a href="manager-taller-ordenes.html">Órdenes</a></li>
+                      <li><a href="#">Editar órdenes</a></li>
+                      <li><a href="#">Presupuestos</a></li>
+                      <li class="sub-item"><a href="#">Calendario</a></li>
+                      <li class="sub-item"><a href="#">Recordatorios</a></li>
+                      <li><a href="manager-taller.html#vehicles-panel">Vehículos</a></li>
+                      <li><a href="#">Histórico</a></li>
+                  </ul>
+              </li>
+              <li class="nav-item has-dropdown">
+                  <a href="#">Tienda</a>
+                  <ul class="dropdown">
+                      <li><a href="#">Compras</a></li>
+                      <li><a href="#">Ventas</a></li>
+                  </ul>
+              </li>
+              <li class="nav-item"><a href="#">Caja</a></li>
+              <li class="nav-item has-dropdown">
+                  <a href="#">Cuentas corrientes</a>
+                  <ul class="dropdown">
+                      <li><a href="#">Saldos</a></li>
+                      <li><a href="#">Movimientos</a></li>
+                  </ul>
+              </li>
+              <li class="nav-item"><a href="manager-taller-inventario.html">Inventario</a></li>
+              <li class="nav-item"><a href="manager-taller-trabajadores.html" class="active">Trabajadores</a></li>
+              <li class="nav-item has-dropdown">
+                  <a href="manager-taller-clientes.html">Contactos</a>
+                  <ul class="dropdown">
+                      <li><a href="manager-taller-clientes.html">Clientes</a></li>
+                      <li><a href="manager-taller-proveedores.html">Proveedores</a></li>
+                  </ul>
+              </li>
+              <li class="nav-item"><a href="#">Informes</a></li>
+          </ul>
+      </nav>
+          <div class="user-session">
+              <span class="user-name">Iván Moreno · admin</span>
+              <a href="login.html" class="logout-button">Salir</a>
+          </div>
+      </header>
+    <main>
+        <form id="worker-form" class="form-container">
+          <h2 class="form-main-title">Registro de Trabajador</h2>
+
+          <div class="form-section">
+            <div class="form-group">
+              <label for="nombre">Nombre *</label>
+              <input type="text" id="nombre" name="nombre" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label for="tipo_documento">Tipo Documento</label>
+              <select id="tipo_documento" name="tipo_documento" class="form-select">
+                <option value="DNI">DNI</option>
+                <option value="NIE">NIE</option>
+                <option value="Pasaporte">Pasaporte</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="nif">NIF *</label>
+              <input type="text" id="nif" name="nif" class="form-input" required>
+            </div>
+            <div class="form-group">
+              <label for="domicilio">Domicilio</label>
+              <input type="text" id="domicilio" name="domicilio" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="tarea">Tarea</label>
+              <select id="tarea" name="tarea" class="form-select">
+                <option value="Mecanico">Mecánico</option>
+                <option value="Vendedor">Vendedor</option>
+                <option value="Cajero">Cajero</option>
+                <option value="Contador">Contador</option>
+                <option value="Encargado">Encargado</option>
+                <option value="Mantenimiento">Mantenimiento</option>
+                <option value="Administrador general">Administrador general</option>
+                <option value="RRHH">RRHH</option>
+                <option value="Staff">Staff</option>
+                <option value="Otras">Otras</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="comision">Comisión %</label>
+              <input type="number" step="0.01" id="comision" name="comision" class="form-input" placeholder="Ej: 0.05 para 5%">
+            </div>
+          </div>
+
+          <h3 class="form-section-title">Contacto</h3>
+          <div class="form-section">
+            <div class="form-group">
+              <label for="telefono">Teléfono</label>
+              <input type="tel" id="telefono" name="telefono" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="telefono_alternativo">Teléfono Alternativo</label>
+              <input type="tel" id="telefono_alternativo" name="telefono_alternativo" class="form-input">
+            </div>
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" id="email" name="email" class="form-input">
+            </div>
+          </div>
+
+          <button type="submit" class="btn" style="width: 100%; padding: 15px; font-size: 16px; margin-top: 20px;">
+            Confirmar Registro
+          </button>
+        </form>
+      </main>
+    </div>
+
+    <!-- MODAL DE ÉXITO -->
+    <div id="success-modal" class="success-modal-overlay">
+        <div class="success-modal-content">
+            <div class="success-modal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/>
+                </svg>
+            </div>
+            <h3>¡Éxito!</h3>
+            <p>El trabajador ha sido registrado correctamente.</p>
+            <button id="close-success-modal" class="btn">Cerrar</button>
+        </div>
+    </div>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // --- URL DE WEBHOOK (DEBES REEMPLAZARLA) ---
+        const MAKE_WORKER_SAVE_URL = "https://hook.eu2.make.com/tbx80d01vf61z9lwty4mslubrgrapd8t";
+
+        const form = document.getElementById("worker-form");
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            console.log("Enviando datos del trabajador:", data);
+
+            fetch(MAKE_WORKER_SAVE_URL, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("La respuesta del servidor no fue exitosa.");
+                return response.text();
+            })
+            .then(result => {
+                console.log("Respuesta de Make:", result);
+                showSuccessModal();
+            })
+            .catch(err => {
+                console.error("Error al registrar el trabajador:", err);
+                alert("Hubo un error al registrar el trabajador.");
+            });
+        });
+
+        // --- LÓGICA DE MODAL DE ÉXITO ---
+        const successModal = document.getElementById('success-modal');
+        const closeSuccessModalBtn = document.getElementById('close-success-modal');
+
+        function showSuccessModal() {
+            successModal.classList.add('show');
+        }
+        function closeSuccessModal() {
+            successModal.classList.remove('show');
+            form.reset();
+        }
+        closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
+      });
+    </script>
+</body>
+</html>

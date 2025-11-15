@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Clientes - Goversa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos Generales */
+        :root {
+            --brand-orange: #FF652B;
+            --brand-orange-strong: #FF7A45;
+            --surface-elevated: rgba(18, 18, 20, 0.96);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --surface-highlight: rgba(255, 255, 255, 0.04);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            font-family: 'Montserrat', Arial, sans-serif;
+            color: #FFFFFF;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header y Menú de Navegación */
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 18px 28px;
+            margin-bottom: 30px;
+            border-radius: 18px;
+            border: 1px solid var(--surface-border);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+            box-shadow: 0 28px 60px -38px rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(18px);
+            flex-wrap: wrap;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 180px;
+        }
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 18px;
+            background: radial-gradient(circle at top, rgba(255, 101, 43, 0.22), rgba(255, 101, 43, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 16px 40px -24px rgba(255, 101, 43, 0.9), 0 12px 28px -18px rgba(0, 0, 0, 0.85);
+        }
+        .logo-badge .logo-img {
+            height: 58px;
+            width: auto;
+            filter: drop-shadow(0 8px 16px rgba(255, 101, 43, 0.5));
+        }
+        .user-session {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+            box-shadow: 0 20px 48px -34px rgba(0, 0, 0, 0.85);
+            color: #F5F6F8;
+            font-weight: 600;
+        }
+        .user-name {
+            font-size: 15px;
+            letter-spacing: 0.01em;
+        }
+        .logout-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 18px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            text-decoration: none;
+            color: #0B0B0D;
+            background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-strong));
+            box-shadow: 0 18px 35px -24px rgba(255, 122, 69, 0.9);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .logout-button:hover,
+        .logout-button:focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 42px -22px rgba(255, 122, 69, 0.95);
+            color: #0B0B0D;
+        }
+        .logout-button:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.65);
+            outline-offset: 3px;
+        }
+
+        .main-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
+        .main-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .main-nav .nav-item {
+            position: relative;
+        }
+        .main-nav .nav-item > a {
+            color: #FFFFFF;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 12px 16px;
+            display: block;
+            border-radius: 8px;
+            transition: transform 0.2s ease-in-out, background-color 0.2s;
+        }
+        .main-nav .nav-item > a:hover,
+        .main-nav .nav-item > a:focus-visible,
+        .main-nav .nav-item > a.active {
+            transform: translateY(-4px);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+        }
+        .nav-item .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 220px;
+            padding: 12px 0;
+            z-index: 100;
+            flex-direction: column;
+            gap: 2px;
+            background: radial-gradient(circle at top, rgba(255, 101, 43, 0.1), transparent 55%), var(--surface-elevated);
+            border: 1px solid var(--surface-border);
+            border-radius: 14px;
+            box-shadow: 0 24px 65px -35px rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(18px);
+            overflow: hidden;
+        }
+        .nav-item.has-dropdown:hover .dropdown {
+            display: flex;
+        }
+        .dropdown li a {
+            padding: 12px 22px;
+            white-space: nowrap;
+            color: #F5F6F8;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            position: relative;
+            display: block;
+            z-index: 0;
+            transition: color 0.2s ease, background 0.25s ease, transform 0.25s ease;
+        }
+        .dropdown li a::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 101, 43, 0.18), rgba(255, 122, 69, 0.05));
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.2s ease;
+        }
+        .dropdown li a:hover,
+        .dropdown li a:focus-visible {
+            color: #0B0B0D;
+            transform: translateX(4px);
+        }
+        .dropdown li a:hover::after,
+        .dropdown li a:focus-visible::after {
+            opacity: 1;
+        }
+        .dropdown li a:visited {
+            color: #F5F6F8;
+        }
+        .dropdown li a.active {
+            background: linear-gradient(140deg, rgba(255, 101, 43, 0.35), rgba(255, 101, 43, 0.1));
+            color: #FFFFFF;
+        }
+        .dropdown .sub-item {
+            padding-left: 20px;
+        }
+
+        /* Tarjetas de Métricas (KPIs) - ELIMINADO */
+
+        .card {
+            background-color: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        /* Panel Principal (Grid) */
+        .main-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        /* Estilos del Formulario y Buscador */
+        .form-container h2, .search-container h2 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+        .form-label {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #A0A0A0;
+        }
+        .form-input, .form-select, .search-input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            background-color: #333333;
+            border: 1px solid #444444;
+            color: #FFFFFF;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 16px;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        .form-select {
+             background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23A0A0A0%22/%3E%3C/svg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px;
+        }
+        .submit-button, .search-button {
+            width: 100%;
+            font-size: 16px;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-weight: bold;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 16px 25px;
+            border: 1px solid var(--brand-orange);
+            background-color: var(--brand-orange);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .submit-button:disabled, .search-button:disabled {
+            background-color: #333;
+            border-color: #444;
+            cursor: not-allowed;
+        }
+        .submit-button:hover:not(:disabled), .search-button:hover:not(:disabled) {
+            background-color: var(--brand-orange-strong);
+        }
+        .search-form { display: flex; gap: 10px; }
+        .search-input { flex-grow: 1; margin: 0; }
+        .search-button { width: auto; margin: 0; }
+
+        /* Lista de Clientes y Resultados de Búsqueda */
+        .client-list, #search-results {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        #search-results { margin-top: 20px; }
+        .client-list li, .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #2A2A2A;
+            opacity: 0;
+            transform: translateY(-10px);
+            animation: fadeIn 0.5s forwards;
+        }
+        .client-list li:first-child {
+            border-top: 1px solid #2A2A2A;
+        }
+        .client-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--brand-orange);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .client-info .name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #FFFFFF;
+        }
+        .client-info .email {
+            font-size: 16px;
+            color: #A0A0A0;
+        }
+        .client-info .detail {
+            font-size: 14px;
+            color: #888;
+        }
+
+
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0 20px 0;
+            font-size: 12px;
+            color: #555555;
+        }
+        
+        /* Animación y Responsividad */
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 900px) { .main-panel { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) {
+            header { flex-direction: column; align-items: flex-start; }
+            .user-session {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 16px;
+            }
+            .user-session .logout-button {
+                width: auto;
+            }
+            .user-session .user-name {
+                font-size: 14px;
+            }
+
+            .main-nav { width: 100%; }
+            .main-nav ul { justify-content: flex-start; }
+        }
+    </style>
+  </head>
+  <body>
+
+    <div class="container">
+    <header class="app-header w-full max-w-6xl mx-auto px-4 py-3">
+        <div class="header-left">
+            <div class="logo-badge">
+                <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo de Goversa" class="logo-img">
+            </div>
+        </div>
+        <nav class="main-nav">
+        <ul>
+            <li class="nav-item"><a href="index.html">Inicio</a></li>
+            <li class="nav-item has-dropdown">
+                <a href="manager-taller.html">Taller</a>
+                <ul class="dropdown">
+                    <li><a href="manager-taller-ordenes.html">Órdenes</a></li>
+                    <li><a href="#">Editar órdenes</a></li>
+                    <li><a href="#">Presupuestos</a></li>
+                    <li class="sub-item"><a href="#">Calendario</a></li>
+                    <li class="sub-item"><a href="#">Recordatorios</a></li>
+                    <li><a href="manager-taller.html#vehicles-panel">Vehículos</a></li>
+                    <li><a href="#">Histórico</a></li>
+                </ul>
+            </li>
+            <li class="nav-item has-dropdown">
+                <a href="#">Tienda</a>
+                <ul class="dropdown">
+                    <li><a href="#">Compras</a></li>
+                    <li><a href="#">Ventas</a></li>
+                </ul>
+            </li>
+            <li class="nav-item"><a href="#">Caja</a></li>
+            <li class="nav-item has-dropdown">
+                <a href="#">Cuentas corrientes</a>
+                <ul class="dropdown">
+                    <li><a href="#">Saldos</a></li>
+                    <li><a href="#">Movimientos</a></li>
+                </ul>
+            </li>
+            <li class="nav-item"><a href="manager-taller-inventario.html">Inventario</a></li>
+            <li class="nav-item"><a href="manager-taller-trabajadores.html">Trabajadores</a></li>
+            <li class="nav-item has-dropdown">
+                <a href="manager-taller-clientes.html" class="active">Contactos</a>
+                <ul class="dropdown">
+                    <li><a href="manager-taller-clientes.html" class="active">Clientes</a></li>
+                    <li><a href="manager-taller-proveedores.html">Proveedores</a></li>
+                </ul>
+            </li>
+            <li class="nav-item"><a href="#">Informes</a></li>
+        </ul>
+    </nav>
+        <div class="user-session">
+            <span class="user-name">Iván Moreno · admin</span>
+            <a href="login.html" class="logout-button">Salir</a>
+        </div>
+    </header>
+
+        <!-- PANEL PRINCIPAL CON FORMULARIO Y LISTA/BUSCADOR -->
+        <main class="main-panel">
+            
+            <!-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO -->
+            <div class="card form-container">
+                <h2>Registrar Nuevo Cliente</h2>
+                <form id="client-form" novalidate>
+                    <label for="nombre" class="form-label">Nombre</label>
+                    <input type="text" id="nombre" name="nombre" class="form-input" required>
+
+                    <label for="email" class="form-label">Correo Electrónico</label>
+                    <input type="email" id="email" name="email" class="form-input" required>
+
+                    <label for="telefono" class="form-label">Teléfono</label>
+                    <input type="tel" id="telefono" name="telefono" class="form-input" required>
+
+                    <label for="dni" class="form-label">DNI</label>
+                    <input type="text" id="dni" name="dni" class="form-input" required>
+                    
+                    <label for="direccion" class="form-label">Dirección (Opcional)</label>
+                    <input type="text" id="direccion" name="direccion" class="form-input">
+
+                    <label for="fuenteMarketing" class="form-label">¿Por dónde nos conoció?</label>
+                    <select id="fuenteMarketing" name="fuenteMarketing" class="form-select" required>
+                        <option value="">Selecciona una opción</option>
+                        <option value="Redes Sociales">Redes Sociales</option>
+                        <option value="Recomendacion">Recomendación de un amigo</option>
+                        <option value="Busqueda Google">Búsqueda en Google</option>
+                        <option value="Publicidad Online">Publicidad Online</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+
+                    <button type="submit" id="submit-button" class="submit-button">Registrar Cliente</button>
+                </form>
+                <p id="form-status" style="text-align: center; margin-top: 20px;"></p>
+            </div>
+
+            <!-- COLUMNA DERECHA: BUSCADOR Y RESULTADOS -->
+            <div class="card search-container">
+                <h2>Buscar Cliente</h2>
+                <form id="search-form">
+                    <div class="search-form">
+                        <input type="search" id="search-input" placeholder="Buscar por nombre, DNI..." class="search-input">
+                        <button type="submit" id="search-button" class="search-button">Buscar</button>
+                    </div>
+                </form>
+                <div id="search-results-info" style="text-align:center; margin-top:20px;"></div>
+                <div id="search-results"></div>
+            </div>
+        </main>
+
+        <!-- FOOTER -->
+        <footer>
+            <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+
+    <script>
+        const MAKE_REGISTER_WEBHOOK_URL = 'https://hook.eu2.make.com/kpu77b41gubbkfixyttlbl2dq0afsbz5';
+        const MAKE_SEARCH_WEBHOOK_URL = 'https://hook.eu2.make.com/quirc89qo1imv3lwxhc5fhaj25qkhua7';
+
+        // --- LÓGICA PARA REGISTRAR CLIENTES ---
+        const registerForm = document.getElementById('client-form');
+        const submitButton = document.getElementById('submit-button');
+        const formStatus = document.getElementById('form-status');
+        
+        registerForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            formStatus.textContent = 'Registrando cliente...';
+            formStatus.style.color = '#A0A0A0';
+            submitButton.disabled = true;
+
+            const formData = new FormData(registerForm);
+            const data = {};
+            formData.forEach((value, key) => { data[key] = value; });
+
+          fetch("http://localhost:3000/api/clientes", {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify(data),
+            })
+
+            .then(response => {
+                if (response.ok) {
+                    return response.text();
+                }
+                throw new Error('La respuesta del servidor no fue exitosa.');
+            })
+            .then(text => {
+                console.log('Respuesta de Make:', text);
+                formStatus.textContent = '¡Cliente registrado con éxito!';
+                formStatus.style.color = '#28a745';
+                
+                registerForm.reset();
+                setTimeout(() => { formStatus.textContent = ''; }, 3000);
+            })
+            .catch(error => {
+                console.error('Error al enviar el formulario:', error);
+                formStatus.textContent = 'Hubo un error al registrar. Inténtalo de nuevo.';
+                formStatus.style.color = '#dc3545';
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+            });
+        });
+
+        // --- NUEVA LÓGICA PARA BUSCAR CLIENTES ---
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const searchResultsContainer = document.getElementById('search-results');
+        const searchResultsInfo = document.getElementById('search-results-info');
+
+        searchForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const query = searchInput.value.trim();
+
+            if (!query) {
+                searchResultsInfo.textContent = 'Por favor, introduce un término de búsqueda.';
+                searchResultsInfo.style.color = '#A0A0A0';
+                return;
+            }
+
+            searchResultsInfo.textContent = 'Buscando...';
+            searchResultsInfo.style.color = '#A0A0A0';
+            searchButton.disabled = true;
+            searchResultsContainer.innerHTML = ''; // Limpiar resultados anteriores
+
+            const urlWithQuery = `${MAKE_SEARCH_WEBHOOK_URL}?query=${encodeURIComponent(query)}`;
+
+            fetch(urlWithQuery)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error en la respuesta del servidor.');
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    if (!text) {
+                        displaySearchResults([]);
+                        return;
+                    }
+                    try {
+                        const results = JSON.parse(text);
+                        displaySearchResults(results);
+                    } catch (e) {
+                        console.error("La respuesta del servidor no era un JSON válido:", text);
+                        displaySearchResults([]);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al buscar:', error);
+                    searchResultsInfo.textContent = 'Error al realizar la búsqueda.';
+                    searchResultsInfo.style.color = '#dc3545';
+                })
+                .finally(() => {
+                    searchButton.disabled = false;
+                });
+        });
+
+        function displaySearchResults(results) {
+            // SOLUCIÓN: Forzamos el pintado. Si 'results' no es un array (es un solo objeto), 
+            // lo convertimos en un array de un solo elemento para que el código pueda procesarlo.
+            const resultsArray = Array.isArray(results) ? results : [results];
+
+            if (!resultsArray || resultsArray.length === 0) {
+                searchResultsInfo.textContent = 'No se encontraron clientes.';
+                searchResultsInfo.style.color = '#A0A0A0';
+                return;
+            }
+
+            searchResultsInfo.textContent = `Se encontraron ${resultsArray.length} resultados.`;
+            searchResultsInfo.style.color = '#28a745';
+            
+            resultsArray.forEach(client => {
+                if (!client || !client.nombre) return; // Añadimos una comprobación extra de seguridad
+
+                const listItem = document.createElement('div');
+                listItem.className = 'search-result-item';
+
+                const initials = client.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+                listItem.innerHTML = `
+                    <div class="client-avatar">${initials}</div>
+                    <div class="client-info">
+                        <div class="name">${client.nombre || 'No disponible'}</div>
+                        <div class="email">${client.email || 'No disponible'}</div>
+                        <div class="detail">DNI: ${client.dni || 'No disponible'} | Tel: ${client.telefono || 'No disponible'}</div>
+                    </div>
+                `;
+                searchResultsContainer.appendChild(listItem);
+            });
+        }
+    </script>
+</body>
+</html>

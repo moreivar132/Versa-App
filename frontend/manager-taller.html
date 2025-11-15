@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Vehículos - Goversa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos Generales */
+        :root {
+            --brand-orange: #FF652B;
+            --brand-orange-strong: #FF7A45;
+            --surface-elevated: rgba(18, 18, 20, 0.96);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --surface-highlight: rgba(255, 255, 255, 0.04);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            font-family: 'Montserrat', Arial, sans-serif;
+            color: #FFFFFF;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header y Menú de Navegación */
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 18px 28px;
+            margin-bottom: 30px;
+            border-radius: 18px;
+            border: 1px solid var(--surface-border);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+            box-shadow: 0 28px 60px -38px rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(18px);
+            flex-wrap: wrap;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 180px;
+        }
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: 18px;
+            background: radial-gradient(circle at top, rgba(255, 101, 43, 0.22), rgba(255, 101, 43, 0.05));
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 16px 40px -24px rgba(255, 101, 43, 0.9), 0 12px 28px -18px rgba(0, 0, 0, 0.85);
+        }
+        .logo-badge .logo-img {
+            height: 58px;
+            width: auto;
+            filter: drop-shadow(0 8px 16px rgba(255, 101, 43, 0.5));
+        }
+        .user-session {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 18px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+            box-shadow: 0 20px 48px -34px rgba(0, 0, 0, 0.85);
+            color: #F5F6F8;
+            font-weight: 600;
+        }
+        .user-name {
+            font-size: 15px;
+            letter-spacing: 0.01em;
+        }
+        .logout-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 18px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            text-decoration: none;
+            color: #0B0B0D;
+            background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-strong));
+            box-shadow: 0 18px 35px -24px rgba(255, 122, 69, 0.9);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .logout-button:hover,
+        .logout-button:focus-visible {
+            transform: translateY(-2px);
+            box-shadow: 0 22px 42px -22px rgba(255, 122, 69, 0.95);
+            color: #0B0B0D;
+        }
+        .logout-button:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.65);
+            outline-offset: 3px;
+        }
+        .main-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+        }
+        .main-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .main-nav .nav-item {
+            position: relative;
+        }
+        .main-nav .nav-item a {
+            color: #FFFFFF;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 12px 16px;
+            display: block;
+            border-radius: 8px;
+            transition: transform 0.2s ease-in-out, background-color 0.2s;
+        }
+        .main-nav .nav-item > a:hover,
+        .main-nav .nav-item > a.active {
+            transform: translateY(-4px);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+        }
+        .nav-item .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 220px;
+            padding: 12px 0;
+            z-index: 100;
+            flex-direction: column;
+            gap: 2px;
+            background: radial-gradient(circle at top, rgba(255, 101, 43, 0.1), transparent 55%), var(--surface-elevated);
+            border: 1px solid var(--surface-border);
+            border-radius: 14px;
+            box-shadow: 0 24px 65px -35px rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(18px);
+            overflow: hidden;
+        }
+        .nav-item.has-dropdown:hover .dropdown {
+            display: flex;
+        }
+        .dropdown li a {
+            padding: 12px 22px;
+            white-space: nowrap;
+            color: #F5F6F8;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            position: relative;
+            display: block;
+            z-index: 0;
+            transition: color 0.2s ease, background 0.25s ease, transform 0.25s ease;
+        }
+        .dropdown li a::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 101, 43, 0.18), rgba(255, 122, 69, 0.05));
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.2s ease;
+        }
+        .dropdown li a:hover {
+            transform: translateY(0);
+            background-color: #FF5F00;
+        }
+        .dropdown li a.active {
+            background: linear-gradient(140deg, rgba(255, 101, 43, 0.35), rgba(255, 101, 43, 0.1));
+            color: #FFFFFF;
+        }
+        .dropdown .sub-item {
+            padding-left: 20px;
+        }
+
+        .panel-switcher {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .panel-button {
+            background-color: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            color: #FFFFFF;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+        }
+        .panel-button:hover {
+            transform: translateY(-2px);
+            border-color: var(--brand-orange);
+            box-shadow: 0 12px 30px -22px var(--brand-orange-strong);
+        }
+        .panel-button.active {
+            background: linear-gradient(120deg, var(--brand-orange) 0%, var(--brand-orange-strong) 90%);
+            border-color: transparent;
+            box-shadow: 0 20px 45px -26px rgba(255, 101, 43, 0.9);
+        }
+        .panel-section[hidden] {
+            display: none !important;
+        }
+        .embedded-panel {
+            width: 100%;
+            min-height: 900px;
+            border: 1px solid #2A2A2A;
+            border-radius: 12px;
+            background-color: #1A1A1A;
+        }
+
+        .card {
+            background-color: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        /* Panel Principal (Grid) */
+        .main-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 20px; /* Espacio solo entre columnas */
+        }
+
+        /* Estilos del Formulario y Buscador */
+        .form-container h2, .search-container h2 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+        .form-label {
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: #A0A0A0;
+            display: block;
+            margin-bottom: 16px; /* Espacio debajo de cada label */
+        }
+        .form-label .required {
+            color: var(--brand-orange);
+        }
+        .form-input, .form-select, .search-input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border-radius: 8px;
+            background-color: #333333;
+            border: 1px solid #444444;
+            color: #FFFFFF;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 16px;
+            box-sizing: border-box;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input:focus, .form-select:focus, .search-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            box-shadow: 0 0 0 3px rgba(255, 101, 43, 0.25);
+        }
+        .form-select {
+             background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23FF652B%22/%3E%3C/svg%3E');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 20px;
+        }
+        .submit-button, .search-button {
+            width: 100%;
+            font-size: 16px;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-weight: bold;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 16px 25px;
+            border: 1px solid #FF5F00;
+            background-color: #FF5F00;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        .full-width {
+            grid-column: 1 / -1; /* Ocupa todo el ancho */
+        }
+        .search-form { display: flex; gap: 10px; }
+        .search-input { flex-grow: 1; margin: 0; }
+        .search-button { width: auto; margin: 0; }
+
+        /* --- NUEVOS ESTILOS PARA DROPDOWN BUSCABLE --- */
+        .custom-select-container {
+            position: relative;
+        }
+        .custom-select-input:focus {
+             outline: none;
+            border-color: #FF5F00;
+            box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.2);
+        }
+        .custom-select-options {
+            display: none;
+            position: absolute;
+            top: calc(100% - 10px);
+            left: 0;
+            right: 0;
+            background-color: #333333;
+            border: 1px solid #444444;
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .custom-select-options.show {
+            display: block;
+        }
+        .custom-select-options .option, .custom-select-options .option-group {
+            padding: 12px 15px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .custom-select-options .option:hover {
+            background-color: #FF5F00;
+        }
+        .custom-select-options .option-group {
+            font-weight: bold;
+            color: #A0A0A0;
+            cursor: default;
+            border-top: 1px solid #444444;
+            margin-top: 5px;
+            padding-top: 10px;
+        }
+        .custom-select-options .option-group:first-child {
+            border-top: none;
+            margin-top: 0;
+        }
+        .custom-select-options::-webkit-scrollbar { width: 8px; }
+        .custom-select-options::-webkit-scrollbar-track { background: #333; }
+        .custom-select-options::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+        .custom-select-options::-webkit-scrollbar-thumb:hover { background: #777; }
+        /* --- FIN DE NUEVOS ESTILOS --- */
+
+
+        /* Resultados de Búsqueda */
+        #search-results { margin-top: 20px; }
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #2A2A2A;
+            opacity: 0;
+            transform: translateY(-10px);
+            animation: fadeIn 0.5s forwards;
+        }
+        .search-result-item:first-child {
+            border-top: 1px solid #2A2A2A;
+        }
+        .vehicle-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px; /* Cuadrado */
+            background-color: #FF5F00;
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            margin-right: 20px;
+            flex-shrink: 0;
+            text-align: center;
+            line-height: 1.2;
+        }
+        .vehicle-info .name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #FFFFFF;
+        }
+        .vehicle-info .detail {
+            font-size: 14px;
+            color: #A0A0A0;
+            margin-top: 5px;
+        }
+        .vehicle-info .detail div {
+            margin-top: 4px;
+        }
+        .vehicle-info .detail strong {
+            color: #FFFFFF;
+            font-weight: 600;
+            min-width: 80px;
+            display: inline-block;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 0 20px 0;
+            font-size: 12px;
+            color: #555555;
+        }
+        
+        /* Animación y Responsividad */
+        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 900px) { .main-panel { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) {
+            .main-nav { width: 100%; justify-content: flex-start; }
+            .main-nav ul { flex-direction: column; gap: 5px; align-items: flex-start; }
+            header { flex-direction: column; align-items: flex-start; }
+            .user-session {
+                width: 100%;
+                justify-content: space-between;
+                margin-top: 16px;
+            }
+            .user-session .logout-button {
+                width: auto;
+            }
+            .user-session .user-name {
+                font-size: 14px;
+            }
+
+            .form-grid { grid-template-columns: 1fr; }
+            .panel-switcher { width: 100%; justify-content: flex-start; }
+            .panel-button { width: 100%; text-align: left; }
+            .embedded-panel { min-height: 1000px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- HEADER CON MENÚ DE NAVEGACIÓN UNIFICADO -->
+        <header class="app-header w-full max-w-6xl mx-auto px-4 py-3">
+            <div class="header-left">
+                <div class="logo-badge">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo de Goversa" class="logo-img">
+                </div>
+            </div>
+            <nav class="main-nav">
+            <ul>
+                <li class="nav-item"><a href="index.html">Inicio</a></li>
+                <li class="nav-item has-dropdown">
+                    <a href="manager-taller.html" class="active">Taller</a>
+                    <ul class="dropdown">
+                        <li><a href="manager-taller-ordenes.html">Órdenes</a></li>
+                        <li><a href="#">Editar órdenes</a></li>
+                        <li><a href="#">Presupuestos</a></li>
+                        <li class="sub-item"><a href="#">Calendario</a></li>
+                        <li class="sub-item"><a href="#">Recordatorios</a></li>
+                        <li><a href="manager-taller.html#vehicles-panel" class="active">Vehículos</a></li>
+                        <li><a href="#">Histórico</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item has-dropdown">
+                    <a href="#">Tienda</a>
+                    <ul class="dropdown">
+                        <li><a href="#">Compras</a></li>
+                        <li><a href="#">Ventas</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a href="#">Caja</a></li>
+                <li class="nav-item has-dropdown">
+                    <a href="#">Cuentas corrientes</a>
+                    <ul class="dropdown">
+                        <li><a href="#">Saldos</a></li>
+                        <li><a href="#">Movimientos</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a href="manager-taller-inventario.html">Inventario</a></li>
+                <li class="nav-item"><a href="manager-taller-trabajadores.html">Trabajadores</a></li>
+                <li class="nav-item has-dropdown">
+                    <a href="manager-taller-clientes.html">Contactos</a>
+                    <ul class="dropdown">
+                        <li><a href="manager-taller-clientes.html">Clientes</a></li>
+                        <li><a href="manager-taller-proveedores.html">Proveedores</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a href="#">Informes</a></li>
+            </ul>
+        </nav>
+            <div class="user-session">
+                <span class="user-name">Iván Moreno · admin</span>
+                <a href="login.html" class="logout-button">Salir</a>
+            </div>
+        </header>
+
+
+        <!-- PANEL PRINCIPAL CON FORMULARIO Y BUSCADOR -->
+        <main id="vehicles-panel" class="main-panel panel-section" role="tabpanel" aria-labelledby="vehicles-tab">
+
+            <!-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO DE VEHÍCULOS -->
+            <div class="card form-container">
+                <h2>Registrar Nuevo Vehículo</h2>
+                <form id="vehicle-form" novalidate>
+                    <div class="form-grid">
+                        <label for="placa" class="form-label">Placa <span class="required">*</span>
+                            <input type="text" id="placa" name="placa" class="form-input" required>
+                        </label>
+                        <label for="ano" class="form-label">Año
+                            <input type="number" id="ano" name="ano" class="form-input">
+                        </label>
+                        
+                        <!-- CAMPO DE MARCA MODIFICADO -->
+                        <label for="marca" class="form-label">Marca
+                             <div class="custom-select-container">
+                                <input type="text" name="marca" class="form-input custom-select-input" id="marca" placeholder="Buscar o escribir marca...">
+                                <div class="custom-select-options" id="marca-options">
+                                    <!-- Se rellena dinámicamente con JavaScript -->
+                                </div>
+                            </div>
+                        </label>
+
+                        <label for="chasis" class="form-label">Nº Chasis
+                            <input type="text" id="chasis" name="chasis" class="form-input">
+                        </label>
+                        <label for="modelo" class="form-label">Modelo
+                            <input type="text" id="modelo" name="modelo" class="form-input">
+                        </label>
+                         <label for="cc" class="form-label">CC
+                            <input type="text" id="cc" name="cc" class="form-input">
+                        </label>
+                         <label for="tipo" class="form-label">Tipo
+                            <select id="tipo" name="tipo" class="form-select">
+                                <option value="">Seleccionar...</option>
+                                <option value="Coche">Coche</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Furgoneta">Furgoneta</option>
+                                <option value="Camion">Camión</option>
+                            </select>
+                        </label>
+                        <label for="seguro" class="form-label">Seguro
+                            <input type="text" id="seguro" name="seguro" class="form-input">
+                        </label>
+                        <label for="color" class="form-label full-width">Color
+                             <select id="color" name="color" class="form-select">
+                                <option value="">Seleccionar...</option>
+                                <option value="Negro">Negro</option>
+                                <option value="Blanco">Blanco</option>
+                                <option value="Gris">Gris</option>
+                                <option value="Rojo">Rojo</option>
+                                <option value="Azul">Azul</option>
+                            </select>
+                        </label>
+                    </div>
+                    <button type="submit" id="submit-button" class="submit-button full-width">Registrar Vehículo</button>
+                </form>
+                <p id="form-status" style="text-align: center; margin-top: 20px;"></p>
+            </div>
+
+            <!-- COLUMNA DERECHA: BUSCADOR Y RESULTADOS -->
+            <div class="card search-container">
+                <h2>Buscar Vehículo</h2>
+                <form id="search-form">
+                    <div class="search-form">
+                        <input type="search" id="search-input" placeholder="Buscar por matrícula, chasis..." class="search-input">
+                        <button type="submit" id="search-button" class="search-button">Buscar</button>
+                    </div>
+                </form>
+                <div id="search-results-info" style="text-align:center; margin-top:20px;"></div>
+                <div id="search-results"></div>
+            </div>
+        </main>
+
+        <section id="clients-panel" class="panel-section" role="tabpanel" aria-labelledby="clients-tab" hidden>
+            <iframe src="manager-taller-clientes.html" title="Gestión de clientes" class="embedded-panel" loading="lazy"></iframe>
+        </section>
+        <section id="workers-panel" class="panel-section" role="tabpanel" aria-labelledby="workers-tab" hidden>
+            <iframe src="manager-taller-trabajadores.html" title="Gestión de trabajadores" class="embedded-panel" loading="lazy"></iframe>
+        </section>
+        <section id="inventory-panel" class="panel-section" role="tabpanel" aria-labelledby="inventory-tab" hidden>
+            <iframe src="manager-taller-inventario.html" title="Gestión de inventario" class="embedded-panel" loading="lazy"></iframe>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- PANEL SWITCHING BETWEEN VEHICLES AND CLIENTS ---
+        const panelButtons = document.querySelectorAll('.panel-button');
+        const panelSections = {
+            'vehicles-panel': document.getElementById('vehicles-panel'),
+            'clients-panel': document.getElementById('clients-panel'),
+            'workers-panel': document.getElementById('workers-panel'),
+            'inventory-panel': document.getElementById('inventory-panel'),
+        };
+
+        panelButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const targetId = button.dataset.panelTarget;
+                if (!targetId || !panelSections[targetId]) {
+                    return;
+                }
+
+                Object.entries(panelSections).forEach(([id, section]) => {
+                    section.hidden = id !== targetId;
+                });
+
+                panelButtons.forEach((btn) => {
+                    const isActive = btn === button;
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-selected', isActive.toString());
+                });
+            });
+        });
+
+        // --- URLs PARA VEHÍCULOS (DEBES CREAR NUEVOS WEBHOOKS EN MAKE) ---
+        const MAKE_VEHICLE_REGISTER_WEBHOOK_URL = 'https://hook.eu2.make.com/acfpmuivv7els6mzk2nlrwfb7529gpo5';
+        const MAKE_VEHICLE_SEARCH_WEBHOOK_URL = 'https://hook.eu2.make.com/z8b2jaicivbiuuhc819wcwlq2mw2em32';
+        
+        // --- NUEVA LÓGICA PARA DROPDOWN BUSCABLE ---
+        const vehicleBrands = [
+            { type: 'group', label: 'Coches' },
+            "Volkswagen", "Skoda", "Seat", "Cupra", "Audi", "BMW", "Mercedes-Benz", "Peugeot", "Renault", "Dacia", "Citroën", "Opel", "Fiat", "Ford", "Toyota", "Hyundai", "Kia", "Tesla", "Mazda", "Nissan", "Volvo", "BYD", "MG", "Lynk & Co", "NIO", "XPeng", "Zeekr", "GWM ORA", "Aiways", "Chery",
+            { type: 'group', label: 'Motos y Scooters' },
+            "Honda", "Yamaha", "Kawasaki", "Suzuki", "KTM", "Ducati", "Triumph", "Harley-Davidson", "BMW Motorrad", "Piaggio", "Vespa", "Aprilia", "Moto Guzzi", "MV Agusta", "Royal Enfield", "Benelli", "Keeway", "Zontes", "CFMoto", "Voge", "SYM", "KYMCO", "NIU", "Silence", "Super Soco", "Yadea", "Horwin", "Sunra", "Lifan", "Wottan", "Mash", "Brixton", "Fantic", "SWM", "Rieju", "GasGas", "Husqvarna", "Beta", "Sherco", "Montesa", "Derbi", "Italjet", "Peugeot Motocycles", "Malaguti", "Ebroh", "Torrot", "Colove", "Sur-Ron", "Oset", "Zero Motorcycles", "Energica", "Arc Vector", "Segway", "Dayun", "Loncin", "QJ Motor", "Aeon", "UM Motorcycles", "Hero MotoCorp", "TVS Motor", "Bajaj", "Taro", "Hanway", "MITT", "CF-EV", "Efun", "LVNENG", "Sunra Robo", "Okinawa", "ZEEHO (CFMoto EV)", "Stark Future", "Cake"
+        ];
+
+        function setupCustomSelect(inputId, optionsId, data) {
+            const input = document.getElementById(inputId);
+            const optionsContainer = document.getElementById(optionsId);
+
+            data.forEach(item => {
+                const div = document.createElement('div');
+                if (typeof item === 'object' && item.type === 'group') {
+                    div.className = 'option-group';
+                    div.textContent = item.label;
+                } else {
+                    div.className = 'option';
+                    div.textContent = item;
+                    div.dataset.value = item;
+                    
+                    div.addEventListener('click', () => {
+                        input.value = div.dataset.value;
+                        optionsContainer.classList.remove('show');
+                    });
+                }
+                optionsContainer.appendChild(div);
+            });
+
+            input.addEventListener('focus', () => optionsContainer.classList.add('show'));
+
+            input.addEventListener('keyup', () => {
+                const filter = input.value.toLowerCase();
+                const options = optionsContainer.getElementsByClassName('option');
+                for (let i = 0; i < options.length; i++) {
+                    const txtValue = options[i].textContent || options[i].innerText;
+                    options[i].style.display = txtValue.toLowerCase().indexOf(filter) > -1 ? "" : "none";
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!input.contains(event.target) && !optionsContainer.contains(event.target)) {
+                    optionsContainer.classList.remove('show');
+                }
+            });
+        }
+        
+        // Inicializar el dropdown personalizado
+        document.addEventListener('DOMContentLoaded', () => {
+            setupCustomSelect('marca', 'marca-options', vehicleBrands);
+        });
+        
+        // --- LÓGICA PARA REGISTRAR VEHÍCULOS ---
+        const registerForm = document.getElementById('vehicle-form');
+        const submitButton = document.getElementById('submit-button');
+        const formStatus = document.getElementById('form-status');
+        
+        registerForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            formStatus.textContent = 'Registrando vehículo...';
+            formStatus.style.color = '#A0A0A0';
+            submitButton.disabled = true;
+
+            const formData = new FormData(registerForm);
+            const data = {};
+            formData.forEach((value, key) => { data[key] = value; });
+
+            fetch(MAKE_VEHICLE_REGISTER_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+            .then(response => {
+                if (response.ok) return response.text();
+                throw new Error('La respuesta del servidor no fue exitosa.');
+            })
+            .then(text => {
+                formStatus.textContent = '¡Vehículo registrado con éxito!';
+                formStatus.style.color = '#28a745';
+                registerForm.reset();
+                setTimeout(() => { formStatus.textContent = ''; }, 3000);
+            })
+            .catch(error => {
+                console.error('Error al enviar el formulario:', error);
+                formStatus.textContent = 'Hubo un error al registrar. Inténtalo de nuevo.';
+                formStatus.style.color = '#dc3545';
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+            });
+        });
+
+        // --- LÓGICA PARA BUSCAR VEHÍCULOS ---
+        const searchForm = document.getElementById('search-form');
+        const searchInput = document.getElementById('search-input');
+        const searchButton = document.getElementById('search-button');
+        const searchResultsContainer = document.getElementById('search-results');
+        const searchResultsInfo = document.getElementById('search-results-info');
+
+        searchForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const query = searchInput.value.trim();
+            if (!query) {
+                searchResultsInfo.textContent = 'Por favor, introduce un término de búsqueda.';
+                return;
+            }
+
+            searchResultsInfo.textContent = 'Buscando...';
+            searchButton.disabled = true;
+            searchResultsContainer.innerHTML = '';
+
+            const urlWithQuery = `${MAKE_VEHICLE_SEARCH_WEBHOOK_URL}?query=${encodeURIComponent(query)}`;
+
+            fetch(urlWithQuery)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error en la respuesta del servidor.');
+                    return response.text();
+                })
+                .then(text => {
+                    if (!text || text.trim() === 'Accepted') {
+                        displayVehicleSearchResults([]);
+                        return;
+                    }
+                    try {
+                        const results = JSON.parse(text);
+                        displayVehicleSearchResults(results);
+                    } catch (parseError) {
+                        console.error('Error al buscar: Error al procesar la respuesta del servidor.', parseError);
+                        searchResultsInfo.textContent = 'La respuesta del servidor no tuvo un formato válido.';
+                        searchResultsInfo.style.color = '#dc3545';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al buscar:', error);
+                    searchResultsInfo.textContent = 'Error al realizar la búsqueda.';
+                    searchResultsInfo.style.color = '#dc3545';
+                })
+                .finally(() => {
+                    searchButton.disabled = false;
+                });
+        });
+
+        function displayVehicleSearchResults(results) {
+            const resultsArray = Array.isArray(results) ? results : [results];
+
+            if (resultsArray.length === 0) {
+                searchResultsInfo.textContent = 'No se encontraron vehículos.';
+                searchResultsInfo.style.color = '#A0A0A0';
+                return;
+            }
+
+            searchResultsInfo.textContent = `Se encontraron ${resultsArray.length} resultados.`;
+            searchResultsInfo.style.color = '#28a745';
+            
+            resultsArray.forEach(vehicle => {
+                // CORRECCIÓN: Usar las claves con Mayúscula como las envía Make.
+                if (!vehicle || !vehicle.Matricula) return;
+
+                const listItem = document.createElement('div');
+                listItem.className = 'search-result-item';
+
+                listItem.innerHTML = `
+                    <div class="vehicle-avatar">${vehicle.Matricula}</div>
+                    <div class="vehicle-info">
+                        <div class="name">${vehicle.Marca || ''} ${vehicle.Modelo || ''}</div>
+                        <div class="detail">
+                            <div><strong>Matrícula:</strong> ${vehicle.Matricula || 'N/A'}</div>
+                            <div><strong>Marca:</strong> ${vehicle.Marca || 'N/A'}</div>
+                            <div><strong>Año:</strong> ${vehicle.Año || 'N/A'}</div>
+                        </div>
+                    </div>
+                `;
+                searchResultsContainer.appendChild(listItem);
+            });
+        }
+    </script>
+</body>
+</html>
