@@ -635,8 +635,8 @@
             });
         });
 
-        // --- URLs PARA VEHÍCULOS (DEBES CREAR NUEVOS WEBHOOKS EN MAKE) ---
-        const MAKE_VEHICLE_REGISTER_WEBHOOK_URL = 'https://hook.eu2.make.com/acfpmuivv7els6mzk2nlrwfb7529gpo5';
+        // --- URLs PARA VEHÍCULOS ---
+        const VEHICLE_REGISTER_API_URL = 'http://localhost:3000/api/vehiculos';
         const MAKE_VEHICLE_SEARCH_WEBHOOK_URL = 'https://hook.eu2.make.com/z8b2jaicivbiuuhc819wcwlq2mw2em32';
         
         // --- NUEVA LÓGICA PARA DROPDOWN BUSCABLE ---
@@ -708,16 +708,26 @@
             const data = {};
             formData.forEach((value, key) => { data[key] = value; });
 
-            fetch(MAKE_VEHICLE_REGISTER_WEBHOOK_URL, {
+            fetch(VEHICLE_REGISTER_API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             })
-            .then(response => {
-                if (response.ok) return response.text();
-                throw new Error('La respuesta del servidor no fue exitosa.');
+            .then(async response => {
+                const contentType = response.headers.get('content-type') || '';
+                const isJson = contentType.includes('application/json');
+                const payload = isJson ? await response.json() : await response.text();
+
+                if (!response.ok || (isJson && payload && payload.ok === false)) {
+                    const errorMessage = isJson && payload && payload.error
+                        ? payload.error
+                        : 'La respuesta del servidor no fue exitosa.';
+                    throw new Error(errorMessage);
+                }
+
+                return payload;
             })
-            .then(text => {
+            .then(() => {
                 formStatus.textContent = '¡Vehículo registrado con éxito!';
                 formStatus.style.color = '#28a745';
                 registerForm.reset();
@@ -725,7 +735,7 @@
             })
             .catch(error => {
                 console.error('Error al enviar el formulario:', error);
-                formStatus.textContent = 'Hubo un error al registrar. Inténtalo de nuevo.';
+                formStatus.textContent = error.message || 'Hubo un error al registrar. Inténtalo de nuevo.';
                 formStatus.style.color = '#dc3545';
             })
             .finally(() => {
