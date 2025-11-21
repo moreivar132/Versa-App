@@ -996,15 +996,6 @@ function initApp(){
       }
     }
 
-    if(!lote.categoria || lote.categoria === DEFAULT_LOTE_META.categoria){
-      const categorias = fileMetas.map(meta => meta.categoria).filter(Boolean);
-      const allSameCategoria = categorias.length > 0 && categorias.every((categoria) => categoria === categorias[0]);
-      const dominantCategoria = allSameCategoria ? categorias[0] : '';
-      if(dominantCategoria && dominantCategoria !== DEFAULT_LOTE_META.categoria){
-        lote.categoria = dominantCategoria;
-      }
-    }
-
     const manifest = {
       version:'no-cors',
       enviadoEn:new Date().toISOString(),
