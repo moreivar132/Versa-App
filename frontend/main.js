@@ -522,6 +522,19 @@ function guessTipo(file){
   if(m.startsWith('image/')) return 'Ticket';
   return 'Factura';
 }
+
+function getPreviewType(file){
+  if(!(file instanceof File)) return null;
+  if((file.type || '').startsWith('image/')) return 'image';
+  if((file.type || '').toLowerCase() === 'application/pdf') return 'pdf';
+  return null;
+}
+
+function getPreviewURL(file){
+  const type = getPreviewType(file);
+  if(!type) return { previewURL: null, previewType: null };
+  return { previewURL: URL.createObjectURL(file), previewType: type };
+}
 function isDuplicate(file){
   return state.files.some(f=>f.file.name===file.name && f.file.size===file.size);
 }
@@ -568,10 +581,19 @@ function renderFiles(){
   }
   if(emptyState){ emptyState.hidden = true; }
   cont.innerHTML = state.files.map(f=>{
-    const isImg = !!f.previewURL;
+    const previewType = f.previewType || getPreviewType(f.file);
+    const previewMarkup = (()=>{
+      if(previewType === 'image' && f.previewURL){
+        return `<figure class="file-card__preview"><img src="${f.previewURL||''}" alt="Vista previa" /></figure>`;
+      }
+      if(previewType === 'pdf' && f.previewURL){
+        return `<figure class="file-card__preview file-card__preview--pdf"><embed src="${f.previewURL||''}" type="application/pdf" aria-label="Vista previa de ${escapeHTML(f.file.name)}" /></figure>`;
+      }
+      return '';
+    })();
     return `
       <article class="file-card">
-        ${isImg ? `<figure class="file-card__preview"><img src="${f.previewURL||''}" alt="Vista previa" /></figure>` : ''}
+        ${previewMarkup}
         <div class="file-card__body">
           <header class="file-card__header">
             <div class="file-card__title">
@@ -774,7 +796,20 @@ window.removeFile = function(id){
 };
 window.updateFileMeta = function(id,k,v){
   const f=state.files.find(x=>x.id===id);
-  if(f) { f.meta[k]=v; persist(); }
+  if(f) {
+    if(k === 'categoria'){
+      f.meta[k] = sanitizeCategoryValue(v, DEFAULT_LOTE_META.categoria);
+    }else if(k === 'area'){
+      f.meta[k] = sanitizeSelectValue(v, AREA_OPTIONS, DEFAULT_LOTE_META.area);
+    }else if(k === 'naturaleza'){
+      f.meta[k] = sanitizeSelectValue(v, NATURALEZA_OPTIONS, DEFAULT_LOTE_META.naturaleza);
+    }else if(k === 'metodoPago'){
+      f.meta[k] = sanitizeSelectValue(v, PAYMENT_METHODS, DEFAULT_LOTE_META.metodoPago);
+    }else{
+      f.meta[k]=v;
+    }
+    persist();
+  }
   updateSendButtonState();
 };
 
@@ -799,7 +834,7 @@ function addFiles(list){
     state.files.push({
       id: crypto.randomUUID(),
       file,
-      previewURL: file.type?.startsWith('image/') ? URL.createObjectURL(file) : null,
+      ...getPreviewURL(file),
       meta: {
          ...meta,
         tipo: guessTipo(file)
@@ -958,6 +993,15 @@ function initApp(){
       const dominantArea = allSameArea ? areas[0] : '';
       if(dominantArea){
         lote.area = dominantArea;
+      }
+    }
+
+    if(!lote.categoria || lote.categoria === DEFAULT_LOTE_META.categoria){
+      const categorias = fileMetas.map(meta => meta.categoria).filter(Boolean);
+      const allSameCategoria = categorias.length > 0 && categorias.every((categoria) => categoria === categorias[0]);
+      const dominantCategoria = allSameCategoria ? categorias[0] : '';
+      if(dominantCategoria && dominantCategoria !== DEFAULT_LOTE_META.categoria){
+        lote.categoria = dominantCategoria;
       }
     }
 
