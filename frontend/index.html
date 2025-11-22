@@ -18,15 +18,6 @@
     <link rel="stylesheet" href="./theme.css" />
   </head>
   <body class="min-h-screen bg-[var(--bg)] text-[var(--text)] font-['Montserrat',sans-serif]">
-    <script>
-      (function enforceSession() {
-        const email = localStorage.getItem('userEmail');
-        const role = localStorage.getItem('userRole');
-        if (!email || !role) {
-          window.location.replace('login.html');
-        }
-      })();
-    </script>
 
     <a
       class="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white/90 focus:text-black"
@@ -574,7 +565,6 @@
     <script>
       document.getElementById('year').textContent = new Date().getFullYear();
     </script>
-    <script src="./user-store.js" defer></script>
     <script src="./auth.js" defer></script>
     <script src="./admin.js" defer></script>
     <script src="./main.js" defer></script>

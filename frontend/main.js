@@ -2,6 +2,40 @@
 const WEBHOOK_URL = 'https://hook.eu2.make.com/n3hsmt5ppfadl249l7wm3cs16moc8xgk';
 const LS_KEY = 'portal_facturas_v2';
 
+let cachedUser = null;
+
+(async function enforceAuth() {
+  const user = await Auth.requireAuth();
+  if (!user) return;
+
+  cachedUser = user;
+  const isAdmin = Boolean(user.is_super_admin);
+  const roleLabel = isAdmin ? 'Administrador' : 'Usuario';
+
+  document.body?.setAttribute('data-user-role', isAdmin ? 'admin' : 'empleado');
+
+  const userInfo = document.getElementById('userInfo');
+  if (userInfo) userInfo.textContent = `${user.nombre || user.email} · ${roleLabel}`;
+  const mobileUserInfo = document.getElementById('mobileUserInfo');
+  if (mobileUserInfo) mobileUserInfo.textContent = user.nombre || user.email;
+
+  document.querySelectorAll('[data-requires="admin"]').forEach((el) => {
+    if (isAdmin) {
+      el.removeAttribute('hidden');
+      el.style.display = '';
+    } else {
+      el.setAttribute('hidden', '');
+      el.style.display = 'none';
+    }
+  });
+
+  const logoutBtn = document.getElementById('btnLogout');
+  logoutBtn?.addEventListener('click', () => {
+    Auth.clearSession();
+    window.location.replace('login.html');
+  });
+})();
+
 // Activa/Desactiva filtros (para pruebas, mejor FALSE)
 const STRICT_FILTERS = false;   // si algo falla déjalo en false
 const AREA_OPTIONS = Object.freeze(['Flota', 'Taller', 'Bicicletas']);
@@ -1008,7 +1042,7 @@ function initApp(){
     const manifest = {
       version:'no-cors',
       enviadoEn:new Date().toISOString(),
-      usuario:{ email: localStorage.getItem('userEmail')||'' },
+      usuario:{ email: (cachedUser || Auth.getCurrentUser())?.email || '' },
       lote: applyDateFormatting(lote),
       manifestOnly,
       archivos: state.files.map((f, index)=>({
