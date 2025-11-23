@@ -3,12 +3,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const pool = require('./db');
+const authRoutes = require('./routes/auth'); // Importar rutas de autenticación
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// Usar rutas de autenticación
+app.use('/api/auth', authRoutes);
 
 // Ruta para probar servidor
 app.get('/', (req, res) => {
