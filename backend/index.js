@@ -2,13 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const open = require('open');
 const pool = require('./db');
 const { authenticateToken } = require('./middleware/auth');
 const authRoutes = require('./routes/auth');
 
 const app = express();
-// Cambiamos el puerto a 3001 para evitar conflictos comunes
 const PORT = process.env.PORT || 3001;
 
 // --- Middlewares Esenciales ---
@@ -16,7 +14,6 @@ app.use(cors());
 app.use(express.json());
 
 // --- Servir archivos estáticos del Frontend ---
-// Esto le dice a Express que use la carpeta 'frontend' que está un nivel más arriba
 const frontendPath = path.join(__dirname, '..', 'frontend');
 app.use(express.static(frontendPath));
 
@@ -92,17 +89,12 @@ app.delete('/api/notas/:id', async (req, res) => {
 });
 
 // --- Ruta Catch-all para SPA ---
-// Si ninguna ruta de API o archivo estático coincide, sirve el index.html.
-// Esto es útil para Single Page Applications, pero por ahora redirigimos a login.
 app.get('*', (req, res) => {
   res.sendFile(path.join(frontendPath, 'login.html'));
 });
 
 
-// --- Iniciar el servidor y abrir el navegador ---
+// --- Iniciar el servidor ---
 app.listen(PORT, () => {
-  const url = `http://localhost:${PORT}`;
-  console.log(`🚀 Servidor escuchando en ${url}`);
-  console.log('Abriendo el navegador...');
-  open(url);
+  console.log(`🚀 Servidor escuchando en http://localhost:${PORT}`);
 });
