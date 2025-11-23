@@ -1,104 +1,102 @@
-// index.js
-require('dotenv').config();
+require('dotenv').config(); // Carga las variables de entorno desde .env
 const express = require('express');
 const cors = require('cors');
-const pool = require('./db');
-const authRoutes = require('./routes/auth'); // Importar rutas de autenticación
+const pool = require('./db'); // Importa el pool de conexión a la BD
+const { authenticateToken } = require('./middleware/auth'); // Importa el middleware de autenticación
+const authRoutes = require('./routes/auth'); // Importa las rutas de autenticación
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+// --- Middlewares Esenciales ---
+app.use(cors()); // Permite peticiones desde diferentes orígenes (tu frontend)
+app.use(express.json()); // Permite al servidor entender y manejar JSON en las peticiones
 
-// Usar rutas de autenticación
+// --- Rutas Públicas ---
+// La ruta de login no necesita autenticación, por eso va antes del middleware authenticateToken
 app.use('/api/auth', authRoutes);
 
-// Ruta para probar servidor
-app.get('/', (req, res) => {
-  res.send('Servidor Versa-Backend funcionando en local 🚀');
+// --- Rutas Protegidas ---
+// Todas las rutas definidas después de este punto requerirán un token válido
+app.use(authenticateToken);
+
+// GET /api/notas - Obtener todas las notas del usuario autenticado
+app.get('/api/notas', async (req, res) => {
+  const userId = req.user.userId; // Obtenemos el ID del usuario desde el token
+  try {
+    const result = await pool.query('SELECT * FROM notas WHERE usuario_id = $1 ORDER BY fecha_creacion DESC', [userId]);
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error al obtener las notas:', error);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
 });
 
-// Ruta para registrar clientes desde el frontend
-app.post('/api/clientes', async (req, res) => {
-  const payload = req.body || {};
+// POST /api/notas - Crear una nueva nota para el usuario autenticado
+app.post('/api/notas', async (req, res) => {
+  const { titulo, contenido } = req.body;
+  const userId = req.user.userId; // Obtenemos el ID del usuario desde el token
+
+  if (!titulo) {
+    return res.status(400).json({ error: 'El título es obligatorio.' });
+  }
 
   try {
-    // Obtener columnas válidas de la tabla clientes
-    const { rows: columnRows } = await pool.query(
-      `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'clientes'`
+    const result = await pool.query(
+      'INSERT INTO notas (titulo, contenido, usuario_id) VALUES ($1, $2, $3) RETURNING *',
+      [titulo, contenido, userId]
     );
-
-    const validColumns = new Set(columnRows.map((row) => row.column_name));
-    const usedColumns = new Set();
-    const columns = [];
-    const values = [];
-
-    const toSnakeCase = (value = '') =>
-      value
-        .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
-        .replace(/[-\s]+/g, '_')
-        .toLowerCase();
-
-    Object.entries(payload).forEach(([key, value]) => {
-      if (value === undefined) return;
-
-      const possibleColumns = [key, key.toLowerCase(), toSnakeCase(key)];
-      const columnName = possibleColumns.find((candidate) => validColumns.has(candidate));
-
-      if (!columnName || usedColumns.has(columnName)) {
-        return;
-      }
-
-      usedColumns.add(columnName);
-      columns.push(`"${columnName}"`);
-      values.push(value === '' ? null : value);
-    });
-
-    if (columns.length === 0) {
-      return res.status(400).json({
-        ok: false,
-        error: 'No se recibieron campos válidos para registrar al cliente.',
-      });
-    }
-
-    const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
-    const insertQuery = `INSERT INTO clientes (${columns.join(', ')}) VALUES (${placeholders}) RETURNING *`;
-
-    const result = await pool.query(insertQuery, values);
-
-    return res.status(201).json({
-      ok: true,
-      cliente: result.rows[0],
-    });
+    res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error al registrar cliente:', error);
-    return res.status(500).json({
-      ok: false,
-      error: 'Error al registrar el cliente en la base de datos.',
-      details: error.message,
-    });
+    console.error('Error al crear la nota:', error);
+    res.status(500).json({ error: 'Error interno del servidor.' });
   }
 });
 
-// Ruta para probar conexión con Neon
-app.get('/db-test', async (req, res) => {
+// PUT /api/notas/:id - Actualizar una nota existente del usuario autenticado
+app.put('/api/notas/:id', async (req, res) => {
+  const { id } = req.params;
+  const { titulo, contenido } = req.body;
+  const userId = req.user.userId;
+
+  if (!titulo) {
+    return res.status(400).json({ error: 'El título es obligatorio.' });
+  }
+
   try {
-    const result = await pool.query('SELECT NOW() AS now');
-    res.json({
-      ok: true,
-      now: result.rows[0].now,
-    });
+    const result = await pool.query(
+      'UPDATE notas SET titulo = $1, contenido = $2, fecha_actualizacion = CURRENT_TIMESTAMP WHERE id = $3 AND usuario_id = $4 RETURNING *',
+      [titulo, contenido, id, userId]
+    );
+    if (result.rowCount === 0) {
+      // Si no se actualizó ninguna fila, es porque la nota no existe o no pertenece al usuario
+      return res.status(404).json({ error: 'Nota no encontrada o no tienes permiso para editarla.' });
+    }
+    res.status(200).json(result.rows[0]);
   } catch (error) {
-    console.error('Error en /db-test:', error);
-    res.status(500).json({
-      ok: false,
-      error: 'Error conectando a Neon',
-      details: error.message,
-    });
+    console.error('Error al actualizar la nota:', error);
+    res.status(500).json({ error: 'Error interno del servidor.' });
   }
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Servidor escuchando en http://localhost:${port}`);
+// DELETE /api/notas/:id - Eliminar una nota del usuario autenticado
+app.delete('/api/notas/:id', async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.userId;
+
+  try {
+    const result = await pool.query('DELETE FROM notas WHERE id = $1 AND usuario_id = $2 RETURNING *', [id, userId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Nota no encontrada o no tienes permiso para eliminarla.' });
+    }
+    res.status(200).json({ message: 'Nota eliminada correctamente.' });
+  } catch (error) {
+    console.error('Error al eliminar la nota:', error);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+});
+
+// --- Iniciar el servidor ---
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en http://localhost:${PORT}`);
 });
