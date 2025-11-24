@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "postinstall": "npm --prefix backend install",
+    "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend run dev"
+  },
   "dependencies": {
     "open": "^11.0.0"
   }
