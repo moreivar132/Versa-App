@@ -12,6 +12,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Rutas de autenticación
+app.use('/api/auth', authRouter);
+
 const toSnakeCase = (value = '') =>
   String(value ?? '')
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
