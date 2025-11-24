@@ -3,6 +3,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const pool = require('./db');
+const authRouter = require('./routes/auth');
+const verifyJWT = require('./middleware/auth');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -140,8 +142,8 @@ app.get('/', (req, res) => {
   res.send('Servidor Versa-Backend funcionando en local 🚀');
 });
 
-// Ruta para registrar clientes desde el frontend
-app.post('/api/clientes', async (req, res) => {
+// Ruta para registrar clientes desde el frontend (protegida)
+app.post('/api/clientes', verifyJWT, async (req, res) => {
   const payload = req.body || {};
 
   try {
