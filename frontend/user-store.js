@@ -1,11 +1,23 @@
 (function initUserStore(global){
+  function getApiBase() {
+    // Permite configurar explícitamente la URL del backend (útil si el frontend se sirve desde otro puerto).
+    if (global.__API_BASE__) return global.__API_BASE__;
+
+    const { origin, port, protocol, hostname } = global.location;
+    if (port === '3000') return origin; // Frontend servido directamente por el backend.
+
+    // Si se abre el login como archivo local o desde otro dev server, caemos al backend local por defecto.
+    return `${protocol}//${hostname ? hostname : 'localhost'}:3000`;
+  }
+
+  const API_BASE = getApiBase();
   // ===== INICIO DE LA REFACTORIZACIÓN: Conexión al Backend =====
   // El UserStore ahora se comunicará con la API del backend en lugar de usar localStorage.
 
   // Función para realizar la autenticación contra el backend
   async function authenticate(email, password) {
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
