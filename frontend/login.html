@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,6 +10,7 @@
   <script src="https://cdn.tailwindcss.com" defer></script>
   <link rel="stylesheet" href="./theme.css" />
 </head>
+
 <body class="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center p-6">
   <main class="login-shell">
     <section class="login-header">
@@ -46,6 +48,7 @@
     </section>
   </main>
 
+  <script src="./config.js"></script>
   <script src="./auth.js" defer></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -82,7 +85,7 @@
         }
 
         try {
-          const response = await fetch('/api/auth/login', {
+          const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password }),
@@ -105,4 +108,5 @@
     });
   </script>
 </body>
+
 </html>
