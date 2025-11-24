@@ -99,6 +99,13 @@ const frontendPath = path.join(__dirname, '..', 'frontend');
 app.use(express.static(frontendPath));
 
 
+// 2.1 Rutas explícitas para la pantalla de login
+//     Esto evita respuestas 404 al acceder directamente a /login.html.
+app.get(['/', '/login', '/login.html'], (req, res) => {
+    res.sendFile(path.join(frontendPath, 'login.html'));
+});
+
+
 // 3. Ruta "Catch-All" para Single-Page Application (SPA)
 //    Si la petición no coincide ni con API ni con un archivo, se devuelve el login.
 app.get('*', (req, res) => {
