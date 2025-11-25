@@ -1,4 +1,3 @@
-import { UserStore } from './user-store.js';
 import { requireAuth } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
