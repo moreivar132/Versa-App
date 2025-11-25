@@ -2,6 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const pool = require('./db');
 const authRouter = require('./routes/auth');
 const verifyJWT = require('./middleware/auth');
@@ -9,9 +10,15 @@ const verifyJWT = require('./middleware/auth');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// --- Middlewares ---
 app.use(cors());
 app.use(express.json());
 
+// --- API Routes ---
+// Rutas públicas de autenticación (login, register)
+app.use('/api/auth', authRouter);
+
+// El resto de la lógica compleja para el manejo de la base de datos se mantiene igual.
 const toSnakeCase = (value = '') =>
   String(value ?? '')
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
@@ -137,97 +144,79 @@ const getTableMetadata = async (possibleNames = []) => {
   };
 };
 
-// Ruta para probar servidor
-app.get('/', (req, res) => {
-  res.send('Servidor Versa-Backend funcionando en local 🚀');
-});
-
-// Ruta para registrar clientes desde el frontend (protegida)
+// Ruta protegida para registrar clientes
 app.post('/api/clientes', verifyJWT, async (req, res) => {
   const payload = req.body || {};
-
   try {
     const { tableName, validColumns } = await getTableMetadata(['clientes']);
     const { columns, values } = buildInsertParts(payload, validColumns);
-
     if (columns.length === 0) {
-      return res.status(400).json({
-        ok: false,
-        error: 'No se recibieron campos válidos para registrar al cliente.',
-      });
+      return res.status(400).json({ ok: false, error: 'No se recibieron campos válidos para registrar al cliente.' });
     }
-
     const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
     const insertQuery = `INSERT INTO "${tableName}" (${columns.join(', ')}) VALUES (${placeholders}) RETURNING *`;
-
     const result = await pool.query(insertQuery, values);
-
-    return res.status(201).json({
-      ok: true,
-      cliente: result.rows[0],
-    });
+    return res.status(201).json({ ok: true, cliente: result.rows[0] });
   } catch (error) {
     console.error('Error al registrar cliente:', error);
-    return res.status(500).json({
-      ok: false,
-      error: 'Error al registrar el cliente en la base de datos.',
-      details: error.message,
-    });
+    return res.status(500).json({ ok: false, error: 'Error al registrar el cliente en la base de datos.', details: error.message });
   }
 });
 
-// Ruta para registrar vehículos desde el frontend
+// Ruta para registrar vehículos (Nota: No está protegida con JWT)
 app.post('/api/vehiculos', async (req, res) => {
   const payload = req.body || {};
-
   try {
     const { tableName, validColumns } = await getTableMetadata(['vehiculos', 'vehículos']);
     const { columns, values } = buildInsertParts(payload, validColumns);
-
     if (columns.length === 0) {
-      return res.status(400).json({
-        ok: false,
-        error: 'No se recibieron campos válidos para registrar el vehículo.',
-      });
+      return res.status(400).json({ ok: false, error: 'No se recibieron campos válidos para registrar el vehículo.' });
     }
-
     const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
     const insertQuery = `INSERT INTO "${tableName}" (${columns.join(', ')}) VALUES (${placeholders}) RETURNING *`;
-
     const result = await pool.query(insertQuery, values);
-
-    return res.status(201).json({
-      ok: true,
-      vehiculo: result.rows[0],
-    });
+    return res.status(201).json({ ok: true, vehiculo: result.rows[0] });
   } catch (error) {
     console.error('Error al registrar vehículo:', error);
-    return res.status(500).json({
-      ok: false,
-      error: 'Error al registrar el vehículo en la base de datos.',
-      details: error.message,
-    });
+    return res.status(500).json({ ok: false, error: 'Error al registrar el vehículo en la base de datos.', details: error.message });
   }
 });
 
-// Ruta para probar conexión con Neon
-app.get('/db-test', async (req, res) => {
+// Ruta de test para la base de datos
+app.get('/api/db-test', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW() AS now');
-    res.json({
-      ok: true,
-      now: result.rows[0].now,
-    });
+    res.json({ ok: true, now: result.rows[0].now });
   } catch (error) {
-    console.error('Error en /db-test:', error);
-    res.status(500).json({
-      ok: false,
-      error: 'Error conectando a Neon',
-      details: error.message,
-    });
+    console.error('Error en /api/db-test:', error);
+    res.status(500).json({ ok: false, error: 'Error conectando a Neon', details: error.message });
   }
 });
 
+
+// --- Lógica para Producción ---
+// Este bloque solo se ejecuta cuando el servidor está en modo producción
+if (process.env.NODE_ENV === 'production') {
+    // 1. Define la ruta a la carpeta de build del frontend
+    const frontendDistPath = path.resolve(__dirname, '..', 'frontend', 'dist');
+    
+    // 2. Sirve los archivos estáticos (CSS, JS, imágenes) desde esa carpeta
+    app.use(express.static(frontendDistPath));
+
+    // 3. Para cualquier otra petición (que no sea a la API), envía el index.html
+    // Esto es clave para que el enrutamiento del lado del cliente (SPA) funcione.
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(frontendDistPath, 'index.html'));
+    });
+}
+
+// --- Iniciar Servidor ---
 app.listen(port, () => {
   console.log(`🚀 Servidor escuchando en http://localhost:${port}`);
+  if (process.env.NODE_ENV !== 'production') {
+      console.log('-> Modo de Desarrollo: El backend solo funciona como API.');
+      console.log('-> El frontend debe correr en su propio servidor (Vite).');
+  } else {
+      console.log('-> Modo de Producción: Sirviendo API y archivos del frontend desde /frontend/dist.');
+  }
 });
