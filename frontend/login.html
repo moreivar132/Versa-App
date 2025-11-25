@@ -42,107 +42,58 @@
             <input id="password" type="password" class="input w-full" placeholder="••••••••" required minlength="10" />
           </div>
           <p id="loginError" class="form-error" role="alert" hidden></p>
-          <!DOCTYPE html>
-          <html lang="es">
+          <button class="btn btn-brand w-full" type="submit">Entrar</button>
+        </form>
+      </div>
+    </section>
+  </main>
 
-          <head>
-            <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <meta name="description"
-              content="Acceso seguro al portal Versa Finanzas para el envío de facturas y tickets." />
-            <title>Acceso | Versa Finanzas</title>
-            <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap"
-              rel="stylesheet">
-            <script src="https://cdn.tailwindcss.com" defer></script>
-            <link rel="stylesheet" href="./theme.css" />
-          </head>
+  <script type="module">
+    import { Auth } from './auth.js';
 
-          <body class="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center p-6">
-            <main class="login-shell">
-              <section class="login-header">
-                <div class="brand-lockup brand-lockup--centered">
-                  <span class="brand-lockup__mark" aria-hidden="true">
-                    <img src="assets/logo.png" alt="Logo de Versa Finanzas" />
-                  </span>
-                  <div class="brand-lockup__copy">
-                    <span class="brand-lockup__title">Versa Finanzas</span>
-                    <span class="brand-lockup__subtitle">Portal corporativo</span>
-                  </div>
-                </div>
-              </section>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('loginForm');
+      const errorEl = document.getElementById('loginError');
 
-              <section class="login-card">
-                <div class="surface">
-                  <h2 class="text-xl font-bold">Iniciar sesión</h2>
-                  <p class="helper-text">
-                    Accede con tu email corporativo y la contraseña que te asignó un administrador.
-                  </p>
+      const showError = (message) => {
+        if (!errorEl) return;
+        if (!message) {
+          errorEl.hidden = true;
+          errorEl.textContent = '';
+          return;
+        }
+        errorEl.hidden = false;
+        errorEl.textContent = message;
+      };
 
-                  <form id="loginForm" class="space-y-4 mt-4">
-                    <div class="login-actions">
-                      <label class="text-sm font-semibold" for="email">Email</label>
-                      <input id="email" type="email" class="input w-full" placeholder="tu@versa.com" required />
-                    </div>
-                    <div class="login-actions">
-                      <label class="text-sm font-semibold" for="password">Contraseña</label>
-                      <input id="password" type="password" class="input w-full" placeholder="••••••••" required
-                        minlength="10" />
-                    </div>
-                    <p id="loginError" class="form-error" role="alert" hidden></p>
-                    <button class="btn btn-brand w-full" type="submit">Entrar</button>
-                  </form>
-                </div>
-              </section>
-            </main>
+      Auth.requireAuth().then((user) => {
+        if (user) {
+          window.location.replace('index.html');
+        }
+      });
 
+      form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        showError('');
 
-            <script type="module">
-              import { Auth } from './auth.js';
+        const email = document.getElementById('email')?.value.trim();
+        const password = document.getElementById('password')?.value;
 
-              document.addEventListener('DOMContentLoaded', () => {
-                const form = document.getElementById('loginForm');
-                const errorEl = document.getElementById('loginError');
+        if (!email || !password) {
+          showError('Completa tu email y contraseña.');
+          return;
+        }
 
-                const showError = (message) => {
-                  if (!errorEl) return;
-                  if (!message) {
-                    errorEl.hidden = true;
-                    errorEl.textContent = '';
-                    return;
-                  }
-                  errorEl.hidden = false;
-                  errorEl.textContent = message;
-                };
+        try {
+          await Auth.login(email, password);
+          window.location.replace('index.html');
+        } catch (error) {
+          console.error('Error en login:', error);
+          showError(error.message || 'No se pudo iniciar sesión.');
+        }
+      });
+    });
+  </script>
+</body>
 
-                Auth.requireAuth().then((user) => {
-                  if (user) {
-                    window.location.replace('index.html');
-                  }
-                });
-
-                form?.addEventListener('submit', async (event) => {
-                  event.preventDefault();
-                  showError('');
-
-                  const email = document.getElementById('email')?.value.trim();
-                  const password = document.getElementById('password')?.value;
-
-                  if (!email || !password) {
-                    showError('Completa tu email y contraseña.');
-                    return;
-                  }
-
-                  try {
-                    await Auth.login(email, password);
-                    window.location.replace('index.html');
-                  } catch (error) {
-                    console.error('Error en login:', error);
-                    showError(error.message || 'No se pudo iniciar sesión.');
-                  }
-                });
-              });
-            </script>
-
-          </body>
-
-          </html>
+</html>
