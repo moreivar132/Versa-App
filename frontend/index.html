@@ -521,18 +521,162 @@
             <h2 class="text-xl font-semibold">JavaScript requerido</h2>
             <p class="text-sm text-gray-200">
               Para utilizar el portal financiero de Versa Finanzas necesitas activar JavaScript en tu navegador.
-            </p>
+              ```html
+            <p class="helper-text">También puedes pulsar en “Tomar foto” o “Subir archivos”.</p>
           </div>
         </div>
-      </noscript>
 
-      <script>
-        document.getElementById('year').textContent = new Date().getFullYear();
-      </script>
-      <!-- Scripts (Modules) -->
-      <script type="module" src="./auth.js"></script>
-      <script type="module" src="./admin.js"></script>
-      <script type="module" src="./main.js"></script>
+        <section class="csv-import" data-intake-section="files" aria-labelledby="csvImportTitle">
+          <div class="csv-import__header">
+            <div>
+              <h3 id="csvImportTitle">Importar metadatos vía CSV</h3>
+              <p class="helper-text">
+                Carga un archivo con columnas como descripción, área, naturaleza, método de pago, categoría, fecha,
+                subtotal,
+                IVA, total y notas.
+              </p>
+            </div>
+            <div class="csv-import__actions">
+              <button id="csvClear" type="button" class="btn btn-ghost btn-sm" hidden>Eliminar CSV</button>
+            </div>
+          </div>
+          <p id="csvStatus" class="helper-text" role="status" aria-live="polite">No hay CSV importado todavía.</p>
+          <div id="csvAlerts" class="csv-import__alerts" aria-live="polite"></div>
+          <div id="csvPreview" class="csv-preview" hidden></div>
+        </section>
+
+        <div class="file-list" aria-live="polite" data-intake-section="files">
+          <p class="helper-text" id="fileListEmpty">No hay archivos añadidos todavía.</p>
+          <div id="fileList" class="file-grid"></div>
+        </div>
+        </article>
+
+        <article id="manualEntry" class="surface invoice-meta" aria-labelledby="metadata-title" hidden>
+          <header class="invoice-meta__header">
+            <div>
+              <p class="eyebrow">Metadatos del envío</p>
+              <h3 id="metadata-title">Aplica la misma información al lote</h3>
+            </div>
+            <span class="badge badge--subtle">Opcional salvo descripción</span>
+          </header>
+          <form id="metaForm" class="form-grid" autocomplete="off">
+            <label class="field">
+              <span>Descripción del lote <span class="text-red-500">*</span></span>
+              <textarea name="descripcion" rows="3" class="input w-full mt-1"
+                placeholder="Ej. Facturas de mantenimiento preventivo de la flota" required></textarea>
+            </label>
+            <label class="field">
+              <span>Área</span>
+              <select name="area" class="input w-full" required>
+                <option value="" selected disabled>Selecciona área</option>
+                <option value="Flota">Flota</option>
+                <option value="Taller">Taller</option>
+                <option value="Bicicletas">Bicicletas</option>
+              </select>
+            </label>
+            <fieldset class="field" style="grid-column: 1 / -1">
+              <span>Naturaleza</span>
+              <div class="radio-group">
+                <label>
+                  <input class="accent-[var(--accent)]" type="radio" name="naturaleza" value="Ingreso" />
+                  Ingreso
+                </label>
+                <label>
+                  <input class="accent-[var(--accent)]" type="radio" name="naturaleza" value="Egreso" checked />
+                  Egreso
+                </label>
+              </div>
+            </fieldset>
+            <label class="field" style="grid-column: 1 / -1">
+              <span>Notas</span>
+              <textarea name="notas" rows="3" class="input w-full"
+                placeholder="Observaciones, centros de coste, referencias internas..."></textarea>
+            </label>
+          </form>
+        </article>
+
+        <article class="surface invoice-submit" aria-labelledby="submit-title">
+          <div class="invoice-submit__header">
+            <div>
+              <p class="eyebrow">Revisión final</p>
+              <h3 id="submit-title">Envía el lote cuando esté listo</h3>
+            </div>
+            <label class="inline-flex items-center gap-2 text-sm text-[var(--muted)]">
+              <input id="chkBorrado" type="checkbox" class="accent-[var(--accent)]" />
+              Borrar archivos locales tras enviar
+            </label>
+          </div>
+          <div class="invoice-submit__actions">
+            <button type="button" class="btn btn-ghost">Guardar borrador</button>
+            <button id="btnEnviar" type="button" class="btn btn-brand">Enviar ahora</button>
+          </div>
+          <p id="status" class="helper-text" role="status" aria-live="polite">Añade tus archivos para comenzar.</p>
+        </article>
+        </section>
+        </main>
+        </section>
+    </div>
+
+    <div id="mobileNavOverlay" class="mobile-nav-overlay" aria-hidden="true">
+      <div id="mobileNavPanel" class="mobile-nav" role="dialog" aria-modal="true" aria-labelledby="mobileNavTitle"
+        tabindex="-1">
+        <header class="mobile-nav__header">
+          <div class="mobile-nav__brand">
+            <p class="mobile-nav__eyebrow">Versa Finanzas</p>
+            <h2 id="mobileNavTitle">Menú principal</h2>
+            <p id="mobileUserInfo" class="mobile-nav__user"></p>
+          </div>
+          <button id="mobileNavClose" class="mobile-nav__close" type="button" aria-label="Cerrar menú">
+            ✕
+          </button>
+        </header>
+        <nav class="mobile-nav__body" aria-label="Navegación móvil">
+          <a class="navlink" data-requires="admin" href="#dashboard">
+            <span aria-hidden="true">📊</span>
+            <span>Dashboard ejecutivo</span>
+          </a>
+          <a class="navlink" data-requires="admin" href="#admin">
+            <span aria-hidden="true">🛡️</span>
+            <span>Administración de accesos</span>
+          </a>
+          <a class="navlink" href="#facturas">
+            <span aria-hidden="true">🧾</span>
+            <span>Gestión de facturas</span>
+          </a>
+          <a class="navlink" href="manager-taller.html">
+            <span aria-hidden="true">🛠️</span>
+            <span>MANAGER TALLER</span>
+          </a>
+        </nav>
+        <div class="mobile-nav__footer">
+          <p class="mobile-nav__hint">Usa el menú para navegar entre vistas y gestionar tus envíos.</p>
+        </div>
+      </div>
+    </div>
+
+    <button type="button" id="dashboardFullscreenClose" class="dashboard-fullscreen-close" aria-hidden="true">
+      ✕ Salir de pantalla completa
+    </button>
+
+    <noscript>
+      <div class="fixed inset-0 z-50 grid place-items-center bg-black/80 p-6 text-center text-white">
+        <div class="max-w-sm space-y-3 rounded-2xl bg-[#111]/90 p-6">
+          <h2 class="text-xl font-semibold">JavaScript requerido</h2>
+          <p class="text-sm text-gray-200">
+            Para utilizar el portal financiero de Versa Finanzas necesitas activar JavaScript en tu navegador.
+          </p>
+        </div>
+      </div>
+    </noscript>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+    <!-- Scripts (Modules) -->
+    <script type="module" src="./auth.js"></script>
+    <script type="module" src="./admin.js"></script>
+    <script type="module" src="./main.js"></script>
 </body>
 
 </html>
+```
