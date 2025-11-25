@@ -1,20 +1,35 @@
 import { UserStore } from './user-store.js';
+import { requireAuth } from './auth.js';
 
-async function initAdminPanel() {
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = await requireAuth();
+  if (!user) return;
+
+  const isSuperAdmin = Boolean(user.is_super_admin || user.role === 'admin');
+  if (!isSuperAdmin) {
+    alert('Acceso restringido a super administradores.');
+    window.location.replace('index.html');
+    return;
+  }
+
+  const userInfo = document.getElementById('userInfo');
+  if (userInfo) {
+    userInfo.textContent = `${user.nombre || user.email} · Administrador`;
+  }
+
+  // Initialize UserStore for admin operations (legacy/local support)
   await UserStore.init();
 
   const userListEl = document.getElementById('userList');
   const createUserForm = document.getElementById('createUserForm');
   if (!userListEl || !createUserForm) return;
-  const currentRole = document.body?.getAttribute('data-user-role');
-  if (currentRole !== 'admin') return;
 
   const feedbackEl = document.getElementById('adminFeedback');
   const secretWrapper = document.getElementById('adminGeneratedSecret');
   const secretValueEl = secretWrapper?.querySelector('.generated-secret__value');
   const passwordInput = document.getElementById('newUserPassword');
   const generateBtn = document.getElementById('btnGeneratePassword');
-  const currentUserEmail = (localStorage.getItem('userEmail') || '').trim().toLowerCase();
+  const currentUserEmail = (user.email || '').trim().toLowerCase();
 
   const escapeHTML = (value = '') => `${value}`
     .replace(/&/g, '&amp;')
@@ -200,6 +215,4 @@ async function initAdminPanel() {
   });
 
   renderUsers();
-}
-
-initAdminPanel();
+});

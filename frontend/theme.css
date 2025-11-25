@@ -1100,6 +1100,19 @@ textarea {
   display: block;
 }
 
+.file-card__preview--pdf {
+  background: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.06), transparent 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.file-card__preview--pdf embed {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+}
+
 .file-card__body {
   padding: 1.1rem 1.25rem 1.3rem;
   display: grid;
@@ -1399,49 +1412,36 @@ body.nav-open {
 }
 
 .login-shell {
-  width: min(1120px, 100%);
+  width: min(520px, 100%);
   margin: clamp(2rem, 6vw, 4rem) auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-  gap: clamp(2rem, 5vw, 4rem);
-  align-items: stretch;
-}
-
-.login-hero {
-  display: grid;
-  gap: 1rem;
-}
-
-.login-hero__badge {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.85rem;
-  border-radius: 999px;
-  background: rgba(255, 94, 0, 0.14);
-  border: 1px solid rgba(255, 94, 0, 0.4);
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--muted-strong);
+  gap: 1.5rem;
+  text-align: center;
 }
 
-.login-hero__title {
-  font-size: clamp(1.9rem, 4vw, 2.6rem);
-  font-weight: 700;
-  letter-spacing: -0.01em;
+.login-header {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
 }
 
-.login-hero__text {
+.brand-lockup--centered {
+  justify-content: center;
+}
+
+.login-header__subtext {
   color: var(--muted);
-  font-size: 0.92rem;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
 }
 
 .login-card {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: min(100%, 460px);
 }
 
 .login-card .surface {
@@ -1461,16 +1461,7 @@ body.nav-open {
 
 @media (max-width: 960px) {
   .login-shell {
-    grid-template-columns: minmax(0, 1fr);
     margin: clamp(1.5rem, 8vw, 3rem) auto;
-  }
-
-  .login-card {
-    order: 2;
-  }
-
-  .login-card .surface {
-    width: 100%;
   }
 }
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,11 +10,11 @@
   <script src="https://cdn.tailwindcss.com" defer></script>
   <link rel="stylesheet" href="./theme.css" />
 </head>
+
 <body class="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center p-6">
   <main class="login-shell">
-    <section class="login-hero">
-      <span class="login-hero__badge">Portal Versa</span>
-      <div class="brand-lockup">
+    <section class="login-header">
+      <div class="brand-lockup brand-lockup--centered">
         <span class="brand-lockup__mark" aria-hidden="true">
           <img src="assets/logo.png" alt="Logo de Versa Finanzas" />
         </span>
@@ -22,18 +23,13 @@
           <span class="brand-lockup__subtitle">Portal corporativo</span>
         </div>
       </div>
-      <h1 class="login-hero__title">Entrá al centro neurálgico financiero</h1>
-      <p class="login-hero__text">
-        Conecta tu operación con un flujo de trabajo moderno para tickets, facturas y reportes. Al iniciar sesión tendrás acceso a herramientas diseñadas para equipos financieros exigentes.
-      </p>
     </section>
 
     <section class="login-card">
       <div class="surface">
         <h2 class="text-xl font-bold">Iniciar sesión</h2>
         <p class="helper-text">
-          Accede con tu email corporativo y la contraseña que te asignó un administrador. Las credenciales se cifran en el
-          navegador antes de almacenarse.
+          Accede con tu email corporativo y la contraseña que te asignó un administrador.
         </p>
 
         <form id="loginForm" class="space-y-4 mt-4">
@@ -52,7 +48,65 @@
     </section>
   </main>
 
-  <script src="./user-store.js" defer></script>
+  <script src="./config.js"></script>
   <script src="./auth.js" defer></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const form = document.getElementById('loginForm');
+      const errorEl = document.getElementById('loginError');
+
+      const showError = (message) => {
+        if (!errorEl) return;
+        if (!message) {
+          errorEl.hidden = true;
+          errorEl.textContent = '';
+          return;
+        }
+        errorEl.hidden = false;
+        errorEl.textContent = message;
+      };
+
+      Auth.requireAuth().then((user) => {
+        if (user) {
+          window.location.replace('index.html');
+        }
+      });
+
+      form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        showError('');
+
+        const email = document.getElementById('email')?.value.trim();
+        const password = document.getElementById('password')?.value;
+
+        if (!email || !password) {
+          showError('Completa tu email y contraseña.');
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({ error: 'Credenciales inválidas.' }));
+            showError(payload.error || 'No se pudo iniciar sesión.');
+            return;
+          }
+
+          const { token, user } = await response.json();
+          Auth.setSession(token, user);
+          window.location.replace('index.html');
+        } catch (error) {
+          console.error('Error en login:', error);
+          showError('No se pudo iniciar sesión.');
+        }
+      });
+    });
+  </script>
 </body>
+
 </html>
