@@ -1,5 +1,7 @@
+import { UserStore } from './user-store.js';
+
 // Gestión de autenticación y visibilidad por rol.
-(async function initAuth(){
+async function initAuth() {
   const onLogin =
     location.pathname.endsWith('login.html') || location.href.endsWith('login.html');
 
@@ -16,7 +18,7 @@
   }
 
   try {
-    await window.UserStore.init();
+    await UserStore.init();
   } catch (error) {
     console.error('No se pudo inicializar el almacén de usuarios.', error);
     if (onLogin) {
@@ -31,7 +33,7 @@
   if (onLogin) {
     const form = document.getElementById('loginForm');
     if (!form) return;
-    form.addEventListener('submit', async (event)=>{
+    form.addEventListener('submit', async (event) => {
       event.preventDefault();
       showLoginError('');
       const email = document.getElementById('email').value.trim();
@@ -41,7 +43,7 @@
         return;
       }
       try {
-        const user = await window.UserStore.authenticate(email, password);
+        const user = await UserStore.authenticate(email, password);
         localStorage.setItem('userEmail', user.email);
         localStorage.setItem('userRole', user.role);
         localStorage.setItem('userName', user.name || '');
@@ -62,7 +64,7 @@
 
   const email = localStorage.getItem('userEmail') || '';
   if (!email) { forceLogout(); return; }
-  const user = window.UserStore.getUser(email);
+  const user = UserStore.getUser(email);
   if (!user) { forceLogout(); return; }
 
   localStorage.setItem('userRole', user.role);
@@ -77,7 +79,7 @@
 
   document.body?.setAttribute('data-user-role', user.role);
 
-  document.querySelectorAll('[data-requires="admin"]').forEach((el)=>{
+  document.querySelectorAll('[data-requires="admin"]').forEach((el) => {
     el.style.display = (user.role === 'admin') ? '' : 'none';
   });
 
@@ -90,9 +92,9 @@
     }).filter(([, section]) => Boolean(section))
   );
 
-  function setActiveNav(id){
-    navLinks.forEach(link=>{
-      const href = (link.getAttribute('href') || '').replace('#','');
+  function setActiveNav(id) {
+    navLinks.forEach(link => {
+      const href = (link.getAttribute('href') || '').replace('#', '');
       if (!href) return;
       const isActive = href === id;
       if (isActive) {
@@ -105,9 +107,9 @@
   }
 
   const views = VIEW_IDS.filter((viewId) => viewSections.has(viewId));
-  function showView(id){
+  function showView(id) {
     const activeId = viewSections.has(id) ? id : views[0];
-    viewSections.forEach((section, viewId)=>{
+    viewSections.forEach((section, viewId) => {
       if (!section) return;
       const isActive = viewId === activeId;
       section.style.display = isActive ? '' : 'none';
@@ -133,13 +135,13 @@
     return target;
   }
 
-  window.addEventListener('hashchange', ()=>{
-    const id = resolveTargetView(location.hash.replace('#',''));
+  window.addEventListener('hashchange', () => {
+    const id = resolveTargetView(location.hash.replace('#', ''));
     showView(id);
     if (isMobileNavOpen()) closeMobileNav();
   });
 
-  showView(resolveTargetView(location.hash.replace('#','')));
+  showView(resolveTargetView(location.hash.replace('#', '')));
 
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const mobileNavOverlay = document.getElementById('mobileNavOverlay');
@@ -150,7 +152,7 @@
 
   const isMobileNavOpen = () => mobileNavOverlay?.getAttribute('aria-hidden') === 'false';
 
-  function handleMobileNavKeydown(event){
+  function handleMobileNavKeydown(event) {
     if (!isMobileNavOpen()) return;
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -159,7 +161,7 @@
     }
     if (event.key !== 'Tab') return;
     if (!mobileNavPanel) return;
-    const focusables = Array.from(mobileNavPanel.querySelectorAll(focusableSelectors)).filter(el=> !el.hasAttribute('disabled'));
+    const focusables = Array.from(mobileNavPanel.querySelectorAll(focusableSelectors)).filter(el => !el.hasAttribute('disabled'));
     if (!focusables.length) return;
     const first = focusables[0];
     const last = focusables[focusables.length - 1];
@@ -174,14 +176,14 @@
     }
   }
 
-  function openMobileNav(){
+  function openMobileNav() {
     if (!mobileNavOverlay || !mobileNavPanel) return;
     if (isMobileNavOpen()) return;
     lastFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     mobileNavOverlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('nav-open');
     mobileMenuBtn?.setAttribute('aria-expanded', 'true');
-    requestAnimationFrame(()=>{
+    requestAnimationFrame(() => {
       const firstFocusable = mobileNavPanel.querySelector(focusableSelectors);
       if (firstFocusable instanceof HTMLElement) {
         firstFocusable.focus();
@@ -192,9 +194,9 @@
     document.addEventListener('keydown', handleMobileNavKeydown);
   }
 
-  function closeMobileNav(){
+  function closeMobileNav() {
     if (!mobileNavOverlay) return;
-    if (!isMobileNavOpen()) return;
+    if (isMobileNavOpen()) return;
     mobileNavOverlay.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('nav-open');
     mobileMenuBtn?.setAttribute('aria-expanded', 'false');
@@ -207,7 +209,7 @@
     }
   }
 
-  mobileMenuBtn?.addEventListener('click', ()=>{
+  mobileMenuBtn?.addEventListener('click', () => {
     if (isMobileNavOpen()) {
       closeMobileNav();
     } else {
@@ -216,14 +218,14 @@
   });
 
   mobileNavClose?.addEventListener('click', closeMobileNav);
-  mobileNavOverlay?.addEventListener('click', (event)=>{
+  mobileNavOverlay?.addEventListener('click', (event) => {
     if (event.target === mobileNavOverlay) {
       closeMobileNav();
     }
   });
 
-  navLinks.forEach(link=>{
-    link.addEventListener('click', ()=>{
+  navLinks.forEach(link => {
+    link.addEventListener('click', () => {
       if (isMobileNavOpen()) {
         setTimeout(closeMobileNav, 150);
       }
@@ -232,4 +234,7 @@
 
   // Logout
   document.getElementById('btnLogout')?.addEventListener('click', forceLogout);
-})();
+}
+
+// Iniciar
+initAuth();

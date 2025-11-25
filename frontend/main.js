@@ -1,10 +1,3 @@
-// ====== CONFIG ======
-const WEBHOOK_URL = 'https://hook.eu2.make.com/n3hsmt5ppfadl249l7wm3cs16moc8xgk';
-const LS_KEY = 'portal_facturas_v2';
-
-// Activa/Desactiva filtros (para pruebas, mejor FALSE)
-const STRICT_FILTERS = false;   // si algo falla déjalo en false
-const AREA_OPTIONS = Object.freeze(['Flota', 'Taller', 'Bicicletas']);
 const NATURALEZA_OPTIONS = Object.freeze(['Ingreso', 'Egreso']);
 const PAYMENT_METHODS = ['Tarjeta', 'Transferencia', 'Efectivo'];
 const CATEGORY_OPTIONS = [
@@ -69,7 +62,7 @@ const CSV_PREVIEW_LIMIT = 5;
 const DEFAULT_CSV_PREVIEW_COLUMNS = ['descripcion', 'area', 'naturaleza', 'fecha', 'total'];
 
 // ====== STATE + UTILS ======
-function createEmptyCSVImport(){
+function createEmptyCSVImport() {
   return {
     entries: [],
     filename: '',
@@ -86,8 +79,8 @@ function createEmptyCSVImport(){
 }
 
 const state = { files: [], sending: false, MAX_FILES: 50, MAX_MB: 50, intakeMode: 'files', csvImport: createEmptyCSVImport() };
-const el = (s)=>document.querySelector(s);
-const formatBytes=(b)=>{ if(!b&&b!==0) return ''; const u=['B','KB','MB','GB']; let i=0; while(b>1024&&i<u.length-1){b/=1024;i++;} return `${b.toFixed(1)} ${u[i]}`; };
+const el = (s) => document.querySelector(s);
+const formatBytes = (b) => { if (!b && b !== 0) return ''; const u = ['B', 'KB', 'MB', 'GB']; let i = 0; while (b > 1024 && i < u.length - 1) { b /= 1024; i++; } return `${b.toFixed(1)} ${u[i]}`; };
 const escapeHTML = (value = '') => `${value}`
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -325,7 +318,7 @@ const buildCSVImport = (rows = [], delimiter = ',') => {
     };
 
     entry.descripcion = getValue('descripcion') || '';
-    if (!entry.descripcion){
+    if (!entry.descripcion) {
       skippedRows.push(rowNumber);
       return;
     }
@@ -431,40 +424,40 @@ const applyDateFormatting = (meta = {}) => {
 
 const STATUS_VARIANTS = {
   default: [],
-  info: ['text-orange-400','font-semibold'],
-  success: ['text-emerald-400','font-semibold'],
-  error: ['text-red-400','font-semibold']
+  info: ['text-orange-400', 'font-semibold'],
+  success: ['text-emerald-400', 'font-semibold'],
+  error: ['text-red-400', 'font-semibold']
 };
 
-function setStatus(message, variant = 'default'){
+function setStatus(message, variant = 'default') {
   const statusEl = el('#status');
-  if(!statusEl) return;
-  const baseClasses = ['helper-text','transition-colors','duration-150'];
+  if (!statusEl) return;
+  const baseClasses = ['helper-text', 'transition-colors', 'duration-150'];
   statusEl.className = baseClasses.join(' ');
   const classes = STATUS_VARIANTS[variant] || STATUS_VARIANTS.default;
   classes.forEach(cls => statusEl.classList.add(cls));
   statusEl.textContent = message;
 }
 
-function getLoteMetadata(){
+function getLoteMetadata() {
   const defaults = { ...DEFAULT_LOTE_META };
   const form = document.getElementById('metaForm');
-  if(!form) return defaults;
-  try{
+  if (!form) return defaults;
+  try {
     const data = Object.fromEntries(new FormData(form));
     return sanitizeMetadata({ ...defaults, ...data });
-  }catch{
+  } catch {
     return { ...defaults };
   }
 }
 
-function hasMeaningfulLoteMetadata(lote){
-  if(!lote) return false;
-  const normalize = (val)=> (val ?? '').toString().trim();
-  if(normalize(lote.descripcion)) return true;
-  if(normalize(lote.fecha)) return true;
-  if(['subtotal','iva','total','notas'].some(k=> normalize(lote[k]))) return true;
-  if(['area','naturaleza','metodoPago','categoria'].some(k=>{
+function hasMeaningfulLoteMetadata(lote) {
+  if (!lote) return false;
+  const normalize = (val) => (val ?? '').toString().trim();
+  if (normalize(lote.descripcion)) return true;
+  if (normalize(lote.fecha)) return true;
+  if (['subtotal', 'iva', 'total', 'notas'].some(k => normalize(lote[k]))) return true;
+  if (['area', 'naturaleza', 'metodoPago', 'categoria'].some(k => {
     const value = normalize(lote[k]);
     const defaultValue = normalize(DEFAULT_LOTE_META[k]);
     return value && value !== defaultValue;
@@ -472,7 +465,7 @@ function hasMeaningfulLoteMetadata(lote){
   return false;
 }
 
-function updateSendButtonState(){
+function updateSendButtonState() {
   const btn = el('#btnEnviar'); if (!btn) return;
   const hasFiles = state.files.length > 0;
   const csvReady = Array.isArray(state.csvImport?.entries) && state.csvImport.entries.length > 0 && !state.csvImport.error;
@@ -480,103 +473,103 @@ function updateSendButtonState(){
   const hasMetadata = hasMeaningfulLoteMetadata(lote);
   const descriptionProvided = !!(lote.descripcion && lote.descripcion.toString().trim());
   const areaProvided = !!(lote.area && lote.area.toString().trim());
-  const filesRequireArea = state.files.some((f)=> {
+  const filesRequireArea = state.files.some((f) => {
     const meta = sanitizeMetadata(f.meta);
     return !meta.area;
   }) && !areaProvided;
 
   let shouldDisable = state.sending;
-  if(!shouldDisable){
-    if(state.intakeMode === 'manual'){
+  if (!shouldDisable) {
+    if (state.intakeMode === 'manual') {
       shouldDisable = !descriptionProvided || !hasMetadata || !areaProvided;
-    }else{
+    } else {
       shouldDisable = (!hasFiles && !csvReady) || filesRequireArea;
     }
   }
 
   btn.disabled = shouldDisable;
 
-  if(state.sending){
+  if (state.sending) {
     btn.textContent = 'Enviando…';
-  }else if(state.intakeMode === 'manual' && !descriptionProvided){
+  } else if (state.intakeMode === 'manual' && !descriptionProvided) {
     btn.textContent = 'Añade la descripción';
-  }else if(state.intakeMode === 'manual' && !areaProvided){
+  } else if (state.intakeMode === 'manual' && !areaProvided) {
     btn.textContent = 'Selecciona el área';
-  }else if(state.intakeMode === 'manual' && !hasMetadata){
+  } else if (state.intakeMode === 'manual' && !hasMetadata) {
     btn.textContent = 'Completa los datos';
-  }else if(filesRequireArea){
+  } else if (filesRequireArea) {
     btn.textContent = 'Selecciona el área de cada archivo';
-  }else if(!hasFiles && csvReady){
+  } else if (!hasFiles && csvReady) {
     btn.textContent = 'Enviar metadatos CSV';
-  }else if(!hasFiles){
+  } else if (!hasFiles) {
     btn.textContent = 'Añade archivos o CSV';
-  }else{
+  } else {
     btn.textContent = 'Enviar';
   }
 }
 
-function guessTipo(file){
-  const n=(file.name||'').toLowerCase(), m=(file.type||'').toLowerCase();
-  if(n.includes('ticket')||n.includes('receipt')) return 'Ticket';
-  if(m.includes('pdf')) return 'Factura';
-  if(m.startsWith('image/')) return 'Ticket';
+function guessTipo(file) {
+  const n = (file.name || '').toLowerCase(), m = (file.type || '').toLowerCase();
+  if (n.includes('ticket') || n.includes('receipt')) return 'Ticket';
+  if (m.includes('pdf')) return 'Factura';
+  if (m.startsWith('image/')) return 'Ticket';
   return 'Factura';
 }
-function isDuplicate(file){
-  return state.files.some(f=>f.file.name===file.name && f.file.size===file.size);
+function isDuplicate(file) {
+  return state.files.some(f => f.file.name === file.name && f.file.size === file.size);
 }
 
 // ====== RENDER ======
-function renderSelectOptions(options, selected){
-  return options.map(opt=>`<option value="${opt}" ${opt===selected?'selected':''}>${opt}</option>`).join('');
+function renderSelectOptions(options, selected) {
+  return options.map(opt => `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`).join('');
 }
 
-function renderAreaOptions(selected, includePrompt = false){
+function renderAreaOptions(selected, includePrompt = false) {
   const options = [];
-  if(includePrompt){
-    options.push(`<option value="" ${selected?'':'selected'} disabled>Selecciona área</option>`);
+  if (includePrompt) {
+    options.push(`<option value="" ${selected ? '' : 'selected'} disabled>Selecciona área</option>`);
   }
-  options.push(...AREA_OPTIONS.map(opt=>`<option value="${opt}" ${opt===selected?'selected':''}>${opt}</option>`));
+  options.push(...AREA_OPTIONS.map(opt => `<option value="${opt}" ${opt === selected ? 'selected' : ''}>${opt}</option>`));
   return options.join('');
 }
 
-function renderFiles(){
+function renderFiles() {
   const cont = el('#fileList');
   const emptyState = el('#fileListEmpty');
-  if(!cont) return;
+  if (!cont) return;
   let metaUpdated = false;
-  state.files.forEach(f=>{
+  state.files.forEach(f => {
     const sanitized = sanitizeMetadata(f.meta);
-    Object.entries(DEFAULT_LOTE_META).forEach(([key, value])=>{
-      if(!(key in sanitized)){
+    Object.entries(DEFAULT_LOTE_META).forEach(([key, value]) => {
+      if (!(key in sanitized)) {
         sanitized[key] = value;
       }
     });
-    if(JSON.stringify(f.meta) !== JSON.stringify(sanitized)){
+    if (JSON.stringify(f.meta) !== JSON.stringify(sanitized)) {
       f.meta = sanitized;
       metaUpdated = true;
     }
-    if(!('tipo' in f.meta)) { f.meta.tipo='Factura'; metaUpdated=true; }
+    if (!('tipo' in f.meta)) { f.meta.tipo = 'Factura'; metaUpdated = true; }
 
   });
-  if(metaUpdated) persist();
-  if(!state.files.length){
-    cont.innerHTML='';
-    if(emptyState){ emptyState.hidden = false; }
+  if (metaUpdated) persist();
+  if (!state.files.length) {
+    cont.innerHTML = '';
+    if (emptyState) { emptyState.hidden = false; }
     updateSendButtonState();
     return;
   }
-  if(emptyState){ emptyState.hidden = true; }
-  cont.innerHTML = state.files.map(f=>{
+  if (emptyState) { emptyState.hidden = true; }
+  cont.innerHTML = state.files.map(f => {
     const isImg = !!f.previewURL;
     return `
       <article class="file-card">
-        ${isImg ? `<figure class="file-card__preview"><img src="${f.previewURL||''}" alt="Vista previa" /></figure>` : ''}
+        ${isImg ? `<figure class="file-card__preview"><img src="${f.previewURL || ''}" alt="Vista previa" /></figure>` : ''}
         <div class="file-card__body">
           <header class="file-card__header">
             <div class="file-card__title">
               <p class="file-card__name" title="${f.file.name}">${f.file.name}</p>
-              <span class="file-card__meta">${f.file.type||'—'} · ${formatBytes(f.file.size)}</span>
+              <span class="file-card__meta">${f.file.type || '—'} · ${formatBytes(f.file.size)}</span>
             </div>
             <button class="file-card__remove" type="button" onclick="removeFile('${f.id}')" aria-label="Eliminar ${f.file.name}">✕</button>
           </header>
@@ -590,8 +583,8 @@ function renderFiles(){
             <label class="field field--compact">
               <span>Naturaleza</span>
               <select class="input" onchange="updateFileMeta('${f.id}','naturaleza',this.value)">
-                <option value="Ingreso" ${f.meta.naturaleza==='Ingreso'?'selected':''}>Ingreso</option>
-                <option value="Egreso" ${f.meta.naturaleza==='Egreso'?'selected':''}>Egreso</option>
+                <option value="Ingreso" ${f.meta.naturaleza === 'Ingreso' ? 'selected' : ''}>Ingreso</option>
+                <option value="Egreso" ${f.meta.naturaleza === 'Egreso' ? 'selected' : ''}>Egreso</option>
               </select>
             </label>
             <label class="field field--compact">
@@ -609,13 +602,13 @@ function renderFiles(){
             <label class="field field--compact">
               <span>Tipo</span>
               <select class="input" onchange="updateFileMeta('${f.id}','tipo',this.value)">
-                <option value="Factura" ${f.meta.tipo==='Factura'?'selected':''}>Factura</option>
-                <option value="Ticket" ${f.meta.tipo==='Ticket'?'selected':''}>Ticket</option>
+                <option value="Factura" ${f.meta.tipo === 'Factura' ? 'selected' : ''}>Factura</option>
+                <option value="Ticket" ${f.meta.tipo === 'Ticket' ? 'selected' : ''}>Ticket</option>
               </select>
             </label>
             <label class="field field--compact" style="grid-column: 1 / -1">
               <span>Notas</span>
-              <textarea rows="2" class="input" onchange="updateFileMeta('${f.id}','notas',this.value)">${f.meta.notas||''}</textarea>
+              <textarea rows="2" class="input" onchange="updateFileMeta('${f.id}','notas',this.value)">${f.meta.notas || ''}</textarea>
             </label>
           </div>
         </div>
@@ -678,36 +671,36 @@ const buildCSVPreviewMarkup = (entries = []) => {
   `;
 };
 
-function renderCSVImport(){
+function renderCSVImport() {
   const statusEl = el('#csvStatus');
   const previewEl = el('#csvPreview');
   const clearBtn = el('#csvClear');
   const alertsEl = el('#csvAlerts');
-  if(!statusEl || !previewEl || !clearBtn || !alertsEl) return;
+  if (!statusEl || !previewEl || !clearBtn || !alertsEl) return;
 
   const { entries, filename, error, missingOptional, detectedFields, skippedRows } = state.csvImport;
   const csvReady = Array.isArray(entries) && entries.length > 0 && !error;
 
   alertsEl.innerHTML = '';
 
-  if(error){
+  if (error) {
     alertsEl.innerHTML += `<div class="alert alert--error">${escapeHTML(error)}</div>`;
   }
 
-  if(!error && Array.isArray(missingOptional) && missingOptional.length){
+  if (!error && Array.isArray(missingOptional) && missingOptional.length) {
     alertsEl.innerHTML += `<div class="alert alert--warning">Faltan columnas opcionales: ${escapeHTML(formatFieldList(missingOptional))}. Se utilizarán valores por defecto donde aplique.</div>`;
   }
 
-  if(!error && Array.isArray(skippedRows) && skippedRows.length){
+  if (!error && Array.isArray(skippedRows) && skippedRows.length) {
     alertsEl.innerHTML += `<div class="alert alert--warning">Se omitieron ${skippedRows.length} fila(s) por faltar datos obligatorios (filas: ${escapeHTML(skippedRows.join(', '))}).</div>`;
   }
 
-  if(csvReady){
+  if (csvReady) {
     let message = `${entries.length} registros importados`;
-    if(filename){
+    if (filename) {
       message += ` de ${filename}`;
     }
-    if(Array.isArray(detectedFields) && detectedFields.length){
+    if (Array.isArray(detectedFields) && detectedFields.length) {
       message += `. Campos detectados: ${formatFieldList(detectedFields)}.`;
     } else {
       message += '.';
@@ -716,7 +709,7 @@ function renderCSVImport(){
     previewEl.hidden = false;
     previewEl.innerHTML = buildCSVPreviewMarkup(entries);
     clearBtn.hidden = false;
-  }else{
+  } else {
     statusEl.textContent = error ? 'No se pudieron procesar los datos del CSV.' : 'No hay CSV importado todavía.';
     previewEl.hidden = true;
     previewEl.innerHTML = '';
@@ -724,18 +717,18 @@ function renderCSVImport(){
   }
 }
 
-function clearCSVImport(){
+function clearCSVImport() {
   state.csvImport = createEmptyCSVImport();
   const input = el('#csvInput');
-  if(input){
+  if (input) {
     input.value = '';
   }
   renderCSVImport();
   updateSendButtonState();
 }
 
-function handleCSVFile(file){
-  if(!(file instanceof File)) return;
+function handleCSVFile(file) {
+  if (!(file instanceof File)) return;
   const reader = new FileReader();
   reader.onload = () => {
     try {
@@ -763,26 +756,26 @@ function handleCSVFile(file){
 }
 
 // ====== ACTIONS ======
-window.removeFile = function(id){
-  const i = state.files.findIndex(f=>f.id===id);
-  if(i>-1){
-    const f=state.files[i];
-    if(f.previewURL) URL.revokeObjectURL(f.previewURL);
-    state.files.splice(i,1);
+window.removeFile = function (id) {
+  const i = state.files.findIndex(f => f.id === id);
+  if (i > -1) {
+    const f = state.files[i];
+    if (f.previewURL) URL.revokeObjectURL(f.previewURL);
+    state.files.splice(i, 1);
   }
   persist(); renderFiles();
 };
-window.updateFileMeta = function(id,k,v){
-  const f=state.files.find(x=>x.id===id);
-  if(f) { f.meta[k]=v; persist(); }
+window.updateFileMeta = function (id, k, v) {
+  const f = state.files.find(x => x.id === id);
+  if (f) { f.meta[k] = v; persist(); }
   updateSendButtonState();
 };
 
-function addFiles(list){
+function addFiles(list) {
   console.log('addFiles ->', list?.length, list);
   const meta = getLoteMetadata();
 
-  [...list].forEach(file=>{
+  [...list].forEach(file => {
     console.log('  candidate:', file?.name, file?.size, file instanceof File);
     if (!(file instanceof File)) { console.warn('Descartado: no es File', file); return; }
 
@@ -794,14 +787,14 @@ function addFiles(list){
 
     if (state.files.length >= state.MAX_FILES) return;
     if (STRICT_FILTERS && isDuplicate(file)) return;
-    if (STRICT_FILTERS && (file.size/(1024*1024)) > state.MAX_MB) return;
+    if (STRICT_FILTERS && (file.size / (1024 * 1024)) > state.MAX_MB) return;
 
     state.files.push({
       id: crypto.randomUUID(),
       file,
       previewURL: file.type?.startsWith('image/') ? URL.createObjectURL(file) : null,
       meta: {
-         ...meta,
+        ...meta,
         tipo: guessTipo(file)
       }
     });
@@ -809,31 +802,31 @@ function addFiles(list){
   persist(); renderFiles();
 }
 
-function clearAll(){
-  state.files.forEach(f=> f.previewURL && URL.revokeObjectURL(f.previewURL));
+function clearAll() {
+  state.files.forEach(f => f.previewURL && URL.revokeObjectURL(f.previewURL));
   state.files = []; persist(); renderFiles();
 }
 
-function persist(){
-  try{
-    const serializable = state.files.map(f=>({
-      id:f.id,
-      meta:f.meta,
-      file:{ name:f.file.name, size:f.file.size, type:f.file.type }
+function persist() {
+  try {
+    const serializable = state.files.map(f => ({
+      id: f.id,
+      meta: f.meta,
+      file: { name: f.file.name, size: f.file.size, type: f.file.type }
     }));
     localStorage.setItem(LS_KEY, JSON.stringify(serializable));
-  }catch{ }
+  } catch { }
 }
 
 // ====== INIT + SEND ======
-function initApp(){
+function initApp() {
   enhanceMetaForm();
   // Inputs
-  el('#fileInput')?.addEventListener('change', e=> addFiles(e.target.files));
-  el('#cameraInput')?.addEventListener('change', e=> addFiles(e.target.files));
-  el('#csvInput')?.addEventListener('change', e=>{
+  el('#fileInput')?.addEventListener('change', e => addFiles(e.target.files));
+  el('#cameraInput')?.addEventListener('change', e => addFiles(e.target.files));
+  el('#csvInput')?.addEventListener('change', e => {
     const file = e.target.files && e.target.files[0];
-    if(file){
+    if (file) {
       handleCSVFile(file);
     }
     e.target.value = '';
@@ -841,31 +834,31 @@ function initApp(){
 
   // Dropzone
   const dz = el('#dropzone');
-  if(dz){
-    ['dragenter','dragover'].forEach(ev=> dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.add('dragover'); }));
-    ['dragleave','drop'].forEach(ev=> dz.addEventListener(ev, e=>{ e.preventDefault(); dz.classList.remove('dragover'); }));
-    dz.addEventListener('drop', e=> addFiles(e.dataTransfer.files));
+  if (dz) {
+    ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+    ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+    dz.addEventListener('drop', e => addFiles(e.dataTransfer.files));
   }
 
   el('#clearAll')?.addEventListener('click', clearAll);
   el('#csvClear')?.addEventListener('click', clearCSVImport);
 
-  document.querySelectorAll('.segmented-control__item').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
+  document.querySelectorAll('.segmented-control__item').forEach(btn => {
+    btn.addEventListener('click', () => {
       const group = btn.closest('.segmented-control');
-      if(!group) return;
-      group.querySelectorAll('.segmented-control__item').forEach(item=>{
-        if(item === btn){
+      if (!group) return;
+      group.querySelectorAll('.segmented-control__item').forEach(item => {
+        if (item === btn) {
           item.classList.add('is-active');
-          item.setAttribute('aria-selected','true');
-        }else{
+          item.setAttribute('aria-selected', 'true');
+        } else {
           item.classList.remove('is-active');
-          item.setAttribute('aria-selected','false');
+          item.setAttribute('aria-selected', 'false');
         }
       });
 
       const mode = btn.dataset.intakeMode;
-      if(mode){
+      if (mode) {
         setIntakeMode(mode);
       }
     });
@@ -874,15 +867,15 @@ function initApp(){
   setupDashboardFullscreen();
 
   // Enviar
-  el('#btnEnviar')?.addEventListener('click', async (ev)=>{
+  el('#btnEnviar')?.addEventListener('click', async (ev) => {
     ev?.preventDefault?.(); // evita submit del <form>
 
-    if(!WEBHOOK_URL){ alert('Webhook no configurado.'); return; }
+    if (!WEBHOOK_URL) { alert('Webhook no configurado.'); return; }
     const csvReady = Array.isArray(state.csvImport.entries) && state.csvImport.entries.length > 0 && !state.csvImport.error;
-    if(!state.files.length){
-      if(csvReady){
+    if (!state.files.length) {
+      if (csvReady) {
         console.warn('Envío sin archivos adjuntos: se enviará manifest con registros CSV.');
-      }else{
+      } else {
         console.warn('Envío sin archivos: se enviará solo el manifest.');
       }
     }
@@ -901,22 +894,22 @@ function initApp(){
     const descriptionProvided = !!(lote.descripcion && lote.descripcion.toString().trim());
     const hasMetadata = hasMeaningfulLoteMetadata(lote);
 
-    if(state.intakeMode === 'files' && !state.files.length && !csvReady){
+    if (state.intakeMode === 'files' && !state.files.length && !csvReady) {
       setStatus('Añade al menos un archivo o importa un CSV antes de enviar.', 'error');
       return;
     }
 
-    if(state.intakeMode === 'manual'){
-      if(!descriptionProvided){
+    if (state.intakeMode === 'manual') {
+      if (!descriptionProvided) {
         setStatus('Añade una descripción detallada antes de enviar.', 'error');
         return;
       }
-      if(!hasMetadata){
+      if (!hasMetadata) {
         console.warn('Intento de envío sin datos manuales. Abortado.');
         setStatus('Añade información del lote para enviar sin archivos.', 'error');
         return;
       }
-      if(!lote.area){
+      if (!lote.area) {
         setStatus('Selecciona el área del lote antes de enviar.', 'error');
         return;
       }
@@ -926,57 +919,57 @@ function initApp(){
     const missingAreaFiles = [];
     let areaInjected = false;
     fileMetas.forEach((meta, index) => {
-      if(!meta.area){
-        if(lote.area){
+      if (!meta.area) {
+        if (lote.area) {
           meta.area = lote.area;
-          if(state.files[index]?.meta){
+          if (state.files[index]?.meta) {
             state.files[index].meta.area = lote.area;
             areaInjected = true;
           }
-        }else{
+        } else {
           const name = state.files[index]?.file?.name || `Archivo ${index + 1}`;
           missingAreaFiles.push(name);
         }
       }
     });
 
-    if(missingAreaFiles.length){
+    if (missingAreaFiles.length) {
       const preview = missingAreaFiles.slice(0, 3).join(', ');
       const extra = missingAreaFiles.length > 3 ? ` y ${missingAreaFiles.length - 3} más` : '';
       setStatus(`Selecciona el área para ${missingAreaFiles.length > 1 ? 'los archivos' : 'el archivo'} pendiente (${preview}${extra}).`, 'error');
       return;
     }
 
-    if(areaInjected){
+    if (areaInjected) {
       persist();
       renderFiles();
     }
 
-    if(!lote.area){
+    if (!lote.area) {
       const areas = fileMetas.map(meta => meta.area).filter(Boolean);
       const allSameArea = areas.length > 0 && areas.every(area => area === areas[0]);
       const dominantArea = allSameArea ? areas[0] : '';
-      if(dominantArea){
+      if (dominantArea) {
         lote.area = dominantArea;
       }
     }
 
     const manifest = {
-      version:'no-cors',
-      enviadoEn:new Date().toISOString(),
-      usuario:{ email: localStorage.getItem('userEmail')||'' },
+      version: 'no-cors',
+      enviadoEn: new Date().toISOString(),
+      usuario: { email: localStorage.getItem('userEmail') || '' },
       lote: applyDateFormatting(lote),
       manifestOnly,
-      archivos: state.files.map((f, index)=>({
-        id:f.id,
-        nombre:f.file.name,
-        size:f.file.size,
-        type:f.file.type,
+      archivos: state.files.map((f, index) => ({
+        id: f.id,
+        nombre: f.file.name,
+        size: f.file.size,
+        type: f.file.type,
         meta: applyDateFormatting(fileMetas[index])
       }))
     };
 
-    if(csvReady){
+    if (csvReady) {
       manifest.csvImport = {
         archivo: state.csvImport.filename || '',
         delimitador: state.csvImport.delimiter || ',',
@@ -1007,7 +1000,7 @@ function initApp(){
     // Adjuntar los archivos utilizando el mismo nombre (files[]) para que Make los trate como un array
     state.files.forEach((f) => appendFile(f.file, 'state'));
 
-    if(csvReady && state.csvImport.file instanceof File){
+    if (csvReady && state.csvImport.file instanceof File) {
       fd.append('csv', state.csvImport.file, state.csvImport.file.name);
     }
 
@@ -1019,28 +1012,28 @@ function initApp(){
     }
 
     // Volcado del FormData
-    for (const [k,v] of fd.entries()) {
+    for (const [k, v] of fd.entries()) {
       console.log('FD:', k, v instanceof File ? `${v.name} (${v.type}, ${v.size})` : v);
     }
 
     state.sending = true; updateSendButtonState();
     setStatus('Enviando lote desde Versa Finanzas…', 'info');
 
-    try{
-      await fetch(WEBHOOK_URL, { method:'POST', body: fd, mode:'no-cors' });
+    try {
+      await fetch(WEBHOOK_URL, { method: 'POST', body: fd, mode: 'no-cors' });
       setStatus('Envío registrado desde Versa Finanzas ✔️', 'success');
       clearAll();
       clearCSVImport();
       const autoClearToggle = el('#chkBorrado');
-      if(autoClearToggle){
+      if (autoClearToggle) {
         autoClearToggle.checked = false;
       }
-    }catch(err){
+    } catch (err) {
       console.error(err);
       setStatus('No se pudo completar el envío. Inténtalo nuevamente.', 'error');
       alert('⚠️ Error al enviar archivos');
-    }finally{
-       state.sending = false; updateSendButtonState();
+    } finally {
+      state.sending = false; updateSendButtonState();
     }
   });
 
@@ -1050,7 +1043,7 @@ function initApp(){
 }
 document.addEventListener('DOMContentLoaded', initApp);
 
-function setIntakeMode(nextMode){
+function setIntakeMode(nextMode) {
   const mode = nextMode === 'manual' ? 'manual' : 'files';
   state.intakeMode = mode;
 
@@ -1061,38 +1054,38 @@ function setIntakeMode(nextMode){
   });
 
   const manualArticle = el('#manualEntry');
-  if(manualArticle){
+  if (manualArticle) {
     manualArticle.hidden = !showManual;
   }
 
   const clearBtn = el('#clearAll');
-  if(clearBtn){
+  if (clearBtn) {
     clearBtn.hidden = showManual;
   }
 
-  if(showManual){
-    if(state.files.length){
+  if (showManual) {
+    if (state.files.length) {
       clearAll();
     }
     ['#cameraInput', '#fileInput', '#csvInput'].forEach(selector => {
       const input = el(selector);
-      if(input){
+      if (input) {
         input.setAttribute('disabled', 'true');
       }
     });
     setStatus('Introduce los datos de la factura manualmente.', 'info');
-  }else{
+  } else {
     ['#cameraInput', '#fileInput', '#csvInput'].forEach(selector => {
       const input = el(selector);
-      if(input){
+      if (input) {
         input.removeAttribute('disabled');
       }
     });
     const csvReady = Array.isArray(state.csvImport.entries) && state.csvImport.entries.length > 0 && !state.csvImport.error;
-    if(!state.files.length){
-      if(csvReady){
+    if (!state.files.length) {
+      if (csvReady) {
         setStatus('CSV importado listo para enviar o complementa con archivos.', 'info');
-      }else{
+      } else {
         setStatus('Añade tus archivos o un CSV para comenzar.', 'default');
       }
     }
@@ -1101,16 +1094,16 @@ function setIntakeMode(nextMode){
   updateSendButtonState();
 }
 
-function setupDashboardFullscreen(){
+function setupDashboardFullscreen() {
   const frame = el('#lookerFrame');
   const openBtn = el('#dashboardFullscreenBtn');
   const closeBtn = el('#dashboardFullscreenClose');
-  if(!frame || !openBtn || !closeBtn) return;
+  if (!frame || !openBtn || !closeBtn) return;
 
   const body = document.body;
   const ACTIVE_CLASS = 'dashboard-fullscreen-active';
   const focusSafely = (element) => {
-    if(!element || typeof element.focus !== 'function') return;
+    if (!element || typeof element.focus !== 'function') return;
     try {
       element.focus({ preventScroll: true });
     } catch {
@@ -1119,7 +1112,7 @@ function setupDashboardFullscreen(){
   };
 
   const open = () => {
-    if(body.classList.contains(ACTIVE_CLASS)) return;
+    if (body.classList.contains(ACTIVE_CLASS)) return;
     body.classList.add(ACTIVE_CLASS);
     openBtn.setAttribute('aria-expanded', 'true');
     closeBtn.setAttribute('aria-hidden', 'false');
@@ -1127,26 +1120,26 @@ function setupDashboardFullscreen(){
   };
 
   const close = () => {
-    if(!body.classList.contains(ACTIVE_CLASS)) return;
+    if (!body.classList.contains(ACTIVE_CLASS)) return;
     body.classList.remove(ACTIVE_CLASS);
     openBtn.setAttribute('aria-expanded', 'false');
     closeBtn.setAttribute('aria-hidden', 'true');
-    if(document.fullscreenElement && document.exitFullscreen){
-      document.exitFullscreen().catch(()=>{});
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => { });
     }
     focusSafely(openBtn);
   };
 
   openBtn.setAttribute('aria-expanded', 'false');
 
-  openBtn.addEventListener('click', async ()=>{
-    if(body.classList.contains(ACTIVE_CLASS)){
+  openBtn.addEventListener('click', async () => {
+    if (body.classList.contains(ACTIVE_CLASS)) {
       close();
       return;
     }
 
     open();
-    if(frame.requestFullscreen && window.matchMedia('(max-width: 1024px)').matches){
+    if (frame.requestFullscreen && window.matchMedia('(max-width: 1024px)').matches) {
       try {
         await frame.requestFullscreen();
       } catch (err) {
@@ -1157,28 +1150,28 @@ function setupDashboardFullscreen(){
 
   closeBtn.addEventListener('click', close);
 
-  document.addEventListener('keydown', (event)=>{
-    if(event.key === 'Escape') close();
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') close();
   });
 
-  window.addEventListener('resize', ()=>{
-    if(!body.classList.contains(ACTIVE_CLASS)) return;
-    if(window.innerWidth > 1280) close();
+  window.addEventListener('resize', () => {
+    if (!body.classList.contains(ACTIVE_CLASS)) return;
+    if (window.innerWidth > 1280) close();
   });
 
-  document.addEventListener('fullscreenchange', ()=>{
-    if(document.fullscreenElement && document.fullscreenElement !== frame) return;
-    if(!document.fullscreenElement) close();
+  document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement && document.fullscreenElement !== frame) return;
+    if (!document.fullscreenElement) close();
   });
 }
 
-function enhanceMetaForm(){
+function enhanceMetaForm() {
   const form = el('#metaForm');
-  if(!form || form.dataset.enhanced==='1') return;
+  if (!form || form.dataset.enhanced === '1') return;
 
-  const existing = (()=>{
-    try{ return Object.fromEntries(new FormData(form)); }
-    catch{ return {}; }
+  const existing = (() => {
+    try { return Object.fromEntries(new FormData(form)); }
+    catch { return {}; }
   })();
 
   const defaults = sanitizeMetadata(DEFAULT_LOTE_META);
@@ -1213,11 +1206,11 @@ function enhanceMetaForm(){
         <label class="font-medium">Naturaleza</label>
         <div class="mt-1 flex flex-wrap gap-3">
           <label class="inline-flex items-center gap-2">
-            <input type="radio" name="naturaleza" value="Ingreso" ${naturaleza==='Ingreso'?'checked':''}>
+            <input type="radio" name="naturaleza" value="Ingreso" ${naturaleza === 'Ingreso' ? 'checked' : ''}>
             <span>Ingreso</span>
           </label>
           <label class="inline-flex items-center gap-2">
-            <input type="radio" name="naturaleza" value="Egreso" ${naturaleza!=='Ingreso'?'checked':''}>
+            <input type="radio" name="naturaleza" value="Egreso" ${naturaleza !== 'Ingreso' ? 'checked' : ''}>
             <span>Egreso</span>
           </label>
         </div>
@@ -1256,10 +1249,10 @@ function enhanceMetaForm(){
   `;
 
   form.dataset.enhanced = '1';
-  
-  form.querySelectorAll('input, select, textarea').forEach(ctrl=>{
-    ctrl.addEventListener('change', ()=> updateSendButtonState());
-    ctrl.addEventListener('input', ()=> updateSendButtonState());
+
+  form.querySelectorAll('input, select, textarea').forEach(ctrl => {
+    ctrl.addEventListener('change', () => updateSendButtonState());
+    ctrl.addEventListener('input', () => updateSendButtonState());
   });
 
   updateSendButtonState();

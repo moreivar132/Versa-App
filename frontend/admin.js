@@ -1,5 +1,7 @@
-(async function initAdminPanel(){
-  await window.UserStore.init();
+import { UserStore } from './user-store.js';
+
+async function initAdminPanel() {
+  await UserStore.init();
 
   const userListEl = document.getElementById('userList');
   const createUserForm = document.getElementById('createUserForm');
@@ -58,7 +60,7 @@
 
   function renderUsers() {
     userListEl.setAttribute('aria-busy', 'true');
-    const users = window.UserStore.listUsers();
+    const users = UserStore.listUsers();
     if (!users.length) {
       userListEl.innerHTML = '<p class="helper-text">Aún no hay usuarios registrados.</p>';
       userListEl.setAttribute('aria-busy', 'false');
@@ -117,7 +119,7 @@
   }
 
   generateBtn?.addEventListener('click', () => {
-    const password = window.UserStore.generateSecurePassword();
+    const password = UserStore.generateSecurePassword();
     if (passwordInput) {
       passwordInput.value = password;
       passwordInput.focus();
@@ -139,7 +141,7 @@
       return;
     }
     try {
-      await window.UserStore.createUser({ email, name, role, password });
+      await UserStore.createUser({ email, name, role, password });
       renderUsers();
       createUserForm.reset();
       showGeneratedSecret(password);
@@ -155,7 +157,7 @@
     const email = getTargetEmail(select);
     const newRole = select.value;
     try {
-      await window.UserStore.changeRole(email, newRole);
+      await UserStore.changeRole(email, newRole);
       setFeedback(`El rol de ${email} ahora es ${formatRole(newRole)}.`, 'success');
       renderUsers();
     } catch (error) {
@@ -173,9 +175,9 @@
     if (!email) return;
 
     if (action === 'reset-password') {
-      const newPassword = window.UserStore.generateSecurePassword();
+      const newPassword = UserStore.generateSecurePassword();
       try {
-        await window.UserStore.resetPassword(email, newPassword);
+        await UserStore.resetPassword(email, newPassword);
         showGeneratedSecret(newPassword);
         setFeedback(`Contraseña restablecida para ${email}. Comunica la nueva clave de inmediato.`, 'success');
       } catch (error) {
@@ -188,7 +190,7 @@
       const confirmed = window.confirm(`¿Seguro que deseas revocar el acceso de ${email}?`);
       if (!confirmed) return;
       try {
-        await window.UserStore.deleteUser(email);
+        await UserStore.deleteUser(email);
         setFeedback(`Se revocó el acceso de ${email}.`, 'success');
         renderUsers();
       } catch (error) {
@@ -198,4 +200,6 @@
   });
 
   renderUsers();
-})();
+}
+
+initAdminPanel();
