@@ -11,6 +11,11 @@ export default defineConfig({
                 main: path.resolve(__dirname, 'frontend/index.html'),
                 login: path.resolve(__dirname, 'frontend/login.html'),
                 managerTaller: path.resolve(__dirname, 'frontend/manager-taller.html'),
+                managerTallerClientes: path.resolve(__dirname, 'frontend/manager-taller-clientes.html'),
+                managerTallerInventario: path.resolve(__dirname, 'frontend/manager-taller-inventario.html'),
+                managerTallerOrdenes: path.resolve(__dirname, 'frontend/manager-taller-ordenes.html'),
+                managerTallerProveedores: path.resolve(__dirname, 'frontend/manager-taller-proveedores.html'),
+                managerTallerTrabajadores: path.resolve(__dirname, 'frontend/manager-taller-trabajadores.html'),
             }
         }
     },
