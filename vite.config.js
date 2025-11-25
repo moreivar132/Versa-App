@@ -6,6 +6,13 @@ export default defineConfig({
     build: {
         outDir: 'dist',
         emptyOutDir: true,
+        rollupOptions: {
+            input: {
+                main: path.resolve(__dirname, 'frontend/index.html'),
+                login: path.resolve(__dirname, 'frontend/login.html'),
+                managerTaller: path.resolve(__dirname, 'frontend/manager-taller.html'),
+            }
+        }
     },
     server: {
         port: 3000
