@@ -9,4 +9,4 @@ backend/node_modules/
 .env
 
 # Build output
-dist/
+frontend/dist/
