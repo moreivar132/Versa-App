@@ -276,10 +276,19 @@
               <span class="badge badge--accent">Solo super admins</span>
             </div>
 
-            <div class="surface-2 space-y-4">
+            <div class="tablist" role="tablist" aria-label="Opciones de super admin">
+              <button class="btn btn-wire btn-sm" type="button" data-tab-target="tenants" aria-selected="true"
+                role="tab">Tenants</button>
+              <button class="btn btn-wire btn-sm" type="button" data-tab-target="roles" role="tab"
+                aria-selected="false">Roles y permisos</button>
+              <button class="btn btn-wire btn-sm" type="button" data-tab-target="usuarios" role="tab"
+                aria-selected="false">Usuarios SaaS</button>
+            </div>
+
+            <div class="surface-2 space-y-4" data-tab-content="tenants">
               <div class="section-title">
                 <div>
-                  <h4 class="text-base font-semibold">Gestión de Tenants</h4>
+                  <h4 class="text-base font-semibold">Tenants</h4>
                   <p class="section-title__description">Configura nuevos entornos SaaS para cada cliente.</p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -304,54 +313,104 @@
               </div>
             </div>
 
-            <div class="surface-2 space-y-4">
+            <div class="surface-2 space-y-4" data-tab-content="roles" hidden>
               <div class="section-title">
                 <div>
-                  <h4 class="text-base font-semibold">Crear Usuario SaaS</h4>
+                  <h4 class="text-base font-semibold">Roles y permisos</h4>
+                  <p class="section-title__description">Organiza roles y asigna permisos de forma granular.</p>
+                </div>
+              </div>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <h5 class="font-semibold">Roles</h5>
+                    <button id="toggleRoleFormBtn" type="button" class="btn btn-wire btn-sm">Nuevo rol</button>
+                  </div>
+                  <div id="roleFormWrapper" class="surface" hidden>
+                    <form id="roleForm" class="space-y-3" autocomplete="off">
+                      <label class="field">
+                        <span>Nombre del rol</span>
+                        <input type="text" name="nombre" class="input w-full" placeholder="Ej. Supervisor" />
+                      </label>
+                      <div class="flex items-center gap-2">
+                        <button type="submit" class="btn btn-brand btn-sm">Guardar</button>
+                        <button type="button" id="cancelRoleFormBtn" class="btn btn-ghost btn-sm">Cancelar</button>
+                      </div>
+                    </form>
+                  </div>
+                  <div id="rolesList" class="space-y-2" aria-live="polite">
+                    <p class="helper-text">Añade roles y selecciónalos para asignar permisos.</p>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <h5 class="font-semibold">Permisos</h5>
+                    <button id="saveRolePermissionsBtn" type="button" class="btn btn-dark btn-sm">Guardar</button>
+                  </div>
+                  <p id="permissionsHint" class="helper-text">Selecciona un rol para ver sus permisos.</p>
+                  <div id="permisosList" class="space-y-2" role="group" aria-live="polite"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="surface-2 space-y-4" data-tab-content="usuarios" hidden>
+              <div class="section-title">
+                <div>
+                  <h4 class="text-base font-semibold">Usuarios SaaS</h4>
                   <p class="section-title__description">Usuarios conectados al modelo multi-tenant.</p>
                 </div>
               </div>
-              <form id="createSaaSUserForm" class="form-grid admin-form" autocomplete="off">
-                <label class="field">
-                  <span>Nombre completo</span>
-                  <input type="text" name="nombre" class="input w-full" placeholder="Persona responsable" />
-                </label>
-                <label class="field">
-                  <span>Email corporativo</span>
-                  <input type="email" name="email" class="input w-full" placeholder="persona@cliente.com" />
-                </label>
-                <label class="field">
-                  <span>Contraseña inicial</span>
-                  <input type="password" name="password" class="input w-full" placeholder="••••••••" />
-                </label>
-                <label class="field">
-                  <span>Porcentaje mano de obra</span>
-                  <input type="number" name="porcentaje_mano_obra" class="input w-full" step="0.01" min="0" max="1"
-                    value="0.50" />
-                  <p class="helper-text">Valor por defecto: 0.50 (50 %).</p>
-                </label>
-                <label class="field">
-                  <span>Es super admin</span>
-                  <div class="inline-flex items-center gap-2">
+              <form id="createSaaSUserForm" class="space-y-4" autocomplete="off">
+                <div class="form-grid admin-form">
+                  <label class="field">
+                    <span>Tenant</span>
+                    <select id="tenantSelect" name="tenant_id" class="input w-full">
+                      <option value="" disabled selected>TODO: cargar tenants</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Nombre completo</span>
+                    <input type="text" name="nombre" class="input w-full" placeholder="Persona responsable" />
+                  </label>
+                  <label class="field">
+                    <span>Email corporativo</span>
+                    <input type="email" name="email" class="input w-full" placeholder="persona@cliente.com" />
+                  </label>
+                </div>
+                <div class="form-grid admin-form">
+                  <label class="field">
+                    <span>Contraseña</span>
+                    <input type="password" name="password" class="input w-full" placeholder="Genera o escribe una contraseña" />
+                  </label>
+                  <label class="field">
+                    <span>Porcentaje mano de obra</span>
+                    <input type="number" name="porcentaje_mano_obra" step="0.01" min="0" max="1" class="input w-full"
+                      placeholder="0.5" />
+                  </label>
+                  <label class="field inline-flex items-center gap-2">
                     <input type="checkbox" name="is_super_admin" class="accent-[var(--accent)]" />
-                    <span class="helper-text">Otorga permisos globales en el SaaS.</span>
-                  </div>
-                </label>
-                <label class="field">
-                  <span>Roles (multi-selección)</span>
-                  <select id="rolesSelect" name="roles" class="input w-full" multiple size="4">
-                    <option disabled>TODO: cargar roles desde /roles</option>
-                  </select>
-                  <p class="helper-text">Selecciona uno o varios roles cuando estén disponibles.</p>
-                </label>
-                <label class="field">
-                  <span>Sucursales (multi-selección)</span>
-                  <select id="sucursalesSelect" name="sucursales" class="input w-full" multiple size="4">
-                    <option disabled>TODO: cargar sucursales desde /sucursales</option>
-                  </select>
-                  <p class="helper-text">Asigna el usuario a las sucursales correspondientes.</p>
-                </label>
-                <div class="form-actions field--full">
+                    <span>Es super admin</span>
+                  </label>
+                </div>
+                <div class="form-grid admin-form">
+                  <label class="field">
+                    <span>Roles (multiselección)</span>
+                    <select id="rolesSelect" name="roles" class="input w-full" multiple size="3">
+                      <option value="1">Admin</option>
+                      <option value="2">Operaciones</option>
+                      <option value="3">Auditor</option>
+                    </select>
+                  </label>
+                  <label class="field">
+                    <span>Sucursales (multiselección)</span>
+                    <select id="sucursalesSelect" name="sucursales" class="input w-full" multiple size="3">
+                      <option value="10">CDMX - Centro</option>
+                      <option value="11">CDMX - Norte</option>
+                      <option value="12">Guadalajara</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="form-actions">
                   <button type="submit" class="btn btn-brand">Crear usuario SaaS</button>
                 </div>
                 <p id="saasUserFeedback" class="form-feedback" role="status" aria-live="polite" hidden></p>
