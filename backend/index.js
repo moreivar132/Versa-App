@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const pool = require('./db');
 const authRouter = require('./routes/auth');
+const superAdminRouter = require('./routes/superAdminRoutes');
 const verifyJWT = require('./middleware/auth');
 
 const app = express();
@@ -16,6 +17,7 @@ app.use(express.json());
 
 // Rutas de autenticación
 app.use('/api/auth', authRouter);
+app.use('/api/admin', superAdminRouter);
 
 const toSnakeCase = (value = '') =>
   String(value ?? '')
