@@ -64,6 +64,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
+  // Bloque de visibilidad del nuevo panel para super administradores (SaaS)
+  const superAdminPanel = document.getElementById('superAdminPanel');
+  if (superAdminPanel) {
+    superAdminPanel.hidden = !isSuperAdmin;
+    if (isSuperAdmin) {
+      setupSuperAdminPanel();
+    }
+  }
+
   const userInfo = document.getElementById('userInfo');
   if (userInfo) {
     userInfo.textContent = `${user.nombre || user.email} · Administrador`;
@@ -428,7 +437,7 @@ function setupSuperAdminPanel() {
     // await api.post('/tenants', payloadTenant);
 
     showFeedback(tenantFeedback, 'Tenant preparado para enviar al backend.');
-    hideTenantForm();
+    tenantForm?.reset();
   });
 
   saasUserForm?.addEventListener('submit', (event) => {
@@ -441,6 +450,11 @@ function setupSuperAdminPanel() {
     const password = `${formData.get('password') || ''}`.trim();
     const porcentaje_mano_obra = parseFloat(formData.get('porcentaje_mano_obra') || 0.5);
     const is_super_admin = formData.has('is_super_admin');
+
+    if (!email || !password) {
+      showFeedback(saasUserFeedback, 'Email y contraseña son obligatorios.');
+      return;
+    }
 
     const rolesSelect = document.getElementById('rolesSelect');
     const selectedRoleIds = Array.from(rolesSelect?.selectedOptions || [])
