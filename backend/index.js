@@ -195,26 +195,26 @@ app.get('/api/db-test', async (req, res) => {
 // --- Lógica para Producción ---
 // Este bloque solo se ejecuta cuando el servidor está en modo producción
 if (process.env.NODE_ENV === 'production') {
-    // 1. Define la ruta a la carpeta de build del frontend
-    const frontendDistPath = path.resolve(__dirname, '..', 'frontend', 'dist');
-    
-    // 2. Sirve los archivos estáticos (CSS, JS, imágenes) desde esa carpeta
-    app.use(express.static(frontendDistPath));
+  // 1. Define la ruta a la carpeta de build del frontend
+  const frontendDistPath = path.resolve(__dirname, '..', 'frontend', 'dist');
 
-    // 3. Para cualquier otra petición (que no sea a la API), envía el index.html
-    // Esto es clave para que el enrutamiento del lado del cliente (SPA) funcione.
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(frontendDistPath, 'index.html'));
-    });
+  // 2. Sirve los archivos estáticos (CSS, JS, imágenes) desde esa carpeta
+  app.use(express.static(frontendDistPath));
+
+  // 3. Para cualquier otra petición (que no sea a la API), envía el index.html
+  // Esto es clave para que el enrutamiento del lado del cliente (SPA) funcione.
+  app.get('/*', (req, res) => {
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
 }
 
 // --- Iniciar Servidor ---
 app.listen(port, () => {
   console.log(`🚀 Servidor escuchando en http://localhost:${port}`);
   if (process.env.NODE_ENV !== 'production') {
-      console.log('-> Modo de Desarrollo: El backend solo funciona como API.');
-      console.log('-> El frontend debe correr en su propio servidor (Vite).');
+    console.log('-> Modo de Desarrollo: El backend solo funciona como API.');
+    console.log('-> El frontend debe correr en su propio servidor (Vite).');
   } else {
-      console.log('-> Modo de Producción: Sirviendo API y archivos del frontend desde /frontend/dist.');
+    console.log('-> Modo de Producción: Sirviendo API y archivos del frontend desde /frontend/dist.');
   }
 });
