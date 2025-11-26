@@ -1,3 +1,4 @@
+<!-- Force redeploy -->
 <!DOCTYPE html>
 <html lang="es">
 
@@ -48,9 +49,9 @@
     </section>
   </main>
 
-  <script src="./config.js"></script>
-  <script src="./auth.js" defer></script>
-  <script>
+  <script type="module">
+    import { requireAuth, login } from './auth.js';
+
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('loginForm');
       const errorEl = document.getElementById('loginError');
@@ -66,7 +67,7 @@
         errorEl.textContent = message;
       };
 
-      Auth.requireAuth().then((user) => {
+      requireAuth().then((user) => {
         if (user) {
           window.location.replace('index.html');
         }
@@ -85,24 +86,11 @@
         }
 
         try {
-          const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-          });
-
-          if (!response.ok) {
-            const payload = await response.json().catch(() => ({ error: 'Credenciales inválidas.' }));
-            showError(payload.error || 'No se pudo iniciar sesión.');
-            return;
-          }
-
-          const { token, user } = await response.json();
-          Auth.setSession(token, user);
+          await login(email, password);
           window.location.replace('index.html');
         } catch (error) {
           console.error('Error en login:', error);
-          showError('No se pudo iniciar sesión.');
+          showError(error.message || 'No se pudo iniciar sesión.');
         }
       });
     });

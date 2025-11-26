@@ -16,7 +16,6 @@
 </head>
 
 <body class="min-h-screen bg-[var(--bg)] text-[var(--text)] font-['Montserrat',sans-serif]">
-
   <a class="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white/90 focus:text-black"
     href="#contenido-principal">
     Ir al contenido principal
@@ -98,22 +97,23 @@
             <article class="stat-card">
               <header class="stat-card__label">Ingresos (mes)</header>
               <div class="stat-card__value" data-dashboard="ingresos">—</div>
-              <p class="stat-card__trend">Datos pendientes de carga</p>
+              <p class="stat-card__trend" data-variant="up"><span aria-hidden="true">▲</span> +12.4% vs mes anterior</p>
             </article>
             <article class="stat-card">
               <header class="stat-card__label">Egresos (mes)</header>
               <div class="stat-card__value" data-dashboard="egresos">—</div>
-              <p class="stat-card__trend">Datos pendientes de carga</p>
+              <p class="stat-card__trend" data-variant="down"><span aria-hidden="true">▼</span> -4.8% vs presupuesto</p>
             </article>
             <article class="stat-card">
               <header class="stat-card__label">IVA estimado</header>
               <div class="stat-card__value" data-dashboard="iva">—</div>
-              <p class="stat-card__trend">Datos pendientes de carga</p>
+              <p class="stat-card__trend">Pendiente de conciliación</p>
             </article>
             <article class="stat-card">
               <header class="stat-card__label">Facturas por aprobar</header>
-              <div class="stat-card__value" data-dashboard="pendientes">—</div>
-              <p class="stat-card__trend">Datos pendientes de carga</p>
+              <div class="stat-card__value" data-dashboard="pendientes">18</div>
+              <p class="stat-card__trend" data-variant="down"><span aria-hidden="true">▼</span> -3 vs semana anterior
+              </p>
             </article>
           </div>
 
@@ -121,18 +121,19 @@
             <article class="summary-card">
               <div class="summary-card__header">
                 <span>Alertas de auditoría</span>
-                <span class="status" data-variant="pending">Sin datos</span>
+                <span class="status" data-variant="pending">2 pendientes</span>
               </div>
-              <p class="helper-text">Los datos reales se mostrarán cuando estén disponibles.</p>
-              <button class="btn btn-ghost btn-sm" type="button" disabled>Revisar alertas</button>
+              <p class="helper-text">Identifica movimientos con discrepancias impositivas y acelera el cierre contable.
+              </p>
+              <button class="btn btn-ghost btn-sm" type="button">Revisar alertas</button>
             </article>
             <article class="summary-card">
               <div class="summary-card__header">
                 <span>Último lote procesado</span>
-                <time aria-hidden="true">—</time>
+                <time datetime="2024-05-12">12 mayo 2024</time>
               </div>
-              <strong>—</strong>
-              <p class="helper-text">Los registros aparecerán aquí una vez se procesen datos reales.</p>
+              <strong>54 documentos</strong>
+              <p class="helper-text">34 ingresos · 20 egresos</p>
             </article>
           </div>
 
@@ -145,9 +146,19 @@
             </div>
             <div class="timeline">
               <article class="timeline__item">
-                <header class="timeline__meta">Actividad en espera</header>
-                <p>No hay eventos recientes. Cuando se registren movimientos reales, aparecerán en esta sección.</p>
-                <span class="status" data-variant="pending">Sin actividad</span>
+                <header class="timeline__meta">Hace 10 minutos · Taller</header>
+                <p>Se cargó un lote de 8 facturas (egreso) para proveedores de mantenimiento.</p>
+                <span class="status" data-variant="success">Procesado</span>
+              </article>
+              <article class="timeline__item">
+                <header class="timeline__meta">Hace 1 hora · Flota</header>
+                <p>Factura pendiente de validación por diferencia en IVA.</p>
+                <span class="status" data-variant="pending">En revisión</span>
+              </article>
+              <article class="timeline__item">
+                <header class="timeline__meta">Ayer · Bicicletas</header>
+                <p>Ticket rechazado por datos incompletos.</p>
+                <span class="status" data-variant="error">Rechazado</span>
               </article>
             </div>
           </div>
@@ -455,10 +466,10 @@
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
-  <script src="./config.js"></script>
-  <script src="./auth.js" defer></script>
-  <script src="./admin.js" defer></script>
-  <script src="./main.js" defer></script>
+  <!-- Scripts (Modules) -->
+  <script type="module" src="./auth.js"></script>
+  <script type="module" src="./admin.js"></script>
+  <script type="module" src="./main.js"></script>
 </body>
 
 </html>
