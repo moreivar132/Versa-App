@@ -1,4 +1,5 @@
 import { requireAuth, clearSession } from './auth.js';
+import './admin.js';  // Import admin module to ensure it's processed by Vite
 
 // ====== CONFIG ======
 const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL;

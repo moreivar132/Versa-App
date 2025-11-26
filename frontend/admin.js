@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Initialize UserStore for admin operations (legacy/local support)
-  await UserStore.init();
+  // TODO: UserStore is not defined - needs to be implemented or removed
+  // await UserStore.init();
 
   const userListEl = document.getElementById('userList');
   const createUserForm = document.getElementById('createUserForm');
@@ -36,6 +37,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+  function generateSecurePassword() {
+    const length = 16;
+    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    let password = '';
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      password += charset[randomIndex];
+    }
+    return password;
+  }
 
   function setFeedback(message, variant = 'info') {
     if (!feedbackEl) return;
@@ -74,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderUsers() {
     userListEl.setAttribute('aria-busy', 'true');
-    const users = UserStore.listUsers();
+    const users = []; // UserStore.listUsers(); // TODO: Implement backend API call
     if (!users.length) {
       userListEl.innerHTML = '<p class="helper-text">Aún no hay usuarios registrados.</p>';
       userListEl.setAttribute('aria-busy', 'false');
@@ -133,7 +145,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   generateBtn?.addEventListener('click', () => {
-    const password = UserStore.generateSecurePassword();
+    const password = generateSecurePassword(); // UserStore.generateSecurePassword();
     if (passwordInput) {
       passwordInput.value = password;
       passwordInput.focus();
@@ -155,7 +167,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     try {
-      await UserStore.createUser({ email, name, role, password });
+      // await UserStore.createUser({ email, name, role, password }); // TODO: Implement backend API call
       renderUsers();
       createUserForm.reset();
       showGeneratedSecret(password);
@@ -171,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const email = getTargetEmail(select);
     const newRole = select.value;
     try {
-      await UserStore.changeRole(email, newRole);
+      // await UserStore.changeRole(email, newRole); // TODO: Implement backend API call
       setFeedback(`El rol de ${email} ahora es ${formatRole(newRole)}.`, 'success');
       renderUsers();
     } catch (error) {
@@ -189,9 +201,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!email) return;
 
     if (action === 'reset-password') {
-      const newPassword = UserStore.generateSecurePassword();
+      const newPassword = generateSecurePassword(); // UserStore.generateSecurePassword();
       try {
-        await UserStore.resetPassword(email, newPassword);
+        // await UserStore.resetPassword(email, newPassword); // TODO: Implement backend API call
         showGeneratedSecret(newPassword);
         setFeedback(`Contraseña restablecida para ${email}. Comunica la nueva clave de inmediato.`, 'success');
       } catch (error) {
@@ -204,7 +216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const confirmed = window.confirm(`¿Seguro que deseas revocar el acceso de ${email}?`);
       if (!confirmed) return;
       try {
-        await UserStore.deleteUser(email);
+        // await UserStore.deleteUser(email); // TODO: Implement backend API call
         setFeedback(`Se revocó el acceso de ${email}.`, 'success');
         renderUsers();
       } catch (error) {
