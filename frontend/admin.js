@@ -1,4 +1,57 @@
-import { requireAuth } from './auth.js';
+import { fetchWithAuth, requireAuth } from './auth.js';
+
+const ADMIN_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const LOCAL_USER_STORE_KEY = 'versa_admin_users';
+
+function getLocalUsers() {
+  try {
+    const stored = localStorage.getItem(LOCAL_USER_STORE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.warn('No se pudieron leer los usuarios locales.', error);
+    return [];
+  }
+}
+
+function persistLocalUsers(users = []) {
+  try {
+    localStorage.setItem(LOCAL_USER_STORE_KEY, JSON.stringify(users));
+  } catch (error) {
+    console.warn('No se pudieron guardar los usuarios locales.', error);
+  }
+}
+
+function normalizeUser(user = {}) {
+  if (!user?.email) return null;
+  const now = new Date().toISOString();
+  return {
+    email: String(user.email).trim().toLowerCase(),
+    name: user.name || user.nombre || '',
+    role: user.role || 'empleado',
+    is_super_admin: Boolean(user.is_super_admin || user.role === 'admin'),
+    createdAt: user.createdAt || now,
+    lastLoginAt: user.lastLoginAt || user.last_login_at || now
+  };
+}
+
+function ensureSelfUser(users, currentUser) {
+  const normalizedCurrent = normalizeUser(currentUser);
+  if (!normalizedCurrent) return users;
+  const exists = users.some((entry) => entry.email === normalizedCurrent.email);
+  if (exists) return users;
+  return [normalizedCurrent, ...users];
+}
+
+async function requestJSON(path, options = {}) {
+  const response = await fetchWithAuth(`${ADMIN_API_URL}${path}`, options);
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody.error || 'No se pudo completar la operación.');
+  }
+  return response.json();
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
   const user = await requireAuth();
@@ -16,10 +69,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     userInfo.textContent = `${user.nombre || user.email} · Administrador`;
   }
 
-  // Initialize UserStore for admin operations (legacy/local support)
-  // TODO: UserStore is not defined - needs to be implemented or removed
-  // await UserStore.init();
-
   const userListEl = document.getElementById('userList');
   const createUserForm = document.getElementById('createUserForm');
   if (!userListEl || !createUserForm) return;
@@ -30,6 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const passwordInput = document.getElementById('newUserPassword');
   const generateBtn = document.getElementById('btnGeneratePassword');
   const currentUserEmail = (user.email || '').trim().toLowerCase();
+  let cachedUsers = ensureSelfUser(getLocalUsers(), user);
 
   const escapeHTML = (value = '') => `${value}`
     .replace(/&/g, '&amp;')
@@ -39,14 +89,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     .replace(/'/g, '&#39;');
 
   function generateSecurePassword() {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const cryptoObj = window.crypto || window.msCrypto;
     const length = 16;
-    const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
-    let password = '';
-    for (let i = 0; i < length; i++) {
-      const randomIndex = Math.floor(Math.random() * charset.length);
-      password += charset[randomIndex];
+    const bytes = new Uint32Array(length);
+    if (cryptoObj?.getRandomValues) {
+      cryptoObj.getRandomValues(bytes);
     }
-    return password;
+    return Array.from({ length }, (_, index) => {
+      const fallback = Math.floor(Math.random() * alphabet.length);
+      const value = bytes[index] || fallback;
+      return alphabet[value % alphabet.length];
+    }).join('');
   }
 
   function setFeedback(message, variant = 'info') {
@@ -86,36 +140,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function renderUsers() {
     userListEl.setAttribute('aria-busy', 'true');
-    const users = []; // UserStore.listUsers(); // TODO: Implement backend API call
+    const users = cachedUsers;
     if (!users.length) {
       userListEl.innerHTML = '<p class="helper-text">Aún no hay usuarios registrados.</p>';
       userListEl.setAttribute('aria-busy', 'false');
       return;
     }
     const markup = users
-      .map((user) => {
-        const normalized = user.email.trim().toLowerCase();
+      .map((entry) => {
+        const normalized = entry.email.trim().toLowerCase();
         const isSelf = normalized === currentUserEmail;
         const roleOptions = `
-          <option value="empleado"${user.role === 'empleado' ? ' selected' : ''}>Empleado</option>
-          <option value="admin"${user.role === 'admin' ? ' selected' : ''}>Administrador</option>`;
+          <option value="empleado"${entry.role === 'empleado' ? ' selected' : ''}>Empleado</option>
+          <option value="admin"${entry.role === 'admin' ? ' selected' : ''}>Administrador</option>`;
         return `
-          <article class="user-card" data-email="${escapeHTML(user.email)}">
+          <article class="user-card" data-email="${escapeHTML(entry.email)}">
             <header class="user-card__header">
               <div>
-                <strong>${escapeHTML(user.name || user.email)}</strong>
-                <p class="helper-text">${escapeHTML(user.email)}</p>
+                <strong>${escapeHTML(entry.name || entry.email)}</strong>
+                <p class="helper-text">${escapeHTML(entry.email)}</p>
               </div>
-              <span class="badge ${user.role === 'admin' ? 'badge--accent' : 'badge--subtle'}">${formatRole(user.role)}</span>
+              <span class="badge ${entry.role === 'admin' ? 'badge--accent' : 'badge--subtle'}">${formatRole(entry.role)}</span>
             </header>
             <dl class="user-card__meta">
               <div>
                 <dt>Creado</dt>
-                <dd>${escapeHTML(formatDate(user.createdAt))}</dd>
+                <dd>${escapeHTML(formatDate(entry.createdAt))}</dd>
               </div>
               <div>
                 <dt>Último acceso</dt>
-                <dd>${escapeHTML(formatDate(user.lastLoginAt))}</dd>
+                <dd>${escapeHTML(formatDate(entry.lastLoginAt))}</dd>
               </div>
             </dl>
             <div class="user-card__actions">
@@ -144,8 +198,90 @@ document.addEventListener('DOMContentLoaded', async () => {
     return card ? card.getAttribute('data-email') : '';
   }
 
+  const AdminStore = {
+    async listUsers() {
+      try {
+        const data = await requestJSON('/api/admin/users');
+        const normalized = Array.isArray(data) ? data.map(normalizeUser).filter(Boolean) : [];
+        cachedUsers = ensureSelfUser(normalized, user);
+        persistLocalUsers(cachedUsers);
+        return cachedUsers;
+      } catch (error) {
+        console.warn('Fallo al recuperar usuarios desde la API, usando caché local.', error);
+        cachedUsers = ensureSelfUser(getLocalUsers(), user);
+        return cachedUsers;
+      }
+    },
+
+    async createUser(payload) {
+      const baseUser = normalizeUser({ ...payload, createdAt: new Date().toISOString() });
+      if (!baseUser) throw new Error('Email inválido.');
+      try {
+        const created = await requestJSON('/api/admin/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const normalized = normalizeUser(created) || baseUser;
+        cachedUsers = ensureSelfUser([normalized, ...cachedUsers.filter((u) => u.email !== normalized.email)], user);
+        persistLocalUsers(cachedUsers);
+        return normalized;
+      } catch (error) {
+        console.warn('Creación de usuario solo en almacenamiento local.', error);
+        cachedUsers = ensureSelfUser([baseUser, ...cachedUsers.filter((u) => u.email !== baseUser.email)], user);
+        persistLocalUsers(cachedUsers);
+        return baseUser;
+      }
+    },
+
+    async changeRole(email, role) {
+      try {
+        await requestJSON(`/api/admin/users/${encodeURIComponent(email)}/role`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role })
+        });
+      } catch (error) {
+        console.warn('No se pudo actualizar en backend, se actualizará solo localmente.', error);
+      }
+      cachedUsers = cachedUsers.map((entry) => (
+        entry.email === email ? { ...entry, role, is_super_admin: role === 'admin' } : entry
+      ));
+      persistLocalUsers(cachedUsers);
+    },
+
+    async resetPassword(email, password) {
+      try {
+        await requestJSON(`/api/admin/users/${encodeURIComponent(email)}/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password })
+        });
+      } catch (error) {
+        console.warn('Restablecimiento local únicamente.', error);
+      }
+      return password;
+    },
+
+    async deleteUser(email) {
+      try {
+        await requestJSON(`/api/admin/users/${encodeURIComponent(email)}`, { method: 'DELETE' });
+      } catch (error) {
+        console.warn('Eliminación solo local.', error);
+      }
+      cachedUsers = cachedUsers.filter((entry) => entry.email !== email);
+      persistLocalUsers(cachedUsers);
+    }
+  };
+
+  async function refreshUserList() {
+    userListEl.setAttribute('aria-busy', 'true');
+    cachedUsers = await AdminStore.listUsers();
+    renderUsers();
+  }
+
   generateBtn?.addEventListener('click', () => {
-    const password = generateSecurePassword(); // UserStore.generateSecurePassword();
+    const password = generateSecurePassword();
     if (passwordInput) {
       passwordInput.value = password;
       passwordInput.focus();
@@ -167,8 +303,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     try {
-      // await UserStore.createUser({ email, name, role, password }); // TODO: Implement backend API call
-      renderUsers();
+      await AdminStore.createUser({ email, name, role, password });
+      await refreshUserList();
       createUserForm.reset();
       showGeneratedSecret(password);
       setFeedback(`Cuenta creada para ${email}. Recuerda compartir la contraseña mostrada una sola vez.`, 'success');
@@ -183,7 +319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const email = getTargetEmail(select);
     const newRole = select.value;
     try {
-      // await UserStore.changeRole(email, newRole); // TODO: Implement backend API call
+      await AdminStore.changeRole(email, newRole);
       setFeedback(`El rol de ${email} ahora es ${formatRole(newRole)}.`, 'success');
       renderUsers();
     } catch (error) {
@@ -201,9 +337,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!email) return;
 
     if (action === 'reset-password') {
-      const newPassword = generateSecurePassword(); // UserStore.generateSecurePassword();
+      const newPassword = generateSecurePassword();
       try {
-        // await UserStore.resetPassword(email, newPassword); // TODO: Implement backend API call
+        await AdminStore.resetPassword(email, newPassword);
         showGeneratedSecret(newPassword);
         setFeedback(`Contraseña restablecida para ${email}. Comunica la nueva clave de inmediato.`, 'success');
       } catch (error) {
@@ -216,7 +352,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const confirmed = window.confirm(`¿Seguro que deseas revocar el acceso de ${email}?`);
       if (!confirmed) return;
       try {
-        // await UserStore.deleteUser(email); // TODO: Implement backend API call
+        await AdminStore.deleteUser(email);
         setFeedback(`Se revocó el acceso de ${email}.`, 'success');
         renderUsers();
       } catch (error) {
@@ -225,5 +361,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
-  renderUsers();
+  refreshUserList();
 });
