@@ -150,6 +150,19 @@ router.get('/tenants', async (req, res) => {
     }
 });
 
+router.post('/tenants', async (req, res) => {
+    try {
+        const { nombre } = req.body;
+        if (!nombre) {
+            return res.status(400).json({ error: 'El nombre del tenant es obligatorio' });
+        }
+        const newTenant = await tenantModel.createTenant(nombre);
+        res.status(201).json(newTenant);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al crear tenant' });
+    }
+});
+
 router.get('/roles', async (req, res) => {
     try {
         const roles = await roleModel.getAllRoles();
