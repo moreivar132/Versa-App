@@ -195,6 +195,23 @@
         <!-- Vista: Administración (solo administradores) -->
         <section id="admin" class="space-y-6" data-view="admin" data-requires="admin" aria-labelledby="admin-title"
           hidden>
+          <!-- Enlace al nuevo panel de Super Admin -->
+          <article class="surface space-y-4 border-l-4 border-[var(--brand)]">
+            <div class="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h3 class="text-lg font-semibold flex items-center gap-2">
+                  <span>🚀</span> Panel de Gestión Super Admin
+                </h3>
+                <p class="text-sm text-[var(--muted)]">
+                  Gestión centralizada de usuarios, tenants, roles y sucursales.
+                </p>
+              </div>
+              <a href="super-admin-usuarios.html" class="btn btn-brand">
+                Abrir Panel Completo
+              </a>
+            </div>
+          </article>
+
           <article class="surface space-y-6">
             <div class="section-title">
               <div>
@@ -380,7 +397,8 @@
                 <div class="form-grid admin-form">
                   <label class="field">
                     <span>Contraseña</span>
-                    <input type="password" name="password" class="input w-full" placeholder="Genera o escribe una contraseña" />
+                    <input type="password" name="password" class="input w-full"
+                      placeholder="Genera o escribe una contraseña" />
                   </label>
                   <label class="field">
                     <span>Porcentaje mano de obra</span>
