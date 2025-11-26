@@ -253,6 +253,101 @@
             </div>
             <div id="userList" class="user-admin-list" role="region" aria-live="polite" aria-busy="false"></div>
           </article>
+
+          <!-- ============================= -->
+          <!-- NUEVO PANEL SUPER ADMIN (SaaS) -->
+          <!-- ============================= -->
+          <article id="superAdminPanel" class="surface space-y-6" hidden>
+            <div class="section-title">
+              <div>
+                <h3 class="text-lg font-semibold">Panel Super Admin (nuevo SaaS)</h3>
+                <p class="section-title__description">Herramientas preparadas para la administración multi-tenant.</p>
+              </div>
+              <span class="badge badge--accent">Solo super admins</span>
+            </div>
+
+            <div class="surface-2 space-y-4">
+              <div class="section-title">
+                <div>
+                  <h4 class="text-base font-semibold">Gestión de Tenants</h4>
+                  <p class="section-title__description">Configura nuevos entornos SaaS para cada cliente.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="toggleTenantFormBtn" class="btn btn-wire btn-sm">Nuevo tenant</button>
+                </div>
+              </div>
+              <div id="tenantList" class="user-admin-list" aria-live="polite">
+                <p class="helper-text">Todavía sin datos.</p>
+              </div>
+              <div id="tenantFormWrapper" class="surface" hidden>
+                <form id="tenantForm" class="form-grid admin-form" autocomplete="off">
+                  <label class="field field--full">
+                    <span>Nombre del tenant <span class="text-red-500">*</span></span>
+                    <input type="text" name="nombre" class="input w-full" placeholder="Cliente corporativo" required />
+                  </label>
+                  <div class="form-actions field--full">
+                    <button type="submit" class="btn btn-brand">Crear tenant</button>
+                    <button type="button" id="cancelTenantFormBtn" class="btn btn-ghost">Cancelar</button>
+                  </div>
+                  <p id="tenantFeedback" class="form-feedback" role="status" aria-live="polite" hidden></p>
+                </form>
+              </div>
+            </div>
+
+            <div class="surface-2 space-y-4">
+              <div class="section-title">
+                <div>
+                  <h4 class="text-base font-semibold">Crear Usuario SaaS</h4>
+                  <p class="section-title__description">Usuarios conectados al modelo multi-tenant.</p>
+                </div>
+              </div>
+              <form id="createSaaSUserForm" class="form-grid admin-form" autocomplete="off">
+                <label class="field">
+                  <span>Nombre completo</span>
+                  <input type="text" name="nombre" class="input w-full" placeholder="Persona responsable" />
+                </label>
+                <label class="field">
+                  <span>Email corporativo</span>
+                  <input type="email" name="email" class="input w-full" placeholder="persona@cliente.com" />
+                </label>
+                <label class="field">
+                  <span>Contraseña inicial</span>
+                  <input type="password" name="password" class="input w-full" placeholder="••••••••" />
+                </label>
+                <label class="field">
+                  <span>Porcentaje mano de obra</span>
+                  <input type="number" name="porcentaje_mano_obra" class="input w-full" step="0.01" min="0" max="1"
+                    value="0.50" />
+                  <p class="helper-text">Valor por defecto: 0.50 (50 %).</p>
+                </label>
+                <label class="field">
+                  <span>Es super admin</span>
+                  <div class="inline-flex items-center gap-2">
+                    <input type="checkbox" name="is_super_admin" class="accent-[var(--accent)]" />
+                    <span class="helper-text">Otorga permisos globales en el SaaS.</span>
+                  </div>
+                </label>
+                <label class="field">
+                  <span>Roles (multi-selección)</span>
+                  <select id="rolesSelect" name="roles" class="input w-full" multiple size="4">
+                    <option disabled>TODO: cargar roles desde /roles</option>
+                  </select>
+                  <p class="helper-text">Selecciona uno o varios roles cuando estén disponibles.</p>
+                </label>
+                <label class="field">
+                  <span>Sucursales (multi-selección)</span>
+                  <select id="sucursalesSelect" name="sucursales" class="input w-full" multiple size="4">
+                    <option disabled>TODO: cargar sucursales desde /sucursales</option>
+                  </select>
+                  <p class="helper-text">Asigna el usuario a las sucursales correspondientes.</p>
+                </label>
+                <div class="form-actions field--full">
+                  <button type="submit" class="btn btn-brand">Crear usuario SaaS</button>
+                </div>
+                <p id="saasUserFeedback" class="form-feedback" role="status" aria-live="polite" hidden></p>
+              </form>
+            </div>
+          </article>
         </section>
 
         <!-- Vista: Gestión de facturas -->
