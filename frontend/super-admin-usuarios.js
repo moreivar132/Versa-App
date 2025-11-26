@@ -216,6 +216,67 @@ function initEventListeners() {
             await handleDeleteUser(userId);
         }
     });
+
+    // Tabs
+    document.querySelectorAll('[data-tab-target]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.tabTarget;
+
+            // Update tabs
+            document.querySelectorAll('[data-tab-target]').forEach(t => {
+                t.setAttribute('aria-selected', 'false');
+                t.classList.remove('btn-dark'); // Assuming active style
+                t.classList.add('btn-wire');
+            });
+            tab.setAttribute('aria-selected', 'true');
+            tab.classList.remove('btn-wire');
+            tab.classList.add('btn-dark'); // Active style
+
+            // Update content
+            document.querySelectorAll('[data-tab-content]').forEach(content => {
+                content.hidden = true;
+            });
+            const content = document.querySelector(`[data-tab-content="${target}"]`);
+            if (content) content.hidden = false;
+        });
+    });
+
+    // Tenant Form
+    document.getElementById('toggleTenantFormBtn')?.addEventListener('click', () => {
+        const wrapper = document.getElementById('tenantFormWrapper');
+        if (wrapper) wrapper.hidden = !wrapper.hidden;
+    });
+
+    document.getElementById('cancelTenantFormBtn')?.addEventListener('click', () => {
+        const wrapper = document.getElementById('tenantFormWrapper');
+        if (wrapper) wrapper.hidden = true;
+        document.getElementById('tenantForm')?.reset();
+    });
+
+    document.getElementById('tenantForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleCreateTenant(e.target);
+    });
+}
+
+async function handleCreateTenant(form) {
+    const formData = new FormData(form);
+    const nombre = formData.get('nombre');
+
+    if (!nombre) {
+        showFeedback('El nombre del tenant es obligatorio', 'error');
+        return;
+    }
+
+    try {
+        await API.createTenant({ nombre });
+        showFeedback('Tenant creado exitosamente', 'success');
+        form.reset();
+        document.getElementById('tenantFormWrapper').hidden = true;
+        await loadTenants();
+    } catch (error) {
+        showFeedback(`Error al crear tenant: ${error.message}`, 'error');
+    }
 }
 
 async function handleCreateUser(form) {
@@ -294,25 +355,6 @@ async function loadUsers() {
         updateStats();
     } catch (error) {
         showFeedback('Error al cargar usuarios', 'error');
-    }
-}
-
-async function loadTenants() {
-    try {
-        state.tenants = await API.getTenants();
-        populateTenantSelect();
-        updateStats();
-    } catch (error) {
-        showFeedback('Error al cargar tenants', 'error');
-    }
-}
-
-async function loadRoles() {
-    try {
-        state.roles = await API.getRoles();
-        populateRolesSelect();
-    } catch (error) {
-        showFeedback('Error al cargar roles', 'error');
     }
 }
 
