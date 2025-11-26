@@ -1,24 +1,7 @@
 const SESSION_KEY = 'versa_session_v1';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export async function login(email, password) {
-  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, password }),
-  });
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({ message: 'Credenciales incorrectas o error en el servidor.' }));
-    throw new Error(errorData.message);
-  }
-
-  const { token, user } = await response.json();
-  setSession(token, user);
-  return user;
-}
 
 export function getSession() {
   try {
