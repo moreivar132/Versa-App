@@ -50,7 +50,7 @@
   </main>
 
   <script type="module">
-    import * as Auth from './auth.js';
+    import { requireAuth, login } from './auth.js';
 
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('loginForm');
@@ -67,7 +67,7 @@
         errorEl.textContent = message;
       };
 
-      Auth.requireAuth().then((user) => {
+      requireAuth().then((user) => {
         if (user) {
           window.location.replace('index.html');
         }
@@ -86,7 +86,7 @@
         }
 
         try {
-          await Auth.login(email, password);
+          await login(email, password);
           window.location.replace('index.html');
         } catch (error) {
           console.error('Error en login:', error);

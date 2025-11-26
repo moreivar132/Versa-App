@@ -84,6 +84,25 @@ export async function requireAuth() {
   }
 }
 
+export async function login(email, password) {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || 'Error en login');
+  }
+
+  const data = await response.json();
+  setSession(data.token, data.user);
+  return data.user;
+}
+
 export async function fetchWithAuth(url, options = {}) {
   const token = getToken();
   if (!token) {
