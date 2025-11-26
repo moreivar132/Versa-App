@@ -1,3 +1,4 @@
+<!-- Force redeploy -->
 <!DOCTYPE html>
 <html lang="es">
 
@@ -7,7 +8,6 @@
   <meta name="description" content="Acceso seguro al portal Versa Finanzas para el envío de facturas y tickets." />
   <title>Acceso | Versa Finanzas</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com" defer></script>
   <link rel="stylesheet" href="./theme.css" />
 </head>
 
@@ -48,65 +48,7 @@
     </section>
   </main>
 
-  <script src="./config.js"></script>
-  <script src="./auth.js" defer></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const form = document.getElementById('loginForm');
-      const errorEl = document.getElementById('loginError');
-
-      const showError = (message) => {
-        if (!errorEl) return;
-        if (!message) {
-          errorEl.hidden = true;
-          errorEl.textContent = '';
-          return;
-        }
-        errorEl.hidden = false;
-        errorEl.textContent = message;
-      };
-
-      Auth.requireAuth().then((user) => {
-        if (user) {
-          window.location.replace('index.html');
-        }
-      });
-
-      form?.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        showError('');
-
-        const email = document.getElementById('email')?.value.trim();
-        const password = document.getElementById('password')?.value;
-
-        if (!email || !password) {
-          showError('Completa tu email y contraseña.');
-          return;
-        }
-
-        try {
-          const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-          });
-
-          if (!response.ok) {
-            const payload = await response.json().catch(() => ({ error: 'Credenciales inválidas.' }));
-            showError(payload.error || 'No se pudo iniciar sesión.');
-            return;
-          }
-
-          const { token, user } = await response.json();
-          Auth.setSession(token, user);
-          window.location.replace('index.html');
-        } catch (error) {
-          console.error('Error en login:', error);
-          showError('No se pudo iniciar sesión.');
-        }
-      });
-    });
-  </script>
+  <script type="module" src="./login.js"></script>
 </body>
 
 </html>
