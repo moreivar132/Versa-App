@@ -383,15 +383,17 @@ function setupSuperAdminPanel() {
   const saasUserForm = document.getElementById('createSaaSUserForm');
   const saasUserFeedback = document.getElementById('saasUserFeedback');
 
-  const showTenantForm = () => {
-    if (tenantFormWrapper) tenantFormWrapper.hidden = false;
-  };
+  const roleFormWrapper = document.getElementById('roleFormWrapper');
+  const toggleRoleFormBtn = document.getElementById('toggleRoleFormBtn');
+  const cancelRoleFormBtn = document.getElementById('cancelRoleFormBtn');
+  const roleForm = document.getElementById('roleForm');
+  const rolesListEl = document.getElementById('rolesList');
+  const permisosListEl = document.getElementById('permisosList');
+  const permissionsHint = document.getElementById('permissionsHint');
+  const saveRolePermissionsBtn = document.getElementById('saveRolePermissionsBtn');
 
-  const hideTenantForm = () => {
-    if (tenantFormWrapper) tenantFormWrapper.hidden = true;
-    if (tenantForm) tenantForm.reset();
-    hideFeedback(tenantFeedback);
-  };
+  const tabButtons = Array.from(document.querySelectorAll('[data-tab-target]'));
+  const tabPanels = Array.from(document.querySelectorAll('[data-tab-content]'));
 
   const showFeedback = (el, message) => {
     if (!el) return;
@@ -403,6 +405,33 @@ function setupSuperAdminPanel() {
     if (!el) return;
     el.hidden = true;
     el.textContent = '';
+  };
+
+  const setActiveTab = (target) => {
+    tabButtons.forEach((btn) => {
+      const isActive = btn.dataset.tabTarget === target;
+      btn.classList.toggle('is-active', isActive);
+      btn.setAttribute('aria-selected', String(isActive));
+    });
+    tabPanels.forEach((panel) => {
+      const isActive = panel.dataset.tabContent === target;
+      panel.hidden = !isActive;
+      panel.classList.toggle('is-active', isActive);
+    });
+  };
+
+  if (tabButtons.length && tabPanels.length) {
+    const defaultTab = tabButtons[0]?.dataset.tabTarget || 'tenants';
+    setActiveTab(defaultTab);
+    tabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => setActiveTab(btn.dataset.tabTarget));
+    });
+  }
+
+  const hideTenantForm = () => {
+    if (tenantFormWrapper) tenantFormWrapper.hidden = true;
+    if (tenantForm) tenantForm.reset();
+    hideFeedback(tenantFeedback);
   };
 
   toggleTenantFormBtn?.addEventListener('click', () => {
@@ -439,6 +468,140 @@ function setupSuperAdminPanel() {
     showFeedback(tenantFeedback, 'Tenant preparado para enviar al backend.');
     tenantForm?.reset();
   });
+
+  const staticPermissions = [
+    { id: 1, label: 'Ver órdenes' },
+    { id: 2, label: 'Editar órdenes' },
+    { id: 3, label: 'Cerrar caja' },
+    { id: 4, label: 'Ver reportes financieros' },
+    { id: 5, label: 'Configurar sucursales' },
+    { id: 6, label: 'Gestionar inventario' }
+  ];
+
+  const defaultRoles = [
+    { id: 1, nombre: 'Admin global' },
+    { id: 2, nombre: 'Operaciones' },
+    { id: 3, nombre: 'Auditor' }
+  ];
+
+  const rolePermissionsState = {
+    1: new Set([1, 2, 3, 4, 5, 6]),
+    2: new Set([1, 2, 3]),
+    3: new Set([1, 4])
+  };
+
+  let roles = [...defaultRoles];
+  let selectedRoleId = roles[0]?.id || null;
+
+  const renderRoles = () => {
+    if (!rolesListEl) return;
+    if (!roles.length) {
+      rolesListEl.innerHTML = '<p class="helper-text">Agrega un rol para comenzar.</p>';
+      return;
+    }
+    rolesListEl.innerHTML = roles.map((role) => {
+      const isActive = role.id === selectedRoleId;
+      return `
+        <article class="surface-2 ${isActive ? 'is-active' : ''}" data-role-id="${role.id}">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <strong>${role.nombre}</strong>
+              <p class="helper-text">ID: ${role.id}</p>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="select-role">Editar</button>
+          </div>
+        </article>`;
+    }).join('');
+  };
+
+  const renderPermissions = () => {
+    if (!permisosListEl) return;
+    if (!selectedRoleId) {
+      permisosListEl.innerHTML = '';
+      if (permissionsHint) permissionsHint.hidden = false;
+      return;
+    }
+    if (permissionsHint) permissionsHint.hidden = true;
+    const selectedSet = rolePermissionsState[selectedRoleId] || new Set();
+    permisosListEl.innerHTML = staticPermissions.map((permiso) => {
+      const checked = selectedSet.has(permiso.id);
+      return `
+        <label class="inline-flex items-center gap-2">
+          <input type="checkbox" class="accent-[var(--accent)]" data-perm-id="${permiso.id}" ${checked ? 'checked' : ''} />
+          <span>${permiso.label}</span>
+        </label>`;
+    }).join('');
+  };
+
+  const selectRole = (roleId) => {
+    selectedRoleId = roleId;
+    renderRoles();
+    renderPermissions();
+  };
+
+  toggleRoleFormBtn?.addEventListener('click', () => {
+    if (!roleFormWrapper) return;
+    roleFormWrapper.hidden = !roleFormWrapper.hidden;
+    if (!roleFormWrapper.hidden) {
+      roleForm?.reset();
+    }
+  });
+
+  cancelRoleFormBtn?.addEventListener('click', () => {
+    if (roleFormWrapper) roleFormWrapper.hidden = true;
+    roleForm?.reset();
+  });
+
+  roleForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const formData = new FormData(roleForm);
+    const nombre = `${formData.get('nombre') || ''}`.trim();
+    if (!nombre) return;
+    const newRoleId = Date.now();
+    roles = [...roles, { id: newRoleId, nombre }];
+    rolePermissionsState[newRoleId] = new Set();
+    selectRole(newRoleId);
+    roleForm.reset();
+    if (roleFormWrapper) roleFormWrapper.hidden = true;
+  });
+
+  rolesListEl?.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const card = target.closest('[data-role-id]');
+    if (!card) return;
+    const roleId = Number(card.getAttribute('data-role-id'));
+    if (Number.isNaN(roleId)) return;
+    selectRole(roleId);
+  });
+
+  permisosListEl?.addEventListener('change', (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+    const permisoId = Number(input.getAttribute('data-perm-id'));
+    if (!selectedRoleId || Number.isNaN(permisoId)) return;
+    const currentSet = rolePermissionsState[selectedRoleId] || new Set();
+    if (input.checked) {
+      currentSet.add(permisoId);
+    } else {
+      currentSet.delete(permisoId);
+    }
+    rolePermissionsState[selectedRoleId] = currentSet;
+  });
+
+  saveRolePermissionsBtn?.addEventListener('click', () => {
+    if (!selectedRoleId) return;
+    const permiso_ids = Array.from(rolePermissionsState[selectedRoleId] || []);
+    console.log('Payload rol/permiso', { id_rol: selectedRoleId, permiso_ids });
+
+    // TODO: cuando el backend esté listo:
+    // import api from './api.js';
+    // await api.post('/roles', { nombre: '...' });
+    // await api.put(`/roles/${selectedRoleId}/permisos`, { permiso_ids });
+  });
+
+  renderRoles();
+  renderPermissions();
 
   saasUserForm?.addEventListener('submit', (event) => {
     event.preventDefault();
