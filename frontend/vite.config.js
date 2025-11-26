@@ -9,6 +9,7 @@ export default defineConfig({
             input: {
                 main: 'index.html',
                 login: 'login.html',
+                superAdminUsuarios: 'super-admin-usuarios.html',
                 managerTaller: 'manager-taller.html',
                 managerTallerClientes: 'manager-taller-clientes.html',
                 managerTallerInventario: 'manager-taller-inventario.html',
