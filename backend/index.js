@@ -203,7 +203,7 @@ if (process.env.NODE_ENV === 'production') {
 
   // 3. Para cualquier otra petición (que no sea a la API), envía el index.html
   // Esto es clave para que el enrutamiento del lado del cliente (SPA) funcione.
-  app.get('/*', (req, res) => {
+  app.use((req, res) => {
     res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 }
