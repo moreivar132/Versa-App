@@ -14,11 +14,9 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// --- API Routes ---
-// Rutas públicas de autenticación (login, register)
+// Rutas de autenticación
 app.use('/api/auth', authRouter);
 
-// El resto de la lógica compleja para el manejo de la base de datos se mantiene igual.
 const toSnakeCase = (value = '') =>
   String(value ?? '')
     .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
