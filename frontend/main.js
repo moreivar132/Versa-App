@@ -1,6 +1,11 @@
 import { requireAuth, clearSession } from './auth.js';
 import './admin.js';  // Import admin module to ensure it's processed by Vite
 
+document.addEventListener('DOMContentLoaded', () => {
+  const yearEl = document.getElementById('year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+});
+
 // ====== CONFIG ======
 const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL;
 const LS_KEY = 'portal_facturas_v2';
