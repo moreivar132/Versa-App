@@ -94,16 +94,30 @@ router.post('/', verifyJWT, async (req, res) => {
 // GET /api/clientes - Obtener últimos 10 clientes
 router.get('/', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
+    const isSuperAdmin = req.user.is_super_admin;
 
     try {
-        const query = `
-            SELECT * FROM clientefinal 
-            WHERE id_tenant = $1 
-            ORDER BY created_at DESC 
-            LIMIT 10
-        `;
+        let query;
+        let params;
 
-        const result = await pool.query(query, [id_tenant]);
+        if (isSuperAdmin) {
+            query = `
+                SELECT * FROM clientefinal 
+                ORDER BY created_at DESC 
+                LIMIT 10
+            `;
+            params = [];
+        } else {
+            query = `
+                SELECT * FROM clientefinal 
+                WHERE id_tenant = $1 
+                ORDER BY created_at DESC 
+                LIMIT 10
+            `;
+            params = [id_tenant];
+        }
+
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error al obtener clientes:', error);
@@ -115,6 +129,7 @@ router.get('/', verifyJWT, async (req, res) => {
 router.get('/search', verifyJWT, async (req, res) => {
     const { q } = req.query;
     const id_tenant = req.user.id_tenant;
+    const isSuperAdmin = req.user.is_super_admin;
 
     if (!q) {
         return res.status(400).json({ error: 'Parámetro de búsqueda requerido' });
@@ -122,14 +137,27 @@ router.get('/search', verifyJWT, async (req, res) => {
 
     try {
         const searchTerm = `%${q}%`;
-        const query = `
-            SELECT * FROM clientefinal 
-            WHERE id_tenant = $1 
-            AND (nombre ILIKE $2 OR documento ILIKE $2 OR telefono ILIKE $2)
-            LIMIT 10
-        `;
+        let query;
+        let params;
 
-        const result = await pool.query(query, [id_tenant, searchTerm]);
+        if (isSuperAdmin) {
+            query = `
+                SELECT * FROM clientefinal 
+                WHERE (nombre ILIKE $1 OR documento ILIKE $1 OR telefono ILIKE $1)
+                LIMIT 10
+            `;
+            params = [searchTerm];
+        } else {
+            query = `
+                SELECT * FROM clientefinal 
+                WHERE id_tenant = $1 
+                AND (nombre ILIKE $2 OR documento ILIKE $2 OR telefono ILIKE $2)
+                LIMIT 10
+            `;
+            params = [id_tenant, searchTerm];
+        }
+
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error en búsqueda de clientes:', error);
