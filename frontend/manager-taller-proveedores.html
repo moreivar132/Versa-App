@@ -621,7 +621,21 @@
             event.preventDefault();
 
             // Validar token
-            const token = localStorage.getItem('token');
+            let token = localStorage.getItem('token');
+
+            // Intentar obtener desde la sesión estructurada si no hay token directo
+            if (!token) {
+                try {
+                    const sessionRaw = localStorage.getItem('versa_session_v1');
+                    if (sessionRaw) {
+                        const session = JSON.parse(sessionRaw);
+                        token = session.token;
+                    }
+                } catch (e) {
+                    console.error('Error al leer la sesión:', e);
+                }
+            }
+
             if (!token) {
                 alert('No estás autenticado. Por favor inicia sesión.');
                 window.location.href = 'login.html';
