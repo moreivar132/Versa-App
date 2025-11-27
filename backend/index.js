@@ -7,6 +7,7 @@ const pool = require('./db');
 const authRouter = require('./routes/auth');
 const superAdminRouter = require('./routes/superAdminRoutes');
 const proveedoresRouter = require('./routes/proveedores');
+const clientesRouter = require('./routes/clientes');
 const verifyJWT = require('./middleware/auth');
 
 const app = express();
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use('/api/auth', authRouter);
 app.use('/api/admin', superAdminRouter);
 app.use('/api/proveedores', proveedoresRouter);
+app.use('/api/clientes', clientesRouter);
 
 const toSnakeCase = (value = '') =>
   String(value ?? '')
@@ -145,25 +147,6 @@ const getTableMetadata = async (possibleNames = []) => {
     validColumns: new Set(columnRows.map((row) => row.column_name)),
   };
 };
-
-// Ruta protegida para registrar clientes
-app.post('/api/clientes', verifyJWT, async (req, res) => {
-  const payload = req.body || {};
-  try {
-    const { tableName, validColumns } = await getTableMetadata(['clientes']);
-    const { columns, values } = buildInsertParts(payload, validColumns);
-    if (columns.length === 0) {
-      return res.status(400).json({ ok: false, error: 'No se recibieron campos válidos para registrar al cliente.' });
-    }
-    const placeholders = columns.map((_, index) => `$${index + 1}`).join(', ');
-    const insertQuery = `INSERT INTO "${tableName}" (${columns.join(', ')}) VALUES (${placeholders}) RETURNING *`;
-    const result = await pool.query(insertQuery, values);
-    return res.status(201).json({ ok: true, cliente: result.rows[0] });
-  } catch (error) {
-    console.error('Error al registrar cliente:', error);
-    return res.status(500).json({ ok: false, error: 'Error al registrar el cliente en la base de datos.', details: error.message });
-  }
-});
 
 // Ruta para registrar vehículos (Nota: No está protegida con JWT)
 app.post('/api/vehiculos', async (req, res) => {
