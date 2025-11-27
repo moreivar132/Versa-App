@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -577,249 +578,475 @@
 
 <body>
     <div class="container">
-        <header class="app-header w-full max-w-6xl mx-auto px-4 py-3">
-            <div class="header-left">
-                <div class="logo-badge">
-                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo de Goversa" class="logo-img">
+        <div class="flex h-screen w-full">
+            <!-- SideNavBar -->
+            <aside id="sidebar"
+                class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+                <div class="flex h-full flex-col justify-between">
+                    <div class="flex flex-col gap-4">
+                        <!-- User Profile / Logo Area -->
+                        <div class="flex items-center gap-3 p-2 mb-4">
+                            <div class="logo-badge"
+                                style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                    style="height: 24px; width: auto;">
+                            </div>
+                            <div class="flex flex-col sidebar-text">
+                                <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                    Goversa</h1>
+                                <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                    Gestión</p>
+                            </div>
+                            <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                        </div>
+
+                        <!-- Navigation Links -->
+                        <nav class="flex flex-col gap-2">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="index.html">
+                                <span class="icon-container"><i class="fas fa-home"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                            </a>
+
+                            <!-- Taller Dropdown -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('taller-submenu')">
+                                    <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                    <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                        id="taller-arrow"></i>
+                                </a>
+                                <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="manager-taller-ordenes.html"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                        órdenes</a>
+                                    <a href="#"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                    <a href="manager-taller.html#vehicles-panel"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                                </div>
+                            </div>
+
+                            <!-- Tienda Dropdown -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('tienda-submenu')">
+                                    <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                    <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                        id="tienda-arrow"></i>
+                                </a>
+                                <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                                </div>
+                            </div>
+
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="#">
+                                <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                            </a>
+
+                            <!-- Cuentas Dropdown -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('cuentas-submenu')">
+                                    <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                    <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                        id="cuentas-arrow"></i>
+                                </a>
+                                <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                                </div>
+                            </div>
+
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="manager-taller-inventario.html">
+                                <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                            </a>
+
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="manager-taller-trabajadores.html">
+                                <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                            </a>
+
+                            <!-- Contactos Active -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('contactos-submenu')">
+                                    <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                    <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                        id="contactos-arrow"></i>
+                                </a>
+                                <div id="contactos-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                    <a href="manager-taller-clientes.html"
+                                        class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                                    <a href="manager-taller-proveedores.html"
+                                        class="text-white font-semibold text-sm py-1 block">Proveedores</a>
+                                </div>
+                            </div>
+                        </nav>
+                    </div>
+
+                    <!-- Bottom Actions -->
+                    <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                        <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                            <div
+                                class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                                IM
+                            </div>
+                            <div class="flex flex-col sidebar-text overflow-hidden">
+                                <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                                <span class="text-gray-500 text-xs truncate">admin</span>
+                            </div>
+                        </div>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="login.html">
+                            <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                        </a>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Wrapper -->
+            <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+                <!-- Top Mobile Header (Visible only on small screens) -->
+                <header
+                    class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                    <div class="logo-badge p-2">
+                        <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                    </div>
+                    <button id="mobile-menu-btn" class="text-white">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </header>
+
+                <main class="flex-1 overflow-y-auto p-6">
+                    <!-- Container adjustments for new layout -->
+                    <div class="max-w-7xl mx-auto">
+
+                        <!-- KPI CARDS -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Total Proveedores</p>
+                                    <h3 class="text-3xl font-bold text-white" id="total-providers-count">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-[rgba(255,101,43,0.1)] flex items-center justify-center text-[var(--brand-orange)]">
+                                    <i class="fas fa-truck text-xl"></i>
+                                </div>
+                            </div>
+                            <!-- Placeholder KPIs -->
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Nuevos este mes</p>
+                                    <h3 class="text-3xl font-bold text-white">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                    <i class="fas fa-calendar-plus text-xl"></i>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Activos</p>
+                                    <h3 class="text-3xl font-bold text-white">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                                    <i class="fas fa-check-circle text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN BUSCADOR DE PROVEEDORES -->
+                        <section class="search-container">
+                            <h2 class="form-main-title"><i class="fas fa-search"></i> Buscar Proveedor</h2>
+                            <div class="search-box">
+                                <input type="text" id="search-input" class="form-input"
+                                    placeholder="Buscar por Nombre, CIF/NIF o Teléfono..." autocomplete="off">
+                                <button id="search-btn" class="btn"><i class="fas fa-search"
+                                        style="margin-right: 8px;"></i>
+                                    Buscar</button>
+
+                                <!-- Dropdown de sugerencias -->
+                                <div id="suggestions-list" class="suggestions-dropdown"></div>
+                            </div>
+
+                            <!-- FICHA DE RESULTADO (Oculta hasta encontrar) -->
+                            <div id="provider-result" class="search-result-card">
+                                <div class="result-header">
+                                    <div class="flex items-center gap-3">
+                                        <span class="result-title" id="res-nombre">Nombre del Proveedor</span>
+                                        <span class="badge"
+                                            style="background:var(--brand-orange); color: black; padding: 4px 10px; border-radius:4px; font-size:12px; font-weight:700;">Proveedor</span>
+                                    </div>
+                                    <button class="btn"
+                                        style="padding: 8px 16px; font-size: 14px; background-color: #333; border: 1px solid #555;"
+                                        onclick="alert('Funcionalidad de edición en desarrollo')">
+                                        <i class="fas fa-edit mr-2"></i> Editar
+                                    </button>
+                                </div>
+                                <div class="result-grid">
+                                    <div class="result-item">
+                                        <label>CIF / NIF</label>
+                                        <span id="res-cif">B12345678</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Teléfono</label>
+                                        <span id="res-telefono">91 123 45 67</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Contacto</label>
+                                        <span id="res-contacto">Juan Pérez</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Email</label>
+                                        <span id="res-email">contacto@proveedor.com</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Web B2B</label>
+                                        <a href="#" id="res-web" style="color:var(--brand-orange)"
+                                            target="_blank">www.proveedor.com</a>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Ubicación</label>
+                                        <span id="res-ubicacion">Pol. Ind. Sur, Nave 4</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Provincia / CP</label>
+                                        <span id="res-provincia">Madrid, 28001</span>
+                                    </div>
+                                </div>
+                                <div class="result-item" style="margin-top: 15px;">
+                                    <label>Comentarios</label>
+                                    <p id="res-comentarios"
+                                        style="font-size: 14px; color: #ddd; margin-top:5px; font-style:italic;">
+                                        Proveedor principal
+                                        de recambios de aceite.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ÚLTIMOS PROVEEDORES -->
+                        <section>
+                            <h3 class="form-section-title" style="margin-top: 0; border-bottom: none;"><i
+                                    class="fas fa-history"></i> Últimos 3 Proveedores Registrados</h3>
+                            <div id="recent-providers-grid" class="clients-grid">
+                                <!-- Se rellena vía JS -->
+                                <div
+                                    style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-secondary);">
+                                    <i class="fas fa-spinner fa-spin"></i> Cargando proveedores...
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <!-- FORMULARIO DE REGISTRO -->
+                        <form id="provider-form" class="form-container">
+                            <h2 class="form-main-title">Registro de Nuevo Proveedor</h2>
+                            <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 0.9em;">Los campos
+                                marcados con
+                                * son obligatorios.</p>
+
+                            <div class="form-section">
+                                <!-- CAMPOS OBLIGATORIOS -->
+                                <div class="form-group">
+                                    <label for="nombre">Nombre / Razón Social *</label>
+                                    <input type="text" id="nombre" name="nombre" class="form-input" required
+                                        placeholder="Ej: Recambios S.L.">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="cif">CIF / NIF / DNI *</label>
+                                    <input type="text" id="cif" name="cif" class="form-input" required
+                                        placeholder="Ej: B12345678">
+                                </div>
+
+                                <!-- OTROS CAMPOS DE LA BASE DE DATOS -->
+                                <div class="form-group">
+                                    <label for="Nombre_contacto">Nombre de Contacto</label>
+                                    <input type="text" id="Nombre_contacto" name="Nombre_contacto" class="form-input"
+                                        placeholder="Persona de referencia">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="telefono">Teléfono</label>
+                                    <input type="tel" id="telefono" name="telefono" class="form-input"
+                                        placeholder="+34 ...">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="Correo">Email</label>
+                                    <input type="email" id="Correo" name="Correo" class="form-input"
+                                        placeholder="pedidos@empresa.com">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="Sitio_web_b2b">Sitio Web B2B</label>
+                                    <input type="url" id="Sitio_web_b2b" name="Sitio_web_b2b" class="form-input"
+                                        placeholder="https://...">
+                                </div>
+                            </div>
+
+                            <h3 class="form-section-title">Dirección Fiscal y Otros</h3>
+                            <div class="form-section">
+                                <div class="form-group">
+                                    <label for="Domicilio_fiscal">Domicilio Fiscal</label>
+                                    <input type="text" id="Domicilio_fiscal" name="Domicilio_fiscal" class="form-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="Proviancia">Provincia</label>
+                                    <input type="text" id="Proviancia" name="Proviancia" class="form-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="cp_localidad">CP / Localidad</label>
+                                    <input type="text" id="cp_localidad" name="cp_localidad" class="form-input"
+                                        placeholder="Código Postal">
+                                </div>
+                            </div>
+
+                            <div class="form-section" style="margin-top: 25px;">
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="Comentarios">Comentarios</label>
+                                    <textarea id="Comentarios" name="Comentarios" class="form-textarea"
+                                        placeholder="Información adicional, días de reparto, etc."></textarea>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn"
+                                style="width: 100%; padding: 15px; font-size: 16px; margin-top: 30px;">
+                                <i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Proveedor
+                            </button>
+                        </form>
+                </main>
+            </div>
+
+            <!-- MODAL DE ÉXITO -->
+            <div id="success-modal" class="success-modal-overlay">
+                <div class="success-modal-content">
+                    <div class="success-modal-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                            <path
+                                d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                        </svg>
+                    </div>
+                    <h3>¡Proveedor Guardado!</h3>
+                    <p>Los datos han sido registrados correctamente en el sistema.</p>
+                    <button id="close-success-modal" class="btn">Cerrar</button>
                 </div>
             </div>
-            <nav class="main-nav">
-                <ul>
-                    <li class="nav-item"><a href="index.html">Inicio</a></li>
-                    <li class="nav-item has-dropdown">
-                        <a href="manager-taller.html">Taller</a>
-                        <ul class="dropdown">
-                            <li><a href="manager-taller-ordenes.html">Órdenes</a></li>
-                            <li><a href="#">Editar órdenes</a></li>
-                            <li><a href="#">Presupuestos</a></li>
-                            <li><a href="manager-taller.html#vehicles-panel">Vehículos</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item has-dropdown">
-                        <a href="#">Tienda</a>
-                    </li>
-                    <li class="nav-item"><a href="#">Caja</a></li>
-                    <li class="nav-item has-dropdown">
-                        <a href="#">Cuentas</a>
-                    </li>
-                    <li class="nav-item"><a href="manager-taller-inventario.html">Inventario</a></li>
-                    <li class="nav-item"><a href="manager-taller-trabajadores.html">Trabajadores</a></li>
-                    <li class="nav-item has-dropdown">
-                        <a href="manager-taller-clientes.html" class="active">Contactos</a>
-                        <ul class="dropdown">
-                            <li><a href="manager-taller-clientes.html">Clientes</a></li>
-                            <li><a href="manager-taller-proveedores.html" class="active">Proveedores</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </nav>
-            <div class="user-session">
-                <span class="user-name">Iván Moreno · admin</span>
-                <a href="login.html" class="logout-button">Salir</a>
-            </div>
-        </header>
 
-        <main>
+            <script type="module">
+                import { getToken, getApiBaseUrl, fetchWithAuth } from './auth.js';
 
-            <!-- SECCIÓN BUSCADOR DE PROVEEDORES -->
-            <section class="search-container">
-                <h2 class="form-main-title"><i class="fas fa-search"></i> Buscar Proveedor</h2>
-                <div class="search-box">
-                    <input type="text" id="search-input" class="form-input"
-                        placeholder="Buscar por Nombre, CIF/NIF o Teléfono..." autocomplete="off">
-                    <button id="search-btn" class="btn"><i class="fas fa-search" style="margin-right: 8px;"></i>
-                        Buscar</button>
+                // --- SIDEBAR LOGIC ---
+                window.toggleSubmenu = function (id) {
+                    const submenu = document.getElementById(id);
+                    const arrow = document.getElementById(id.replace('submenu', 'arrow'));
 
-                    <!-- Dropdown de sugerencias -->
-                    <div id="suggestions-list" class="suggestions-dropdown"></div>
-                </div>
+                    if (submenu.classList.contains('hidden')) {
+                        submenu.classList.remove('hidden');
+                        submenu.classList.add('flex');
+                        if (arrow) arrow.style.transform = 'rotate(180deg)';
+                    } else {
+                        submenu.classList.add('hidden');
+                        submenu.classList.remove('flex');
+                        if (arrow) arrow.style.transform = 'rotate(0deg)';
+                    }
+                }
 
-                <!-- FICHA DE RESULTADO (Oculta hasta encontrar) -->
-                <div id="provider-result" class="search-result-card">
-                    <div class="result-header">
-                        <span class="result-title" id="res-nombre">Nombre del Proveedor S.L.</span>
-                        <span class="badge"
-                            style="background:var(--success-color); padding: 4px 10px; border-radius:4px; font-size:12px;">Activo</span>
-                    </div>
-                    <div class="result-grid">
-                        <div class="result-item">
-                            <label>CIF / NIF</label>
-                            <span id="res-cif">B12345678</span>
-                        </div>
-                        <div class="result-item">
-                            <label>Teléfono</label>
-                            <span id="res-telefono">91 123 45 67</span>
-                        </div>
-                        <div class="result-item">
-                            <label>Contacto</label>
-                            <span id="res-contacto">Juan Pérez</span>
-                        </div>
-                        <div class="result-item">
-                            <label>Email</label>
-                            <span id="res-email">contacto@proveedor.com</span>
-                        </div>
-                        <div class="result-item">
-                            <label>Web B2B</label>
-                            <a href="#" id="res-web" style="color:var(--brand-orange)"
-                                target="_blank">www.proveedor.com</a>
-                        </div>
-                        <div class="result-item">
-                            <label>Ubicación</label>
-                            <span id="res-ubicacion">Pol. Ind. Sur, Nave 4</span>
-                        </div>
-                        <div class="result-item">
-                            <label>Provincia / CP</label>
-                            <span id="res-provincia">Madrid, 28001</span>
-                        </div>
-                    </div>
-                    <div class="result-item" style="margin-top: 15px;">
-                        <label>Comentarios</label>
-                        <p id="res-comentarios"
-                            style="font-size: 14px; color: #ddd; margin-top:5px; font-style:italic;">Proveedor principal
-                            de recambios de aceite.</p>
-                    </div>
-                </div>
-            </section>
+                const sidebar = document.getElementById('sidebar');
+                const toggleBtn = document.getElementById('toggle-sidebar');
+                const sidebarTexts = document.querySelectorAll('.sidebar-text');
+                let isCollapsed = false;
 
-            <!-- ÚLTIMOS PROVEEDORES -->
-            <section>
-                <h3 class="form-section-title" style="margin-top: 0; border-bottom: none;"><i
-                        class="fas fa-history"></i> Últimos Proveedores Registrados</h3>
-                <div id="recent-providers-grid" class="providers-grid">
-                    <!-- Se rellena vía JS -->
-                    <div style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-secondary);">
-                        <i class="fas fa-spinner fa-spin"></i> Cargando proveedores...
-                    </div>
-                </div>
-            </section>
+                toggleBtn.addEventListener('click', () => {
+                    isCollapsed = !isCollapsed;
+                    if (isCollapsed) {
+                        sidebar.classList.remove('w-64');
+                        sidebar.classList.add('w-20');
+                        sidebarTexts.forEach(el => el.classList.add('hidden'));
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                        document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                            el.classList.add('hidden');
+                            el.classList.remove('flex');
+                        });
+                    } else {
+                        sidebar.classList.add('w-64');
+                        sidebar.classList.remove('w-20');
+                        sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                    }
+                });
 
+                const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('-translate-x-full');
+                    sidebar.classList.toggle('absolute');
+                    sidebar.classList.toggle('z-50');
+                    sidebar.classList.toggle('h-full');
+                });
 
-            <!-- FORMULARIO DE REGISTRO -->
-            <form id="provider-form" class="form-container">
-                <h2 class="form-main-title">Registro de Nuevo Proveedor</h2>
-                <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 0.9em;">Los campos marcados con
-                    * son obligatorios.</p>
+                document.addEventListener("DOMContentLoaded", () => {
 
-                <div class="form-section">
-                    <!-- CAMPOS OBLIGATORIOS -->
-                    <div class="form-group">
-                        <label for="nombre">Nombre / Razón Social *</label>
-                        <input type="text" id="nombre" name="nombre" class="form-input" required
-                            placeholder="Ej: Recambios S.L.">
-                    </div>
+                    const API_URL = `${getApiBaseUrl()}/api/proveedores`;
+                    console.log('API URL Configurada:', API_URL);
 
-                    <div class="form-group">
-                        <label for="cif">CIF / NIF / DNI *</label>
-                        <input type="text" id="cif" name="cif" class="form-input" required placeholder="Ej: B12345678">
-                    </div>
+                    // Cargar últimos proveedores y estadísticas
+                    loadRecentProviders();
+                    loadProviderStats();
 
-                    <!-- OTROS CAMPOS DE LA BASE DE DATOS -->
-                    <div class="form-group">
-                        <label for="Nombre_contacto">Nombre de Contacto</label>
-                        <input type="text" id="Nombre_contacto" name="Nombre_contacto" class="form-input"
-                            placeholder="Persona de referencia">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="telefono">Teléfono</label>
-                        <input type="tel" id="telefono" name="telefono" class="form-input" placeholder="+34 ...">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="Correo">Email</label>
-                        <input type="email" id="Correo" name="Correo" class="form-input"
-                            placeholder="pedidos@empresa.com">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="Sitio_web_b2b">Sitio Web B2B</label>
-                        <input type="url" id="Sitio_web_b2b" name="Sitio_web_b2b" class="form-input"
-                            placeholder="https://...">
-                    </div>
-                </div>
-
-                <h3 class="form-section-title">Dirección Fiscal y Otros</h3>
-                <div class="form-section">
-                    <div class="form-group">
-                        <label for="Domicilio_fiscal">Domicilio Fiscal</label>
-                        <input type="text" id="Domicilio_fiscal" name="Domicilio_fiscal" class="form-input">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="Proviancia">Provincia</label>
-                        <input type="text" id="Proviancia" name="Proviancia" class="form-input">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="cp_localidad">CP / Localidad</label>
-                        <input type="text" id="cp_localidad" name="cp_localidad" class="form-input"
-                            placeholder="Código Postal">
-                    </div>
-                </div>
-
-                <div class="form-section" style="margin-top: 25px;">
-                    <div class="form-group" style="grid-column: 1 / -1;">
-                        <label for="Comentarios">Comentarios</label>
-                        <textarea id="Comentarios" name="Comentarios" class="form-textarea"
-                            placeholder="Información adicional, días de reparto, etc."></textarea>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn"
-                    style="width: 100%; padding: 15px; font-size: 16px; margin-top: 30px;">
-                    <i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Proveedor
-                </button>
-            </form>
-        </main>
-    </div>
-
-    <!-- MODAL DE ÉXITO -->
-    <div id="success-modal" class="success-modal-overlay">
-        <div class="success-modal-content">
-            <div class="success-modal-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-                    <path
-                        d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
-                </svg>
-            </div>
-            <h3>¡Proveedor Guardado!</h3>
-            <p>Los datos han sido registrados correctamente en el sistema.</p>
-            <button id="close-success-modal" class="btn">Cerrar</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { getToken, getApiBaseUrl, fetchWithAuth } from './auth.js';
-
-        document.addEventListener("DOMContentLoaded", () => {
-
-            const API_URL = `${getApiBaseUrl()}/api/proveedores`;
-            console.log('API URL Configurada:', API_URL);
-
-            // Cargar últimos proveedores al iniciar
-            loadRecentProviders();
-
-            async function loadRecentProviders() {
-                const grid = document.getElementById('recent-providers-grid');
-                try {
-                    const response = await fetchWithAuth('/api/proveedores'); // GET / (Top 10)
-                    if (!response.ok) throw new Error('Error cargando proveedores');
-
-                    const providers = await response.json();
-
-                    grid.innerHTML = '';
-                    if (providers.length === 0) {
-                        grid.innerHTML = '<p style="color:var(--text-secondary); grid-column:1/-1;">No hay proveedores registrados aún.</p>';
-                        return;
+                    async function loadProviderStats() {
+                        try {
+                            const response = await fetchWithAuth('/api/proveedores/count');
+                            if (response.ok) {
+                                const data = await response.json();
+                                document.getElementById('total-providers-count').textContent = data.count;
+                            }
+                        } catch (error) {
+                            console.error('Error cargando estadísticas:', error);
+                        }
                     }
 
-                    providers.forEach(p => {
-                        const card = document.createElement('div');
-                        card.className = 'provider-mini-card';
-                        card.innerHTML = `
+                    async function loadRecentProviders() {
+                        const grid = document.getElementById('recent-providers-grid');
+                        try {
+                            const response = await fetchWithAuth('/api/proveedores'); // GET / (Top 3)
+                            if (!response.ok) throw new Error('Error cargando proveedores');
+
+                            const providers = await response.json();
+
+                            grid.innerHTML = '';
+                            if (providers.length === 0) {
+                                grid.innerHTML = '<p style="color:var(--text-secondary); grid-column:1/-1;">No hay proveedores registrados aún.</p>';
+                                return;
+                            }
+
+                            providers.forEach(p => {
+                                const card = document.createElement('div');
+                                card.className = 'provider-mini-card';
+                                card.innerHTML = `
                             <div class="mini-card-header">
                                 <h4 class="mini-card-title">${p.nombre}</h4>
-                                <span class="mini-card-badge">Activo</span>
+                                <span class="mini-card-badge">Proveedor</span>
                             </div>
                             <div class="mini-card-info">
                                 <i class="fas fa-id-card"></i> ${p.cif || 'Sin CIF'}
@@ -828,180 +1055,173 @@
                                 <i class="fas fa-phone"></i> ${p.telefono || 'Sin teléfono'}
                             </div>
                             <div class="mini-card-info">
-                                <i class="fas fa-envelope"></i> ${p.Correo || 'Sin email'}
+                                <i class="fas fa-envelope"></i> ${p.email || 'Sin email'}
                             </div>
                         `;
-                        // Al hacer clic, mostramos la ficha grande (reutilizamos la lógica del buscador)
-                        card.addEventListener('click', () => {
-                            displayProvider(p);
-                            // Scroll suave hacia la ficha
-                            document.getElementById('provider-result').scrollIntoView({ behavior: 'smooth' });
-                        });
-                        grid.appendChild(card);
-                    });
+                                card.addEventListener('click', () => {
+                                    displayProvider(p);
+                                    document.getElementById('provider-result').scrollIntoView({ behavior: 'smooth' });
+                                });
+                                grid.appendChild(card);
+                            });
 
-                } catch (error) {
-                    console.error('Error:', error);
-                    grid.innerHTML = '<p style="color:var(--error-color); grid-column:1/-1;">Error al cargar los últimos proveedores.</p>';
-                }
-            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            grid.innerHTML = '<p style="color:var(--error-color); grid-column:1/-1;">Error al cargar los últimos proveedores.</p>';
+                        }
+                    }
 
-            /* -----------------------------------------------------
-           LÓGICA DEL BUSCADOR DE PROVEEDORES (AUTOCOMPLETADO)
-        ----------------------------------------------------- */
-            const searchBtn = document.getElementById('search-btn');
-            const searchInput = document.getElementById('search-input');
-            const resultCard = document.getElementById('provider-result');
-            const suggestionsList = document.getElementById('suggestions-list');
+                    /* -----------------------------------------------------
+                       LÓGICA DEL BUSCADOR (AUTOCOMPLETADO)
+                    ----------------------------------------------------- */
+                    const searchBtn = document.getElementById('search-btn');
+                    const searchInput = document.getElementById('search-input');
+                    const resultCard = document.getElementById('provider-result');
+                    const suggestionsList = document.getElementById('suggestions-list');
 
-            // Función debounce para no saturar el servidor
-            function debounce(func, wait) {
-                let timeout;
-                return function (...args) {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(this, args), wait);
-                };
-            }
+                    function debounce(func, wait) {
+                        let timeout;
+                        return function (...args) {
+                            clearTimeout(timeout);
+                            timeout = setTimeout(() => func.apply(this, args), wait);
+                        };
+                    }
 
-            // Función para mostrar un proveedor seleccionado
-            function displayProvider(data) {
-                document.getElementById('res-nombre').textContent = data.nombre || 'Sin nombre';
-                document.getElementById('res-cif').textContent = data.cif || '—';
-                document.getElementById('res-telefono').textContent = data.telefono || '—';
-                document.getElementById('res-contacto').textContent = data.Nombre_contacto || '—';
-                document.getElementById('res-email').textContent = data.Correo || '—';
+                    function displayProvider(data) {
+                        document.getElementById('res-nombre').textContent = data.nombre || 'Sin nombre';
+                        document.getElementById('res-cif').textContent = data.cif || '—';
+                        document.getElementById('res-telefono').textContent = data.telefono || '—';
+                        document.getElementById('res-contacto').textContent = data.Nombre_contacto || '—'; // Kept original field for consistency
+                        document.getElementById('res-email').textContent = data.Correo || '—'; // Kept original field for consistency
 
-                const webLink = document.getElementById('res-web');
-                if (data.Sitio_web_b2b) {
-                    webLink.textContent = data.Sitio_web_b2b;
-                    webLink.href = data.Sitio_web_b2b.startsWith('http') ? data.Sitio_web_b2b : `https://${data.Sitio_web_b2b}`;
-                    webLink.style.display = 'inline';
-                } else {
-                    webLink.style.display = 'none';
-                }
+                        // Update web link
+                        const webLink = document.getElementById('res-web');
+                        if (data.Sitio_web_b2b) { // Kept original field for consistency
+                            webLink.textContent = data.Sitio_web_b2b;
+                            webLink.href = data.Sitio_web_b2b.startsWith('http') ? data.Sitio_web_b2b : `https://${data.Sitio_web_b2b}`;
+                            webLink.style.display = 'inline';
+                        } else {
+                            webLink.style.display = 'none';
+                        }
 
-                document.getElementById('res-ubicacion').textContent = data.Domicilio_fiscal || '—';
-                document.getElementById('res-provincia').textContent = `${data.Proviancia || ''} ${data.cp_localidad || ''}`;
-                document.getElementById('res-comentarios').textContent = data.Comentarios || 'Sin comentarios adicionales.';
+                        // Update location fields
+                        document.getElementById('res-ubicacion').textContent = data.Domicilio_fiscal || '—'; // Kept original field for consistency
+                        document.getElementById('res-provincia').textContent = `${data.Proviancia || ''} ${data.cp_localidad || ''}`; // Kept original fields for consistency
+                        document.getElementById('res-comentarios').textContent = data.Comentarios || 'Sin comentarios adicionales.'; // Kept original field for consistency
 
-                resultCard.classList.add('active');
-                suggestionsList.classList.remove('active'); // Ocultar sugerencias
-            }
-
-            // Evento de escritura (input)
-            searchInput.addEventListener('input', debounce(async (e) => {
-                const query = e.target.value.trim();
-
-                if (query.length < 2) {
-                    suggestionsList.classList.remove('active');
-                    return;
-                }
-
-                try {
-                    const response = await fetchWithAuth(`/api/proveedores/search?q=${encodeURIComponent(query)}`);
-                    if (!response.ok) return;
-
-                    const results = await response.json();
-
-                    suggestionsList.innerHTML = '';
-
-                    if (results.length > 0) {
-                        results.forEach(provider => {
-                            const div = document.createElement('div');
-                            div.className = 'suggestion-item';
-                            div.innerHTML = `
-                            <span class="suggestion-name">${provider.nombre}</span>
-                            <span class="suggestion-info">${provider.cif || ''}</span>
-                        `;
-                            div.addEventListener('click', () => displayProvider(provider));
-                            suggestionsList.appendChild(div);
-                        });
-                        suggestionsList.classList.add('active');
-                    } else {
+                        resultCard.classList.add('active');
                         suggestionsList.classList.remove('active');
                     }
 
-                } catch (error) {
-                    console.error('Error buscando sugerencias:', error);
-                }
-            }, 300));
+                    searchInput.addEventListener('input', debounce(async (e) => {
+                        const query = e.target.value.trim();
 
-            // Ocultar sugerencias si se hace clic fuera
-            document.addEventListener('click', (e) => {
-                if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
-                    suggestionsList.classList.remove('active');
-                }
-            });
+                        if (query.length < 2) {
+                            suggestionsList.classList.remove('active');
+                            return;
+                        }
 
-            // Mantener funcionalidad del botón "Buscar" (opcional, busca el primero)
-            searchBtn.addEventListener('click', async () => {
-                const query = searchInput.value.trim();
-                if (!query) return;
+                        try {
+                            const response = await fetchWithAuth(`/api/proveedores/search?q=${encodeURIComponent(query)}`);
+                            if (!response.ok) return;
 
-                // ... (Lógica existente simplificada para reutilizar displayProvider si se quisiera)
-                // Por ahora dejamos que el autocompletado sea la vía principal
-                searchInput.dispatchEvent(new Event('input')); // Forzar búsqueda
-            });
+                            const results = await response.json();
 
+                            suggestionsList.innerHTML = '';
 
+                            if (results.length > 0) {
+                                results.forEach(provider => {
+                                    const div = document.createElement('div');
+                                    div.className = 'suggestion-item';
+                                    div.innerHTML = `
+                                <span class="suggestion-name">${provider.nombre}</span>
+                                <span class="suggestion-info">${provider.cif || ''}</span>
+                            `;
+                                    div.addEventListener('click', () => displayProvider(provider));
+                                    suggestionsList.appendChild(div);
+                                });
+                                suggestionsList.classList.add('active');
+                            } else {
+                                suggestionsList.classList.remove('active');
+                            }
 
-            /* -----------------------------------------------------
-               LÓGICA DE GUARDADO (FORMULARIO)
-            ----------------------------------------------------- */
-            const form = document.getElementById("provider-form");
-            const successModal = document.getElementById('success-modal');
-            const closeSuccessModalBtn = document.getElementById('close-success-modal');
+                        } catch (error) {
+                            console.error('Error buscando sugerencias:', error);
+                        }
+                    }, 300));
 
-            form.addEventListener("submit", async (event) => {
-                event.preventDefault();
-
-                const submitBtn = form.querySelector('button[type="submit"]');
-                const originalBtnText = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-
-                const formData = new FormData(form);
-                const data = Object.fromEntries(formData.entries());
-
-                console.log("Datos del proveedor capturados:", data);
-
-                try {
-                    const response = await fetchWithAuth('/api/proveedores', {
-                        method: 'POST',
-                        body: JSON.stringify(data)
+                    document.addEventListener('click', (e) => {
+                        if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+                            suggestionsList.classList.remove('active');
+                        }
                     });
 
-                    if (!response.ok) {
-                        const errorData = await response.json().catch(() => ({}));
-                        throw new Error(errorData.error || 'Error al guardar el proveedor');
+                    searchBtn.addEventListener('click', async () => {
+                        const query = searchInput.value.trim();
+                        if (!query) return;
+                        searchInput.dispatchEvent(new Event('input'));
+                    });
+
+
+                    /* -----------------------------------------------------
+                       LÓGICA DE GUARDADO (FORMULARIO)
+                    ----------------------------------------------------- */
+                    const form = document.getElementById("provider-form");
+                    const successModal = document.getElementById('success-modal');
+                    const closeSuccessModalBtn = document.getElementById('close-success-modal');
+
+                    form.addEventListener("submit", async (event) => {
+                        event.preventDefault();
+
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        const originalBtnText = submitBtn.innerHTML;
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+                        const formData = new FormData(form);
+                        const data = Object.fromEntries(formData.entries());
+
+                        console.log("Datos del proveedor capturados:", data);
+
+                        try {
+                            const response = await fetchWithAuth('/api/proveedores', {
+                                method: 'POST',
+                                body: JSON.stringify(data)
+                            });
+
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({}));
+                                throw new Error(errorData.error || 'Error al guardar el proveedor');
+                            }
+
+                            const result = await response.json();
+                            console.log('Proveedor guardado:', result);
+
+                            showSuccessModal();
+                            loadRecentProviders();
+                            loadProviderStats(); // Recargar estadísticas
+
+                        } catch (error) {
+                            console.error('Error al guardar:', error);
+                            alert(error.message || 'Error al guardar el proveedor. Inténtalo de nuevo.');
+                        } finally {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalBtnText;
+                        }
+                    });
+
+                    function showSuccessModal() {
+                        successModal.classList.add('show');
                     }
-
-                    const result = await response.json();
-                    console.log('Proveedor guardado:', result);
-
-                    showSuccessModal();
-                    loadRecentProviders(); // Recargar la lista
-
-                } catch (error) {
-                    console.error('Error al guardar:', error);
-                    alert(error.message || 'Error al guardar el proveedor. Inténtalo de nuevo.');
-                } finally {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                }
-            });
-
-            function showSuccessModal() {
-                successModal.classList.add('show');
-            }
-            function closeSuccessModal() {
-                successModal.classList.remove('show');
-                form.reset();
-                resultCard.classList.remove('active');
-            }
-            closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
-        });
-    </script>
+                    function closeSuccessModal() {
+                        successModal.classList.remove('show');
+                        form.reset();
+                        resultCard.classList.remove('active');
+                    }
+                    closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
+                });
+            </script>
 </body>
 
 </html>
+```

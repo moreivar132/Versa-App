@@ -91,7 +91,7 @@ router.post('/', verifyJWT, async (req, res) => {
     }
 });
 
-// GET /api/clientes - Obtener últimos 10 clientes
+// GET /api/clientes - Obtener últimos 3 clientes
 router.get('/', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     const isSuperAdmin = req.user.is_super_admin;
@@ -104,7 +104,7 @@ router.get('/', verifyJWT, async (req, res) => {
             query = `
                 SELECT * FROM clientefinal 
                 ORDER BY created_at DESC 
-                LIMIT 10
+                LIMIT 3
             `;
             params = [];
         } else {
@@ -112,7 +112,7 @@ router.get('/', verifyJWT, async (req, res) => {
                 SELECT * FROM clientefinal 
                 WHERE id_tenant = $1 
                 ORDER BY created_at DESC 
-                LIMIT 10
+                LIMIT 3
             `;
             params = [id_tenant];
         }
@@ -122,6 +122,31 @@ router.get('/', verifyJWT, async (req, res) => {
     } catch (error) {
         console.error('Error al obtener clientes:', error);
         res.status(500).json({ error: 'Error al obtener clientes' });
+    }
+});
+
+// GET /api/clientes/count - Obtener total de clientes
+router.get('/count', verifyJWT, async (req, res) => {
+    const id_tenant = req.user.id_tenant;
+    const isSuperAdmin = req.user.is_super_admin;
+
+    try {
+        let query;
+        let params;
+
+        if (isSuperAdmin) {
+            query = 'SELECT COUNT(*) FROM clientefinal';
+            params = [];
+        } else {
+            query = 'SELECT COUNT(*) FROM clientefinal WHERE id_tenant = $1';
+            params = [id_tenant];
+        }
+
+        const result = await pool.query(query, params);
+        res.json({ count: parseInt(result.rows[0].count) });
+    } catch (error) {
+        console.error('Error al contar clientes:', error);
+        res.status(500).json({ error: 'Error al contar clientes' });
     }
 });
 
