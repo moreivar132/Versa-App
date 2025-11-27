@@ -83,4 +83,30 @@ router.post('/', verifyJWT, async (req, res) => {
     }
 });
 
+// Búsqueda de proveedores
+router.get('/search', verifyJWT, async (req, res) => {
+    const { q } = req.query;
+    const id_tenant = req.user.id_tenant;
+
+    if (!q) {
+        return res.status(400).json({ error: 'Parámetro de búsqueda requerido' });
+    }
+
+    try {
+        const searchTerm = `%${q}%`;
+        const query = `
+            SELECT * FROM proveedor 
+            WHERE id_tenant = $1 
+            AND (nombre ILIKE $2 OR cif ILIKE $2 OR telefono ILIKE $2)
+            LIMIT 10
+        `;
+
+        const result = await pool.query(query, [id_tenant, searchTerm]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error en búsqueda de proveedores:', error);
+        res.status(500).json({ error: 'Error al buscar proveedores' });
+    }
+});
+
 module.exports = router;
