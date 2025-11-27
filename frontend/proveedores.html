@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Proveedores | Versa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-indigo-600 px-8 py-6">
+            <h1 class="text-2xl font-bold text-white">Registrar Nuevo Proveedor</h1>
+            <p class="text-indigo-100 mt-1">Ingrese los datos del proveedor para su organización.</p>
+        </div>
+
+        <!-- Formulario -->
+        <form id="proveedorForm" class="p-8 space-y-6">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Nombre -->
+                <div class="col-span-2">
+                    <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre / Razón Social
+                        *</label>
+                    <input type="text" id="nombre" name="nombre" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        placeholder="Ej. Repuestos Generales S.A.">
+                </div>
+
+                <!-- RUC/DNI -->
+                <div>
+                    <label for="ruc_dni" class="block text-sm font-medium text-gray-700 mb-1">RUC / DNI *</label>
+                    <input type="text" id="ruc_dni" name="ruc_dni" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        placeholder="Ej. 20123456789">
+                </div>
+
+                <!-- Teléfono -->
+                <div>
+                    <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                    <input type="tel" id="telefono" name="telefono"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        placeholder="Ej. +51 999 999 999">
+                </div>
+
+                <!-- Email -->
+                <div class="col-span-2 md:col-span-1">
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                    <input type="email" id="email" name="email"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        placeholder="contacto@proveedor.com">
+                </div>
+
+                <!-- Dirección -->
+                <div class="col-span-2">
+                    <label for="direccion" class="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                    <textarea id="direccion" name="direccion" rows="3"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                        placeholder="Av. Principal 123, Lima"></textarea>
+                </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="flex items-center justify-end gap-4 pt-4 border-t border-gray-100">
+                <button type="button" onclick="window.history.back()"
+                    class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                    Cancelar
+                </button>
+                <button type="submit" id="btnSubmit"
+                    class="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 shadow-md transition-all transform hover:scale-[1.02]">
+                    Registrar Proveedor
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Ajustar URL según entorno (asumiendo localhost:3000 para dev)
+        const API_URL = 'http://localhost:3000/api/proveedores';
+
+        document.getElementById('proveedorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const btnSubmit = document.getElementById('btnSubmit');
+            const originalText = btnSubmit.innerText;
+
+            // UI Loading state
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = 'Guardando...';
+            btnSubmit.classList.add('opacity-75', 'cursor-not-allowed');
+
+            // Recopilar datos
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            // Obtener token
+            const token = localStorage.getItem('token');
+
+            if (!token) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No autenticado',
+                    text: 'Por favor, inicia sesión nuevamente.',
+                    confirmButtonColor: '#4F46E5'
+                });
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = originalText;
+                btnSubmit.classList.remove('opacity-75', 'cursor-not-allowed');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: '¡Éxito!',
+                        text: 'Proveedor registrado correctamente.',
+                        confirmButtonColor: '#4F46E5',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    e.target.reset();
+                } else {
+                    throw new Error(result.error || 'Error desconocido al guardar');
+                }
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message,
+                    confirmButtonColor: '#EF4444'
+                });
+            } finally {
+                // Reset UI
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = originalText;
+                btnSubmit.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        });
+    </script>
+</body>
+
+</html>
