@@ -135,6 +135,72 @@ router.get('/count', verifyJWT, async (req, res) => {
     }
 });
 
+// PUT /api/proveedores/:id - Actualizar un proveedor existente
+router.put('/:id', verifyJWT, async (req, res) => {
+    const { id } = req.params;
+    const { nombre, cif, telefono, Correo, Domicilio_fiscal, Comentarios, Nombre_contacto, Sitio_web_b2b, Proviancia, cp_localidad } = req.body;
+
+    if (!nombre || !cif) {
+        return res.status(400).json({
+            ok: false,
+            error: 'Nombre y CIF/NIF son obligatorios.'
+        });
+    }
+
+    const id_tenant = req.user.id_tenant;
+
+    try {
+        // Verificar que el proveedor pertenezca al tenant
+        const checkQuery = 'SELECT id FROM proveedor WHERE id = $1 AND id_tenant = $2';
+        const checkResult = await pool.query(checkQuery, [id, id_tenant]);
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({
+                ok: false,
+                error: 'Proveedor no encontrado o no autorizado.'
+            });
+        }
+
+        // Actualizar proveedor
+        const updateQuery = `
+            UPDATE proveedor
+            SET nombre = $1, cif = $2, telefono = $3, "Correo" = $4, "Domicilio_fiscal" = $5, 
+                "Comentarios" = $6, "Nombre_contacto" = $7, "Sitio_web_b2b" = $8, 
+                "Proviancia" = $9, cp_localidad = $10
+            WHERE id = $11 AND id_tenant = $12
+            RETURNING *
+        `;
+
+        const result = await pool.query(updateQuery, [
+            nombre,
+            cif,
+            telefono || null,
+            Correo || null,
+            Domicilio_fiscal || null,
+            Comentarios || null,
+            Nombre_contacto || null,
+            Sitio_web_b2b || null,
+            Proviancia || null,
+            cp_localidad || null,
+            id,
+            id_tenant
+        ]);
+
+        res.json({
+            ok: true,
+            message: 'Proveedor actualizado exitosamente',
+            proveedor: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error al actualizar proveedor:', error);
+        res.status(500).json({
+            ok: false,
+            error: 'Error interno del servidor al actualizar el proveedor.'
+        });
+    }
+});
+
 // Búsqueda de proveedores
 router.get('/search', verifyJWT, async (req, res) => {
     const { q } = req.query;
