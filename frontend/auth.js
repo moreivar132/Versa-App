@@ -1,21 +1,11 @@
 const SESSION_KEY = 'versa_session_v1';
 
 export function getApiBaseUrl() {
-  // Si hay variable de entorno (ej. en Netlify/Railway), usarla
-  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
-
-  // En desarrollo local, asumir backend en puerto 3000
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:3000';
-  }
-
-  // En producción (si no hay variable), usar path relativo (asume que el backend sirve el frontend)
-  return '';
+  // FORZADO: Usar siempre el backend de Railway para desarrollo y producción
+  return 'https://versa-app-dev.up.railway.app';
 }
 
 const API_BASE_URL = getApiBaseUrl();
-
-
 
 export function getSession() {
   try {
