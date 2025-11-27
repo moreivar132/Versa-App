@@ -58,10 +58,20 @@
     </style>
 </head>
 
-<body class="font-display bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 overflow-hidden">
-    <div class="flex h-screen relative">
-        <!-- Mobile Overlay -->
-        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity opacity-0">
+<body>
+    <!-- Toast de notificaciones -->
+    <div id="toast" class="toast"></div>
+
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="usuarios">👥 Usuarios</button>
+                <button class="tab-button" data-tab="roles">🎭 Roles</button>
+                <button class="tab-button" data-tab="permisos">🔐 Permisos</button>
+                <button class="tab-button" data-tab="tenants">🏢 Tenants</button>
+                <button class="tab-button" data-tab="sucursales">📍 Sucursales</button>
+            </div>
         </div>
 
         <!-- Sidebar (Consistent with Index) -->

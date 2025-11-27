@@ -79,19 +79,23 @@
           </a>
         </nav>
       </div>
-      <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
-        <div class="flex items-center">
-          <div
-            class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm mr-3 shadow-md">
-            <span>IM</span>
-          </div>
-          <div>
-            <p class="font-semibold text-sm text-gray-800 dark:text-gray-100">Iván Moreno</p>
-            <p class="text-xs text-muted-light dark:text-muted-dark">Administrador</p>
-          </div>
-        </div>
-        <a class="text-muted-light dark:text-muted-dark hover:text-primary transition-colors" href="login.html">
-          <span class="material-symbols-outlined">logout</span>
+      <nav id="mainNavigation">
+        <span class="nav__title">Panel</span>
+        <a class="navlink" data-requires="admin" href="#dashboard">
+          <span aria-hidden="true">📊</span>
+          <span>Dashboard ejecutivo</span>
+        </a>
+        <a class="navlink" data-requires="admin" href="admin-accesos.html">
+          <span aria-hidden="true">🛡️</span>
+          <span>Administración de accesos</span>
+        </a>
+        <a class="navlink" href="#facturas">
+          <span aria-hidden="true">🧾</span>
+          <span>Gestión de facturas</span>
+        </a>
+        <a class="navlink" href="manager-taller.html">
+          <span aria-hidden="true">🛠️</span>
+          <span>MANAGER TALLER</span>
         </a>
       </div>
     </aside>
