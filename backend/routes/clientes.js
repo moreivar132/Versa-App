@@ -150,6 +150,86 @@ router.get('/count', verifyJWT, async (req, res) => {
     }
 });
 
+// PUT /api/clientes/:id - Actualizar un cliente existente
+router.put('/:id', verifyJWT, async (req, res) => {
+    const { id } = req.params;
+    const {
+        nombre,
+        tipo_documento,
+        documento,
+        origen_cliente,
+        telefono,
+        telefono_alternativo,
+        email,
+        direccion,
+        localidad,
+        cp_cliente,
+        comentario
+    } = req.body;
+
+    // Validación básica
+    if (!nombre || !documento || !telefono) {
+        return res.status(400).json({
+            ok: false,
+            error: 'Nombre, Documento y Teléfono son obligatorios.'
+        });
+    }
+
+    const id_tenant = req.user.id_tenant;
+
+    try {
+        // Verificar que el cliente pertenezca al tenant
+        const checkQuery = 'SELECT id FROM clientefinal WHERE id = $1 AND id_tenant = $2';
+        const checkResult = await pool.query(checkQuery, [id, id_tenant]);
+
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({
+                ok: false,
+                error: 'Cliente no encontrado o no autorizado.'
+            });
+        }
+
+        // Actualizar cliente
+        const updateQuery = `
+            UPDATE clientefinal
+            SET nombre = $1, tipo_documento = $2, documento = $3, origen_cliente = $4, 
+                telefono = $5, telefono_alternativo = $6, email = $7, direccion = $8, 
+                localidad = $9, cp_cliente = $10, comentario = $11
+            WHERE id = $12 AND id_tenant = $13
+            RETURNING *
+        `;
+
+        const result = await pool.query(updateQuery, [
+            nombre,
+            tipo_documento || null,
+            documento,
+            origen_cliente || null,
+            telefono,
+            telefono_alternativo || null,
+            email || null,
+            direccion || null,
+            localidad || null,
+            cp_cliente || null,
+            comentario || null,
+            id,
+            id_tenant
+        ]);
+
+        res.json({
+            ok: true,
+            message: 'Cliente actualizado exitosamente',
+            cliente: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error al actualizar cliente:', error);
+        res.status(500).json({
+            ok: false,
+            error: 'Error interno del servidor al actualizar el cliente.'
+        });
+    }
+});
+
 // GET /api/clientes/search - Buscar clientes
 router.get('/search', verifyJWT, async (req, res) => {
     const { q } = req.query;

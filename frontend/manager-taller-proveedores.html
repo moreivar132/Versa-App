@@ -796,9 +796,8 @@
                                         <span class="badge"
                                             style="background:var(--brand-orange); color: black; padding: 4px 10px; border-radius:4px; font-size:12px; font-weight:700;">Proveedor</span>
                                     </div>
-                                    <button class="btn"
-                                        style="padding: 8px 16px; font-size: 14px; background-color: #333; border: 1px solid #555;"
-                                        onclick="alert('Funcionalidad de edición en desarrollo')">
+                                    <button id="edit-provider-btn" class="btn"
+                                        style="padding: 8px 16px; font-size: 14px; background-color: #333; border: 1px solid #555;">
                                         <i class="fas fa-edit mr-2"></i> Editar
                                     </button>
                                 </div>
@@ -863,6 +862,7 @@
                             <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 0.9em;">Los campos
                                 marcados con
                                 * son obligatorios.</p>
+                            <input type="hidden" id="proveedor_id" name="id">
 
                             <div class="form-section">
                                 <!-- CAMPOS OBLIGATORIOS -->
@@ -1109,8 +1109,35 @@
                         document.getElementById('res-provincia').textContent = `${data.Proviancia || ''} ${data.cp_localidad || ''}`; // Kept original fields for consistency
                         document.getElementById('res-comentarios').textContent = data.Comentarios || 'Sin comentarios adicionales.'; // Kept original field for consistency
 
+                        // Configurar botón de editar
+                        const editBtn = document.getElementById('edit-provider-btn');
+                        editBtn.onclick = () => editProvider(data);
+
                         resultCard.classList.add('active');
                         suggestionsList.classList.remove('active');
+                    }
+
+                    function editProvider(data) {
+                        // Rellenar formulario
+                        document.getElementById('proveedor_id').value = data.id;
+                        document.getElementById('nombre').value = data.nombre || '';
+                        document.getElementById('cif').value = data.cif || '';
+                        document.getElementById('Nombre_contacto').value = data.Nombre_contacto || '';
+                        document.getElementById('telefono').value = data.telefono || '';
+                        document.getElementById('Correo').value = data.Correo || '';
+                        document.getElementById('Sitio_web_b2b').value = data.Sitio_web_b2b || '';
+                        document.getElementById('Domicilio_fiscal').value = data.Domicilio_fiscal || '';
+                        document.getElementById('Proviancia').value = data.Proviancia || '';
+                        document.getElementById('cp_localidad').value = data.cp_localidad || '';
+                        document.getElementById('Comentarios').value = data.Comentarios || '';
+
+                        // Cambiar título y botón
+                        document.querySelector('.form-main-title').textContent = 'Editar Proveedor';
+                        const submitBtn = document.querySelector('#provider-form button[type="submit"]');
+                        submitBtn.innerHTML = '<i class="fas fa-sync-alt" style="margin-right: 10px;"></i> Actualizar Proveedor';
+
+                        // Scroll al formulario
+                        document.getElementById('provider-form').scrollIntoView({ behavior: 'smooth' });
                     }
 
                     searchInput.addEventListener('input', debounce(async (e) => {
@@ -1180,12 +1207,21 @@
 
                         const formData = new FormData(form);
                         const data = Object.fromEntries(formData.entries());
+                        const providerId = document.getElementById('proveedor_id').value;
 
                         console.log("Datos del proveedor capturados:", data);
 
                         try {
-                            const response = await fetchWithAuth('/api/proveedores', {
-                                method: 'POST',
+                            let url = '/api/proveedores';
+                            let method = 'POST';
+
+                            if (providerId) {
+                                url = `/api/proveedores/${providerId}`;
+                                method = 'PUT';
+                            }
+
+                            const response = await fetchWithAuth(url, {
+                                method: method,
                                 body: JSON.stringify(data)
                             });
 
@@ -1216,6 +1252,9 @@
                     function closeSuccessModal() {
                         successModal.classList.remove('show');
                         form.reset();
+                        document.getElementById('proveedor_id').value = ''; // Limpiar ID
+                        document.querySelector('.form-main-title').textContent = 'Registro de Nuevo Proveedor'; // Restaurar título
+                        document.querySelector('#provider-form button[type="submit"]').innerHTML = '<i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Proveedor'; // Restaurar botón
                         resultCard.classList.remove('active');
                     }
                     closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
