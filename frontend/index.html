@@ -1,367 +1,226 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full">
+<html class="dark" lang="es">
 
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description"
-    content="Versa Finanzas: portal corporativo para operaciones financieras, tickets y reportes con experiencia premium." />
-  <title>Versa Finanzas | Portal Corporativo</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet" />
-  <link rel="stylesheet" href="./theme.css" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Versa Finanzas - Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#ea580c", // A vibrant orange from the Tailwind palette
+            "background-light": "#f1f5f9", // slate-100
+            "background-dark": "#0f172a", // slate-900
+            "surface-light": "#ffffff", // white
+            "surface-dark": "#1e293b", // slate-800
+            "muted-light": "#64748b", // slate-500
+            "muted-dark": "#94a3b8", // slate-400
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.75rem", // 12px
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
 </head>
 
-<body class="min-h-screen bg-[var(--bg)] text-[var(--text)] font-['Montserrat',sans-serif]">
-  <a class="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:rounded-lg focus:bg-white/90 focus:text-black"
-    href="#contenido-principal">
-    Ir al contenido principal
-  </a>
+<body class="font-display bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 overflow-hidden">
+  <div class="flex h-screen relative">
+    <!-- Mobile Overlay -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity opacity-0">
+    </div>
 
-  <div class="app-shell">
-    <aside class="sidebar" aria-label="Menú principal">
-      <div class="sidebar__header">
-        <div class="brand-lockup">
-          <span class="brand-lockup__mark" aria-hidden="true">
-            <img src="assets/logo.png" alt="Logo de Versa Finanzas" />
-          </span>
-          <div class="brand-lockup__copy">
-            <span class="brand-lockup__title">Versa Finanzas</span>
-            <span class="brand-lockup__subtitle">Portal corporativo</span>
+    <!-- Sidebar -->
+    <aside id="sidebar"
+      class="fixed inset-y-0 left-0 z-50 w-72 bg-surface-light dark:bg-surface-dark p-6 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 shadow-2xl md:shadow-none">
+      <div>
+        <div class="flex items-center justify-between mb-10">
+          <span class="text-xl font-bold uppercase text-muted-light dark:text-muted-dark tracking-widest">Panel</span>
+          <button id="close-sidebar" class="md:hidden text-muted-light dark:text-muted-dark">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <nav class="space-y-3">
+          <a class="flex items-center p-3 rounded-lg text-white bg-primary shadow-lg transition-transform hover:scale-[1.02]"
+            href="index.html">
+            <span class="material-symbols-outlined mr-4">bar_chart</span>
+            <span class="font-semibold">Dashboard ejecutivo</span>
+          </a>
+          <a class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+            href="#">
+            <span class="material-symbols-outlined mr-4">shield_person</span>
+            <span class="font-medium">Administración de accesos</span>
+          </a>
+          <a class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+            href="#">
+            <span class="material-symbols-outlined mr-4">receipt_long</span>
+            <span class="font-medium">Gestión de facturas</span>
+          </a>
+          <a class="flex items-center py-3 px-3 text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary transition-colors duration-200 group"
+            href="manager-taller-ordenes.html">
+            <span
+              class="material-symbols-outlined mr-4 text-muted-light dark:text-muted-dark group-hover:text-primary transition-colors duration-200">build</span>
+            <span class="font-medium uppercase tracking-wider text-sm">Manager Taller</span>
+          </a>
+        </nav>
+      </div>
+      <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div class="flex items-center">
+          <div
+            class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm mr-3 shadow-md">
+            <span>IM</span>
+          </div>
+          <div>
+            <p class="font-semibold text-sm text-gray-800 dark:text-gray-100">Iván Moreno</p>
+            <p class="text-xs text-muted-light dark:text-muted-dark">Administrador</p>
           </div>
         </div>
-        <p class="sidebar__quote">Navega con precisión cada flujo económico y alinea a tu equipo con métricas
-          accionables.</p>
+        <a class="text-muted-light dark:text-muted-dark hover:text-primary transition-colors" href="login.html">
+          <span class="material-symbols-outlined">logout</span>
+        </a>
       </div>
-      <nav id="mainNavigation">
-        <span class="nav__title">Panel</span>
-        <a class="navlink" data-requires="admin" href="#dashboard">
-          <span aria-hidden="true">📊</span>
-          <span>Dashboard ejecutivo</span>
-        </a>
-        <a class="navlink" data-requires="admin" href="#admin">
-          <span aria-hidden="true">🛡️</span>
-          <span>Administración de accesos</span>
-        </a>
-        <a class="navlink" href="#facturas">
-          <span aria-hidden="true">🧾</span>
-          <span>Gestión de facturas</span>
-        </a>
-        <a class="navlink" href="manager-taller.html">
-          <span aria-hidden="true">🛠️</span>
-          <span>MANAGER TALLER</span>
-        </a>
-      </nav>
-      <footer>© <span id="year"></span> Versa Labs. Inteligencia financiera en tiempo real.</footer>
     </aside>
 
-    <section class="main" id="contenido-principal">
-      <header class="topbar">
-        <div class="topbar__brand">
-          <button id="mobileMenuBtn" class="mobile-nav-toggle" type="button" aria-expanded="false"
-            aria-controls="mobileNavPanel">
-            <span aria-hidden="true">☰</span>
-            <span class="sr-only">Abrir menú principal</span>
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto w-full">
+      <header class="flex items-center justify-between mb-8">
+        <div class="flex items-center">
+          <button id="mobile-menu-btn"
+            class="mr-4 text-muted-light dark:text-muted-dark md:hidden hover:text-primary transition-colors">
+            <span class="material-symbols-outlined">menu</span>
           </button>
-          <div class="brand-chip" aria-hidden="true">
-            <span class="brand-chip__mark">V</span>
-            <div class="brand-chip__copy">
-              <span class="brand-chip__title">Panel Versa</span>
-              <span class="brand-chip__subtitle">Seguimiento integral</span>
-            </div>
-          </div>
-          <h1 class="sr-only">Versa Finanzas · Portal corporativo</h1>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard General</h1>
         </div>
-        <div class="topbar__meta" aria-live="polite">
-          <span id="userInfo" class="topbar__user"></span>
-          <button id="btnLogout" class="btn btn-dark btn-sm">Salir</button>
-        </div>
-      </header>
-
-      <main id="viewContainer" class="flex-1 space-y-6 p-6">
-        <!-- Vista: Dashboard (solo administradores) -->
-        <section id="dashboard" class="surface space-y-6" data-view="dashboard" data-requires="admin"
-          aria-labelledby="dashboard-title">
-          <div class="section-title">
-            <div>
-              <h2 id="dashboard-title" class="text-2xl font-semibold">Visión general</h2>
-              <p class="section-title__description">Resumen ejecutivo de rendimiento, liquidez y foco operativo.</p>
-            </div>
-            <span class="badge badge--accent">Actualizado cada 15 min</span>
-          </div>
-
-          <div class="stat-grid">
-            <article class="stat-card">
-              <header class="stat-card__label">Ingresos (mes)</header>
-              <div class="stat-card__value" data-dashboard="ingresos">—</div>
-              <p class="stat-card__trend" data-variant="up"><span aria-hidden="true">▲</span> +12.4% vs mes anterior</p>
-            </article>
-            <article class="stat-card">
-              <header class="stat-card__label">Egresos (mes)</header>
-              <div class="stat-card__value" data-dashboard="egresos">—</div>
-              <p class="stat-card__trend" data-variant="down"><span aria-hidden="true">▼</span> -4.8% vs presupuesto</p>
-            </article>
-            <article class="stat-card">
-              <header class="stat-card__label">IVA estimado</header>
-              <div class="stat-card__value" data-dashboard="iva">—</div>
-              <p class="stat-card__trend">Pendiente de conciliación</p>
-            </article>
-            <article class="stat-card">
-              <header class="stat-card__label">Facturas por aprobar</header>
-              <div class="stat-card__value" data-dashboard="pendientes">18</div>
-              <p class="stat-card__trend" data-variant="down"><span aria-hidden="true">▼</span> -3 vs semana anterior
-              </p>
-            </article>
-          </div>
-
-          <div class="summary">
-            <article class="summary-card">
-              <div class="summary-card__header">
-                <span>Alertas de auditoría</span>
-                <span class="status" data-variant="pending">2 pendientes</span>
-              </div>
-              <p class="helper-text">Identifica movimientos con discrepancias impositivas y acelera el cierre contable.
-              </p>
-              <button class="btn btn-ghost btn-sm" type="button">Revisar alertas</button>
-            </article>
-            <article class="summary-card">
-              <div class="summary-card__header">
-                <span>Último lote procesado</span>
-                <time datetime="2024-05-12">12 mayo 2024</time>
-              </div>
-              <strong>54 documentos</strong>
-              <p class="helper-text">34 ingresos · 20 egresos</p>
-            </article>
-          </div>
-
-          <div class="surface-2">
-            <div class="section-title">
-              <div>
-                <h3 class="text-lg font-semibold">Actividad reciente</h3>
-                <p class="section-title__description">Seguimiento de los envíos clave y su estado operativo.</p>
-              </div>
-            </div>
-            <div class="timeline">
-              <article class="timeline__item">
-                <header class="timeline__meta">Hace 10 minutos · Taller</header>
-                <p>Se cargó un lote de 8 facturas (egreso) para proveedores de mantenimiento.</p>
-                <span class="status" data-variant="success">Procesado</span>
-              </article>
-              <article class="timeline__item">
-                <header class="timeline__meta">Hace 1 hora · Flota</header>
-                <p>Factura pendiente de validación por diferencia en IVA.</p>
-                <span class="status" data-variant="pending">En revisión</span>
-              </article>
-              <article class="timeline__item">
-                <header class="timeline__meta">Ayer · Bicicletas</header>
-                <p>Ticket rechazado por datos incompletos.</p>
-                <span class="status" data-variant="error">Rechazado</span>
-              </article>
-            </div>
-          </div>
-
-          <article class="surface space-y-4" aria-labelledby="looker-dashboard-title">
-            <header class="section-title">
-              <div>
-                <h3 id="looker-dashboard-title" class="text-lg font-semibold">Dashboard interactivo</h3>
-                <p class="section-title__description">Explora métricas en vivo de Looker Studio con filtros avanzados.
-                </p>
-              </div>
-              <span class="badge badge--accent">Looker Studio</span>
-            </header>
-            <div class="dashboard-wrapper">
-              <div class="dashboard-hint">
-                <div class="dashboard-hint__copy">
-                  <strong>Recomendación UX</strong>
-                  <span>Activa el modo pantalla completa para presentar indicadores en salas de comité o revisarlos en
-                    detalle.</span>
-                  <div>
-                    <p id="intake-question" class="intake-mode__question">¿La captura incluye la factura?</p>
-                    <span class="helper-text">Elige si subirás los archivos o si registrarás los datos
-                      manualmente.</span>
-                  </div>
-                  <div class="segmented-control" role="tablist" aria-label="Modo de carga">
-                    <button type="button" class="segmented-control__item is-active" role="tab" aria-selected="true"
-                      data-intake-mode="files">
-                      Sí, adjuntar archivo
-                    </button>
-                    <button type="button" class="segmented-control__item" role="tab" aria-selected="false"
-                      data-intake-mode="manual">
-                      No, introducir datos
-                    </button>
-                  </div>
-                </div>
-
-                <div class="upload-stack" data-intake-section="files">
-                  <div class="upload-stack__header">
-                    <div>
-                      <h3>Adjuntar factura</h3>
-                      <p class="helper-text">Compatible con PDF, JPG, PNG y HEIC. Puedes añadir varios archivos a la
-                        vez.
-                      </p>
-                    </div>
-                    <div class="upload-actions">
-                      <label class="btn btn-light" for="cameraInput" role="button" tabindex="0">📷 Tomar foto</label>
-                      <label class="btn btn-dark" for="fileInput" role="button" tabindex="0">⤴️ Subir archivos</label>
-                      <label class="btn btn-wire" for="csvInput" role="button" tabindex="0">🧾 Importar CSV</label>
-                    </div>
-                  </div>
-                  <div id="dropzone" class="dropzone dropzone--quiet" role="region" aria-live="polite">
-                    <div class="dropzone__icon" aria-hidden="true">☁️</div>
-                    <strong>Arrastra el archivo aquí</strong>
-                    <p class="helper-text">También puedes pulsar en “Tomar foto” o “Subir archivos”.</p>
-                  </div>
-                </div>
-
-                <section class="csv-import" data-intake-section="files" aria-labelledby="csvImportTitle">
-                  <div class="csv-import__header">
-                    <div>
-                      <h3 id="csvImportTitle">Importar metadatos vía CSV</h3>
-                      <p class="helper-text">
-                        Carga un archivo con columnas como descripción, área, naturaleza, método de pago, categoría,
-                        fecha,
-                        subtotal,
-                        IVA, total y notas.
-                      </p>
-                    </div>
-                    <div class="csv-import__actions">
-                      <button id="csvClear" type="button" class="btn btn-ghost btn-sm" hidden>Eliminar CSV</button>
-                    </div>
-                  </div>
-                  <p id="csvStatus" class="helper-text" role="status" aria-live="polite">No hay CSV importado todavía.
-                  </p>
-                  <div id="csvAlerts" class="csv-import__alerts" aria-live="polite"></div>
-                  <div id="csvPreview" class="csv-preview" hidden></div>
-                </section>
-
-                <div class="file-list" aria-live="polite" data-intake-section="files">
-                  <p class="helper-text" id="fileListEmpty">No hay archivos añadidos todavía.</p>
-                  <div id="fileList" class="file-grid"></div>
-                </div>
-          </article>
-
-          <article id="manualEntry" class="surface invoice-meta" aria-labelledby="metadata-title" hidden>
-            <header class="invoice-meta__header">
-              <div>
-                <p class="eyebrow">Metadatos del envío</p>
-                <h3 id="metadata-title">Aplica la misma información al lote</h3>
-              </div>
-              <span class="badge badge--subtle">Opcional salvo descripción</span>
-            </header>
-            <form id="metaForm" class="form-grid" autocomplete="off">
-              <label class="field">
-                <span>Descripción del lote <span class="text-red-500">*</span></span>
-                <textarea name="descripcion" rows="3" class="input w-full mt-1"
-                  placeholder="Ej. Facturas de mantenimiento preventivo de la flota" required></textarea>
-              </label>
-              <label class="field">
-                <span>Área</span>
-                <select name="area" class="input w-full" required>
-                  <option value="" selected disabled>Selecciona área</option>
-                  <option value="Flota">Flota</option>
-                  <option value="Taller">Taller</option>
-                  <option value="Bicicletas">Bicicletas</option>
-                </select>
-              </label>
-              <fieldset class="field" style="grid-column: 1 / -1">
-                <span>Naturaleza</span>
-                <div class="radio-group">
-                  <label>
-                    <input class="accent-[var(--accent)]" type="radio" name="naturaleza" value="Ingreso" />
-                    Ingreso
-                  </label>
-                  <label>
-                    <input class="accent-[var(--accent)]" type="radio" name="naturaleza" value="Egreso" checked />
-                    Egreso
-                  </label>
-                </div>
-              </fieldset>
-              <label class="field" style="grid-column: 1 / -1">
-                <span>Notas</span>
-                <textarea name="notas" rows="3" class="input w-full"
-                  placeholder="Observaciones, centros de coste, referencias internas..."></textarea>
-              </label>
-            </form>
-          </article>
-
-          <article class="surface invoice-submit" aria-labelledby="submit-title">
-            <div class="invoice-submit__header">
-              <div>
-                <p class="eyebrow">Revisión final</p>
-                <h3 id="submit-title">Envía el lote cuando esté listo</h3>
-              </div>
-              <label class="inline-flex items-center gap-2 text-sm text-[var(--muted)]">
-                <input id="chkBorrado" type="checkbox" class="accent-[var(--accent)]" />
-                Borrar archivos locales tras enviar
-              </label>
-            </div>
-            <div class="invoice-submit__actions">
-              <button type="button" class="btn btn-ghost">Guardar borrador</button>
-              <button id="btnEnviar" type="button" class="btn btn-brand">Enviar ahora</button>
-            </div>
-            <p id="status" class="helper-text" role="status" aria-live="polite">Añade tus archivos para comenzar.</p>
-          </article>
-        </section>
-      </main>
-    </section>
-  </div>
-
-  <div id="mobileNavOverlay" class="mobile-nav-overlay" aria-hidden="true">
-    <div id="mobileNavPanel" class="mobile-nav" role="dialog" aria-modal="true" aria-labelledby="mobileNavTitle"
-      tabindex="-1">
-      <header class="mobile-nav__header">
-        <div class="mobile-nav__brand">
-          <p class="mobile-nav__eyebrow">Versa Finanzas</p>
-          <h2 id="mobileNavTitle">Menú principal</h2>
-          <p id="mobileUserInfo" class="mobile-nav__user"></p>
-        </div>
-        <button id="mobileNavClose" class="mobile-nav__close" type="button" aria-label="Cerrar menú">
-          ✕
+        <button class="text-muted-light dark:text-muted-dark hover:text-primary transition-colors">
+          <span class="material-symbols-outlined">account_circle</span>
         </button>
       </header>
-      <nav class="mobile-nav__body" aria-label="Navegación móvil">
-        <a class="navlink" data-requires="admin" href="#dashboard">
-          <span aria-hidden="true">📊</span>
-          <span>Dashboard ejecutivo</span>
-        </a>
-        <a class="navlink" data-requires="admin" href="#admin">
-          <span aria-hidden="true">🛡️</span>
-          <span>Administración de accesos</span>
-        </a>
-        <a class="navlink" href="#facturas">
-          <span aria-hidden="true">🧾</span>
-          <span>Gestión de facturas</span>
-        </a>
-        <a class="navlink" href="manager-taller.html">
-          <span aria-hidden="true">🛠️</span>
-          <span>MANAGER TALLER</span>
-        </a>
-      </nav>
-      <div class="mobile-nav__footer">
-        <p class="mobile-nav__hint">Usa el menú para navegar entre vistas y gestionar tus envíos.</p>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center text-primary mb-2">
+            <span class="material-symbols-outlined mr-2">payments</span>
+            <h3 class="font-medium text-sm text-muted-light dark:text-muted-dark">Ingresos (Mes)</h3>
+          </div>
+          <p class="text-4xl font-bold text-gray-900 dark:text-white">€ 24,500</p>
+        </div>
+        <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center text-primary mb-2">
+            <span class="material-symbols-outlined mr-2">build_circle</span>
+            <h3 class="font-medium text-sm text-muted-light dark:text-muted-dark">Órdenes Activas</h3>
+          </div>
+          <p class="text-4xl font-bold text-gray-900 dark:text-white">12</p>
+        </div>
+        <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+          <div class="flex items-center text-primary mb-2">
+            <span class="material-symbols-outlined mr-2">group_add</span>
+            <h3 class="font-medium text-sm text-muted-light dark:text-muted-dark">Clientes Nuevos</h3>
+          </div>
+          <p class="text-4xl font-bold text-gray-900 dark:text-white">8</p>
+        </div>
       </div>
-    </div>
+
+      <!-- Search -->
+      <div class="relative mb-8">
+        <span
+          class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-muted-light dark:text-muted-dark">search</span>
+        <input
+          class="w-full bg-surface-light dark:bg-surface-dark border-none rounded-lg pl-12 pr-4 py-3 text-gray-800 dark:text-gray-200 placeholder-muted-light dark:placeholder-muted-dark focus:ring-2 focus:ring-primary shadow-sm"
+          placeholder="Buscar órdenes, clientes o facturas..." type="text" />
+      </div>
+
+      <!-- Recent Activity -->
+      <div>
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Actividad Reciente</h2>
+        <div class="space-y-4">
+          <div
+            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg flex items-center justify-between shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center mr-4">
+                <span class="material-symbols-outlined text-primary">directions_car</span>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900 dark:text-white">Orden #1024 - BMW X5</p>
+                <p class="text-sm text-muted-light dark:text-muted-dark">Estado: En reparación</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">chevron_right</span>
+          </div>
+          <div
+            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg flex items-center justify-between shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center mr-4">
+                <span class="material-symbols-outlined text-primary">person_add</span>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900 dark:text-white">Nuevo Cliente: María García</p>
+                <p class="text-sm text-muted-light dark:text-muted-dark">Registrado hace 2 horas</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">chevron_right</span>
+          </div>
+          <div
+            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg flex items-center justify-between shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <div class="flex items-center">
+              <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center mr-4">
+                <span class="material-symbols-outlined text-primary">receipt</span>
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900 dark:text-white">Factura F-2023-005</p>
+                <p class="text-sm text-muted-light dark:text-muted-dark">Pendiente de pago</p>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">chevron_right</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAB -->
+      <button
+        class="fixed bottom-8 right-8 w-14 h-14 bg-primary rounded-full flex items-center justify-center text-white shadow-lg hover:bg-orange-600 transition-transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-primary/50">
+        <span class="material-symbols-outlined text-3xl">add</span>
+      </button>
+    </main>
   </div>
 
-  <button type="button" id="dashboardFullscreenClose" class="dashboard-fullscreen-close" aria-hidden="true">
-    ✕ Salir de pantalla completa
-  </button>
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const closeSidebarBtn = document.getElementById('close-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
 
-  <noscript>
-    <div class="fixed inset-0 z-50 grid place-items-center bg-black/80 p-6 text-center text-white">
-      <div class="max-w-sm space-y-3 rounded-2xl bg-[#111]/90 p-6">
-        <h2 class="text-xl font-semibold">JavaScript requerido</h2>
-        <p class="text-sm text-gray-200">
-          Para utilizar el portal financiero de Versa Finanzas necesitas activar JavaScript en tu navegador.
-        </p>
-      </div>
-    </div>
-  </noscript>
+    function openSidebar() {
+      sidebar.classList.remove('-translate-x-full');
+      overlay.classList.remove('hidden');
+      setTimeout(() => overlay.classList.remove('opacity-0'), 10); // Fade in
+    }
 
-  <!-- Scripts (Modules) -->
-  <script type="module" src="./main.js"></script>
+    function closeSidebar() {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('opacity-0');
+      setTimeout(() => overlay.classList.add('hidden'), 300); // Wait for fade out
+    }
+
+    mobileMenuBtn.addEventListener('click', openSidebar);
+    closeSidebarBtn.addEventListener('click', closeSidebar);
+    overlay.addEventListener('click', closeSidebar);
+  </script>
 </body>
 
 </html>
