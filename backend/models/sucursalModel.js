@@ -13,6 +13,27 @@ const getSucursalesByTenant = async (tenantId) => {
     return result.rows;
 };
 
+const createSucursal = async ({ nombre, id_tenant }) => {
+    const result = await pool.query(
+        'INSERT INTO sucursal (nombre, id_tenant) VALUES ($1, $2) RETURNING *',
+        [nombre, id_tenant]
+    );
+    return result.rows[0];
+};
+
+const updateSucursal = async (id, { nombre, id_tenant }) => {
+    const result = await pool.query(
+        'UPDATE sucursal SET nombre = $1, id_tenant = $2 WHERE id = $3 RETURNING *',
+        [nombre, id_tenant, id]
+    );
+    return result.rows[0];
+};
+
+const deleteSucursal = async (id) => {
+    await pool.query('DELETE FROM usuariosucursal WHERE id_sucursal = $1', [id]);
+    await pool.query('DELETE FROM sucursal WHERE id = $1', [id]);
+};
+
 const getUserSucursales = async (userId) => {
     const result = await pool.query(
         `SELECT s.* 
@@ -47,6 +68,9 @@ const clearUserSucursales = async (userId) => {
 module.exports = {
     getAllSucursales,
     getSucursalesByTenant,
+    createSucursal,
+    updateSucursal,
+    deleteSucursal,
     getUserSucursales,
     assignSucursalToUser,
     clearUserSucursales
