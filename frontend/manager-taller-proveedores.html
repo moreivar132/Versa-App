@@ -604,11 +604,15 @@
         </footer>
     </div>
 
-    <script>
+    <script type="module">
         // --- CONFIGURACIÓN API ---
         // FORZAMOS LOCALHOST PARA DESARROLLO
         // En producción, esto debería ser dinámico o usar variables de entorno
-        const API_URL = 'http://localhost:3000/api/proveedores';
+        import { getToken, getApiBaseUrl } from './auth.js';
+
+        // Configuración dinámica de la API usando la lógica centralizada
+        const API_URL = `${getApiBaseUrl()}/api/proveedores`;
+        console.log('API URL Configurada:', API_URL);
 
         // --- LÓGICA PARA REGISTRAR PROVEEDORES ---
         const providerForm = document.getElementById('provider-form');
