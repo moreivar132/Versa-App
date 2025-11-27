@@ -5,6 +5,33 @@ const getAllRoles = async () => {
     return result.rows;
 };
 
+const getRoleById = async (id) => {
+    const result = await pool.query('SELECT * FROM rol WHERE id = $1 LIMIT 1', [id]);
+    return result.rows[0];
+};
+
+const createRole = async ({ nombre }) => {
+    const result = await pool.query(
+        'INSERT INTO rol (nombre) VALUES ($1) RETURNING *',
+        [nombre]
+    );
+    return result.rows[0];
+};
+
+const updateRole = async (id, { nombre }) => {
+    const result = await pool.query(
+        'UPDATE rol SET nombre = $1 WHERE id = $2 RETURNING *',
+        [nombre, id]
+    );
+    return result.rows[0];
+};
+
+const deleteRole = async (id) => {
+    await pool.query('DELETE FROM rolpermiso WHERE id_rol = $1', [id]);
+    await pool.query('DELETE FROM usuariorol WHERE id_rol = $1', [id]);
+    await pool.query('DELETE FROM rol WHERE id = $1', [id]);
+};
+
 const getUserRoles = async (userId) => {
     const result = await pool.query(
         `SELECT r.* 
@@ -43,10 +70,48 @@ const clearUserRoles = async (userId) => {
     await pool.query('DELETE FROM usuariorol WHERE id_usuario = $1', [userId]);
 };
 
+const getRolePermissions = async (roleId) => {
+    const result = await pool.query(
+        `SELECT p.*
+     FROM permiso p
+     JOIN rolpermiso rp ON p.id = rp.id_permiso
+     WHERE rp.id_rol = $1
+     ORDER BY p.nombre`,
+        [roleId]
+    );
+    return result.rows;
+};
+
+const assignPermissionToRole = async (roleId, permisoId) => {
+    const existing = await pool.query(
+        'SELECT 1 FROM rolpermiso WHERE id_rol = $1 AND id_permiso = $2',
+        [roleId, permisoId]
+    );
+
+    if (existing.rows.length > 0) return existing.rows[0];
+
+    const result = await pool.query(
+        'INSERT INTO rolpermiso (id_rol, id_permiso) VALUES ($1, $2) RETURNING *',
+        [roleId, permisoId]
+    );
+    return result.rows[0];
+};
+
+const clearRolePermissions = async (roleId) => {
+    await pool.query('DELETE FROM rolpermiso WHERE id_rol = $1', [roleId]);
+};
+
 module.exports = {
     getAllRoles,
+    getRoleById,
+    createRole,
+    updateRole,
+    deleteRole,
     getUserRoles,
     assignRoleToUser,
     removeRoleFromUser,
-    clearUserRoles
+    clearUserRoles,
+    getRolePermissions,
+    assignPermissionToRole,
+    clearRolePermissions
 };
