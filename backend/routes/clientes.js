@@ -40,7 +40,7 @@ router.post('/', verifyJWT, async (req, res) => {
     try {
         // Verificar si ya existe el cliente en este tenant
         const existing = await pool.query(
-            'SELECT id FROM clientes WHERE documento = $1 AND id_tenant = $2',
+            'SELECT id FROM clientefinal WHERE documento = $1 AND id_tenant = $2',
             [documento, id_tenant]
         );
 
@@ -55,7 +55,7 @@ router.post('/', verifyJWT, async (req, res) => {
         // Asumo que la tabla es 'clientes' y tiene estas columnas. 
         // Si fallan los nombres de columna, tendré que ajustar.
         const insertQuery = `
-            INSERT INTO clientes 
+            INSERT INTO clientefinal 
             (id_tenant, nombre, tipo_documento, documento, origen_cliente, telefono, telefono_alternativo, email, direccion, localidad, cp_cliente, comentario, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
             RETURNING *
@@ -97,7 +97,7 @@ router.get('/', verifyJWT, async (req, res) => {
 
     try {
         const query = `
-            SELECT * FROM clientes 
+            SELECT * FROM clientefinal 
             WHERE id_tenant = $1 
             ORDER BY created_at DESC 
             LIMIT 10
@@ -123,7 +123,7 @@ router.get('/search', verifyJWT, async (req, res) => {
     try {
         const searchTerm = `%${q}%`;
         const query = `
-            SELECT * FROM clientes 
+            SELECT * FROM clientefinal 
             WHERE id_tenant = $1 
             AND (nombre ILIKE $2 OR documento ILIKE $2 OR telefono ILIKE $2)
             LIMIT 10
