@@ -4,36 +4,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Proveedores - Goversa</title>
+    <title>Gestión de Proveedores - Goversa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Estilos Generales */
+        /* Estilos Generales (Reutilizados para consistencia) */
         :root {
             --brand-orange: #FF652B;
             --brand-orange-strong: #FF7A45;
             --surface-elevated: rgba(18, 18, 20, 0.96);
             --surface-border: rgba(255, 255, 255, 0.08);
             --surface-highlight: rgba(255, 255, 255, 0.04);
+            --dark-bg: #000000;
+            --surface-bg: #1a1a1a;
+            --border-color: #2a2a2a;
+            --input-bg: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --success-color: #28a745;
+            --error-color: #dc3545;
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: #000000;
-            font-family: 'Montserrat', Arial, sans-serif;
-            color: #FFFFFF;
+            background-color: var(--dark-bg);
+            font-family: "Montserrat", Arial, sans-serif;
+            color: var(--text-primary);
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 20px 40px;
         }
 
         /* Header y Menú de Navegación */
-
         header {
             display: flex;
             align-items: center;
@@ -113,11 +122,6 @@
             color: #0B0B0D;
         }
 
-        .logout-button:focus-visible {
-            outline: 2px solid rgba(255, 255, 255, 0.65);
-            outline-offset: 3px;
-        }
-
         .main-nav {
             display: flex;
             justify-content: center;
@@ -140,7 +144,7 @@
         }
 
         .main-nav .nav-item>a {
-            color: #FFFFFF;
+            color: var(--text-primary);
             text-decoration: none;
             font-weight: 600;
             padding: 12px 16px;
@@ -190,19 +194,8 @@
             transition: color 0.2s ease, background 0.25s ease, transform 0.25s ease;
         }
 
-        .dropdown li a::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255, 101, 43, 0.18), rgba(255, 122, 69, 0.05));
-            opacity: 0;
-            z-index: -1;
-            transition: opacity 0.2s ease;
-        }
-
         .dropdown li a:hover {
-            transform: translateY(0);
-            background-color: #FF5F00;
+            background-color: var(--brand-orange);
         }
 
         .dropdown li a.active {
@@ -210,222 +203,241 @@
             color: #FFFFFF;
         }
 
-        .dropdown .sub-item {
-            padding-left: 20px;
-        }
-
-        .card {
-            background-color: #1A1A1A;
-            border: 1px solid #2A2A2A;
+        /* --- ESTILOS BUSCADOR --- */
+        .search-container {
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 25px;
+            padding: 30px;
+            margin-bottom: 30px;
         }
 
-        /* Panel Principal (Grid) */
-        .main-panel {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
         }
 
-        /* Estilos del Formulario y Buscador */
-        .form-container h2,
-        .search-container h2 {
-            font-size: 28px;
-            font-weight: 800;
-            margin-top: 0;
-            margin-bottom: 25px;
+        .search-result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--surface-border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+            /* Oculto por defecto */
+            animation: fadeIn 0.3s ease-in-out;
         }
 
-        .form-label {
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            color: #A0A0A0;
+        .search-result-card.active {
             display: block;
-            /* Make labels take full width */
-            margin-bottom: 6px;
         }
 
-        .form-input,
-        .form-select,
-        .search-input,
-        .form-textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 16px;
-            border-radius: 8px;
-            background-color: #333333;
-            border: 1px solid #444444;
-            color: #FFFFFF;
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 16px;
-            box-sizing: border-box;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-
-        .form-textarea {
-            resize: vertical;
-            /* Allow vertical resize for textarea */
-            min-height: 80px;
-        }
-
-        .form-select {
-            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23A0A0A0%22/%3E%3C/svg%3E');
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 20px;
-        }
-
-        /* Grid for form inputs */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0 20px;
-            /* Gap between columns */
-        }
-
-        .form-group {
+        .result-header {
             display: flex;
-            flex-direction: column;
-        }
-
-        .submit-button,
-        .search-button {
-            width: 100%;
-            font-size: 16px;
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-weight: bold;
-            color: #ffffff;
-            text-decoration: none;
-            border-radius: 8px;
-            padding: 16px 25px;
-            border: 1px solid var(--brand-orange);
-            background-color: var(--brand-orange);
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
-        }
-
-        .submit-button:disabled,
-        .search-button:disabled {
-            background-color: #333;
-            border-color: #444;
-            cursor: not-allowed;
-        }
-
-        .submit-button:hover:not(:disabled),
-        .search-button:hover:not(:disabled) {
-            background-color: var(--brand-orange-strong);
-        }
-
-        .search-form {
-            display: flex;
-            gap: 10px;
-        }
-
-        .search-input {
-            flex-grow: 1;
-            margin: 0;
-        }
-
-        .search-button {
-            width: auto;
-            margin: 0;
-        }
-
-        /* Lista de Resultados */
-        #search-results {
-            list-style: none;
-            padding: 0;
-            margin: 20px 0 0 0;
-        }
-
-        .search-result-item {
-            display: flex;
+            justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #2A2A2A;
-            opacity: 0;
-            transform: translateY(-10px);
-            animation: fadeIn 0.5s forwards;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
         }
 
-        #search-results .search-result-item:first-child {
-            border-top: 1px solid #2A2A2A;
-        }
-
-        .client-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: var(--brand-orange);
-            color: #FFFFFF;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
+        .result-title {
+            font-size: 20px;
             font-weight: 700;
-            margin-right: 20px;
-            flex-shrink: 0;
+            color: var(--brand-orange);
         }
 
-        .client-info .name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #FFFFFF;
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
         }
 
-        .client-info .detail {
-            font-size: 14px;
-            color: #888;
-        }
-
-        hr {
-            border: none;
-            border-top: 1px solid #2A2A2A;
-            margin: 25px 0;
-        }
-
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 40px 0 20px 0;
+        .result-item label {
+            display: block;
             font-size: 12px;
-            color: #555555;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
         }
 
-        /* Animación y Responsividad */
+        .result-item span {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
         @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        @media (max-width: 900px) {
+        /* --- ESTILOS FORMULARIO --- */
+        .form-container {
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+        }
 
-            .main-panel,
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
+        .form-main-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+        }
+
+        .form-section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--brand-orange);
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: var(--input-bg);
+            border: 1px solid #444;
+            color: var(--text-primary);
+            font-family: "Montserrat", Arial, sans-serif;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.2);
+        }
+
+        .btn {
+            background-color: var(--brand-orange);
+            color: var(--text-primary);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: "Montserrat", Arial, sans-serif;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            border-radius: 8px;
+            padding: 12px 20px;
+        }
+
+        .btn:hover {
+            background-color: #e05300;
+        }
+
+        .btn-secondary {
+            background-color: #333;
+            border: 1px solid #555;
+        }
+
+        .btn-secondary:hover {
+            background-color: #444;
+        }
+
+        /* --- MODAL --- */
+        .success-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+
+        .success-modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .success-modal-content {
+            background-color: var(--surface-bg);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .success-modal-overlay.show .success-modal-content {
+            transform: scale(1);
+        }
+
+        .success-modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            border: 4px solid var(--success-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .success-modal-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--success-color);
+        }
+
+        .success-modal-content h3 {
+            margin-top: 20px;
+            color: var(--success-color);
         }
 
         @media (max-width: 768px) {
-            .main-nav {
-                width: 100%;
-                justify-content: flex-start;
-            }
-
-            .main-nav ul {
-                flex-direction: column;
-                gap: 5px;
-                align-items: flex-start;
-            }
-
             header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -437,22 +449,23 @@
                 margin-top: 16px;
             }
 
-            .user-session .logout-button {
-                width: auto;
+            .main-nav {
+                width: 100%;
             }
 
-            .user-session .user-name {
-                font-size: 14px;
+            .form-section {
+                grid-template-columns: 1fr;
             }
 
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
-        <!-- HEADER CON MENÚ DE NAVEGACIÓN UNIFICADO -->
         <header class="app-header w-full max-w-6xl mx-auto px-4 py-3">
             <div class="header-left">
                 <div class="logo-badge">
@@ -468,26 +481,15 @@
                             <li><a href="manager-taller-ordenes.html">Órdenes</a></li>
                             <li><a href="#">Editar órdenes</a></li>
                             <li><a href="#">Presupuestos</a></li>
-                            <li class="sub-item"><a href="#">Calendario</a></li>
-                            <li class="sub-item"><a href="#">Recordatorios</a></li>
                             <li><a href="manager-taller.html#vehicles-panel">Vehículos</a></li>
-                            <li><a href="#">Histórico</a></li>
                         </ul>
                     </li>
                     <li class="nav-item has-dropdown">
                         <a href="#">Tienda</a>
-                        <ul class="dropdown">
-                            <li><a href="#">Compras</a></li>
-                            <li><a href="#">Ventas</a></li>
-                        </ul>
                     </li>
                     <li class="nav-item"><a href="#">Caja</a></li>
                     <li class="nav-item has-dropdown">
-                        <a href="#">Cuentas corrientes</a>
-                        <ul class="dropdown">
-                            <li><a href="#">Saldos</a></li>
-                            <li><a href="#">Movimientos</a></li>
-                        </ul>
+                        <a href="#">Cuentas</a>
                     </li>
                     <li class="nav-item"><a href="manager-taller-inventario.html">Inventario</a></li>
                     <li class="nav-item"><a href="manager-taller-trabajadores.html">Trabajadores</a></li>
@@ -498,7 +500,6 @@
                             <li><a href="manager-taller-proveedores.html" class="active">Proveedores</a></li>
                         </ul>
                     </li>
-                    <li class="nav-item"><a href="#">Informes</a></li>
                 </ul>
             </nav>
             <div class="user-session">
@@ -507,218 +508,291 @@
             </div>
         </header>
 
-        <!-- PANEL PRINCIPAL CON FORMULARIO Y BUSCADOR -->
-        <main class="main-panel">
+        <main>
 
-            <!-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO DE PROVEEDOR -->
-            <div class="card form-container">
-                <h2>Registrar Nuevo Proveedor</h2>
-                <form id="provider-form" novalidate>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="nombre" class="form-label">Nombre*</label>
-                            <input type="text" id="nombre" name="nombre" class="form-input" required>
+            <!-- SECCIÓN BUSCADOR DE PROVEEDORES -->
+            <section class="search-container">
+                <h2 class="form-main-title"><i class="fas fa-search"></i> Buscar Proveedor</h2>
+                <div class="search-box">
+                    <input type="text" id="search-input" class="form-input"
+                        placeholder="Buscar por Nombre, CIF/NIF o Teléfono...">
+                    <button id="search-btn" class="btn"><i class="fas fa-search" style="margin-right: 8px;"></i>
+                        Buscar</button>
+                </div>
+
+                <!-- FICHA DE RESULTADO (Oculta hasta encontrar) -->
+                <div id="provider-result" class="search-result-card">
+                    <div class="result-header">
+                        <span class="result-title" id="res-nombre">Nombre del Proveedor S.L.</span>
+                        <span class="badge"
+                            style="background:var(--success-color); padding: 4px 10px; border-radius:4px; font-size:12px;">Activo</span>
+                    </div>
+                    <div class="result-grid">
+                        <div class="result-item">
+                            <label>CIF / NIF</label>
+                            <span id="res-cif">B12345678</span>
                         </div>
-                        <div class="form-group">
-                            <label for="nombreFantasia" class="form-label">Nombre de Fantasía</label>
-                            <input type="text" id="nombreFantasia" name="nombreFantasia" class="form-input">
+                        <div class="result-item">
+                            <label>Teléfono</label>
+                            <span id="res-telefono">91 123 45 67</span>
                         </div>
-                        <div class="form-group">
-                            <label for="tipoResponsable" class="form-label">Tipo responsable*</label>
-                            <select id="tipoResponsable" name="tipoResponsable" class="form-select" required>
-                                <option value="">Selecciona una opción</option>
-                                <option value="Consumidor Final">Consumidor Final</option>
-                                <option value="Monotributista">Monotributista</option>
-                                <option value="Responsable Inscripto">Responsable Inscripto</option>
-                                <option value="Exento">Exento</option>
-                            </select>
+                        <div class="result-item">
+                            <label>Contacto</label>
+                            <span id="res-contacto">Juan Pérez</span>
                         </div>
-                        <div class="form-group">
-                            <label for="cuit" class="form-label">CUIT*</label>
-                            <input type="text" id="cuit" name="cuit" class="form-input" required>
+                        <div class="result-item">
+                            <label>Email</label>
+                            <span id="res-email">contacto@proveedor.com</span>
                         </div>
-                        <div class="form-group">
-                            <label for="domicilioFiscal" class="form-label">Domicilio fiscal</label>
-                            <input type="text" id="domicilioFiscal" name="domicilioFiscal" class="form-input">
+                        <div class="result-item">
+                            <label>Web B2B</label>
+                            <a href="#" id="res-web" style="color:var(--brand-orange)"
+                                target="_blank">www.proveedor.com</a>
                         </div>
-                        <div class="form-group">
-                            <label for="localidadFiscal" class="form-label">Localidad fiscal</label>
-                            <input type="text" id="localidadFiscal" name="localidadFiscal" class="form-input">
+                        <div class="result-item">
+                            <label>Ubicación</label>
+                            <span id="res-ubicacion">Pol. Ind. Sur, Nave 4</span>
+                        </div>
+                        <div class="result-item">
+                            <label>Provincia / CP</label>
+                            <span id="res-provincia">Madrid, 28001</span>
                         </div>
                     </div>
+                    <div class="result-item" style="margin-top: 15px;">
+                        <label>Comentarios</label>
+                        <p id="res-comentarios"
+                            style="font-size: 14px; color: #ddd; margin-top:5px; font-style:italic;">Proveedor principal
+                            de recambios de aceite.</p>
+                    </div>
+                </div>
+            </section>
 
-                    <hr>
-                    <h4>Datos de Contacto</h4>
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="telefono" class="form-label">Teléfono</label>
-                            <input type="tel" id="telefono" name="telefono" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="telefonoAlternativo" class="form-label">Teléfono alternativo</label>
-                            <input type="tel" id="telefonoAlternativo" name="telefonoAlternativo" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" id="email" name="email" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="emailAlternativo" class="form-label">Email alternativo</label>
-                            <input type="email" id="emailAlternativo" name="emailAlternativo" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="personaContacto" class="form-label">Persona de contacto</label>
-                            <input type="text" id="personaContacto" name="personaContacto" class="form-input">
-                        </div>
+            <!-- FORMULARIO DE REGISTRO -->
+            <form id="provider-form" class="form-container">
+                <h2 class="form-main-title">Registro de Nuevo Proveedor</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 0.9em;">Los campos marcados con
+                    * son obligatorios.</p>
+
+                <div class="form-section">
+                    <!-- CAMPOS OBLIGATORIOS -->
+                    <div class="form-group">
+                        <label for="nombre">Nombre / Razón Social *</label>
+                        <input type="text" id="nombre" name="nombre" class="form-input" required
+                            placeholder="Ej: Recambios S.L.">
                     </div>
 
-                    <hr>
-
-                    <label for="comentario" class="form-label">Comentario</label>
-                    <textarea id="comentario" name="comentario" class="form-textarea" rows="3"></textarea>
-
-                    <button type="submit" id="submit-button" class="submit-button">Registrar Proveedor</button>
-                </form>
-                <p id="form-status" style="text-align: center; margin-top: 20px;"></p>
-            </div>
-
-            <!-- COLUMNA DERECHA: BUSCADOR Y RESULTADOS -->
-            <div class="card search-container">
-                <h2>Buscar Proveedor</h2>
-                <form id="search-form">
-                    <div class="search-form">
-                        <input type="search" id="search-input" placeholder="Buscar por nombre, CUIT..."
-                            class="search-input">
-                        <button type="submit" id="search-button" class="search-button">Buscar</button>
+                    <div class="form-group">
+                        <label for="cif">CIF / NIF / DNI *</label>
+                        <input type="text" id="cif" name="cif" class="form-input" required placeholder="Ej: B12345678">
                     </div>
-                </form>
-                <div id="search-results-info" style="text-align:center; margin-top:20px;"></div>
-                <div id="search-results"></div>
-            </div>
+
+                    <!-- OTROS CAMPOS DE LA BASE DE DATOS -->
+                    <div class="form-group">
+                        <label for="Nombre_contacto">Nombre de Contacto</label>
+                        <input type="text" id="Nombre_contacto" name="Nombre_contacto" class="form-input"
+                            placeholder="Persona de referencia">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="telefono">Teléfono</label>
+                        <input type="tel" id="telefono" name="telefono" class="form-input" placeholder="+34 ...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Correo">Email</label>
+                        <input type="email" id="Correo" name="Correo" class="form-input"
+                            placeholder="pedidos@empresa.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Sitio_web_b2b">Sitio Web B2B</label>
+                        <input type="url" id="Sitio_web_b2b" name="Sitio_web_b2b" class="form-input"
+                            placeholder="https://...">
+                    </div>
+                </div>
+
+                <h3 class="form-section-title">Dirección Fiscal y Otros</h3>
+                <div class="form-section">
+                    <div class="form-group">
+                        <label for="Domicilio_fiscal">Domicilio Fiscal</label>
+                        <input type="text" id="Domicilio_fiscal" name="Domicilio_fiscal" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="Proviancia">Provincia</label>
+                        <input type="text" id="Proviancia" name="Proviancia" class="form-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cp_localidad">CP / Localidad</label>
+                        <input type="text" id="cp_localidad" name="cp_localidad" class="form-input"
+                            placeholder="Código Postal">
+                    </div>
+                </div>
+
+                <div class="form-section" style="margin-top: 25px;">
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label for="Comentarios">Comentarios</label>
+                        <textarea id="Comentarios" name="Comentarios" class="form-textarea"
+                            placeholder="Información adicional, días de reparto, etc."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn"
+                    style="width: 100%; padding: 15px; font-size: 16px; margin-top: 30px;">
+                    <i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Proveedor
+                </button>
+            </form>
         </main>
+    </div>
 
-        <!-- FOOTER -->
-        <footer>
-            <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
-        </footer>
+    <!-- MODAL DE ÉXITO -->
+    <div id="success-modal" class="success-modal-overlay">
+        <div class="success-modal-content">
+            <div class="success-modal-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                    <path
+                        d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                </svg>
+            </div>
+            <h3>¡Proveedor Guardado!</h3>
+            <p>Los datos han sido registrados correctamente en el sistema.</p>
+            <button id="close-success-modal" class="btn">Cerrar</button>
+        </div>
     </div>
 
     <script type="module">
-        // --- CONFIGURACIÓN API ---
-        // FORZAMOS LOCALHOST PARA DESARROLLO
-        // En producción, esto debería ser dinámico o usar variables de entorno
-        import { getToken, getApiBaseUrl } from './auth.js';
+        import { getToken, getApiBaseUrl, fetchWithAuth } from './auth.js';
 
-        // Configuración dinámica de la API usando la lógica centralizada
-        const API_URL = `${getApiBaseUrl()}/api/proveedores`;
-        console.log('API URL Configurada:', API_URL);
+        document.addEventListener("DOMContentLoaded", () => {
 
-        // --- LÓGICA PARA REGISTRAR PROVEEDORES ---
-        const providerForm = document.getElementById('provider-form');
-        const submitButton = document.getElementById('submit-button');
-        const formStatus = document.getElementById('form-status');
+            const API_URL = `${getApiBaseUrl()}/api/proveedores`;
+            console.log('API URL Configurada:', API_URL);
 
-        providerForm.addEventListener('submit', async function (event) {
-            event.preventDefault();
+            /* -----------------------------------------------------
+               LÓGICA DEL BUSCADOR DE PROVEEDORES
+            ----------------------------------------------------- */
+            const searchBtn = document.getElementById('search-btn');
+            const searchInput = document.getElementById('search-input');
+            const resultCard = document.getElementById('provider-result');
 
-            // Validar token
-            let token = localStorage.getItem('token');
+            searchBtn.addEventListener('click', async () => {
+                const query = searchInput.value.trim();
+                if (!query) {
+                    alert("Por favor introduce un nombre o CIF para buscar.");
+                    return;
+                }
 
-            // Intentar obtener desde la sesión estructurada si no hay token directo
-            if (!token) {
+                console.log("Buscando proveedor:", query);
+
+                const originalBtnText = searchBtn.innerHTML;
+                searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Buscando...';
+                searchBtn.disabled = true;
+
                 try {
-                    const sessionRaw = localStorage.getItem('versa_session_v1');
-                    if (sessionRaw) {
-                        const session = JSON.parse(sessionRaw);
-                        token = session.token;
+                    const response = await fetchWithAuth(`/api/proveedores/search?q=${encodeURIComponent(query)}`);
+
+                    if (!response.ok) {
+                        throw new Error('Error al buscar proveedores');
                     }
-                } catch (e) {
-                    console.error('Error al leer la sesión:', e);
-                }
-            }
 
-            if (!token) {
-                alert('No estás autenticado. Por favor inicia sesión.');
-                window.location.href = 'login.html';
-                return;
-            }
+                    const results = await response.json();
 
-            formStatus.textContent = 'Registrando proveedor...';
-            formStatus.style.color = '#A0A0A0';
-            submitButton.disabled = true;
+                    if (results.length > 0) {
+                        const data = results[0]; // Mostrar el primer resultado por ahora
 
-            // Recopilar datos del formulario
-            const formData = new FormData(providerForm);
+                        // Rellenar la ficha visual
+                        document.getElementById('res-nombre').textContent = data.nombre || 'Sin nombre';
+                        document.getElementById('res-cif').textContent = data.cif || '—';
+                        document.getElementById('res-telefono').textContent = data.telefono || '—';
+                        document.getElementById('res-contacto').textContent = data.Nombre_contacto || '—';
+                        document.getElementById('res-email').textContent = data.Correo || '—';
 
-            // Construir el objeto payload
-            const payload = {
-                nombre: formData.get('nombre'),
-                ruc_dni: formData.get('cuit'),
-                telefono: formData.get('telefono'),
-                email: formData.get('email'),
-                direccion: `${formData.get('domicilioFiscal') || ''} ${formData.get('localidadFiscal') || ''}`.trim(),
-                comentario: formData.get('comentario'),
-                personaContacto: formData.get('personaContacto')
-            };
+                        const webLink = document.getElementById('res-web');
+                        if (data.Sitio_web_b2b) {
+                            webLink.textContent = data.Sitio_web_b2b;
+                            webLink.href = data.Sitio_web_b2b.startsWith('http') ? data.Sitio_web_b2b : `https://${data.Sitio_web_b2b}`;
+                            webLink.style.display = 'inline';
+                        } else {
+                            webLink.style.display = 'none';
+                        }
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(payload),
-                });
+                        document.getElementById('res-ubicacion').textContent = data.Domicilio_fiscal || '—';
+                        document.getElementById('res-provincia').textContent = `${data.Proviancia || ''} ${data.cp_localidad || ''}`;
+                        document.getElementById('res-comentarios').textContent = data.Comentarios || 'Sin comentarios adicionales.';
 
-                // Verificar primero si la respuesta es exitosa
-                if (!response.ok) {
-                    // Intentar leer el error como texto o JSON
-                    const errorText = await response.text();
-                    let errorMessage;
-                    try {
-                        const errorJson = JSON.parse(errorText);
-                        errorMessage = errorJson.error || errorJson.message || `Error ${response.status}`;
-                    } catch (e) {
-                        errorMessage = `Error del servidor (${response.status}): ${errorText.substring(0, 50)}...`;
+                        resultCard.classList.add('active');
+                    } else {
+                        alert('No se encontraron proveedores con ese criterio.');
+                        resultCard.classList.remove('active');
                     }
-                    throw new Error(errorMessage);
+
+                } catch (error) {
+                    console.error('Error en búsqueda:', error);
+                    alert('Hubo un error al buscar el proveedor.');
+                } finally {
+                    searchBtn.innerHTML = originalBtnText;
+                    searchBtn.disabled = false;
                 }
+            });
 
-                const result = await response.json();
 
-                console.log('Proveedor creado:', result);
-                formStatus.textContent = '¡Proveedor registrado con éxito!';
-                formStatus.style.color = '#28a745';
-                providerForm.reset();
-                setTimeout(() => { formStatus.textContent = ''; }, 3000);
+            /* -----------------------------------------------------
+               LÓGICA DE GUARDADO (FORMULARIO)
+            ----------------------------------------------------- */
+            const form = document.getElementById("provider-form");
+            const successModal = document.getElementById('success-modal');
+            const closeSuccessModalBtn = document.getElementById('close-success-modal');
 
-            } catch (error) {
-                console.error('Error al enviar el formulario:', error);
-                formStatus.textContent = error.message || 'Hubo un error al registrar. Inténtalo de nuevo.';
-                formStatus.style.color = '#dc3545';
-            } finally {
-                submitButton.disabled = false;
+            form.addEventListener("submit", async (event) => {
+                event.preventDefault();
+
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                console.log("Datos del proveedor capturados:", data);
+
+                try {
+                    const response = await fetchWithAuth('/api/proveedores', {
+                        method: 'POST',
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || 'Error al guardar el proveedor');
+                    }
+
+                    const result = await response.json();
+                    console.log('Proveedor guardado:', result);
+
+                    showSuccessModal();
+
+                } catch (error) {
+                    console.error('Error al guardar:', error);
+                    alert(error.message || 'Error al guardar el proveedor. Inténtalo de nuevo.');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
+            });
+
+            function showSuccessModal() {
+                successModal.classList.add('show');
             }
+            function closeSuccessModal() {
+                successModal.classList.remove('show');
+                form.reset();
+                resultCard.classList.remove('active');
+            }
+            closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
         });
-
-        // --- LÓGICA PARA BUSCAR PROVEEDORES (Deshabilitada temporalmente) ---
-        const searchForm = document.getElementById('search-form');
-        const searchInput = document.getElementById('search-input');
-        const searchButton = document.getElementById('search-button');
-        const searchResultsContainer = document.getElementById('search-results');
-        const searchResultsInfo = document.getElementById('search-results-info');
-
-        searchForm.addEventListener('submit', function (event) {
-            event.preventDefault();
-            searchResultsInfo.textContent = 'La búsqueda estará disponible próximamente.';
-            searchResultsInfo.style.color = '#A0A0A0';
-        });
-
-        function displaySearchResults(results) {
-            // Implementación futura
-        }
     </script>
 </body>
 
