@@ -185,335 +185,84 @@
               </div>
               <iframe id="lookerFrame" class="dashboard-frame"
                 src="https://lookerstudio.google.com/embed/reporting/89f974df-1e6d-44c9-ac58-948494fa5b27/page/rfReF"
-                frameborder="0" allowfullscreen
-                sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                aria-label="Dashboard de Looker Studio"></iframe>
-            </div>
-          </article>
-        </section>
-
-        <!-- Vista: Administración (solo administradores) -->
-        <section id="admin" class="space-y-6" data-view="admin" data-requires="admin" aria-labelledby="admin-title"
-          hidden>
-          <!-- Enlace al nuevo panel de Super Admin -->
-          <article class="surface space-y-4 border-l-4 border-[var(--brand)]">
-            <div class="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <h3 class="text-lg font-semibold flex items-center gap-2">
-                  <span>🚀</span> Panel de Gestión Super Admin
-                </h3>
-                <p class="text-sm text-[var(--muted)]">
-                  Gestión centralizada de usuarios, tenants, roles y sucursales.
-                </p>
-              </div>
-              <a href="super-admin-usuarios.html" class="btn btn-brand">
-                Abrir Panel Completo
-              </a>
-            </div>
-          </article>
-
-          <article class="surface space-y-6">
-            <div class="section-title">
-              <div>
-                <h2 id="admin-title" class="text-2xl font-semibold">Administración de accesos</h2>
-                <p class="section-title__description">Crea cuentas seguras y controla los permisos del personal.</p>
-              </div>
-              <span class="badge badge--accent">Solo administradores</span>
-            </div>
-
-            <div class="admin-grid">
-              <form id="createUserForm" class="form-grid admin-form" autocomplete="off">
-                <label class="field">
-                  <span>Email corporativo <span class="text-red-500">*</span></span>
-                  <input type="email" name="email" class="input w-full" placeholder="persona@versa.com"
-                    autocomplete="off" required />
-                </label>
-                <label class="field">
-                  <span>Nombre completo</span>
-                  <input type="text" name="name" class="input w-full" placeholder="Opcional" autocomplete="off" />
-                </label>
-                <label class="field">
-                  <span>Rol</span>
-                  <select name="role" class="input w-full">
-                    <option value="empleado">Empleado</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                </label>
-                <label class="field field--full">
-                  <span>Contraseña temporal <span class="text-red-500">*</span></span>
-                  <div class="password-field">
-                    <input type="text" name="password" id="newUserPassword" class="input w-full" required minlength="10"
-                      autocomplete="off" />
-                    <button type="button" id="btnGeneratePassword" class="btn btn-dark btn-sm">Generar</button>
-                  </div>
-                  <p class="helper-text">Comparte la clave por un canal seguro. La verás solo una vez.</p>
-                </label>
-                <div class="form-actions field--full">
-                  <button type="submit" class="btn btn-brand">Crear usuario</button>
-                </div>
-              </form>
-
-              <div class="surface-2 admin-hint">
-                <h3 class="text-lg font-semibold">Buenas prácticas de seguridad</h3>
-                <ul class="admin-hint__list">
-                  <li>Utiliza contraseñas únicas de al menos 10 caracteres.</li>
-                  <li>Revoca el acceso cuando un integrante deja la organización.</li>
-                  <li>Comparte las credenciales iniciales usando canales cifrados.</li>
-                  <li>Garantiza que haya más de un administrador activo como respaldo.</li>
-                </ul>
-                <p id="adminFeedback" class="form-feedback" role="status" aria-live="polite" hidden></p>
-                <div id="adminGeneratedSecret" class="generated-secret" hidden>
-                  <p class="generated-secret__label">Contraseña generada</p>
-                  <code class="generated-secret__value" aria-live="polite"></code>
-                  <p class="helper-text">Copia y entrega esta clave inmediatamente; no volverá a mostrarse.</p>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="surface-2 space-y-4">
-            <div class="section-title">
-              <div>
-                <h3 class="text-lg font-semibold">Usuarios registrados</h3>
-                <p class="section-title__description">Actualiza roles, restablece contraseñas o revoca accesos.</p>
-              </div>
-            </div>
-            <div id="userList" class="user-admin-list" role="region" aria-live="polite" aria-busy="false"></div>
-          </article>
-
-          <!-- ============================= -->
-          <!-- NUEVO PANEL SUPER ADMIN (SaaS) -->
-          <!-- ============================= -->
-          <article id="superAdminPanel" class="surface space-y-6" hidden>
-            <div class="section-title">
-              <div>
-                <h3 class="text-lg font-semibold">Panel Super Admin (nuevo SaaS)</h3>
-                <p class="section-title__description">Herramientas preparadas para la administración multi-tenant.</p>
-              </div>
-              <span class="badge badge--accent">Solo super admins</span>
-            </div>
-
-            <div class="tablist" role="tablist" aria-label="Opciones de super admin">
-              <button class="btn btn-wire btn-sm" type="button" data-tab-target="tenants" aria-selected="true"
-                role="tab">Tenants</button>
-              <button class="btn btn-wire btn-sm" type="button" data-tab-target="roles" role="tab"
-                aria-selected="false">Roles y permisos</button>
-              <button class="btn btn-wire btn-sm" type="button" data-tab-target="usuarios" role="tab"
-                aria-selected="false">Usuarios SaaS</button>
-            </div>
-
-            <div class="surface-2 space-y-4" data-tab-content="tenants">
-              <div class="section-title">
+                frameborder="0" allowfullscreen <header class="invoice-pane__header">
                 <div>
-                  <h4 class="text-base font-semibold">Tenants</h4>
-                  <p class="section-title__description">Configura nuevos entornos SaaS para cada cliente.</p>
+                  <p class="eyebrow">Carga de facturas</p>
+                  <h2 id="facturas-title">Centraliza tus comprobantes</h2>
+                  <p class="invoice-pane__lead">Arrastra tus archivos o captura desde el móvil. Soporte para PDF e
+                    imágenes de hasta 20 MB.</p>
                 </div>
-                <div class="flex items-center gap-2">
-                  <button type="button" id="toggleTenantFormBtn" class="btn btn-wire btn-sm">Nuevo tenant</button>
-                </div>
-              </div>
-              <div id="tenantList" class="user-admin-list" aria-live="polite">
-                <p class="helper-text">Todavía sin datos.</p>
-              </div>
-              <div id="tenantFormWrapper" class="surface" hidden>
-                <form id="tenantForm" class="form-grid admin-form" autocomplete="off">
-                  <label class="field field--full">
-                    <span>Nombre del tenant <span class="text-red-500">*</span></span>
-                    <input type="text" name="nombre" class="input w-full" placeholder="Cliente corporativo" required />
-                  </label>
-                  <div class="form-actions field--full">
-                    <button type="submit" class="btn btn-brand">Crear tenant</button>
-                    <button type="button" id="cancelTenantFormBtn" class="btn btn-ghost">Cancelar</button>
-                  </div>
-                  <p id="tenantFeedback" class="form-feedback" role="status" aria-live="polite" hidden></p>
-                </form>
-              </div>
-            </div>
+                <button id="clearAll" type="button" class="btn btn-ghost btn-sm">Vaciar selección</button>
+                </header>
 
-            <div class="surface-2 space-y-4" data-tab-content="roles" hidden>
-              <div class="section-title">
-                <div>
-                  <h4 class="text-base font-semibold">Roles y permisos</h4>
-                  <p class="section-title__description">Organiza roles y asigna permisos de forma granular.</p>
-                </div>
-              </div>
-              <div class="grid gap-4 md:grid-cols-2">
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between gap-2">
-                    <h5 class="font-semibold">Roles</h5>
-                    <button id="toggleRoleFormBtn" type="button" class="btn btn-wire btn-sm">Nuevo rol</button>
+                <input id="cameraInput" class="sr-only" type="file" accept="image/*" capture="environment" multiple />
+                <input id="fileInput" class="sr-only" type="file" accept="image/*,application/pdf" multiple />
+                <input id="csvInput" class="sr-only" type="file" accept="text/csv,.csv" />
+
+                <div class="intake-mode" role="group" aria-labelledby="intake-question">
+                  <div>
+                    <p id="intake-question" class="intake-mode__question">¿La captura incluye la factura?</p>
+                    <span class="helper-text">Elige si subirás los archivos o si registrarás los datos
+                      manualmente.</span>
                   </div>
-                  <div id="roleFormWrapper" class="surface" hidden>
-                    <form id="roleForm" class="space-y-3" autocomplete="off">
-                      <label class="field">
-                        <span>Nombre del rol</span>
-                        <input type="text" name="nombre" class="input w-full" placeholder="Ej. Supervisor" />
-                      </label>
-                      <div class="flex items-center gap-2">
-                        <button type="submit" class="btn btn-brand btn-sm">Guardar</button>
-                        <button type="button" id="cancelRoleFormBtn" class="btn btn-ghost btn-sm">Cancelar</button>
-                      </div>
-                    </form>
-                  </div>
-                  <div id="rolesList" class="space-y-2" aria-live="polite">
-                    <p class="helper-text">Añade roles y selecciónalos para asignar permisos.</p>
+                  <div class="segmented-control" role="tablist" aria-label="Modo de carga">
+                    <button type="button" class="segmented-control__item is-active" role="tab" aria-selected="true"
+                      data-intake-mode="files">
+                      Sí, adjuntar archivo
+                    </button>
+                    <button type="button" class="segmented-control__item" role="tab" aria-selected="false"
+                      data-intake-mode="manual">
+                      No, introducir datos
+                    </button>
                   </div>
                 </div>
-                <div class="space-y-3">
-                  <div class="flex items-center justify-between">
-                    <h5 class="font-semibold">Permisos</h5>
-                    <button id="saveRolePermissionsBtn" type="button" class="btn btn-dark btn-sm">Guardar</button>
+
+                <div class="upload-stack" data-intake-section="files">
+                  <div class="upload-stack__header">
+                    <div>
+                      <h3>Adjuntar factura</h3>
+                      <p class="helper-text">Compatible con PDF, JPG, PNG y HEIC. Puedes añadir varios archivos a la
+                        vez.
+                      </p>
+                    </div>
+                    <div class="upload-actions">
+                      <label class="btn btn-light" for="cameraInput" role="button" tabindex="0">📷 Tomar foto</label>
+                      <label class="btn btn-dark" for="fileInput" role="button" tabindex="0">⤴️ Subir archivos</label>
+                      <label class="btn btn-wire" for="csvInput" role="button" tabindex="0">🧾 Importar CSV</label>
+                    </div>
                   </div>
-                  <p id="permissionsHint" class="helper-text">Selecciona un rol para ver sus permisos.</p>
-                  <div id="permisosList" class="space-y-2" role="group" aria-live="polite"></div>
+                  <div id="dropzone" class="dropzone dropzone--quiet" role="region" aria-live="polite">
+                    <div class="dropzone__icon" aria-hidden="true">☁️</div>
+                    <strong>Arrastra el archivo aquí</strong>
+                    <p class="helper-text">También puedes pulsar en “Tomar foto” o “Subir archivos”.</p>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div class="surface-2 space-y-4" data-tab-content="usuarios" hidden>
-              <div class="section-title">
-                <div>
-                  <h4 class="text-base font-semibold">Usuarios SaaS</h4>
-                  <p class="section-title__description">Usuarios conectados al modelo multi-tenant.</p>
-                </div>
-              </div>
-              <form id="createSaaSUserForm" class="space-y-4" autocomplete="off">
-                <div class="form-grid admin-form">
-                  <label class="field">
-                    <span>Tenant</span>
-                    <select id="tenantSelect" name="tenant_id" class="input w-full">
-                      <option value="" disabled selected>TODO: cargar tenants</option>
-                    </select>
-                  </label>
-                  <label class="field">
-                    <span>Nombre completo</span>
-                    <input type="text" name="nombre" class="input w-full" placeholder="Persona responsable" />
-                  </label>
-                  <label class="field">
-                    <span>Email corporativo</span>
-                    <input type="email" name="email" class="input w-full" placeholder="persona@cliente.com" />
-                  </label>
-                </div>
-                <div class="form-grid admin-form">
-                  <label class="field">
-                    <span>Contraseña</span>
-                    <input type="password" name="password" class="input w-full"
-                      placeholder="Genera o escribe una contraseña" />
-                  </label>
-                  <label class="field">
-                    <span>Porcentaje mano de obra</span>
-                    <input type="number" name="porcentaje_mano_obra" step="0.01" min="0" max="1" class="input w-full"
-                      placeholder="0.5" />
-                  </label>
-                  <label class="field inline-flex items-center gap-2">
-                    <input type="checkbox" name="is_super_admin" class="accent-[var(--accent)]" />
-                    <span>Es super admin</span>
-                  </label>
-                </div>
-                <div class="form-grid admin-form">
-                  <label class="field">
-                    <span>Roles (multiselección)</span>
-                    <select id="rolesSelect" name="roles" class="input w-full" multiple size="3">
-                      <option value="1">Admin</option>
-                      <option value="2">Operaciones</option>
-                      <option value="3">Auditor</option>
-                    </select>
-                  </label>
-                  <label class="field">
-                    <span>Sucursales (multiselección)</span>
-                    <select id="sucursalesSelect" name="sucursales" class="input w-full" multiple size="3">
-                      <option value="10">CDMX - Centro</option>
-                      <option value="11">CDMX - Norte</option>
-                      <option value="12">Guadalajara</option>
-                    </select>
-                  </label>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-brand">Crear usuario SaaS</button>
-                </div>
-                <p id="saasUserFeedback" class="form-feedback" role="status" aria-live="polite" hidden></p>
-              </form>
-            </div>
-          </article>
-        </section>
-
-        <!-- Vista: Gestión de facturas -->
-        <section id="facturas" class="space-y-6" data-view="facturas" aria-labelledby="facturas-title">
-          <article class="surface invoice-pane">
-            <header class="invoice-pane__header">
-              <div>
-                <p class="eyebrow">Carga de facturas</p>
-                <h2 id="facturas-title">Centraliza tus comprobantes</h2>
-                <p class="invoice-pane__lead">Arrastra tus archivos o captura desde el móvil. Soporte para PDF e
-                  imágenes de hasta 20 MB.</p>
-              </div>
-              <button id="clearAll" type="button" class="btn btn-ghost btn-sm">Vaciar selección</button>
-            </header>
-
-            <input id="cameraInput" class="sr-only" type="file" accept="image/*" capture="environment" multiple />
-            <input id="fileInput" class="sr-only" type="file" accept="image/*,application/pdf" multiple />
-            <input id="csvInput" class="sr-only" type="file" accept="text/csv,.csv" />
-
-            <div class="intake-mode" role="group" aria-labelledby="intake-question">
-              <div>
-                <p id="intake-question" class="intake-mode__question">¿La captura incluye la factura?</p>
-                <span class="helper-text">Elige si subirás los archivos o si registrarás los datos manualmente.</span>
-              </div>
-              <div class="segmented-control" role="tablist" aria-label="Modo de carga">
-                <button type="button" class="segmented-control__item is-active" role="tab" aria-selected="true"
-                  data-intake-mode="files">
-                  Sí, adjuntar archivo
-                </button>
-                <button type="button" class="segmented-control__item" role="tab" aria-selected="false"
-                  data-intake-mode="manual">
-                  No, introducir datos
-                </button>
-              </div>
-            </div>
-
-            <div class="upload-stack" data-intake-section="files">
-              <div class="upload-stack__header">
-                <div>
-                  <h3>Adjuntar factura</h3>
-                  <p class="helper-text">Compatible con PDF, JPG, PNG y HEIC. Puedes añadir varios archivos a la vez.
+                <section class="csv-import" data-intake-section="files" aria-labelledby="csvImportTitle">
+                  <div class="csv-import__header">
+                    <div>
+                      <h3 id="csvImportTitle">Importar metadatos vía CSV</h3>
+                      <p class="helper-text">
+                        Carga un archivo con columnas como descripción, área, naturaleza, método de pago, categoría,
+                        fecha,
+                        subtotal,
+                        IVA, total y notas.
+                      </p>
+                    </div>
+                    <div class="csv-import__actions">
+                      <button id="csvClear" type="button" class="btn btn-ghost btn-sm" hidden>Eliminar CSV</button>
+                    </div>
+                  </div>
+                  <p id="csvStatus" class="helper-text" role="status" aria-live="polite">No hay CSV importado todavía.
                   </p>
-                </div>
-                <div class="upload-actions">
-                  <label class="btn btn-light" for="cameraInput" role="button" tabindex="0">📷 Tomar foto</label>
-                  <label class="btn btn-dark" for="fileInput" role="button" tabindex="0">⤴️ Subir archivos</label>
-                  <label class="btn btn-wire" for="csvInput" role="button" tabindex="0">🧾 Importar CSV</label>
-                </div>
-              </div>
-              <div id="dropzone" class="dropzone dropzone--quiet" role="region" aria-live="polite">
-                <div class="dropzone__icon" aria-hidden="true">☁️</div>
-                <strong>Arrastra el archivo aquí</strong>
-                <p class="helper-text">También puedes pulsar en “Tomar foto” o “Subir archivos”.</p>
-              </div>
-            </div>
+                  <div id="csvAlerts" class="csv-import__alerts" aria-live="polite"></div>
+                  <div id="csvPreview" class="csv-preview" hidden></div>
+                </section>
 
-            <section class="csv-import" data-intake-section="files" aria-labelledby="csvImportTitle">
-              <div class="csv-import__header">
-                <div>
-                  <h3 id="csvImportTitle">Importar metadatos vía CSV</h3>
-                  <p class="helper-text">
-                    Carga un archivo con columnas como descripción, área, naturaleza, método de pago, categoría, fecha,
-                    subtotal,
-                    IVA, total y notas.
-                  </p>
+                <div class="file-list" aria-live="polite" data-intake-section="files">
+                  <p class="helper-text" id="fileListEmpty">No hay archivos añadidos todavía.</p>
+                  <div id="fileList" class="file-grid"></div>
                 </div>
-                <div class="csv-import__actions">
-                  <button id="csvClear" type="button" class="btn btn-ghost btn-sm" hidden>Eliminar CSV</button>
-                </div>
-              </div>
-              <p id="csvStatus" class="helper-text" role="status" aria-live="polite">No hay CSV importado todavía.</p>
-              <div id="csvAlerts" class="csv-import__alerts" aria-live="polite"></div>
-              <div id="csvPreview" class="csv-preview" hidden></div>
-            </section>
-
-            <div class="file-list" aria-live="polite" data-intake-section="files">
-              <p class="helper-text" id="fileListEmpty">No hay archivos añadidos todavía.</p>
-              <div id="fileList" class="file-grid"></div>
-            </div>
           </article>
 
           <article id="manualEntry" class="surface invoice-meta" aria-labelledby="metadata-title" hidden>

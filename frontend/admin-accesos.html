@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Accesos - Versa Finanzas</title>
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* Estilos específicos para el módulo de administración */
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color, #e5e7eb);
+        }
+
+        .admin-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary, #111827);
+            margin: 0;
+        }
+
+        .admin-header .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            margin-bottom: 2rem;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border-color, #e5e7eb);
+            margin-bottom: 2rem;
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-secondary, #6b7280);
+            transition: all 0.2s;
+        }
+
+        .tab-button:hover {
+            color: var(--text-primary, #111827);
+            background: var(--bg-hover, #f9fafb);
+        }
+
+        .tab-button.active {
+            color: var(--primary-color, #2563eb);
+            border-bottom-color: var(--primary-color, #2563eb);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary, #111827);
+            margin: 0;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: var(--bg-secondary, #f9fafb);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-secondary, #6b7280);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
+        }
+
+        tr:hover {
+            background: var(--bg-hover, #f9fafb);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-super-admin {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-admin {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-user {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 0.875rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color, #2563eb);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover, #1d4ed8);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary, #f3f4f6);
+            color: var(--text-primary, #111827);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover, #e5e7eb);
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: transform 0.2s;
+        }
+
+        .btn-icon:hover {
+            transform: scale(1.1);
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary, #111827);
+            font-size: 0.875rem;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color, #d1d5db);
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color, #2563eb);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-checkbox {
+            margin-right: 0.5rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary, #6b7280);
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary, #111827);
+        }
+
+        /* Toast/Alert */
+        .toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 2000;
+            display: none;
+            max-width: 400px;
+        }
+
+        .toast.active {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+
+        .toast-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary, #6b7280);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1rem;
+            opacity: 0.5;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary, #6b7280);
+        }
+
+        .spinner {
+            border: 3px solid var(--border-color, #e5e7eb);
+            border-top-color: var(--primary-color, #2563eb);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Utility classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Toast de notificaciones -->
+    <div id="toast" class="toast"></div>
+
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <div>
+                <h1>⚙️ Administración de Accesos</h1>
+                <p style="color: #6b7280; margin: 0.5rem 0 0 0;">Gestión completa de usuarios, roles, permisos y tenants
+                </p>
+            </div>
+            <div class="user-info">
+                <span id="currentUserName" style="font-weight: 500;"></span>
+                <button id="logoutBtn" class="btn btn-secondary btn-sm">Cerrar Sesión</button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab-button active" data-tab="usuarios">👥 Usuarios</button>
+                <button class="tab-button" data-tab="roles">🎭 Roles</button>
+                <button class="tab-button" data-tab="permisos">🔐 Permisos</button>
+                <button class="tab-button" data-tab="tenants">🏢 Tenants</button>
+                <button class="tab-button" data-tab="sucursales">📍 Sucursales</button>
+            </div>
+        </div>
+
+        <!-- Tab: Usuarios -->
+        <div id="tab-usuarios" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Gestión de Usuarios</h2>
+                    <div class="flex gap-2">
+                        <button id="refreshUsersBtn" class="btn btn-secondary btn-sm">🔄 Actualizar</button>
+                        <button id="createUserBtn" class="btn btn-primary btn-sm">➕ Crear Usuario</button>
+                    </div>
+                </div>
+                <div id="usersTableContainer" class="table-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando usuarios...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Roles -->
+        <div id="tab-roles" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Gestión de Roles</h2>
+                    <button id="createRoleBtn" class="btn btn-primary btn-sm">➕ Crear Rol</button>
+                </div>
+                <div id="rolesTableContainer" class="table-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando roles...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Permisos -->
+        <div id="tab-permisos" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Gestión de Permisos</h2>
+                    <button id="createPermisoBtn" class="btn btn-primary btn-sm">➕ Crear Permiso</button>
+                </div>
+                <div id="permisosTableContainer" class="table-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando permisos...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Tenants -->
+        <div id="tab-tenants" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Gestión de Tenants</h2>
+                    <button id="createTenantBtn" class="btn btn-primary btn-sm">➕ Crear Tenant</button>
+                </div>
+                <div id="tenantsTableContainer" class="table-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando tenants...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Sucursales -->
+        <div id="tab-sucursales" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Gestión de Sucursales</h2>
+                    <button id="createSucursalBtn" class="btn btn-primary btn-sm">➕ Crear Sucursal</button>
+                </div>
+                <div id="sucursalesTableContainer" class="table-container">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando sucursales...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para crear/editar usuario -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="userModalTitle">Crear Usuario</h3>
+                <button class="modal-close" onclick="closeUserModal()">×</button>
+            </div>
+            <form id="userForm">
+                <input type="hidden" id="userId" name="id">
+
+                <div class="form-group">
+                    <label class="form-label" for="userName">Nombre Completo *</label>
+                    <input type="text" id="userName" name="nombre" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="userEmail">Email *</label>
+                    <input type="email" id="userEmail" name="email" class="form-input" required>
+                </div>
+
+                <div class="form-group" id="passwordGroup">
+                    <label class="form-label" for="userPassword">Contraseña *</label>
+                    <div class="flex gap-2">
+                        <input type="password" id="userPassword" name="password" class="form-input" required>
+                        <button type="button" id="generatePasswordBtn" class="btn btn-secondary">🎲 Generar</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="userTenant">Tenant *</label>
+                    <select id="userTenant" name="id_tenant" class="form-select" required>
+                        <option value="">Seleccionar tenant...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="userPorcentaje">Porcentaje Mano de Obra</label>
+                    <input type="number" id="userPorcentaje" name="porcentaje_mano_obra" class="form-input" min="0"
+                        max="1" step="0.01" value="0.5">
+                    <small style="color: #6b7280;">Valor entre 0 y 1 (ejemplo: 0.5 = 50%)</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox" id="userIsSuperAdmin" name="is_super_admin">
+                        <span class="form-label" style="display: inline; margin: 0;">Super Administrador</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="userRoles">Roles</label>
+                    <select id="userRoles" name="roles" class="form-select" multiple size="4">
+                    </select>
+                    <small style="color: #6b7280;">Mantén Ctrl/Cmd para seleccionar múltiples</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="userSucursales">Sucursales</label>
+                    <select id="userSucursales" name="sucursales" class="form-select" multiple size="4">
+                    </select>
+                    <small style="color: #6b7280;">Mantén Ctrl/Cmd para seleccionar múltiples</small>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para crear/editar tenant -->
+    <div id="tenantModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="tenantModalTitle">Crear Tenant</h3>
+                <button class="modal-close" onclick="closeTenantModal()">×</button>
+            </div>
+            <form id="tenantForm">
+                <input type="hidden" id="tenantId" name="id">
+
+                <div class="form-group">
+                    <label class="form-label" for="tenantName">Nombre del Tenant *</label>
+                    <input type="text" id="tenantName" name="nombre" class="form-input" required>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeTenantModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para crear/editar sucursal -->
+    <div id="sucursalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="sucursalModalTitle">Crear Sucursal</h3>
+                <button class="modal-close" onclick="closeSucursalModal()">×</button>
+            </div>
+            <form id="sucursalForm">
+                <input type="hidden" id="sucursalId" name="id">
+
+                <div class="form-group">
+                    <label class="form-label" for="sucursalName">Nombre de la Sucursal *</label>
+                    <input type="text" id="sucursalName" name="nombre" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="sucursalTenant">Tenant *</label>
+                    <select id="sucursalTenant" name="id_tenant" class="form-select" required>
+                        <option value="">Seleccionar tenant...</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeSucursalModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para crear/editar rol -->
+    <div id="roleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="roleModalTitle">Crear Rol</h3>
+                <button class="modal-close" onclick="closeRoleModal()">×</button>
+            </div>
+            <form id="roleForm">
+                <input type="hidden" id="roleId" name="id">
+
+                <div class="form-group">
+                    <label class="form-label" for="roleName">Nombre del Rol *</label>
+                    <input type="text" id="roleName" name="nombre" class="form-input" required>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeRoleModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para crear/editar permiso -->
+    <div id="permisoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="permisoModalTitle">Crear Permiso</h3>
+                <button class="modal-close" onclick="closePermisoModal()">×</button>
+            </div>
+            <form id="permisoForm">
+                <input type="hidden" id="permisoId" name="id">
+
+                <div class="form-group">
+                    <label class="form-label" for="permisoName">Nombre del Permiso *</label>
+                    <input type="text" id="permisoName" name="nombre" class="form-input" required
+                        placeholder="Ej: users:create, roles:edit">
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closePermisoModal()">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="admin-accesos.js"></script>
+</body>
+
+</html>
