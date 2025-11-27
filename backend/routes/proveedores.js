@@ -76,6 +76,26 @@ router.post('/', verifyJWT, async (req, res) => {
     }
 });
 
+// GET /api/proveedores - Obtener últimos 10 proveedores
+router.get('/', verifyJWT, async (req, res) => {
+    const id_tenant = req.user.id_tenant;
+
+    try {
+        const query = `
+            SELECT * FROM proveedor 
+            WHERE id_tenant = $1 
+            ORDER BY created_at DESC 
+            LIMIT 10
+        `;
+
+        const result = await pool.query(query, [id_tenant]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener proveedores:', error);
+        res.status(500).json({ error: 'Error al obtener proveedores' });
+    }
+});
+
 // Búsqueda de proveedores
 router.get('/search', verifyJWT, async (req, res) => {
     const { q } = req.query;
