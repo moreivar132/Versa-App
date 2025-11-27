@@ -6,6 +6,7 @@ const path = require('path');
 const pool = require('./db');
 const authRouter = require('./routes/auth');
 const superAdminRouter = require('./routes/superAdminRoutes');
+const proveedoresRouter = require('./routes/proveedores');
 const verifyJWT = require('./middleware/auth');
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json());
 // Rutas de autenticación
 app.use('/api/auth', authRouter);
 app.use('/api/admin', superAdminRouter);
+app.use('/api/proveedores', proveedoresRouter);
 
 const toSnakeCase = (value = '') =>
   String(value ?? '')
