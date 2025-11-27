@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,6 +25,7 @@
             font-family: 'Montserrat', Arial, sans-serif;
             color: #FFFFFF;
         }
+
         .container {
             max-width: 1100px;
             margin: 0 auto;
@@ -46,12 +48,14 @@
             backdrop-filter: blur(18px);
             flex-wrap: wrap;
         }
+
         .header-left {
             display: flex;
             align-items: center;
             gap: 16px;
             min-width: 180px;
         }
+
         .logo-badge {
             display: inline-flex;
             align-items: center;
@@ -62,11 +66,13 @@
             border: 1px solid rgba(255, 255, 255, 0.14);
             box-shadow: 0 16px 40px -24px rgba(255, 101, 43, 0.9), 0 12px 28px -18px rgba(0, 0, 0, 0.85);
         }
+
         .logo-badge .logo-img {
             height: 58px;
             width: auto;
             filter: drop-shadow(0 8px 16px rgba(255, 101, 43, 0.5));
         }
+
         .user-session {
             display: flex;
             align-items: center;
@@ -79,10 +85,12 @@
             color: #F5F6F8;
             font-weight: 600;
         }
+
         .user-name {
             font-size: 15px;
             letter-spacing: 0.01em;
         }
+
         .logout-button {
             display: inline-flex;
             align-items: center;
@@ -97,22 +105,26 @@
             box-shadow: 0 18px 35px -24px rgba(255, 122, 69, 0.9);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .logout-button:hover,
         .logout-button:focus-visible {
             transform: translateY(-2px);
             box-shadow: 0 22px 42px -22px rgba(255, 122, 69, 0.95);
             color: #0B0B0D;
         }
+
         .logout-button:focus-visible {
             outline: 2px solid rgba(255, 255, 255, 0.65);
             outline-offset: 3px;
         }
+
         .main-nav {
             display: flex;
             justify-content: center;
             align-items: center;
             flex-grow: 1;
         }
+
         .main-nav ul {
             list-style: none;
             margin: 0;
@@ -122,10 +134,12 @@
             flex-wrap: wrap;
             justify-content: center;
         }
+
         .main-nav .nav-item {
             position: relative;
         }
-        .main-nav .nav-item > a {
+
+        .main-nav .nav-item>a {
             color: #FFFFFF;
             text-decoration: none;
             font-weight: 600;
@@ -134,12 +148,14 @@
             border-radius: 8px;
             transition: transform 0.2s ease-in-out, background-color 0.2s;
         }
-        .main-nav .nav-item > a:hover,
-        .main-nav .nav-item > a.active {
+
+        .main-nav .nav-item>a:hover,
+        .main-nav .nav-item>a.active {
             transform: translateY(-4px);
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
         }
+
         .nav-item .dropdown {
             display: none;
             position: absolute;
@@ -157,9 +173,11 @@
             backdrop-filter: blur(18px);
             overflow: hidden;
         }
+
         .nav-item.has-dropdown:hover .dropdown {
             display: flex;
         }
+
         .dropdown li a {
             padding: 12px 22px;
             white-space: nowrap;
@@ -171,6 +189,7 @@
             z-index: 0;
             transition: color 0.2s ease, background 0.25s ease, transform 0.25s ease;
         }
+
         .dropdown li a::after {
             content: '';
             position: absolute;
@@ -180,14 +199,17 @@
             z-index: -1;
             transition: opacity 0.2s ease;
         }
+
         .dropdown li a:hover {
             transform: translateY(0);
             background-color: #FF5F00;
         }
+
         .dropdown li a.active {
             background: linear-gradient(140deg, rgba(255, 101, 43, 0.35), rgba(255, 101, 43, 0.1));
             color: #FFFFFF;
         }
+
         .dropdown .sub-item {
             padding-left: 20px;
         }
@@ -207,21 +229,28 @@
         }
 
         /* Estilos del Formulario y Buscador */
-        .form-container h2, .search-container h2 {
+        .form-container h2,
+        .search-container h2 {
             font-size: 28px;
             font-weight: 800;
             margin-top: 0;
             margin-bottom: 25px;
         }
+
         .form-label {
             font-family: 'Montserrat', Arial, sans-serif;
             font-size: 14px;
             font-weight: 600;
             color: #A0A0A0;
-            display: block; /* Make labels take full width */
+            display: block;
+            /* Make labels take full width */
             margin-bottom: 6px;
         }
-        .form-input, .form-select, .search-input, .form-textarea {
+
+        .form-input,
+        .form-select,
+        .search-input,
+        .form-textarea {
             width: 100%;
             padding: 12px;
             margin-bottom: 16px;
@@ -236,30 +265,35 @@
             -moz-appearance: none;
             appearance: none;
         }
+
         .form-textarea {
-            resize: vertical; /* Allow vertical resize for textarea */
+            resize: vertical;
+            /* Allow vertical resize for textarea */
             min-height: 80px;
         }
+
         .form-select {
-             background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23A0A0A0%22/%3E%3C/svg%3E');
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23A0A0A0%22/%3E%3C/svg%3E');
             background-repeat: no-repeat;
             background-position: right 10px center;
             background-size: 20px;
         }
-        
+
         /* Grid for form inputs */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 0 20px; /* Gap between columns */
+            gap: 0 20px;
+            /* Gap between columns */
         }
-        
+
         .form-group {
             display: flex;
             flex-direction: column;
         }
 
-        .submit-button, .search-button {
+        .submit-button,
+        .search-button {
             width: 100%;
             font-size: 16px;
             font-family: 'Montserrat', Arial, sans-serif;
@@ -274,17 +308,33 @@
             transition: background-color 0.2s;
             margin-top: 10px;
         }
-        .submit-button:disabled, .search-button:disabled {
+
+        .submit-button:disabled,
+        .search-button:disabled {
             background-color: #333;
             border-color: #444;
             cursor: not-allowed;
         }
-        .submit-button:hover:not(:disabled), .search-button:hover:not(:disabled) {
+
+        .submit-button:hover:not(:disabled),
+        .search-button:hover:not(:disabled) {
             background-color: var(--brand-orange-strong);
         }
-        .search-form { display: flex; gap: 10px; }
-        .search-input { flex-grow: 1; margin: 0; }
-        .search-button { width: auto; margin: 0; }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            margin: 0;
+        }
+
+        .search-button {
+            width: auto;
+            margin: 0;
+        }
 
         /* Lista de Resultados */
         #search-results {
@@ -292,6 +342,7 @@
             padding: 0;
             margin: 20px 0 0 0;
         }
+
         .search-result-item {
             display: flex;
             align-items: center;
@@ -301,9 +352,11 @@
             transform: translateY(-10px);
             animation: fadeIn 0.5s forwards;
         }
+
         #search-results .search-result-item:first-child {
-             border-top: 1px solid #2A2A2A;
+            border-top: 1px solid #2A2A2A;
         }
+
         .client-avatar {
             width: 50px;
             height: 50px;
@@ -318,16 +371,18 @@
             margin-right: 20px;
             flex-shrink: 0;
         }
+
         .client-info .name {
             font-size: 18px;
             font-weight: 600;
             color: #FFFFFF;
         }
+
         .client-info .detail {
             font-size: 14px;
             color: #888;
         }
-        
+
         hr {
             border: none;
             border-top: 1px solid #2A2A2A;
@@ -342,22 +397,50 @@
             font-size: 12px;
             color: #555555;
         }
-        
+
         /* Animación y Responsividad */
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 900px) { .main-panel, .form-grid { grid-template-columns: 1fr; } }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 900px) {
+
+            .main-panel,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 768px) {
-            .main-nav { width: 100%; justify-content: flex-start; }
-            .main-nav ul { flex-direction: column; gap: 5px; align-items: flex-start; }
-            header { flex-direction: column; align-items: flex-start; }
+            .main-nav {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .main-nav ul {
+                flex-direction: column;
+                gap: 5px;
+                align-items: flex-start;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
             .user-session {
                 width: 100%;
                 justify-content: space-between;
                 margin-top: 16px;
             }
+
             .user-session .logout-button {
                 width: auto;
             }
+
             .user-session .user-name {
                 font-size: 14px;
             }
@@ -365,67 +448,68 @@
         }
     </style>
 </head>
+
 <body>
 
     <div class="container">
-            <!-- HEADER CON MENÚ DE NAVEGACIÓN UNIFICADO -->
-    <header class="app-header w-full max-w-6xl mx-auto px-4 py-3">
-        <div class="header-left">
-            <div class="logo-badge">
-                <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo de Goversa" class="logo-img">
+        <!-- HEADER CON MENÚ DE NAVEGACIÓN UNIFICADO -->
+        <header class="app-header w-full max-w-6xl mx-auto px-4 py-3">
+            <div class="header-left">
+                <div class="logo-badge">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo de Goversa" class="logo-img">
+                </div>
             </div>
-        </div>
-        <nav class="main-nav">
-        <ul>
-            <li class="nav-item"><a href="index.html">Inicio</a></li>
-            <li class="nav-item has-dropdown">
-                <a href="manager-taller.html">Taller</a>
-                <ul class="dropdown">
-                    <li><a href="manager-taller-ordenes.html">Órdenes</a></li>
-                    <li><a href="#">Editar órdenes</a></li>
-                    <li><a href="#">Presupuestos</a></li>
-                    <li class="sub-item"><a href="#">Calendario</a></li>
-                    <li class="sub-item"><a href="#">Recordatorios</a></li>
-                    <li><a href="manager-taller.html#vehicles-panel">Vehículos</a></li>
-                    <li><a href="#">Histórico</a></li>
+            <nav class="main-nav">
+                <ul>
+                    <li class="nav-item"><a href="index.html">Inicio</a></li>
+                    <li class="nav-item has-dropdown">
+                        <a href="manager-taller.html">Taller</a>
+                        <ul class="dropdown">
+                            <li><a href="manager-taller-ordenes.html">Órdenes</a></li>
+                            <li><a href="#">Editar órdenes</a></li>
+                            <li><a href="#">Presupuestos</a></li>
+                            <li class="sub-item"><a href="#">Calendario</a></li>
+                            <li class="sub-item"><a href="#">Recordatorios</a></li>
+                            <li><a href="manager-taller.html#vehicles-panel">Vehículos</a></li>
+                            <li><a href="#">Histórico</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item has-dropdown">
+                        <a href="#">Tienda</a>
+                        <ul class="dropdown">
+                            <li><a href="#">Compras</a></li>
+                            <li><a href="#">Ventas</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="#">Caja</a></li>
+                    <li class="nav-item has-dropdown">
+                        <a href="#">Cuentas corrientes</a>
+                        <ul class="dropdown">
+                            <li><a href="#">Saldos</a></li>
+                            <li><a href="#">Movimientos</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="manager-taller-inventario.html">Inventario</a></li>
+                    <li class="nav-item"><a href="manager-taller-trabajadores.html">Trabajadores</a></li>
+                    <li class="nav-item has-dropdown">
+                        <a href="manager-taller-clientes.html" class="active">Contactos</a>
+                        <ul class="dropdown">
+                            <li><a href="manager-taller-clientes.html">Clientes</a></li>
+                            <li><a href="manager-taller-proveedores.html" class="active">Proveedores</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item"><a href="#">Informes</a></li>
                 </ul>
-            </li>
-            <li class="nav-item has-dropdown">
-                <a href="#">Tienda</a>
-                <ul class="dropdown">
-                    <li><a href="#">Compras</a></li>
-                    <li><a href="#">Ventas</a></li>
-                </ul>
-            </li>
-            <li class="nav-item"><a href="#">Caja</a></li>
-            <li class="nav-item has-dropdown">
-                <a href="#">Cuentas corrientes</a>
-                <ul class="dropdown">
-                    <li><a href="#">Saldos</a></li>
-                    <li><a href="#">Movimientos</a></li>
-                </ul>
-            </li>
-            <li class="nav-item"><a href="manager-taller-inventario.html">Inventario</a></li>
-            <li class="nav-item"><a href="manager-taller-trabajadores.html">Trabajadores</a></li>
-            <li class="nav-item has-dropdown">
-                <a href="manager-taller-clientes.html" class="active">Contactos</a>
-                <ul class="dropdown">
-                    <li><a href="manager-taller-clientes.html">Clientes</a></li>
-                    <li><a href="manager-taller-proveedores.html" class="active">Proveedores</a></li>
-                </ul>
-            </li>
-            <li class="nav-item"><a href="#">Informes</a></li>
-        </ul>
-    </nav>
-        <div class="user-session">
-            <span class="user-name">Iván Moreno · admin</span>
-            <a href="login.html" class="logout-button">Salir</a>
-        </div>
-    </header>
-    
+            </nav>
+            <div class="user-session">
+                <span class="user-name">Iván Moreno · admin</span>
+                <a href="login.html" class="logout-button">Salir</a>
+            </div>
+        </header>
+
         <!-- PANEL PRINCIPAL CON FORMULARIO Y BUSCADOR -->
         <main class="main-panel">
-            
+
             <!-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO DE PROVEEDOR -->
             <div class="card form-container">
                 <h2>Registrar Nuevo Proveedor</h2>
@@ -440,14 +524,14 @@
                             <input type="text" id="nombreFantasia" name="nombreFantasia" class="form-input">
                         </div>
                         <div class="form-group">
-                             <label for="tipoResponsable" class="form-label">Tipo responsable*</label>
-                             <select id="tipoResponsable" name="tipoResponsable" class="form-select" required>
-                                 <option value="">Selecciona una opción</option>
-                                 <option value="Consumidor Final">Consumidor Final</option>
-                                 <option value="Monotributista">Monotributista</option>
-                                 <option value="Responsable Inscripto">Responsable Inscripto</option>
-                                 <option value="Exento">Exento</option>
-                             </select>
+                            <label for="tipoResponsable" class="form-label">Tipo responsable*</label>
+                            <select id="tipoResponsable" name="tipoResponsable" class="form-select" required>
+                                <option value="">Selecciona una opción</option>
+                                <option value="Consumidor Final">Consumidor Final</option>
+                                <option value="Monotributista">Monotributista</option>
+                                <option value="Responsable Inscripto">Responsable Inscripto</option>
+                                <option value="Exento">Exento</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label for="cuit" class="form-label">CUIT*</label>
@@ -457,12 +541,12 @@
                             <label for="domicilioFiscal" class="form-label">Domicilio fiscal</label>
                             <input type="text" id="domicilioFiscal" name="domicilioFiscal" class="form-input">
                         </div>
-                         <div class="form-group">
+                        <div class="form-group">
                             <label for="localidadFiscal" class="form-label">Localidad fiscal</label>
                             <input type="text" id="localidadFiscal" name="localidadFiscal" class="form-input">
                         </div>
                     </div>
-                    
+
                     <hr>
                     <h4>Datos de Contacto</h4>
 
@@ -475,11 +559,11 @@
                             <label for="telefonoAlternativo" class="form-label">Teléfono alternativo</label>
                             <input type="tel" id="telefonoAlternativo" name="telefonoAlternativo" class="form-input">
                         </div>
-                         <div class="form-group">
+                        <div class="form-group">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" id="email" name="email" class="form-input">
                         </div>
-                         <div class="form-group">
+                        <div class="form-group">
                             <label for="emailAlternativo" class="form-label">Email alternativo</label>
                             <input type="email" id="emailAlternativo" name="emailAlternativo" class="form-input">
                         </div>
@@ -493,7 +577,7 @@
 
                     <label for="comentario" class="form-label">Comentario</label>
                     <textarea id="comentario" name="comentario" class="form-textarea" rows="3"></textarea>
-                    
+
                     <button type="submit" id="submit-button" class="submit-button">Registrar Proveedor</button>
                 </form>
                 <p id="form-status" style="text-align: center; margin-top: 20px;"></p>
@@ -504,7 +588,8 @@
                 <h2>Buscar Proveedor</h2>
                 <form id="search-form">
                     <div class="search-form">
-                        <input type="search" id="search-input" placeholder="Buscar por nombre, CUIT..." class="search-input">
+                        <input type="search" id="search-input" placeholder="Buscar por nombre, CUIT..."
+                            class="search-input">
                         <button type="submit" id="search-button" class="search-button">Buscar</button>
                     </div>
                 </form>
@@ -520,144 +605,95 @@
     </div>
 
     <script>
-        // --- NUEVAS URLs DE WEBHOOKS PARA PROVEEDORES ---
-        const MAKE_REGISTER_PROVIDER_WEBHOOK_URL = 'https://hook.eu2.make.com/TU_NUEVO_WEBHOOK_DE_REGISTRO';
-        const MAKE_SEARCH_PROVIDER_WEBHOOK_URL = 'https://hook.eu2.make.com/TU_NUEVO_WEBHOOK_DE_BUSQUEDA';
+        // --- CONFIGURACIÓN API ---
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000'
+            : window.location.origin;
+
+        const API_URL = `${API_BASE_URL}/api/proveedores`;
 
         // --- LÓGICA PARA REGISTRAR PROVEEDORES ---
         const providerForm = document.getElementById('provider-form');
         const submitButton = document.getElementById('submit-button');
         const formStatus = document.getElementById('form-status');
-        
-        providerForm.addEventListener('submit', function(event) {
+
+        providerForm.addEventListener('submit', async function (event) {
             event.preventDefault();
+
+            // Validar token
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('No estás autenticado. Por favor inicia sesión.');
+                window.location.href = 'login.html';
+                return;
+            }
 
             formStatus.textContent = 'Registrando proveedor...';
             formStatus.style.color = '#A0A0A0';
             submitButton.disabled = true;
 
+            // Recopilar datos del formulario
             const formData = new FormData(providerForm);
-            const data = {};
-            formData.forEach((value, key) => { data[key] = value; });
 
-            fetch(MAKE_REGISTER_PROVIDER_WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            })
-            .then(response => {
-                if (response.ok) return response.text();
-                throw new Error('La respuesta del servidor no fue exitosa.');
-            })
-            .then(text => {
-                console.log('Respuesta de Make:', text);
-                formStatus.textContent = '¡Proveedor registrado con éxito!';
-                formStatus.style.color = '#28a745';
-                
-                providerForm.reset();
-                setTimeout(() => { formStatus.textContent = ''; }, 3000);
-            })
-            .catch(error => {
+            // Construir el objeto payload mapeando los campos del formulario a lo que espera el backend
+            const payload = {
+                nombre: formData.get('nombre'),
+                ruc_dni: formData.get('cuit'), // Backend espera ruc_dni (que se guarda en cif)
+                telefono: formData.get('telefono'),
+                email: formData.get('email'),
+                direccion: `${formData.get('domicilioFiscal') || ''} ${formData.get('localidadFiscal') || ''}`.trim(),
+                comentario: formData.get('comentario'),
+                personaContacto: formData.get('personaContacto')
+                // Otros campos como nombreFantasia, tipoResponsable, etc. se pueden agregar si el backend los soporta
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    console.log('Proveedor creado:', result);
+                    formStatus.textContent = '¡Proveedor registrado con éxito!';
+                    formStatus.style.color = '#28a745';
+                    providerForm.reset();
+                    setTimeout(() => { formStatus.textContent = ''; }, 3000);
+                } else {
+                    throw new Error(result.error || 'Error desconocido al guardar');
+                }
+            } catch (error) {
                 console.error('Error al enviar el formulario:', error);
-                formStatus.textContent = 'Hubo un error al registrar. Inténtalo de nuevo.';
+                formStatus.textContent = error.message || 'Hubo un error al registrar. Inténtalo de nuevo.';
                 formStatus.style.color = '#dc3545';
-            })
-            .finally(() => {
+            } finally {
                 submitButton.disabled = false;
-            });
+            }
         });
 
-        // --- LÓGICA PARA BUSCAR PROVEEDORES ---
+        // --- LÓGICA PARA BUSCAR PROVEEDORES (Deshabilitada temporalmente) ---
         const searchForm = document.getElementById('search-form');
         const searchInput = document.getElementById('search-input');
         const searchButton = document.getElementById('search-button');
         const searchResultsContainer = document.getElementById('search-results');
         const searchResultsInfo = document.getElementById('search-results-info');
 
-        searchForm.addEventListener('submit', function(event) {
+        searchForm.addEventListener('submit', function (event) {
             event.preventDefault();
-            const query = searchInput.value.trim();
-
-            if (!query) {
-                searchResultsInfo.textContent = 'Por favor, introduce un término de búsqueda.';
-                searchResultsInfo.style.color = '#A0A0A0';
-                return;
-            }
-
-            searchResultsInfo.textContent = 'Buscando...';
+            searchResultsInfo.textContent = 'La búsqueda estará disponible próximamente.';
             searchResultsInfo.style.color = '#A0A0A0';
-            searchButton.disabled = true;
-            searchResultsContainer.innerHTML = ''; 
-
-            const urlWithQuery = `${MAKE_SEARCH_PROVIDER_WEBHOOK_URL}?query=${encodeURIComponent(query)}`;
-
-            fetch(urlWithQuery)
-                .then(response => {
-                    if (!response.ok) throw new Error('Error en la respuesta del servidor.');
-                    return response.text();
-                })
-                .then(text => {
-                    if (!text) {
-                        displaySearchResults([]);
-                        return;
-                    }
-                    try {
-                        // Simulación de una respuesta de Make.com
-                        const results = [
-                            { nombre: "Proveedor de Ejemplo 1", cuit: "30-12345678-9", telefono: "11-2233-4455"},
-                            { nombre: "Distribuidora ABC", cuit: "30-98765432-1", telefono: "11-6677-8899"}
-                        ].filter(p => p.nombre.toLowerCase().includes(query.toLowerCase()) || p.cuit.includes(query));
-
-                        displaySearchResults(results);
-                    } catch (e) {
-                        console.error("La respuesta del servidor no era un JSON válido:", text);
-                        displaySearchResults([]);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error al buscar:', error);
-                    searchResultsInfo.textContent = 'Error al realizar la búsqueda.';
-                    searchResultsInfo.style.color = '#dc3545';
-                })
-                .finally(() => {
-                    searchButton.disabled = false;
-                });
         });
 
         function displaySearchResults(results) {
-            const resultsArray = Array.isArray(results) ? results : [results];
-
-            if (!resultsArray || resultsArray.length === 0 || (resultsArray.length === 1 && !resultsArray[0].nombre) ) {
-                searchResultsInfo.textContent = 'No se encontraron proveedores.';
-                searchResultsInfo.style.color = '#A0A0A0';
-                searchResultsContainer.innerHTML = '';
-                return;
-            }
-
-            searchResultsInfo.textContent = `Se encontraron ${resultsArray.length} resultados.`;
-            searchResultsInfo.style.color = '#28a745';
-            
-            searchResultsContainer.innerHTML = ''; // Limpiar antes de añadir nuevos
-            
-            resultsArray.forEach(provider => {
-                if (!provider || !provider.nombre) return; 
-
-                const listItem = document.createElement('div');
-                listItem.className = 'search-result-item';
-
-                const initials = provider.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-
-                // Adaptado para mostrar datos del proveedor
-                listItem.innerHTML = `
-                    <div class="client-avatar">${initials}</div>
-                    <div class="client-info">
-                        <div class="name">${provider.nombre || 'No disponible'}</div>
-                        <div class="detail">CUIT: ${provider.cuit || 'No disponible'} | Tel: ${provider.telefono || 'No disponible'}</div>
-                    </div>
-                `;
-                searchResultsContainer.appendChild(listItem);
-            });
+            // Implementación futura
         }
     </script>
 </body>
+
 </html>

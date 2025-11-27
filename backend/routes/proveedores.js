@@ -28,33 +28,44 @@ router.post('/', verifyJWT, async (req, res) => {
     try {
         // Verificar si ya existe el proveedor en este tenant
         const existing = await pool.query(
-            'SELECT id FROM proveedor WHERE ruc_dni = $1 AND id_tenant = $2',
+            'SELECT id FROM proveedor WHERE cif = $1 AND id_tenant = $2',
             [ruc_dni, id_tenant]
         );
 
         if (existing.rows.length > 0) {
             return res.status(400).json({
                 ok: false,
-                error: 'Ya existe un proveedor con este RUC/DNI en su organización.'
+                error: 'Ya existe un proveedor con este CUIT/CIF en su organización.'
             });
         }
 
         // Insertar proveedor
-        // Se asume que la tabla tiene los campos: id_tenant, nombre, ruc_dni, telefono, email, direccion, estado, created_at
+        // Columnas reales: id_tenant, nombre, cif, telefono, Correo, Domicilio_fiscal, Comentarios, Nombre_contacto, cp_localidad
         const insertQuery = `
       INSERT INTO proveedor 
-      (id_tenant, nombre, ruc_dni, telefono, email, direccion, estado, created_at)
-      VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVO', NOW())
+      (id_tenant, nombre, cif, telefono, "Correo", "Domicilio_fiscal", "Comentarios", "Nombre_contacto", created_at)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
       RETURNING *
     `;
+
+        // Mapeo de campos del frontend
+        // nombre -> nombre
+        // ruc_dni -> cif
+        // telefono -> telefono
+        // email -> Correo
+        // direccion -> Domicilio_fiscal
+        // comentario -> Comentarios
+        // personaContacto -> Nombre_contacto
 
         const result = await pool.query(insertQuery, [
             id_tenant,
             nombre,
-            ruc_dni,
+            ruc_dni, // Frontend envía ruc_dni o cuit, aquí lo recibimos como ruc_dni en el destructuring
             telefono || null,
             email || null,
-            direccion || null
+            direccion || null,
+            req.body.comentario || null,
+            req.body.personaContacto || null
         ]);
 
         res.status(201).json({
