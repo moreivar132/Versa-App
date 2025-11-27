@@ -76,7 +76,7 @@ router.post('/', verifyJWT, async (req, res) => {
     }
 });
 
-// GET /api/proveedores - Obtener últimos 10 proveedores
+// GET /api/proveedores - Obtener últimos 3 proveedores
 router.get('/', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     const isSuperAdmin = req.user.is_super_admin;
@@ -89,7 +89,7 @@ router.get('/', verifyJWT, async (req, res) => {
             query = `
                 SELECT * FROM proveedor 
                 ORDER BY created_at DESC 
-                LIMIT 10
+                LIMIT 3
             `;
             params = [];
         } else {
@@ -97,7 +97,7 @@ router.get('/', verifyJWT, async (req, res) => {
                 SELECT * FROM proveedor 
                 WHERE id_tenant = $1 
                 ORDER BY created_at DESC 
-                LIMIT 10
+                LIMIT 3
             `;
             params = [id_tenant];
         }
@@ -107,6 +107,31 @@ router.get('/', verifyJWT, async (req, res) => {
     } catch (error) {
         console.error('Error al obtener proveedores:', error);
         res.status(500).json({ error: 'Error al obtener proveedores' });
+    }
+});
+
+// GET /api/proveedores/count - Obtener total de proveedores
+router.get('/count', verifyJWT, async (req, res) => {
+    const id_tenant = req.user.id_tenant;
+    const isSuperAdmin = req.user.is_super_admin;
+
+    try {
+        let query;
+        let params;
+
+        if (isSuperAdmin) {
+            query = 'SELECT COUNT(*) FROM proveedor';
+            params = [];
+        } else {
+            query = 'SELECT COUNT(*) FROM proveedor WHERE id_tenant = $1';
+            params = [id_tenant];
+        }
+
+        const result = await pool.query(query, params);
+        res.json({ count: parseInt(result.rows[0].count) });
+    } catch (error) {
+        console.error('Error al contar proveedores:', error);
+        res.status(500).json({ error: 'Error al contar proveedores' });
     }
 });
 

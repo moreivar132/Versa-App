@@ -611,7 +611,7 @@
                                 <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
                             </a>
 
-                            <!-- Taller Dropdown Trigger -->
+                            <!-- Taller Dropdown -->
                             <div class="nav-group">
                                 <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                                     onclick="toggleSubmenu('taller-submenu')">
@@ -623,8 +623,48 @@
                                 <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
                                     <a href="manager-taller-ordenes.html"
                                         class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                        órdenes</a>
+                                    <a href="#"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
                                     <a href="manager-taller.html#vehicles-panel"
                                         class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                                </div>
+                            </div>
+
+                            <!-- Tienda Dropdown -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('tienda-submenu')">
+                                    <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                    <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                        id="tienda-arrow"></i>
+                                </a>
+                                <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                                </div>
+                            </div>
+
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="#">
+                                <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                            </a>
+
+                            <!-- Cuentas Dropdown -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('cuentas-submenu')">
+                                    <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                    <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                        id="cuentas-arrow"></i>
+                                </a>
+                                <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
                                 </div>
                             </div>
 
@@ -697,6 +737,44 @@
                     <!-- Container adjustments for new layout -->
                     <div class="max-w-7xl mx-auto">
 
+                        <!-- KPI CARDS -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Total Clientes</p>
+                                    <h3 class="text-3xl font-bold text-white" id="total-clients-count">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-[rgba(255,101,43,0.1)] flex items-center justify-center text-[var(--brand-orange)]">
+                                    <i class="fas fa-users text-xl"></i>
+                                </div>
+                            </div>
+                            <!-- Placeholder KPIs -->
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Nuevos este mes</p>
+                                    <h3 class="text-3xl font-bold text-white">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                    <i class="fas fa-user-plus text-xl"></i>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Activos</p>
+                                    <h3 class="text-3xl font-bold text-white">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                                    <i class="fas fa-check-circle text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- SECCIÓN BUSCADOR DE CLIENTES -->
                         <section class="search-container">
                             <h2 class="form-main-title"><i class="fas fa-search"></i> Buscar Cliente</h2>
@@ -714,10 +792,17 @@
                             <!-- FICHA DE RESULTADO (Oculta hasta encontrar) -->
                             <div id="client-result" class="search-result-card">
                                 <div class="result-header">
-                                    <span class="result-title" id="res-nombre">Nombre del Cliente</span>
-                                    <span class="badge"
-                                        style="background:var(--brand-orange); color: black; padding: 4px 10px; border-radius:4px; font-size:12px; font-weight:700;">Cliente
-                                        Final</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="result-title" id="res-nombre">Nombre del Cliente</span>
+                                        <span class="badge"
+                                            style="background:var(--brand-orange); color: black; padding: 4px 10px; border-radius:4px; font-size:12px; font-weight:700;">Cliente
+                                            Final</span>
+                                    </div>
+                                    <button class="btn"
+                                        style="padding: 8px 16px; font-size: 14px; background-color: #333; border: 1px solid #555;"
+                                        onclick="alert('Funcionalidad de edición en desarrollo')">
+                                        <i class="fas fa-edit mr-2"></i> Editar
+                                    </button>
                                 </div>
                                 <div class="result-grid">
                                     <div class="result-item">
@@ -758,7 +843,7 @@
                         <!-- ÚLTIMOS CLIENTES -->
                         <section>
                             <h3 class="form-section-title" style="margin-top: 0; border-bottom: none;"><i
-                                    class="fas fa-history"></i> Últimos Clientes Registrados</h3>
+                                    class="fas fa-history"></i> Últimos 3 Clientes Registrados</h3>
                             <div id="recent-clients-grid" class="clients-grid">
                                 <!-- Se rellena vía JS -->
                                 <div
@@ -949,6 +1034,19 @@
 
                 // Cargar últimos clientes al iniciar
                 loadRecentClients();
+                loadClientStats();
+
+                async function loadClientStats() {
+                    try {
+                        const response = await fetchWithAuth('/api/clientes/count');
+                        if (response.ok) {
+                            const data = await response.json();
+                            document.getElementById('total-clients-count').textContent = data.count;
+                        }
+                    } catch (error) {
+                        console.error('Error cargando estadísticas:', error);
+                    }
+                }
 
                 async function loadRecentClients() {
                     const grid = document.getElementById('recent-clients-grid');
