@@ -56,48 +56,42 @@
           </button>
         </div>
         <nav class="space-y-3">
-          <a class="flex items-center p-3 rounded-lg text-white bg-primary shadow-lg transition-transform hover:scale-[1.02]"
-            href="index.html">
-            <span class="material-symbols-outlined mr-4">bar_chart</span>
-            <span class="font-semibold">Dashboard ejecutivo</span>
-          </a>
-          <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
-            href="admin-accesos.html">
-            <span class="material-symbols-outlined mr-4">shield</span>
-            <span class="font-medium">Administración de accesos</span>
-          </a>
-          <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
-            href="#">
-            <span class="material-symbols-outlined mr-4">receipt_long</span>
-            <span class="font-medium">Gestión de facturas</span>
-          </a>
-
-          <!-- Collapsible Manager Taller Menu -->
+          <!-- Collapsible Main Menu -->
           <div>
-            <button onclick="toggleSubmenu('taller-submenu')"
+            <button onclick="toggleSubmenu('main-menu', 'main-menu-arrow')"
               class="w-full flex items-center justify-between p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors group">
               <div class="flex items-center">
-                <span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">build</span>
-                <span class="font-medium">Manager Taller</span>
+                <span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">menu</span>
+                <span class="font-medium">Menú Principal</span>
               </div>
-              <span id="taller-arrow"
+              <span id="main-menu-arrow"
                 class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
             </button>
-            <div id="taller-submenu" class="hidden pl-12 space-y-1 mt-1 border-l-2 border-dark-700 ml-6">
-              <a href="manager-taller-ordenes.html"
-                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Órdenes</a>
-              <a href="manager-taller-vehiculos.html"
-                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Vehículos</a>
-              <a href="manager-taller-clientes.html"
-                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Clientes</a>
-              <a href="manager-taller-proveedores.html"
-                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Proveedores</a>
-              <a href="manager-taller-inventario.html"
-                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Inventario</a>
-              <a href="manager-taller-trabajadores.html"
-                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Trabajadores</a>
+            <div id="main-menu" class="hidden pl-2 space-y-1 mt-1 border-l-2 border-dark-700 ml-6">
+              <a class="flex items-center p-3 rounded-lg text-white bg-primary shadow-lg transition-transform hover:scale-[1.02]"
+                href="index.html">
+                <span class="material-symbols-outlined mr-4">bar_chart</span>
+                <span class="font-semibold">Dashboard ejecutivo</span>
+              </a>
+              <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
+                href="admin-accesos.html">
+                <span class="material-symbols-outlined mr-4">shield</span>
+                <span class="font-medium">Administración de accesos</span>
+              </a>
+              <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
+                href="#">
+                <span class="material-symbols-outlined mr-4">receipt_long</span>
+                <span class="font-medium">Gestión de facturas</span>
+              </a>
             </div>
           </div>
+
+          <!-- Manager Taller Link -->
+          <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
+            href="manager-taller-ordenes.html">
+            <span class="material-symbols-outlined mr-4">build</span>
+            <span class="font-medium">Manager Taller</span>
+          </a>
         </nav>
       </div>
       <div class="flex items-center justify-between pt-6 border-t border-dark-700">
@@ -242,16 +236,16 @@
     closeSidebarBtn.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
 
-    function toggleSubmenu(id) {
-      const submenu = document.getElementById(id);
-      const arrow = document.getElementById('taller-arrow');
+    function toggleSubmenu(submenuId, arrowId) {
+      const submenu = document.getElementById(submenuId);
+      const arrow = document.getElementById(arrowId);
 
       if (submenu.classList.contains('hidden')) {
         submenu.classList.remove('hidden');
-        arrow.style.transform = 'rotate(180deg)';
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
       } else {
         submenu.classList.add('hidden');
-        arrow.style.transform = 'rotate(0deg)';
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
       }
     }
   </script>
