@@ -71,11 +71,33 @@
             <span class="material-symbols-outlined mr-4">receipt_long</span>
             <span class="font-medium">Gestión de facturas</span>
           </a>
-          <a class="flex items-center py-3 px-3 text-gray-400 border-b border-dark-700 hover:border-primary hover:text-white transition-colors duration-200 group"
-            href="manager-taller-ordenes.html">
-            <span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">build</span>
-            <span class="font-medium uppercase tracking-wider text-sm">Manager Taller</span>
-          </a>
+
+          <!-- Collapsible Manager Taller Menu -->
+          <div>
+            <button onclick="toggleSubmenu('taller-submenu')"
+              class="w-full flex items-center justify-between p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors group">
+              <div class="flex items-center">
+                <span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">build</span>
+                <span class="font-medium">Manager Taller</span>
+              </div>
+              <span id="taller-arrow"
+                class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
+            </button>
+            <div id="taller-submenu" class="hidden pl-12 space-y-1 mt-1 border-l-2 border-dark-700 ml-6">
+              <a href="manager-taller-ordenes.html"
+                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Órdenes</a>
+              <a href="manager-taller-vehiculos.html"
+                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Vehículos</a>
+              <a href="manager-taller-clientes.html"
+                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Clientes</a>
+              <a href="manager-taller-proveedores.html"
+                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Proveedores</a>
+              <a href="manager-taller-inventario.html"
+                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Inventario</a>
+              <a href="manager-taller-trabajadores.html"
+                class="block py-2 text-sm text-gray-400 hover:text-primary transition-colors">Trabajadores</a>
+            </div>
+          </div>
         </nav>
       </div>
       <div class="flex items-center justify-between pt-6 border-t border-dark-700">
@@ -219,6 +241,19 @@
     mobileMenuBtn.addEventListener('click', openSidebar);
     closeSidebarBtn.addEventListener('click', closeSidebar);
     overlay.addEventListener('click', closeSidebar);
+
+    function toggleSubmenu(id) {
+      const submenu = document.getElementById(id);
+      const arrow = document.getElementById('taller-arrow');
+
+      if (submenu.classList.contains('hidden')) {
+        submenu.classList.remove('hidden');
+        arrow.style.transform = 'rotate(180deg)';
+      } else {
+        submenu.classList.add('hidden');
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }
   </script>
 </body>
 
