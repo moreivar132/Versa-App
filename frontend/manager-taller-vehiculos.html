@@ -651,11 +651,29 @@
 
                             <!-- FICHA DE RESULTADO (CON TABS) -->
                             <div id="vehicle-result" class="search-result-card">
+                                <!-- Main Header -->
+                                <div class="flex justify-between items-start mb-8 px-2">
+                                    <div>
+                                        <h1 class="text-3xl font-extrabold text-white mb-2 tracking-tight">
+                                            <span id="header-matricula"></span> - <span id="header-marca-modelo"></span>
+                                        </h1>
+                                        <p class="text-gray-400 text-sm">Gestiona la información del vehículo y su
+                                            historial.</p>
+                                    </div>
+                                    <button id="header-edit-btn"
+                                        class="px-4 py-2 bg-[#2a2a2a] hover:bg-[#333] text-white border border-[#3a3a3a] rounded-lg font-medium transition-colors flex items-center gap-2 text-sm">
+                                        <i class="fas fa-edit"></i> Editar Vehículo
+                                    </button>
+                                </div>
+
                                 <!-- Tabs Header -->
-                                <div class="detail-tabs">
-                                    <div class="detail-tab active" data-tab="general">Información General</div>
-                                    <div class="detail-tab" data-tab="historial">Historial</div>
-                                    <div class="detail-tab" data-tab="comentarios">Comentarios</div>
+                                <div class="detail-tabs mb-6 bg-transparent border-b border-[#2a2a2a]">
+                                    <div class="detail-tab active" data-tab="general" style="border-bottom-width: 2px;">
+                                        Información General</div>
+                                    <div class="detail-tab" data-tab="historial" style="border-bottom-width: 2px;">
+                                        Historial de Mantenimiento</div>
+                                    <div class="detail-tab" data-tab="comentarios" style="border-bottom-width: 2px;">
+                                        Comentarios</div>
                                 </div>
 
                                 <!-- Tab: General -->
@@ -727,19 +745,15 @@
                                             <h3 class="text-xl font-bold text-white mb-6">Acciones Rápidas</h3>
                                             <div class="flex flex-col gap-4">
                                                 <button
-                                                    class="w-full py-3 px-4 bg-[#3d261c] hover:bg-[#4d3024] text-[#ff8a5b] border border-[#593020] rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                                                    class="w-full py-3 px-4 bg-[#3d2116] hover:bg-[#4d2a1c] text-[#ff652b] border border-[#593020] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
                                                     <i class="fas fa-plus-circle"></i> Añadir Mantenimiento
                                                 </button>
                                                 <button
-                                                    class="w-full py-3 px-4 bg-[#2a2a2a] hover:bg-[#333] text-white border border-[#3a3a3a] rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                                                    class="w-full py-3 px-4 bg-[#2a2a2a] hover:bg-[#333] text-white border border-[#3a3a3a] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
                                                     <i class="fas fa-print"></i> Imprimir Ficha
                                                 </button>
-                                                <button id="edit-vehicle-btn"
-                                                    class="w-full py-3 px-4 bg-[#2a2a2a] hover:bg-[#333] text-white border border-[#3a3a3a] rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                                                    <i class="fas fa-edit"></i> Editar Vehículo
-                                                </button>
                                                 <button
-                                                    class="w-full py-3 px-4 bg-[#2a1a1a] hover:bg-[#3a2020] text-[#ff5b5b] border border-[#4a2020] rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                                                    class="w-full py-3 px-4 bg-[#2a1515] hover:bg-[#3a1d1d] text-[#ff5b5b] border border-[#4a2020] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
                                                     <i class="fas fa-trash-alt"></i> Eliminar Vehículo
                                                 </button>
                                             </div>
@@ -1090,7 +1104,10 @@
         });
 
         function displayVehicle(v) {
-            // General Info
+            // Header Info
+            document.getElementById('header-matricula').textContent = v.matricula;
+            document.getElementById('header-marca-modelo').textContent = `${v.marca} ${v.modelo}`;
+
             // General Info
             document.getElementById('res-matricula').textContent = v.matricula;
             // Removed title elements as they are no longer in the layout
@@ -1109,7 +1126,8 @@
             document.getElementById('res-cliente').textContent = v.nombre_cliente || 'Sin Cliente';
             document.getElementById('res-sucursal').textContent = v.nombre_sucursal || 'Sin Sucursal';
 
-            document.getElementById('edit-vehicle-btn').onclick = () => editVehicle(v);
+            // Update Header Edit Button
+            document.getElementById('header-edit-btn').onclick = () => editVehicle(v);
 
             resultCard.classList.add('active');
             suggestionsList.classList.remove('active');
