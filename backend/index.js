@@ -24,6 +24,7 @@ app.use('/api/admin', superAdminRouter);
 app.use('/api/proveedores', proveedoresRouter);
 app.use('/api/clientes', clientesRouter);
 app.use('/api/vehiculos', vehiculosRouter);
+app.use('/api/citas', require('./routes/citas'));
 
 // Ruta de test para la base de datos
 app.get('/api/db-test', async (req, res) => {
