@@ -17,6 +17,7 @@ export default defineConfig({
                 managerTallerProveedores: 'manager-taller-proveedores.html',
                 managerTallerTrabajadores: 'manager-taller-trabajadores.html',
                 managerTallerVehiculos: 'manager-taller-vehiculos.html',
+                citaPrevia: 'cita-previa.html',
             }
         }
     },
