@@ -236,7 +236,7 @@
 
         /* Component Styles */
         .professional-card {
-            background-color: var(--surface-bg);
+            background-color: var(--input-bg);
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
         }
@@ -1585,15 +1585,25 @@
             // --- Workshop & Professional Selection (Step 2 & 3) ---
             // --- Workshop & Professional Selection (Step 2 & 3) ---
             function renderWorkshops() {
+                if (!UIElements.workshopList) return;
                 UIElements.workshopList.innerHTML = '';
+
+                if (!Array.isArray(CONFIG.workshops)) {
+                    console.error('CONFIG.workshops is not an array');
+                    return;
+                }
+
                 CONFIG.workshops.forEach(ws => {
                     const label = document.createElement('label');
-                    label.className = 'flex items-center gap-3 p-4 border border-border-color rounded-xl cursor-pointer hover:bg-input-bg transition-colors';
+                    // Ensure flex and width are set
+                    label.className = 'flex items-center gap-3 p-4 border border-border-color rounded-xl cursor-pointer hover:bg-input-bg transition-colors w-full';
+                    label.style.display = 'flex'; // Fallback
+
                     const isChecked = bookingState.workshop === ws.id ? 'checked' : '';
                     label.innerHTML = `
-                        <input type="radio" name="taller" value="${ws.id}" class="accent-brand-orange w-5 h-5" ${isChecked}>
-                        <div>
-                            <div class="font-bold">${ws.name}</div>
+                        <input type="radio" name="taller" value="${ws.id}" class="accent-brand-orange w-5 h-5 flex-shrink-0" ${isChecked}>
+                        <div class="flex-grow">
+                            <div class="font-bold text-white">${ws.name}</div>
                             <div class="text-sm text-text-light">${ws.address}</div>
                         </div>
                     `;
@@ -1605,6 +1615,8 @@
                     });
                     UIElements.workshopList.appendChild(label);
                 });
+
+                // Ensure map is rendered if workshop is selected
                 if (bookingState.workshop) renderMapa(bookingState.workshop);
             }
 
