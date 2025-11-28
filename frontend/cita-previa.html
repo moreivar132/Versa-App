@@ -1319,7 +1319,22 @@
                                 <button role="tab" type="button" class="tab" id="tab-bici" aria-controls="panel-bici"
                                     aria-selected="false">BICICLETA</button>
                             </div>
-                            <div id="panel-moto" role="tabpanel" aria-labelledby="tab-moto" class="tab-panel"></div>
+                            <div id="panel-moto" role="tabpanel" aria-labelledby="tab-moto" class="tab-panel">
+                                <div class="subtabs" role="tablist" aria-label="Tipo de cliente">
+                                    <button role="tab" type="button" class="subtab" id="tab-moto-externo"
+                                        aria-controls="panel-moto-externo" aria-selected="true">Cliente externo</button>
+                                    <button role="tab" type="button" class="subtab" id="tab-moto-interno"
+                                        aria-controls="panel-moto-interno" aria-selected="false">Cliente interno
+                                        “VERSA”</button>
+                                </div>
+                                <p class="leyenda" id="leyenda-moto-interno" hidden>*En el 99% de los casos los precios
+                                    ya
+                                    están incluidos.</p>
+                                <div id="panel-moto-externo" role="tabpanel" aria-labelledby="tab-moto-externo"
+                                    class="tab-panel"></div>
+                                <div id="panel-moto-interno" role="tabpanel" aria-labelledby="tab-moto-interno"
+                                    class="tab-panel" hidden></div>
+                            </div>
                             <div id="panel-coche" role="tabpanel" aria-labelledby="tab-coche" class="tab-panel" hidden>
                             </div>
                             <div id="panel-bici" role="tabpanel" aria-labelledby="tab-bici" class="tab-panel" hidden>
@@ -1678,9 +1693,13 @@
 
             function refreshServiceCards() {
                 const currentTab = document.querySelector('.tab[aria-selected="true"]').id.replace('tab-', '');
-                if (currentTab === 'bici') {
-                    const currentSubTab = document.querySelector('.subtab[aria-selected="true"]').id.replace('tab-bici-', '');
-                    renderServiceCards('bici', `panel-bici-${currentSubTab}`, currentSubTab === 'interno');
+                if (currentTab === 'bici' || currentTab === 'moto') {
+                    const parentPanel = document.getElementById(`panel-${currentTab}`);
+                    const activeSubTab = parentPanel.querySelector('.subtab[aria-selected="true"]');
+                    if (activeSubTab) {
+                        const subType = activeSubTab.id.includes('interno') ? 'interno' : 'externo';
+                        renderServiceCards(currentTab, `panel-${currentTab}-${subType}`, subType === 'interno');
+                    }
                 } else {
                     renderServiceCards(currentTab, `panel-${currentTab}`);
                 }
@@ -1709,15 +1728,35 @@
                 });
 
                 const subtabs = document.querySelectorAll('.subtab');
-                const subpanels = document.querySelectorAll('#panel-bici > .tab-panel');
                 subtabs.forEach(tab => {
                     tab.addEventListener('click', (e) => {
-                        subtabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+                        const parentPanel = e.currentTarget.closest('.tab-panel'); // #panel-moto or #panel-bici
+
+                        // Deselect all subtabs IN THIS PARENT
+                        parentPanel.querySelectorAll('.subtab').forEach(t => t.setAttribute('aria-selected', 'false'));
                         e.currentTarget.setAttribute('aria-selected', 'true');
-                        subpanels.forEach(p => p.setAttribute('hidden', 'true'));
+
+                        // Hide all subpanels IN THIS PARENT (direct children tab-panels)
+                        // Note: The structure is parentPanel -> div.tab-panel (subpanel)
+                        // We need to be careful not to hide the parentPanel itself if the selector is too broad, 
+                        // but querySelectorAll on parentPanel searches descendants.
+                        // The subpanels have class 'tab-panel' too.
+                        // Let's target specific IDs or use a more specific selector if needed.
+                        // Actually, the subpanels are direct children of the parentPanel container div? 
+                        // No, looking at HTML: 
+                        // <div id="panel-moto" ... class="tab-panel"> 
+                        //    <div id="panel-moto-externo" ... class="tab-panel">
+                        // So querySelectorAll('.tab-panel') inside #panel-moto will find the subpanels.
+
+                        parentPanel.querySelectorAll('.tab-panel').forEach(p => p.setAttribute('hidden', 'true'));
+
                         const panelId = e.currentTarget.getAttribute('aria-controls');
                         document.getElementById(panelId).removeAttribute('hidden');
-                        document.getElementById('leyenda-interno').toggleAttribute('hidden', e.currentTarget.id !== 'tab-bici-interno');
+
+                        const isInterno = e.currentTarget.id.includes('interno');
+                        const legend = parentPanel.querySelector('.leyenda');
+                        if (legend) legend.toggleAttribute('hidden', !isInterno);
+
                         bookingState.services = [];
                         refreshServiceCards();
                         updateSummary();
@@ -2264,7 +2303,8 @@
             async function init() {
                 feather.replace();
                 // Step 1
-                renderServiceCards('moto', 'panel-moto');
+                renderServiceCards('moto', 'panel-moto-externo', false);
+                renderServiceCards('moto', 'panel-moto-interno', true);
                 renderServiceCards('coche', 'panel-coche');
                 renderServiceCards('bici', 'panel-bici-externo', false);
                 renderServiceCards('bici', 'panel-bici-interno', true);
