@@ -3,23 +3,30 @@ const router = express.Router();
 const pool = require('../db');
 
 // GET /api/citas/config - Obtener configuración (sucursales y técnicos)
+// GET /api/citas/config - Obtener configuración (sucursales y técnicos)
 router.get('/config', async (req, res) => {
     try {
         const sucursalesRes = await pool.query('SELECT id, nombre FROM sucursal ORDER BY id');
 
-        // Fetch technicians (users associated with sucursales)
-        // We assume 'usuariosucursal' links users to sucursales
-        const tecnicosRes = await pool.query(`
-            SELECT u.id, u.nombre, us.id_sucursal 
-            FROM usuario u 
-            JOIN usuariosucursal us ON u.id = us.id_usuario
-            ORDER BY u.nombre
-        `);
+        let tecnicos = [];
+        try {
+            // Fetch technicians (users associated with sucursales)
+            // We assume 'usuariosucursal' links users to sucursales
+            const tecnicosRes = await pool.query(`
+                SELECT u.id, u.nombre, us.id_sucursal 
+                FROM usuario u 
+                JOIN usuariosucursal us ON u.id = us.id_usuario
+                ORDER BY u.nombre
+            `);
+            tecnicos = tecnicosRes.rows;
+        } catch (err) {
+            console.warn('Could not fetch technicians (usuariosucursal might be missing):', err.message);
+        }
 
         res.json({
             ok: true,
             sucursales: sucursalesRes.rows,
-            tecnicos: tecnicosRes.rows
+            tecnicos: tecnicos
         });
     } catch (error) {
         console.error('Error al obtener config de citas:', error);

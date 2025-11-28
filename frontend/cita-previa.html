@@ -2051,7 +2051,7 @@
             async function fetchConfig() {
                 try {
                     const response = await fetch(CONFIG.api.baseUrl + CONFIG.api.configEndpoint);
-                    if (!response.ok) throw new Error('Failed to fetch config');
+                    if (!response.ok) throw new Error(`Failed to fetch config: ${response.statusText}`);
                     const data = await response.json();
 
                     if (data.ok) {
@@ -2068,30 +2068,40 @@
                         });
 
                         // Process Technicians
-                        data.tecnicos.forEach(t => {
-                            // Add to professionals list
-                            CONFIG.professionals[t.id] = {
-                                id: t.id,
-                                name: t.nombre,
-                                calendarUrl: null, // Placeholder or fetch from DB if available
-                                rating: (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1) // Mock rating for now
-                            };
+                        if (data.tecnicos && Array.isArray(data.tecnicos)) {
+                            data.tecnicos.forEach(t => {
+                                // Add to professionals list
+                                CONFIG.professionals[t.id] = {
+                                    id: t.id,
+                                    name: t.nombre,
+                                    calendarUrl: null, // Placeholder or fetch from DB if available
+                                    rating: (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1) // Mock rating for now
+                                };
 
-                            // Link to workshop
-                            const ws = CONFIG.workshops.find(w => w.id === t.id_sucursal);
-                            if (ws) {
-                                ws.technicianIds.push(t.id);
-                            }
-                        });
+                                // Link to workshop
+                                const ws = CONFIG.workshops.find(w => w.id === t.id_sucursal);
+                                if (ws) {
+                                    ws.technicianIds.push(t.id);
+                                }
+                            });
+                        }
 
                         // Set default workshop if exists
                         if (CONFIG.workshops.length > 0) {
                             bookingState.workshop = CONFIG.workshops[0].id;
+                        } else {
+                            UIElements.workshopList.innerHTML = '<p class="text-red-500 p-4">No se encontraron talleres disponibles en la base de datos.</p>';
                         }
+                    } else {
+                        throw new Error(data.error || 'API Error');
                     }
                 } catch (error) {
                     console.error('Error fetching config:', error);
-                    // Fallback or alert user
+                    UIElements.workshopList.innerHTML = `<div class="p-4 text-red-400 border border-red-800 rounded bg-red-900/20">
+                        <p class="font-bold">Error de conexión</p>
+                        <p class="text-sm">No se pudo cargar la lista de talleres. (${error.message})</p>
+                        <p class="text-xs mt-2 text-gray-400">Asegúrate de que el backend está corriendo en localhost:3000</p>
+                    </div>`;
                 }
             }
 
