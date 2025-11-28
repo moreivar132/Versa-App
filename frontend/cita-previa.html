@@ -236,7 +236,7 @@
 
         /* Component Styles */
         .professional-card {
-            background-color: var(--surface-bg);
+            background-color: var(--input-bg);
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
         }
@@ -1376,10 +1376,22 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
+            const STATIC_WORKSHOP_DATA = {
+                1: { // Tesoro (ID 1 assumed)
+                    address: 'Calle del Tesoro, 26, 28004 Madrid',
+                    mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.479549925624!2d-3.707675923233866!3d40.42028605553646!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd4228783255152b%3A0x6b4857434a5d7426!2sC.%20del%20Tesoro%2C%2026%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030204753!5m2!1sen!2sus'
+                },
+                2: { // Mella (ID 2 assumed)
+                    address: 'C. de Vázquez de Mella, 4, 28004 Madrid',
+                    mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.409337581561!2d-3.702919923233796!3d40.42177305541604!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd42289b5a265f69%3A0x619f0450523f4c6a!2sC.%20de%20V%C3%A1zquez%20de%20Mella%2C%204%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030252530!5m2!1sen!2sus'
+                }
+            };
+
             const CONFIG = {
                 api: {
-                    baseUrl: '', // Leave empty for relative path, or set full URL if needed
+                    baseUrl: '',
                     bookingWebhook: '/api/citas/crear',
+                    configEndpoint: '/api/citas/config'
                 },
                 calendar: {
                     workingHours: { start: '09:00', end: '19:00' },
@@ -1411,27 +1423,9 @@
                     ]
                 },
                 professionals: {
-                    1: { id: 1, name: 'Cualquier técnico', calendarUrl: null, rating: null },
-                    2: { id: 2, name: 'Carlos García', calendarUrl: 'https://calendar.google.com/calendar/ical/rafael.quintero%40goversa.es/public/basic.ics', rating: 4.8 },
-                    3: { id: 3, name: 'Lucía Fernández', calendarUrl: 'https://calendar.google.com/calendar/ical/rafael.quintero%40goversa.es/public/basic.ics', rating: 4.9 },
-                    4: { id: 4, name: 'Ana Pérez', calendarUrl: null, rating: 4.7 }
+                    0: { id: 0, name: 'Cualquier técnico', calendarUrl: null, rating: null }
                 },
-                workshops: [
-                    {
-                        id: 'tesoro',
-                        name: 'Taller Centro',
-                        address: 'Calle del Tesoro, 26, 28004 Madrid',
-                        technicianIds: [1, 2],
-                        mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.479549925624!2d-3.707675923233866!3d40.42028605553646!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd4228783255152b%3A0x6b4857434a5d7426!2sC.%20del%20Tesoro%2C%2026%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030204753!5m2!1sen!2sus'
-                    },
-                    {
-                        id: 'mella',
-                        name: 'Taller Chueca',
-                        address: 'C. de Vázquez de Mella, 4, 28004 Madrid',
-                        technicianIds: [1, 3, 4],
-                        mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.409337581561!2d-3.702919923233796!3d40.42177305541604!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd42289b5a265f69%3A0x619f0450523f4c6a!2sC.%20de%20V%C3%A1zquez%20de%20Mella%2C%204%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030252530!5m2!1sen!2sus'
-                    }
-                ]
+                workshops: []
             };
 
             let currentStep = 1;
@@ -1441,7 +1435,7 @@
                 professional: null,
                 date: null,
                 time: null,
-                workshop: 'tesoro',
+                workshop: null,
                 totalPrice: 0,
                 totalDuration: 0,
                 vehicleCategory: 'moto' // Default
@@ -1585,15 +1579,25 @@
             // --- Workshop & Professional Selection (Step 2 & 3) ---
             // --- Workshop & Professional Selection (Step 2 & 3) ---
             function renderWorkshops() {
+                if (!UIElements.workshopList) return;
                 UIElements.workshopList.innerHTML = '';
+
+                if (!Array.isArray(CONFIG.workshops)) {
+                    console.error('CONFIG.workshops is not an array');
+                    return;
+                }
+
                 CONFIG.workshops.forEach(ws => {
                     const label = document.createElement('label');
-                    label.className = 'flex items-center gap-3 p-4 border border-border-color rounded-xl cursor-pointer hover:bg-input-bg transition-colors';
+                    // Ensure flex and width are set
+                    label.className = 'flex items-center gap-3 p-4 border border-border-color rounded-xl cursor-pointer hover:bg-input-bg transition-colors w-full';
+                    label.style.display = 'flex'; // Fallback
+
                     const isChecked = bookingState.workshop === ws.id ? 'checked' : '';
                     label.innerHTML = `
-                        <input type="radio" name="taller" value="${ws.id}" class="accent-brand-orange w-5 h-5" ${isChecked}>
-                        <div>
-                            <div class="font-bold">${ws.name}</div>
+                        <input type="radio" name="taller" value="${ws.id}" class="accent-brand-orange w-5 h-5 flex-shrink-0" ${isChecked}>
+                        <div class="flex-grow">
+                            <div class="font-bold text-white">${ws.name}</div>
                             <div class="text-sm text-text-light">${ws.address}</div>
                         </div>
                     `;
@@ -1605,6 +1609,8 @@
                     });
                     UIElements.workshopList.appendChild(label);
                 });
+
+                // Ensure map is rendered if workshop is selected
                 if (bookingState.workshop) renderMapa(bookingState.workshop);
             }
 
@@ -2042,7 +2048,54 @@
                 });
             });
 
-            function init() {
+            async function fetchConfig() {
+                try {
+                    const response = await fetch(CONFIG.api.baseUrl + CONFIG.api.configEndpoint);
+                    if (!response.ok) throw new Error('Failed to fetch config');
+                    const data = await response.json();
+
+                    if (data.ok) {
+                        // Process Workshops
+                        CONFIG.workshops = data.sucursales.map(s => {
+                            const staticData = STATIC_WORKSHOP_DATA[s.id] || { address: 'Dirección no disponible', mapEmbed: '' };
+                            return {
+                                id: s.id,
+                                name: s.nombre,
+                                address: staticData.address,
+                                mapEmbed: staticData.mapEmbed,
+                                technicianIds: [0] // Start with 'Cualquier técnico'
+                            };
+                        });
+
+                        // Process Technicians
+                        data.tecnicos.forEach(t => {
+                            // Add to professionals list
+                            CONFIG.professionals[t.id] = {
+                                id: t.id,
+                                name: t.nombre,
+                                calendarUrl: null, // Placeholder or fetch from DB if available
+                                rating: (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1) // Mock rating for now
+                            };
+
+                            // Link to workshop
+                            const ws = CONFIG.workshops.find(w => w.id === t.id_sucursal);
+                            if (ws) {
+                                ws.technicianIds.push(t.id);
+                            }
+                        });
+
+                        // Set default workshop if exists
+                        if (CONFIG.workshops.length > 0) {
+                            bookingState.workshop = CONFIG.workshops[0].id;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching config:', error);
+                    // Fallback or alert user
+                }
+            }
+
+            async function init() {
                 feather.replace();
                 // Step 1
                 renderServiceCards('moto', 'panel-moto');
@@ -2051,10 +2104,13 @@
                 renderServiceCards('bici', 'panel-bici-interno', true);
                 setupServiceTabs();
 
+                // Fetch dynamic config
+                await fetchConfig();
+
                 // Step 2 & 3
                 setupWorkshopSelection();
                 renderWorkshops();
-                bookingState.professional = CONFIG.professionals[1]; // Default to 'Cualquier técnico'
+                bookingState.professional = CONFIG.professionals[0]; // Default to 'Cualquier técnico'
 
                 // Step 4
                 let today = new Date();

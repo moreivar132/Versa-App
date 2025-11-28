@@ -2,6 +2,31 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 
+// GET /api/citas/config - Obtener configuración (sucursales y técnicos)
+router.get('/config', async (req, res) => {
+    try {
+        const sucursalesRes = await pool.query('SELECT id, nombre FROM sucursal ORDER BY id');
+
+        // Fetch technicians (users associated with sucursales)
+        // We assume 'usuariosucursal' links users to sucursales
+        const tecnicosRes = await pool.query(`
+            SELECT u.id, u.nombre, us.id_sucursal 
+            FROM usuario u 
+            JOIN usuariosucursal us ON u.id = us.id_usuario
+            ORDER BY u.nombre
+        `);
+
+        res.json({
+            ok: true,
+            sucursales: sucursalesRes.rows,
+            tecnicos: tecnicosRes.rows
+        });
+    } catch (error) {
+        console.error('Error al obtener config de citas:', error);
+        res.status(500).json({ ok: false, error: 'Error al obtener configuración' });
+    }
+});
+
 // POST /api/citas/crear - Crear una nueva cita (Público)
 router.post('/crear', async (req, res) => {
     const {
@@ -22,10 +47,13 @@ router.post('/crear', async (req, res) => {
         });
     }
 
-    // Mapeo de sucursal (Hardcoded por ahora, idealmente consultar DB)
-    // tesoro -> 1, mella -> 2
-    let id_sucursal = 1;
-    if (sucursal_ref === 'mella') id_sucursal = 2;
+    // Mapeo de sucursal
+    let id_sucursal = parseInt(sucursal_ref);
+    if (isNaN(id_sucursal)) {
+        // Fallback para referencias antiguas de texto
+        if (sucursal_ref === 'mella') id_sucursal = 2;
+        else id_sucursal = 1; // Default
+    }
 
     const client = await pool.connect();
 
