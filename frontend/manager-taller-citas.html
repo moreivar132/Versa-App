@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Citas - Goversa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) - Mantenido para compatibilidad con el contenido de citas -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <style>
+        /* Estilos Generales preservados */
+        :root {
+            --brand-orange: #FF652B;
+            --brand-orange-strong: #FF7A45;
+            --surface-elevated: rgba(18, 18, 20, 0.96);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --surface-highlight: rgba(255, 255, 255, 0.04);
+            --dark-bg: #000000;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--dark-bg);
+            font-family: 'Montserrat', Arial, sans-serif;
+            color: #FFFFFF;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+
+        /* Scrollbar personalizado oscuro */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff5f00;
+        }
+
+        /* Estilos específicos para las tarjetas de citas */
+        .card {
+            background-color: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 12px;
+            padding: 25px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex h-screen w-full">
+        <!-- SideNavBar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">Goversa
+                            </h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="index.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-white font-semibold text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                <a href="manager-taller.html#vehicles-panel"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="#">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            IM
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                            <span class="text-gray-500 text-xs truncate">admin</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="login.html">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+            <!-- Top Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-7xl mx-auto">
+
+                    <!-- Header -->
+                    <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Citas y Taller</h1>
+                            <p class="text-[#a0a0a0] text-sm">Vista general de operaciones del día.</p>
+                        </div>
+
+                        <div class="flex w-full items-center gap-4 sm:w-auto">
+                            <!-- SearchBar -->
+                            <label class="flex-1 sm:w-64">
+                                <div class="relative flex w-full items-center">
+                                    <span class="material-symbols-outlined absolute left-3 text-[#a0a0a0]">search</span>
+                                    <input
+                                        class="h-10 w-full rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] pl-10 text-white placeholder:text-[#a0a0a0] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-all"
+                                        placeholder="Buscar matrícula, cliente..." />
+                                </div>
+                            </label>
+
+                            <!-- Notificaciones -->
+                            <button
+                                class="relative rounded-lg p-2 text-[#a0a0a0] hover:bg-[#1a1a1a] hover:text-white transition-colors">
+                                <span class="material-symbols-outlined">notifications</span>
+                                <span
+                                    class="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--brand-orange)]"></span>
+                            </button>
+
+                            <!-- Botón Acción -->
+                            <button
+                                class="flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--brand-orange)] px-4 text-sm font-bold text-white shadow-lg shadow-orange-900/20 hover:bg-orange-600 transition-all">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                                <span class="hidden sm:inline">Nueva Cita Manual</span>
+                            </button>
+                        </div>
+                    </header>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                        <!-- Card 1 -->
+                        <div
+                            class="flex flex-col gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[var(--brand-orange)]/30 transition-colors">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-[#a0a0a0]">Citas para Hoy</p>
+                                <span
+                                    class="material-symbols-outlined text-[var(--brand-orange)] bg-[var(--brand-orange)]/10 p-1 rounded-md">calendar_today</span>
+                            </div>
+                            <p class="text-3xl font-bold text-white" id="stats-citas-hoy">0</p>
+                            <p class="text-xs text-green-500 flex items-center gap-1"><span
+                                    class="material-symbols-outlined text-xs">trending_up</span> +2 vs ayer</p>
+                        </div>
+
+                        <!-- Card 2 -->
+                        <div
+                            class="flex flex-col gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[var(--brand-orange)]/30 transition-colors">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-[#a0a0a0]">En Taller Ahora</p>
+                                <span
+                                    class="material-symbols-outlined text-blue-500 bg-blue-500/10 p-1 rounded-md">build_circle</span>
+                            </div>
+                            <p class="text-3xl font-bold text-white">4</p>
+                            <p class="text-xs text-[#a0a0a0]">2 Motos, 1 Coche, 1 Bici</p>
+                        </div>
+
+                        <!-- Card 3 -->
+                        <div
+                            class="flex flex-col gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[var(--brand-orange)]/30 transition-colors">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-[#a0a0a0]">Facturación (Est.)</p>
+                                <span
+                                    class="material-symbols-outlined text-green-500 bg-green-500/10 p-1 rounded-md">payments</span>
+                            </div>
+                            <p class="text-3xl font-bold text-white">450€</p>
+                            <p class="text-xs text-[#a0a0a0]">Pendiente de cobro: 120€</p>
+                        </div>
+
+                        <!-- Card 4 -->
+                        <div
+                            class="flex flex-col gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[var(--brand-orange)]/30 transition-colors">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-[#a0a0a0]">Solicitudes Web</p>
+                                <span
+                                    class="material-symbols-outlined text-purple-500 bg-purple-500/10 p-1 rounded-md">public</span>
+                            </div>
+                            <p class="text-3xl font-bold text-white">3</p>
+                            <p class="text-xs text-[var(--brand-orange)] font-bold">Requieren confirmación</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Area: Tablas y Gráficas -->
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+                        <!-- Appointments List (Tabla Grande) -->
+                        <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] lg:col-span-2 flex flex-col">
+                            <div class="border-b border-[#2a2a2a] p-4 flex justify-between items-center">
+                                <h3 class="text-lg font-bold text-white">Próximas Citas (Tabla: public.citataller)</h3>
+                                <button
+                                    class="text-xs text-[var(--brand-orange)] font-semibold hover:text-white transition-colors"
+                                    onclick="loadCitas()">Actualizar</button>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-[#2a2a2a]">
+                                    <thead class="bg-black/20">
+                                        <tr>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Hora</th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Cliente / Vehículo</th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Servicio / Sucursal</th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Estado</th>
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-[#2a2a2a] bg-transparent" id="citas-tbody">
+                                        <!-- Filas dinámicas aquí -->
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-4 text-center text-[#a0a0a0]">Cargando
+                                                citas...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Chart & Alerts -->
+                        <div class="flex flex-col gap-6">
+
+                            <!-- Performance Chart (Simulado con CSS) -->
+                            <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 flex flex-col h-full">
+                                <h3 class="mb-6 text-lg font-bold text-white">Ocupación Semanal</h3>
+                                <div class="flex h-full items-end justify-between gap-2 mt-auto min-h-[150px]">
+                                    <!-- Barras -->
+                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
+                                        <div
+                                            class="h-[40%] w-full max-w-[20px] rounded-t bg-[#2a2a2a] group-hover:bg-[var(--brand-orange)] transition-all">
+                                        </div>
+                                        <span class="text-[10px] text-[#a0a0a0]">L</span>
+                                    </div>
+                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
+                                        <div
+                                            class="h-[60%] w-full max-w-[20px] rounded-t bg-[#2a2a2a] group-hover:bg-[var(--brand-orange)] transition-all">
+                                        </div>
+                                        <span class="text-[10px] text-[#a0a0a0]">M</span>
+                                    </div>
+                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
+                                        <div
+                                            class="h-[80%] w-full max-w-[20px] rounded-t bg-[var(--brand-orange)] shadow-[0_0_10px_rgba(255,95,0,0.5)]">
+                                        </div>
+                                        <span class="text-[10px] text-white font-bold">X</span>
+                                    </div>
+                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
+                                        <div
+                                            class="h-[70%] w-full max-w-[20px] rounded-t bg-[#2a2a2a] group-hover:bg-[var(--brand-orange)] transition-all">
+                                        </div>
+                                        <span class="text-[10px] text-[#a0a0a0]">J</span>
+                                    </div>
+                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
+                                        <div
+                                            class="h-[90%] w-full max-w-[20px] rounded-t bg-[#2a2a2a] group-hover:bg-[var(--brand-orange)] transition-all">
+                                        </div>
+                                        <span class="text-[10px] text-[#a0a0a0]">V</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Alertas Rápidas -->
+                            <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5">
+                                <h3 class="mb-4 text-sm font-bold text-[#a0a0a0] uppercase tracking-wider">Alertas</h3>
+                                <div class="space-y-3">
+                                    <div class="flex gap-3 items-start">
+                                        <div class="bg-red-500/10 p-2 rounded-lg text-red-500">
+                                            <span class="material-symbols-outlined text-sm">warning</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-white font-medium">Stock bajo Aceite 10W40</p>
+                                            <p class="text-xs text-[#a0a0a0]">Quedan 2 unidades en Tesoro</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-3 items-start">
+                                        <div class="bg-blue-500/10 p-2 rounded-lg text-blue-500">
+                                            <span class="material-symbols-outlined text-sm">info</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-white font-medium">Nueva Solicitud Web</p>
+                                            <p class="text-xs text-[#a0a0a0]">Hace 10 min - Revisar</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // --- SIDEBAR LOGIC ---
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isCollapsed = false;
+
+        toggleBtn.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                sidebarTexts.forEach(el => el.classList.add('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                });
+            } else {
+                sidebar.classList.add('w-64');
+                sidebar.classList.remove('w-20');
+                sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            }
+        });
+
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('absolute');
+            sidebar.classList.toggle('z-50');
+            sidebar.classList.toggle('h-full');
+        });
+
+        // Expand Taller submenu by default
+        document.addEventListener("DOMContentLoaded", () => {
+            toggleSubmenu('taller-submenu');
+            loadCitas(); // Load citas on startup
+        });
+
+        // --- CITAS LOGIC ---
+
+        // Función para formatear fecha
+        function formatTime(isoString) {
+            if (!isoString) return '--:--';
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDate(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            const today = new Date();
+            const isToday = date.getDate() === today.getDate() &&
+                date.getMonth() === today.getMonth() &&
+                date.getFullYear() === today.getFullYear();
+
+            if (isToday) return 'Hoy';
+            return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+        }
+
+        // Función para obtener clase de estado
+        function getStatusBadge(status) {
+            const s = (status || '').toLowerCase();
+            if (s === 'pendiente') {
+                return `<span class="inline-flex items-center rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500 border border-yellow-500/20">Pendiente</span>`;
+            } else if (s === 'en proceso' || s === 'confirmada') {
+                return `<span class="inline-flex items-center rounded-full bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-500 border border-blue-500/20">En Proceso</span>`;
+            } else if (s === 'completado' || s === 'finalizada') {
+                return `<span class="inline-flex items-center rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-500 border border-green-500/20">Completado</span>`;
+            } else {
+                return `<span class="inline-flex items-center rounded-full bg-gray-500/10 px-2.5 py-0.5 text-xs font-medium text-gray-400 border border-gray-500/20">${status}</span>`;
+            }
+        }
+
+        // Cargar citas
+        async function loadCitas() {
+            const tbody = document.getElementById('citas-tbody');
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#a0a0a0]">Cargando...</td></tr>';
+
+            try {
+                const response = await fetch('/api/citas');
+                const data = await response.json();
+
+                if (data.ok && data.citas) {
+                    tbody.innerHTML = '';
+
+                    // Actualizar contador
+                    const today = new Date().toISOString().split('T')[0];
+                    const citasHoy = data.citas.filter(c => c.fecha_hora && c.fecha_hora.startsWith(today)).length;
+                    document.getElementById('stats-citas-hoy').textContent = citasHoy;
+
+                    if (data.citas.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#a0a0a0]">No hay citas registradas.</td></tr>';
+                        return;
+                    }
+
+                    data.citas.forEach(cita => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-white/5 transition-colors group';
+
+                        const vehiculoIcon = cita.vehiculo_modelo && cita.vehiculo_modelo.toLowerCase().includes('moto') ? 'two_wheeler' : 'directions_car';
+
+                        tr.innerHTML = `
+                            <td class="whitespace-nowrap px-6 py-4">
+                                <div class="text-sm font-bold text-white">${formatTime(cita.fecha_hora)}</div>
+                                <div class="text-xs text-[#a0a0a0]">${formatDate(cita.fecha_hora)}</div>
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4">
+                                <div class="text-sm font-medium text-white">${cita.cliente_nombre || 'Cliente Desconocido'}</div>
+                                <div class="text-xs text-[#a0a0a0] flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">${vehiculoIcon}</span> ${cita.vehiculo_marca || ''} ${cita.vehiculo_modelo || ''}
+                                </div>
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4">
+                                <div class="text-sm text-gray-300">${cita.motivo || 'Servicio General'}</div>
+                                <div class="text-xs text-[var(--brand-orange)]">${cita.sucursal_nombre || 'Sucursal Principal'}</div>
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4">
+                                ${getStatusBadge(cita.estado)}
+                            </td>
+                            <td class="whitespace-nowrap px-6 py-4 text-right">
+                                <button class="text-[#a0a0a0] hover:text-[var(--brand-orange)] transition-colors">
+                                    <span class="material-symbols-outlined">more_vert</span>
+                                </button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar citas.</td></tr>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error de conexión.</td></tr>';
+            }
+        }
+    </script>
+</body>
+
+</html>
