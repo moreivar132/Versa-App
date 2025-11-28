@@ -54,7 +54,8 @@ router.get('/', async (req, res) => {
             LEFT JOIN clientefinal cli ON c.id_cliente = cli.id
             LEFT JOIN vehiculo v ON c.id_vehiculo = v.id
             LEFT JOIN sucursal s ON c.id_sucursal = s.id
-            ORDER BY c.fecha_hora ASC
+            ORDER BY c.fecha_hora DESC
+            LIMIT 10
         `;
         const result = await pool.query(query);
         res.json({ ok: true, citas: result.rows });
