@@ -34,6 +34,36 @@ router.get('/config', async (req, res) => {
     }
 });
 
+// GET /api/citas - Listar citas (Interno)
+router.get('/', async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                c.id,
+                c.fecha_hora,
+                c.duracion_min,
+                c.estado,
+                c.motivo,
+                c.notas,
+                cli.nombre as cliente_nombre,
+                v.marca as vehiculo_marca,
+                v.modelo as vehiculo_modelo,
+                v.matricula as vehiculo_matricula,
+                s.nombre as sucursal_nombre
+            FROM citataller c
+            LEFT JOIN clientefinal cli ON c.id_cliente = cli.id
+            LEFT JOIN vehiculo v ON c.id_vehiculo = v.id
+            LEFT JOIN sucursal s ON c.id_sucursal = s.id
+            ORDER BY c.fecha_hora ASC
+        `;
+        const result = await pool.query(query);
+        res.json({ ok: true, citas: result.rows });
+    } catch (error) {
+        console.error('Error al obtener citas:', error);
+        res.status(500).json({ ok: false, error: 'Error al obtener citas' });
+    }
+});
+
 // POST /api/citas/crear - Crear una nueva cita (Público)
 router.post('/crear', async (req, res) => {
     const {
