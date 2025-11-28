@@ -1389,7 +1389,7 @@
 
             const CONFIG = {
                 api: {
-                    baseUrl: '',
+                    baseUrl: 'https://versa-app-dev.up.railway.app',
                     bookingWebhook: '/api/citas/crear',
                     configEndpoint: '/api/citas/config'
                 },
@@ -2079,27 +2079,6 @@
                                 const ws = CONFIG.workshops.find(w => w.id === t.id_sucursal);
                                 if (ws) ws.technicianIds.push(t.id);
                             });
-                        } else {
-                            // Fallback: Add dummy technicians if DB is empty so the UI isn't broken
-                            const dummyTechs = [
-                                { id: 101, name: 'Carlos García', rating: 4.8, workshopId: 1 },
-                                { id: 102, name: 'Lucía Fernández', rating: 4.9, workshopId: 2 },
-                                { id: 103, name: 'Ana Pérez', rating: 4.7, workshopId: 2 }
-                            ];
-
-                            dummyTechs.forEach(t => {
-                                CONFIG.professionals[t.id] = {
-                                    id: t.id,
-                                    name: t.name,
-                                    calendarUrl: null,
-                                    rating: t.rating
-                                };
-                                // Try to find workshop by ID, or just add to the first one if ID 1/2 don't exist
-                                let ws = CONFIG.workshops.find(w => w.id === t.workshopId);
-                                if (!ws && CONFIG.workshops.length > 0) ws = CONFIG.workshops[0];
-
-                                if (ws) ws.technicianIds.push(t.id);
-                            });
                         }
 
                         // Set default workshop if exists
@@ -2113,11 +2092,9 @@
                     }
                 } catch (error) {
                     console.error('Error fetching config:', error);
-                    UIElements.workshopList.innerHTML = `<div class="p-4 text-red-400 border border-red-800 rounded bg-red-900/20">
-                        <p class="font-bold">Error de conexión</p>
-                        <p class="text-sm">No se pudo cargar la lista de talleres. (${error.message})</p>
-                        <p class="text-xs mt-2 text-gray-400">Asegúrate de que el backend está corriendo en localhost:3000</p>
-                    </div>`;
+                    if (UIElements.workshopList) {
+                        UIElements.workshopList.innerHTML = '<p class="text-red-500 p-4">Error al conectar con el servidor. Por favor, inténtelo más tarde.</p>';
+                    }
                 }
             }
 
