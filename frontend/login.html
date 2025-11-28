@@ -9,6 +9,94 @@
   <title>Acceso | Versa Finanzas</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./theme.css" />
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    /* Estilos específicos para el botón premium sin afectar el tema global */
+    .premium-card-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: white;
+      border-radius: 1.5rem;
+      /* rounded-3xl */
+      padding: 1rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid #f3f4f6;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      margin-top: 1.5rem;
+    }
+
+    .premium-card-link:hover {
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      transform: translateY(-2px);
+    }
+
+    .premium-icon-container {
+      height: 3.5rem;
+      width: 3.5rem;
+      background-color: #007AFF;
+      border-radius: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .premium-card-link:hover .premium-icon-container {
+      transform: scale(1.1) rotate(3deg);
+    }
+
+    .premium-text-container {
+      text-align: left;
+      margin-left: 1.25rem;
+      flex-grow: 1;
+    }
+
+    .premium-title {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: #111827;
+      margin: 0;
+      transition: color 0.3s ease;
+    }
+
+    .premium-card-link:hover .premium-title {
+      color: #007AFF;
+    }
+
+    .premium-subtitle {
+      font-size: 0.875rem;
+      color: #6b7280;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .premium-arrow {
+      color: #d1d5db;
+      transition: all 0.3s ease;
+    }
+
+    .premium-card-link:hover .premium-arrow {
+      color: #007AFF;
+      transform: translateX(4px);
+    }
+
+    .external-services-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      margin-left: 0.5rem;
+      margin-top: 2rem;
+    }
+  </style>
 </head>
 
 <body class="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center p-6">
@@ -44,11 +132,33 @@
           <p id="loginError" class="form-error" role="alert" hidden></p>
           <button class="btn btn-brand w-full" type="submit">Entrar</button>
         </form>
+
+        <!-- External Services Section -->
+        <div class="external-services-title">Servicios Externos</div>
+
+        <a href="cita-previa.html" class="premium-card-link">
+          <div style="display: flex; align-items: center;">
+            <div class="premium-icon-container">
+              <i data-feather="calendar" style="width: 1.75rem; height: 1.75rem;"></i>
+            </div>
+            <div class="premium-text-container">
+              <h3 class="premium-title">Solicitar Cita Previa</h3>
+              <p class="premium-subtitle">Reserva taller sin cuenta</p>
+            </div>
+          </div>
+          <div class="premium-arrow">
+            <i data-feather="chevron-right" style="width: 1.5rem; height: 1.5rem;"></i>
+          </div>
+        </a>
+
       </div>
     </section>
   </main>
 
   <script type="module" src="./login.js"></script>
+  <script>
+    feather.replace();
+  </script>
 </body>
 
 </html>
