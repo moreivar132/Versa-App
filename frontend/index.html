@@ -47,11 +47,11 @@
 
     <!-- Sidebar -->
     <aside id="sidebar"
-      class="fixed inset-y-0 left-0 z-50 w-72 bg-surface-light dark:bg-surface-dark p-6 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 shadow-2xl md:shadow-none">
+      class="fixed inset-y-0 left-0 z-50 w-72 bg-dark-800 p-6 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 border-r border-dark-700">
       <div>
         <div class="flex items-center justify-between mb-10">
-          <span class="text-xl font-bold uppercase text-muted-light dark:text-muted-dark tracking-widest">Panel</span>
-          <button id="close-sidebar" class="md:hidden text-muted-light dark:text-muted-dark">
+          <span class="text-xl font-bold uppercase text-gray-400 tracking-widest">Panel</span>
+          <button id="close-sidebar" class="md:hidden text-gray-400 hover:text-white">
             <span class="material-symbols-outlined">close</span>
           </button>
         </div>
@@ -61,41 +61,36 @@
             <span class="material-symbols-outlined mr-4">bar_chart</span>
             <span class="font-semibold">Dashboard ejecutivo</span>
           </a>
-          <a class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+          <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
             href="admin-accesos.html">
-            <span class="material-symbols-outlined mr-4">shield_person</span>
+            <span class="material-symbols-outlined mr-4">shield</span>
             <span class="font-medium">Administración de accesos</span>
           </a>
-          <a class="flex items-center p-3 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+          <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
             href="#">
             <span class="material-symbols-outlined mr-4">receipt_long</span>
             <span class="font-medium">Gestión de facturas</span>
           </a>
-          <a class="flex items-center py-3 px-3 text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700 hover:border-primary dark:hover:border-primary transition-colors duration-200 group"
+          <a class="flex items-center py-3 px-3 text-gray-400 border-b border-dark-700 hover:border-primary hover:text-white transition-colors duration-200 group"
             href="manager-taller-ordenes.html">
-            <span
-              class="material-symbols-outlined mr-4 text-muted-light dark:text-muted-dark group-hover:text-primary transition-colors duration-200">build</span>
+            <span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">build</span>
             <span class="font-medium uppercase tracking-wider text-sm">Manager Taller</span>
           </a>
         </nav>
       </div>
-      <nav id="mainNavigation">
-        <span class="nav__title">Panel</span>
-        <a class="navlink" data-requires="admin" href="#dashboard">
-          <span aria-hidden="true">📊</span>
-          <span>Dashboard ejecutivo</span>
-        </a>
-        <a class="navlink" data-requires="admin" href="admin-accesos.html">
-          <span aria-hidden="true">🛡️</span>
-          <span>Administración de accesos</span>
-        </a>
-        <a class="navlink" href="#facturas">
-          <span aria-hidden="true">🧾</span>
-          <span>Gestión de facturas</span>
-        </a>
-        <a class="navlink" href="manager-taller.html">
-          <span aria-hidden="true">🛠️</span>
-          <span>MANAGER TALLER</span>
+      <div class="flex items-center justify-between pt-6 border-t border-dark-700">
+        <div class="flex items-center">
+          <div
+            class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm mr-3 shadow-md">
+            <span>IM</span>
+          </div>
+          <div>
+            <p class="font-semibold text-sm text-white">Iván Moreno</p>
+            <p class="text-xs text-gray-400">Administrador</p>
+          </div>
+        </div>
+        <a class="text-gray-400 hover:text-primary transition-colors" href="login.html">
+          <span class="material-symbols-outlined">logout</span>
         </a>
       </div>
     </aside>
