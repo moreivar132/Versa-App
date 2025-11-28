@@ -13,18 +13,18 @@ const getSucursalesByTenant = async (tenantId) => {
     return result.rows;
 };
 
-const createSucursal = async ({ nombre, id_tenant }) => {
+const createSucursal = async ({ nombre, id_tenant, google_calendar_id }) => {
     const result = await pool.query(
-        'INSERT INTO sucursal (nombre, id_tenant) VALUES ($1, $2) RETURNING *',
-        [nombre, id_tenant]
+        'INSERT INTO sucursal (nombre, id_tenant, google_calendar_id) VALUES ($1, $2, $3) RETURNING *',
+        [nombre, id_tenant, google_calendar_id]
     );
     return result.rows[0];
 };
 
-const updateSucursal = async (id, { nombre, id_tenant }) => {
+const updateSucursal = async (id, { nombre, id_tenant, google_calendar_id }) => {
     const result = await pool.query(
-        'UPDATE sucursal SET nombre = $1, id_tenant = $2 WHERE id = $3 RETURNING *',
-        [nombre, id_tenant, id]
+        'UPDATE sucursal SET nombre = $1, id_tenant = $2, google_calendar_id = $3 WHERE id = $4 RETURNING *',
+        [nombre, id_tenant, google_calendar_id, id]
     );
     return result.rows[0];
 };
