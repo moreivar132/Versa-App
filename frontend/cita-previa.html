@@ -989,6 +989,93 @@
         .gap-y-2 {
             row-gap: 0.5rem;
         }
+
+        /* Stepper Styles */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .step-indicator.active {
+            color: var(--brand-orange);
+            font-weight: 700;
+            opacity: 1;
+        }
+
+        .step-indicator.completed {
+            color: var(--brand-orange);
+            opacity: 0.8;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--input-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .step-indicator.active .step-number,
+        .step-indicator.completed .step-number {
+            background-color: var(--brand-orange);
+            color: white;
+        }
+
+        /* Input Styles Fix */
+        input,
+        textarea,
+        select {
+            color: #EAEAEA !important;
+            background-color: #333333 !important;
+            border-color: var(--border-color) !important;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--brand-orange) !important;
+            outline-color: var(--brand-orange) !important;
+        }
+
+        /* Date Time Layout */
+        .date-time-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media(min-width: 768px) {
+            .date-time-container {
+                grid-template-columns: 320px 1fr;
+            }
+        }
+
+        .slots-group-title {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
     </style>
 </head>
 
@@ -1052,11 +1139,9 @@
         <form id="bookingForm" method="POST">
             <div class="lg:grid lg:grid-cols-3 lg:gap-8 items-start">
                 <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border pb-40 lg:pb-8">
-                    <!-- Progress Bar -->
-                    <div class="w-full bg-gray-200 rounded-full h-1.5 mb-8 overflow-hidden">
-                        <div id="progress-bar"
-                            class="bg-[#ff5f00] h-1.5 rounded-full transition-all duration-500 ease-out"
-                            style="width: 14%"></div>
+                    <!-- Stepper -->
+                    <div class="stepper no-scrollbar" id="booking-stepper">
+                        <!-- Injected via JS -->
                     </div>
 
                     <div class="mb-8 flex items-center justify-between">
@@ -1105,16 +1190,9 @@
 
                     <!-- Step 2: Workshop -->
                     <div id="step-2" class="step-content hidden">
-                        <fieldset id="taller">
-                            <legend>Taller de referencia</legend>
-                            <label>
-                                <input type="radio" name="taller" value="tesoro" required checked>
-                                <span>Calle del Tesoro, 26</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="taller" value="mella">
-                                <span>C. de Vázquez de Mella, 4</span>
-                            </label>
+                        <fieldset id="taller" class="space-y-3">
+                            <legend class="mb-4">Selecciona un Taller</legend>
+                            <div id="workshop-list" class="space-y-3"></div>
                         </fieldset>
                         <div id="mapa"></div>
                     </div>
@@ -1126,16 +1204,33 @@
 
                     <!-- Step 4: Date & Time -->
                     <div id="step-4" class="step-content hidden">
-                        <div class="flex items-center justify-between mb-4 mt-6">
-                            <div class="font-bold text-lg" id="current-month-display"></div>
-                            <button type="button" id="calendar-btn"
-                                class="h-10 w-10 flex items-center justify-center rounded-full border hover:bg-gray-100 transition-colors">
-                                <i data-feather="calendar" class="w-5 h-5"></i>
-                            </button>
+                        <div class="date-time-container mt-6">
+                            <!-- Left: Inline Calendar -->
+                            <div class="calendar-wrapper">
+                                <div class="flex items-center justify-between mb-4">
+                                    <button type="button" id="cal-prev" class="p-1 hover:bg-input-bg rounded"><i
+                                            data-feather="chevron-left"></i></button>
+                                    <span id="cal-month-year" class="font-bold capitalize"></span>
+                                    <button type="button" id="cal-next" class="p-1 hover:bg-input-bg rounded"><i
+                                            data-feather="chevron-right"></i></button>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 text-center text-xs text-text-light mb-2">
+                                    <span>LU</span><span>MA</span><span>MI</span><span>JU</span><span>VI</span><span>SA</span><span>DO</span>
+                                </div>
+                                <div id="inline-calendar-grid" class="grid grid-cols-7 gap-1 place-items-center"></div>
+                            </div>
+
+                            <!-- Right: Time Slots -->
+                            <div class="slots-wrapper">
+                                <h3 class="font-bold mb-4" id="selected-date-display">Selecciona una hora</h3>
+                                <div id="time-slots-container" class="space-y-6">
+                                    <!-- Morning -->
+                                    <div id="slots-morning"></div>
+                                    <!-- Afternoon -->
+                                    <div id="slots-afternoon"></div>
+                                </div>
+                            </div>
                         </div>
-                        <div id="day-selector-container"
-                            class="flex items-center space-x-2 overflow-x-auto pb-4 mb-6 no-scrollbar"></div>
-                        <div id="time-slots" class="grid grid-cols-3 gap-3"></div>
                     </div>
 
                     <!-- Step 5: Review -->
@@ -1283,7 +1378,8 @@
 
             const CONFIG = {
                 api: {
-                    bookingWebhook: '/api/citas/crear', // Refactored endpoint
+                    baseUrl: '', // Leave empty for relative path, or set full URL if needed
+                    bookingWebhook: '/api/citas/crear',
                 },
                 calendar: {
                     workingHours: { start: '09:00', end: '19:00' },
@@ -1320,24 +1416,22 @@
                     3: { id: 3, name: 'Lucía Fernández', calendarUrl: 'https://calendar.google.com/calendar/ical/rafael.quintero%40goversa.es/public/basic.ics', rating: 4.9 },
                     4: { id: 4, name: 'Ana Pérez', calendarUrl: null, rating: 4.7 }
                 },
-                workshops: {
-                    tesoro: {
-                        name: 'Calle del Tesoro, 26',
-                        technicianIds: [1, 2]
+                workshops: [
+                    {
+                        id: 'tesoro',
+                        name: 'Taller Centro',
+                        address: 'Calle del Tesoro, 26, 28004 Madrid',
+                        technicianIds: [1, 2],
+                        mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.479549925624!2d-3.707675923233866!3d40.42028605553646!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd4228783255152b%3A0x6b4857434a5d7426!2sC.%20del%20Tesoro%2C%2026%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030204753!5m2!1sen!2sus'
                     },
-                    mella: {
-                        name: 'C. de Vázquez de Mella, 4',
-                        technicianIds: [1, 3, 4]
+                    {
+                        id: 'mella',
+                        name: 'Taller Chueca',
+                        address: 'C. de Vázquez de Mella, 4, 28004 Madrid',
+                        technicianIds: [1, 3, 4],
+                        mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.409337581561!2d-3.702919923233796!3d40.42177305541604!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd42289b5a265f69%3A0x619f0450523f4c6a!2sC.%20de%20V%C3%A1zquez%20de%20Mella%2C%204%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030252530!5m2!1sen!2sus'
                     }
-                },
-                maps: {
-                    tesoro: {
-                        embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.479549925624!2d-3.707675923233866!3d40.42028605553646!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd4228783255152b%3A0x6b4857434a5d7426!2sC.%20del%20Tesoro%2C%2026%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030204753!5m2!1sen!2sus',
-                    },
-                    mella: {
-                        embed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.409337581561!2d-3.702919923233796!3d40.42177305541604!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd42289b5a265f69%3A0x619f0450523f4c6a!2sC.%20de%20V%C3%A1zquez%20de%20Mella%2C%204%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030252530!5m2!1sen!2sus',
-                    }
-                }
+                ]
             };
 
             let currentStep = 1;
@@ -1361,9 +1455,15 @@
                 nextStepBtns: document.querySelectorAll('.next-step-btn'),
                 steps: document.querySelectorAll('.step-content'),
                 professionalList: document.getElementById('professional-list'),
-                currentMonthDisplay: document.getElementById('current-month-display'),
-                daySelectorContainer: document.getElementById('day-selector-container'),
-                timeSlotsContainer: document.getElementById('time-slots'),
+                workshopList: document.getElementById('workshop-list'), // New
+                stepper: document.getElementById('booking-stepper'), // New
+                calMonthYear: document.getElementById('cal-month-year'), // New
+                calPrevBtn: document.getElementById('cal-prev'), // New
+                calNextBtn: document.getElementById('cal-next'), // New
+                inlineCalendarGrid: document.getElementById('inline-calendar-grid'), // New
+                slotsMorning: document.getElementById('slots-morning'), // New
+                slotsAfternoon: document.getElementById('slots-afternoon'), // New
+                selectedDateDisplay: document.getElementById('selected-date-display'), // New
                 summaryItems: document.getElementById('summary-items'),
                 mobileSummaryFooter: document.getElementById('mobile-summary-footer'),
                 summaryTotalDesktop: document.getElementById('summary-total-desktop'),
@@ -1374,12 +1474,6 @@
                 notesContainer: document.getElementById('notes-container'),
                 finalSummaryContainer: document.getElementById('final-summary'),
                 addToCalendarBtn: document.getElementById('add-to-calendar-btn'),
-                calendarModal: document.getElementById('calendar-modal'),
-                calendarBtn: document.getElementById('calendar-btn'),
-                modalMonthYear: document.getElementById('modal-month-year'),
-                modalPrevMonthBtn: document.getElementById('modal-prev-month-btn'),
-                modalNextMonthBtn: document.getElementById('modal-next-month-btn'),
-                modalCalendarGrid: document.getElementById('modal-calendar-grid'),
                 mapaDiv: document.getElementById('mapa'),
                 mainNav: document.getElementById('main-nav'),
                 menuOpenBtn: document.getElementById('menu-open-btn'),
@@ -1489,27 +1583,42 @@
             }
 
             // --- Workshop & Professional Selection (Step 2 & 3) ---
-            function setupWorkshopSelection() {
-                document.querySelectorAll('input[name="taller"]').forEach(radio => {
-                    radio.addEventListener('change', (e) => {
-                        bookingState.workshop = e.target.value;
-                        bookingState.professional = null; // Reset professional on workshop change
-                        renderMapa(bookingState.workshop);
+            // --- Workshop & Professional Selection (Step 2 & 3) ---
+            function renderWorkshops() {
+                UIElements.workshopList.innerHTML = '';
+                CONFIG.workshops.forEach(ws => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center gap-3 p-4 border border-border-color rounded-xl cursor-pointer hover:bg-input-bg transition-colors';
+                    const isChecked = bookingState.workshop === ws.id ? 'checked' : '';
+                    label.innerHTML = `
+                        <input type="radio" name="taller" value="${ws.id}" class="accent-brand-orange w-5 h-5" ${isChecked}>
+                        <div>
+                            <div class="font-bold">${ws.name}</div>
+                            <div class="text-sm text-text-light">${ws.address}</div>
+                        </div>
+                    `;
+                    label.querySelector('input').addEventListener('change', () => {
+                        bookingState.workshop = ws.id;
+                        bookingState.professional = null;
+                        renderMapa(ws.id);
                         validateStep();
                     });
+                    UIElements.workshopList.appendChild(label);
                 });
+                if (bookingState.workshop) renderMapa(bookingState.workshop);
             }
 
             function renderMapa(key) {
-                const cfg = CONFIG.maps[key];
-                UIElements.mapaDiv.innerHTML = cfg ? `<iframe src="${cfg.embed}" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` : '';
+                const ws = CONFIG.workshops.find(w => w.id === key);
+                UIElements.mapaDiv.innerHTML = ws ? `<iframe src="${ws.mapEmbed}" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` : '';
             }
 
             function renderProfessionals(workshopKey) {
                 UIElements.professionalList.innerHTML = '';
-                const technicianIds = CONFIG.workshops[workshopKey].technicianIds;
+                const ws = CONFIG.workshops.find(w => w.id === workshopKey);
+                if (!ws) return;
 
-                technicianIds.forEach(id => {
+                ws.technicianIds.forEach(id => {
                     const pro = CONFIG.professionals[id];
                     if (!pro) return;
 
@@ -1532,48 +1641,18 @@
 
 
             // --- Date & Time (Step 4) ---
-            function renderDays() {
-                UIElements.daySelectorContainer.innerHTML = '';
-                const selectedDate = new Date(bookingState.date + 'T00:00:00');
-                UIElements.currentMonthDisplay.textContent = selectedDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-
-                for (let i = -7; i < 8; i++) {
-                    const date = new Date(selectedDate);
-                    date.setDate(selectedDate.getDate() + i);
-
-                    const dayName = date.toLocaleDateString('es-ES', { weekday: 'short' });
-                    const dayNumber = date.getDate();
-                    const dayOfWeek = date.getDay();
-                    const fullDate = getLocalDateString(date);
-
-                    const isSelected = bookingState.date === fullDate;
-                    const isOffDay = CONFIG.calendar.offDays.includes(dayOfWeek);
-
-                    const dayEl = document.createElement('button');
-                    dayEl.type = 'button';
-                    let classes = `day-selector flex-shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-xl border transition-colors`;
-                    classes += isSelected ? ' selected' : (isOffDay ? ' disabled' : ' border-border-color hover:bg-input-bg');
-
-                    dayEl.className = classes;
-                    dayEl.dataset.date = fullDate;
-                    dayEl.disabled = isOffDay;
-                    dayEl.innerHTML = `<span class="text-xs uppercase">${dayName.replace('.', '')}</span><span class="font-bold text-lg">${dayNumber}</span>`;
-                    UIElements.daySelectorContainer.appendChild(dayEl);
-                }
-            }
-
-            function renderCalendarModal(date) {
+            function renderInlineCalendar(date) {
                 const month = date.getMonth();
                 const year = date.getFullYear();
-                UIElements.modalMonthYear.textContent = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-                UIElements.modalCalendarGrid.innerHTML = '';
+                UIElements.calMonthYear.textContent = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                UIElements.inlineCalendarGrid.innerHTML = '';
 
                 const firstDay = new Date(year, month, 1);
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
                 const startDayOfWeek = (firstDay.getDay() + 6) % 7;
 
                 for (let i = 0; i < startDayOfWeek; i++) {
-                    UIElements.modalCalendarGrid.appendChild(document.createElement('div'));
+                    UIElements.inlineCalendarGrid.appendChild(document.createElement('div'));
                 }
 
                 const today = new Date();
@@ -1593,12 +1672,21 @@
                     if (dayString === getLocalDateString(today)) dayEl.classList.add('today');
                     if (dayString === bookingState.date) dayEl.classList.add('selected');
 
-                    UIElements.modalCalendarGrid.appendChild(dayEl);
+                    dayEl.addEventListener('click', () => {
+                        bookingState.date = dayString;
+                        bookingState.time = null;
+                        renderInlineCalendar(calendarDate); // Re-render to show selection
+                        fetchAndRenderTimes(bookingState.date);
+                    });
+
+                    UIElements.inlineCalendarGrid.appendChild(dayEl);
                 }
             }
 
             async function fetchAndRenderTimes(date) {
-                UIElements.timeSlotsContainer.innerHTML = Array(6).fill(0).map(() => `<div class="h-12 bg-input-bg rounded-xl animate-pulse"></div>`).join('');
+                UIElements.selectedDateDisplay.textContent = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                UIElements.slotsMorning.innerHTML = '<div class="h-10 bg-input-bg rounded animate-pulse"></div>';
+                UIElements.slotsAfternoon.innerHTML = '<div class="h-10 bg-input-bg rounded animate-pulse"></div>';
 
                 const { workingHours, saturdayHours, slotDurationMinutes } = CONFIG.calendar;
                 const duration = bookingState.totalDuration;
@@ -1622,8 +1710,6 @@
                         busySlots = parseIcal(icalText, date);
                     } catch (error) {
                         console.error("Error fetching calendar:", error);
-                        UIElements.timeSlotsContainer.innerHTML = `<p class="text-sm col-span-3 text-center" style="color: #f56565;">No se pudo cargar la disponibilidad.</p>`;
-                        return;
                     }
                 }
 
@@ -1634,25 +1720,54 @@
 
                     const isOverlapping = busySlots.some(busy => t < busy.end && slotEnd > busy.start);
                     if (!isOverlapping) {
-                        availableTimes.push(`${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`);
+                        availableTimes.push(t);
                     }
                 }
 
-                UIElements.timeSlotsContainer.innerHTML = '';
+                UIElements.slotsMorning.innerHTML = '';
+                UIElements.slotsAfternoon.innerHTML = '';
+
                 if (availableTimes.length === 0) {
-                    UIElements.timeSlotsContainer.innerHTML = `<p class="text-text-light text-sm col-span-3 text-center">No hay citas disponibles para este día.</p>`;
+                    UIElements.slotsMorning.innerHTML = `<p class="text-text-light text-sm">No hay citas disponibles.</p>`;
                     return;
                 }
 
-                availableTimes.forEach(time => {
-                    const isSelected = bookingState.time === time;
-                    const slot = document.createElement('button');
-                    slot.type = 'button';
-                    slot.dataset.time = time;
-                    slot.className = `time-slot p-3 text-center rounded-xl border-2 transition-all ${isSelected ? 'selected' : 'border-border-color hover:bg-input-bg'}`;
-                    slot.textContent = time;
-                    UIElements.timeSlotsContainer.appendChild(slot);
-                });
+                const morningSlots = availableTimes.filter(t => t < 14 * 60);
+                const afternoonSlots = availableTimes.filter(t => t >= 14 * 60);
+
+                const renderSlots = (slots, container) => {
+                    if (slots.length === 0) {
+                        container.innerHTML = '<p class="text-xs text-text-light">No hay huecos.</p>';
+                        return;
+                    }
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-3 gap-2';
+                    slots.forEach(t => {
+                        const timeStr = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+                        const isSelected = bookingState.time === timeStr;
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = `time-slot p-2 text-sm rounded-lg border border-border-color hover:border-brand-orange transition-all ${isSelected ? 'selected' : ''}`;
+                        btn.textContent = timeStr;
+                        btn.addEventListener('click', () => {
+                            bookingState.time = timeStr;
+                            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            validateStep();
+                        });
+                        grid.appendChild(btn);
+                    });
+                    container.appendChild(grid);
+                };
+
+                if (morningSlots.length > 0) {
+                    UIElements.slotsMorning.innerHTML = '<div class="slots-group-title">Mañana</div>';
+                    renderSlots(morningSlots, UIElements.slotsMorning);
+                }
+                if (afternoonSlots.length > 0) {
+                    UIElements.slotsAfternoon.innerHTML = '<div class="slots-group-title">Tarde</div>';
+                    renderSlots(afternoonSlots, UIElements.slotsAfternoon);
+                }
                 validateStep();
             }
 
@@ -1706,7 +1821,8 @@
             function renderReview() {
                 const { services, professional, date, time, workshop, totalPrice, totalDuration } = bookingState;
                 const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                const workshopName = CONFIG.workshops[workshop].name;
+                const ws = CONFIG.workshops.find(w => w.id === workshop);
+                const workshopName = ws ? ws.name : workshop;
                 UIElements.reviewSummaryContainer.innerHTML = `
                 <div class="space-y-4">
                      <div class="border-b border-border-color pb-4 space-y-2">
@@ -1724,7 +1840,8 @@
             function renderFinalSummary() {
                 const { services, professional, date, time, workshop, totalPrice } = bookingState;
                 const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
-                const workshopName = CONFIG.workshops[workshop].name;
+                const ws = CONFIG.workshops.find(w => w.id === workshop);
+                const workshopName = ws ? ws.name : workshop;
                 UIElements.finalSummaryContainer.innerHTML = `
                 <div class="flex justify-between items-center"><span class="text-text-light">Taller</span><span class="font-bold">${workshopName}</span></div>
                 <div class="flex justify-between items-center"><span class="text-text-light">Técnico</span><span class="font-bold">${professional.name}</span></div>
@@ -1745,10 +1862,9 @@
                 UIElements.backBtn.style.visibility = (currentStep === 1 || currentStep === 7) ? 'hidden' : 'visible';
 
                 if (currentStep === 3) renderProfessionals(bookingState.workshop);
-                
-                // Update Progress Bar
-                const progress = (currentStep / 7) * 100;
-                document.getElementById('progress-bar').style.width = `${progress}%`;
+
+                // Update Stepper
+                renderStepper();
 
                 if (currentStep === 7) {
                     UIElements.mobileSummaryFooter.classList.add('hidden');
@@ -1786,7 +1902,8 @@
                 const { services, professional, date, time, workshop, totalDuration } = bookingState;
                 const customerName = document.getElementById('name').value;
                 const notes = document.getElementById('notes').value;
-                const workshopName = CONFIG.workshops[workshop].name;
+                const ws = CONFIG.workshops.find(w => w.id === workshop);
+                const workshopName = ws ? ws.name : workshop;
 
                 const formatToGoogleUTC = (d) => d.toISOString().replace(/[-:.]/g, '').slice(0, -3) + 'Z';
                 const startDate = new Date(`${date}T${time}`);
@@ -1803,6 +1920,39 @@
                     location: workshopName
                 });
                 window.open(`https://www.google.com/calendar/render?${params.toString()}`, '_blank');
+            }
+
+            // --- Stepper Logic ---
+            function renderStepper() {
+                const steps = [
+                    { num: 1, label: 'Servicios' },
+                    { num: 2, label: 'Taller' },
+                    { num: 3, label: 'Técnico' },
+                    { num: 4, label: 'Fecha' },
+                    { num: 5, label: 'Datos' }
+                ];
+
+                // Map currentStep (1-7) to Stepper (1-5)
+                // 1->1, 2->2, 3->3, 4->4, 5->5 (Review is part of Data flow?), 6->5, 7->Done
+                // Actually step 5 is Review, 6 is Data. Let's simplify:
+                // 1: Serv, 2: Taller, 3: Tec, 4: Fecha, 5: Confirmar (Review + Data)
+
+                let activeStep = currentStep;
+                if (currentStep >= 5) activeStep = 5;
+                if (currentStep === 7) activeStep = 6; // Done
+
+                UIElements.stepper.innerHTML = steps.map(s => {
+                    let status = '';
+                    if (s.num < activeStep) status = 'completed';
+                    if (s.num === activeStep) status = 'active';
+
+                    return `
+                    <div class="step-indicator ${status}">
+                        <div class="step-number">${s.num < activeStep ? '✓' : s.num}</div>
+                        <span class="${s.num === activeStep ? '' : 'hidden md:inline'}">${s.label}</span>
+                    </div>
+                    `;
+                }).join('');
             }
 
             // --- Event Listeners ---
@@ -1822,47 +1972,14 @@
                 updateSummary();
             });
 
-            UIElements.daySelectorContainer.addEventListener('click', (e) => {
-                const btn = e.target.closest('.day-selector:not(.disabled)');
-                if (!btn) return;
-                bookingState.date = btn.dataset.date;
-                bookingState.time = null;
-                renderDays();
-                fetchAndRenderTimes(bookingState.date);
-            });
-
-            UIElements.timeSlotsContainer.addEventListener('click', (e) => {
-                const btn = e.target.closest('.time-slot');
-                if (!btn) return;
-                bookingState.time = btn.dataset.time;
-                UIElements.timeSlotsContainer.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-                btn.classList.add('selected');
-                validateStep();
-            });
-
-            UIElements.calendarBtn.addEventListener('click', () => {
-                calendarDate = new Date(bookingState.date + 'T00:00:00');
-                renderCalendarModal(calendarDate);
-                UIElements.calendarModal.classList.add('visible');
-            });
-            UIElements.calendarModal.querySelector('.modal-backdrop').addEventListener('click', () => UIElements.calendarModal.classList.remove('visible'));
-            UIElements.modalPrevMonthBtn.addEventListener('click', () => {
+            // Calendar Navigation
+            UIElements.calPrevBtn.addEventListener('click', () => {
                 calendarDate.setMonth(calendarDate.getMonth() - 1);
-                renderCalendarModal(calendarDate);
+                renderInlineCalendar(calendarDate);
             });
-            UIElements.modalNextMonthBtn.addEventListener('click', () => {
+            UIElements.calNextBtn.addEventListener('click', () => {
                 calendarDate.setMonth(calendarDate.getMonth() + 1);
-                renderCalendarModal(calendarDate);
-            });
-            UIElements.modalCalendarGrid.addEventListener('click', (e) => {
-                const btn = e.target.closest('.calendar-day:not(:disabled)');
-                if (btn) {
-                    bookingState.date = btn.dataset.date;
-                    bookingState.time = null;
-                    UIElements.calendarModal.classList.remove('visible');
-                    renderDays();
-                    fetchAndRenderTimes(bookingState.date);
-                }
+                renderInlineCalendar(calendarDate);
             });
 
             UIElements.addNotesToggle.addEventListener('change', () => UIElements.notesContainer.classList.toggle('hidden', !UIElements.addNotesToggle.checked));
@@ -1888,7 +2005,8 @@
                 };
 
                 try {
-                    const response = await fetch(CONFIG.api.bookingWebhook, {
+                    const url = CONFIG.api.baseUrl + CONFIG.api.bookingWebhook;
+                    const response = await fetch(url, {
                         method: 'POST',
                         body: JSON.stringify(payload),
                         headers: { 'Content-Type': 'application/json' }
@@ -1935,7 +2053,7 @@
 
                 // Step 2 & 3
                 setupWorkshopSelection();
-                renderMapa(bookingState.workshop);
+                renderWorkshops();
                 bookingState.professional = CONFIG.professionals[1]; // Default to 'Cualquier técnico'
 
                 // Step 4
@@ -1944,7 +2062,7 @@
                     today.setDate(today.getDate() + 1);
                 }
                 bookingState.date = getLocalDateString(today);
-                renderDays();
+                renderInlineCalendar(today);
 
                 updateSummary();
                 goToStep(1);
