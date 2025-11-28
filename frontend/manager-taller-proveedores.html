@@ -1,37 +1,49 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Proveedores - Goversa</title>
+    <title>Gestión de Proveedores - Goversa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Estilos Generales */
+        /* Estilos Generales (Reutilizados para consistencia) */
         :root {
             --brand-orange: #FF652B;
             --brand-orange-strong: #FF7A45;
             --surface-elevated: rgba(18, 18, 20, 0.96);
             --surface-border: rgba(255, 255, 255, 0.08);
             --surface-highlight: rgba(255, 255, 255, 0.04);
+            --dark-bg: #000000;
+            --surface-bg: #1a1a1a;
+            --border-color: #2a2a2a;
+            --input-bg: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --success-color: #28a745;
+            --error-color: #dc3545;
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: #000000;
-            font-family: 'Montserrat', Arial, sans-serif;
-            color: #FFFFFF;
+            background-color: var(--dark-bg);
+            font-family: "Montserrat", Arial, sans-serif;
+            color: var(--text-primary);
         }
+
         .container {
-            max-width: 1100px;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 20px 40px;
         }
 
         /* Header y Menú de Navegación */
-
         header {
             display: flex;
             align-items: center;
@@ -46,12 +58,14 @@
             backdrop-filter: blur(18px);
             flex-wrap: wrap;
         }
+
         .header-left {
             display: flex;
             align-items: center;
             gap: 16px;
             min-width: 180px;
         }
+
         .logo-badge {
             display: inline-flex;
             align-items: center;
@@ -62,11 +76,13 @@
             border: 1px solid rgba(255, 255, 255, 0.14);
             box-shadow: 0 16px 40px -24px rgba(255, 101, 43, 0.9), 0 12px 28px -18px rgba(0, 0, 0, 0.85);
         }
+
         .logo-badge .logo-img {
             height: 58px;
             width: auto;
             filter: drop-shadow(0 8px 16px rgba(255, 101, 43, 0.5));
         }
+
         .user-session {
             display: flex;
             align-items: center;
@@ -79,10 +95,12 @@
             color: #F5F6F8;
             font-weight: 600;
         }
+
         .user-name {
             font-size: 15px;
             letter-spacing: 0.01em;
         }
+
         .logout-button {
             display: inline-flex;
             align-items: center;
@@ -97,22 +115,21 @@
             box-shadow: 0 18px 35px -24px rgba(255, 122, 69, 0.9);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .logout-button:hover,
         .logout-button:focus-visible {
             transform: translateY(-2px);
             box-shadow: 0 22px 42px -22px rgba(255, 122, 69, 0.95);
             color: #0B0B0D;
         }
-        .logout-button:focus-visible {
-            outline: 2px solid rgba(255, 255, 255, 0.65);
-            outline-offset: 3px;
-        }
+
         .main-nav {
             display: flex;
             justify-content: center;
             align-items: center;
             flex-grow: 1;
         }
+
         .main-nav ul {
             list-style: none;
             margin: 0;
@@ -122,11 +139,13 @@
             flex-wrap: wrap;
             justify-content: center;
         }
+
         .main-nav .nav-item {
             position: relative;
         }
-        .main-nav .nav-item > a {
-            color: #FFFFFF;
+
+        .main-nav .nav-item>a {
+            color: var(--text-primary);
             text-decoration: none;
             font-weight: 600;
             padding: 12px 16px;
@@ -134,12 +153,14 @@
             border-radius: 8px;
             transition: transform 0.2s ease-in-out, background-color 0.2s;
         }
-        .main-nav .nav-item > a:hover,
-        .main-nav .nav-item > a.active {
+
+        .main-nav .nav-item>a:hover,
+        .main-nav .nav-item>a.active {
             transform: translateY(-4px);
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
             box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
         }
+
         .nav-item .dropdown {
             display: none;
             position: absolute;
@@ -157,9 +178,11 @@
             backdrop-filter: blur(18px);
             overflow: hidden;
         }
+
         .nav-item.has-dropdown:hover .dropdown {
             display: flex;
         }
+
         .dropdown li a {
             padding: 12px 22px;
             white-space: nowrap;
@@ -171,493 +194,1069 @@
             z-index: 0;
             transition: color 0.2s ease, background 0.25s ease, transform 0.25s ease;
         }
-        .dropdown li a::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255, 101, 43, 0.18), rgba(255, 122, 69, 0.05));
-            opacity: 0;
-            z-index: -1;
-            transition: opacity 0.2s ease;
-        }
+
         .dropdown li a:hover {
-            transform: translateY(0);
-            background-color: #FF5F00;
+            background-color: var(--brand-orange);
         }
+
         .dropdown li a.active {
             background: linear-gradient(140deg, rgba(255, 101, 43, 0.35), rgba(255, 101, 43, 0.1));
             color: #FFFFFF;
         }
-        .dropdown .sub-item {
-            padding-left: 20px;
-        }
 
-        .card {
-            background-color: #1A1A1A;
-            border: 1px solid #2A2A2A;
+        /* --- ESTILOS BUSCADOR --- */
+        .search-container {
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 25px;
+            padding: 30px;
+            margin-bottom: 30px;
         }
 
-        /* Panel Principal (Grid) */
-        .main-panel {
+        .search-box {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        /* --- GRID DE PROVEEDORES RECIENTES --- */
+        .providers-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
         }
 
-        /* Estilos del Formulario y Buscador */
-        .form-container h2, .search-container h2 {
+        .provider-mini-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid var(--surface-border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .provider-mini-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border-color: var(--brand-orange);
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+        }
+
+        .mini-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .mini-card-title {
+            font-weight: 700;
+            font-size: 16px;
+            color: #fff;
+            margin: 0;
+        }
+
+        .mini-card-badge {
+            font-size: 10px;
+            padding: 2px 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            color: var(--text-secondary);
+        }
+
+        .mini-card-info {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mini-card-info i {
+            color: var(--brand-orange);
+            width: 16px;
+            text-align: center;
+        }
+
+        /* --- DROPDOWN DE SUGERENCIAS --- */
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: var(--surface-elevated);
+            border: 1px solid var(--surface-border);
+            border-radius: 0 0 12px 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .suggestions-dropdown.active {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--surface-border);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-item:hover {
+            background-color: var(--surface-highlight);
+        }
+
+        .suggestion-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .suggestion-info {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .search-result-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--surface-border);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+            /* Oculto por defecto */
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .search-result-card.active {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+
+        .result-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--brand-orange);
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .result-item label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .result-item span {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- ESTILOS FORMULARIO --- */
+        .form-container {
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 40px;
+        }
+
+        .form-main-title {
             font-size: 28px;
             font-weight: 800;
-            margin-top: 0;
-            margin-bottom: 25px;
+            margin: 0 0 10px 0;
         }
-        .form-label {
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            color: #A0A0A0;
-            display: block; /* Make labels take full width */
-            margin-bottom: 6px;
+
+        .form-section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--brand-orange);
+            margin-top: 30px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
         }
-        .form-input, .form-select, .search-input, .form-textarea {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 16px;
-            border-radius: 8px;
-            background-color: #333333;
-            border: 1px solid #444444;
-            color: #FFFFFF;
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 16px;
-            box-sizing: border-box;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-        }
-        .form-textarea {
-            resize: vertical; /* Allow vertical resize for textarea */
-            min-height: 80px;
-        }
-        .form-select {
-             background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23A0A0A0%22/%3E%3C/svg%3E');
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 20px;
-        }
-        
-        /* Grid for form inputs */
-        .form-grid {
+
+        .form-section {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0 20px; /* Gap between columns */
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
         }
-        
+
         .form-group {
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
-        .submit-button, .search-button {
+        .form-group label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
             width: 100%;
-            font-size: 16px;
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-weight: bold;
-            color: #ffffff;
-            text-decoration: none;
+            padding: 12px;
             border-radius: 8px;
-            padding: 16px 25px;
-            border: 1px solid var(--brand-orange);
-            background-color: var(--brand-orange);
-            cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid #444;
+            color: var(--text-primary);
+            font-family: "Montserrat", Arial, sans-serif;
+            font-size: 15px;
+            box-sizing: border-box;
         }
-        .submit-button:disabled, .search-button:disabled {
-            background-color: #333;
-            border-color: #444;
-            cursor: not-allowed;
-        }
-        .submit-button:hover:not(:disabled), .search-button:hover:not(:disabled) {
-            background-color: var(--brand-orange-strong);
-        }
-        .search-form { display: flex; gap: 10px; }
-        .search-input { flex-grow: 1; margin: 0; }
-        .search-button { width: auto; margin: 0; }
 
-        /* Lista de Resultados */
-        #search-results {
-            list-style: none;
-            padding: 0;
-            margin: 20px 0 0 0;
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
         }
-        .search-result-item {
-            display: flex;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #2A2A2A;
-            opacity: 0;
-            transform: translateY(-10px);
-            animation: fadeIn 0.5s forwards;
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.2);
         }
-        #search-results .search-result-item:first-child {
-             border-top: 1px solid #2A2A2A;
-        }
-        .client-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
+
+        .btn {
             background-color: var(--brand-orange);
-            color: #FFFFFF;
+            color: var(--text-primary);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: "Montserrat", Arial, sans-serif;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+            border-radius: 8px;
+            padding: 12px 20px;
+        }
+
+        .btn:hover {
+            background-color: #e05300;
+        }
+
+        .btn-secondary {
+            background-color: #333;
+            border: 1px solid #555;
+        }
+
+        .btn-secondary:hover {
+            background-color: #444;
+        }
+
+        /* --- MODAL --- */
+        .success-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+
+        .success-modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .success-modal-content {
+            background-color: var(--surface-bg);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .success-modal-overlay.show .success-modal-content {
+            transform: scale(1);
+        }
+
+        .success-modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            border: 4px solid var(--success-color);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
-            font-weight: 700;
-            margin-right: 20px;
-            flex-shrink: 0;
-        }
-        .client-info .name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #FFFFFF;
-        }
-        .client-info .detail {
-            font-size: 14px;
-            color: #888;
-        }
-        
-        hr {
-            border: none;
-            border-top: 1px solid #2A2A2A;
-            margin: 25px 0;
         }
 
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 40px 0 20px 0;
-            font-size: 12px;
-            color: #555555;
+        .success-modal-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--success-color);
         }
-        
-        /* Animación y Responsividad */
-        @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 900px) { .main-panel, .form-grid { grid-template-columns: 1fr; } }
+
+        .success-modal-content h3 {
+            margin-top: 20px;
+            color: var(--success-color);
+        }
+
         @media (max-width: 768px) {
-            .main-nav { width: 100%; justify-content: flex-start; }
-            .main-nav ul { flex-direction: column; gap: 5px; align-items: flex-start; }
-            header { flex-direction: column; align-items: flex-start; }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
             .user-session {
                 width: 100%;
                 justify-content: space-between;
                 margin-top: 16px;
             }
-            .user-session .logout-button {
-                width: auto;
-            }
-            .user-session .user-name {
-                font-size: 14px;
+
+            .main-nav {
+                width: 100%;
             }
 
+            .form-section {
+                grid-template-columns: 1fr;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
+
 <body>
-
     <div class="container">
-            <!-- HEADER CON MENÚ DE NAVEGACIÓN UNIFICADO -->
-    <header class="app-header w-full max-w-6xl mx-auto px-4 py-3">
-        <div class="header-left">
-            <div class="logo-badge">
-                <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo de Goversa" class="logo-img">
-            </div>
-        </div>
-        <nav class="main-nav">
-        <ul>
-            <li class="nav-item"><a href="index.html">Inicio</a></li>
-            <li class="nav-item has-dropdown">
-                <a href="manager-taller.html">Taller</a>
-                <ul class="dropdown">
-                    <li><a href="manager-taller-ordenes.html">Órdenes</a></li>
-                    <li><a href="#">Editar órdenes</a></li>
-                    <li><a href="#">Presupuestos</a></li>
-                    <li class="sub-item"><a href="#">Calendario</a></li>
-                    <li class="sub-item"><a href="#">Recordatorios</a></li>
-                    <li><a href="manager-taller.html#vehicles-panel">Vehículos</a></li>
-                    <li><a href="#">Histórico</a></li>
-                </ul>
-            </li>
-            <li class="nav-item has-dropdown">
-                <a href="#">Tienda</a>
-                <ul class="dropdown">
-                    <li><a href="#">Compras</a></li>
-                    <li><a href="#">Ventas</a></li>
-                </ul>
-            </li>
-            <li class="nav-item"><a href="#">Caja</a></li>
-            <li class="nav-item has-dropdown">
-                <a href="#">Cuentas corrientes</a>
-                <ul class="dropdown">
-                    <li><a href="#">Saldos</a></li>
-                    <li><a href="#">Movimientos</a></li>
-                </ul>
-            </li>
-            <li class="nav-item"><a href="manager-taller-inventario.html">Inventario</a></li>
-            <li class="nav-item"><a href="manager-taller-trabajadores.html">Trabajadores</a></li>
-            <li class="nav-item has-dropdown">
-                <a href="manager-taller-clientes.html" class="active">Contactos</a>
-                <ul class="dropdown">
-                    <li><a href="manager-taller-clientes.html">Clientes</a></li>
-                    <li><a href="manager-taller-proveedores.html" class="active">Proveedores</a></li>
-                </ul>
-            </li>
-            <li class="nav-item"><a href="#">Informes</a></li>
-        </ul>
-    </nav>
-        <div class="user-session">
-            <span class="user-name">Iván Moreno · admin</span>
-            <a href="login.html" class="logout-button">Salir</a>
-        </div>
-    </header>
-    
-        <!-- PANEL PRINCIPAL CON FORMULARIO Y BUSCADOR -->
-        <main class="main-panel">
-            
-            <!-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO DE PROVEEDOR -->
-            <div class="card form-container">
-                <h2>Registrar Nuevo Proveedor</h2>
-                <form id="provider-form" novalidate>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="nombre" class="form-label">Nombre*</label>
-                            <input type="text" id="nombre" name="nombre" class="form-input" required>
+        <div class="flex h-screen w-full">
+            <!-- SideNavBar -->
+            <aside id="sidebar"
+                class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+                <div class="flex h-full flex-col justify-between">
+                    <div class="flex flex-col gap-4">
+                        <!-- User Profile / Logo Area -->
+                        <div class="flex items-center gap-3 p-2 mb-4">
+                            <div class="logo-badge"
+                                style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                    style="height: 24px; width: auto;">
+                            </div>
+                            <div class="flex flex-col sidebar-text">
+                                <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                    Goversa</h1>
+                                <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                    Gestión</p>
+                            </div>
+                            <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
                         </div>
-                        <div class="form-group">
-                            <label for="nombreFantasia" class="form-label">Nombre de Fantasía</label>
-                            <input type="text" id="nombreFantasia" name="nombreFantasia" class="form-input">
-                        </div>
-                        <div class="form-group">
-                             <label for="tipoResponsable" class="form-label">Tipo responsable*</label>
-                             <select id="tipoResponsable" name="tipoResponsable" class="form-select" required>
-                                 <option value="">Selecciona una opción</option>
-                                 <option value="Consumidor Final">Consumidor Final</option>
-                                 <option value="Monotributista">Monotributista</option>
-                                 <option value="Responsable Inscripto">Responsable Inscripto</option>
-                                 <option value="Exento">Exento</option>
-                             </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="cuit" class="form-label">CUIT*</label>
-                            <input type="text" id="cuit" name="cuit" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="domicilioFiscal" class="form-label">Domicilio fiscal</label>
-                            <input type="text" id="domicilioFiscal" name="domicilioFiscal" class="form-input">
-                        </div>
-                         <div class="form-group">
-                            <label for="localidadFiscal" class="form-label">Localidad fiscal</label>
-                            <input type="text" id="localidadFiscal" name="localidadFiscal" class="form-input">
-                        </div>
-                    </div>
-                    
-                    <hr>
-                    <h4>Datos de Contacto</h4>
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="telefono" class="form-label">Teléfono</label>
-                            <input type="tel" id="telefono" name="telefono" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="telefonoAlternativo" class="form-label">Teléfono alternativo</label>
-                            <input type="tel" id="telefonoAlternativo" name="telefonoAlternativo" class="form-input">
-                        </div>
-                         <div class="form-group">
-                            <label for="email" class="form-label">Email</label>
-                            <input type="email" id="email" name="email" class="form-input">
-                        </div>
-                         <div class="form-group">
-                            <label for="emailAlternativo" class="form-label">Email alternativo</label>
-                            <input type="email" id="emailAlternativo" name="emailAlternativo" class="form-input">
-                        </div>
-                        <div class="form-group">
-                            <label for="personaContacto" class="form-label">Persona de contacto</label>
-                            <input type="text" id="personaContacto" name="personaContacto" class="form-input">
-                        </div>
+                        <!-- Navigation Links -->
+                        <nav class="flex flex-col gap-2">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="index.html">
+                                <span class="icon-container"><i class="fas fa-home"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                            </a>
+
+                            <!-- Taller Dropdown -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('taller-submenu')">
+                                    <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+
+                                </a>
+                                <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="manager-taller-ordenes.html"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                        órdenes</a>
+                                    <a href="#"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                    <a href="manager-taller-vehiculos.html"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                                </div>
+                            </div>
+
+                            <!-- Tienda Dropdown -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('tienda-submenu')">
+                                    <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+
+                                </a>
+                                <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                                </div>
+                            </div>
+
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="#">
+                                <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                            </a>
+
+                            <!-- Cuentas Dropdown -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('cuentas-submenu')">
+                                    <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+
+                                </a>
+                                <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                                </div>
+                            </div>
+
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="manager-taller-inventario.html">
+                                <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                            </a>
+
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                                href="manager-taller-trabajadores.html">
+                                <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                            </a>
+
+                            <!-- Contactos Active -->
+                            <div class="nav-group">
+                                <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                    onclick="toggleSubmenu('contactos-submenu')">
+                                    <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+
+                                </a>
+                                <div id="contactos-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                    <a href="manager-taller-clientes.html"
+                                        class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                                    <a href="manager-taller-proveedores.html"
+                                        class="text-white font-semibold text-sm py-1 block">Proveedores</a>
+                                </div>
+                            </div>
+                        </nav>
                     </div>
 
-                    <hr>
-
-                    <label for="comentario" class="form-label">Comentario</label>
-                    <textarea id="comentario" name="comentario" class="form-textarea" rows="3"></textarea>
-                    
-                    <button type="submit" id="submit-button" class="submit-button">Registrar Proveedor</button>
-                </form>
-                <p id="form-status" style="text-align: center; margin-top: 20px;"></p>
-            </div>
-
-            <!-- COLUMNA DERECHA: BUSCADOR Y RESULTADOS -->
-            <div class="card search-container">
-                <h2>Buscar Proveedor</h2>
-                <form id="search-form">
-                    <div class="search-form">
-                        <input type="search" id="search-input" placeholder="Buscar por nombre, CUIT..." class="search-input">
-                        <button type="submit" id="search-button" class="search-button">Buscar</button>
+                    <!-- Bottom Actions -->
+                    <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                        <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                            <div
+                                class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                                IM
+                            </div>
+                            <div class="flex flex-col sidebar-text overflow-hidden">
+                                <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                                <span class="text-gray-500 text-xs truncate">admin</span>
+                            </div>
+                        </div>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="login.html">
+                            <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                        </a>
                     </div>
-                </form>
-                <div id="search-results-info" style="text-align:center; margin-top:20px;"></div>
-                <div id="search-results"></div>
+                </div>
+            </aside>
+
+            <!-- Main Content Wrapper -->
+            <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+                <!-- Top Mobile Header (Visible only on small screens) -->
+                <header
+                    class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                    <div class="logo-badge p-2">
+                        <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                    </div>
+                    <button id="mobile-menu-btn" class="text-white">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </header>
+
+                <main class="flex-1 overflow-y-auto p-6">
+                    <!-- Container adjustments for new layout -->
+                    <div class="max-w-7xl mx-auto">
+
+                        <!-- KPI CARDS -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Total Proveedores</p>
+                                    <h3 class="text-3xl font-bold text-white" id="total-providers-count">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-[rgba(255,101,43,0.1)] flex items-center justify-center text-[var(--brand-orange)]">
+                                    <i class="fas fa-truck text-xl"></i>
+                                </div>
+                            </div>
+                            <!-- Placeholder KPIs -->
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Nuevos este mes</p>
+                                    <h3 class="text-3xl font-bold text-white">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                    <i class="fas fa-calendar-plus text-xl"></i>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-400 text-sm font-medium mb-1">Activos</p>
+                                    <h3 class="text-3xl font-bold text-white">-</h3>
+                                </div>
+                                <div
+                                    class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                                    <i class="fas fa-check-circle text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECCIÓN BUSCADOR DE PROVEEDORES -->
+                        <section class="search-container">
+                            <h2 class="form-main-title"><i class="fas fa-search"></i> Buscar Proveedor</h2>
+                            <div class="search-box">
+                                <input type="text" id="search-input" class="form-input"
+                                    placeholder="Buscar por Nombre, CIF/NIF o Teléfono..." autocomplete="off">
+                                <button id="search-btn" class="btn"><i class="fas fa-search"
+                                        style="margin-right: 8px;"></i>
+                                    Buscar</button>
+
+                                <!-- Dropdown de sugerencias -->
+                                <div id="suggestions-list" class="suggestions-dropdown"></div>
+                            </div>
+
+                            <!-- FICHA DE RESULTADO (Oculta hasta encontrar) -->
+                            <div id="provider-result" class="search-result-card">
+                                <div class="result-header">
+                                    <div class="flex items-center gap-3">
+                                        <span class="result-title" id="res-nombre">Nombre del Proveedor</span>
+                                        <span class="badge"
+                                            style="background:var(--brand-orange); color: black; padding: 4px 10px; border-radius:4px; font-size:12px; font-weight:700;">Proveedor</span>
+                                    </div>
+                                    <button id="edit-provider-btn" class="btn"
+                                        style="padding: 8px 16px; font-size: 14px; background-color: #333; border: 1px solid #555;">
+                                        <i class="fas fa-edit mr-2"></i> Editar
+                                    </button>
+                                </div>
+                                <div class="result-grid">
+                                    <div class="result-item">
+                                        <label>CIF / NIF</label>
+                                        <span id="res-cif">B12345678</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Teléfono</label>
+                                        <span id="res-telefono">91 123 45 67</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Contacto</label>
+                                        <span id="res-contacto">Juan Pérez</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Email</label>
+                                        <span id="res-email">contacto@proveedor.com</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Web B2B</label>
+                                        <a href="#" id="res-web" style="color:var(--brand-orange)"
+                                            target="_blank">www.proveedor.com</a>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Ubicación</label>
+                                        <span id="res-ubicacion">Pol. Ind. Sur, Nave 4</span>
+                                    </div>
+                                    <div class="result-item">
+                                        <label>Provincia / CP</label>
+                                        <span id="res-provincia">Madrid, 28001</span>
+                                    </div>
+                                </div>
+                                <div class="result-item" style="margin-top: 15px;">
+                                    <label>Comentarios</label>
+                                    <p id="res-comentarios"
+                                        style="font-size: 14px; color: #ddd; margin-top:5px; font-style:italic;">
+                                        Proveedor principal
+                                        de recambios de aceite.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- ÚLTIMOS PROVEEDORES -->
+                        <section>
+                            <h3 class="form-section-title" style="margin-top: 0; border-bottom: none;"><i
+                                    class="fas fa-history"></i> Últimos 3 Proveedores Registrados</h3>
+                            <div id="recent-providers-grid" class="clients-grid">
+                                <!-- Se rellena vía JS -->
+                                <div
+                                    style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-secondary);">
+                                    <i class="fas fa-spinner fa-spin"></i> Cargando proveedores...
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <!-- FORMULARIO DE REGISTRO -->
+                        <form id="provider-form" class="form-container">
+                            <h2 class="form-main-title">Registro de Nuevo Proveedor</h2>
+                            <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 0.9em;">Los campos
+                                marcados con
+                                * son obligatorios.</p>
+                            <input type="hidden" id="proveedor_id" name="id">
+
+                            <div class="form-section">
+                                <!-- CAMPOS OBLIGATORIOS -->
+                                <div class="form-group">
+                                    <label for="nombre">Nombre / Razón Social *</label>
+                                    <input type="text" id="nombre" name="nombre" class="form-input" required
+                                        placeholder="Ej: Recambios S.L.">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="cif">CIF / NIF / DNI *</label>
+                                    <input type="text" id="cif" name="cif" class="form-input" required
+                                        placeholder="Ej: B12345678">
+                                </div>
+
+                                <!-- OTROS CAMPOS DE LA BASE DE DATOS -->
+                                <div class="form-group">
+                                    <label for="Nombre_contacto">Nombre de Contacto</label>
+                                    <input type="text" id="Nombre_contacto" name="Nombre_contacto" class="form-input"
+                                        placeholder="Persona de referencia">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="telefono">Teléfono</label>
+                                    <input type="tel" id="telefono" name="telefono" class="form-input"
+                                        placeholder="+34 ...">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="Correo">Email</label>
+                                    <input type="email" id="Correo" name="Correo" class="form-input"
+                                        placeholder="pedidos@empresa.com">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="Sitio_web_b2b">Sitio Web B2B</label>
+                                    <input type="url" id="Sitio_web_b2b" name="Sitio_web_b2b" class="form-input"
+                                        placeholder="https://...">
+                                </div>
+                            </div>
+
+                            <h3 class="form-section-title">Dirección Fiscal y Otros</h3>
+                            <div class="form-section">
+                                <div class="form-group">
+                                    <label for="Domicilio_fiscal">Domicilio Fiscal</label>
+                                    <input type="text" id="Domicilio_fiscal" name="Domicilio_fiscal" class="form-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="Proviancia">Provincia</label>
+                                    <input type="text" id="Proviancia" name="Proviancia" class="form-input">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="cp_localidad">CP / Localidad</label>
+                                    <input type="text" id="cp_localidad" name="cp_localidad" class="form-input"
+                                        placeholder="Código Postal">
+                                </div>
+                            </div>
+
+                            <div class="form-section" style="margin-top: 25px;">
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label for="Comentarios">Comentarios</label>
+                                    <textarea id="Comentarios" name="Comentarios" class="form-textarea"
+                                        placeholder="Información adicional, días de reparto, etc."></textarea>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn"
+                                style="width: 100%; padding: 15px; font-size: 16px; margin-top: 30px;">
+                                <i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Proveedor
+                            </button>
+                        </form>
+                </main>
             </div>
-        </main>
 
-        <!-- FOOTER -->
-        <footer>
-            <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
-        </footer>
-    </div>
+            <!-- MODAL DE ÉXITO -->
+            <div id="success-modal" class="success-modal-overlay">
+                <div class="success-modal-content">
+                    <div class="success-modal-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                            <path
+                                d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
+                        </svg>
+                    </div>
+                    <h3>¡Proveedor Guardado!</h3>
+                    <p>Los datos han sido registrados correctamente en el sistema.</p>
+                    <button id="close-success-modal" class="btn">Cerrar</button>
+                </div>
+            </div>
 
-    <script>
-        // --- NUEVAS URLs DE WEBHOOKS PARA PROVEEDORES ---
-        const MAKE_REGISTER_PROVIDER_WEBHOOK_URL = 'https://hook.eu2.make.com/TU_NUEVO_WEBHOOK_DE_REGISTRO';
-        const MAKE_SEARCH_PROVIDER_WEBHOOK_URL = 'https://hook.eu2.make.com/TU_NUEVO_WEBHOOK_DE_BUSQUEDA';
+            <script type="module">
+                import { getToken, getApiBaseUrl, fetchWithAuth } from './auth.js';
 
-        // --- LÓGICA PARA REGISTRAR PROVEEDORES ---
-        const providerForm = document.getElementById('provider-form');
-        const submitButton = document.getElementById('submit-button');
-        const formStatus = document.getElementById('form-status');
-        
-        providerForm.addEventListener('submit', function(event) {
-            event.preventDefault();
+                // --- SIDEBAR LOGIC ---
+                window.toggleSubmenu = function (id) {
+                    const submenu = document.getElementById(id);
+                    const arrow = document.getElementById(id.replace('submenu', 'arrow'));
 
-            formStatus.textContent = 'Registrando proveedor...';
-            formStatus.style.color = '#A0A0A0';
-            submitButton.disabled = true;
-
-            const formData = new FormData(providerForm);
-            const data = {};
-            formData.forEach((value, key) => { data[key] = value; });
-
-            fetch(MAKE_REGISTER_PROVIDER_WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            })
-            .then(response => {
-                if (response.ok) return response.text();
-                throw new Error('La respuesta del servidor no fue exitosa.');
-            })
-            .then(text => {
-                console.log('Respuesta de Make:', text);
-                formStatus.textContent = '¡Proveedor registrado con éxito!';
-                formStatus.style.color = '#28a745';
-                
-                providerForm.reset();
-                setTimeout(() => { formStatus.textContent = ''; }, 3000);
-            })
-            .catch(error => {
-                console.error('Error al enviar el formulario:', error);
-                formStatus.textContent = 'Hubo un error al registrar. Inténtalo de nuevo.';
-                formStatus.style.color = '#dc3545';
-            })
-            .finally(() => {
-                submitButton.disabled = false;
-            });
-        });
-
-        // --- LÓGICA PARA BUSCAR PROVEEDORES ---
-        const searchForm = document.getElementById('search-form');
-        const searchInput = document.getElementById('search-input');
-        const searchButton = document.getElementById('search-button');
-        const searchResultsContainer = document.getElementById('search-results');
-        const searchResultsInfo = document.getElementById('search-results-info');
-
-        searchForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const query = searchInput.value.trim();
-
-            if (!query) {
-                searchResultsInfo.textContent = 'Por favor, introduce un término de búsqueda.';
-                searchResultsInfo.style.color = '#A0A0A0';
-                return;
-            }
-
-            searchResultsInfo.textContent = 'Buscando...';
-            searchResultsInfo.style.color = '#A0A0A0';
-            searchButton.disabled = true;
-            searchResultsContainer.innerHTML = ''; 
-
-            const urlWithQuery = `${MAKE_SEARCH_PROVIDER_WEBHOOK_URL}?query=${encodeURIComponent(query)}`;
-
-            fetch(urlWithQuery)
-                .then(response => {
-                    if (!response.ok) throw new Error('Error en la respuesta del servidor.');
-                    return response.text();
-                })
-                .then(text => {
-                    if (!text) {
-                        displaySearchResults([]);
-                        return;
+                    if (submenu.classList.contains('hidden')) {
+                        submenu.classList.remove('hidden');
+                        submenu.classList.add('flex');
+                        if (arrow) arrow.style.transform = 'rotate(180deg)';
+                    } else {
+                        submenu.classList.add('hidden');
+                        submenu.classList.remove('flex');
+                        if (arrow) arrow.style.transform = 'rotate(0deg)';
                     }
-                    try {
-                        // Simulación de una respuesta de Make.com
-                        const results = [
-                            { nombre: "Proveedor de Ejemplo 1", cuit: "30-12345678-9", telefono: "11-2233-4455"},
-                            { nombre: "Distribuidora ABC", cuit: "30-98765432-1", telefono: "11-6677-8899"}
-                        ].filter(p => p.nombre.toLowerCase().includes(query.toLowerCase()) || p.cuit.includes(query));
+                }
 
-                        displaySearchResults(results);
-                    } catch (e) {
-                        console.error("La respuesta del servidor no era un JSON válido:", text);
-                        displaySearchResults([]);
+                const sidebar = document.getElementById('sidebar');
+                const toggleBtn = document.getElementById('toggle-sidebar');
+                const sidebarTexts = document.querySelectorAll('.sidebar-text');
+                let isCollapsed = false;
+
+                toggleBtn.addEventListener('click', () => {
+                    isCollapsed = !isCollapsed;
+                    if (isCollapsed) {
+                        sidebar.classList.remove('w-64');
+                        sidebar.classList.add('w-20');
+                        sidebarTexts.forEach(el => el.classList.add('hidden'));
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                        document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                            el.classList.add('hidden');
+                            el.classList.remove('flex');
+                        });
+                    } else {
+                        sidebar.classList.add('w-64');
+                        sidebar.classList.remove('w-20');
+                        sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
                     }
-                })
-                .catch(error => {
-                    console.error('Error al buscar:', error);
-                    searchResultsInfo.textContent = 'Error al realizar la búsqueda.';
-                    searchResultsInfo.style.color = '#dc3545';
-                })
-                .finally(() => {
-                    searchButton.disabled = false;
                 });
-        });
 
-        function displaySearchResults(results) {
-            const resultsArray = Array.isArray(results) ? results : [results];
+                const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('-translate-x-full');
+                    sidebar.classList.toggle('absolute');
+                    sidebar.classList.toggle('z-50');
+                    sidebar.classList.toggle('h-full');
+                });
 
-            if (!resultsArray || resultsArray.length === 0 || (resultsArray.length === 1 && !resultsArray[0].nombre) ) {
-                searchResultsInfo.textContent = 'No se encontraron proveedores.';
-                searchResultsInfo.style.color = '#A0A0A0';
-                searchResultsContainer.innerHTML = '';
-                return;
-            }
+                document.addEventListener("DOMContentLoaded", () => {
 
-            searchResultsInfo.textContent = `Se encontraron ${resultsArray.length} resultados.`;
-            searchResultsInfo.style.color = '#28a745';
-            
-            searchResultsContainer.innerHTML = ''; // Limpiar antes de añadir nuevos
-            
-            resultsArray.forEach(provider => {
-                if (!provider || !provider.nombre) return; 
+                    const API_URL = `${getApiBaseUrl()}/api/proveedores`;
+                    console.log('API URL Configurada:', API_URL);
 
-                const listItem = document.createElement('div');
-                listItem.className = 'search-result-item';
+                    // Cargar últimos proveedores y estadísticas
+                    loadRecentProviders();
+                    loadProviderStats();
 
-                const initials = provider.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                    async function loadProviderStats() {
+                        try {
+                            const response = await fetchWithAuth('/api/proveedores/count');
+                            if (response.ok) {
+                                const data = await response.json();
+                                document.getElementById('total-providers-count').textContent = data.count;
+                            }
+                        } catch (error) {
+                            console.error('Error cargando estadísticas:', error);
+                        }
+                    }
 
-                // Adaptado para mostrar datos del proveedor
-                listItem.innerHTML = `
-                    <div class="client-avatar">${initials}</div>
-                    <div class="client-info">
-                        <div class="name">${provider.nombre || 'No disponible'}</div>
-                        <div class="detail">CUIT: ${provider.cuit || 'No disponible'} | Tel: ${provider.telefono || 'No disponible'}</div>
-                    </div>
-                `;
-                searchResultsContainer.appendChild(listItem);
-            });
-        }
-    </script>
+                    async function loadRecentProviders() {
+                        const grid = document.getElementById('recent-providers-grid');
+                        try {
+                            const response = await fetchWithAuth('/api/proveedores'); // GET / (Top 3)
+                            if (!response.ok) throw new Error('Error cargando proveedores');
+
+                            const providers = await response.json();
+
+                            grid.innerHTML = '';
+                            if (providers.length === 0) {
+                                grid.innerHTML = '<p style="color:var(--text-secondary); grid-column:1/-1;">No hay proveedores registrados aún.</p>';
+                                return;
+                            }
+
+                            providers.forEach(p => {
+                                const card = document.createElement('div');
+                                card.className = 'provider-mini-card';
+                                card.innerHTML = `
+                            <div class="mini-card-header">
+                                <h4 class="mini-card-title">${p.nombre}</h4>
+                                <span class="mini-card-badge">Proveedor</span>
+                            </div>
+                            <div class="mini-card-info">
+                                <i class="fas fa-id-card"></i> ${p.cif || 'Sin CIF'}
+                            </div>
+                            <div class="mini-card-info">
+                                <i class="fas fa-phone"></i> ${p.telefono || 'Sin teléfono'}
+                            </div>
+                            <div class="mini-card-info">
+                                <i class="fas fa-envelope"></i> ${p.email || 'Sin email'}
+                            </div>
+                        `;
+                                card.addEventListener('click', () => {
+                                    displayProvider(p);
+                                    document.getElementById('provider-result').scrollIntoView({ behavior: 'smooth' });
+                                });
+                                grid.appendChild(card);
+                            });
+
+                        } catch (error) {
+                            console.error('Error:', error);
+                            grid.innerHTML = '<p style="color:var(--error-color); grid-column:1/-1;">Error al cargar los últimos proveedores.</p>';
+                        }
+                    }
+
+                    /* -----------------------------------------------------
+                       LÓGICA DEL BUSCADOR (AUTOCOMPLETADO)
+                    ----------------------------------------------------- */
+                    const searchBtn = document.getElementById('search-btn');
+                    const searchInput = document.getElementById('search-input');
+                    const resultCard = document.getElementById('provider-result');
+                    const suggestionsList = document.getElementById('suggestions-list');
+
+                    function debounce(func, wait) {
+                        let timeout;
+                        return function (...args) {
+                            clearTimeout(timeout);
+                            timeout = setTimeout(() => func.apply(this, args), wait);
+                        };
+                    }
+
+                    function displayProvider(data) {
+                        document.getElementById('res-nombre').textContent = data.nombre || 'Sin nombre';
+                        document.getElementById('res-cif').textContent = data.cif || '—';
+                        document.getElementById('res-telefono').textContent = data.telefono || '—';
+                        document.getElementById('res-contacto').textContent = data.Nombre_contacto || '—'; // Kept original field for consistency
+                        document.getElementById('res-email').textContent = data.Correo || '—'; // Kept original field for consistency
+
+                        // Update web link
+                        const webLink = document.getElementById('res-web');
+                        if (data.Sitio_web_b2b) { // Kept original field for consistency
+                            webLink.textContent = data.Sitio_web_b2b;
+                            webLink.href = data.Sitio_web_b2b.startsWith('http') ? data.Sitio_web_b2b : `https://${data.Sitio_web_b2b}`;
+                            webLink.style.display = 'inline';
+                        } else {
+                            webLink.style.display = 'none';
+                        }
+
+                        // Update location fields
+                        document.getElementById('res-ubicacion').textContent = data.Domicilio_fiscal || '—'; // Kept original field for consistency
+                        document.getElementById('res-provincia').textContent = `${data.Proviancia || ''} ${data.cp_localidad || ''}`; // Kept original fields for consistency
+                        document.getElementById('res-comentarios').textContent = data.Comentarios || 'Sin comentarios adicionales.'; // Kept original field for consistency
+
+                        // Configurar botón de editar
+                        const editBtn = document.getElementById('edit-provider-btn');
+                        editBtn.onclick = () => editProvider(data);
+
+                        resultCard.classList.add('active');
+                        suggestionsList.classList.remove('active');
+                    }
+
+                    function editProvider(data) {
+                        // Rellenar formulario
+                        document.getElementById('proveedor_id').value = data.id;
+                        document.getElementById('nombre').value = data.nombre || '';
+                        document.getElementById('cif').value = data.cif || '';
+                        document.getElementById('Nombre_contacto').value = data.Nombre_contacto || '';
+                        document.getElementById('telefono').value = data.telefono || '';
+                        document.getElementById('Correo').value = data.Correo || '';
+                        document.getElementById('Sitio_web_b2b').value = data.Sitio_web_b2b || '';
+                        document.getElementById('Domicilio_fiscal').value = data.Domicilio_fiscal || '';
+                        document.getElementById('Proviancia').value = data.Proviancia || '';
+                        document.getElementById('cp_localidad').value = data.cp_localidad || '';
+                        document.getElementById('Comentarios').value = data.Comentarios || '';
+
+                        // Cambiar título y botón
+                        document.querySelector('.form-main-title').textContent = 'Editar Proveedor';
+                        const submitBtn = document.querySelector('#provider-form button[type="submit"]');
+                        submitBtn.innerHTML = '<i class="fas fa-sync-alt" style="margin-right: 10px;"></i> Actualizar Proveedor';
+
+                        // Scroll al formulario
+                        document.getElementById('provider-form').scrollIntoView({ behavior: 'smooth' });
+                    }
+
+                    searchInput.addEventListener('input', debounce(async (e) => {
+                        const query = e.target.value.trim();
+
+                        if (query.length < 2) {
+                            suggestionsList.classList.remove('active');
+                            return;
+                        }
+
+                        try {
+                            const response = await fetchWithAuth(`/api/proveedores/search?q=${encodeURIComponent(query)}`);
+                            if (!response.ok) return;
+
+                            const results = await response.json();
+
+                            suggestionsList.innerHTML = '';
+
+                            if (results.length > 0) {
+                                results.forEach(provider => {
+                                    const div = document.createElement('div');
+                                    div.className = 'suggestion-item';
+                                    div.innerHTML = `
+                                <span class="suggestion-name">${provider.nombre}</span>
+                                <span class="suggestion-info">${provider.cif || ''}</span>
+                            `;
+                                    div.addEventListener('click', () => displayProvider(provider));
+                                    suggestionsList.appendChild(div);
+                                });
+                                suggestionsList.classList.add('active');
+                            } else {
+                                suggestionsList.classList.remove('active');
+                            }
+
+                        } catch (error) {
+                            console.error('Error buscando sugerencias:', error);
+                        }
+                    }, 300));
+
+                    document.addEventListener('click', (e) => {
+                        if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
+                            suggestionsList.classList.remove('active');
+                        }
+                    });
+
+                    searchBtn.addEventListener('click', async () => {
+                        const query = searchInput.value.trim();
+                        if (!query) return;
+                        searchInput.dispatchEvent(new Event('input'));
+                    });
+
+
+                    /* -----------------------------------------------------
+                       LÓGICA DE GUARDADO (FORMULARIO)
+                    ----------------------------------------------------- */
+                    const form = document.getElementById("provider-form");
+                    const successModal = document.getElementById('success-modal');
+                    const closeSuccessModalBtn = document.getElementById('close-success-modal');
+
+                    form.addEventListener("submit", async (event) => {
+                        event.preventDefault();
+
+                        const submitBtn = form.querySelector('button[type="submit"]');
+                        const originalBtnText = submitBtn.innerHTML;
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+                        const formData = new FormData(form);
+                        const data = Object.fromEntries(formData.entries());
+                        const providerId = document.getElementById('proveedor_id').value;
+
+                        console.log("Datos del proveedor capturados:", data);
+
+                        try {
+                            let url = '/api/proveedores';
+                            let method = 'POST';
+
+                            if (providerId) {
+                                url = `/api/proveedores/${providerId}`;
+                                method = 'PUT';
+                            }
+
+                            const response = await fetchWithAuth(url, {
+                                method: method,
+                                body: JSON.stringify(data)
+                            });
+
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({}));
+                                throw new Error(errorData.error || 'Error al guardar el proveedor');
+                            }
+
+                            const result = await response.json();
+                            console.log('Proveedor guardado:', result);
+
+                            showSuccessModal();
+                            loadRecentProviders();
+                            loadProviderStats(); // Recargar estadísticas
+
+                        } catch (error) {
+                            console.error('Error al guardar:', error);
+                            alert(error.message || 'Error al guardar el proveedor. Inténtalo de nuevo.');
+                        } finally {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalBtnText;
+                        }
+                    });
+
+                    function showSuccessModal() {
+                        successModal.classList.add('show');
+                    }
+                    function closeSuccessModal() {
+                        successModal.classList.remove('show');
+                        form.reset();
+                        document.getElementById('proveedor_id').value = ''; // Limpiar ID
+                        document.querySelector('.form-main-title').textContent = 'Registro de Nuevo Proveedor'; // Restaurar título
+                        document.querySelector('#provider-form button[type="submit"]').innerHTML = '<i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Proveedor'; // Restaurar botón
+                        resultCard.classList.remove('active');
+                    }
+                    closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
+                });
+            </script>
 </body>
+
 </html>
+```

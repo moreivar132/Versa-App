@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Citas - Goversa</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Feather Icons for UI elements -->
+    <script src="https://unpkg.com/feather-icons"></script>
+
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --brand-orange: #ff5f00;
+            --dark-bg: #000000;
+            --surface-bg: #1a1a1a;
+            --border-color: #2a2a2a;
+            --input-bg: #333333;
+            --text-primary: #ffffff;
+            --text-secondary: #cccccc;
+            --text-light: #a0a0a0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-primary);
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            margin-bottom: 30px;
+        }
+
+        .menu-open-btn {
+            display: block;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1001;
+        }
+
+        @media (min-width: 1024px) {
+            .menu-open-btn {
+                display: none;
+            }
+        }
+
+        .main-nav {
+            display: none;
+            /* Hidden on mobile by default */
+            flex-grow: 1;
+        }
+
+        .main-nav.is-open {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--dark-bg);
+            z-index: 1000;
+        }
+
+        .menu-close-btn {
+            display: block;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        @media (min-width: 1024px) {
+            .main-nav {
+                display: flex;
+                position: static;
+                flex-direction: row;
+                justify-content: center;
+                height: auto;
+                width: auto;
+                background-color: transparent;
+            }
+
+            .menu-close-btn {
+                display: none;
+            }
+        }
+
+        .main-nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            gap: 15px;
+            flex-direction: column;
+            /* Mobile first */
+            align-items: center;
+        }
+
+        @media (min-width: 1024px) {
+            .main-nav ul {
+                flex-direction: row;
+            }
+        }
+
+        .main-nav .nav-item a {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .main-nav .nav-item>a:hover {
+            background-color: var(--border-color);
+        }
+
+        .main-nav .nav-item .feather {
+            width: 18px;
+            height: 18px;
+        }
+
+        .main-nav .nav-item .chevron {
+            width: 16px;
+            height: 16px;
+            margin-left: 4px;
+            transition: transform 0.2s;
+        }
+
+        /* Dropdown styles */
+        .nav-item.dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            background-color: transparent;
+            min-width: 180px;
+            z-index: 10;
+        }
+
+        .dropdown-content a {
+            padding: 12px 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Mobile Dropdown */
+        .nav-item.dropdown.is-active .dropdown-content {
+            display: block;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .nav-item.dropdown.is-active .chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Desktop Dropdown */
+        @media (min-width: 1024px) {
+            .dropdown-content {
+                display: none;
+                position: absolute;
+                top: 100%;
+                right: 0;
+                background-color: var(--surface-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            }
+
+            .dropdown-content a:hover {
+                background-color: var(--border-color);
+            }
+
+            .nav-item.dropdown:hover .dropdown-content {
+                display: block;
+            }
+
+            .nav-item.dropdown.is-active .dropdown-content {
+                display: none;
+                /* Reset mobile state */
+            }
+
+            .nav-item.dropdown.is-active .chevron {
+                transform: none;
+                /* Reset mobile state */
+            }
+        }
+
+
+        /* Scrollbar custom */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Component Styles */
+        .professional-card {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .professional-card:hover {
+            border-color: var(--brand-orange);
+            transform: translateY(-2px);
+        }
+
+        .professional-card.selected {
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 95, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(255, 95, 0, 0.15);
+        }
+
+        .time-slot {
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .time-slot:hover {
+            border-color: var(--brand-orange);
+            color: var(--text-primary);
+        }
+
+        .time-slot.selected {
+            background-color: var(--brand-orange);
+            color: white;
+            border-color: var(--brand-orange);
+            box-shadow: 0 4px 12px rgba(255, 95, 0, 0.3);
+        }
+
+        .day-selector {
+            height: 70px;
+            width: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .day-selector:not(.disabled):hover {
+            border-color: var(--brand-orange);
+            transform: translateY(-2px);
+            color: var(--text-primary);
+        }
+
+        .day-selector.selected {
+            background-color: var(--brand-orange);
+            color: white;
+            border-color: var(--brand-orange);
+            box-shadow: 0 8px 16px rgba(255, 95, 0, 0.25);
+            transform: scale(1.05);
+        }
+
+        .day-selector.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background-color: transparent;
+            border-color: transparent;
+        }
+
+        .calendar-day {
+            height: 40px;
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .calendar-day:not(:disabled):hover {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+        }
+
+        .calendar-day.selected {
+            background-color: var(--brand-orange);
+            color: white;
+            box-shadow: 0 4px 10px rgba(255, 95, 0, 0.3);
+        }
+
+        .calendar-day.today {
+            border: 1px solid var(--brand-orange);
+            color: var(--brand-orange);
+        }
+
+        .calendar-day.today.selected {
+            color: white;
+        }
+
+        /* Modal Styles */
+        .modal-container {
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .modal-container.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-backdrop {
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: var(--surface-bg);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        .modal-container.visible .modal-backdrop {
+            opacity: 1;
+        }
+
+        .modal-container.visible .modal-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Tabs */
+        .tabs,
+        .subtabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab,
+        .subtab {
+            padding: 0.75rem 0.25rem;
+            margin-bottom: -1px;
+            border: none;
+            background: none;
+            color: var(--text-light);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .tab:hover,
+        .subtab:hover {
+            color: var(--text-primary);
+        }
+
+        .tab[aria-selected="true"],
+        .subtab[aria-selected="true"] {
+            color: var(--brand-orange);
+            border-bottom-color: var(--brand-orange);
+        }
+
+        .tab-panel {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .tab-panel[hidden] {
+            display: none;
+        }
+
+        .leyenda {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            background-color: var(--input-bg);
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-top: -1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Service Cards */
+        .service-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        @media(min-width: 640px) {
+            .service-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .service-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+        }
+
+        .service-card:hover {
+            transform: translateY(-2px);
+            border-color: #444;
+        }
+
+        .service-card.selected {
+            border-color: var(--brand-orange);
+            box-shadow: 0 0 0 1.5px var(--brand-orange);
+        }
+
+        .service-card .name {
+            font-weight: 600;
+        }
+
+        .service-card .details {
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-top: 0.25rem;
+        }
+
+        .price-included .price {
+            text-decoration: line-through;
+        }
+
+        .toggle-service-btn {
+            height: 32px;
+            width: 32px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .toggle-service-btn.selected {
+            background-color: var(--brand-orange);
+            color: white;
+            border-color: var(--brand-orange);
+        }
+
+        /* Workshop */
+        #taller {
+            border: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        #taller legend {
+            font-size: 1.125rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        #taller label {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+
+        #taller input[type="radio"] {
+            accent-color: var(--brand-orange);
+        }
+
+        #mapa {
+            margin-top: 1rem;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            min-height: 250px;
+            background-color: var(--input-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #mapa iframe {
+            filter: invert(90%) hue-rotate(180deg);
+        }
+
+        /* User Details Inputs */
+        .user-details-container {
+            max-width: 32rem;
+            /* lg */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .user-details-container input {
+            padding-top: 0.75rem;
+            /* py-3 */
+            padding-bottom: 0.75rem;
+        }
+
+        .whatsapp-btn {
+            background-color: #25D366 !important;
+            color: white !important;
+            text-decoration: none;
+        }
+
+        .whatsapp-btn:hover {
+            opacity: 0.9;
+        }
+
+        /* Generic Tailwind-like Styles */
+        .grid {
+            display: grid;
+        }
+
+        .lg\:grid-cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .lg\:gap-8 {
+            gap: 2rem;
+        }
+
+        .items-start {
+            align-items: flex-start;
+        }
+
+        .lg\:col-span-2 {
+            grid-column: span 2 / span 2;
+        }
+
+        .bg-white {
+            background-color: var(--surface-bg);
+        }
+
+        .p-6 {
+            padding: 1.5rem;
+        }
+
+        .md\:p-8 {
+            padding: 2rem;
+        }
+
+        .rounded-2xl {
+            border-radius: 1rem;
+        }
+
+        .shadow-sm {
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .border {
+            border-width: 1px;
+            border-color: var(--border-color);
+        }
+
+        .pb-40 {
+            padding-bottom: 10rem;
+        }
+
+        .lg\:pb-8 {
+            padding-bottom: 2rem;
+        }
+
+        .mb-8 {
+            margin-bottom: 2rem;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-between {
+            justify-content: space-between;
+        }
+
+        .h-10 {
+            height: 2.5rem;
+        }
+
+        .w-10 {
+            width: 2.5rem;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .rounded-full {
+            border-radius: 9999px;
+        }
+
+        .hover\:bg-gray-100:hover {
+            background-color: var(--input-bg);
+        }
+
+        .transition-colors {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+
+        .w-5 {
+            width: 1.25rem;
+        }
+
+        .h-5 {
+            height: 1.25rem;
+        }
+
+        .text-2xl {
+            font-size: 1.5rem;
+            line-height: 2rem;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .font-semibold {
+            font-weight: 600;
+        }
+
+        .step-content.hidden {
+            display: none;
+        }
+
+        .mb-6 {
+            margin-bottom: 1.5rem;
+        }
+
+        .h-8 {
+            height: 2rem;
+        }
+
+        .w-8 {
+            width: 2rem;
+        }
+
+        .text-gray-500 {
+            color: var(--text-light);
+        }
+
+        .space-x-2> :not([hidden])~ :not([hidden]) {
+            margin-left: 0.5rem;
+        }
+
+        .overflow-x-auto {
+            overflow-x: auto;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .md\:grid-cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .gap-2 {
+            gap: 0.5rem;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .font-bold {
+            font-weight: 700;
+        }
+
+        .text-lg {
+            font-size: 1.125rem;
+            line-height: 1.75rem;
+        }
+
+        .pb-4 {
+            padding-bottom: 1rem;
+        }
+
+        .grid-cols-3 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .gap-3 {
+            gap: 0.75rem;
+        }
+
+        .space-y-6> :not([hidden])~ :not([hidden]) {
+            margin-top: 1.5rem;
+        }
+
+        label {
+            margin-bottom: 0.25rem;
+        }
+
+        .block {
+            display: block;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .bg-gray-50 {
+            background-color: var(--input-bg);
+        }
+
+        .rounded-lg {
+            border-radius: 0.5rem;
+        }
+
+        .focus\:outline-none:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+        }
+
+        .focus\:ring-1:focus {
+            box-shadow: 0 0 0 1px var(--brand-orange);
+        }
+
+        .mt-2 {
+            margin-top: 0.5rem;
+        }
+
+        .space-y-4> :not([hidden])~ :not([hidden]) {
+            margin-top: 1rem;
+        }
+
+        .h-4 {
+            height: 1rem;
+        }
+
+        .w-4 {
+            width: 1rem;
+        }
+
+        .mr-2 {
+            margin-right: 0.5rem;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .h-16 {
+            height: 4rem;
+        }
+
+        .w-16 {
+            width: 4rem;
+        }
+
+        .bg-green-100 {
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        .text-green-600 {
+            color: #28a745;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .rounded-xl {
+            border-radius: 0.75rem;
+        }
+
+        .mt-8 {
+            margin-top: 2rem;
+        }
+
+        .text-white {
+            color: white;
+        }
+
+        .py-3 {
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+        }
+
+        .hover\:opacity-90:hover {
+            opacity: 0.9;
+        }
+
+        .transition-opacity {
+            transition-property: opacity;
+        }
+
+        .lg\:col-span-1 {
+            grid-column: span 1 / span 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .lg\:block {
+            display: block;
+        }
+
+        .lg\:hidden {
+            display: none;
+        }
+
+        @media (min-width: 1024px) {
+            .lg\:hidden {
+                display: none !important;
+            }
+        }
+
+        .sticky {
+            position: sticky;
+        }
+
+        .top-8 {
+            top: 2rem;
+        }
+
+        .space-x-4> :not([hidden])~ :not([hidden]) {
+            margin-left: 1rem;
+        }
+
+        .object-contain {
+            object-fit: contain;
+        }
+
+        .text-xl {
+            font-size: 1.25rem;
+            line-height: 1.75rem;
+        }
+
+        .space-y-3> :not([hidden])~ :not([hidden]) {
+            margin-top: 0.75rem;
+        }
+
+        .border-b {
+            border-bottom-width: 1px;
+        }
+
+        .text-gray-400 {
+            color: #9ca3af;
+        }
+
+        .mt-4 {
+            margin-top: 1rem;
+        }
+
+        .mt-6 {
+            margin-top: 1.5rem;
+        }
+
+        .fixed {
+            position: fixed;
+        }
+
+        .bottom-0 {
+            bottom: 0;
+        }
+
+        .left-0 {
+            left: 0;
+        }
+
+        .z-50 {
+            z-index: 50;
+        }
+
+        .rounded-t-2xl {
+            border-top-left-radius: 1rem;
+            border-top-right-radius: 1rem;
+        }
+
+        .text-primary {
+            color: var(--text-primary);
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+            line-height: 1rem;
+        }
+
+        .font-normal {
+            font-weight: 400;
+        }
+
+        .w-1\/2 {
+            width: 50%;
+        }
+
+        .disabled\:opacity-50:disabled {
+            opacity: 0.5;
+        }
+
+        .disabled\:cursor-not-allowed:disabled {
+            cursor: not-allowed;
+        }
+
+        .max-w-sm {
+            max-width: 24rem;
+        }
+
+        .shadow-xl {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .capitalize {
+            text-transform: capitalize;
+        }
+
+        .grid-cols-7 {
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+        }
+
+        .gap-1 {
+            gap: 0.25rem;
+        }
+
+        .gap-y-2 {
+            row-gap: 0.5rem;
+        }
+
+        /* Stepper Styles */
+        .stepper {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+
+        .step-indicator.active {
+            color: var(--brand-orange);
+            font-weight: 700;
+            opacity: 1;
+        }
+
+        .step-indicator.completed {
+            color: var(--brand-orange);
+            opacity: 0.8;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: var(--input-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .step-indicator.active .step-number,
+        .step-indicator.completed .step-number {
+            background-color: var(--brand-orange);
+            color: white;
+        }
+
+        /* Input Styles Fix */
+        input,
+        textarea,
+        select {
+            color: #EAEAEA !important;
+            background-color: #333333 !important;
+            border-color: var(--border-color) !important;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--brand-orange) !important;
+            outline-color: var(--brand-orange) !important;
+        }
+
+        /* Date Time Layout */
+        .date-time-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        @media(min-width: 768px) {
+            .date-time-container {
+                grid-template-columns: 320px 1fr;
+            }
+        }
+
+        .slots-group-title {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
+    </style>
+</head>
+
+<body class="antialiased">
+    <div class="container">
+        <header>
+            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo de Goversa" style="height: 40px; width: auto" />
+            <nav class="main-nav" id="main-nav">
+                <button type="button" id="menu-close-btn" class="menu-close-btn">
+                    <i data-feather="x"></i>
+                </button>
+                <ul>
+                    <li class="nav-item">
+                        <a href="https://wa.me/34632943261?text=Hola%20VERSA%2C%20tengo%20una%20cita%20con%20ustedes"
+                            target="_blank">
+                            <i data-feather="message-square"></i><span>Whatsapp</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="https://www.instagram.com/versabikemd/" target="_blank">
+                            <i data-feather="instagram"></i><span>Instagram</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a
+                            href="mailto:flota@goversa.es?subject=Consulta%20Importante&body=Hola,%20me%20gustaría%20saber%20más%20sobre...">
+                            <i data-feather="mail"></i><span>Correo</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="#"><i data-feather="briefcase"></i><span>Trabaja con nosotros</span><i
+                                data-feather="chevron-down" class="chevron"></i></a>
+                        <div class="dropdown-content">
+                            <a href="#">Flotas</a>
+                            <a href="#">Mecánico</a>
+                            <a href="#">Repartidor</a>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a href="https://goversa.es/" target="_blank">
+                            <i data-feather="globe"></i><span>Web</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a href="#"><i data-feather="key"></i><span>Quiero alquilar</span><i data-feather="chevron-down"
+                                class="chevron"></i></a>
+                        <div class="dropdown-content">
+                            <a href="https://wa.me/34632943261?text=Hola%20VERSA%2C%20quiero%20alquilar%20una%20moto"
+                                target="_blank">Moto</a>
+                            <a href="https://wa.me/34632943261?text=Hola%20VERSA%2C%20quiero%20alquilar%20una%20bicicleta"
+                                target="_blank">Bicicleta</a>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+            <button type="button" id="menu-open-btn" class="menu-open-btn">
+                <i data-feather="menu"></i>
+            </button>
+        </header>
+
+        <form id="bookingForm" method="POST">
+            <div class="lg:grid lg:grid-cols-3 lg:gap-8 items-start">
+                <div class="lg:col-span-2 bg-white p-6 md:p-8 rounded-2xl shadow-sm border pb-40 lg:pb-8">
+                    <!-- Stepper -->
+                    <div class="stepper no-scrollbar" id="booking-stepper">
+                        <!-- Injected via JS -->
+                    </div>
+
+                    <div class="mb-8 flex items-center justify-between">
+                        <button type="button" id="back-btn"
+                            class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+                            <i data-feather="arrow-left" class="w-5 h-5"></i>
+                        </button>
+                        <h1 id="step-title" class="text-2xl text-center font-semibold">Servicios</h1>
+                        <button type="button" id="close-btn"
+                            class="h-10 w-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+                            <i data-feather="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 1: Services (Tabs) -->
+                    <div id="step-1" class="step-content">
+                        <section id="servicios">
+                            <div class="tabs" role="tablist" aria-label="Categorías de vehículos">
+                                <button role="tab" type="button" class="tab" id="tab-moto" aria-controls="panel-moto"
+                                    aria-selected="true">MOTO</button>
+                                <button role="tab" type="button" class="tab" id="tab-coche" aria-controls="panel-coche"
+                                    aria-selected="false">COCHE</button>
+                                <button role="tab" type="button" class="tab" id="tab-bici" aria-controls="panel-bici"
+                                    aria-selected="false">BICICLETA</button>
+                            </div>
+                            <div id="panel-moto" role="tabpanel" aria-labelledby="tab-moto" class="tab-panel"></div>
+                            <div id="panel-coche" role="tabpanel" aria-labelledby="tab-coche" class="tab-panel" hidden>
+                            </div>
+                            <div id="panel-bici" role="tabpanel" aria-labelledby="tab-bici" class="tab-panel" hidden>
+                                <div class="subtabs" role="tablist" aria-label="Tipo de cliente">
+                                    <button role="tab" type="button" class="subtab" id="tab-bici-externo"
+                                        aria-controls="panel-bici-externo" aria-selected="true">Cliente externo</button>
+                                    <button role="tab" type="button" class="subtab" id="tab-bici-interno"
+                                        aria-controls="panel-bici-interno" aria-selected="false">Cliente interno
+                                        “VERSA”</button>
+                                </div>
+                                <p class="leyenda" id="leyenda-interno" hidden>*En el 99% de los casos los precios ya
+                                    están incluidos.</p>
+                                <div id="panel-bici-externo" role="tabpanel" aria-labelledby="tab-bici-externo"
+                                    class="tab-panel"></div>
+                                <div id="panel-bici-interno" role="tabpanel" aria-labelledby="tab-bici-interno"
+                                    class="tab-panel" hidden></div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Step 2: Workshop -->
+                    <div id="step-2" class="step-content hidden">
+                        <fieldset id="taller" class="space-y-3">
+                            <legend class="mb-4">Selecciona un Taller</legend>
+                            <div id="workshop-list" class="space-y-3"></div>
+                        </fieldset>
+                        <div id="mapa"></div>
+                    </div>
+
+                    <!-- Step 3: Professional -->
+                    <div id="step-3" class="step-content hidden">
+                        <div id="professional-list" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+                    </div>
+
+                    <!-- Step 4: Date & Time -->
+                    <div id="step-4" class="step-content hidden">
+                        <div class="date-time-container mt-6">
+                            <!-- Left: Inline Calendar -->
+                            <div class="calendar-wrapper">
+                                <div class="flex items-center justify-between mb-4">
+                                    <button type="button" id="cal-prev" class="p-1 hover:bg-input-bg rounded"><i
+                                            data-feather="chevron-left"></i></button>
+                                    <span id="cal-month-year" class="font-bold capitalize"></span>
+                                    <button type="button" id="cal-next" class="p-1 hover:bg-input-bg rounded"><i
+                                            data-feather="chevron-right"></i></button>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 text-center text-xs text-text-light mb-2">
+                                    <span>LU</span><span>MA</span><span>MI</span><span>JU</span><span>VI</span><span>SA</span><span>DO</span>
+                                </div>
+                                <div id="inline-calendar-grid" class="grid grid-cols-7 gap-1 place-items-center"></div>
+                            </div>
+
+                            <!-- Right: Time Slots -->
+                            <div class="slots-wrapper">
+                                <h3 class="font-bold mb-4" id="selected-date-display">Selecciona una hora</h3>
+                                <div id="time-slots-container" class="space-y-6">
+                                    <!-- Morning -->
+                                    <div id="slots-morning"></div>
+                                    <!-- Afternoon -->
+                                    <div id="slots-afternoon"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Review -->
+                    <div id="step-5" class="step-content hidden space-y-6">
+                        <div id="review-summary"></div>
+                    </div>
+
+                    <!-- Step 6: User Details -->
+                    <div id="step-6" class="step-content hidden">
+                        <div class="user-details-container">
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="name" class="block text-sm font-medium mb-1">Nombre Completo</label>
+                                    <input type="text" id="name" name="name" required
+                                        class="w-full px-4 bg-gray-50 rounded-lg border focus:outline-none focus:ring-1 text-lg font-barajan"
+                                        style="--tw-ring-color: var(--brand-orange);">
+                                </div>
+                                <div>
+                                    <label for="email" class="block text-sm font-medium mb-1">Correo Electrónico</label>
+                                    <input type="email" id="email" name="email" required
+                                        class="w-full px-4 bg-gray-50 rounded-lg border focus:outline-none focus:ring-1 text-lg font-barajan"
+                                        style="--tw-ring-color: var(--brand-orange);">
+                                </div>
+                                <div>
+                                    <label for="phone" class="block text-sm font-medium mb-1">Teléfono</label>
+                                    <input type="tel" id="phone" name="phone"
+                                        class="w-full px-4 bg-gray-50 rounded-lg border focus:outline-none focus:ring-1 text-lg font-barajan"
+                                        style="--tw-ring-color: var(--brand-orange);">
+                                </div>
+                                <div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" id="add-notes-toggle"
+                                            class="h-4 w-4 rounded border-gray-200" style="color: var(--brand-orange);">
+                                        <label for="add-notes-toggle"
+                                            class="ml-2 block text-sm font-medium cursor-pointer">Añadir notas</label>
+                                    </div>
+                                    <div id="notes-container" class="mt-2 hidden">
+                                        <textarea id="notes" name="notes" rows="3"
+                                            class="w-full px-4 py-2 bg-gray-50 rounded-lg border focus:outline-none focus:ring-1"
+                                            style="--tw-ring-color: var(--brand-orange);"
+                                            placeholder="Indica el modelo, matrícula o cualquier detalle importante."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 7: Final Summary -->
+                    <div id="step-7" class="step-content hidden text-center">
+                        <div
+                            class="mx-auto mb-4 h-16 w-16 flex items-center justify-center rounded-full bg-green-100 text-green-600">
+                            <i data-feather="check" class="w-8 h-8"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold mb-2">¡Cita Registrada!</h2>
+                        <p class="text-text-light mb-6">Tu cita ha sido registrada en nuestro sistema. Puedes añadirla a
+                            tu calendario personal.</p>
+                        <div id="final-summary" class="text-left bg-gray-50 p-6 rounded-xl border space-y-4"></div>
+                        <button type="button" id="add-to-calendar-btn"
+                            class="mt-8 w-full text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 transition-opacity flex items-center justify-center"
+                            style="background-color: var(--brand-orange);">
+                            <i data-feather="calendar" class="w-5 h-5 mr-2"></i>
+                            <span>Añadir a Google Calendar</span>
+                        </button>
+                        <a href="https://wa.me/34632943261?text=Hola%20VERSA%2C%20tengo%20una%20cita%20con%20ustedes"
+                            target="_blank"
+                            class="whatsapp-btn mt-4 w-full font-semibold py-3 px-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+                            <i data-feather="message-square"></i>
+                            <span>Escribir por WhatsApp</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Column (Desktop) / Sticky Footer (Mobile) -->
+                <div class="lg:col-span-1">
+                    <div class="hidden lg:block sticky top-8 bg-white p-6 rounded-2xl shadow-sm border">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Goversa Logo"
+                                class="w-16 h-16 rounded-lg object-contain">
+                            <div>
+                                <h2 class="text-xl font-bold">Taller Goversa</h2>
+                                <p class="text-sm text-text-light">Madrid, España</p>
+                            </div>
+                        </div>
+                        <div id="summary-items" class="space-y-3 pb-4 border-b">
+                            <p class="text-sm text-gray-400">Selecciona un servicio para empezar</p>
+                        </div>
+                        <div class="flex justify-between items-center font-bold mt-4">
+                            <span>Total</span>
+                            <span id="summary-total-desktop">€0.00</span>
+                        </div>
+                        <div class="mt-6">
+                            <button type="button"
+                                class="next-step-btn w-full text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                                style="background-color: var(--brand-orange);">
+                                <span class="btn-text">Continuar</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="mobile-summary-footer"
+                        class="hidden lg:hidden fixed bottom-0 left-0 w-full z-50 bg-surface-bg p-4 rounded-t-2xl shadow-[0_-4px_12px_rgba(0,0,0,0.1)]">
+                        <div class="flex items-center justify-between">
+                            <div class="font-bold text-primary">
+                                <span id="summary-total-mobile">€0.00</span>
+                                <div id="mobile-summary-short" class="text-xs font-normal text-text-light"></div>
+                            </div>
+                            <div class="w-1/2">
+                                <button type="button"
+                                    class="next-step-btn w-full text-white font-bold py-3 px-4 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                                    style="background-color: var(--brand-orange);">
+                                    <span class="btn-text">Continuar</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Calendar Modal -->
+    <div id="calendar-modal" class="modal-container fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0 bg-black/40"></div>
+        <div class="modal-content relative rounded-2xl w-full max-w-sm p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <button type="button" id="modal-prev-month-btn"
+                    class="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+                    <i data-feather="chevron-left" class="w-5 h-5"></i>
+                </button>
+                <h2 id="modal-month-year" class="font-bold text-lg capitalize"></h2>
+                <button type="button" id="modal-next-month-btn"
+                    class="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100">
+                    <i data-feather="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-7 gap-y-2 text-center text-xs text-text-light mb-2">
+                <span>LU</span><span>MA</span><span>MI</span><span>JU</span><span>VI</span><span>SA</span><span>DO</span>
+            </div>
+            <div id="modal-calendar-grid" class="grid grid-cols-7 gap-1 place-items-center"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const STATIC_WORKSHOP_DATA = {
+                1: { // Tesoro (ID 1 assumed)
+                    address: 'Calle del Tesoro, 26, 28004 Madrid',
+                    mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.479549925624!2d-3.707675923233866!3d40.42028605553646!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd4228783255152b%3A0x6b4857434a5d7426!2sC.%20del%20Tesoro%2C%2026%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030204753!5m2!1sen!2sus'
+                },
+                2: { // Mella (ID 2 assumed)
+                    address: 'C. de Vázquez de Mella, 4, 28004 Madrid',
+                    mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3037.409337581561!2d-3.702919923233796!3d40.42177305541604!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd42289b5a265f69%3A0x619f0450523f4c6a!2sC.%20de%20V%C3%A1zquez%20de%20Mella%2C%204%2C%20Centro%2C%2028004%20Madrid%2C%20Spain!5e0!3m2!1sen!2sus!4v1730030252530!5m2!1sen!2sus'
+                }
+            };
+
+            const CONFIG = {
+                api: {
+                    baseUrl: '',
+                    bookingWebhook: '/api/citas/crear',
+                    configEndpoint: '/api/citas/config'
+                },
+                calendar: {
+                    workingHours: { start: '09:00', end: '19:00' },
+                    saturdayHours: { start: '09:00', end: '14:00' },
+                    offDays: [0], // Sunday
+                    slotDurationMinutes: 30,
+                },
+                services: {
+                    moto: [
+                        { id: 101, name: 'Revisión general', duration: 90, price: 75 },
+                        { id: 102, name: 'Cambio de aceite', duration: 45, price: 60 },
+                        { id: 103, name: 'Pastillas de freno', duration: 60, price: 50 },
+                        { id: 104, name: 'Ajuste de cadena', duration: 30, price: 25 },
+                        { id: 105, name: 'Diagnóstico eléctrico', duration: 60, price: 55 },
+                    ],
+                    coche: [
+                        { id: 201, name: 'Revisión pre‑ITV', duration: 120, price: 90 },
+                        { id: 202, name: 'Cambio de aceite y filtros', duration: 90, price: 120 },
+                        { id: 203, name: 'Pastillas/Discos de freno', duration: 100, price: 150 },
+                        { id: 204, name: 'Neumáticos (x2)', duration: 60, price: 80 },
+                        { id: 205, name: 'Diagnóstico OBD', duration: 45, price: 50 },
+                    ],
+                    bici: [
+                        { id: 301, name: 'Ajuste de frenos', duration: 30, price: 20 },
+                        { id: 302, name: 'Centrado de ruedas', duration: 45, price: 30 },
+                        { id: 303, name: 'Cambio de pastillas', duration: 30, price: 25 },
+                        { id: 304, name: 'Ajuste de cambios', duration: 30, price: 20 },
+                        { id: 305, name: 'Mantenimiento e‑bike', duration: 90, price: 80 },
+                    ]
+                },
+                professionals: {
+                    0: { id: 0, name: 'Cualquier técnico', calendarUrl: null, rating: null }
+                },
+                workshops: []
+            };
+
+            let currentStep = 1;
+            let calendarDate = new Date();
+            const bookingState = {
+                services: [],
+                professional: null,
+                date: null,
+                time: null,
+                workshop: null,
+                totalPrice: 0,
+                totalDuration: 0,
+                vehicleCategory: 'moto' // Default
+            };
+
+            const UIElements = {
+                bookingForm: document.getElementById('bookingForm'),
+                backBtn: document.getElementById('back-btn'),
+                closeBtn: document.getElementById('close-btn'),
+                stepTitle: document.getElementById('step-title'),
+                nextStepBtns: document.querySelectorAll('.next-step-btn'),
+                steps: document.querySelectorAll('.step-content'),
+                professionalList: document.getElementById('professional-list'),
+                workshopList: document.getElementById('workshop-list'), // New
+                stepper: document.getElementById('booking-stepper'), // New
+                calMonthYear: document.getElementById('cal-month-year'), // New
+                calPrevBtn: document.getElementById('cal-prev'), // New
+                calNextBtn: document.getElementById('cal-next'), // New
+                inlineCalendarGrid: document.getElementById('inline-calendar-grid'), // New
+                slotsMorning: document.getElementById('slots-morning'), // New
+                slotsAfternoon: document.getElementById('slots-afternoon'), // New
+                selectedDateDisplay: document.getElementById('selected-date-display'), // New
+                summaryItems: document.getElementById('summary-items'),
+                mobileSummaryFooter: document.getElementById('mobile-summary-footer'),
+                summaryTotalDesktop: document.getElementById('summary-total-desktop'),
+                summaryTotalMobile: document.getElementById('summary-total-mobile'),
+                mobileSummaryShort: document.getElementById('mobile-summary-short'),
+                reviewSummaryContainer: document.getElementById('review-summary'),
+                addNotesToggle: document.getElementById('add-notes-toggle'),
+                notesContainer: document.getElementById('notes-container'),
+                finalSummaryContainer: document.getElementById('final-summary'),
+                addToCalendarBtn: document.getElementById('add-to-calendar-btn'),
+                mapaDiv: document.getElementById('mapa'),
+                mainNav: document.getElementById('main-nav'),
+                menuOpenBtn: document.getElementById('menu-open-btn'),
+                menuCloseBtn: document.getElementById('menu-close-btn'),
+            };
+
+            const stepTitles = ['Elige Servicios', 'Elige Taller', 'Seleccionar Técnico', 'Fecha y Hora', 'Revisar y Confirmar', 'Tus Datos', 'Cita Agendada'];
+            const formatCurrency = (amount) => `€${amount.toFixed(2)}`;
+
+            function getLocalDateString(date) {
+                if (!date) return null;
+                return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+            }
+
+            // --- Service Selection Functions (Step 1) ---
+            function renderServiceCards(category, containerId, isInternal = false) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+                const grid = document.createElement('div');
+                grid.className = 'service-grid';
+
+                CONFIG.services[category].forEach(service => {
+                    const card = document.createElement('div');
+                    const isSelected = bookingState.services.some(s => s.id === service.id);
+                    card.className = `service-card ${isSelected ? 'selected' : ''}`;
+                    card.dataset.id = service.id;
+
+                    const priceText = isInternal ? `<span>Incluido*</span>` : formatCurrency(service.price);
+
+                    card.innerHTML = `
+                    <div class="flex-grow">
+                        <div class="name">${service.name}</div>
+                        <div class="details">
+                            <span>${priceText}</span>
+                            <span>&middot; ${service.duration} min</span>
+                        </div>
+                    </div>
+                    <div class="toggle-service-btn ${isSelected ? 'selected' : ''}">
+                       <i data-feather="${isSelected ? 'check' : 'plus'}" class="w-5 h-5"></i>
+                    </div>
+                `;
+                    card.addEventListener('click', () => toggleService(service, isInternal));
+                    grid.appendChild(card);
+                });
+                container.appendChild(grid);
+                feather.replace();
+            }
+
+            function toggleService(service, isInternal) {
+                const serviceIndex = bookingState.services.findIndex(s => s.id === service.id);
+                if (serviceIndex > -1) {
+                    bookingState.services.splice(serviceIndex, 1);
+                } else {
+                    bookingState.services.push({ ...service, price: isInternal ? 0 : service.price });
+                }
+                refreshServiceCards();
+                updateSummary();
+            }
+
+            function refreshServiceCards() {
+                const currentTab = document.querySelector('.tab[aria-selected="true"]').id.replace('tab-', '');
+                if (currentTab === 'bici') {
+                    const currentSubTab = document.querySelector('.subtab[aria-selected="true"]').id.replace('tab-bici-', '');
+                    renderServiceCards('bici', `panel-bici-${currentSubTab}`, currentSubTab === 'interno');
+                } else {
+                    renderServiceCards(currentTab, `panel-${currentTab}`);
+                }
+            }
+
+            function setupServiceTabs() {
+                const tabs = document.querySelectorAll('.tab');
+                const panels = document.querySelectorAll('#servicios > .tab-panel');
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        tabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+                        e.currentTarget.setAttribute('aria-selected', 'true');
+                        panels.forEach(p => p.setAttribute('hidden', 'true'));
+                        const panelId = e.currentTarget.getAttribute('aria-controls');
+                        document.getElementById(panelId).removeAttribute('hidden');
+
+                        // Update vehicle category based on tab
+                        const category = e.currentTarget.id.replace('tab-', '');
+                        bookingState.vehicleCategory = category;
+
+                        bookingState.services = [];
+                        refreshServiceCards();
+                        updateSummary();
+                    });
+                });
+
+                const subtabs = document.querySelectorAll('.subtab');
+                const subpanels = document.querySelectorAll('#panel-bici > .tab-panel');
+                subtabs.forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        subtabs.forEach(t => t.setAttribute('aria-selected', 'false'));
+                        e.currentTarget.setAttribute('aria-selected', 'true');
+                        subpanels.forEach(p => p.setAttribute('hidden', 'true'));
+                        const panelId = e.currentTarget.getAttribute('aria-controls');
+                        document.getElementById(panelId).removeAttribute('hidden');
+                        document.getElementById('leyenda-interno').toggleAttribute('hidden', e.currentTarget.id !== 'tab-bici-interno');
+                        bookingState.services = [];
+                        refreshServiceCards();
+                        updateSummary();
+                    });
+                });
+            }
+
+            // --- Workshop & Professional Selection (Step 2 & 3) ---
+            // --- Workshop & Professional Selection (Step 2 & 3) ---
+            function renderWorkshops() {
+                if (!UIElements.workshopList) return;
+                UIElements.workshopList.innerHTML = '';
+
+                if (!Array.isArray(CONFIG.workshops)) {
+                    console.error('CONFIG.workshops is not an array');
+                    return;
+                }
+
+                CONFIG.workshops.forEach(ws => {
+                    const label = document.createElement('label');
+                    // Ensure flex and width are set
+                    label.className = 'flex items-center gap-3 p-4 border border-border-color rounded-xl cursor-pointer hover:bg-input-bg transition-colors w-full';
+                    label.style.display = 'flex'; // Fallback
+
+                    const isChecked = bookingState.workshop === ws.id ? 'checked' : '';
+                    label.innerHTML = `
+                        <input type="radio" name="taller" value="${ws.id}" class="accent-brand-orange w-5 h-5 flex-shrink-0" ${isChecked}>
+                        <div class="flex-grow">
+                            <div class="font-bold text-white">${ws.name}</div>
+                            <div class="text-sm text-text-light">${ws.address}</div>
+                        </div>
+                    `;
+                    label.querySelector('input').addEventListener('change', () => {
+                        bookingState.workshop = ws.id;
+                        bookingState.professional = null;
+                        renderMapa(ws.id);
+                        validateStep();
+                    });
+                    UIElements.workshopList.appendChild(label);
+                });
+
+                // Ensure map is rendered if workshop is selected
+                if (bookingState.workshop) renderMapa(bookingState.workshop);
+            }
+
+            function renderMapa(key) {
+                const ws = CONFIG.workshops.find(w => w.id === key);
+                UIElements.mapaDiv.innerHTML = ws ? `<iframe src="${ws.mapEmbed}" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` : '';
+            }
+
+            function renderProfessionals(workshopKey) {
+                UIElements.professionalList.innerHTML = '';
+                const ws = CONFIG.workshops.find(w => w.id === workshopKey);
+                if (!ws) return;
+
+                ws.technicianIds.forEach(id => {
+                    const pro = CONFIG.professionals[id];
+                    if (!pro) return;
+
+                    const isSelected = bookingState.professional && bookingState.professional.id === pro.id;
+                    const card = document.createElement('button');
+                    card.type = 'button';
+                    card.dataset.proId = pro.id;
+                    card.className = `professional-card text-center p-4 rounded-xl border-2 transition-all ${isSelected ? 'selected' : 'border-transparent hover:border-border-color'}`;
+                    const initials = pro.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    card.innerHTML = `
+                    <div class="relative w-20 h-20 mx-auto mb-2 flex items-center justify-center bg-input-bg rounded-full text-xl font-bold">
+                       ${initials}
+                    </div>
+                    <h4 class="font-bold">${pro.name}</h4>
+                    ${pro.rating ? `<div class="flex items-center justify-center mt-1 text-sm text-text-light">⭐ <span>${pro.rating}</span></div>` : ''}
+                `;
+                    UIElements.professionalList.appendChild(card);
+                });
+            }
+
+
+            // --- Date & Time (Step 4) ---
+            function renderInlineCalendar(date) {
+                const month = date.getMonth();
+                const year = date.getFullYear();
+                UIElements.calMonthYear.textContent = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                UIElements.inlineCalendarGrid.innerHTML = '';
+
+                const firstDay = new Date(year, month, 1);
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const startDayOfWeek = (firstDay.getDay() + 6) % 7;
+
+                for (let i = 0; i < startDayOfWeek; i++) {
+                    UIElements.inlineCalendarGrid.appendChild(document.createElement('div'));
+                }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                for (let i = 1; i <= daysInMonth; i++) {
+                    const dayDate = new Date(year, month, i);
+                    const dayString = getLocalDateString(dayDate);
+                    const dayEl = document.createElement('button');
+                    dayEl.type = 'button';
+                    dayEl.className = 'calendar-day';
+                    dayEl.textContent = i;
+                    dayEl.dataset.date = dayString;
+
+                    if (dayDate < today) dayEl.disabled = true;
+                    if (CONFIG.calendar.offDays.includes(dayDate.getDay())) dayEl.disabled = true;
+                    if (dayString === getLocalDateString(today)) dayEl.classList.add('today');
+                    if (dayString === bookingState.date) dayEl.classList.add('selected');
+
+                    dayEl.addEventListener('click', () => {
+                        bookingState.date = dayString;
+                        bookingState.time = null;
+                        renderInlineCalendar(calendarDate); // Re-render to show selection
+                        fetchAndRenderTimes(bookingState.date);
+                    });
+
+                    UIElements.inlineCalendarGrid.appendChild(dayEl);
+                }
+            }
+
+            async function fetchAndRenderTimes(date) {
+                UIElements.selectedDateDisplay.textContent = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                UIElements.slotsMorning.innerHTML = '<div class="h-10 bg-input-bg rounded animate-pulse"></div>';
+                UIElements.slotsAfternoon.innerHTML = '<div class="h-10 bg-input-bg rounded animate-pulse"></div>';
+
+                const { workingHours, saturdayHours, slotDurationMinutes } = CONFIG.calendar;
+                const duration = bookingState.totalDuration;
+                const timeToMinutes = t => t.split(':').map(Number).reduce((h, m) => h * 60 + m);
+
+                const selectedDate = new Date(date + 'T00:00:00');
+                const schedule = selectedDate.getDay() === 6 ? saturdayHours : workingHours;
+                const startMinutes = timeToMinutes(schedule.start);
+                const endMinutes = timeToMinutes(schedule.end);
+
+                const today = new Date();
+                const nowMinutes = (date === getLocalDateString(today)) ? today.getHours() * 60 + today.getMinutes() : 0;
+
+                let busySlots = [];
+                if (bookingState.professional && bookingState.professional.calendarUrl) {
+                    try {
+                        const proxyUrl = 'https://corsproxy.io/?';
+                        const icalResponse = await fetch(`${proxyUrl}${encodeURIComponent(bookingState.professional.calendarUrl)}`);
+                        if (!icalResponse.ok) throw new Error('Could not load calendar.');
+                        const icalText = await icalResponse.text();
+                        busySlots = parseIcal(icalText, date);
+                    } catch (error) {
+                        console.error("Error fetching calendar:", error);
+                    }
+                }
+
+                const availableTimes = [];
+                for (let t = startMinutes; t < endMinutes; t += slotDurationMinutes) {
+                    const slotEnd = t + duration;
+                    if (slotEnd > endMinutes || t < nowMinutes + 15) continue;
+
+                    const isOverlapping = busySlots.some(busy => t < busy.end && slotEnd > busy.start);
+                    if (!isOverlapping) {
+                        availableTimes.push(t);
+                    }
+                }
+
+                UIElements.slotsMorning.innerHTML = '';
+                UIElements.slotsAfternoon.innerHTML = '';
+
+                if (availableTimes.length === 0) {
+                    UIElements.slotsMorning.innerHTML = `<p class="text-text-light text-sm">No hay citas disponibles.</p>`;
+                    return;
+                }
+
+                const morningSlots = availableTimes.filter(t => t < 14 * 60);
+                const afternoonSlots = availableTimes.filter(t => t >= 14 * 60);
+
+                const renderSlots = (slots, container) => {
+                    if (slots.length === 0) {
+                        container.innerHTML = '<p class="text-xs text-text-light">No hay huecos.</p>';
+                        return;
+                    }
+                    const grid = document.createElement('div');
+                    grid.className = 'grid grid-cols-3 gap-2';
+                    slots.forEach(t => {
+                        const timeStr = `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
+                        const isSelected = bookingState.time === timeStr;
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = `time-slot p-2 text-sm rounded-lg border border-border-color hover:border-brand-orange transition-all ${isSelected ? 'selected' : ''}`;
+                        btn.textContent = timeStr;
+                        btn.addEventListener('click', () => {
+                            bookingState.time = timeStr;
+                            document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            validateStep();
+                        });
+                        grid.appendChild(btn);
+                    });
+                    container.appendChild(grid);
+                };
+
+                if (morningSlots.length > 0) {
+                    UIElements.slotsMorning.innerHTML = '<div class="slots-group-title">Mañana</div>';
+                    renderSlots(morningSlots, UIElements.slotsMorning);
+                }
+                if (afternoonSlots.length > 0) {
+                    UIElements.slotsAfternoon.innerHTML = '<div class="slots-group-title">Tarde</div>';
+                    renderSlots(afternoonSlots, UIElements.slotsAfternoon);
+                }
+                validateStep();
+            }
+
+            function parseIcal(icalText, dateString) {
+                const events = [];
+                const dateToFind = dateString.replace(/-/g, '');
+                for (const block of icalText.split('BEGIN:VEVENT')) {
+                    if (!block.includes('DTSTART')) continue;
+
+                    const startMatch = block.match(/DTSTART(?:;TZID=.*?)?:(\d{8}T\d{6})(Z?)/);
+                    const endMatch = block.match(/DTEND(?:;TZID=.*?)?:(\d{8}T\d{6})(Z?)/);
+
+                    if (startMatch && endMatch && startMatch[1].startsWith(dateToFind)) {
+                        const parseDate = (dStr, isUtc) => {
+                            const [Y, M, D, h, m] = [dStr.substring(0, 4), dStr.substring(4, 6) - 1, dStr.substring(6, 8), dStr.substring(9, 11), dStr.substring(11, 13)];
+                            return isUtc ? new Date(Date.UTC(Y, M, D, h, m)) : new Date(Y, M, D, h, m);
+                        };
+                        const start = parseDate(startMatch[1], startMatch[2] === 'Z');
+                        const end = parseDate(endMatch[1], endMatch[2] === 'Z');
+                        events.push({ start: start.getHours() * 60 + start.getMinutes(), end: end.getHours() * 60 + end.getMinutes() });
+                    }
+                }
+                return events;
+            }
+
+            // --- Summary & Navigation ---
+            function updateSummary() {
+                bookingState.totalPrice = bookingState.services.reduce((acc, s) => acc + s.price, 0);
+                bookingState.totalDuration = bookingState.services.reduce((acc, s) => acc + s.duration, 0);
+
+                if (bookingState.services.length === 0) {
+                    UIElements.summaryItems.innerHTML = '<p class="text-sm text-gray-400">Selecciona un servicio para empezar</p>';
+                    UIElements.mobileSummaryFooter.classList.add('hidden');
+                } else {
+                    UIElements.mobileSummaryFooter.classList.remove('hidden');
+                    UIElements.summaryItems.innerHTML = bookingState.services.map(s => `
+                    <div class="text-sm flex justify-between items-center">
+                        <span>${s.name}</span>
+                        <span class="font-semibold">${formatCurrency(s.price)}</span>
+                    </div>`).join('');
+                }
+
+                UIElements.summaryTotalDesktop.textContent = formatCurrency(bookingState.totalPrice);
+                UIElements.summaryTotalMobile.textContent = formatCurrency(bookingState.totalPrice);
+                UIElements.mobileSummaryShort.textContent = bookingState.services.length > 0 ? `${bookingState.services.length} servicio(s) · ${bookingState.totalDuration} min` : '';
+
+                if (currentStep === 4 && bookingState.date) fetchAndRenderTimes(bookingState.date);
+                validateStep();
+            }
+
+            function renderReview() {
+                const { services, professional, date, time, workshop, totalPrice, totalDuration } = bookingState;
+                const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                const ws = CONFIG.workshops.find(w => w.id === workshop);
+                const workshopName = ws ? ws.name : workshop;
+                UIElements.reviewSummaryContainer.innerHTML = `
+                <div class="space-y-4">
+                     <div class="border-b border-border-color pb-4 space-y-2">
+                        <div class="flex items-center space-x-3 text-text-light"><i data-feather="tool" class="w-5 h-5"></i><span>Con ${professional.name}</span></div>
+                        <div class="flex items-center space-x-3 text-text-light"><i data-feather="map-pin" class="w-5 h-5"></i><span>${workshopName}</span></div>
+                        <div class="flex items-center space-x-3 text-text-light"><i data-feather="calendar" class="w-5 h-5"></i><span>${formattedDate}</span></div>
+                        <div class="flex items-center space-x-3 text-text-light"><i data-feather="clock" class="w-5 h-5"></i><span>${time} (${totalDuration} min)</span></div>
+                    </div>
+                    <div class="border-b border-border-color py-4 space-y-3">${services.map(s => `<div class="flex justify-between items-center"><p class="font-bold">${s.name}</p><p class="font-bold">${formatCurrency(s.price)}</p></div>`).join('')}</div>
+                     <div class="pt-4 flex justify-between font-bold text-lg"><span>Total</span><span>${formatCurrency(totalPrice)}</span></div>
+                </div>`;
+                feather.replace();
+            }
+
+            function renderFinalSummary() {
+                const { services, professional, date, time, workshop, totalPrice } = bookingState;
+                const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+                const ws = CONFIG.workshops.find(w => w.id === workshop);
+                const workshopName = ws ? ws.name : workshop;
+                UIElements.finalSummaryContainer.innerHTML = `
+                <div class="flex justify-between items-center"><span class="text-text-light">Taller</span><span class="font-bold">${workshopName}</span></div>
+                <div class="flex justify-between items-center"><span class="text-text-light">Técnico</span><span class="font-bold">${professional.name}</span></div>
+                <div class="flex justify-between items-center"><span class="text-text-light">Fecha</span><span class="font-bold">${formattedDate}</span></div>
+                <div class="flex justify-between items-center"><span class="text-text-light">Hora</span><span class="font-bold">${time}</span></div>
+                <div class="border-t border-border-color my-2"></div>
+                <div class="flex justify-between items-start"><span class="text-text-light">Servicios</span><div class="text-right">${services.map(s => `<p class="font-semibold">${s.name}</p>`).join('')}</div></div>
+                <div class="border-t border-border-color my-2"></div>
+                <div class="flex justify-between items-center text-lg"><span class="text-text-light">Total</span><span class="font-bold">${formatCurrency(totalPrice)}</span></div>
+            `;
+            }
+
+            function goToStep(stepNumber) {
+                currentStep = stepNumber;
+                UIElements.steps.forEach(s => s.classList.add('hidden'));
+                document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+                UIElements.stepTitle.textContent = stepTitles[currentStep - 1];
+                UIElements.backBtn.style.visibility = (currentStep === 1 || currentStep === 7) ? 'hidden' : 'visible';
+
+                if (currentStep === 3) renderProfessionals(bookingState.workshop);
+
+                // Update Stepper
+                renderStepper();
+
+                if (currentStep === 7) {
+                    UIElements.mobileSummaryFooter.classList.add('hidden');
+                    document.querySelector('.lg\\:block.sticky').classList.add('hidden');
+                    feather.replace();
+                }
+
+                UIElements.nextStepBtns.forEach(btn => {
+                    const btnText = btn.querySelector('.btn-text');
+                    if (currentStep === 5) { renderReview(); btnText.textContent = 'Confirmar Cita'; }
+                    else if (currentStep === 6) { btnText.textContent = 'Finalizar Reserva'; btn.type = 'submit'; }
+                    else { btnText.textContent = 'Continuar'; btn.type = 'button'; }
+                });
+                validateStep();
+            }
+
+            function validateStep() {
+                let isValid = false;
+                switch (currentStep) {
+                    case 1: isValid = bookingState.services.length > 0; break;
+                    case 2: isValid = bookingState.workshop !== null; break;
+                    case 3: isValid = bookingState.professional !== null; break;
+                    case 4: isValid = bookingState.date !== null && bookingState.time !== null; break;
+                    case 5: isValid = true; break;
+                    case 6:
+                        const name = document.getElementById('name').value.trim();
+                        const email = document.getElementById('email').value.trim();
+                        isValid = name !== '' && email !== '' && email.includes('@');
+                        break;
+                }
+                UIElements.nextStepBtns.forEach(btn => btn.disabled = !isValid);
+            }
+
+            function redirectToGoogleCalendar() {
+                const { services, professional, date, time, workshop, totalDuration } = bookingState;
+                const customerName = document.getElementById('name').value;
+                const notes = document.getElementById('notes').value;
+                const ws = CONFIG.workshops.find(w => w.id === workshop);
+                const workshopName = ws ? ws.name : workshop;
+
+                const formatToGoogleUTC = (d) => d.toISOString().replace(/[-:.]/g, '').slice(0, -3) + 'Z';
+                const startDate = new Date(`${date}T${time}`);
+                const endDate = new Date(startDate.getTime() + totalDuration * 60000);
+
+                let description = `Servicios solicitados:\\n- ${services.map(s => s.name).join('\\n- ')}\\n\\nTécnico: ${professional.name}.`;
+                if (notes) description += `\\n\\nNotas: ${notes}`;
+
+                const params = new URLSearchParams({
+                    action: 'TEMPLATE',
+                    text: `Cita en Taller Goversa para ${customerName}`,
+                    dates: `${formatToGoogleUTC(startDate)}/${formatToGoogleUTC(endDate)}`,
+                    details: description,
+                    location: workshopName
+                });
+                window.open(`https://www.google.com/calendar/render?${params.toString()}`, '_blank');
+            }
+
+            // --- Stepper Logic ---
+            function renderStepper() {
+                const steps = [
+                    { num: 1, label: 'Servicios' },
+                    { num: 2, label: 'Taller' },
+                    { num: 3, label: 'Técnico' },
+                    { num: 4, label: 'Fecha' },
+                    { num: 5, label: 'Datos' }
+                ];
+
+                // Map currentStep (1-7) to Stepper (1-5)
+                // 1->1, 2->2, 3->3, 4->4, 5->5 (Review is part of Data flow?), 6->5, 7->Done
+                // Actually step 5 is Review, 6 is Data. Let's simplify:
+                // 1: Serv, 2: Taller, 3: Tec, 4: Fecha, 5: Confirmar (Review + Data)
+
+                let activeStep = currentStep;
+                if (currentStep >= 5) activeStep = 5;
+                if (currentStep === 7) activeStep = 6; // Done
+
+                UIElements.stepper.innerHTML = steps.map(s => {
+                    let status = '';
+                    if (s.num < activeStep) status = 'completed';
+                    if (s.num === activeStep) status = 'active';
+
+                    return `
+                    <div class="step-indicator ${status}">
+                        <div class="step-number">${s.num < activeStep ? '✓' : s.num}</div>
+                        <span class="${s.num === activeStep ? '' : 'hidden md:inline'}">${s.label}</span>
+                    </div>
+                    `;
+                }).join('');
+            }
+
+            // --- Event Listeners ---
+            UIElements.nextStepBtns.forEach(btn => btn.addEventListener('click', (e) => {
+                if (e.currentTarget.type === 'button') goToStep(currentStep + 1);
+            }));
+            UIElements.backBtn.addEventListener('click', () => goToStep(currentStep - 1));
+            UIElements.closeBtn.addEventListener('click', () => location.reload());
+            UIElements.addToCalendarBtn.addEventListener('click', redirectToGoogleCalendar);
+
+            UIElements.professionalList.addEventListener('click', (e) => {
+                const card = e.target.closest('.professional-card');
+                if (!card) return;
+                const proId = parseInt(card.dataset.proId);
+                bookingState.professional = CONFIG.professionals[proId];
+                renderProfessionals(bookingState.workshop);
+                updateSummary();
+            });
+
+            // Calendar Navigation
+            UIElements.calPrevBtn.addEventListener('click', () => {
+                calendarDate.setMonth(calendarDate.getMonth() - 1);
+                renderInlineCalendar(calendarDate);
+            });
+            UIElements.calNextBtn.addEventListener('click', () => {
+                calendarDate.setMonth(calendarDate.getMonth() + 1);
+                renderInlineCalendar(calendarDate);
+            });
+
+            UIElements.addNotesToggle.addEventListener('change', () => UIElements.notesContainer.classList.toggle('hidden', !UIElements.addNotesToggle.checked));
+            document.getElementById('step-6').addEventListener('input', validateStep);
+
+            UIElements.bookingForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                UIElements.nextStepBtns.forEach(btn => btn.disabled = true);
+
+                // Construct the payload as requested
+                const payload = {
+                    sucursal_ref: bookingState.workshop,
+                    fecha_hora: `${bookingState.date} ${bookingState.time}:00`,
+                    duracion_min: bookingState.totalDuration,
+                    motivo: bookingState.services.map(s => s.name).join(', '),
+                    notas: document.getElementById('notes').value,
+                    cliente: {
+                        nombre: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                        telefono: document.getElementById('phone').value
+                    },
+                    vehiculo_categoria: bookingState.vehicleCategory
+                };
+
+                try {
+                    const url = CONFIG.api.baseUrl + CONFIG.api.bookingWebhook;
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: JSON.stringify(payload),
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API failed: ${response.statusText}`);
+                    }
+
+                    renderFinalSummary();
+                    goToStep(7);
+                } catch (error) {
+                    console.error("Error sending reservation to API:", error);
+                    alert('Hubo un problema al registrar tu cita. Por favor, inténtalo de nuevo.');
+                    UIElements.nextStepBtns.forEach(btn => btn.disabled = false);
+                }
+            });
+
+            // Mobile Menu Logic
+            UIElements.menuOpenBtn.addEventListener('click', () => {
+                UIElements.mainNav.classList.add('is-open');
+            });
+            UIElements.menuCloseBtn.addEventListener('click', () => {
+                UIElements.mainNav.classList.remove('is-open');
+            });
+
+            document.querySelectorAll('.main-nav .dropdown > a').forEach(dropdownToggle => {
+                dropdownToggle.addEventListener('click', (e) => {
+                    if (window.innerWidth < 1024) { // Only enable click on mobile
+                        e.preventDefault();
+                        dropdownToggle.parentElement.classList.toggle('is-active');
+                    }
+                });
+            });
+
+            async function fetchConfig() {
+                try {
+                    const response = await fetch(CONFIG.api.baseUrl + CONFIG.api.configEndpoint);
+                    if (!response.ok) throw new Error(`Failed to fetch config: ${response.statusText}`);
+                    const data = await response.json();
+
+                    if (data.ok) {
+                        // Process Workshops
+                        CONFIG.workshops = data.sucursales.map(s => {
+                            const staticData = STATIC_WORKSHOP_DATA[s.id] || { address: 'Dirección no disponible', mapEmbed: '' };
+                            return {
+                                id: s.id,
+                                name: s.nombre,
+                                address: staticData.address,
+                                mapEmbed: staticData.mapEmbed,
+                                technicianIds: [0] // Start with 'Cualquier técnico'
+                            };
+                        });
+
+                        // Process Technicians
+                        if (data.tecnicos && Array.isArray(data.tecnicos)) {
+                            data.tecnicos.forEach(t => {
+                                // Add to professionals list
+                                CONFIG.professionals[t.id] = {
+                                    id: t.id,
+                                    name: t.nombre,
+                                    calendarUrl: null, // Placeholder or fetch from DB if available
+                                    rating: (Math.random() * (5.0 - 4.5) + 4.5).toFixed(1) // Mock rating for now
+                                };
+
+                                // Link to workshop
+                                const ws = CONFIG.workshops.find(w => w.id === t.id_sucursal);
+                                if (ws) {
+                                    ws.technicianIds.push(t.id);
+                                }
+                            });
+                        }
+
+                        // Set default workshop if exists
+                        if (CONFIG.workshops.length > 0) {
+                            bookingState.workshop = CONFIG.workshops[0].id;
+                        } else {
+                            UIElements.workshopList.innerHTML = '<p class="text-red-500 p-4">No se encontraron talleres disponibles en la base de datos.</p>';
+                        }
+                    } else {
+                        throw new Error(data.error || 'API Error');
+                    }
+                } catch (error) {
+                    console.error('Error fetching config:', error);
+                    UIElements.workshopList.innerHTML = `<div class="p-4 text-red-400 border border-red-800 rounded bg-red-900/20">
+                        <p class="font-bold">Error de conexión</p>
+                        <p class="text-sm">No se pudo cargar la lista de talleres. (${error.message})</p>
+                        <p class="text-xs mt-2 text-gray-400">Asegúrate de que el backend está corriendo en localhost:3000</p>
+                    </div>`;
+                }
+            }
+
+            async function init() {
+                feather.replace();
+                // Step 1
+                renderServiceCards('moto', 'panel-moto');
+                renderServiceCards('coche', 'panel-coche');
+                renderServiceCards('bici', 'panel-bici-externo', false);
+                renderServiceCards('bici', 'panel-bici-interno', true);
+                setupServiceTabs();
+
+                // Fetch dynamic config
+                await fetchConfig();
+
+                // Step 2 & 3
+                setupWorkshopSelection();
+                renderWorkshops();
+                bookingState.professional = CONFIG.professionals[0]; // Default to 'Cualquier técnico'
+
+                // Step 4
+                let today = new Date();
+                while (CONFIG.calendar.offDays.includes(today.getDay())) {
+                    today.setDate(today.getDate() + 1);
+                }
+                bookingState.date = getLocalDateString(today);
+                renderInlineCalendar(today);
+
+                updateSummary();
+                goToStep(1);
+            }
+
+            init();
+        });
+    </script>
+</body>
+
+</html>

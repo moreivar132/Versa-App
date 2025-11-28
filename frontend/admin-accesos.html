@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Gestión de Accesos - Versa Finanzas</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#ea580c",
+                        dark: {
+                            900: "#0f172a", // Main background
+                            800: "#1e293b", // Surface/Sidebar
+                            700: "#334155", // Borders
+                        }
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        .material-icons-outlined {
+            font-size: 20px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        .modal {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .tab-btn.active {
+            background-color: rgba(234, 88, 12, 0.1);
+            color: #ea580c;
+            border-color: rgba(234, 88, 12, 0.2);
+        }
+    </style>
+</head>
+
+<body class="font-display bg-dark-900 text-gray-200 overflow-hidden">
+    <div class="flex h-screen relative">
+        <!-- Sidebar Overlay -->
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity opacity-0">
+        </div>
+
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="fixed inset-y-0 left-0 z-50 w-72 bg-dark-800 p-6 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 border-r border-dark-700">
+            <div>
+                <div class="flex items-center justify-between mb-10">
+                    <span class="text-xl font-bold uppercase text-gray-400 tracking-widest">Panel</span>
+                    <button id="close-sidebar" class="md:hidden text-gray-400 hover:text-white">
+                        <span class="material-icons-outlined">close</span>
+                    </button>
+                </div>
+                <nav class="space-y-3">
+                    <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
+                        href="index.html">
+                        <span class="material-icons-outlined mr-4">bar_chart</span>
+                        <span class="font-medium">Dashboard ejecutivo</span>
+                    </a>
+                    <a class="flex items-center p-3 rounded-lg text-white bg-primary shadow-lg transition-transform hover:scale-[1.02]"
+                        href="admin-accesos.html">
+                        <span class="material-icons-outlined mr-4">shield</span>
+                        <span class="font-semibold">Administración de accesos</span>
+                    </a>
+                    <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
+                        href="#">
+                        <span class="material-icons-outlined mr-4">receipt_long</span>
+                        <span class="font-medium">Gestión de facturas</span>
+                    </a>
+                    <a class="flex items-center py-3 px-3 text-gray-400 border-b border-dark-700 hover:border-primary hover:text-white transition-colors duration-200 group"
+                        href="manager-taller-ordenes.html">
+                        <span
+                            class="material-icons-outlined mr-4 group-hover:text-primary transition-colors">build</span>
+                        <span class="font-medium uppercase tracking-wider text-sm">Manager Taller</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="flex items-center justify-between pt-6 border-t border-dark-700">
+                <div class="flex items-center">
+                    <div
+                        class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm mr-3 shadow-md">
+                        <span>IM</span>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-sm text-white">Iván Moreno</p>
+                        <p class="text-xs text-gray-400">Administrador</p>
+                    </div>
+                </div>
+                <a class="text-gray-400 hover:text-primary transition-colors" href="login.html">
+                    <span class="material-icons-outlined">logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden bg-dark-900">
+            <!-- Header / Top Nav -->
+            <header class="bg-dark-800 border-b border-dark-700 shrink-0 z-30">
+                <div class="px-6 lg:px-8 h-16 flex items-center justify-between">
+                    <div class="flex items-center w-full">
+                        <button id="mobile-menu-btn" class="mr-4 text-gray-400 md:hidden hover:text-white">
+                            <span class="material-icons-outlined">menu</span>
+                        </button>
+
+                        <!-- Navigation Tabs -->
+                        <div class="flex space-x-2 overflow-x-auto no-scrollbar w-full" id="tabs-container">
+                            <button
+                                class="tab-btn active flex items-center gap-2 py-2 px-4 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-all border border-transparent"
+                                data-tab="users">
+                                <span class="material-icons-outlined">group</span>
+                                <span>Usuarios</span>
+                            </button>
+                            <button
+                                class="tab-btn flex items-center gap-2 py-2 px-4 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-all border border-transparent"
+                                data-tab="roles">
+                                <span class="material-icons-outlined">theater_comedy</span>
+                                <span>Roles</span>
+                            </button>
+                            <button
+                                class="tab-btn flex items-center gap-2 py-2 px-4 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-all border border-transparent"
+                                data-tab="permisos">
+                                <span class="material-icons-outlined">lock</span>
+                                <span>Permisos</span>
+                            </button>
+                            <button
+                                class="tab-btn flex items-center gap-2 py-2 px-4 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-all border border-transparent"
+                                data-tab="tenants">
+                                <span class="material-icons-outlined">apartment</span>
+                                <span>Tenants</span>
+                            </button>
+                            <button
+                                class="tab-btn flex items-center gap-2 py-2 px-4 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-all border border-transparent"
+                                data-tab="sucursales">
+                                <span class="material-icons-outlined">place</span>
+                                <span>Sucursales</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-6 lg:p-8">
+                <div class="bg-dark-800 rounded-xl shadow-lg border border-dark-700 min-h-[500px]">
+
+                    <!-- Generic Header -->
+                    <div
+                        class="p-6 border-b border-dark-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                        <h1 id="page-title" class="text-xl font-bold text-white">Gestión de Usuarios</h1>
+                        <div class="flex items-center space-x-3 w-full sm:w-auto">
+                            <button id="refresh-btn"
+                                class="text-gray-400 hover:text-white hover:bg-dark-700 font-medium transition-colors duration-300 flex items-center gap-2 text-sm px-4 py-2 rounded-lg border border-transparent hover:border-dark-700">
+                                <span class="material-icons-outlined">refresh</span>
+                                <span class="hidden sm:inline">Actualizar</span>
+                            </button>
+                            <button id="create-btn"
+                                class="bg-primary hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition-transform hover:scale-105 shadow-md text-sm w-full sm:w-auto justify-center">
+                                <span class="material-icons-outlined">add</span>
+                                <span id="create-btn-text">Crear Usuario</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Views Container -->
+                    <div id="views-container" class="overflow-x-auto">
+
+                        <!-- USERS VIEW -->
+                        <div id="view-users" class="view-section">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-400 uppercase bg-dark-900/50 border-b border-dark-700">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left rounded-tl-lg">
+                                            Usuario</th>
+                                        <th
+                                            class="px-6 py-4 font-semibold tracking-wider text-left hidden sm:table-cell">
+                                            Tenant</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Tipo</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Roles</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Sucursales</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Creado</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-right rounded-tr-lg">
+                                            Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body" class="divide-y divide-dark-700"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- ROLES VIEW -->
+                        <div id="view-roles" class="view-section hidden">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-400 uppercase bg-dark-900/50 border-b border-dark-700">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left rounded-tl-lg">ID
+                                        </th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Nombre del Rol</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-right rounded-tr-lg">
+                                            Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roles-table-body" class="divide-y divide-dark-700"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- PERMISOS VIEW -->
+                        <div id="view-permisos" class="view-section hidden">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-400 uppercase bg-dark-900/50 border-b border-dark-700">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left rounded-tl-lg">ID
+                                        </th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Nombre del Permiso
+                                        </th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-right rounded-tr-lg">
+                                            Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="permisos-table-body" class="divide-y divide-dark-700"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- TENANTS VIEW -->
+                        <div id="view-tenants" class="view-section hidden">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-400 uppercase bg-dark-900/50 border-b border-dark-700">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left rounded-tl-lg">ID
+                                        </th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Nombre del Tenant
+                                        </th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Creado</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-right rounded-tr-lg">
+                                            Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tenants-table-body" class="divide-y divide-dark-700"></tbody>
+                            </table>
+                        </div>
+
+                        <!-- SUCURSALES VIEW -->
+                        <div id="view-sucursales" class="view-section hidden">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-gray-400 uppercase bg-dark-900/50 border-b border-dark-700">
+                                    <tr>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left rounded-tl-lg">ID
+                                        </th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Nombre</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Tenant</th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-left">Google Calendar ID
+                                        </th>
+                                        <th class="px-6 py-4 font-semibold tracking-wider text-right rounded-tr-lg">
+                                            Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sucursales-table-body" class="divide-y divide-dark-700"></tbody>
+                            </table>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- GENERIC MODAL -->
+    <div id="generic-modal"
+        class="modal fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div
+            class="modal-content bg-dark-800 w-full max-w-2xl rounded-xl shadow-2xl border border-dark-700 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-dark-700 flex justify-between items-center">
+                <h2 id="modal-title" class="text-xl font-bold text-white">Nuevo Item</h2>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-white transition-colors">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+            <form id="generic-form" class="p-6 space-y-6">
+                <input type="hidden" id="item-id" name="id">
+                <div id="modal-fields" class="space-y-4">
+                    <!-- Dynamic Fields Injected Here -->
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-dark-700">
+                    <button type="button" id="cancel-modal-btn"
+                        class="px-4 py-2 rounded-lg text-gray-400 hover:text-white hover:bg-dark-700 transition-colors font-medium">Cancelar</button>
+                    <button type="submit"
+                        class="px-6 py-2 rounded-lg bg-primary hover:bg-orange-600 text-white font-bold shadow-lg transition-transform hover:scale-105">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchWithAuth, requireAuth } from './auth.js';
+
+        // --- GLOBAL STATE ---
+        let currentTab = 'users';
+        let allRoles = [], allTenants = [], allSucursales = [], allPermisos = [];
+
+        // --- DOM ELEMENTS ---
+        const tabs = document.querySelectorAll('.tab-btn');
+        const views = document.querySelectorAll('.view-section');
+        const pageTitle = document.getElementById('page-title');
+        const createBtn = document.getElementById('create-btn');
+        const createBtnText = document.getElementById('create-btn-text');
+        const refreshBtn = document.getElementById('refresh-btn');
+
+        // Modal
+        const modal = document.getElementById('generic-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalFields = document.getElementById('modal-fields');
+        const genericForm = document.getElementById('generic-form');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const cancelModalBtn = document.getElementById('cancel-modal-btn');
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            await loadCatalogs();
+            switchTab('users');
+        });
+
+        // --- TABS LOGIC ---
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+        });
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+
+            // Update UI
+            tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+            views.forEach(v => v.classList.toggle('hidden', v.id !== `view-${tabName}`));
+
+            // Update Header
+            const titles = {
+                users: 'Gestión de Usuarios',
+                roles: 'Gestión de Roles',
+                permisos: 'Gestión de Permisos',
+                tenants: 'Gestión de Tenants',
+                sucursales: 'Gestión de Sucursales'
+            };
+            const btnTexts = {
+                users: 'Crear Usuario',
+                roles: 'Crear Rol',
+                permisos: 'Crear Permiso',
+                tenants: 'Crear Tenant',
+                sucursales: 'Crear Sucursal'
+            };
+
+            pageTitle.textContent = titles[tabName];
+            createBtnText.textContent = btnTexts[tabName];
+
+            // Load Data
+            loadData();
+        }
+
+        refreshBtn.addEventListener('click', loadData);
+        createBtn.addEventListener('click', () => openModal('create'));
+
+        async function loadData() {
+            if (currentTab === 'users') loadUsers();
+            else if (currentTab === 'roles') loadRoles();
+            else if (currentTab === 'permisos') loadPermisos();
+            else if (currentTab === 'tenants') loadTenants();
+            else if (currentTab === 'sucursales') loadSucursales();
+        }
+
+        async function loadCatalogs() {
+            try {
+                const [r, t, s, p] = await Promise.all([
+                    fetchWithAuth('/api/admin/roles').then(res => res.ok ? res.json() : []),
+                    fetchWithAuth('/api/admin/tenants').then(res => res.ok ? res.json() : []),
+                    fetchWithAuth('/api/admin/sucursales').then(res => res.ok ? res.json() : []),
+                    fetchWithAuth('/api/admin/permisos').then(res => res.ok ? res.json() : [])
+                ]);
+                allRoles = r; allTenants = t; allSucursales = s; allPermisos = p;
+            } catch (e) { console.error('Error loading catalogs', e); }
+        }
+
+        // --- RENDER FUNCTIONS ---
+
+        // 1. USERS
+        async function loadUsers() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">Cargando...</td></tr>';
+            try {
+                const res = await fetchWithAuth('/api/admin/users');
+                const users = await res.json();
+                if (!users.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay usuarios.</td></tr>'; return; }
+
+                tbody.innerHTML = users.map(u => {
+                    const tenant = allTenants.find(t => t.id === u.id_tenant)?.nombre || 'Desconocido';
+                    const roleBadge = u.is_super_admin
+                        ? `<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">Super Admin</span>`
+                        : `<span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">Usuario</span>`;
+                    const roles = (u.roles || []).map(r => `<span class="px-1.5 py-0.5 rounded text-[10px] bg-dark-700 border border-dark-600 text-gray-300">${r}</span>`).join('');
+                    const sucursales = (u.sucursales || []).length ? `${u.sucursales.length} Sucursales` : 'Ninguna';
+                    const date = new Date(u.created_at).toLocaleDateString();
+                    const userJson = JSON.stringify(u).replace(/"/g, '&quot;');
+
+                    return `<tr class="border-b border-dark-800 hover:bg-dark-800/50 transition-colors group">
+                        <td class="px-6 py-4 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-dark-700 flex items-center justify-center text-xs font-bold text-gray-300">${u.nombre?.substring(0, 2).toUpperCase() || '??'}</div>
+                            <div><div class="font-medium text-white text-sm">${u.nombre}</div><div class="text-xs text-gray-500">${u.email}</div></div>
+                        </td>
+                        <td class="px-6 py-4 hidden sm:table-cell"><span class="px-2 py-0.5 rounded-full text-xs bg-dark-800 border border-dark-700 text-gray-400">${tenant}</span></td>
+                        <td class="px-6 py-4">${roleBadge}</td>
+                        <td class="px-6 py-4 flex gap-1 flex-wrap">${roles}</td>
+                        <td class="px-6 py-4 text-sm text-gray-400">${sucursales}</td>
+                        <td class="px-6 py-4 text-xs text-gray-500">${date}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="text-gray-400 hover:text-primary p-1" onclick='openModal("edit", ${userJson})'><span class="material-icons-outlined">edit</span></button>
+                            <button class="text-gray-400 hover:text-red-500 p-1" onclick='deleteItem("users", ${u.id})'><span class="material-icons-outlined">delete</span></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-red-400">Error: ${e.message}</td></tr>`; }
+        }
+
+        // 2. ROLES
+        async function loadRoles() {
+            const tbody = document.getElementById('roles-table-body');
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">Cargando...</td></tr>';
+            try {
+                const res = await fetchWithAuth('/api/admin/roles');
+                const roles = await res.json();
+                allRoles = roles; // Update cache
+                if (!roles.length) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">No hay roles.</td></tr>'; return; }
+
+                tbody.innerHTML = roles.map(r => {
+                    const json = JSON.stringify(r).replace(/"/g, '&quot;');
+                    return `<tr class="border-b border-dark-800 hover:bg-dark-800/50 transition-colors">
+                        <td class="px-6 py-4 text-gray-400">#${r.id}</td>
+                        <td class="px-6 py-4 font-medium text-white">${r.nombre}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="text-gray-400 hover:text-primary p-1" onclick='openModal("edit", ${json})'><span class="material-icons-outlined">edit</span></button>
+                            <button class="text-gray-400 hover:text-red-500 p-1" onclick='deleteItem("roles", ${r.id})'><span class="material-icons-outlined">delete</span></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { tbody.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-red-400">Error: ${e.message}</td></tr>`; }
+        }
+
+        // 3. PERMISOS
+        async function loadPermisos() {
+            const tbody = document.getElementById('permisos-table-body');
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">Cargando...</td></tr>';
+            try {
+                const res = await fetchWithAuth('/api/admin/permisos');
+                const permisos = await res.json();
+                if (!permisos.length) { tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">No hay permisos.</td></tr>'; return; }
+
+                tbody.innerHTML = permisos.map(p => {
+                    const json = JSON.stringify(p).replace(/"/g, '&quot;');
+                    return `<tr class="border-b border-dark-800 hover:bg-dark-800/50 transition-colors">
+                        <td class="px-6 py-4 text-gray-400">#${p.id}</td>
+                        <td class="px-6 py-4 font-medium text-white">${p.nombre}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="text-gray-400 hover:text-primary p-1" onclick='openModal("edit", ${json})'><span class="material-icons-outlined">edit</span></button>
+                            <button class="text-gray-400 hover:text-red-500 p-1" onclick='deleteItem("permisos", ${p.id})'><span class="material-icons-outlined">delete</span></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { tbody.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-red-400">Error: ${e.message}</td></tr>`; }
+        }
+
+        // 4. TENANTS
+        async function loadTenants() {
+            const tbody = document.getElementById('tenants-table-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">Cargando...</td></tr>';
+            try {
+                const res = await fetchWithAuth('/api/admin/tenants');
+                const tenants = await res.json();
+                allTenants = tenants; // Update cache
+                if (!tenants.length) { tbody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">No hay tenants.</td></tr>'; return; }
+
+                tbody.innerHTML = tenants.map(t => {
+                    const json = JSON.stringify(t).replace(/"/g, '&quot;');
+                    return `<tr class="border-b border-dark-800 hover:bg-dark-800/50 transition-colors">
+                        <td class="px-6 py-4 text-gray-400">#${t.id}</td>
+                        <td class="px-6 py-4 font-medium text-white">${t.nombre}</td>
+                        <td class="px-6 py-4 text-gray-500 text-sm">${new Date(t.created_at).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="text-gray-400 hover:text-primary p-1" onclick='openModal("edit", ${json})'><span class="material-icons-outlined">edit</span></button>
+                            <button class="text-gray-400 hover:text-red-500 p-1" onclick='deleteItem("tenants", ${t.id})'><span class="material-icons-outlined">delete</span></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-400">Error: ${e.message}</td></tr>`; }
+        }
+
+        // 5. SUCURSALES
+        async function loadSucursales() {
+            const tbody = document.getElementById('sucursales-table-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">Cargando...</td></tr>';
+            try {
+                const res = await fetchWithAuth('/api/admin/sucursales');
+                const sucursales = await res.json();
+                allSucursales = sucursales; // Update cache
+                if (!sucursales.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No hay sucursales.</td></tr>'; return; }
+
+                tbody.innerHTML = sucursales.map(s => {
+                    const tenant = allTenants.find(t => t.id === s.id_tenant)?.nombre || 'Desconocido';
+                    const json = JSON.stringify(s).replace(/"/g, '&quot;');
+                    return `<tr class="border-b border-dark-800 hover:bg-dark-800/50 transition-colors">
+                        <td class="px-6 py-4 text-gray-400">#${s.id}</td>
+                        <td class="px-6 py-4 font-medium text-white">${s.nombre}</td>
+                        <td class="px-6 py-4 text-gray-400 text-sm">${tenant}</td>
+                        <td class="px-6 py-4 text-gray-500 text-xs font-mono">${s.google_calendar_id || '-'}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button class="text-gray-400 hover:text-primary p-1" onclick='openModal("edit", ${json})'><span class="material-icons-outlined">edit</span></button>
+                            <button class="text-gray-400 hover:text-red-500 p-1" onclick='deleteItem("sucursales", ${s.id})'><span class="material-icons-outlined">delete</span></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (e) { tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-red-400">Error: ${e.message}</td></tr>`; }
+        }
+
+        // --- MODAL LOGIC ---
+        window.openModal = async function (mode, data = null) {
+            genericForm.reset();
+            document.getElementById('item-id').value = data ? data.id : '';
+            modalTitle.textContent = mode === 'edit' ? `Editar ${currentTab.slice(0, -1)}` : `Crear ${currentTab.slice(0, -1)}`;
+
+            // Build Fields
+            let html = '';
+            if (currentTab === 'users') {
+                html = `
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="block text-sm text-gray-400 mb-1">Nombre</label><input name="nombre" class="w-full bg-dark-900 border-dark-700 rounded text-white" required value="${data?.nombre || ''}"></div>
+                        <div><label class="block text-sm text-gray-400 mb-1">Email</label><input name="email" type="email" class="w-full bg-dark-900 border-dark-700 rounded text-white" required value="${data?.email || ''}"></div>
+                        <div><label class="block text-sm text-gray-400 mb-1">Password</label><input name="password" type="password" class="w-full bg-dark-900 border-dark-700 rounded text-white" ${mode === 'create' ? 'required' : ''} placeholder="${mode === 'edit' ? 'Dejar vacío para mantener' : ''}"></div>
+                        <div><label class="block text-sm text-gray-400 mb-1">Tenant</label>
+                            <select name="id_tenant" class="w-full bg-dark-900 border-dark-700 rounded text-white" required>
+                                <option value="">Seleccionar...</option>
+                                ${allTenants.map(t => `<option value="${t.id}" ${data?.id_tenant === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('')}
+                            </select>
+                        </div>
+                    </div>
+                    <div><label class="block text-sm text-gray-400 mb-2">Roles</label>
+                        <div class="grid grid-cols-3 gap-2 bg-dark-900 p-3 rounded border border-dark-700 max-h-32 overflow-y-auto">
+                            ${allRoles.map(r => `<label class="flex items-center gap-2"><input type="checkbox" name="roles" value="${r.id}" ${data?.roles?.includes(r.nombre) ? 'checked' : ''}> <span class="text-sm text-gray-300">${r.nombre}</span></label>`).join('')}
+                        </div>
+                    </div>
+                    <div><label class="block text-sm text-gray-400 mb-2">Sucursales</label>
+                        <div class="grid grid-cols-3 gap-2 bg-dark-900 p-3 rounded border border-dark-700 max-h-32 overflow-y-auto">
+                            ${allSucursales.map(s => `<label class="flex items-center gap-2"><input type="checkbox" name="sucursales" value="${s.id}" ${data?.sucursales?.some(sub => sub.id === s.id) ? 'checked' : ''}> <span class="text-sm text-gray-300">${s.nombre}</span></label>`).join('')}
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2"><input type="checkbox" name="is_super_admin" ${data?.is_super_admin ? 'checked' : ''}> <span class="text-sm text-white">Es Super Admin</span></div>
+                `;
+            } else if (currentTab === 'roles') {
+                // Fetch current permissions if editing
+                let rolePermisos = [];
+                if (mode === 'edit' && data) {
+                    try {
+                        const res = await fetchWithAuth(`/api/admin/roles/${data.id}/permisos`);
+                        if (res.ok) rolePermisos = await res.json();
+                    } catch (e) { console.error(e); }
+                }
+                const rolePermisoIds = rolePermisos.map(p => p.id);
+
+                html = `
+                    <div><label class="block text-sm text-gray-400 mb-1">Nombre del Rol</label><input name="nombre" class="w-full bg-dark-900 border-dark-700 rounded text-white" required value="${data?.nombre || ''}"></div>
+                    <div><label class="block text-sm text-gray-400 mb-2">Permisos Asociados</label>
+                        <div class="grid grid-cols-2 gap-2 bg-dark-900 p-3 rounded border border-dark-700 max-h-48 overflow-y-auto">
+                            ${allPermisos.map(p => `<label class="flex items-center gap-2"><input type="checkbox" name="permisos" value="${p.id}" ${rolePermisoIds.includes(p.id) ? 'checked' : ''}> <span class="text-sm text-gray-300" title="${p.descripcion || ''}">${p.nombre}</span></label>`).join('')}
+                        </div>
+                    </div>
+                `;
+            } else if (currentTab === 'permisos' || currentTab === 'tenants') {
+                html = `<div><label class="block text-sm text-gray-400 mb-1">Nombre</label><input name="nombre" class="w-full bg-dark-900 border-dark-700 rounded text-white" required value="${data?.nombre || ''}"></div>`;
+            } else if (currentTab === 'sucursales') {
+                html = `
+                    <div><label class="block text-sm text-gray-400 mb-1">Nombre</label><input name="nombre" class="w-full bg-dark-900 border-dark-700 rounded text-white" required value="${data?.nombre || ''}"></div>
+                    <div><label class="block text-sm text-gray-400 mb-1">Tenant</label>
+                        <select name="id_tenant" class="w-full bg-dark-900 border-dark-700 rounded text-white" required>
+                            <option value="">Seleccionar...</option>
+                            ${allTenants.map(t => `<option value="${t.id}" ${data?.id_tenant === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div><label class="block text-sm text-gray-400 mb-1">Google Calendar ID</label><input name="google_calendar_id" class="w-full bg-dark-900 border-dark-700 rounded text-white" value="${data?.google_calendar_id || ''}"></div>
+                `;
+            }
+
+            modalFields.innerHTML = html;
+            modal.classList.add('active');
+        }
+
+        function closeModal() { modal.classList.remove('active'); }
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelModalBtn.addEventListener('click', closeModal);
+
+        // --- SUBMIT LOGIC ---
+        genericForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fd = new FormData(genericForm);
+            const id = fd.get('id');
+            const method = id ? 'PUT' : 'POST';
+            const url = `/api/admin/${currentTab}` + (id ? `/${id}` : '');
+
+            const payload = Object.fromEntries(fd.entries());
+            if (payload.is_super_admin) payload.is_super_admin = true; // Fix checkbox
+
+            try {
+                const res = await fetchWithAuth(url, { method, body: JSON.stringify(payload) });
+                if (!res.ok) throw new Error((await res.json()).error || 'Error');
+
+                const saved = await res.json();
+
+                // Extra logic for Users (Roles/Sucursales)
+                if (currentTab === 'users') {
+                    const targetId = id || saved.id;
+                    const roles = Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(c => c.value);
+                    const sucursales = Array.from(document.querySelectorAll('input[name="sucursales"]:checked')).map(c => c.value);
+
+                    await fetchWithAuth(`/api/admin/users/${targetId}/roles`, { method: 'POST', body: JSON.stringify({ role_ids: roles }) });
+                    await fetchWithAuth(`/api/admin/users/${targetId}/sucursales`, { method: 'POST', body: JSON.stringify({ sucursal_ids: sucursales }) });
+                } else if (currentTab === 'roles') {
+                    const targetId = id || saved.id;
+                    const permisos = Array.from(document.querySelectorAll('input[name="permisos"]:checked')).map(c => c.value);
+                    await fetchWithAuth(`/api/admin/roles/${targetId}/permisos`, { method: 'POST', body: JSON.stringify({ permiso_ids: permisos }) });
+                }
+
+                closeModal();
+                loadData();
+                loadCatalogs(); // Refresh catalogs in case we added something relevant
+            } catch (err) { alert(err.message); }
+        });
+
+        // --- DELETE LOGIC ---
+        window.deleteItem = async function (type, id) {
+            if (!confirm('¿Eliminar este elemento?')) return;
+            try {
+                const res = await fetchWithAuth(`/api/admin/${type}/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Error al eliminar');
+                loadData();
+            } catch (e) { alert(e.message); }
+        }
+
+        // Sidebar
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); setTimeout(() => overlay.classList.remove('opacity-0'), 10); });
+        document.getElementById('close-sidebar').addEventListener('click', closeSidebar);
+        overlay.addEventListener('click', closeSidebar);
+        function closeSidebar() { sidebar.classList.add('-translate-x-full'); overlay.classList.add('opacity-0'); setTimeout(() => overlay.classList.add('hidden'), 300); }
+
+    </script>
+</body>
+
+</html>
