@@ -579,6 +579,9 @@
                                 ${allTenants.map(t => `<option value="${t.id}" ${data?.id_tenant === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('')}
                             </select>
                         </div>
+                        <div><label class="block text-sm text-gray-400 mb-1">Mano de Obra (%)</label>
+                            <input name="porcentaje_mano_obra" type="number" step="0.01" min="0" max="1" class="w-full bg-dark-900 border-dark-700 rounded text-white" value="${data?.porcentaje_mano_obra !== undefined ? data.porcentaje_mano_obra : 0.5}">
+                        </div>
                     </div>
                     <div><label class="block text-sm text-gray-400 mb-2">Roles</label>
                         <div class="grid grid-cols-3 gap-2 bg-dark-900 p-3 rounded border border-dark-700 max-h-32 overflow-y-auto">
@@ -644,6 +647,7 @@
 
             const payload = Object.fromEntries(fd.entries());
             if (payload.is_super_admin) payload.is_super_admin = true; // Fix checkbox
+            if (payload.porcentaje_mano_obra) payload.porcentaje_mano_obra = parseFloat(payload.porcentaje_mano_obra);
 
             try {
                 const res = await fetchWithAuth(url, { method, body: JSON.stringify(payload) });
