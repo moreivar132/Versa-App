@@ -820,11 +820,12 @@
 
                             <div class="form-section-title">Información del Cliente</div>
                             <div class="form-section">
-                                <div class="form-group">
-                                    <label for="id_cliente">Cliente *</label>
-                                    <select name="id_cliente" id="id_cliente" class="form-select" required>
-                                        <option value="">Seleccionar Cliente...</option>
-                                    </select>
+                                <div class="form-group" style="position: relative;">
+                                    <label for="cliente_search">Cliente *</label>
+                                    <input type="text" id="cliente_search" class="form-input"
+                                        placeholder="Buscar cliente..." autocomplete="off" required>
+                                    <input type="hidden" id="id_cliente" name="id_cliente">
+                                    <div id="cliente-suggestions" class="suggestions-dropdown" style="top: 75px;"></div>
                                 </div>
                                 <div class="form-group">
                                     <label for="id_sucursal">Sucursal *</label>
@@ -984,16 +985,8 @@
 
         async function loadCatalogs() {
             try {
-                const [clients, sucursales] = await Promise.all([
-                    fetchWithAuth('/api/clientes').then(r => r.ok ? r.json() : []),
-                    fetchWithAuth('/api/admin/sucursales').then(r => r.ok ? r.json() : [])
-                ]);
-                allClients = clients;
+                const sucursales = await fetchWithAuth('/api/admin/sucursales').then(r => r.ok ? r.json() : []);
                 allSucursales = sucursales;
-
-                const clientSelect = document.getElementById('id_cliente');
-                clientSelect.innerHTML = '<option value="">Seleccionar Cliente...</option>' +
-                    clients.map(c => `<option value="${c.id}">${c.nombre} ${c.apellido || ''}</option>`).join('');
 
                 const sucursalSelect = document.getElementById('id_sucursal');
                 sucursalSelect.innerHTML = '<option value="">Seleccionar Sucursal...</option>' +
@@ -1134,7 +1127,11 @@
 
         function editVehicle(v) {
             document.getElementById('vehicle_id').value = v.id;
+
+            // Set client autocomplete
             document.getElementById('id_cliente').value = v.id_cliente || '';
+            document.getElementById('cliente_search').value = v.nombre_cliente || '';
+
             document.getElementById('id_sucursal').value = v.id_sucursal || '';
             document.getElementById('matricula').value = v.matricula || '';
             document.getElementById('marca').value = v.marca || '';
@@ -1151,6 +1148,62 @@
 
             document.getElementById('vehicle-form').scrollIntoView({ behavior: 'smooth' });
         }
+
+        // --- CLIENT AUTOCOMPLETE LOGIC ---
+        const clienteSearchInput = document.getElementById('cliente_search');
+        const clienteSuggestions = document.getElementById('cliente-suggestions');
+        const clienteHiddenInput = document.getElementById('id_cliente');
+
+        clienteSearchInput.addEventListener('input', debounce(async (e) => {
+            const term = e.target.value.trim();
+            if (term.length < 2) {
+                clienteSuggestions.classList.remove('active');
+                return;
+            }
+
+            try {
+                const res = await fetchWithAuth(`/api/clientes/search?q=${encodeURIComponent(term)}`);
+                if (!res.ok) return;
+                const clients = await res.json();
+
+                clienteSuggestions.innerHTML = '';
+                if (clients.length > 0) {
+                    clients.forEach(c => {
+                        const div = document.createElement('div');
+                        div.className = 'suggestion-item';
+                        div.innerHTML = `
+                            <span class="suggestion-name">${c.nombre} ${c.apellido || ''}</span>
+                            <span class="suggestion-info">${c.documento || ''}</span>
+                        `;
+                        div.addEventListener('click', () => {
+                            clienteHiddenInput.value = c.id;
+                            clienteSearchInput.value = `${c.nombre} ${c.apellido || ''}`;
+                            clienteSuggestions.classList.remove('active');
+                        });
+                        clienteSuggestions.appendChild(div);
+                    });
+                    clienteSuggestions.classList.add('active');
+                } else {
+                    clienteSuggestions.classList.remove('active');
+                }
+            } catch (e) {
+                console.error('Error searching clients', e);
+            }
+        }, 300));
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!clienteSearchInput.contains(e.target) && !clienteSuggestions.contains(e.target)) {
+                clienteSuggestions.classList.remove('active');
+            }
+        });
+
+        // Clear hidden ID if user clears text
+        clienteSearchInput.addEventListener('change', () => {
+            if (clienteSearchInput.value === '') {
+                clienteHiddenInput.value = '';
+            }
+        });
 
         // --- FORM SUBMIT ---
         const form = document.getElementById('vehicle-form');
@@ -1193,6 +1246,8 @@
             successModal.classList.remove('show');
             form.reset();
             document.getElementById('vehicle_id').value = '';
+            document.getElementById('id_cliente').value = '';
+            document.getElementById('cliente_search').value = '';
             document.querySelector('.form-main-title').textContent = 'Registro de Nuevo Vehículo';
             document.querySelector('#vehicle-form button[type="submit"]').innerHTML = '<i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Vehículo';
             resultCard.classList.remove('active');
