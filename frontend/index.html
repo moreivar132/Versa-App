@@ -7,7 +7,12 @@
   <title>Versa Finanzas - Dashboard</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <script>
+    // Evita que se renderice contenido sin validar la sesión
+    document.documentElement.classList.add('auth-check-pending');
+  </script>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script type="module" src="./main.js"></script>
   <script>
     tailwind.config = {
       darkMode: "class",
@@ -35,6 +40,9 @@
   <style>
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    html.auth-check-pending body {
+      visibility: hidden;
     }
   </style>
 </head>
@@ -105,9 +113,9 @@
             <p class="text-xs text-gray-400">Administrador</p>
           </div>
         </div>
-        <a class="text-gray-400 hover:text-primary transition-colors" href="login.html">
+        <button id="btnLogout" type="button" class="text-gray-400 hover:text-primary transition-colors">
           <span class="material-symbols-outlined">logout</span>
-        </a>
+        </button>
       </div>
     </aside>
 
