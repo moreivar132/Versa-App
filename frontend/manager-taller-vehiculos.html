@@ -7,9 +7,14 @@
     <title>Gestión de Vehículos - Goversa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
     <style>
         /* Estilos Generales (Idénticos a Proveedores) */
         :root {
@@ -477,13 +482,14 @@
                                 <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
                             </a>
 
-                            <!-- Taller Dropdown -->
+                            <!-- Taller Dropdown (Active) -->
                             <div class="nav-group">
                                 <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
                                     onclick="toggleSubmenu('taller-submenu')">
                                     <span class="icon-container"><i class="fas fa-wrench"></i></span>
                                     <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
-
+                                    <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                        id="taller-arrow"></i>
                                 </a>
                                 <div id="taller-submenu" class="flex flex-col pl-9 gap-1 mt-1">
                                     <a href="manager-taller-citas.html"
@@ -505,9 +511,14 @@
                                     onclick="toggleSubmenu('tienda-submenu')">
                                     <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
                                     <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
-
+                                    <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                        id="tienda-arrow"></i>
                                 </a>
                                 <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                    <a href="manager-taller-compras.html"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                    <a href="manager-taller-compras-historial.html"
+                                        class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
                                     <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
                                     <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
                                 </div>
@@ -525,7 +536,8 @@
                                     onclick="toggleSubmenu('cuentas-submenu')">
                                     <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
                                     <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
-
+                                    <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                        id="cuentas-arrow"></i>
                                 </a>
                                 <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
                                     <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
@@ -545,19 +557,20 @@
                                 <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
                             </a>
 
-                            <!-- Contactos Dropdown -->
+                            <!-- Contactos -->
                             <div class="nav-group">
                                 <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                                     onclick="toggleSubmenu('contactos-submenu')">
                                     <span class="icon-container"><i class="fas fa-address-book"></i></span>
                                     <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
-
+                                    <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                        id="contactos-arrow"></i>
                                 </a>
                                 <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
                                     <a href="manager-taller-clientes.html"
                                         class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
                                     <a href="manager-taller-proveedores.html"
-                                        class="text-gray-500 hover:text-white text-sm py-1 block">Proveedores</a>
+                                        class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
                                 </div>
                             </div>
                         </nav>
@@ -568,7 +581,8 @@
                         <div class="flex items-center gap-3 px-3 py-2 mb-2">
                             <div
                                 class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
-                                IM</div>
+                                IM
+                            </div>
                             <div class="flex flex-col sidebar-text overflow-hidden">
                                 <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
                                 <span class="text-gray-500 text-xs truncate">admin</span>

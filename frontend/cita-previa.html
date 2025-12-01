@@ -528,13 +528,18 @@
 
         #mapa {
             margin-top: 1rem;
-            border-radius: 0.75rem;
+            border-radius: 1.5rem;
+            /* More rounded for Apple style */
             overflow: hidden;
-            min-height: 250px;
+            min-height: 300px;
+            /* Slightly taller */
             background-color: var(--input-bg);
             display: flex;
             align-items: center;
             justify-content: center;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            /* Apple-like shadow */
+            border: 1px solid var(--border-color);
         }
 
         #mapa iframe {
@@ -1228,6 +1233,63 @@
             height: 1px;
             background-color: var(--border-color);
         }
+
+        /* --- Missing Utility Classes for Modals --- */
+        .inset-0 {
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .z-\[60\] {
+            z-index: 60;
+        }
+
+        .z-\[70\] {
+            z-index: 70;
+        }
+
+        .bg-black\/40 {
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .bg-black\/60 {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+
+        .backdrop-blur-sm {
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .max-w-md {
+            max-width: 28rem;
+        }
+
+        .shadow-2xl {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .relative {
+            position: relative;
+        }
+
+        .bg-brand-orange\/10 {
+            background-color: rgba(255, 95, 0, 0.1);
+        }
+
+        .border-brand-orange\/20 {
+            border-color: rgba(255, 95, 0, 0.2);
+        }
+
+        .scale-100 {
+            transform: scale(1);
+        }
+
+        .opacity-100 {
+            opacity: 1;
+        }
     </style>
 </head>
 
@@ -1280,6 +1342,11 @@
                             <a href="https://wa.me/34632943261?text=Hola%20VERSA%2C%20quiero%20alquilar%20una%20bicicleta"
                                 target="_blank">Bicicleta</a>
                         </div>
+                    </li>
+                    <li class="nav-item">
+                        <a href="login.html">
+                            <i data-feather="log-in"></i><span>Acceso</span>
+                        </a>
                     </li>
                 </ul>
             </nav>
@@ -1537,6 +1604,28 @@
         </div>
     </div>
 
+    <!-- Info Modal -->
+    <div id="info-modal" class="modal-container fixed inset-0 z-[70] flex items-center justify-center p-4">
+        <div class="modal-backdrop absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="modal-content relative bg-surface-bg rounded-2xl w-full max-w-md p-6 shadow-2xl border border-brand-orange/20 transform transition-all scale-100 opacity-100"
+            style="background-color: var(--surface-bg);">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-brand-orange/10 mb-4">
+                    <i data-feather="info" class="h-6 w-6" style="color: var(--brand-orange);"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-2">Recordatorio Importante</h3>
+                <p class="text-text-light text-sm mb-6" id="info-modal-message">
+                    <!-- Message injected here -->
+                </p>
+                <button type="button" id="info-modal-close"
+                    class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-orange sm:text-sm transition-colors"
+                    style="background-color: var(--brand-orange);">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
 
@@ -1553,7 +1642,7 @@
 
             const CONFIG = {
                 api: {
-                    baseUrl: 'https://versa-app-dev.up.railway.app',
+                    baseUrl: 'http://localhost:3000',
                     bookingWebhook: '/api/citas/crear',
                     configEndpoint: '/api/citas/config'
                 },
@@ -1636,6 +1725,9 @@
                 mainNav: document.getElementById('main-nav'),
                 menuOpenBtn: document.getElementById('menu-open-btn'),
                 menuCloseBtn: document.getElementById('menu-close-btn'),
+                infoModal: document.getElementById('info-modal'),
+                infoModalMessage: document.getElementById('info-modal-message'),
+                infoModalClose: document.getElementById('info-modal-close'),
             };
 
             const stepTitles = ['Elige Servicios', 'Elige Taller', 'Seleccionar Técnico', 'Fecha y Hora', 'Revisar y Confirmar', 'Tus Datos', 'Cita Agendada'];
@@ -1721,6 +1813,10 @@
                         const category = e.currentTarget.id.replace('tab-', '');
                         bookingState.vehicleCategory = category;
 
+                        if (category === 'bici') {
+                            showInfoModal("Recuerda llevar tu cargador de la batería, baterías y llaves. La puntualidad es importante, recuerda que hay otros clientes que también respetan su tiempo. ¡Saludos!");
+                        }
+
                         bookingState.services = [];
                         refreshServiceCards();
                         updateSummary();
@@ -1786,7 +1882,6 @@
                         <input type="radio" name="taller" value="${ws.id}" class="accent-brand-orange w-5 h-5 flex-shrink-0" ${isChecked}>
                         <div class="flex-grow">
                             <div class="font-bold text-white">${ws.name}</div>
-                            <div class="text-sm text-text-light">${ws.address}</div>
                         </div>
                     `;
                     label.querySelector('input').addEventListener('change', () => {
@@ -1804,7 +1899,26 @@
 
             function renderMapa(key) {
                 const ws = CONFIG.workshops.find(w => w.id === key);
-                UIElements.mapaDiv.innerHTML = ws ? `<iframe src="${ws.mapEmbed}" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>` : '';
+                if (!ws) {
+                    UIElements.mapaDiv.innerHTML = '';
+                    return;
+                }
+
+                // Check if mapEmbed is a full iframe tag
+                if (ws.mapEmbed && ws.mapEmbed.trim().startsWith('<iframe')) {
+                    UIElements.mapaDiv.innerHTML = ws.mapEmbed;
+                    // Ensure the iframe fills the container
+                    const iframe = UIElements.mapaDiv.querySelector('iframe');
+                    if (iframe) {
+                        iframe.style.width = '100%';
+                        iframe.style.height = '100%';
+                        iframe.style.border = '0';
+                        iframe.style.minHeight = '300px';
+                    }
+                } else {
+                    // It's just a URL
+                    UIElements.mapaDiv.innerHTML = `<iframe src="${ws.mapEmbed}" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+                }
             }
 
             function renderProfessionals(workshopKey) {
@@ -1820,14 +1934,18 @@
                     const card = document.createElement('button');
                     card.type = 'button';
                     card.dataset.proId = pro.id;
-                    card.className = `professional-card text-center p-4 rounded-xl border-2 transition-all ${isSelected ? 'selected' : 'border-transparent hover:border-border-color'}`;
+                    // Changed background to transparent/darker and added border for better visibility
+                    // Text is now white/primary
+                    card.className = `professional-card text-center p-4 rounded-xl border-2 transition-all w-full ${isSelected ? 'selected' : 'border-border-color hover:border-brand-orange'}`;
+
                     const initials = pro.name.split(' ').map(n => n[0]).join('').toUpperCase();
+
                     card.innerHTML = `
-                    <div class="relative w-20 h-20 mx-auto mb-2 flex items-center justify-center bg-input-bg rounded-full text-xl font-bold">
+                    <div class="relative w-20 h-20 mx-auto mb-3 flex items-center justify-center bg-surface-bg rounded-full text-2xl font-bold text-brand-orange border border-border-color">
                        ${initials}
                     </div>
-                    <h4 class="font-bold">${pro.name}</h4>
-                    ${pro.rating ? `<div class="flex items-center justify-center mt-1 text-sm text-text-light">⭐ <span>${pro.rating}</span></div>` : ''}
+                    <h4 class="font-bold text-white text-lg mb-1">${pro.name}</h4>
+                    ${pro.rating ? `<div class="flex items-center justify-center text-base text-white font-bold mt-1"><span class="mr-1">⭐</span> <span>${pro.rating}</span></div>` : ''}
                 `;
                     UIElements.professionalList.appendChild(card);
                 });
@@ -2259,12 +2377,23 @@
                     if (data.ok) {
                         // Process Workshops
                         CONFIG.workshops = data.sucursales.map(s => {
-                            const staticData = STATIC_WORKSHOP_DATA[s.id] || { address: 'Dirección no disponible', mapEmbed: '' };
+                            const staticData = STATIC_WORKSHOP_DATA[s.id] || { mapEmbed: '' };
+                            let mapEmbed = staticData.mapEmbed;
+
+                            // Prioritize DB iframe if available
+                            if (s.direccion_iframe) {
+                                mapEmbed = s.direccion_iframe;
+                            }
+                            // Fallback to constructing from address if no iframe
+                            else if (s.direccion) {
+                                mapEmbed = `https://maps.google.com/maps?q=${encodeURIComponent(s.direccion)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+                            }
+
                             return {
                                 id: s.id,
                                 name: s.nombre,
-                                address: staticData.address,
-                                mapEmbed: staticData.mapEmbed,
+                                address: s.direccion || staticData.address || 'Dirección no disponible',
+                                mapEmbed: mapEmbed,
                                 technicianIds: [0] // Start with 'Cualquier técnico'
                             };
                         });
@@ -2298,6 +2427,19 @@
                         UIElements.workshopList.innerHTML = '<p class="text-red-500 p-4">Error al conectar con el servidor. Por favor, inténtelo más tarde.</p>';
                     }
                 }
+            }
+
+            function showInfoModal(msg) {
+                if (UIElements.infoModal && UIElements.infoModalMessage) {
+                    UIElements.infoModalMessage.textContent = msg;
+                    UIElements.infoModal.classList.add('visible');
+                }
+            }
+
+            if (UIElements.infoModalClose) {
+                UIElements.infoModalClose.addEventListener('click', () => {
+                    UIElements.infoModal.classList.remove('visible');
+                });
             }
 
             async function init() {
