@@ -7,32 +7,16 @@
     <title>Panel de Citas - Goversa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Material Symbols (Iconos) - Mantenido para compatibilidad con el contenido de citas -->
+    <!-- Material Symbols (Iconos) -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
+    <link rel="stylesheet" href="manager.css">
     <style>
-        /* Estilos Generales preservados */
-        :root {
-            --brand-orange: #FF652B;
-            --brand-orange-strong: #FF7A45;
-            --surface-elevated: rgba(18, 18, 20, 0.96);
-            --surface-border: rgba(255, 255, 255, 0.08);
-            --surface-highlight: rgba(255, 255, 255, 0.04);
-            --dark-bg: #000000;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--dark-bg);
-            font-family: 'Montserrat', Arial, sans-serif;
-            color: #FFFFFF;
-        }
-
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             font-size: 24px;
@@ -40,25 +24,6 @@
 
         .material-symbols-outlined.fill {
             font-variation-settings: 'FILL' 1;
-        }
-
-        /* Scrollbar personalizado oscuro */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #ff5f00;
         }
 
         /* Estilos específicos para las tarjetas de citas */
@@ -87,8 +52,8 @@
                                 style="height: 24px; width: auto;">
                         </div>
                         <div class="flex flex-col sidebar-text">
-                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">Goversa
-                            </h1>
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
                             <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
                                 Gestión</p>
                         </div>
@@ -105,24 +70,23 @@
                             <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
                         </a>
 
-                        <!-- Taller Dropdown -->
+                        <!-- Taller Dropdown (Active) -->
                         <div class="nav-group">
                             <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
                                 onclick="toggleSubmenu('taller-submenu')">
                                 <span class="icon-container"><i class="fas fa-wrench"></i></span>
                                 <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
-                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
-                                    id="taller-arrow"></i>
                             </a>
                             <div id="taller-submenu" class="flex flex-col pl-9 gap-1 mt-1">
                                 <a href="manager-taller-citas.html"
                                     class="text-white font-semibold text-sm py-1 block">Citas</a>
                                 <a href="manager-taller-ordenes.html"
                                     class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
-                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                    órdenes</a>
                                 <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
                                 <a href="manager-taller-vehiculos.html"
-                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
                             </div>
                         </div>
 
@@ -132,10 +96,12 @@
                                 onclick="toggleSubmenu('tienda-submenu')">
                                 <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
                                 <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
-                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
-                                    id="tienda-arrow"></i>
                             </a>
                             <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
                                 <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
                                 <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
                             </div>
@@ -153,8 +119,6 @@
                                 onclick="toggleSubmenu('cuentas-submenu')">
                                 <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
                                 <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
-                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
-                                    id="cuentas-arrow"></i>
                             </a>
                             <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
                                 <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
@@ -180,8 +144,6 @@
                                 onclick="toggleSubmenu('contactos-submenu')">
                                 <span class="icon-container"><i class="fas fa-address-book"></i></span>
                                 <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
-                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
-                                    id="contactos-arrow"></i>
                             </a>
                             <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
                                 <a href="manager-taller-clientes.html"
@@ -194,7 +156,7 @@
                 </div>
 
                 <!-- Bottom Actions -->
-                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
                     <div class="flex items-center gap-3 px-3 py-2 mb-2">
                         <div
                             class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
@@ -215,7 +177,7 @@
         </aside>
 
         <!-- Main Content Wrapper -->
-        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
             <!-- Top Mobile Header -->
             <header
                 class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
@@ -227,8 +189,8 @@
                 </button>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-6">
-                <div class="max-w-7xl mx-auto">
+            <main class="flex-1 overflow-y-auto p-6 relative z-10">
+                <div class="manager-panel">
 
                     <!-- Header -->
                     <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -242,78 +204,83 @@
                             <label class="flex-1 sm:w-64">
                                 <div class="relative flex w-full items-center">
                                     <span class="material-symbols-outlined absolute left-3 text-[#a0a0a0]">search</span>
-                                    <input
+                                    <input id="search-input"
                                         class="h-10 w-full rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] pl-10 text-white placeholder:text-[#a0a0a0] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-all"
                                         placeholder="Buscar matrícula, cliente..." />
                                 </div>
                             </label>
 
                             <!-- Notificaciones -->
-                            <button
+                            <button id="notification-btn"
                                 class="relative rounded-lg p-2 text-[#a0a0a0] hover:bg-[#1a1a1a] hover:text-white transition-colors">
                                 <span class="material-symbols-outlined">notifications</span>
-                                <span
-                                    class="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--brand-orange)]"></span>
+                                <span id="notification-badge"
+                                    class="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--brand-orange)] hidden"></span>
                             </button>
 
                             <!-- Botón Acción -->
-                            <a href="cita-previa.html"
+                            <button onclick="openModal()"
                                 class="flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--brand-orange)] px-4 text-sm font-bold text-white shadow-lg shadow-orange-900/20 hover:bg-orange-600 transition-all">
                                 <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
-                                <span class="hidden sm:inline">Nueva Cita Manual</span>
-                            </a>
+                                <span class="hidden sm:inline">Nueva Cita</span>
+                            </button>
                         </div>
                     </header>
 
                     <!-- Stats Grid -->
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                        <!-- Card 1 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- Citas Hoy -->
                         <div
-                            class="flex flex-col gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[var(--brand-orange)]/30 transition-colors">
-                            <div class="flex items-center justify-between">
-                                <p class="text-sm font-medium text-[#a0a0a0]">Citas para Hoy</p>
-                                <span
-                                    class="material-symbols-outlined text-[var(--brand-orange)] bg-[var(--brand-orange)]/10 p-1 rounded-md">calendar_today</span>
+                            class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[#3a3a3a] transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[#a0a0a0] text-sm font-medium">Citas para Hoy</span>
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">calendar_today</span>
                             </div>
-                            <p class="text-3xl font-bold text-white" id="stats-citas-hoy">0</p>
-                            <p class="text-xs text-green-500 flex items-center gap-1"><span
-                                    class="material-symbols-outlined text-xs">trending_up</span> +2 vs ayer</p>
+                            <div class="flex items-end gap-3">
+                                <h2 id="stats-citas-hoy" class="text-3xl font-bold text-white">0</h2>
+                                <span class="text-green-500 text-xs font-medium mb-1"><span
+                                        class="material-symbols-outlined text-[10px] align-middle">trending_up</span> +2
+                                    vs ayer</span>
+                            </div>
                         </div>
 
-                        <!-- Card 2 -->
+                        <!-- En Taller -->
                         <div
-                            class="flex flex-col gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[var(--brand-orange)]/30 transition-colors">
-                            <div class="flex items-center justify-between">
-                                <p class="text-sm font-medium text-[#a0a0a0]">En Taller Ahora</p>
-                                <span
-                                    class="material-symbols-outlined text-blue-500 bg-blue-500/10 p-1 rounded-md">build_circle</span>
+                            class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[#3a3a3a] transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[#a0a0a0] text-sm font-medium">En Taller Ahora</span>
+                                <span class="material-symbols-outlined text-blue-500">build</span>
                             </div>
-                            <p class="text-3xl font-bold text-white">4</p>
-                            <p class="text-xs text-[#a0a0a0]">2 Motos, 1 Coche, 1 Bici</p>
+                            <div class="flex items-end gap-3">
+                                <h2 id="stats-en-taller" class="text-3xl font-bold text-white">0</h2>
+                            </div>
+                            <p class="text-xs text-[#a0a0a0] mt-2">Vehículos en proceso</p>
                         </div>
 
-                        <!-- Card 3 -->
+                        <!-- Facturación -->
                         <div
-                            class="flex flex-col gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[var(--brand-orange)]/30 transition-colors">
-                            <div class="flex items-center justify-between">
-                                <p class="text-sm font-medium text-[#a0a0a0]">Facturación (Est.)</p>
-                                <span
-                                    class="material-symbols-outlined text-green-500 bg-green-500/10 p-1 rounded-md">payments</span>
+                            class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[#3a3a3a] transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[#a0a0a0] text-sm font-medium">Facturación (Est.)</span>
+                                <span class="material-symbols-outlined text-green-500">payments</span>
                             </div>
-                            <p class="text-3xl font-bold text-white">450€</p>
-                            <p class="text-xs text-[#a0a0a0]">Pendiente de cobro: 120€</p>
+                            <div class="flex items-end gap-3">
+                                <h2 id="stats-facturacion" class="text-3xl font-bold text-white">0€</h2>
+                            </div>
+                            <p class="text-xs text-[#a0a0a0] mt-2">Pendiente de cobro: --</p>
                         </div>
 
-                        <!-- Card 4 -->
+                        <!-- Solicitudes Web -->
                         <div
-                            class="flex flex-col gap-2 rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[var(--brand-orange)]/30 transition-colors">
-                            <div class="flex items-center justify-between">
-                                <p class="text-sm font-medium text-[#a0a0a0]">Solicitudes Web</p>
-                                <span
-                                    class="material-symbols-outlined text-purple-500 bg-purple-500/10 p-1 rounded-md">public</span>
+                            class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[#3a3a3a] transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[#a0a0a0] text-sm font-medium">Solicitudes Web</span>
+                                <span class="material-symbols-outlined text-purple-500">public</span>
                             </div>
-                            <p class="text-3xl font-bold text-white">3</p>
-                            <p class="text-xs text-[var(--brand-orange)] font-bold">Requieren confirmación</p>
+                            <div class="flex items-end gap-3">
+                                <h2 id="stats-solicitudes" class="text-3xl font-bold text-white">0</h2>
+                            </div>
+                            <p class="text-xs text-[var(--brand-orange)] mt-2 font-medium">Requieren confirmación</p>
                         </div>
                     </div>
 
@@ -322,11 +289,38 @@
 
                         <!-- Appointments List (Tabla Grande) -->
                         <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] lg:col-span-2 flex flex-col">
-                            <div class="border-b border-[#2a2a2a] p-4 flex justify-between items-center">
-                                <h3 class="text-lg font-bold text-white">Próximas Citas (Tabla: public.citataller)</h3>
-                                <button
-                                    class="text-xs text-[var(--brand-orange)] font-semibold hover:text-white transition-colors"
-                                    onclick="loadCitas()">Actualizar</button>
+                            <div
+                                class="border-b border-[#2a2a2a] p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div class="flex items-center gap-4">
+                                    <h3 class="text-lg font-bold text-white">Próximas Citas</h3>
+                                    <button
+                                        class="text-xs text-[var(--brand-orange)] font-semibold hover:text-white transition-colors"
+                                        onclick="loadCitas()">Actualizar</button>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <!-- Search -->
+                                    <div
+                                        class="flex items-center gap-2 bg-[#2a2a2a] rounded-lg p-1 border border-[#3a3a3a]">
+                                        <span
+                                            class="material-symbols-outlined text-[#a0a0a0] text-sm ml-2">search</span>
+                                        <input type="text" id="search-input" placeholder="Buscar..."
+                                            class="bg-transparent border-none text-sm text-white focus:outline-none w-32 md:w-48 placeholder-[#666]">
+                                    </div>
+                                    <!-- Status Filter -->
+                                    <div
+                                        class="flex items-center gap-2 bg-[#2a2a2a] rounded-lg p-1 border border-[#3a3a3a]">
+                                        <span
+                                            class="material-symbols-outlined text-[#a0a0a0] text-sm ml-2">filter_list</span>
+                                        <select id="status-filter"
+                                            class="bg-transparent border-none text-sm text-white focus:outline-none w-28 cursor-pointer outline-none">
+                                            <option value="" class="bg-[#1a1a1a]">Todos</option>
+                                            <option value="pendiente" class="bg-[#1a1a1a]">Pendiente</option>
+                                            <option value="en proceso" class="bg-[#1a1a1a]">En Proceso</option>
+                                            <option value="completado" class="bg-[#1a1a1a]">Completado</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="overflow-x-auto">
@@ -364,40 +358,41 @@
                         <!-- Right Column: Chart & Alerts -->
                         <div class="flex flex-col gap-6">
 
-                            <!-- Performance Chart (Simulado con CSS) -->
+                            <!-- Performance Chart (Dinámico) -->
                             <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 flex flex-col h-full">
-                                <h3 class="mb-6 text-lg font-bold text-white">Ocupación Semanal</h3>
-                                <div class="flex h-full items-end justify-between gap-2 mt-auto min-h-[150px]">
-                                    <!-- Barras -->
-                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
-                                        <div
-                                            class="h-[40%] w-full max-w-[20px] rounded-t bg-[#2a2a2a] group-hover:bg-[var(--brand-orange)] transition-all">
-                                        </div>
-                                        <span class="text-[10px] text-[#a0a0a0]">L</span>
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-bold text-white">Ocupación Semanal</h3>
+                                    <div class="flex items-center gap-2 bg-[#2a2a2a] rounded-lg p-1">
+                                        <button onclick="changeWeek(-1)"
+                                            class="p-1 hover:text-white text-[#a0a0a0] transition-colors"><span
+                                                class="material-symbols-outlined text-sm">chevron_left</span></button>
+                                        <span id="current-week-label" class="text-xs font-medium text-white px-2">Semana
+                                            Actual</span>
+                                        <button onclick="changeWeek(1)"
+                                            class="p-1 hover:text-white text-[#a0a0a0] transition-colors"><span
+                                                class="material-symbols-outlined text-sm">chevron_right</span></button>
                                     </div>
-                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
-                                        <div
-                                            class="h-[60%] w-full max-w-[20px] rounded-t bg-[#2a2a2a] group-hover:bg-[var(--brand-orange)] transition-all">
-                                        </div>
-                                        <span class="text-[10px] text-[#a0a0a0]">M</span>
+                                </div>
+
+                                <div id="occupancy-chart"
+                                    class="flex h-full items-end justify-between gap-2 mt-auto min-h-[150px] px-2">
+                                    <!-- Barras dinámicas se insertarán aquí -->
+                                    <div class="w-full text-center text-[#a0a0a0] text-xs">Cargando...</div>
+                                </div>
+
+                                <!-- Legend -->
+                                <div class="flex justify-center gap-4 mt-4 pt-4 border-t border-[#2a2a2a]">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                        <span class="text-xs text-[#a0a0a0]">Coche</span>
                                     </div>
-                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
-                                        <div
-                                            class="h-[80%] w-full max-w-[20px] rounded-t bg-[var(--brand-orange)] shadow-[0_0_10px_rgba(255,95,0,0.5)]">
-                                        </div>
-                                        <span class="text-[10px] text-white font-bold">X</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-[var(--brand-orange)]"></span>
+                                        <span class="text-xs text-[#a0a0a0]">Moto</span>
                                     </div>
-                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
-                                        <div
-                                            class="h-[70%] w-full max-w-[20px] rounded-t bg-[#2a2a2a] group-hover:bg-[var(--brand-orange)] transition-all">
-                                        </div>
-                                        <span class="text-[10px] text-[#a0a0a0]">J</span>
-                                    </div>
-                                    <div class="flex w-full flex-col-reverse items-center gap-2 group cursor-pointer">
-                                        <div
-                                            class="h-[90%] w-full max-w-[20px] rounded-t bg-[#2a2a2a] group-hover:bg-[var(--brand-orange)] transition-all">
-                                        </div>
-                                        <span class="text-[10px] text-[#a0a0a0]">V</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                        <span class="text-xs text-[#a0a0a0]">Bici</span>
                                     </div>
                                 </div>
                             </div>
@@ -438,6 +433,107 @@
     <footer>
         <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
     </footer>
+
+    <!-- Modal Cita -->
+    <div id="cita-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <h3 class="mb-4 text-xl font-bold text-white" id="modal-title">Nueva Cita</h3>
+            <form id="cita-form" class="space-y-4">
+                <input type="hidden" id="cita-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Cliente</label>
+                    <input type="text" id="cita-cliente"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Nombre del cliente" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Email</label>
+                    <input type="email" id="cita-email"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Email (para notificaciones)" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Sucursal</label>
+                    <select id="cita-sucursal"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Mecánico</label>
+                    <select id="cita-mecanico"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Cualquiera</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Fecha</label>
+                        <input type="date" id="cita-fecha"
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Hora</label>
+                        <input type="time" id="cita-hora"
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                            required>
+                    </div>
+                </div>
+
+                <!-- Availability Visualization -->
+                <div id="availability-container" class="hidden rounded-lg border border-[#2a2a2a] bg-[#111318] p-3">
+                    <h4 class="text-xs font-bold text-[#a0a0a0] mb-2">Disponibilidad del día</h4>
+                    <div id="availability-slots" class="flex flex-wrap gap-2 text-xs text-white">
+                        <!-- Slots will be injected here -->
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Vehículo</label>
+                    <select id="cita-vehiculo-tipo"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="coche">Coche</option>
+                        <option value="moto">Moto</option>
+                        <option value="bicicleta">Bicicleta</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Motivo / Servicio</label>
+                    <input type="text" id="cita-motivo"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Ej: Revisión General">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="rounded-lg px-4 py-2 text-sm font-medium text-[#a0a0a0] hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="rounded-lg bg-[var(--brand-orange)] px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 transition-colors">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cliente Detalles -->
+    <div id="client-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-white">Detalles del Cliente</h3>
+                <button onclick="closeClientModal()" class="text-[#a0a0a0] hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div id="client-details-content" class="space-y-4">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
 
     <script>
         // --- SIDEBAR LOGIC ---
@@ -488,13 +584,69 @@
             sidebar.classList.toggle('h-full');
         });
 
-        // Expand Taller submenu by default
+        // --- CITAS & CALENDAR LOGIC ---
+
+        let currentWeekStart = new Date();
+        // Adjust to Monday of current week
+        const day = currentWeekStart.getDay();
+        const diff = currentWeekStart.getDate() - day + (day == 0 ? -6 : 1);
+        currentWeekStart.setDate(diff);
+        currentWeekStart.setHours(0, 0, 0, 0);
+
         document.addEventListener("DOMContentLoaded", () => {
             toggleSubmenu('taller-submenu');
-            loadCitas(); // Load citas on startup
+            updateWeekLabel();
+            toggleSubmenu('taller-submenu');
+            updateWeekLabel();
+            loadCitas();
+            loadConfig(); // Fetch branches and mechanics
+
+            // Listeners for availability
+            document.getElementById('cita-fecha').addEventListener('change', checkAvailability);
+            document.getElementById('cita-sucursal').addEventListener('change', checkAvailability);
+            document.getElementById('cita-mecanico').addEventListener('change', checkAvailability);
+
+            // Search Listener
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('status-filter').addEventListener('change', applyFilters);
         });
 
-        // --- CITAS LOGIC ---
+        function applyFilters() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const statusTerm = document.getElementById('status-filter').value.toLowerCase();
+
+            const filtered = currentCitas.filter(c => {
+                const matchesSearch = (c.cliente_nombre || '').toLowerCase().includes(searchTerm) ||
+                    (c.vehiculo_matricula || '').toLowerCase().includes(searchTerm) ||
+                    (c.vehiculo_modelo || '').toLowerCase().includes(searchTerm) ||
+                    (c.vehiculo_marca || '').toLowerCase().includes(searchTerm);
+
+                const matchesStatus = statusTerm === '' || (c.estado || '').toLowerCase() === statusTerm;
+
+                return matchesSearch && matchesStatus;
+            });
+            renderTable(filtered);
+        }
+
+        function changeWeek(offset) {
+            currentWeekStart.setDate(currentWeekStart.getDate() + (offset * 7));
+            updateWeekLabel();
+            loadCitas();
+        }
+
+        function updateWeekLabel() {
+            const weekNum = getWeekNumber(currentWeekStart);
+            const year = currentWeekStart.getFullYear();
+            document.getElementById('current-week-label').textContent = `Semana ${weekNum}`;
+        }
+
+        function getWeekNumber(d) {
+            d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+            return weekNo;
+        }
 
         // Función para formatear fecha
         function formatTime(isoString) {
@@ -532,65 +684,465 @@
         // Cargar citas
         async function loadCitas() {
             const tbody = document.getElementById('citas-tbody');
+            const chartContainer = document.getElementById('occupancy-chart');
+
             tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#a0a0a0]">Cargando...</td></tr>';
 
+            // Calculate date range for API
+            const endOfWeek = new Date(currentWeekStart);
+            endOfWeek.setDate(currentWeekStart.getDate() + 6);
+            endOfWeek.setHours(23, 59, 59, 999);
+
+            const startStr = currentWeekStart.toISOString();
+            const endStr = endOfWeek.toISOString();
+
             try {
-                const response = await fetch('/api/citas');
+                const response = await fetch(`/api/citas?start_date=${startStr}&end_date=${endStr}`);
                 const data = await response.json();
 
                 if (data.ok && data.citas) {
-                    tbody.innerHTML = '';
+                    currentCitas = data.citas;
 
-                    // Actualizar contador
-                    const today = new Date().toISOString().split('T')[0];
-                    const citasHoy = data.citas.filter(c => c.fecha_hora && c.fecha_hora.startsWith(today)).length;
-                    document.getElementById('stats-citas-hoy').textContent = citasHoy;
-
-                    if (data.citas.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#a0a0a0]">No hay citas registradas.</td></tr>';
-                        return;
+                    // Update Notifications (Pending appointments)
+                    const pendingCount = data.citas.filter(c => c.estado === 'pendiente').length;
+                    const badge = document.getElementById('notification-badge');
+                    if (pendingCount > 0) {
+                        badge.classList.remove('hidden');
+                        badge.title = `${pendingCount} citas pendientes`;
+                    } else {
+                        badge.classList.add('hidden');
                     }
 
-                    data.citas.forEach(cita => {
-                        const tr = document.createElement('tr');
-                        tr.className = 'hover:bg-white/5 transition-colors group';
+                    // Update Stats
+                    if (data.stats) {
+                        document.getElementById('stats-citas-hoy').textContent = data.stats.citas_hoy;
+                        document.getElementById('stats-en-taller').textContent = data.stats.en_taller;
+                        document.getElementById('stats-facturacion').textContent = data.stats.facturacion_est + '€';
+                        document.getElementById('stats-solicitudes').textContent = data.stats.solicitudes_web;
+                    }
 
-                        const vehiculoIcon = cita.vehiculo_modelo && cita.vehiculo_modelo.toLowerCase().includes('moto') ? 'two_wheeler' : 'directions_car';
+                    // Apply filters if exist
+                    applyFilters();
 
-                        tr.innerHTML = `
-                            <td class="whitespace-nowrap px-6 py-4">
-                                <div class="text-sm font-bold text-white">${formatTime(cita.fecha_hora)}</div>
-                                <div class="text-xs text-[#a0a0a0]">${formatDate(cita.fecha_hora)}</div>
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4">
-                                <div class="text-sm font-medium text-white">${cita.cliente_nombre || 'Cliente Desconocido'}</div>
-                                <div class="text-xs text-[#a0a0a0] flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[14px]">${vehiculoIcon}</span> ${cita.vehiculo_marca || ''} ${cita.vehiculo_modelo || ''}
-                                </div>
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4">
-                                <div class="text-sm text-gray-300">${cita.motivo || 'Servicio General'}</div>
-                                <div class="text-xs text-[var(--brand-orange)]">${cita.sucursal_nombre || 'Sucursal Principal'}</div>
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4">
-                                ${getStatusBadge(cita.estado)}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-right">
-                                <button class="text-[#a0a0a0] hover:text-[var(--brand-orange)] transition-colors">
-                                    <span class="material-symbols-outlined">more_vert</span>
-                                </button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                    renderChart(data.citas);
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar citas.</td></tr>';
+                    console.error('Error data:', data);
+                    tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error al cargar citas: ${data.error || 'Desconocido'}</td></tr>`;
                 }
             } catch (error) {
-                console.error('Error:', error);
-                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error de conexión.</td></tr>';
+                console.error('Error fetch:', error);
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error de conexión: ${error.message}</td></tr>`;
             }
         }
+
+        function renderTable(citas) {
+            const tbody = document.getElementById('citas-tbody');
+            tbody.innerHTML = '';
+
+            // Update stats for "Today" - Handled by backend stats now, but we keep this for table logic if needed
+            // const todayStr = new Date().toISOString().split('T')[0];
+            // const citasHoy = citas.filter(c => c.fecha_hora && c.fecha_hora.startsWith(todayStr)).length;
+            // document.getElementById('stats-citas-hoy').textContent = citasHoy;
+
+            if (citas.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-[#a0a0a0] flex flex-col items-center gap-2">
+                            <span class="material-symbols-outlined text-4xl opacity-20">calendar_today</span>
+                            <p>No hay citas para esta semana.</p>
+                            <button onclick="changeWeek(1)" class="text-[var(--brand-orange)] hover:underline text-sm">Ver semana siguiente</button>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            citas.forEach(cita => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-white/5 transition-colors group';
+
+                // Detect type from model or marca
+                const typeStr = ((cita.vehiculo_modelo || '') + ' ' + (cita.vehiculo_marca || '')).toLowerCase();
+                let vehiculoIcon = 'directions_car';
+                if (typeStr.includes('moto')) vehiculoIcon = 'two_wheeler';
+                else if (typeStr.includes('bici')) vehiculoIcon = 'pedal_bike';
+
+                tr.innerHTML = `
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <div class="text-sm font-bold text-white">${formatTime(cita.fecha_hora)}</div>
+                        <div class="text-xs text-[#a0a0a0]">${formatDate(cita.fecha_hora)}</div>
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <button onclick="openClientModal('${cita.id}')" class="text-left hover:bg-[#2a2a2a] p-1 -m-1 rounded transition-colors w-full">
+                            <div class="text-sm font-medium text-white hover:text-[var(--brand-orange)] transition-colors underline decoration-dotted underline-offset-4">${cita.cliente_nombre || 'Cliente Desconocido'}</div>
+                            <div class="text-xs text-[#a0a0a0] flex items-center gap-1 mt-1">
+                                <span class="material-symbols-outlined text-[14px]">${vehiculoIcon}</span> ${cita.vehiculo_marca || ''} ${cita.vehiculo_modelo || ''}
+                            </div>
+                        </button>
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <div class="text-sm text-gray-300">${cita.motivo || 'Servicio General'}</div>
+                        <div class="text-xs text-[var(--brand-orange)]">${cita.sucursal_nombre || 'Sucursal Principal'}</div>
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4">
+                        <button onclick="toggleStatus('${cita.id}', '${cita.estado}')" class="hover:opacity-80 transition-opacity">
+                            ${getStatusBadge(cita.estado)}
+                        </button>
+                    </td>
+                    <td class="whitespace-nowrap px-6 py-4 text-right relative">
+                         <div class="flex justify-end gap-2">
+                            <button onclick="editCita('${cita.id}')" class="text-[#a0a0a0] hover:text-white transition-colors" title="Editar">
+                                <span class="material-symbols-outlined text-lg">edit</span>
+                            </button>
+                            <button onclick="deleteCita('${cita.id}')" class="text-[#a0a0a0] hover:text-red-500 transition-colors" title="Eliminar">
+                                <span class="material-symbols-outlined text-lg">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderChart(citas) {
+            const chartContainer = document.getElementById('occupancy-chart');
+            chartContainer.innerHTML = '';
+
+            const days = ['L', 'M', 'X', 'J', 'V', 'S', 'D']; // Added Sunday
+            // Initialize counts for Mon-Sun (0-6)
+            const counts = Array(7).fill(0).map(() => ({ total: 0, types: { coche: 0, moto: 0, bici: 0 } }));
+
+            if (!citas || citas.length === 0) {
+                // Render empty chart
+                days.forEach(dayLabel => {
+                    const barHtml = `
+                        <div class="flex w-full h-full flex-col justify-end items-center gap-2 group cursor-pointer relative">
+                            <div class="w-full max-w-[20px] h-[1px] bg-[#2a2a2a]"></div>
+                            <span class="text-[10px] text-[#a0a0a0]">${dayLabel}</span>
+                        </div>
+                    `;
+                    chartContainer.insertAdjacentHTML('beforeend', barHtml);
+                });
+                return;
+            }
+
+            citas.forEach(cita => {
+                const date = new Date(cita.fecha_hora);
+                let dayIndex = date.getDay() - 1; // Mon=0, Sun=6
+                if (dayIndex === -1) dayIndex = 6; // Sunday
+
+                if (dayIndex >= 0 && dayIndex < 7) {
+                    counts[dayIndex].total++;
+                    // Check both model and brand (marca)
+                    const typeStr = ((cita.vehiculo_modelo || '') + ' ' + (cita.vehiculo_marca || '')).toLowerCase();
+
+                    if (typeStr.includes('moto')) counts[dayIndex].types.moto++;
+                    else if (typeStr.includes('bici')) counts[dayIndex].types.bici++;
+                    else counts[dayIndex].types.coche++;
+                }
+            });
+
+            const maxCount = Math.max(...counts.map(c => c.total), 5); // Min scale of 5
+
+            days.forEach((dayLabel, index) => {
+                const count = counts[index];
+                const totalPercent = (count.total / maxCount) * 100;
+
+                // Calculate percentages for each segment relative to the BAR height
+                const pCoche = count.total > 0 ? (count.types.coche / count.total) * 100 : 0;
+                const pMoto = count.total > 0 ? (count.types.moto / count.total) * 100 : 0;
+                const pBici = count.total > 0 ? (count.types.bici / count.total) * 100 : 0;
+
+                const barHtml = `
+                    <div class="flex w-full h-full flex-col justify-end items-center gap-2 group cursor-pointer relative" title="${count.total} Citas">
+                        <div class="w-full max-w-[20px] relative" style="height: ${Math.max(totalPercent, 1)}%;">
+                             ${count.total > 0 ? `<span class="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] text-white font-bold opacity-0 group-hover:opacity-100 transition-opacity">${count.total}</span>` : ''}
+                             <div class="w-full h-full flex flex-col-reverse rounded-t overflow-hidden bg-[#2a2a2a]">
+                                 ${pCoche > 0 ? `<div style="height: ${pCoche}%;" class="w-full bg-blue-500"></div>` : ''}
+                                 ${pMoto > 0 ? `<div style="height: ${pMoto}%;" class="w-full bg-[var(--brand-orange)]"></div>` : ''}
+                                 ${pBici > 0 ? `<div style="height: ${pBici}%;" class="w-full bg-green-500"></div>` : ''}
+                             </div>
+                        </div>
+                        <span class="text-[10px] text-[#a0a0a0]">${dayLabel}</span>
+                    </div>
+                `;
+                chartContainer.insertAdjacentHTML('beforeend', barHtml);
+            });
+        }
+
+        // --- CRUD OPERATIONS ---
+
+        const modal = document.getElementById('cita-modal');
+        const form = document.getElementById('cita-form');
+
+        let globalConfig = { sucursales: [], tecnicos: [] };
+
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/citas/config');
+                const data = await res.json();
+                if (data.ok) {
+                    globalConfig = data;
+                    const sucursalSelect = document.getElementById('cita-sucursal');
+                    const mecanicoSelect = document.getElementById('cita-mecanico');
+
+                    sucursalSelect.innerHTML = data.sucursales.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+                    mecanicoSelect.innerHTML = '<option value="">Cualquiera</option>' + data.tecnicos.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+                }
+            } catch (e) {
+                console.error('Error loading config', e);
+            }
+        }
+
+        async function checkAvailability() {
+            const date = document.getElementById('cita-fecha').value;
+            const sucursal = document.getElementById('cita-sucursal').value;
+            const mecanico = document.getElementById('cita-mecanico').value;
+            const container = document.getElementById('availability-container');
+            const slotsContainer = document.getElementById('availability-slots');
+
+            if (!date) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.classList.remove('hidden');
+            slotsContainer.innerHTML = '<span class="text-[#a0a0a0]">Cargando...</span>';
+
+            // Fetch appointments for this day
+            const start = new Date(date);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(date);
+            end.setHours(23, 59, 59, 999);
+
+            try {
+                const res = await fetch(`/api/citas?start_date=${start.toISOString()}&end_date=${end.toISOString()}`);
+                const data = await res.json();
+
+                if (data.ok && data.citas) {
+                    const citasDia = data.citas.filter(c => {
+                        // Filter by sucursal if selected
+                        if (sucursal && c.id_sucursal != sucursal) return false;
+                        // Filter by mecanico if selected (and if appointment has mechanic assigned)
+                        if (mecanico && c.id_mecanico && c.id_mecanico != mecanico) return false;
+                        return true;
+                    });
+
+                    if (citasDia.length === 0) {
+                        slotsContainer.innerHTML = '<span class="text-green-500">Todo el día libre</span>';
+                    } else {
+                        slotsContainer.innerHTML = citasDia.map(c => {
+                            const time = new Date(c.fecha_hora).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                            return `<span class="bg-red-500/20 text-red-400 px-2 py-1 rounded border border-red-500/30">${time}</span>`;
+                        }).join('');
+                    }
+                }
+            } catch (e) {
+                slotsContainer.innerHTML = '<span class="text-red-500">Error al cargar disponibilidad</span>';
+            }
+        }
+
+        function openModal(cita = null) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (cita) {
+                document.getElementById('modal-title').textContent = 'Editar Cita';
+                document.getElementById('cita-id').value = cita.id;
+                document.getElementById('cita-cliente').value = cita.cliente_nombre || '';
+                document.getElementById('cita-email').value = cita.cliente_email || '';
+
+                // Set Sucursal and Mecanico
+                if (cita.id_sucursal) document.getElementById('cita-sucursal').value = cita.id_sucursal;
+                if (cita.id_mecanico) document.getElementById('cita-mecanico').value = cita.id_mecanico;
+
+                const date = new Date(cita.fecha_hora);
+                document.getElementById('cita-fecha').value = date.toISOString().split('T')[0];
+                document.getElementById('cita-hora').value = date.toTimeString().slice(0, 5);
+
+                document.getElementById('cita-motivo').value = cita.motivo || '';
+
+                // Set vehicle type based on model text
+                const model = (cita.vehiculo_modelo || '').toLowerCase();
+                if (model.includes('moto')) document.getElementById('cita-vehiculo-tipo').value = 'moto';
+                else if (model.includes('bici')) document.getElementById('cita-vehiculo-tipo').value = 'bicicleta';
+                else document.getElementById('cita-vehiculo-tipo').value = 'coche';
+
+                checkAvailability(); // Check for the loaded date
+
+            } else {
+                document.getElementById('modal-title').textContent = 'Nueva Cita';
+                form.reset();
+                document.getElementById('cita-id').value = '';
+                document.getElementById('cita-fecha').value = new Date().toISOString().split('T')[0];
+
+                // Set default sucursal if available
+                if (globalConfig.sucursales.length > 0) {
+                    document.getElementById('cita-sucursal').value = globalConfig.sucursales[0].id;
+                }
+                checkAvailability();
+            }
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('cita-id').value;
+            const fecha = document.getElementById('cita-fecha').value;
+            const hora = document.getElementById('cita-hora').value;
+            const fecha_hora = `${fecha}T${hora}:00`;
+
+            const data = {
+                fecha_hora,
+                motivo: document.getElementById('cita-motivo').value,
+                cliente: {
+                    nombre: document.getElementById('cita-cliente').value,
+                    email: document.getElementById('cita-email').value,
+                    telefono: '000000000' // Placeholder
+                },
+                vehiculo_categoria: document.getElementById('cita-vehiculo-tipo').value,
+                sucursal_ref: document.getElementById('cita-sucursal').value,
+                id_mecanico: document.getElementById('cita-mecanico').value || null,
+                duracion_min: 60,
+                notas: ''
+            };
+
+            try {
+                let url = '/api/citas/crear';
+                let method = 'POST';
+
+                if (id) {
+                    url = `/api/citas/${id}`;
+                    method = 'PUT';
+                    // For update, we might send different structure depending on backend
+                    // The backend PUT expects: estado, motivo, notas, fecha_hora
+                    // It does NOT update client/vehicle currently.
+                }
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+                if (result.ok) {
+                    closeModal();
+                    loadCitas();
+                } else {
+                    alert('Error: ' + result.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al guardar');
+            }
+        });
+
+        async function deleteCita(id) {
+            if (!confirm('¿Estás seguro de eliminar esta cita?')) return;
+
+            try {
+                const res = await fetch(`/api/citas/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.ok) loadCitas();
+                else alert('Error al eliminar');
+            } catch (err) {
+                alert('Error de conexión');
+            }
+        }
+
+        async function toggleStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'pendiente' ? 'en proceso' :
+                (currentStatus === 'en proceso' ? 'completado' : 'pendiente');
+
+            try {
+                await fetch(`/api/citas/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: newStatus })
+                });
+                loadCitas();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Helper to find cita object from current list
+        let currentCitas = [];
+
+        // --- SIDEBAR LOGIC ---
+
+
+
+        function editCita(id) {
+            const cita = currentCitas.find(c => c.id == id);
+            if (cita) openModal(cita);
+        }
+
+        // --- CLIENT MODAL ---
+        const clientModal = document.getElementById('client-modal');
+
+        function openClientModal(citaId) {
+            const cita = currentCitas.find(c => c.id == citaId);
+            if (!cita) return;
+
+            const content = document.getElementById('client-details-content');
+            content.innerHTML = `
+                <div class="flex items-center gap-4 mb-4 pb-4 border-b border-[#2a2a2a]">
+                    <div class="w-12 h-12 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xl">
+                        ${(cita.cliente_nombre || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-white">${cita.cliente_nombre || 'Desconocido'}</h4>
+                        <p class="text-sm text-[#a0a0a0]">Cliente Registrado</p>
+                    </div>
+                </div>
+                
+                <div class="grid gap-3">
+                    <div class="bg-[#111318] p-3 rounded-lg border border-[#2a2a2a]">
+                        <label class="block text-xs text-[#a0a0a0] mb-1">Contacto</label>
+                        <div class="flex items-center gap-2 text-sm text-white mb-1">
+                            <span class="material-symbols-outlined text-xs">phone</span>
+                            ${cita.cliente_telefono || 'No disponible'}
+                        </div>
+                        <div class="flex items-center gap-2 text-sm text-white">
+                            <span class="material-symbols-outlined text-xs">mail</span>
+                            ${cita.cliente_email || 'No disponible'}
+                        </div>
+                    </div>
+
+                    <div class="bg-[#111318] p-3 rounded-lg border border-[#2a2a2a]">
+                        <label class="block text-xs text-[#a0a0a0] mb-1">Vehículo Actual</label>
+                        <div class="text-sm text-white font-medium">${cita.vehiculo_marca || ''} ${cita.vehiculo_modelo || ''}</div>
+                        <div class="text-xs text-[#a0a0a0] font-mono mt-1">${cita.vehiculo_matricula || 'Sin matrícula'}</div>
+                    </div>
+
+                    <div class="bg-[#111318] p-3 rounded-lg border border-[#2a2a2a]">
+                        <label class="block text-xs text-[#a0a0a0] mb-1">Historial Reciente</label>
+                        <div class="text-xs text-[#a0a0a0] italic">No hay historial disponible.</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end mt-4">
+                    <button onclick="window.location.href='manager-taller-clientes.html?id=${cita.id_cliente}'" class="text-sm text-[var(--brand-orange)] hover:underline">
+                        Ver ficha completa de cliente
+                    </button>
+                </div>
+            `;
+
+            clientModal.classList.remove('hidden');
+            clientModal.classList.add('flex');
+        }
+
+        function closeClientModal() {
+            clientModal.classList.add('hidden');
+            clientModal.classList.remove('flex');
+        }
+
     </script>
 </body>
 

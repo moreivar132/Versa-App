@@ -7,40 +7,23 @@
     <title>Gestión de Vehículos - Goversa</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="manager.css">
     <style>
         /* Estilos Generales (Idénticos a Proveedores) */
-        :root {
-            --brand-orange: #FF652B;
-            --brand-orange-strong: #FF7A45;
-            --surface-elevated: rgba(18, 18, 20, 0.96);
-            --surface-border: rgba(255, 255, 255, 0.08);
-            --surface-highlight: rgba(255, 255, 255, 0.04);
-            --dark-bg: #000000;
-            --surface-bg: #1a1a1a;
-            --border-color: #2a2a2a;
-            --input-bg: #333333;
-            --text-primary: #ffffff;
-            --text-secondary: #cccccc;
-            --success-color: #28a745;
-            --error-color: #dc3545;
-        }
+        /* Redundant variables removed */
 
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--dark-bg);
-            font-family: "Montserrat", Arial, sans-serif;
-            color: var(--text-primary);
-        }
+        /* Sidebar Styles */
 
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 20px 40px;
-        }
+
+
 
         /* Sidebar Styles */
         .logo-badge {
@@ -66,10 +49,7 @@
 
         /* Search Container */
         .search-container {
-            background-color: var(--surface-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 30px;
+            /* Styles handled by manager-panel */
             margin-bottom: 30px;
         }
 
@@ -217,12 +197,7 @@
         }
 
         /* Form Styles */
-        .form-container {
-            background-color: var(--surface-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 40px;
-        }
+
 
         .form-main-title {
             font-size: 28px;
@@ -444,449 +419,455 @@
 </head>
 
 <body>
-    <div class="container">
-        <div class="flex h-screen w-full">
-            <!-- SideNavBar -->
-            <aside id="sidebar"
-                class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
-                <div class="flex h-full flex-col justify-between">
-                    <div class="flex flex-col gap-4">
-                        <!-- User Profile / Logo Area -->
-                        <div class="flex items-center gap-3 p-2 mb-4">
-                            <div class="logo-badge"
-                                style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                                <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
-                                    style="height: 24px; width: auto;">
-                            </div>
-                            <div class="flex flex-col sidebar-text">
-                                <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
-                                    Goversa</h1>
-                                <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
-                                    Gestión</p>
-                            </div>
-                            <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
+    <div class="flex h-screen w-full">
+        <!-- SideNavBar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
                         </div>
-
-                        <!-- Navigation Links -->
-                        <nav class="flex flex-col gap-2">
-                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                                href="index.html">
-                                <span class="icon-container"><i class="fas fa-home"></i></span>
-                                <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
-                            </a>
-
-                            <!-- Taller Dropdown -->
-                            <div class="nav-group">
-                                <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
-                                    onclick="toggleSubmenu('taller-submenu')">
-                                    <span class="icon-container"><i class="fas fa-wrench"></i></span>
-                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
-
-                                </a>
-                                <div id="taller-submenu" class="flex flex-col pl-9 gap-1 mt-1">
-                                    <a href="manager-taller-citas.html"
-                                        class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
-                                    <a href="manager-taller-ordenes.html"
-                                        class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
-                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
-                                        órdenes</a>
-                                    <a href="#"
-                                        class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
-                                    <a href="manager-taller-vehiculos.html"
-                                        class="text-white font-semibold text-sm py-1 block">Vehículos</a>
-                                </div>
-                            </div>
-
-                            <!-- Tienda Dropdown -->
-                            <div class="nav-group">
-                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                                    onclick="toggleSubmenu('tienda-submenu')">
-                                    <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
-                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
-
-                                </a>
-                                <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
-                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
-                                </div>
-                            </div>
-
-                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                                href="#">
-                                <span class="icon-container"><i class="fas fa-cash-register"></i></span>
-                                <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
-                            </a>
-
-                            <!-- Cuentas Dropdown -->
-                            <div class="nav-group">
-                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                                    onclick="toggleSubmenu('cuentas-submenu')">
-                                    <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
-                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
-
-                                </a>
-                                <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
-                                    <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
-                                </div>
-                            </div>
-
-                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                                href="manager-taller-inventario.html">
-                                <span class="icon-container"><i class="fas fa-boxes"></i></span>
-                                <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
-                            </a>
-
-                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                                href="manager-taller-trabajadores.html">
-                                <span class="icon-container"><i class="fas fa-users-cog"></i></span>
-                                <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
-                            </a>
-
-                            <!-- Contactos Dropdown -->
-                            <div class="nav-group">
-                                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                                    onclick="toggleSubmenu('contactos-submenu')">
-                                    <span class="icon-container"><i class="fas fa-address-book"></i></span>
-                                    <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
-
-                                </a>
-                                <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                                    <a href="manager-taller-clientes.html"
-                                        class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
-                                    <a href="manager-taller-proveedores.html"
-                                        class="text-gray-500 hover:text-white text-sm py-1 block">Proveedores</a>
-                                </div>
-                            </div>
-                        </nav>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
                     </div>
 
-                    <!-- Bottom Actions -->
-                    <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
-                        <div class="flex items-center gap-3 px-3 py-2 mb-2">
-                            <div
-                                class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
-                                IM</div>
-                            <div class="flex flex-col sidebar-text overflow-hidden">
-                                <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
-                                <span class="text-gray-500 text-xs truncate">admin</span>
-                            </div>
-                        </div>
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
                         <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="login.html">
-                            <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
-                            <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                            href="index.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
                         </a>
-                    </div>
-                </div>
-            </aside>
 
-            <!-- Main Content Wrapper -->
-            <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
-                <!-- Top Mobile Header -->
-                <header
-                    class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
-                    <div class="logo-badge p-2">
-                        <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
-                    </div>
-                    <button id="mobile-menu-btn" class="text-white">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                </header>
-
-                <main class="flex-1 overflow-y-auto p-6">
-                    <div class="max-w-7xl mx-auto">
-
-                        <!-- KPI CARDS -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <div
-                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
-                                <div>
-                                    <p class="text-gray-400 text-sm font-medium mb-1">Total Vehículos</p>
-                                    <h3 class="text-3xl font-bold text-white" id="total-vehicles-count">-</h3>
-                                </div>
-                                <div
-                                    class="w-12 h-12 rounded-full bg-[rgba(255,101,43,0.1)] flex items-center justify-center text-[var(--brand-orange)]">
-                                    <i class="fas fa-car text-xl"></i>
-                                </div>
-                            </div>
-                            <div
-                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
-                                <div>
-                                    <p class="text-gray-400 text-sm font-medium mb-1">Nuevos este mes</p>
-                                    <h3 class="text-3xl font-bold text-white">-</h3>
-                                </div>
-                                <div
-                                    class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                                    <i class="fas fa-calendar-plus text-xl"></i>
-                                </div>
-                            </div>
-                            <div
-                                class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
-                                <div>
-                                    <p class="text-gray-400 text-sm font-medium mb-1">Próxima ITV</p>
-                                    <h3 class="text-3xl font-bold text-white">-</h3>
-                                </div>
-                                <div
-                                    class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
-                                    <i class="fas fa-check-circle text-xl"></i>
-                                </div>
+                        <!-- Taller Dropdown (Active) -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                    órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-white font-semibold text-sm py-1 block">Vehículos</a>
                             </div>
                         </div>
 
-                        <!-- SECCIÓN BUSCADOR DE VEHÍCULOS -->
-                        <section class="search-container">
-                            <h2 class="form-main-title"><i class="fas fa-search"></i> Buscar Vehículo</h2>
-                            <div class="search-box">
-                                <input type="text" id="search-input" class="form-input"
-                                    placeholder="Buscar por Matrícula, Marca, Modelo o Cliente..." autocomplete="off">
-                                <button id="search-btn" class="btn"><i class="fas fa-search"
-                                        style="margin-right: 8px;"></i> Buscar</button>
-                                <div id="suggestions-list" class="suggestions-dropdown"></div>
+                        <!-- Tienda Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
                             </div>
+                        </div>
 
-                            <!-- FICHA DE RESULTADO (CON TABS) -->
-                            <div id="vehicle-result" class="search-result-card">
-                                <!-- Main Header -->
-                                <div class="flex justify-between items-start mb-8 px-2">
-                                    <div>
-                                        <h1 class="text-3xl font-extrabold text-white mb-2 tracking-tight">
-                                            <span id="header-matricula"></span> - <span id="header-marca-modelo"></span>
-                                        </h1>
-                                        <p class="text-gray-400 text-sm">Gestiona la información del vehículo y su
-                                            historial.</p>
-                                    </div>
-                                    <button id="header-edit-btn"
-                                        class="px-4 py-2 bg-[#2a2a2a] hover:bg-[#333] text-white border border-[#3a3a3a] rounded-lg font-medium transition-colors flex items-center gap-2 text-sm">
-                                        <i class="fas fa-edit"></i> Editar Vehículo
-                                    </button>
-                                </div>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="#">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
 
-                                <!-- Tabs Header -->
-                                <div class="detail-tabs mb-6 bg-transparent border-b border-[#2a2a2a]">
-                                    <div class="detail-tab active" data-tab="general" style="border-bottom-width: 2px;">
-                                        Información General</div>
-                                    <div class="detail-tab" data-tab="historial" style="border-bottom-width: 2px;">
-                                        Historial de Mantenimiento</div>
-                                    <div class="detail-tab" data-tab="comentarios" style="border-bottom-width: 2px;">
-                                        Comentarios</div>
-                                </div>
-
-                                <!-- Tab: General -->
-                                <div id="tab-general" class="detail-content active">
-                                    <!-- Top Row: Main Data + Quick Actions -->
-                                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                                        <!-- Main Data (2/3 width) -->
-                                        <div class="lg:col-span-2 bg-[#1a1a1a] p-8 rounded-2xl border border-[#2a2a2a]">
-                                            <div class="flex justify-between items-center mb-8">
-                                                <h3 class="text-2xl font-bold text-white">Datos Principales del Vehículo
-                                                </h3>
-                                                <!-- Edit button moved here or kept as icon -->
-                                            </div>
-
-                                            <div class="grid grid-cols-2 gap-y-8 gap-x-8">
-                                                <!-- Matrícula -->
-                                                <div>
-                                                    <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">
-                                                        Matrícula</p>
-                                                    <p class="text-white text-xl font-medium" id="res-matricula">-</p>
-                                                </div>
-                                                <!-- Marca -->
-                                                <div>
-                                                    <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Marca
-                                                    </p>
-                                                    <p class="text-white text-xl font-medium" id="res-marca">-</p>
-                                                </div>
-                                                <!-- Modelo -->
-                                                <div>
-                                                    <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">
-                                                        Modelo</p>
-                                                    <p class="text-white text-xl font-medium" id="res-modelo">-</p>
-                                                </div>
-                                                <!-- Año -->
-                                                <div>
-                                                    <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Año
-                                                    </p>
-                                                    <p class="text-white text-xl font-medium" id="res-year">-</p>
-                                                </div>
-                                                <!-- Kilometraje (Placeholder) -->
-                                                <div>
-                                                    <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">
-                                                        Kilometraje</p>
-                                                    <p class="text-white text-xl font-medium">45,890 km</p>
-                                                </div>
-                                                <!-- Combustible (Placeholder) -->
-                                                <div>
-                                                    <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Tipo
-                                                        de Combustible</p>
-                                                    <p class="text-white text-xl font-medium">Híbrido</p>
-                                                </div>
-                                                <!-- VIN -->
-                                                <div>
-                                                    <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">VIN
-                                                    </p>
-                                                    <p class="text-white text-xl font-medium" id="res-serial">-</p>
-                                                </div>
-                                                <!-- ITV (Placeholder) -->
-                                                <div>
-                                                    <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Fecha
-                                                        Próxima ITV</p>
-                                                    <p class="text-white text-xl font-medium">15/07/2025</p>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Quick Actions (1/3 width) -->
-                                        <div class="bg-[#1a1a1a] p-8 rounded-2xl border border-[#2a2a2a] h-fit">
-                                            <h3 class="text-xl font-bold text-white mb-6">Acciones Rápidas</h3>
-                                            <div class="flex flex-col gap-4">
-                                                <button
-                                                    class="w-full py-3 px-4 bg-[#3d2116] hover:bg-[#4d2a1c] text-[#ff652b] border border-[#593020] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
-                                                    <i class="fas fa-plus-circle"></i> Añadir Mantenimiento
-                                                </button>
-                                                <button
-                                                    class="w-full py-3 px-4 bg-[#2a2a2a] hover:bg-[#333] text-white border border-[#3a3a3a] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
-                                                    <i class="fas fa-print"></i> Imprimir Ficha
-                                                </button>
-                                                <button
-                                                    class="w-full py-3 px-4 bg-[#2a1515] hover:bg-[#3a1d1d] text-[#ff5b5b] border border-[#4a2020] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
-                                                    <i class="fas fa-trash-alt"></i> Eliminar Vehículo
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Bottom Row: Owner Data -->
-                                    <div class="bg-[#1a1a1a] p-8 rounded-2xl border border-[#2a2a2a]">
-                                        <h3 class="text-2xl font-bold text-white mb-8">Datos del Propietario</h3>
-                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                            <div>
-                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Nombre
-                                                </p>
-                                                <p class="text-[#ff652b] text-xl font-medium" id="res-cliente">-</p>
-                                            </div>
-                                            <div>
-                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Teléfono
-                                                    de
-                                                    Contacto</p>
-                                                <p class="text-white text-xl font-medium">+34 612 345 678</p>
-                                            </div>
-                                            <div>
-                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Sucursal
-                                                </p>
-                                                <p class="text-white text-xl font-medium" id="res-sucursal">-</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Tab: Historial -->
-                                <div id="tab-historial" class="detail-content">
-                                    <div class="text-center py-8 text-gray-500">
-                                        <i class="fas fa-clipboard-list text-4xl mb-3 opacity-50"></i>
-                                        <p>No hay historial de mantenimiento disponible.</p>
-                                    </div>
-                                </div>
-
-                                <!-- Tab: Comentarios -->
-                                <div id="tab-comentarios" class="detail-content">
-                                    <div class="text-center py-8 text-gray-500">
-                                        <i class="fas fa-comment-alt text-4xl mb-3 opacity-50"></i>
-                                        <p>No hay comentarios registrados.</p>
-                                    </div>
-                                </div>
+                        <!-- Cuentas Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
                             </div>
-                        </section>
+                        </div>
 
-                        <!-- ÚLTIMOS VEHÍCULOS -->
-                        <section>
-                            <h3 class="form-section-title" style="margin-top: 0; border-bottom: none;"><i
-                                    class="fas fa-history"></i> Últimos Vehículos Registrados</h3>
-                            <div id="recent-vehicles-grid" class="vehicles-grid">
-                                <!-- Se rellena vía JS -->
-                                <div
-                                    style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-secondary);">
-                                    <i class="fas fa-spinner fa-spin"></i> Cargando vehículos...
-                                </div>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
                             </div>
-                        </section>
+                        </div>
+                    </nav>
+                </div>
 
-                        <!-- FORMULARIO DE REGISTRO -->
-                        <form id="vehicle-form" class="form-container">
-                            <h2 class="form-main-title">Registro de Nuevo Vehículo</h2>
-                            <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 0.9em;">Los campos
-                                marcados con * son obligatorios.</p>
-                            <input type="hidden" id="vehicle_id" name="id">
-
-                            <div class="form-section-title">Información del Cliente</div>
-                            <div class="form-section">
-                                <div class="form-group" style="position: relative;">
-                                    <label for="cliente_search">Cliente *</label>
-                                    <input type="text" id="cliente_search" class="form-input"
-                                        placeholder="Buscar cliente..." autocomplete="off" required>
-                                    <input type="hidden" id="id_cliente" name="id_cliente">
-                                    <div id="cliente-suggestions" class="suggestions-dropdown" style="top: 75px;"></div>
-                                </div>
-                                <div class="form-group">
-                                    <label for="id_sucursal">Sucursal *</label>
-                                    <select name="id_sucursal" id="id_sucursal" class="form-select" required>
-                                        <option value="">Seleccionar Sucursal...</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-section-title">Datos del Vehículo</div>
-                            <div class="form-section">
-                                <div class="form-group">
-                                    <label for="matricula">Matrícula *</label>
-                                    <input type="text" id="matricula" name="matricula" class="form-input" required
-                                        placeholder="Ej: 1234ABC">
-                                </div>
-                                <div class="form-group">
-                                    <label for="marca">Marca *</label>
-                                    <input type="text" id="marca" name="marca" class="form-input" required
-                                        placeholder="Ej: Toyota">
-                                </div>
-                                <div class="form-group">
-                                    <label for="modelo">Modelo *</label>
-                                    <input type="text" id="modelo" name="modelo" class="form-input" required
-                                        placeholder="Ej: Corolla">
-                                </div>
-                                <div class="form-group">
-                                    <label for="year">Año</label>
-                                    <input type="number" id="year" name="year" class="form-input"
-                                        placeholder="Ej: 2020">
-                                </div>
-                                <div class="form-group">
-                                    <label for="serial">Serial (VIN)</label>
-                                    <input type="text" id="serial" name="serial" class="form-input"
-                                        placeholder="Número de chasis">
-                                </div>
-                                <div class="form-group">
-                                    <label for="color">Color</label>
-                                    <input type="text" id="color" name="color" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="cc">CC</label>
-                                    <input type="text" id="cc" name="cc" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="seguro">Seguro</label>
-                                    <input type="text" id="seguro" name="seguro" class="form-input">
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn"
-                                style="width: 100%; padding: 15px; font-size: 16px; margin-top: 30px;">
-                                <i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Vehículo
-                            </button>
-                        </form>
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            IM
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                            <span class="text-gray-500 text-xs truncate">admin</span>
+                        </div>
                     </div>
-                </main>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="login.html">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
             </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <!-- Top Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 relative z-10">
+                <div class="">
+
+                    <!-- KPI CARDS -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div
+                            class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm font-medium mb-1">Total Vehículos</p>
+                                <h3 class="text-3xl font-bold text-white" id="total-vehicles-count">-</h3>
+                            </div>
+                            <div
+                                class="w-12 h-12 rounded-full bg-[rgba(255,101,43,0.1)] flex items-center justify-center text-[var(--brand-orange)]">
+                                <i class="fas fa-car text-xl"></i>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm font-medium mb-1">Nuevos este mes</p>
+                                <h3 class="text-3xl font-bold text-white">-</h3>
+                            </div>
+                            <div
+                                class="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                <i class="fas fa-calendar-plus text-xl"></i>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-400 text-sm font-medium mb-1">Próxima ITV</p>
+                                <h3 class="text-3xl font-bold text-white">-</h3>
+                            </div>
+                            <div
+                                class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                                <i class="fas fa-check-circle text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN BUSCADOR DE VEHÍCULOS -->
+                    <section class="manager-panel mb-8">
+                        <h2 class="form-main-title"><i class="fas fa-search"></i> Buscar Vehículo</h2>
+                        <div class="search-box">
+                            <input type="text" id="search-input" class="form-input"
+                                placeholder="Buscar por Matrícula, Marca, Modelo o Cliente..." autocomplete="off">
+                            <button id="search-btn" class="btn"><i class="fas fa-search" style="margin-right: 8px;"></i>
+                                Buscar</button>
+                            <div id="suggestions-list" class="suggestions-dropdown"></div>
+                        </div>
+
+                        <!-- FICHA DE RESULTADO (CON TABS) -->
+                        <div id="vehicle-result" class="search-result-card">
+                            <!-- Main Header -->
+                            <div class="flex justify-between items-start mb-8 px-2">
+                                <div>
+                                    <h1 class="text-3xl font-extrabold text-white mb-2 tracking-tight">
+                                        <span id="header-matricula"></span> - <span id="header-marca-modelo"></span>
+                                    </h1>
+                                    <p class="text-gray-400 text-sm">Gestiona la información del vehículo y su
+                                        historial.</p>
+                                </div>
+                                <button id="header-edit-btn"
+                                    class="px-4 py-2 bg-[#2a2a2a] hover:bg-[#333] text-white border border-[#3a3a3a] rounded-lg font-medium transition-colors flex items-center gap-2 text-sm">
+                                    <i class="fas fa-edit"></i> Editar Vehículo
+                                </button>
+                            </div>
+
+                            <!-- Tabs Header -->
+                            <div class="detail-tabs mb-6 bg-transparent border-b border-[#2a2a2a]">
+                                <div class="detail-tab active" data-tab="general" style="border-bottom-width: 2px;">
+                                    Información General</div>
+                                <div class="detail-tab" data-tab="historial" style="border-bottom-width: 2px;">
+                                    Historial de Mantenimiento</div>
+                                <div class="detail-tab" data-tab="comentarios" style="border-bottom-width: 2px;">
+                                    Comentarios</div>
+                            </div>
+
+                            <!-- Tab: General -->
+                            <div id="tab-general" class="detail-content active">
+                                <!-- Top Row: Main Data + Quick Actions -->
+                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                                    <!-- Main Data (2/3 width) -->
+                                    <div class="lg:col-span-2 bg-[#1a1a1a] p-8 rounded-2xl border border-[#2a2a2a]">
+                                        <div class="flex justify-between items-center mb-8">
+                                            <h3 class="text-2xl font-bold text-white">Datos Principales del Vehículo
+                                            </h3>
+                                            <!-- Edit button moved here or kept as icon -->
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-y-8 gap-x-8">
+                                            <!-- Matrícula -->
+                                            <div>
+                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">
+                                                    Matrícula</p>
+                                                <p class="text-white text-xl font-medium" id="res-matricula">-</p>
+                                            </div>
+                                            <!-- Marca -->
+                                            <div>
+                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Marca
+                                                </p>
+                                                <p class="text-white text-xl font-medium" id="res-marca">-</p>
+                                            </div>
+                                            <!-- Modelo -->
+                                            <div>
+                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">
+                                                    Modelo</p>
+                                                <p class="text-white text-xl font-medium" id="res-modelo">-</p>
+                                            </div>
+                                            <!-- Año -->
+                                            <div>
+                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Año
+                                                </p>
+                                                <p class="text-white text-xl font-medium" id="res-year">-</p>
+                                            </div>
+                                            <!-- Kilometraje (Placeholder) -->
+                                            <div>
+                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">
+                                                    Kilometraje</p>
+                                                <p class="text-white text-xl font-medium">45,890 km</p>
+                                            </div>
+                                            <!-- Combustible (Placeholder) -->
+                                            <div>
+                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Tipo
+                                                    de Combustible</p>
+                                                <p class="text-white text-xl font-medium">Híbrido</p>
+                                            </div>
+                                            <!-- VIN -->
+                                            <div>
+                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">VIN
+                                                </p>
+                                                <p class="text-white text-xl font-medium" id="res-serial">-</p>
+                                            </div>
+                                            <!-- ITV (Placeholder) -->
+                                            <div>
+                                                <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Fecha
+                                                    Próxima ITV</p>
+                                                <p class="text-white text-xl font-medium">15/07/2025</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Quick Actions (1/3 width) -->
+                                    <div class="bg-[#1a1a1a] p-8 rounded-2xl border border-[#2a2a2a] h-fit">
+                                        <h3 class="text-xl font-bold text-white mb-6">Acciones Rápidas</h3>
+                                        <div class="flex flex-col gap-4">
+                                            <button
+                                                class="w-full py-3 px-4 bg-[#3d2116] hover:bg-[#4d2a1c] text-[#ff652b] border border-[#593020] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
+                                                <i class="fas fa-plus-circle"></i> Añadir Mantenimiento
+                                            </button>
+                                            <button
+                                                class="w-full py-3 px-4 bg-[#2a2a2a] hover:bg-[#333] text-white border border-[#3a3a3a] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
+                                                <i class="fas fa-print"></i> Imprimir Ficha
+                                            </button>
+                                            <button
+                                                class="w-full py-3 px-4 bg-[#2a1515] hover:bg-[#3a1d1d] text-[#ff5b5b] border border-[#4a2020] rounded-full font-bold transition-colors flex items-center justify-center gap-2">
+                                                <i class="fas fa-trash-alt"></i> Eliminar Vehículo
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Row: Owner Data -->
+                                <div class="bg-[#1a1a1a] p-8 rounded-2xl border border-[#2a2a2a]">
+                                    <h3 class="text-2xl font-bold text-white mb-8">Datos del Propietario</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div>
+                                            <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Nombre
+                                            </p>
+                                            <p class="text-[#ff652b] text-xl font-medium" id="res-cliente">-</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Teléfono
+                                                de
+                                                Contacto</p>
+                                            <p class="text-white text-xl font-medium">+34 612 345 678</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-gray-500 text-xs uppercase tracking-wider mb-2">Sucursal
+                                            </p>
+                                            <p class="text-white text-xl font-medium" id="res-sucursal">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab: Historial -->
+                            <div id="tab-historial" class="detail-content">
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-clipboard-list text-4xl mb-3 opacity-50"></i>
+                                    <p>No hay historial de mantenimiento disponible.</p>
+                                </div>
+                            </div>
+
+                            <!-- Tab: Comentarios -->
+                            <div id="tab-comentarios" class="detail-content">
+                                <div class="text-center py-8 text-gray-500">
+                                    <i class="fas fa-comment-alt text-4xl mb-3 opacity-50"></i>
+                                    <p>No hay comentarios registrados.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ÚLTIMOS VEHÍCULOS -->
+                    <section>
+                        <h3 class="form-section-title" style="margin-top: 0; border-bottom: none;"><i
+                                class="fas fa-history"></i> Últimos Vehículos Registrados</h3>
+                        <div id="recent-vehicles-grid" class="vehicles-grid">
+                            <!-- Se rellena vía JS -->
+                            <div
+                                style="grid-column: 1/-1; text-align: center; padding: 20px; color: var(--text-secondary);">
+                                <i class="fas fa-spinner fa-spin"></i> Cargando vehículos...
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- FORMULARIO DE REGISTRO -->
+                    <form id="vehicle-form" class="manager-panel">
+                        <h2 class="form-main-title">Registro de Nuevo Vehículo</h2>
+                        <p style="color: var(--text-secondary); margin-bottom: 25px; font-size: 0.9em;">Los campos
+                            marcados con * son obligatorios.</p>
+                        <input type="hidden" id="vehicle_id" name="id">
+
+                        <div class="form-section-title">Información del Cliente</div>
+                        <div class="form-section">
+                            <div class="form-group" style="position: relative;">
+                                <label for="cliente_search">Cliente *</label>
+                                <input type="text" id="cliente_search" class="form-input"
+                                    placeholder="Buscar cliente..." autocomplete="off" required>
+                                <input type="hidden" id="id_cliente" name="id_cliente">
+                                <div id="cliente-suggestions" class="suggestions-dropdown" style="top: 75px;"></div>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_sucursal">Sucursal *</label>
+                                <select name="id_sucursal" id="id_sucursal" class="form-select" required>
+                                    <option value="">Seleccionar Sucursal...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section-title">Datos del Vehículo</div>
+                        <div class="form-section">
+                            <div class="form-group">
+                                <label for="matricula">Matrícula *</label>
+                                <input type="text" id="matricula" name="matricula" class="form-input" required
+                                    placeholder="Ej: 1234ABC">
+                            </div>
+                            <div class="form-group">
+                                <label for="marca">Marca *</label>
+                                <input type="text" id="marca" name="marca" class="form-input" required
+                                    placeholder="Ej: Toyota">
+                            </div>
+                            <div class="form-group">
+                                <label for="modelo">Modelo *</label>
+                                <input type="text" id="modelo" name="modelo" class="form-input" required
+                                    placeholder="Ej: Corolla">
+                            </div>
+                            <div class="form-group">
+                                <label for="year">Año</label>
+                                <input type="number" id="year" name="year" class="form-input" placeholder="Ej: 2020">
+                            </div>
+                            <div class="form-group">
+                                <label for="serial">Serial (VIN)</label>
+                                <input type="text" id="serial" name="serial" class="form-input"
+                                    placeholder="Número de chasis">
+                            </div>
+                            <div class="form-group">
+                                <label for="color">Color</label>
+                                <input type="text" id="color" name="color" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="cc">CC</label>
+                                <input type="text" id="cc" name="cc" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label for="seguro">Seguro</label>
+                                <input type="text" id="seguro" name="seguro" class="form-input">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn"
+                            style="width: 100%; padding: 15px; font-size: 16px; margin-top: 30px;">
+                            <i class="fas fa-save" style="margin-right: 10px;"></i> Guardar Vehículo
+                        </button>
+                    </form>
+                </div>
+            </main>
         </div>
+    </div>
     </div>
 
     <!-- MODAL DE ÉXITO -->

@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Compras - Goversa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <!-- Librería Quagga para escáner -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+    <link rel="stylesheet" href="manager.css">
+    <style>
+        /* --- VARIABLES & BASE --- */
+        /* Redundant variables removed */
+
+        /* --- SCROLLBAR --- */
+        /* Redundant scrollbar styles removed */
+
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            background: rgba(17, 19, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        /* --- FORM CONTENEDOR --- */
+        /* --- FORM CONTENEDOR --- */
+
+
+
+        .form-main-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 30px 0;
+            background: linear-gradient(to right, #fff, #ccc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .form-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .form-section.single-col {
+            grid-template-columns: 1fr;
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        /* --- INPUTS --- */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            transition: color 0.3s;
+        }
+
+        .form-group:focus-within label {
+            color: var(--brand-orange);
+        }
+
+        .form-input,
+        .form-select,
+        textarea.form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-family: "Montserrat", sans-serif;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        /* Input readonly style */
+        .form-input[readonly] {
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border-color: transparent;
+            cursor: not-allowed;
+        }
+
+        .form-input:hover,
+        .form-select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        textarea.form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 101, 43, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
+        }
+
+        /* --- BOTONES --- */
+        .btn {
+            background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-dark) 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+            padding: 12px 24px;
+            box-shadow: 0 4px 14px rgba(255, 101, 43, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 101, 43, 0.6);
+            background: linear-gradient(135deg, #ff7a45 0%, #e05300 100%);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle) !important;
+            box-shadow: none;
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        .btn-icon-only {
+            width: 40px;
+            padding: 0;
+        }
+
+        /* --- INPUT GROUP --- */
+        .input-group {
+            display: flex;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group .form-input {
+            border-radius: 10px 0 0 10px;
+            border-right: none;
+        }
+
+        .input-group .btn {
+            border-radius: 0 10px 10px 0;
+            padding: 0 20px;
+            margin: 0;
+            border: 1px solid var(--border-subtle);
+            border-left: none;
+        }
+
+        /* --- AUTOCOMPLETE --- */
+        .custom-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-options {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background-color: #1e1e24;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-select-options.show {
+            display: block;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .custom-select-options .option,
+        .custom-select-options .create-option {
+            padding: 12px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #ccc;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .custom-select-options .option:hover,
+        .custom-select-options .create-option:hover {
+            background-color: rgba(255, 101, 43, 0.15);
+            color: var(--brand-orange);
+        }
+
+        .custom-select-options .create-option {
+            font-weight: bold;
+            color: var(--brand-orange);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        /* --- TABLA DE ITEMS --- */
+        .items-table-container {
+            overflow-x: auto;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+            /* Para asegurar que no se rompa en móvil */
+        }
+
+        .items-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .items-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+            color: var(--text-primary);
+        }
+
+        .items-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Inputs dentro de la tabla */
+        .items-table .form-input {
+            padding: 8px 10px;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Footer de la tabla (fila de agregar) */
+        .items-table tfoot td {
+            background: rgba(var(--brand-orange), 0.05);
+            border-top: 1px solid var(--border-subtle);
+            padding: 15px;
+        }
+
+        /* --- SUBIDA DE IMÁGENES --- */
+        .multi-image-upload-box {
+            border: 2px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-secondary);
+        }
+
+        .multi-image-upload-box:hover,
+        .multi-image-upload-box.dragover {
+            border-color: var(--brand-orange);
+            background: rgba(255, 101, 43, 0.05);
+            color: var(--text-primary);
+        }
+
+        #previews-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .img-preview-wrapper {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            aspect-ratio: 1;
+        }
+
+        .img-preview-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-img-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .remove-img-btn:hover {
+            background: var(--error-color);
+        }
+
+        /* --- RESUMEN Y TOTALES --- */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 40px;
+        }
+
+        .summary-payment-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .summary-payment-table {
+            width: 100%;
+        }
+
+        .summary-payment-table td {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .summary-payment-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .total-row td {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--brand-orange);
+            padding-top: 15px;
+        }
+
+        /* --- MODALES --- */
+        #scanner-modal,
+        #success-modal,
+        #provider-modal {
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #1a1a1f;
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            position: relative;
+            color: white;
+        }
+
+        /* Grid helpers */
+        .grid-span-2 {
+            grid-column: span 2;
+        }
+
+        .grid-span-full {
+            grid-column: 1 / -1;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-span-2 {
+                grid-column: span 1;
+            }
+        }
+
+        /* --- VISUALLY HIDDEN --- */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex h-screen w-full">
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="index.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                    órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown (Active) -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-white font-semibold text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="#">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            IM
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                            <span class="text-gray-500 text-xs truncate">admin</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="login.html">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+            <!-- Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--border-subtle)] z-30">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white p-2">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 relative z-10">
+
+                <form id="purchase-form" class="manager-panel">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="form-main-title mb-0">Registro de Compra</h2>
+                        <span
+                            class="bg-[rgba(255,101,43,0.1)] text-[var(--brand-orange)] px-3 py-1 rounded-full text-xs font-bold border border-[rgba(255,101,43,0.2)]">NUEVA
+                            ENTRADA</span>
+                    </div>
+
+                    <!-- SECCIÓN SUPERIOR: DATOS GENERALES -->
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="fecha-emision">Fecha Emisión</label>
+                            <input type="datetime-local" id="fecha-emision" name="fecha_emision" class="form-input" />
+                        </div>
+
+                        <div class="form-group grid-span-2">
+                            <label for="proveedor">Proveedor <span class="text-[var(--brand-orange)]">*</span></label>
+                            <div class="custom-select-container">
+                                <div class="input-group">
+                                    <input type="text" id="proveedor" name="proveedor"
+                                        class="form-input custom-select-input" placeholder="Buscar o escribir nombre..."
+                                        required />
+                                    <button type="button" id="add-provider-btn"
+                                        class="btn btn-secondary hover:text-[var(--brand-orange)]"
+                                        title="Crear nuevo proveedor">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="custom-select-options" id="provider-options">
+                                    <!-- Opciones dinámicas -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="taller">Taller Destino</label>
+                            <div class="relative">
+                                <select id="taller" name="taller" class="form-select appearance-none">
+                                    <!-- Options populated dynamically -->
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
+                                    <i class="fas fa-chevron-down text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN CENTRAL: TABLA DE ITEMS -->
+                    <h3 class="text-lg font-bold text-white mb-4 pl-2 border-l-4 border-[var(--brand-orange)]">Detalle
+                        de Productos</h3>
+                    <div class="items-table-container">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">Producto / Item</th>
+                                    <th style="width: 15%">Precio Unit. (€)</th>
+                                    <th style="width: 10%">Cant.</th>
+                                    <th style="width: 10%">Bonif. (€)</th>
+                                    <th style="width: 10%">IVA (%)</th>
+                                    <th style="width: 15%">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="items-list">
+                                <!-- Items agregados dinámicamente -->
+                            </tbody>
+                            <tfoot>
+                                <tr id="add-item-row">
+                                    <td>
+                                        <div class="flex flex-col gap-2">
+                                            <div class="relative">
+                                                <div class="input-group">
+                                                    <input type="text" id="item-barcode" placeholder="Cód. Barras"
+                                                        class="form-input text-xs" autocomplete="off" />
+                                                    <button type="button" id="scan-barcode-btn"
+                                                        class="btn btn-secondary btn-sm">
+                                                        <i class="fas fa-barcode"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="custom-select-options" id="barcode-options"></div>
+                                            </div>
+                                            <select id="item-type" class="form-input text-xs">
+                                                <option value="Producto">Producto</option>
+                                                <option value="Servicio">Servicio</option>
+                                            </select>
+                                            <div class="custom-select-container">
+                                                <input type="text" id="item-name" class="form-input custom-select-input"
+                                                    placeholder="Nombre del producto..." />
+                                                <div class="custom-select-options" id="product-options"></div>
+                                                <small class="text-red-500 text-xs hidden"
+                                                    id="item-name-error">Requerido</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="number" id="item-price" step="0.01" placeholder="0.00"
+                                            class="form-input text-right" />
+                                        <small class="text-red-500 text-xs hidden"
+                                            id="item-price-error">Requerido</small>
+                                    </td>
+                                    <td>
+                                        <input type="number" id="item-quantity" value="1" min="1"
+                                            class="form-input text-center" />
+                                    </td>
+                                    <td>
+                                        <input type="number" id="item-bonus" value="0" step="0.01"
+                                            class="form-input text-right" />
+                                    </td>
+                                    <td>
+                                        <input type="number" id="item-iva" value="21" class="form-input text-center" />
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" id="add-item-btn" class="btn btn-sm w-full">
+                                            <i class="fas fa-plus mr-1"></i> Agregar
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <!-- SECCIÓN INFERIOR: RESUMEN Y EXTRAS -->
+                    <div class="summary-grid mt-6">
+                        <!-- Izquierda: Obs e Imagen -->
+                        <div class="flex flex-col gap-6">
+                            <div class="form-group">
+                                <label for="observaciones">Observaciones</label>
+                                <textarea id="observaciones" name="observaciones" rows="3" class="form-input"
+                                    placeholder="Notas adicionales sobre la compra..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Adjuntar Factura / Fotos</label>
+                                <input type="file" id="image-upload" class="visually-hidden" multiple accept="image/*">
+                                <label for="image-upload" class="multi-image-upload-box">
+                                    <i class="fas fa-cloud-upload-alt text-3xl mb-2 text-[var(--brand-orange)]"></i>
+                                    <span>Click para subir imágenes</span>
+                                    <span class="text-xs text-gray-500">Soporta múltiples archivos</span>
+                                </label>
+                                <div id="previews-container"></div>
+                            </div>
+                        </div>
+
+                        <!-- Derecha: Totales -->
+                        <div class="flex flex-col gap-6">
+                            <div class="summary-payment-box">
+                                <h4 class="text-white font-bold mb-4 border-b border-[var(--border-subtle)] pb-2">Método
+                                    de Pago</h4>
+                                <table class="summary-payment-table">
+                                    <tr>
+                                        <td class="text-gray-400">Tipo</td>
+                                        <td class="text-right">
+                                            <select name="metodo_pago"
+                                                class="bg-transparent text-right text-white focus:outline-none border-none cursor-pointer">
+                                                <option value="Efectivo" class="bg-black">Efectivo</option>
+                                                <option value="Tarjeta" class="bg-black">Tarjeta</option>
+                                                <option value="Transferencia" class="bg-black">Transferencia</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-gray-400">Total a Pagar</td>
+                                        <td class="text-right font-bold text-[var(--brand-orange)]" id="payment-total">
+                                            0.00€</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <div class="summary-payment-box">
+                                <h4 class="text-white font-bold mb-4 border-b border-[var(--border-subtle)] pb-2">
+                                    Desglose Económico</h4>
+                                <table class="summary-payment-table">
+                                    <tr>
+                                        <td class="text-gray-400">Subtotal Neto</td>
+                                        <td class="text-right font-mono" id="summary-neto">0.00€</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-gray-400">IVA Total</td>
+                                        <td class="text-right">
+                                            <div class="flex items-center justify-end gap-1">
+                                                <input type="number" step="0.01" id="summary-iva-input"
+                                                    class="bg-transparent text-right text-white w-20 border-b border-[var(--border-subtle)] focus:border-[var(--brand-orange)] focus:outline-none"
+                                                    value="0.00">
+                                                <span>€</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="total-row">
+                                        <td>TOTAL</td>
+                                        <td class="text-right" id="summary-total">0.00€</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-[var(--border-subtle)] flex justify-end">
+                        <button type="submit"
+                            class="btn w-full md:w-auto md:px-12 text-lg shadow-xl shadow-orange-500/20 group">
+                            <span class="mr-2 group-hover:animate-pulse"><i class="fas fa-save"></i></span> Finalizar
+                            Registro
+                        </button>
+                    </div>
+
+                </form>
+
+                <footer class="mt-10 text-center text-gray-600 text-xs pb-4">
+                    <p>&copy; 2025 Goversa System. Todos los derechos reservados.</p>
+                </footer>
+
+            </main>
+        </div>
+
+    </div>
+
+    <!-- MODAL ÉXITO -->
+    <div id="success-modal" class="fixed inset-0 hidden items-center justify-center z-50">
+        <div class="modal-content text-center">
+            <div
+                class="w-20 h-20 mx-auto rounded-full bg-green-500/10 flex items-center justify-center mb-6 ring-1 ring-green-500/30">
+                <i class="fas fa-check text-3xl text-green-500"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">¡Compra Registrada!</h3>
+            <p class="text-gray-400 mb-8">Los datos se han guardado correctamente en el sistema.</p>
+            <button
+                onclick="document.getElementById('success-modal').classList.add('hidden'); document.getElementById('success-modal').classList.remove('flex');"
+                class="btn bg-green-600 hover:bg-green-700 w-full">Entendido</button>
+        </div>
+    </div>
+
+    <!-- MODAL PROVEEDOR -->
+    <div id="provider-modal" class="fixed inset-0 hidden items-center justify-center z-50 overflow-y-auto py-10">
+        <div class="modal-content w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-6 border-b border-[var(--border-subtle)] pb-4">
+                <h3 class="text-xl font-bold text-white">Nuevo Proveedor</h3>
+                <button id="close-provider-modal" class="text-gray-400 hover:text-white"><i
+                        class="fas fa-times text-xl"></i></button>
+            </div>
+            <form id="new-provider-form">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input type="text" name="nombre" id="provider-name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label>NIF / CIF</label>
+                        <input type="text" name="cif" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" name="telefono" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="Correo" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Dirección</label>
+                        <input type="text" name="Domicilio_fiscal" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Provincia</label>
+                        <input type="text" name="Proviancia" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>CP / Localidad</label>
+                        <input type="text" name="cp_localidad" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Nombre Contacto</label>
+                        <input type="text" name="Nombre_contacto" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Web B2B</label>
+                        <input type="url" name="Sitio_web_b2b" class="form-input">
+                    </div>
+                    <div class="form-group md:col-span-2">
+                        <label>Comentarios</label>
+                        <textarea name="Comentarios" class="form-input" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" id="cancel-provider" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn">Guardar Proveedor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL ESCÁNER -->
+    <div id="scanner-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <div
+            class="relative w-[90%] max-w-lg bg-black border border-[var(--brand-orange)] rounded-2xl overflow-hidden shadow-2xl">
+            <button id="close-scanner"
+                class="absolute top-4 right-4 z-10 bg-black/50 text-white rounded-full p-2 w-10 h-10 hover:bg-red-500 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            <div id="scanner-video-container" class="w-full h-80 bg-black relative">
+                <video id="scanner-video" class="w-full h-full object-cover"></video>
+                <div
+                    class="absolute inset-0 border-2 border-[var(--brand-orange)] opacity-50 pointer-events-none m-8 rounded-lg">
+                </div>
+            </div>
+            <div class="p-4 text-center bg-[#1a1a1f]">
+                <p class="text-[var(--brand-orange)] animate-pulse font-mono text-sm">Escaneando código de barras...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script type="module">
+        import { fetchWithAuth } from './auth.js';
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // --- ESTADO & VARIABLES ---
+            let items = [];
+            let uploadedFiles = [];
+
+            // --- ELEMENTOS DOM ---
+            const form = document.getElementById("purchase-form");
+            const itemsList = document.getElementById("items-list");
+            const fechaEmisionInput = document.getElementById("fecha-emision");
+            const successModal = document.getElementById("success-modal");
+
+            // --- 1. INICIALIZACIÓN ---
+            // Fecha actual
+            const now = new Date();
+            // Format for datetime-local: YYYY-MM-DDTHH:MM
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            fechaEmisionInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+            // Cargar Sucursales
+            loadBranches();
+            setupProviderAutocomplete("proveedor", "proveedor-options");
+
+            // Helper: Debounce
+            function debounce(func, wait) {
+                let timeout;
+                return function (...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+
+            // --- BARCODE AUTOCOMPLETE LOGIC ---
+            setupBarcodeAutocomplete();
+
+            function setupBarcodeAutocomplete() {
+                const barcodeInput = document.getElementById("item-barcode");
+                const optionsContainer = document.getElementById("barcode-options");
+                const nameInput = document.getElementById("item-name");
+                const priceInput = document.getElementById("item-price");
+                const typeInput = document.getElementById("item-type");
+
+                let debounceTimeout;
+
+                barcodeInput.addEventListener("input", (e) => {
+                    const query = e.target.value.trim();
+                    clearTimeout(debounceTimeout);
+
+                    if (query.length < 2) {
+                        optionsContainer.innerHTML = "";
+                        optionsContainer.classList.remove("show");
+                        return;
+                    }
+
+                    debounceTimeout = setTimeout(async () => {
+                        try {
+                            const response = await fetchWithAuth(`/api/inventory/search?q=${encodeURIComponent(query)}`);
+                            if (!response.ok) return;
+                            const products = await response.json();
+
+                            renderBarcodeOptions(products);
+                        } catch (err) {
+                            console.error("Error searching barcode:", err);
+                        }
+                    }, 300);
+                });
+
+                // Hide options when clicking outside
+                document.addEventListener("click", (e) => {
+                    if (!barcodeInput.contains(e.target) && !optionsContainer.contains(e.target)) {
+                        optionsContainer.classList.remove("show");
+                    }
+                });
+
+                function renderBarcodeOptions(products) {
+                    optionsContainer.innerHTML = "";
+                    if (products.length === 0) {
+                        optionsContainer.classList.remove("show");
+                        return;
+                    }
+
+                    products.forEach(product => {
+                        const div = document.createElement("div");
+                        div.className = "custom-select-option";
+                        // Show Barcode - Name
+                        div.innerHTML = `
+                            <span class="font-bold text-[var(--brand-orange)]">${product.codigo_barras || 'Sin Código'}</span>
+                            <span class="text-gray-400 text-xs ml-2">${product.nombre}</span>
+                        `;
+
+                        div.addEventListener("click", () => {
+                            selectProduct(product);
+                        });
+                        optionsContainer.appendChild(div);
+                    });
+                    optionsContainer.classList.add("show");
+                }
+
+                function selectProduct(product) {
+                    barcodeInput.value = product.codigo_barras || '';
+                    nameInput.value = product.nombre || '';
+                    priceInput.value = product.costo || product.precio || '';
+                    if (product.tipo) {
+                        typeInput.value = product.tipo;
+                    }
+
+                    // Visual feedback
+                    barcodeInput.style.borderColor = 'var(--brand-green)';
+                    setTimeout(() => barcodeInput.style.borderColor = '', 1000);
+
+                    optionsContainer.innerHTML = "";
+                    optionsContainer.classList.remove("show");
+                }
+            }
+
+            async function loadBranches() {
+                const select = document.getElementById('taller');
+                try {
+                    const response = await fetchWithAuth('/api/sucursales');
+                    if (response.ok) {
+                        const branches = await response.json();
+                        if (branches.length === 0) {
+                            select.innerHTML = '<option value="">No hay sucursales disponibles</option>';
+                        } else {
+                            select.innerHTML = '';
+                            branches.forEach(branch => {
+                                const option = document.createElement('option');
+                                option.value = branch.id;
+                                option.textContent = branch.nombre;
+                                select.appendChild(option);
+                            });
+                        }
+                    } else {
+                        throw new Error('Error al cargar sucursales: ' + response.statusText);
+                    }
+                } catch (error) {
+                    console.error('Error cargando sucursales:', error);
+                    select.innerHTML = '<option value="">Error cargando sucursales</option>';
+                }
+            }
+
+            // --- 2. SIDEBAR TOGGLE ---
+            window.toggleSubmenu = function (id) {
+                const submenu = document.getElementById(id);
+                const arrowId = id.replace('submenu', 'arrow');
+                const arrow = document.getElementById(arrowId);
+
+                if (submenu.classList.contains('hidden')) {
+                    submenu.classList.remove('hidden');
+                    submenu.classList.add('flex');
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                } else {
+                    submenu.classList.add('hidden');
+                    submenu.classList.remove('flex');
+                    if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
+            }
+
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggle-sidebar');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+            let isCollapsed = false;
+
+            toggleBtn.addEventListener('click', () => {
+                isCollapsed = !isCollapsed;
+                if (isCollapsed) {
+                    sidebar.classList.remove('w-64');
+                    sidebar.classList.add('w-20');
+                    sidebarTexts.forEach(el => el.classList.add('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                    // Ocultar submenús abiertos
+                    document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                        el.classList.add('hidden');
+                        el.classList.remove('flex');
+                    });
+                } else {
+                    sidebar.classList.add('w-64');
+                    sidebar.classList.remove('w-20');
+                    sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                }
+            });
+
+            // Mobile menu
+            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+                sidebar.classList.toggle('absolute');
+                sidebar.classList.toggle('z-50');
+                sidebar.classList.toggle('h-full');
+            });
+
+            // --- 3. LÓGICA DE AGREGAR ITEMS ---
+            const addItemBtn = document.getElementById("add-item-btn");
+
+            addItemBtn.addEventListener("click", () => {
+                const nameInput = document.getElementById("item-name");
+                const priceInput = document.getElementById("item-price");
+                const qtyInput = document.getElementById("item-quantity");
+                const bonusInput = document.getElementById("item-bonus");
+                const ivaInput = document.getElementById("item-iva");
+                const barcodeInput = document.getElementById("item-barcode");
+                const typeInput = document.getElementById("item-type");
+
+                // Validar
+                let isValid = true;
+                document.getElementById("item-name-error").classList.add("hidden");
+                document.getElementById("item-price-error").classList.add("hidden");
+
+                // Validar Código de Barras (Obligatorio)
+                if (!barcodeInput.value.trim()) {
+                    alert("El Código de Barras es obligatorio para identificar el producto.");
+                    barcodeInput.focus();
+                    return;
+                }
+
+                if (!nameInput.value.trim()) {
+                    document.getElementById("item-name-error").classList.remove("hidden");
+                    isValid = false;
+                }
+                const price = parseFloat(priceInput.value);
+                if (isNaN(price) || price <= 0) {
+                    document.getElementById("item-price-error").classList.remove("hidden");
+                    isValid = false;
+                }
+
+                if (!isValid) return;
+
+                // Agregar al array
+                items.push({
+                    barcode: barcodeInput.value,
+                    name: nameInput.value,
+                    price: price,
+                    quantity: parseInt(qtyInput.value) || 1,
+                    bonus: parseFloat(bonusInput.value) || 0,
+                    iva: parseFloat(ivaInput.value) || 21,
+                    type: typeInput.value
+                });
+
+                // Renderizar y limpiar
+                renderItems();
+                calculateTotals();
+
+                // Reset inputs
+                nameInput.value = "";
+                priceInput.value = "";
+                qtyInput.value = "1";
+                bonusInput.value = "0";
+                barcodeInput.value = "";
+                typeInput.value = "Producto";
+                nameInput.focus();
+            });
+
+            function renderItems() {
+                itemsList.innerHTML = "";
+                items.forEach((item, index) => {
+                    const subtotal = (item.price * item.quantity) - item.bonus;
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                    <td>
+                        <div class="font-medium text-white">${item.name}</div>
+                        <div class="text-xs text-gray-500">${item.barcode || 'S/N'}</div>
+                    </td>
+                    <td class="text-right font-mono text-gray-300">${item.price.toFixed(2)}</td>
+                    <td class="text-center font-mono text-gray-300">${item.quantity}</td>
+                    <td class="text-right font-mono text-gray-300">${item.bonus > 0 ? '-' + item.bonus.toFixed(2) : '0.00'}</td>
+                    <td class="text-center font-mono text-gray-300">${item.iva}%</td>
+                    <td class="text-center">
+                        <button type="button" class="text-red-400 hover:text-red-300 p-2 transition-colors" onclick="removeItem(${index})">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+                    itemsList.appendChild(row);
+                });
+            }
+
+            window.removeItem = function (index) {
+                items.splice(index, 1);
+                renderItems();
+                calculateTotals();
+            }
+
+            function calculateTotals() {
+                let totalNeto = 0;
+                let totalIva = 0;
+
+                items.forEach((item) => {
+                    const subtotal = (item.price * item.quantity) - item.bonus;
+                    totalNeto += subtotal;
+                    totalIva += subtotal * (item.iva / 100);
+                });
+
+                document.getElementById("summary-neto").textContent = `${totalNeto.toFixed(2)}€`;
+                document.getElementById("summary-iva-input").value = totalIva.toFixed(2);
+                updateTotalFromManualIVA();
+            }
+
+            // Permitir modificar IVA manualmente
+            document.getElementById("summary-iva-input").addEventListener("change", updateTotalFromManualIVA);
+
+            function updateTotalFromManualIVA() {
+                const totalNeto = parseFloat(document.getElementById("summary-neto").textContent.replace("€", "")) || 0;
+                const manualIva = parseFloat(document.getElementById("summary-iva-input").value) || 0;
+                const newTotal = totalNeto + manualIva;
+
+                document.getElementById("summary-total").textContent = `${newTotal.toFixed(2)}€`;
+                document.getElementById("payment-total").textContent = `${newTotal.toFixed(2)}€`;
+            }
+
+            // --- 8. ENVÍO FORMULARIO FINAL ---
+            form.addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                if (items.length === 0) {
+                    alert("Debes agregar al menos un producto.");
+                    return;
+                }
+
+                const providerInput = document.getElementById("proveedor");
+                const providerId = providerInput.dataset.id || null;
+                const providerName = providerInput.value;
+                const branchId = document.getElementById("taller").value;
+                const paymentMethod = document.querySelector('select[name="metodo_pago"]').value;
+                const observations = document.getElementById("observaciones").value;
+                const totalFinal = parseFloat(document.getElementById("payment-total").textContent.replace("€", ""));
+
+                if (!branchId) {
+                    alert("Por favor, selecciona un Taller Destino válido.");
+                    return;
+                }
+
+                const payload = {
+                    id_proveedor: providerId,
+                    nombre_proveedor: providerName,
+                    id_sucursal: branchId,
+                    fecha_emision: document.getElementById("fecha-emision").value,
+                    metodo_pago: paymentMethod,
+                    observaciones: observations,
+                    items: items,
+                    total_final: totalFinal
+                };
+
+                console.log('Enviando payload de compra:', payload);
+
+                try {
+                    console.log('Iniciando fetchWithAuth...');
+                    const response = await fetchWithAuth('/api/compras', {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                    });
+                    console.log('Respuesta recibida:', response);
+
+                    let result;
+                    try {
+                        result = await response.json();
+                        console.log('Resultado JSON:', result);
+                    } catch (e) {
+                        console.error('Error al parsear JSON:', e);
+                        throw new Error(`Error del servidor (${response.status}): ${response.statusText}`);
+                    }
+
+                    if (result.ok) {
+                        successModal.classList.remove("hidden");
+                        successModal.classList.add("flex");
+
+                        // Reset form
+                        form.reset();
+                        items = [];
+                        renderItems();
+                        calculateTotals();
+                        previewsContainer.innerHTML = "";
+
+                        // Reset date to current time
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = String(now.getMonth() + 1).padStart(2, '0');
+                        const day = String(now.getDate()).padStart(2, '0');
+                        const hours = String(now.getHours()).padStart(2, '0');
+                        const minutes = String(now.getMinutes()).padStart(2, '0');
+                        fechaEmisionInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+                        document.getElementById("proveedor").dataset.id = "";
+                    } else {
+                        alert('Error al registrar la compra: ' + (result.error || 'Error desconocido'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error de conexión al registrar la compra: ' + error.message);
+                }
+            });
+
+            // --- 4. DROPDOWNS ---
+
+            // --- PRODUCTOS (MOCK POR AHORA) ---
+            const mockProducts = [
+                { nombre: "Pastillas de Freno Delanteras", precio: 45.50, codigo: "BRK-001" },
+                { nombre: "Filtro de Aceite 5W30", precio: 12.00, codigo: "OIL-530" },
+                { nombre: "Batería 70Ah", precio: 85.00, codigo: "BAT-70" },
+                { nombre: "Limpiaparabrisas 60cm", precio: 9.90, codigo: "WIP-60" }
+            ];
+
+            function setupMockAutocomplete(inputId, optionsId, dataArray, isProduct = false) {
+                const input = document.getElementById(inputId);
+                const optionsContainer = document.getElementById(optionsId);
+
+                input.addEventListener("input", () => {
+                    const query = input.value.toLowerCase();
+                    optionsContainer.innerHTML = "";
+
+                    if (query.length < 1) {
+                        optionsContainer.classList.remove("show");
+                        return;
+                    }
+
+                    const filtered = dataArray.filter(item => item.nombre.toLowerCase().includes(query));
+
+                    filtered.forEach(item => {
+                        const div = document.createElement("div");
+                        div.className = "option";
+                        div.textContent = item.nombre;
+                        div.addEventListener("click", () => {
+                            input.value = item.nombre;
+                            optionsContainer.classList.remove("show");
+                            // Si es producto, rellenar campos
+                            if (isProduct) {
+                                document.getElementById("item-price").value = item.precio;
+                                document.getElementById("item-barcode").value = item.codigo;
+                                document.getElementById("item-quantity").focus();
+                            }
+                        });
+                        optionsContainer.appendChild(div);
+                    });
+
+                    if (filtered.length > 0) {
+                        optionsContainer.classList.add("show");
+                    } else {
+                        optionsContainer.classList.remove("show");
+                    }
+                });
+
+                // Cerrar al hacer click fuera
+                document.addEventListener("click", (e) => {
+                    if (!input.contains(e.target) && !optionsContainer.contains(e.target)) {
+                        optionsContainer.classList.remove("show");
+                    }
+                });
+            }
+
+            setupMockAutocomplete("item-name", "product-options", mockProducts, true);
+
+
+            // --- PROVEEDORES (API REAL) ---
+            function setupProviderAutocomplete(inputId, optionsId) {
+                const input = document.getElementById(inputId);
+                const optionsContainer = document.getElementById(optionsId);
+                let debounceTimeout;
+
+                input.addEventListener("input", () => {
+                    const query = input.value.trim();
+                    clearTimeout(debounceTimeout);
+                    optionsContainer.innerHTML = "";
+
+                    if (query.length < 1) {
+                        optionsContainer.classList.remove("show");
+                        return;
+                    }
+
+                    debounceTimeout = setTimeout(async () => {
+                        try {
+                            const response = await fetchWithAuth(`/api/proveedores/search?q=${encodeURIComponent(query)}`);
+
+                            if (!response.ok) throw new Error('Error buscando proveedores');
+
+                            const providers = await response.json();
+                            optionsContainer.innerHTML = "";
+
+                            providers.forEach(provider => {
+                                const div = document.createElement("div");
+                                div.className = "option";
+                                div.textContent = provider.nombre;
+                                div.addEventListener("click", () => {
+                                    input.value = provider.nombre;
+                                    input.dataset.id = provider.id;
+                                    optionsContainer.classList.remove("show");
+                                });
+                                optionsContainer.appendChild(div);
+                            });
+
+                            // Opción crear
+                            const createDiv = document.createElement("div");
+                            createDiv.className = "create-option";
+                            createDiv.innerHTML = `<i class="fas fa-plus-circle mr-2"></i> Crear "${input.value}"`;
+                            createDiv.addEventListener("click", () => {
+                                openProviderModal(input.value);
+                                optionsContainer.classList.remove("show");
+                            });
+                            optionsContainer.appendChild(createDiv);
+
+                            optionsContainer.classList.add("show");
+
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }, 300);
+                });
+
+                // Cerrar al hacer click fuera
+                document.addEventListener("click", (e) => {
+                    if (!input.contains(e.target) && !optionsContainer.contains(e.target)) {
+                        optionsContainer.classList.remove("show");
+                    }
+                });
+            }
+
+            setupProviderAutocomplete("proveedor", "provider-options");
+
+
+            // --- 5. MODAL PROVEEDOR ---
+            const providerModal = document.getElementById("provider-modal");
+
+            window.openProviderModal = function (initialName = "") {
+                document.getElementById("provider-name").value = initialName;
+                providerModal.classList.remove("hidden");
+                providerModal.classList.add("flex");
+            }
+
+            document.getElementById("add-provider-btn").addEventListener("click", () => openProviderModal());
+
+            document.getElementById("close-provider-modal").addEventListener("click", closeProviderModal);
+            document.getElementById("cancel-provider").addEventListener("click", closeProviderModal);
+
+            function closeProviderModal() {
+                providerModal.classList.add("hidden");
+                providerModal.classList.remove("flex");
+            }
+
+            document.getElementById("new-provider-form").addEventListener("submit", async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetchWithAuth('/api/proveedores', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.ok) {
+                        document.getElementById("proveedor").value = result.proveedor.nombre;
+                        document.getElementById("proveedor").dataset.id = result.proveedor.id;
+                        closeProviderModal();
+                        e.target.reset();
+                        // Mostrar notificación de éxito si se desea
+                    } else {
+                        alert(result.error || 'Error al crear proveedor');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error de conexión al crear proveedor');
+                }
+            });
+
+
+            // --- 6. SUBIDA DE IMÁGENES ---
+            const uploadInput = document.getElementById('image-upload');
+            const previewsContainer = document.getElementById('previews-container');
+
+            uploadInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+            function handleFiles(files) {
+                for (const file of files) {
+                    if (!file.type.startsWith('image/')) continue;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'img-preview-wrapper';
+                        wrapper.innerHTML = `
+                        <img src="${e.target.result}">
+                        <button type="button" class="remove-img-btn"><i class="fas fa-times"></i></button>
+                    `;
+                        wrapper.querySelector('.remove-img-btn').addEventListener('click', () => wrapper.remove());
+                        previewsContainer.appendChild(wrapper);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+
+
+            // --- 7. ESCÁNER (QUAGGA JS) ---
+            const scannerModal = document.getElementById("scanner-modal");
+            const closeScanner = document.getElementById("close-scanner");
+
+            document.getElementById("scan-barcode-btn").addEventListener("click", () => {
+                scannerModal.classList.remove("hidden");
+                scannerModal.classList.add("flex");
+
+                Quagga.init({
+                    inputStream: { name: "Live", type: "LiveStream", target: document.querySelector("#scanner-video"), constraints: { facingMode: "environment" } },
+                    decoder: { readers: ["ean_reader", "code_128_reader"] },
+                }, (err) => {
+                    if (err) { console.error(err); return; }
+                    Quagga.start();
+                });
+            });
+
+            Quagga.onDetected((data) => {
+                document.getElementById("item-barcode").value = data.codeResult.code;
+                stopScanner();
+                // Simular búsqueda tras escaneo
+                const prod = mockProducts.find(p => p.codigo === data.codeResult.code);
+                if (prod) {
+                    document.getElementById("item-name").value = prod.nombre;
+                    document.getElementById("item-price").value = prod.precio;
+                    document.getElementById("item-quantity").focus();
+                }
+            });
+
+            function stopScanner() {
+                Quagga.stop();
+                scannerModal.classList.add("hidden");
+                scannerModal.classList.remove("flex");
+            }
+
+            closeScanner.addEventListener("click", stopScanner);
+
+
+
+
+        });
+    </script>
+</body>
+
+</html>

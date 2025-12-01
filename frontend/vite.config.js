@@ -18,6 +18,8 @@ export default defineConfig({
                 managerTallerTrabajadores: 'manager-taller-trabajadores.html',
                 managerTallerVehiculos: 'manager-taller-vehiculos.html',
                 managerTallerCitas: 'manager-taller-citas.html',
+                managerTallerCompras: 'manager-taller-compras.html',
+                managerTallerComprasHistorial: 'manager-taller-compras-historial.html',
                 citaPrevia: 'cita-previa.html',
             }
         }

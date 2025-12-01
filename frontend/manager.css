@@ -1,0 +1,65 @@
+/* --- VARIABLES & BASE --- */
+:root {
+    --brand-orange: #FF652B;
+    --brand-orange-glow: rgba(255, 101, 43, 0.35);
+    --brand-orange-dark: #e05300;
+    --bg-deep: #050505;
+    --bg-panel: rgba(22, 22, 26, 0.75);
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --input-bg: rgba(0, 0, 0, 0.4);
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: "Montserrat", sans-serif;
+}
+
+/* --- LAYOUT FIXES --- */
+.container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- MANAGER PANEL --- */
+.manager-panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-subtle);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+}
+
+.manager-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--brand-orange), transparent);
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .manager-panel {
+        max-width: 100%;
+        padding: 20px;
+    }
+}
