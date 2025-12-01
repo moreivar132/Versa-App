@@ -37,6 +37,8 @@ router.get('/', verifyJWT, async (req, res) => {
 
 // POST /api/compras - Crear nueva compra
 router.post('/', verifyJWT, async (req, res) => {
+    console.log('POST /api/compras received. Body:', req.body);
+    console.log('User:', req.user);
     const {
         id_proveedor,
         nombre_proveedor, // Fallback if ID is missing (create new?)
@@ -60,7 +62,17 @@ router.post('/', verifyJWT, async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        // 1. Resolver Proveedor
+        // 1. Resolver Proveedor y Sucursal (Validación estricta)
+        if (!id_sucursal) {
+            throw new Error('El ID de sucursal es obligatorio.');
+        }
+
+        // Verificar existencia de sucursal
+        const sucursalCheck = await client.query('SELECT id FROM sucursal WHERE id = $1', [id_sucursal]);
+        if (sucursalCheck.rows.length === 0) {
+            throw new Error('La sucursal especificada no existe.');
+        }
+
         let finalProveedorId = id_proveedor;
         if (!finalProveedorId && nombre_proveedor) {
             // Intentar buscar por nombre o crear
@@ -76,23 +88,24 @@ router.post('/', verifyJWT, async (req, res) => {
             }
         }
 
-        // 2. Insertar Cabecera
-        const insertCabeceraQuery = `
-            INSERT INTO compracabecera 
-            (id_tenant, id_proveedor, id_sucursal, fecha_emision, metodo_pago, observaciones, total, created_at, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), $8)
-            RETURNING id
-        `;
+        if (!finalProveedorId) {
+            throw new Error('Debe especificar un proveedor válido o un nombre para crearlo.');
+        }
 
+        // 2. Insertar Cabecera (Inicialmente con total 0, se actualizará al final)
         // Ensure fecha_emision is formatted
-        // Frontend sends localized string, might need parsing or just use NOW() if invalid
-        // Ideally frontend sends ISO string. We'll handle that in frontend.
-        // For now, let's assume it's a valid date string or default to NOW
         let fecha = new Date();
         if (fecha_emision) {
             const parsed = new Date(fecha_emision);
             if (!isNaN(parsed)) fecha = parsed;
         }
+
+        const insertCabeceraQuery = `
+            INSERT INTO compracabecera 
+            (id_tenant, id_proveedor, id_sucursal, fecha_emision, metodo_pago, observaciones, total, created_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, 0, NOW(), $7)
+            RETURNING id
+        `;
 
         const cabeceraRes = await client.query(insertCabeceraQuery, [
             id_tenant,
@@ -101,17 +114,18 @@ router.post('/', verifyJWT, async (req, res) => {
             fecha,
             metodo_pago,
             observaciones,
-            total_final,
             id_usuario
         ]);
 
         const id_compra = cabeceraRes.rows[0].id;
 
-        // 3. Insertar Líneas
+        // 3. Insertar Líneas y Calcular Totales
+        let calculatedTotal = 0;
+
         for (const item of items) {
             let productId = item.id_producto;
 
-            // Si no hay ID pero hay código de barras, buscar o crear producto
+            // Resolver Producto (Buscar o Crear)
             if (!productId && item.barcode) {
                 const prodRes = await client.query(
                     'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2',
@@ -120,14 +134,14 @@ router.post('/', verifyJWT, async (req, res) => {
                 if (prodRes.rows.length > 0) {
                     productId = prodRes.rows[0].id;
                 } else {
-                    // Crear producto básico
+                    // Crear producto básico vinculado a la sucursal de la compra
                     const createProd = await client.query(
-                        'INSERT INTO producto (id_tenant, codigo_barras, nombre, precio, id_sucursal, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
-                        [id_tenant, item.barcode, item.name, item.price, id_sucursal]
+                        'INSERT INTO producto (id_tenant, codigo_barras, nombre, precio, id_sucursal, tipo, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id',
+                        [id_tenant, item.barcode, item.name, item.price, id_sucursal, item.type || 'Producto']
                     );
                     productId = createProd.rows[0].id;
                 }
-            } else if (!productId && !item.barcode) {
+            } else if (!productId) {
                 // Producto sin código, buscar por nombre exacto o crear
                 const prodRes = await client.query(
                     'SELECT id FROM producto WHERE nombre = $1 AND id_tenant = $2',
@@ -137,11 +151,15 @@ router.post('/', verifyJWT, async (req, res) => {
                     productId = prodRes.rows[0].id;
                 } else {
                     const createProd = await client.query(
-                        'INSERT INTO producto (id_tenant, nombre, precio, id_sucursal, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
-                        [id_tenant, item.name, item.price, id_sucursal]
+                        'INSERT INTO producto (id_tenant, nombre, precio, id_sucursal, tipo, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id',
+                        [id_tenant, item.name, item.price, id_sucursal, item.type || 'Producto']
                     );
                     productId = createProd.rows[0].id;
                 }
+            }
+
+            if (!productId) {
+                throw new Error(`No se pudo resolver el producto para el item: ${item.name}`);
             }
 
             const insertLineaQuery = `
@@ -150,7 +168,11 @@ router.post('/', verifyJWT, async (req, res) => {
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
             `;
 
+            // Calcular total línea: (precio * cantidad) - bonus (si aplica)
+            // Nota: El usuario no mencionó 'bonus' en el modelo, pero el frontend lo envía.
+            // Asumiremos que el total_linea debe reflejar el coste real.
             const lineTotal = (item.price * item.quantity) - (item.bonus || 0);
+            calculatedTotal += lineTotal;
 
             await client.query(insertLineaQuery, [
                 id_compra,
@@ -161,13 +183,16 @@ router.post('/', verifyJWT, async (req, res) => {
                 item.iva,
                 lineTotal
             ]);
-
-            // Opcional: Actualizar stock si existiera columna stock
-            // await client.query('UPDATE producto SET stock = stock + $1 WHERE id = $2', [item.quantity, productId]);
         }
 
+        // 4. Actualizar Total en Cabecera
+        await client.query(
+            'UPDATE compracabecera SET total = $1 WHERE id = $2',
+            [calculatedTotal, id_compra]
+        );
+
         await client.query('COMMIT');
-        res.json({ ok: true, id_compra, message: 'Compra registrada exitosamente' });
+        res.json({ ok: true, id_compra, message: 'Compra registrada exitosamente', total: calculatedTotal });
 
     } catch (error) {
         await client.query('ROLLBACK');

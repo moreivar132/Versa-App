@@ -1,8 +1,8 @@
 const SESSION_KEY = 'versa_session_v1';
 
 export function getApiBaseUrl() {
-  // FORZADO: Usar siempre el backend de Railway para desarrollo y producción
-  return 'https://versa-app-dev.up.railway.app';
+  // Usar localhost para desarrollo local
+  return 'http://localhost:3000';
 }
 
 const API_BASE_URL = getApiBaseUrl();

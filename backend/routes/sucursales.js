@@ -12,12 +12,16 @@ router.get('/', verifyJWT, async (req, res) => {
         let query;
         let params;
 
+        console.log('GET /api/sucursales - User:', req.user);
+
         if (isSuperAdmin) {
             query = 'SELECT * FROM sucursal ORDER BY nombre ASC';
             params = [];
+            console.log('Executing SuperAdmin query');
         } else {
             query = 'SELECT * FROM sucursal WHERE id_tenant = $1 ORDER BY nombre ASC';
             params = [id_tenant];
+            console.log('Executing Tenant query for tenant:', id_tenant);
         }
 
         const result = await pool.query(query, params);

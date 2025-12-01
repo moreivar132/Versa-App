@@ -18,55 +18,14 @@
     <!-- Librería Quagga para escáner -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
+    <link rel="stylesheet" href="manager.css">
     <style>
         /* --- VARIABLES & BASE --- */
-        :root {
-            --brand-orange: #FF652B;
-            --brand-orange-glow: rgba(255, 101, 43, 0.35);
-            --brand-orange-dark: #e05300;
-
-            /* Modern Dark Theme Palette */
-            --bg-deep: #050505;
-            --bg-panel: rgba(22, 22, 26, 0.75);
-            --border-subtle: rgba(255, 255, 255, 0.08);
-            --text-primary: #ffffff;
-            --text-secondary: #9ca3af;
-            --input-bg: rgba(0, 0, 0, 0.4);
-
-            --success-color: #10b981;
-            --error-color: #ef4444;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-deep);
-            background-image:
-                radial-gradient(circle at 15% 50%, rgba(255, 101, 43, 0.08), transparent 25%),
-                radial-gradient(circle at 85% 30%, rgba(40, 40, 50, 0.5), transparent 25%);
-            font-family: "Montserrat", sans-serif;
-            color: var(--text-primary);
-            overflow-x: hidden;
-        }
+        /* Redundant variables removed */
 
         /* --- SCROLLBAR --- */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
+        /* Redundant scrollbar styles removed */
 
-        ::-webkit-scrollbar-track {
-            background: var(--bg-deep);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--brand-orange);
-        }
 
         /* --- SIDEBAR --- */
         #sidebar {
@@ -77,32 +36,9 @@
         }
 
         /* --- FORM CONTENEDOR --- */
-        .inventory-form-container {
-            background: var(--bg-panel);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--border-subtle);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            padding: 40px;
-            max-width: 1400px;
-            /* Un poco más ancho para la tabla */
-            margin: 0 auto;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-            position: relative;
-            overflow: hidden;
-        }
+        /* --- FORM CONTENEDOR --- */
 
-        .inventory-form-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, transparent, var(--brand-orange), transparent);
-            opacity: 0.8;
-        }
+
 
         .form-main-title {
             font-size: 28px;
@@ -654,7 +590,7 @@
                 </div>
 
                 <!-- Bottom Actions -->
-                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
                     <div class="flex items-center gap-3 px-3 py-2 mb-2">
                         <div
                             class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
@@ -690,7 +626,7 @@
 
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
 
-                <form id="purchase-form" class="inventory-form-container">
+                <form id="purchase-form" class="manager-panel">
                     <div class="flex items-center justify-between mb-8">
                         <h2 class="form-main-title mb-0">Registro de Compra</h2>
                         <span
@@ -760,14 +696,21 @@
                                 <tr id="add-item-row">
                                     <td>
                                         <div class="flex flex-col gap-2">
-                                            <div class="input-group">
-                                                <input type="text" id="item-barcode" placeholder="Cód. Barras"
-                                                    class="form-input text-xs" />
-                                                <button type="button" id="scan-barcode-btn"
-                                                    class="btn btn-secondary btn-sm">
-                                                    <i class="fas fa-barcode"></i>
-                                                </button>
+                                            <div class="relative">
+                                                <div class="input-group">
+                                                    <input type="text" id="item-barcode" placeholder="Cód. Barras"
+                                                        class="form-input text-xs" autocomplete="off" />
+                                                    <button type="button" id="scan-barcode-btn"
+                                                        class="btn btn-secondary btn-sm">
+                                                        <i class="fas fa-barcode"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="custom-select-options" id="barcode-options"></div>
                                             </div>
+                                            <select id="item-type" class="form-input text-xs">
+                                                <option value="Producto">Producto</option>
+                                                <option value="Servicio">Servicio</option>
+                                            </select>
                                             <div class="custom-select-container">
                                                 <input type="text" id="item-name" class="form-input custom-select-input"
                                                     placeholder="Nombre del producto..." />
@@ -1020,23 +963,124 @@
 
             // Cargar Sucursales
             loadBranches();
+            setupProviderAutocomplete("proveedor", "proveedor-options");
+
+            // Helper: Debounce
+            function debounce(func, wait) {
+                let timeout;
+                return function (...args) {
+                    const context = this;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(context, args), wait);
+                };
+            }
+
+            // --- BARCODE AUTOCOMPLETE LOGIC ---
+            setupBarcodeAutocomplete();
+
+            function setupBarcodeAutocomplete() {
+                const barcodeInput = document.getElementById("item-barcode");
+                const optionsContainer = document.getElementById("barcode-options");
+                const nameInput = document.getElementById("item-name");
+                const priceInput = document.getElementById("item-price");
+                const typeInput = document.getElementById("item-type");
+
+                let debounceTimeout;
+
+                barcodeInput.addEventListener("input", (e) => {
+                    const query = e.target.value.trim();
+                    clearTimeout(debounceTimeout);
+
+                    if (query.length < 2) {
+                        optionsContainer.innerHTML = "";
+                        optionsContainer.classList.remove("show");
+                        return;
+                    }
+
+                    debounceTimeout = setTimeout(async () => {
+                        try {
+                            const response = await fetchWithAuth(`/api/inventory/search?q=${encodeURIComponent(query)}`);
+                            if (!response.ok) return;
+                            const products = await response.json();
+
+                            renderBarcodeOptions(products);
+                        } catch (err) {
+                            console.error("Error searching barcode:", err);
+                        }
+                    }, 300);
+                });
+
+                // Hide options when clicking outside
+                document.addEventListener("click", (e) => {
+                    if (!barcodeInput.contains(e.target) && !optionsContainer.contains(e.target)) {
+                        optionsContainer.classList.remove("show");
+                    }
+                });
+
+                function renderBarcodeOptions(products) {
+                    optionsContainer.innerHTML = "";
+                    if (products.length === 0) {
+                        optionsContainer.classList.remove("show");
+                        return;
+                    }
+
+                    products.forEach(product => {
+                        const div = document.createElement("div");
+                        div.className = "custom-select-option";
+                        // Show Barcode - Name
+                        div.innerHTML = `
+                            <span class="font-bold text-[var(--brand-orange)]">${product.codigo_barras || 'Sin Código'}</span>
+                            <span class="text-gray-400 text-xs ml-2">${product.nombre}</span>
+                        `;
+
+                        div.addEventListener("click", () => {
+                            selectProduct(product);
+                        });
+                        optionsContainer.appendChild(div);
+                    });
+                    optionsContainer.classList.add("show");
+                }
+
+                function selectProduct(product) {
+                    barcodeInput.value = product.codigo_barras || '';
+                    nameInput.value = product.nombre || '';
+                    priceInput.value = product.costo || product.precio || '';
+                    if (product.tipo) {
+                        typeInput.value = product.tipo;
+                    }
+
+                    // Visual feedback
+                    barcodeInput.style.borderColor = 'var(--brand-green)';
+                    setTimeout(() => barcodeInput.style.borderColor = '', 1000);
+
+                    optionsContainer.innerHTML = "";
+                    optionsContainer.classList.remove("show");
+                }
+            }
 
             async function loadBranches() {
+                const select = document.getElementById('taller');
                 try {
                     const response = await fetchWithAuth('/api/sucursales');
                     if (response.ok) {
                         const branches = await response.json();
-                        const select = document.getElementById('taller');
-                        select.innerHTML = '';
-                        branches.forEach(branch => {
-                            const option = document.createElement('option');
-                            option.value = branch.id;
-                            option.textContent = branch.nombre;
-                            select.appendChild(option);
-                        });
+                        if (branches.length === 0) {
+                            select.innerHTML = '<option value="">No hay sucursales disponibles</option>';
+                        } else {
+                            select.innerHTML = '';
+                            branches.forEach(branch => {
+                                const option = document.createElement('option');
+                                option.value = branch.id;
+                                option.textContent = branch.nombre;
+                                select.appendChild(option);
+                            });
+                        }
+                    } else {
+                        throw new Error('Error al cargar sucursales: ' + response.statusText);
                     }
                 } catch (error) {
                     console.error('Error cargando sucursales:', error);
+                    select.innerHTML = '<option value="">Error cargando sucursales</option>';
                 }
             }
 
@@ -1100,11 +1144,19 @@
                 const bonusInput = document.getElementById("item-bonus");
                 const ivaInput = document.getElementById("item-iva");
                 const barcodeInput = document.getElementById("item-barcode");
+                const typeInput = document.getElementById("item-type");
 
                 // Validar
                 let isValid = true;
                 document.getElementById("item-name-error").classList.add("hidden");
                 document.getElementById("item-price-error").classList.add("hidden");
+
+                // Validar Código de Barras (Obligatorio)
+                if (!barcodeInput.value.trim()) {
+                    alert("El Código de Barras es obligatorio para identificar el producto.");
+                    barcodeInput.focus();
+                    return;
+                }
 
                 if (!nameInput.value.trim()) {
                     document.getElementById("item-name-error").classList.remove("hidden");
@@ -1125,7 +1177,8 @@
                     price: price,
                     quantity: parseInt(qtyInput.value) || 1,
                     bonus: parseFloat(bonusInput.value) || 0,
-                    iva: parseFloat(ivaInput.value) || 21
+                    iva: parseFloat(ivaInput.value) || 21,
+                    type: typeInput.value
                 });
 
                 // Renderizar y limpiar
@@ -1138,6 +1191,7 @@
                 qtyInput.value = "1";
                 bonusInput.value = "0";
                 barcodeInput.value = "";
+                typeInput.value = "Producto";
                 nameInput.focus();
             });
 
@@ -1215,24 +1269,40 @@
                 const observations = document.getElementById("observaciones").value;
                 const totalFinal = parseFloat(document.getElementById("payment-total").textContent.replace("€", ""));
 
+                if (!branchId) {
+                    alert("Por favor, selecciona un Taller Destino válido.");
+                    return;
+                }
+
                 const payload = {
                     id_proveedor: providerId,
                     nombre_proveedor: providerName,
                     id_sucursal: branchId,
-                    fecha_emision: new Date().toISOString(),
+                    fecha_emision: document.getElementById("fecha-emision").value,
                     metodo_pago: paymentMethod,
                     observaciones: observations,
                     items: items,
                     total_final: totalFinal
                 };
 
+                console.log('Enviando payload de compra:', payload);
+
                 try {
+                    console.log('Iniciando fetchWithAuth...');
                     const response = await fetchWithAuth('/api/compras', {
                         method: 'POST',
                         body: JSON.stringify(payload)
                     });
+                    console.log('Respuesta recibida:', response);
 
-                    const result = await response.json();
+                    let result;
+                    try {
+                        result = await response.json();
+                        console.log('Resultado JSON:', result);
+                    } catch (e) {
+                        console.error('Error al parsear JSON:', e);
+                        throw new Error(`Error del servidor (${response.status}): ${response.statusText}`);
+                    }
 
                     if (result.ok) {
                         successModal.classList.remove("hidden");
@@ -1256,11 +1326,11 @@
 
                         document.getElementById("proveedor").dataset.id = "";
                     } else {
-                        alert(result.error || 'Error al registrar la compra');
+                        alert('Error al registrar la compra: ' + (result.error || 'Error desconocido'));
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('Error de conexión al registrar la compra');
+                    alert('Error de conexión al registrar la compra: ' + error.message);
                 }
             });
 

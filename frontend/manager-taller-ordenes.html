@@ -15,42 +15,14 @@
   <!-- Material Symbols (Iconos) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
+  <link rel="stylesheet" href="manager.css">
   <style>
     /* Estilos Generales (Reutilizados) */
-    :root {
-      --brand-orange: #FF652B;
-      --brand-orange-strong: #FF7A45;
-      --surface-elevated: rgba(18, 18, 20, 0.96);
-      --surface-border: rgba(255, 255, 255, 0.08);
-      --surface-highlight: rgba(255, 255, 255, 0.04);
-      --dark-bg: #000000;
-      --surface-bg: #1a1a1a;
-      --border-color: #2a2a2a;
-      --input-bg: #333333;
-      --text-primary: #ffffff;
-      --text-secondary: #cccccc;
-      --success-color: #28a745;
-      --error-color: #dc3545;
-    }
-
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: var(--dark-bg);
-      font-family: "Montserrat", Arial, sans-serif;
-      color: var(--text-primary);
-    }
+    /* Redundant variables removed */
 
     /* Estructura del formulario de órdenes */
-    .order-form-container {
-      background-color: var(--surface-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 40px;
-      max-width: 1400px;
-      /* Limit width */
-      margin: 0 auto;
-    }
+
+
 
     .form-header {
       display: flex;
@@ -621,7 +593,7 @@
         </div>
 
         <!-- Bottom Actions -->
-        <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+        <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
           <div class="flex items-center gap-3 px-3 py-2 mb-2">
             <div
               class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
@@ -642,7 +614,7 @@
     </aside>
 
     <!-- Main Content Wrapper -->
-    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
       <!-- Top Mobile Header -->
       <header
         class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
@@ -654,8 +626,8 @@
         </button>
       </header>
 
-      <main class="flex-1 overflow-y-auto p-6">
-        <form id="order-form" class="order-form-container">
+      <main class="flex-1 overflow-y-auto p-6 relative z-10">
+        <form id="order-form" class="manager-panel">
           <div class="form-header">
             <h2 class="form-main-title">Orden de Reparación</h2>
             <div class="form-header-actions">

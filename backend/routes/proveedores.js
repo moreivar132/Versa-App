@@ -81,6 +81,8 @@ router.get('/', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     const isSuperAdmin = req.user.is_super_admin;
 
+    const limit = parseInt(req.query.limit) || 3;
+
     try {
         let query;
         let params;
@@ -89,17 +91,17 @@ router.get('/', verifyJWT, async (req, res) => {
             query = `
                 SELECT * FROM proveedor 
                 ORDER BY created_at DESC 
-                LIMIT 3
+                LIMIT $1
             `;
-            params = [];
+            params = [limit];
         } else {
             query = `
                 SELECT * FROM proveedor 
                 WHERE id_tenant = $1 
                 ORDER BY created_at DESC 
-                LIMIT 3
+                LIMIT $2
             `;
-            params = [id_tenant];
+            params = [id_tenant, limit];
         }
 
         const result = await pool.query(query, params);
