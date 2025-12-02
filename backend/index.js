@@ -18,6 +18,12 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Logger Middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Rutas de autenticación
 app.use('/api/auth', authRouter);
 app.use('/api/admin', superAdminRouter);
@@ -28,6 +34,12 @@ app.use('/api/citas', require('./routes/citas'));
 app.use('/api/inventory', require('./routes/inventory'));
 app.use('/api/sucursales', require('./routes/sucursales'));
 app.use('/api/compras', require('./routes/compras'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/crm/chat', require('./routes/crm_chat'));
+app.use('/api/upload', require('./routes/upload'));
+
+// Servir archivos estáticos subidos
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Ruta de test para la base de datos
 app.get('/api/db-test', async (req, res) => {
@@ -58,8 +70,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // --- Iniciar Servidor ---
-app.listen(port, () => {
-  console.log(`🚀 Servidor escuchando en http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`🚀 Servidor escuchando en http://0.0.0.0:${port}`);
   if (process.env.NODE_ENV !== 'production') {
     console.log('-> Modo de Desarrollo: El backend solo funciona como API.');
     console.log('-> El frontend debe correr en su propio servidor (Vite).');
