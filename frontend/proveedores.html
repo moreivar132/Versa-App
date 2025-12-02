@@ -7,6 +7,8 @@
     <title>Gestión de Proveedores | Versa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script src="./guard.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -20,8 +22,16 @@
     <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg overflow-hidden">
         <!-- Header -->
         <div class="bg-indigo-600 px-8 py-6">
-            <h1 class="text-2xl font-bold text-white">Registrar Nuevo Proveedor</h1>
-            <p class="text-indigo-100 mt-1">Ingrese los datos del proveedor para su organización.</p>
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-white">Registrar Nuevo Proveedor</h1>
+                    <p class="text-indigo-100 mt-1">Ingrese los datos del proveedor para su organización.</p>
+                </div>
+                <a href="#" data-logout class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-white/90 hover:text-white hover:bg-indigo-700 transition">
+                    <span class="material-icons-outlined">logout</span>
+                    <span class="hidden sm:inline">Cerrar sesión</span>
+                </a>
+            </div>
         </div>
 
         <!-- Formulario -->
