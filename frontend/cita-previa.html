@@ -1626,7 +1626,10 @@
         </div>
     </div>
 
-    <script>
+        <script type="module">
+        import { getApiBaseUrl } from './auth.js';
+        const API_BASE_URL = getApiBaseUrl();
+
         document.addEventListener('DOMContentLoaded', () => {
 
             const STATIC_WORKSHOP_DATA = {
@@ -1642,7 +1645,7 @@
 
             const CONFIG = {
                 api: {
-                    baseUrl: 'http://localhost:3000',
+                    baseUrl: API_BASE_URL,
                     bookingWebhook: '/api/citas/crear',
                     configEndpoint: '/api/citas/config'
                 },
