@@ -5,21 +5,48 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gestión de Órdenes - Goversa</title>
+
+  <!-- Fuentes e Iconos -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/guard.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="manager.css">
-  <style>
-    /* Estilos Generales (Reutilizados) */
-    /* Redundant variables removed */
 
-    /* Estructura del formulario de órdenes */
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* --- Variables de Diseño (Fallback por si falta manager.css) --- */
+    :root {
+      --brand-orange: #ff5f00;
+      --text-primary: #ffffff;
+      --text-secondary: #9da6b9;
+      --surface-bg: #111318;
+      --surface-border: #282e39;
+      --input-bg: #1a1d24;
+      --border-color: #444444;
+      --error-color: #ef4444;
+      --success-color: #10b981;
+      --font-main: 'Montserrat', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: #0b0d11;
+      /* Fondo muy oscuro */
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    /* Estilos Específicos del Formulario */
+    .manager-panel {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
     .form-header {
       display: flex;
       justify-content: space-between;
@@ -33,16 +60,13 @@
       font-size: 28px;
       font-weight: 800;
       margin: 0;
+      color: var(--text-primary);
     }
 
     .form-header-actions {
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
-    }
-
-    .form-header-actions .btn {
-      padding: 10px 20px;
     }
 
     .form-section {
@@ -94,11 +118,12 @@
       padding: 12px;
       border-radius: 8px;
       background-color: var(--input-bg);
-      border: 1px solid #444;
+      border: 1px solid var(--border-color);
       color: var(--text-primary);
       font-family: "Montserrat", Arial, sans-serif;
       font-size: 15px;
       box-sizing: border-box;
+      transition: border-color 0.3s, box-shadow 0.3s;
     }
 
     .form-input:focus,
@@ -127,16 +152,19 @@
       background-color: var(--input-bg);
       padding: 12px;
       border-radius: 8px;
-      border: 1px solid #444;
+      border: 1px solid var(--border-color);
       min-height: 47px;
       box-sizing: border-box;
       font-size: 14px;
       color: var(--text-secondary);
+      display: flex;
+      align-items: center;
     }
 
     /* Estilos para Dropdown Buscable */
     .custom-select-container {
       position: relative;
+      width: 100%;
     }
 
     .custom-select-options {
@@ -151,6 +179,8 @@
       max-height: 250px;
       overflow-y: auto;
       z-index: 1000;
+      margin-top: 5px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     }
 
     .custom-select-options.show {
@@ -161,10 +191,16 @@
       padding: 12px 15px;
       cursor: pointer;
       font-size: 14px;
+      border-bottom: 1px solid #444;
+    }
+
+    .custom-select-options .option:last-child {
+      border-bottom: none;
     }
 
     .custom-select-options .option:hover {
       background-color: var(--brand-orange);
+      color: white;
     }
 
     /* Estilos Tabla de Items */
@@ -176,10 +212,11 @@
 
     .items-table th,
     .items-table td {
-      border-bottom: 1px solid #444;
+      border-bottom: 1px solid var(--border-color);
       padding: 12px 8px;
       text-align: left;
       vertical-align: middle;
+      color: var(--text-primary);
     }
 
     .items-table th {
@@ -187,11 +224,12 @@
       color: var(--text-secondary);
       font-size: 14px;
       font-weight: 600;
+      border-radius: 4px;
     }
 
     .items-table .form-input,
     .items-table .form-select {
-      padding: 10px;
+      padding: 8px;
       font-size: 14px;
     }
 
@@ -208,6 +246,7 @@
 
     .summary-table td {
       padding: 8px 0;
+      color: var(--text-primary);
     }
 
     .summary-table tr td:first-child {
@@ -233,7 +272,7 @@
       border-color: var(--error-color);
     }
 
-    /* --- NUEVOS ESTILOS PARA SUBIDA DE MÚLTIPLES IMÁGENES --- */
+    /* Subida de Imágenes */
     .multi-image-upload-box {
       border: 2px dashed var(--border-color);
       border-radius: 8px;
@@ -247,12 +286,14 @@
       justify-content: center;
       flex-direction: column;
       gap: 10px;
+      color: var(--text-secondary);
     }
 
     .multi-image-upload-box:hover,
     .multi-image-upload-box.dragover {
       border-color: var(--brand-orange);
       background-color: #252525;
+      color: var(--text-primary);
     }
 
     #previews-container {
@@ -291,6 +332,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .remove-img-btn:hover {
+      transform: scale(1.1);
     }
 
     .visually-hidden {
@@ -304,9 +350,10 @@
       border: 0;
     }
 
+    /* Botones */
     .btn {
       background-color: var(--brand-orange);
-      color: var(--text-primary);
+      color: white;
       border: none;
       cursor: pointer;
       font-weight: 600;
@@ -322,7 +369,8 @@
 
     .btn-secondary {
       background-color: var(--input-bg);
-      border: 1px solid #444;
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
     }
 
     .btn-secondary:hover {
@@ -332,10 +380,12 @@
     .btn-outline {
       background-color: transparent;
       border: 1px solid var(--border-color);
+      color: var(--text-secondary);
     }
 
     .btn-outline:hover {
       background-color: var(--border-color);
+      color: var(--text-primary);
     }
 
     /* Toast Notification */
@@ -364,7 +414,7 @@
       bottom: 50px;
     }
 
-    /* --- ESTILOS PARA EL MODAL DE ÉXITO --- */
+    /* Modal de Éxito */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -423,6 +473,7 @@
       font-size: 24px;
       font-weight: 700;
       margin: 0 0 15px 0;
+      color: var(--text-primary);
     }
 
     .modal-content p {
@@ -437,6 +488,7 @@
       gap: 15px;
     }
 
+    /* Responsive */
     @media (max-width: 1024px) {
       .summary-payment-grid {
         grid-template-columns: 1fr;
@@ -464,20 +516,18 @@
       .grid-cols-5 {
         grid-template-columns: 1fr;
       }
-
-      .order-form-container {
-        padding: 24px;
-      }
     }
   </style>
 </head>
 
 <body>
   <div class="flex h-screen w-full">
+    <!-- SIDEBAR -->
     <aside id="sidebar"
       class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
       <div class="flex h-full flex-col justify-between">
         <div class="flex flex-col gap-4">
+          <!-- Logo -->
           <div class="flex items-center gap-3 p-2 mb-4">
             <div class="logo-badge"
               style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
@@ -492,6 +542,7 @@
             </button>
           </div>
 
+          <!-- Navegación -->
           <nav class="flex flex-col gap-2">
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
               href="index.html">
@@ -499,6 +550,7 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
             </a>
 
+            <!-- Submenú Taller (Activo) -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('taller-submenu')">
@@ -516,6 +568,7 @@
               </div>
             </div>
 
+            <!-- Submenú Tienda -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('tienda-submenu')">
@@ -539,6 +592,7 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
 
+            <!-- Submenú Cuentas -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('cuentas-submenu')">
@@ -564,6 +618,7 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
             </a>
 
+            <!-- Submenú Contactos -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('contactos-submenu')">
@@ -581,6 +636,7 @@
           </nav>
         </div>
 
+        <!-- Usuario Footer -->
         <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
           <div class="flex items-center gap-3 px-3 py-2 mb-2">
             <div
@@ -601,7 +657,9 @@
       </div>
     </aside>
 
+    <!-- MAIN CONTENT -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <!-- Header Mobile -->
       <header
         class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
         <div class="logo-badge p-2">
@@ -613,13 +671,17 @@
       </header>
 
       <main class="flex-1 overflow-y-auto p-6 relative z-10">
+        <!-- FORMULARIO PRINCIPAL -->
+        <!-- NOTA: 'action' y 'method' deben configurarse según tu backend -->
         <form id="order-form" class="manager-panel">
+          <!-- Inputs Ocultos para almacenar IDs seleccionados -->
           <input type="hidden" id="id-tecnico-hidden" name="idMecanico" />
           <input type="hidden" id="id-cliente-hidden" name="idCliente" />
           <input type="hidden" id="id-vehiculo-hidden" name="idVehiculo" />
           <input type="hidden" id="id-tipo-orden-hidden" name="idTipoOrden" />
           <input type="hidden" id="id-taller-hidden" name="idSucursal" />
 
+          <!-- Cabecera del Formulario -->
           <div class="form-header">
             <h2 class="form-main-title">Orden de Reparación</h2>
             <div class="form-header-actions">
@@ -629,6 +691,7 @@
             </div>
           </div>
 
+          <!-- SECCIÓN 1: Datos Generales -->
           <div class="form-section">
             <div class="form-grid grid-cols-4">
               <div class="form-group">
@@ -643,21 +706,25 @@
                 <label for="tecnico">Técnico</label>
                 <div class="custom-select-container">
                   <input type="text" id="tecnico" name="tecnico" class="form-input custom-select-input"
-                    placeholder="Buscar técnico...">
-                  <div class="custom-select-options" id="tecnico-options"></div>
+                    placeholder="Buscar técnico..." autocomplete="off">
+                  <div class="custom-select-options" id="tecnico-options">
+                    <!-- Las opciones se inyectan con JS -->
+                  </div>
                 </div>
               </div>
               <div class="form-group">
                 <label for="taller">Taller *</label>
                 <select id="taller" name="taller" class="form-select" required>
                   <option value="" disabled selected>Seleccionar Taller</option>
-                  <option value="2">CALLE EL TESORO</option>
-                  <option value="1">VAZQUEZ DE MELLA</option>
+                  <!-- BACKEND: Llenar estas opciones dinámicamente -->
+                  <option value="1">SUCURSAL PRINCIPAL</option>
+                  <option value="2">SUCURSAL CENTRO</option>
                 </select>
               </div>
             </div>
           </div>
 
+          <!-- SECCIÓN 2: Cliente y Vehículo -->
           <div class="form-section">
             <div class="form-grid grid-cols-5">
               <div class="form-group" style="grid-column: span 2;">
@@ -665,7 +732,7 @@
                 <div class="custom-select-container">
                   <div class="input-group">
                     <input type="text" id="buscar-cliente" name="cliente_nombre" class="form-input custom-select-input"
-                      placeholder="Nombre, NIF o teléfono...">
+                      placeholder="Nombre, NIF o teléfono..." autocomplete="off">
                     <button type="button" id="add-client-btn" class="btn btn-secondary"
                       title="Crear nuevo cliente">+</button>
                   </div>
@@ -681,7 +748,7 @@
                 <div class="custom-select-container">
                   <div class="input-group">
                     <input type="text" id="buscar-vehiculo" name="vehiculo_desc" class="form-input custom-select-input"
-                      placeholder="Matrícula...">
+                      placeholder="Matrícula..." autocomplete="off">
                     <button type="button" id="add-vehicle-btn" class="btn btn-secondary"
                       title="Crear nuevo vehículo">+</button>
                   </div>
@@ -695,6 +762,7 @@
             </div>
           </div>
 
+          <!-- SECCIÓN 3: Detalles de Recepción -->
           <div class="form-section">
             <div class="form-grid grid-cols-4">
               <div class="form-group">
@@ -734,6 +802,7 @@
             </div>
           </div>
 
+          <!-- SECCIÓN 4: Items (Productos/Servicios) -->
           <div class="form-section">
             <table class="items-table">
               <thead>
@@ -748,14 +817,15 @@
                 </tr>
               </thead>
               <tbody id="order-items-list">
-                </tbody>
+                <!-- Items agregados por JS -->
+              </tbody>
               <tfoot>
                 <tr id="add-item-row">
                   <td>
                     <input type="hidden" id="new-item-id-hidden" />
                     <div class="custom-select-container">
                       <input type="text" id="new-item-name" class="form-input custom-select-input"
-                        placeholder="Buscar Producto o Servicio...">
+                        placeholder="Buscar Producto o Servicio..." autocomplete="off">
                       <div class="custom-select-options" id="product-options"></div>
                     </div>
                   </td>
@@ -775,6 +845,7 @@
             </table>
           </div>
 
+          <!-- SECCIÓN 5: Fotos -->
           <div class="form-section">
             <div class="form-group">
               <label for="vehicle-images-upload">Fotos del Vehículo</label>
@@ -783,13 +854,14 @@
                 <span>Arrastra las fotos aquí o haz clic para seleccionar</span>
                 <small>(Puedes seleccionar varios archivos a la vez)</small>
               </label>
-              <div id="previews-container">
-                </div>
+              <div id="previews-container"></div>
             </div>
           </div>
 
+          <!-- SECCIÓN 6: Totales y Pago -->
           <div class="form-section">
             <div class="summary-payment-grid">
+              <!-- Comentarios -->
               <div>
                 <div class="form-group">
                   <label for="observaciones">Observaciones</label>
@@ -800,13 +872,16 @@
                   <textarea id="comentario-interno" name="comentario_interno" rows="5" class="form-input"></textarea>
                 </div>
               </div>
+
+              <!-- Totales -->
               <div>
                 <h4>Resumen</h4>
                 <table class="summary-table">
                   <tbody>
                     <tr>
                       <td>Descuento</td>
-                      <td><input type="number" id="discount-input" name="descuento" class="form-input"
+                      <td>
+                        <input type="number" id="discount-input" name="descuento" class="form-input"
                           style="text-align: right; width: 80px; display: inline-block; margin-left: auto;" value="0"> %
                       </td>
                     </tr>
@@ -834,6 +909,7 @@
                     </tr>
                   </tbody>
                 </table>
+
                 <h4 style="margin-top: 30px;">Pago</h4>
                 <table class="summary-table">
                   <tbody>
@@ -870,6 +946,8 @@
           </div>
         </form>
       </main>
+
+      <!-- Toast y Modales -->
       <div id="toast-notification"></div>
 
       <div id="success-modal" class="modal-overlay">
@@ -880,24 +958,27 @@
                 d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022Z" />
             </svg>
           </div>
-          <h3>¡Éxito!</h3>
-          <p>La orden de reparación ha sido registrada correctamente.</p>
+          <h3>¡Orden Enviada!</h3>
+          <p>La orden de reparación ha sido procesada.</p>
           <div class="modal-actions">
             <button id="close-modal-btn" type="button" class="btn btn-secondary">Cerrar</button>
-            <button id="new-order-btn" type="button" class="btn">Crear Nueva Orden</button>
+            <button id="new-order-btn" type="button" class="btn">Crear Nueva</button>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 
-  <script>
-    // --- SIDEBAR LOGIC ---
+  <script type="module">
+    import { loadSucursales } from './loadSucursales.js';
+    import { searchTecnicos } from './services/tecnicos-service.js';
+    // --- LÓGICA DE INTERFAZ (UI) ---
+    // (Sidebar, Menús, Pestañas - Sin backend)
+
+    // Sidebar Mobile Toggle
     window.toggleSubmenu = function (id) {
       const submenu = document.getElementById(id);
       const arrow = document.getElementById(id.replace('submenu', 'arrow'));
-
       if (submenu.classList.contains('hidden')) {
         submenu.classList.remove('hidden');
         submenu.classList.add('flex');
@@ -921,6 +1002,7 @@
         sidebar.classList.add('w-20');
         sidebarTexts.forEach(el => el.classList.add('hidden'));
         toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        // Ocultar submenús al colapsar
         document.querySelectorAll('[id$="-submenu"]').forEach(el => {
           el.classList.add('hidden');
           el.classList.remove('flex');
@@ -940,77 +1022,31 @@
       sidebar.classList.toggle('z-50');
       sidebar.classList.toggle('h-full');
     });
-  </script>
-  <script>
+
+    // --- LÓGICA DEL FORMULARIO ---
     document.addEventListener("DOMContentLoaded", () => {
-      // --- URLs de Webhooks ---
-      const MAKE_TECHNICIAN_SEARCH_URL = "https://hook.eu2.make.com/7o0cy2ftscs377jw96saxu0lh4nqkegm";
-      const MAKE_CLIENT_SEARCH_URL = "https://hook.eu2.make.com/quirc89qo1imv3lwxhc5fhaj25qkhua7";
-      const MAKE_VEHICLE_SEARCH_URL = "https://hook.eu2.make.com/z8b2jaicivbiuuhc819wcwlq2mw2em32";
-      const MAKE_PRODUCT_SEARCH_URL = "https://hook.eu2.make.com/8xfyw4ki7ja73vtb2rwbkr3pq1kxcdx8";
-      const MAKE_ORDER_SAVE_URL = "https://hook.eu2.make.com/lmx14vfoii9rzn1pmuikiheetox12dil"; // URL para guardar la orden
+      loadSucursales();
 
-      const orderForm = document.getElementById('order-form');
-      let orderItems = [];
-      let uploadedFiles = [];
-
-      // --- LÓGICA DE LA INTERFAZ ---
-      const fechaIngresoInput = document.getElementById("fecha-ingreso");
-      const now = new Date();
-      fechaIngresoInput.value = now.toLocaleString("es-ES", {
+      // Fecha Inicial
+      const fechaIngresoInput = document.getElementById('fecha-ingreso');
+      fechaIngresoInput.value = new Date().toLocaleString("es-ES", {
         year: 'numeric', month: '2-digit', day: '2-digit',
         hour: '2-digit', minute: '2-digit'
       }).replace(",", "");
 
-      // Redirección para crear vehículo
-      document.getElementById('add-vehicle-btn').addEventListener('click', () => {
-        window.location.href = 'crear-vehiculo.html';
-      });
+      // Variables Globales del Formulario
+      let orderItems = [];
+      let uploadedFiles = [];
 
-      // Captura del ID del Taller/Sucursal
-      document.getElementById('taller').addEventListener('change', (e) => {
-        document.getElementById('id-taller-hidden').value = e.target.value;
-      });
-
-      // Captura del ID del Tipo de Orden/Concepto
-      document.getElementById('concepto').addEventListener('change', (e) => {
-        document.getElementById('id-tipo-orden-hidden').value = e.target.value;
-      });
-
-      // --- LÓGICA DEL MODAL ---
+      // Elementos del DOM
       const successModal = document.getElementById('success-modal');
       const closeModalBtn = document.getElementById('close-modal-btn');
       const newOrderBtn = document.getElementById('new-order-btn');
+      const orderForm = document.getElementById('order-form');
 
-      function showSuccessModal() {
-        successModal.classList.add('show');
-      }
-
-      function hideSuccessModal() {
-        successModal.classList.remove('show');
-      }
-
-      function resetForm() {
-        orderForm.reset();
-        orderItems = [];
-        uploadedFiles = [];
-        // Reset hidden inputs
-        document.getElementById('id-tecnico-hidden').value = '';
-        document.getElementById('id-cliente-hidden').value = '';
-        document.getElementById('id-vehiculo-hidden').value = '';
-        document.getElementById('id-taller-hidden').value = '';
-        document.getElementById('id-tipo-orden-hidden').value = '';
-
-        renderItems();
-        calculateNetTotals();
-        document.getElementById('previews-container').innerHTML = '';
-        document.getElementById('cliente-info').textContent = '';
-        document.getElementById('vehiculo-info').textContent = '';
-        fechaIngresoInput.value = new Date().toLocaleString("es-ES", {
-          year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit'
-        }).replace(",", "");
-      }
+      // Mostrar/Ocultar Modal
+      function showSuccessModal() { successModal.classList.add('show'); }
+      function hideSuccessModal() { successModal.classList.remove('show'); }
 
       closeModalBtn.addEventListener('click', hideSuccessModal);
       newOrderBtn.addEventListener('click', () => {
@@ -1018,45 +1054,52 @@
         resetForm();
       });
 
-
       function showToast(message, isError = false) {
         const toast = document.getElementById("toast-notification");
         toast.textContent = message;
         toast.style.backgroundColor = isError ? 'var(--error-color)' : 'var(--success-color)';
         toast.classList.add("show");
-        setTimeout(() => {
-          toast.classList.remove("show");
-        }, 3000);
+        setTimeout(() => toast.classList.remove("show"), 3000);
       }
 
-      // --- LÓGICA DE BÚSQUEDA DINÁMICA ---
-            const USE_MOCK_DATA = true; // Set to false when backend is fixed
+      function resetForm() {
+        orderForm.reset();
+        orderItems = [];
+        uploadedFiles = [];
+        document.getElementById('id-tecnico-hidden').value = '';
+        document.getElementById('id-cliente-hidden').value = '';
+        document.getElementById('id-vehiculo-hidden').value = '';
+        document.getElementById('id-taller-hidden').value = '';
+        document.getElementById('id-tipo-orden-hidden').value = '';
+        renderItems();
+        calculateNetTotals();
+        document.getElementById('previews-container').innerHTML = '';
+        document.getElementById('cliente-info').textContent = '';
+        document.getElementById('vehiculo-info').textContent = '';
+      }
 
+      // --- MOCK DATA PARA DEMOSTRACIÓN VISUAL ---
+      // IMPORTANTE: Conectar esto con tu Backend real (API/Fetch)
       const MOCK_TECNICOS = [
         { id: 101, nombre: "Juan Pérez" },
-        { id: 102, nombre: "Ana Gómez" },
-        { id: 103, nombre: "Carlos Ruiz" }
+        { id: 102, nombre: "Ana Gómez" }
       ];
-      
       const MOCK_CLIENTES = [
-        { id: 201, nombre: "Empresa ABC S.L.", dni: "B12345678", telefono: "600111222" },
-        { id: 202, nombre: "Laura Martínez", dni: "12345678Z", telefono: "600333444" }
+        { id: 201, nombre: "Cliente Ejemplo S.L.", dni: "B123456", telefono: "600111222" },
+        { id: 202, nombre: "María Garcia", dni: "12345678Z", telefono: "600999888" }
       ];
-
       const MOCK_VEHICULOS = [
         { id: 301, Marca: "Toyota", Propietario: "Corolla", Matricula: "1234-ABC" },
-        { id: 302, Marca: "Ford", Propietario: "Focus", Matricula: "5678-DEF" }
+        { id: 302, Marca: "Ford", Propietario: "Focus", Matricula: "5678-XYZ" }
       ];
-
       const MOCK_PRODUCTOS = [
         { id: 401, nombre: "Aceite 5W30", precio_venta: 45.50 },
         { id: 402, nombre: "Filtro de Aire", precio_venta: 15.20 },
-        { id: 403, nombre: "Mano de Obra (h)", precio_venta: 50.00 },
-        { id: 404, nombre: "Pastillas de Freno", precio_venta: 80.00 }
+        { id: 403, nombre: "Mano de Obra (h)", precio_venta: 50.00 }
       ];
 
-      // --- LÓGICA DE BÚSQUEDA DINÁMICA ---
-      function setupCustomSelect({ inputId, optionsId, searchUrl, onSelect, renderOption, mockData = [] }) {
+      // Configuración de Buscadores (Selects Personalizados)
+      function setupCustomSelect({ inputId, optionsId, mockData, searchFunction, renderOption, onSelect }) {
         const input = document.getElementById(inputId);
         const optionsContainer = document.getElementById(optionsId);
         let debounceTimeout;
@@ -1064,62 +1107,29 @@
         input.addEventListener("keyup", () => {
           clearTimeout(debounceTimeout);
           const query = input.value.toLowerCase();
-          
+
           if (query.length < 1) {
-            optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('show');
             return;
           }
 
-          debounceTimeout = setTimeout(() => {
-            if (USE_MOCK_DATA) {
-                console.log(`Buscando en MOCK data para ${inputId}...`);
-                const results = mockData.filter(item => {
-                    return Object.values(item).some(val => 
-                        String(val).toLowerCase().includes(query)
-                    );
-                });
-                renderResults(results);
-                return;
+          debounceTimeout = setTimeout(async () => {
+            let results = [];
+
+            if (searchFunction) {
+              try {
+                results = await searchFunction(query);
+              } catch (e) {
+                console.error("Error en búsqueda:", e);
+              }
+            } else if (mockData) {
+              results = mockData.filter(item => {
+                return Object.values(item).some(val => String(val).toLowerCase().includes(query));
+              });
             }
 
-            fetch(searchUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ query: query })
-            })
-              .then(async response => {
-                const responseText = await response.text();
-                if (!response.ok) {
-                  throw new Error(`Error de red: ${response.status} ${response.statusText} - ${responseText}`);
-                }
-                return responseText;
-              })
-              .then(text => {
-                let data = [];
-                try {
-                  data = JSON.parse(text);
-                } catch (e) {
-                  console.error("Error parsing JSON:", text);
-                  renderResults([]); 
-                  return;
-                }
-                const results = Array.isArray(data) ? data : (data ? [data] : []);
-                renderResults(results);
-              })
-              .catch(error => {
-                console.error('Error durante la búsqueda:', error);
-                optionsContainer.innerHTML = `<div class="option" style="color: var(--error-color);">Error de conexión.</div>`;
-                optionsContainer.classList.add('show');
-              });
-          }, 300);
-        });
-
-        function renderResults(results) {
             optionsContainer.innerHTML = '';
-            if (results.length > 0) {
+            if (results && results.length > 0) {
               results.forEach(item => {
                 const div = document.createElement('div');
                 div.className = 'option';
@@ -1130,203 +1140,174 @@
                 });
                 optionsContainer.appendChild(div);
               });
+              optionsContainer.classList.add('show');
             } else {
-              optionsContainer.innerHTML = `<div class="option" style="color: var(--text-secondary);">No se encontraron resultados.</div>`;
+              optionsContainer.classList.remove('show');
             }
-            optionsContainer.classList.add('show');
-        }
+          }, 300);
+        });
 
         document.addEventListener("click", (e) => {
-          if (!input.contains(e.target) && !optionsContainer.contains(e.target) && !document.getElementById('add-item-btn').contains(e.target)) {
+          if (!input.contains(e.target) && !optionsContainer.contains(e.target)) {
             optionsContainer.classList.remove('show');
           }
         });
       }
 
-      // Configurar buscadores
+      // Inicializar buscadores
       setupCustomSelect({
         inputId: 'tecnico',
         optionsId: 'tecnico-options',
-        searchUrl: MAKE_TECHNICIAN_SEARCH_URL,
-        mockData: MOCK_TECNICOS,
+        searchFunction: searchTecnicos,
         renderOption: item => item.nombre,
         onSelect: item => {
           document.getElementById('tecnico').value = item.nombre;
-          document.getElementById('id-tecnico-hidden').value = item.id; // CAPTURA DE ID
+          document.getElementById('id-tecnico-hidden').value = item.id;
         }
       });
+
       setupCustomSelect({
         inputId: 'buscar-cliente',
         optionsId: 'cliente-options',
-        searchUrl: MAKE_CLIENT_SEARCH_URL,
-        mockData: MOCK_CLIENTES,
-        renderOption: item => `${item.nombre} <small>(${item.dni || 'Sin DNI'})</small>`,
+        searchFunction: searchClientes,
+        renderOption: item => `${item.nombre} <small>(${item.documento || 'Sin Doc'})</small>`,
         onSelect: item => {
           document.getElementById('buscar-cliente').value = item.nombre;
-          document.getElementById('cliente-info').textContent = `${item.dni || ''} | ${item.telefono || ''}`;
-          document.getElementById('id-cliente-hidden').value = item.id; // CAPTURA DE ID
+          document.getElementById('cliente-info').textContent = `${item.documento || ''} | ${item.telefono || ''}`;
+          document.getElementById('id-cliente-hidden').value = item.id;
         }
       });
+
       setupCustomSelect({
-        inputId: 'buscar-vehiculo',
-        optionsId: 'vehiculo-options',
-        searchUrl: MAKE_VEHICLE_SEARCH_URL,
-        mockData: MOCK_VEHICULOS,
+        inputId: 'buscar-vehiculo', optionsId: 'vehiculo-options', mockData: MOCK_VEHICULOS,
         renderOption: item => `${item.Marca} ${item.Propietario} <small>(${item.Matricula})</small>`,
         onSelect: item => {
           document.getElementById('buscar-vehiculo').value = `${item.Marca} ${item.Propietario}`;
           document.getElementById('vehiculo-info').textContent = item.Matricula;
-          document.getElementById('id-vehiculo-hidden').value = item.id; // CAPTURA DE ID
+          document.getElementById('id-vehiculo-hidden').value = item.id;
         }
       });
+
       setupCustomSelect({
-        inputId: 'new-item-name',
-        optionsId: 'product-options',
-        searchUrl: MAKE_PRODUCT_SEARCH_URL,
-        mockData: MOCK_PRODUCTOS,
-        renderOption: item => `${item.nombre} <small>(${parseFloat(item.precio_venta || 0).toFixed(2)}€)</small>`,
+        inputId: 'new-item-name', optionsId: 'product-options', mockData: MOCK_PRODUCTOS,
+        renderOption: item => `${item.nombre} <small>(${item.precio_venta}€)</small>`,
         onSelect: item => {
           document.getElementById('new-item-name').value = item.nombre;
-          document.getElementById('new-item-price').value = parseFloat(item.precio_venta || 0).toFixed(2);
-          document.getElementById('new-item-id-hidden').value = item.id; // CAPTURA DE ID
+          document.getElementById('new-item-price').value = item.precio_venta.toFixed(2);
+          document.getElementById('new-item-id-hidden').value = item.id;
         }
       });
-
-      
-// --- LÓGICA DE LA TABLA DE ITEMS ---
+      // --- GESTIÓN DE ITEMS (Tabla) ---
       document.getElementById('add-item-btn').addEventListener('click', () => {
-        const newItem = {
-          id: document.getElementById('new-item-id-hidden').value, // ID del Producto/Servicio
-          name: document.getElementById('new-item-name').value,
-          price: parseFloat(document.getElementById('new-item-price').value) || 0,
-          quantity: parseInt(document.getElementById('new-item-quantity').value) || 1,
-          type: document.getElementById('new-item-type').value,
-          bonus: parseFloat(document.getElementById('new-item-bonus').value) || 0,
-        };
+        const name = document.getElementById('new-item-name').value;
+        const price = parseFloat(document.getElementById('new-item-price').value) || 0;
+        const qty = parseInt(document.getElementById('new-item-quantity').value) || 1;
+        const type = document.getElementById('new-item-type').value;
+        const bonus = parseFloat(document.getElementById('new-item-bonus').value) || 0;
+        const id = document.getElementById('new-item-id-hidden').value;
 
-        if (!newItem.name || newItem.price <= 0) {
-          showToast("Por favor, selecciona un item de la lista y un precio válido.", true);
+        if (!name || price <= 0) {
+          showToast("Selecciona un item y precio válido.", true);
           return;
         }
 
-        orderItems.push(newItem);
+        orderItems.push({ id, name, price, quantity: qty, type, bonus });
         renderItems();
         calculateNetTotals();
-        clearAddItemRow();
+
+        // Limpiar inputs de "Agregar Item"
+        document.getElementById('new-item-name').value = '';
+        document.getElementById('new-item-price').value = '';
+        document.getElementById('new-item-quantity').value = '1';
+        document.getElementById('new-item-bonus').value = '0';
+        document.getElementById('new-item-id-hidden').value = '';
       });
 
       function renderItems() {
-        const itemList = document.getElementById('order-items-list');
-        itemList.innerHTML = '';
+        const tbody = document.getElementById('order-items-list');
+        tbody.innerHTML = '';
         orderItems.forEach((item, index) => {
           const subtotal = (item.price * item.quantity) - item.bonus;
-          const row = document.createElement('tr');
-          row.innerHTML = `
-                    <td>${item.name} (${item.id || ''})</td>
-                    <td>${item.price.toFixed(2)}€</td>
-                    <td>${item.quantity}</td>
-                    <td>${item.type}</td>
-                    <td>${item.bonus.toFixed(2)}€</td>
-                    <td>${subtotal.toFixed(2)}€</td>
-                    <td><button type="button" class="remove-item-btn" data-index="${index}">&times;</button></td>
-                `;
-          itemList.appendChild(row);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.price.toFixed(2)}€</td>
+            <td>${item.quantity}</td>
+            <td>${item.type}</td>
+            <td>${item.bonus.toFixed(2)}€</td>
+            <td>${subtotal.toFixed(2)}€</td>
+            <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold" data-index="${index}">&times;</button></td>
+          `;
+          tbody.appendChild(tr);
         });
       }
 
       document.getElementById('order-items-list').addEventListener('click', (e) => {
         if (e.target.classList.contains('remove-item-btn')) {
-          const index = e.target.dataset.index;
-          orderItems.splice(index, 1);
+          orderItems.splice(e.target.dataset.index, 1);
           renderItems();
           calculateNetTotals();
         }
       });
 
-      function clearAddItemRow() {
-        document.getElementById('new-item-id-hidden').value = ''; // Limpiar ID
-        document.getElementById('new-item-name').value = '';
-        document.getElementById('new-item-price').value = '';
-        document.getElementById('new-item-quantity').value = '1';
-        document.getElementById('new-item-bonus').value = '0';
-        document.getElementById('new-item-name').focus();
-      }
-
-      // --- LÓGICA DE CÁLCULO Y PAGO ---
+      // --- CÁLCULOS FINANCIEROS ---
       function calculateNetTotals() {
-        let totalRepuestos = 0;
-        let totalManoDeObra = 0;
-
+        let totalRepuestos = 0, totalMano = 0;
         orderItems.forEach(item => {
-          const subtotal = (item.price * item.quantity) - item.bonus;
-          if (item.type === 'Repuesto') {
-            totalRepuestos += subtotal;
-          } else {
-            totalManoDeObra += subtotal;
-          }
+          const sub = (item.price * item.quantity) - item.bonus;
+          if (item.type === 'Repuesto') totalRepuestos += sub;
+          else totalMano += sub;
         });
 
-        const descuento = parseFloat(document.getElementById('discount-input').value) || 0;
-        const subtotalNeto = totalRepuestos + totalManoDeObra;
-        const totalDescuento = subtotalNeto * (descuento / 100);
-        const totalNeto = subtotalNeto - totalDescuento;
+        const descuentoPct = parseFloat(document.getElementById('discount-input').value) || 0;
+        const subtotal = totalRepuestos + totalMano;
+        const descuentoMonto = subtotal * (descuentoPct / 100);
+        const neto = subtotal - descuentoMonto;
 
-        document.getElementById('summary-repuestos').textContent = `${totalRepuestos.toFixed(2)}€`;
-        document.getElementById('summary-mano-obra').textContent = `${totalManoDeObra.toFixed(2)}€`;
-        document.getElementById('summary-neto').textContent = `${totalNeto.toFixed(2)}€`;
+        const ivaPct = parseFloat(document.getElementById('iva-percentage').value) || 0;
+        const ivaMonto = neto * (ivaPct / 100);
+        const total = neto + ivaMonto;
 
-        updateFinalTotal();
-      }
+        // Actualizar UI
+        document.getElementById('summary-repuestos').textContent = totalRepuestos.toFixed(2) + '€';
+        document.getElementById('summary-mano-obra').textContent = totalMano.toFixed(2) + '€';
+        document.getElementById('summary-neto').textContent = neto.toFixed(2) + '€';
+        document.getElementById('summary-iva').textContent = ivaMonto.toFixed(2) + '€';
+        document.getElementById('summary-total').textContent = total.toFixed(2) + '€';
 
-      function updateFinalTotal() {
-        const totalNetoText = document.getElementById('summary-neto').textContent;
-        const totalNeto = parseFloat(totalNetoText.replace('€', '')) || 0;
-        const ivaPercentage = parseFloat(document.getElementById('iva-percentage').value) || 0;
-        const ivaAmount = totalNeto * (ivaPercentage / 100);
-
-        document.getElementById('summary-iva').textContent = `${ivaAmount.toFixed(2)}€`;
-
-        const totalFinal = totalNeto + ivaAmount;
-
-        document.getElementById('summary-total').textContent = `${totalFinal.toFixed(2)}€`;
-        document.getElementById('payment-amount-input').value = totalFinal.toFixed(2);
+        // Auto-llenar pago si no es cuenta corriente
+        if (!document.getElementById('cuenta-corriente-check').checked) {
+          document.getElementById('payment-amount-input').value = total.toFixed(2);
+        }
         validatePayment();
       }
 
       function validatePayment() {
-        const totalFinalText = document.getElementById('summary-total').textContent;
-        const totalFinal = parseFloat(totalFinalText.replace('€', '')) || 0;
-        const paymentInput = document.getElementById('payment-amount-input');
-        const pagoManual = parseFloat(paymentInput.value) || 0;
+        const total = parseFloat(document.getElementById('summary-total').textContent) || 0;
+        const pago = parseFloat(document.getElementById('payment-amount-input').value) || 0;
+        const input = document.getElementById('payment-amount-input');
+        const isCC = document.getElementById('cuenta-corriente-check').checked;
 
-        if (pagoManual.toFixed(2) !== totalFinal.toFixed(2) && !document.getElementById('cuenta-corriente-check').checked) {
-          paymentInput.classList.add('mismatch-amount');
+        if (pago.toFixed(2) !== total.toFixed(2) && !isCC) {
+          input.classList.add('mismatch-amount');
         } else {
-          paymentInput.classList.remove('mismatch-amount');
+          input.classList.remove('mismatch-amount');
         }
       }
 
+      // Event Listeners para cálculos
       document.getElementById('discount-input').addEventListener('input', calculateNetTotals);
       document.getElementById('iva-percentage').addEventListener('input', calculateNetTotals);
       document.getElementById('payment-amount-input').addEventListener('input', validatePayment);
 
-
-      const cuentaCorrienteCheck = document.getElementById('cuenta-corriente-check');
-      const metodoPagoSelect = document.getElementById('metodo-pago');
-
-      cuentaCorrienteCheck.addEventListener('change', () => {
-        if (cuentaCorrienteCheck.checked) {
-          metodoPagoSelect.disabled = true;
-          metodoPagoSelect.style.backgroundColor = 'var(--border-color)';
-        } else {
-          metodoPagoSelect.disabled = false;
-          metodoPagoSelect.style.backgroundColor = '';
-        }
+      const ccCheck = document.getElementById('cuenta-corriente-check');
+      const metodoSelect = document.getElementById('metodo-pago');
+      ccCheck.addEventListener('change', () => {
+        metodoSelect.disabled = ccCheck.checked;
         validatePayment();
       });
 
-
-      // --- LÓGICA PARA SUBIDA DE MÚLTIPLES IMÁGENES ---
+      // --- SUBIDA DE IMÁGENES (FRONTEND) ---
       const uploadInput = document.getElementById('vehicle-images-upload');
       const dropZone = document.querySelector('.multi-image-upload-box');
       const previewsContainer = document.getElementById('previews-container');
@@ -1342,148 +1323,70 @@
       uploadInput.addEventListener('change', (e) => handleFiles(e.target.files));
 
       function handleFiles(files) {
-        for (const file of files) {
-          if (!file.type.startsWith('image/')) continue;
-          if (uploadedFiles.some(f => f.file.name === file.name && f.file.size === file.size)) continue;
-
-          const fileWithId = { file, id: Date.now() + Math.random() };
-          uploadedFiles.push(fileWithId);
-
+        Array.from(files).forEach(file => {
+          if (!file.type.startsWith('image/')) return;
           const reader = new FileReader();
-          reader.onload = (e) => createPreview(e.target.result, fileWithId.id);
+          reader.onload = (e) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'img-preview-wrapper';
+            wrapper.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-img-btn">&times;</button>`;
+            wrapper.querySelector('button').addEventListener('click', () => {
+              wrapper.remove();
+              // Aquí lógica para remover del array de archivos si fuese necesario
+            });
+            previewsContainer.appendChild(wrapper);
+          };
           reader.readAsDataURL(file);
-        }
-        uploadInput.value = '';
-      }
-
-      function createPreview(src, id) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'img-preview-wrapper';
-        wrapper.dataset.fileId = id;
-        const img = document.createElement('img');
-        img.src = src;
-        const removeBtn = document.createElement('button');
-        removeBtn.className = 'remove-img-btn';
-        removeBtn.innerHTML = '&times;';
-        removeBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const fileIdToRemove = parseFloat(wrapper.dataset.fileId);
-          uploadedFiles = uploadedFiles.filter(f => f.id !== fileIdToRemove);
-          wrapper.remove();
         });
-        wrapper.appendChild(img);
-        wrapper.appendChild(removeBtn);
-        previewsContainer.appendChild(wrapper);
       }
 
-      // --- LÓGICA DE ENVÍO DEL FORMULARIO ---
+      // --- SUBMIT DEL FORMULARIO (LIMPIO PARA BACKEND) ---
       orderForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        // Asignar manualmente los valores de los selects si no se han seteado por cambio
-        const idTaller = document.getElementById('taller').value;
-        document.getElementById('id-taller-hidden').value = idTaller;
-        
-        const idTipoOrden = document.getElementById('concepto').value;
-        document.getElementById('id-tipo-orden-hidden').value = idTipoOrden;
+        // Validaciones Básicas
+        if (!document.getElementById('taller').value) return showToast('Selecciona un taller', true);
+        if (!document.getElementById('id-cliente-hidden').value) return showToast('Selecciona un cliente', true);
+        if (orderItems.length === 0) return showToast('Agrega items a la orden', true);
 
-        const idCliente = document.getElementById('id-cliente-hidden').value;
-        const idVehiculo = document.getElementById('id-vehiculo-hidden').value;
-
-        if (!idTaller) {
-          showToast('Debes seleccionar un taller.', true);
-          return;
-        }
-        if (!idCliente) {
-          showToast('Debes seleccionar un cliente.', true);
-          return;
-        }
-        if (orderItems.length === 0) {
-          showToast('Debes agregar al menos un item a la orden.', true);
-          return;
-        }
-
-        const totalFinalText = document.getElementById('summary-total').textContent;
-        const totalFinal = parseFloat(totalFinalText.replace('€', '')) || 0;
-        const paymentInput = document.getElementById('payment-amount-input');
-        const pagoManual = parseFloat(paymentInput.value) || 0;
-        const isCuentaCorriente = document.getElementById('cuenta-corriente-check').checked;
-
-        if (pagoManual.toFixed(2) !== totalFinal.toFixed(2) && !isCuentaCorriente) {
-          showToast('El pago no coincide con el total. Marque "Enviar saldo" para continuar.', true);
-          return;
-        }
-
-
-        // 1. Preparar el Payload de la Orden (JSON Estructurado)
-        const lineasPayload = orderItems.map(item => ({
-          idProducto: item.id,
-          nombre: item.name,
-          precio_unitario: item.price,
-          cantidad: item.quantity,
-          tipo: item.type,
-          bonificacion: item.bonus
-        }));
-
-        const ordenPayload = {
-          idSucursal: idTaller,
-          idCliente: idCliente,
-          idVehiculo: idVehiculo || '',
-          idMecanico: document.getElementById('id-tecnico-hidden').value || '',
-          idTipoOrden: idTipoOrden,
-          fechaIngreso: document.getElementById('fecha-ingreso').value,
-          fechaEgreso: document.getElementById('fecha-egreso').value,
-          kilometraje: document.getElementById('kilometraje').value,
-          combustible: document.getElementById('combustible').value,
-          inspector: document.getElementById('nombre-inspector').value,
-          siniestro: document.getElementById('numero-siniestro').value,
-          franquicia: document.getElementById('franquicia').value,
-          observaciones: document.getElementById('observaciones').value,
-          comentarioInterno: document.getElementById('comentario-interno').value,
-          // Datos de Pago/Resumen
-          descuento_porcentaje: document.getElementById('discount-input').value,
-          iva_porcentaje: document.getElementById('iva-percentage').value,
-          total_repuestos: document.getElementById('summary-repuestos').textContent,
-          total_mano_obra: document.getElementById('summary-mano-obra').textContent,
-          total_neto: document.getElementById('summary-neto').textContent,
-          iva_calculado: document.getElementById('summary-iva').textContent,
-          total_final: document.getElementById('summary-total').textContent,
-          metodo_pago: isCuentaCorriente ? 'Cuenta Corriente' : document.getElementById('metodo-pago').value,
-          pago_manual: pagoManual,
-          lineas: lineasPayload,
+        // RECOPILACIÓN DE DATOS (LISTO PARA API)
+        const payload = {
+          sucursal_id: document.getElementById('taller').value,
+          cliente_id: document.getElementById('id-cliente-hidden').value,
+          vehiculo_id: document.getElementById('id-vehiculo-hidden').value,
+          mecanico_id: document.getElementById('id-tecnico-hidden').value,
+          tipo_orden: document.getElementById('concepto').value,
+          fechas: {
+            ingreso: document.getElementById('fecha-ingreso').value,
+            egreso: document.getElementById('fecha-egreso').value
+          },
+          detalles: {
+            km: document.getElementById('kilometraje').value,
+            combustible: document.getElementById('combustible').value,
+            inspector: document.getElementById('nombre-inspector').value
+          },
+          items: orderItems, // Array con los productos/servicios
+          totales: {
+            neto: document.getElementById('summary-neto').textContent,
+            iva: document.getElementById('summary-iva').textContent,
+            total: document.getElementById('summary-total').textContent
+          },
+          pago: {
+            metodo: ccCheck.checked ? 'Cuenta Corriente' : metodoSelect.value,
+            monto: document.getElementById('payment-amount-input').value
+          }
         };
-        
-        console.log("Payload JSON de la Orden:", ordenPayload);
 
-        // 2. Crear un FormData para enviar tanto el JSON como los archivos.
-        const formData = new FormData();
-        formData.append('payload_json', JSON.stringify(ordenPayload)); // El JSON de la orden
+        console.log("--- DATOS LISTOS PARA ENVIAR AL BACKEND ---");
+        console.log(payload);
 
-        uploadedFiles.forEach((fileWrapper, index) => {
-          formData.append(`vehiculo_imagen_${index + 1}`, fileWrapper.file); // Archivos adjuntos
-        });
+        // AQUÍ IRÍA TU CÓDIGO DE BACKEND (fetch/axios)
+        // fetch('/api/ordenes', { method: 'POST', body: JSON.stringify(payload) ... })
 
-        console.log("Enviando datos de la orden a Make...");
-
-        fetch(MAKE_ORDER_SAVE_URL, {
-          method: 'POST',
-          body: formData
-        })
-          .then(response => {
-            if (!response.ok) {
-              throw new Error('La respuesta del servidor no fue OK al guardar.');
-            }
-            return response.text();
-          })
-          .then(result => {
-            console.log('Respuesta de guardado:', result);
-            showSuccessModal();
-          })
-          .catch(error => {
-            console.error('Error al guardar la orden:', error);
-            showToast('Hubo un error al guardar la orden.', true);
-          });
+        // Simulación de éxito
+        showSuccessModal();
       });
+
     });
   </script>
 </body>
