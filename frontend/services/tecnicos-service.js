@@ -1,9 +1,8 @@
 
-export async function searchTecnicos(query) {
-    const API_URL = 'http://localhost:3000/api/admin/users'; // Ajustar si hay un endpoint específico
+export async function getTecnicos() {
+    const API_URL = 'http://localhost:3000/api/admin/users';
 
     try {
-        // Obtener token
         const sessionRaw = localStorage.getItem('versa_session_v1');
         if (!sessionRaw) throw new Error("No autenticado");
         const token = JSON.parse(sessionRaw).token;
@@ -12,23 +11,20 @@ export async function searchTecnicos(query) {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (!response.ok) throw new Error("Error al buscar técnicos");
+        if (!response.ok) throw new Error("Error al obtener técnicos");
 
         const users = await response.json();
-
-        // Filtrar por nombre y rol (asumiendo que user.roles es un array de strings o objetos)
-        // Y que el rol relevante es "Mecánico" o "Técnico"
-        // Si no sabemos el rol exacto, mostraremos todos los que coincidan con el nombre por ahora
-
-        return users.filter(user => {
-            const matchName = user.nombre.toLowerCase().includes(query.toLowerCase());
-            // TODO: Filtrar también por rol cuando sepamos la estructura exacta
-            // const isMecanico = user.roles.some(r => r.nombre === 'Mecánico');
-            return matchName;
-        });
+        // Aquí idealmente filtraríamos por rol 'Mecánico' si tuviéramos esa info
+        return users;
 
     } catch (error) {
-        console.error("Error buscando técnicos:", error);
+        console.error("Error obteniendo técnicos:", error);
         return [];
     }
+}
+
+export async function searchTecnicos(query) {
+    const users = await getTecnicos();
+    if (!query) return users;
+    return users.filter(user => user.nombre.toLowerCase().includes(query.toLowerCase()));
 }
