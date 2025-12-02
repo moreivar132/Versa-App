@@ -1,29 +1,40 @@
 (function () {
-    // Evitar bucle infinito si ya estamos en login
+    // Evitar bucles en páginas públicas
     if (window.location.pathname.includes('login.html') || window.location.pathname.includes('cita-previa.html')) {
         return;
     }
 
-    const session = localStorage.getItem('versa_session_v1');
+    const SESSION_KEY = 'versa_session_v1';
 
-    function redirect() {
+    function redirectToLogin() {
         console.warn('⛔ Acceso denegado: Redirigiendo a login...');
-        // Usar ruta relativa para mayor compatibilidad
         window.location.replace('login.html');
     }
 
+    const session = localStorage.getItem(SESSION_KEY);
+
     if (!session) {
-        redirect();
+        redirectToLogin();
     } else {
         try {
             const parsed = JSON.parse(session);
-            if (!parsed || !parsed.token) {
+            if (!parsed?.token) {
                 throw new Error('Token no encontrado');
             }
-        } catch (e) {
-            console.error('Sesión inválida:', e);
-            localStorage.removeItem('versa_session_v1');
-            redirect();
+        } catch (error) {
+            console.error('Sesión inválida:', error);
+            localStorage.removeItem(SESSION_KEY);
+            redirectToLogin();
         }
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-logout]').forEach((el) => {
+            el.addEventListener('click', (event) => {
+                event.preventDefault();
+                localStorage.removeItem(SESSION_KEY);
+                window.location.replace('login.html');
+            });
+        });
+    });
 })();

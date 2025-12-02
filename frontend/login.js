@@ -1,4 +1,4 @@
-import { requireAuth, login } from './auth.js';
+import { getSession, requireAuth, login } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('loginForm');
@@ -15,11 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
     errorEl.textContent = message;
   };
 
-  requireAuth().then((user) => {
-    if (user) {
-      window.location.replace('index.html');
-    }
-  });
+  const existingSession = getSession();
+  if (existingSession?.token) {
+    requireAuth().then((user) => {
+      if (user) {
+        window.location.replace('index.html');
+      }
+    });
+  }
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
