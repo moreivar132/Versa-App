@@ -10,9 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- FontAwesome para iconos -->
+  <script src="./guard.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Material Symbols (Iconos) -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="manager.css">
@@ -21,9 +20,6 @@
     /* Redundant variables removed */
 
     /* Estructura del formulario de órdenes */
-
-
-
     .form-header {
       display: flex;
       justify-content: space-between;
@@ -478,12 +474,10 @@
 
 <body>
   <div class="flex h-screen w-full">
-    <!-- SideNavBar -->
     <aside id="sidebar"
       class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
       <div class="flex h-full flex-col justify-between">
         <div class="flex flex-col gap-4">
-          <!-- User Profile / Logo Area -->
           <div class="flex items-center gap-3 p-2 mb-4">
             <div class="logo-badge"
               style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
@@ -498,7 +492,6 @@
             </button>
           </div>
 
-          <!-- Navigation Links -->
           <nav class="flex flex-col gap-2">
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
               href="index.html">
@@ -506,7 +499,6 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
             </a>
 
-            <!-- Taller Dropdown (Active) -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('taller-submenu')">
@@ -524,7 +516,6 @@
               </div>
             </div>
 
-            <!-- Tienda Dropdown -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('tienda-submenu')">
@@ -548,7 +539,6 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
 
-            <!-- Cuentas Dropdown -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('cuentas-submenu')">
@@ -574,7 +564,6 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
             </a>
 
-            <!-- Contactos -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('contactos-submenu')">
@@ -592,7 +581,6 @@
           </nav>
         </div>
 
-        <!-- Bottom Actions -->
         <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
           <div class="flex items-center gap-3 px-3 py-2 mb-2">
             <div
@@ -605,7 +593,7 @@
             </div>
           </div>
           <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-            href="login.html">
+            href="#" data-logout>
             <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
             <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
           </a>
@@ -613,9 +601,7 @@
       </div>
     </aside>
 
-    <!-- Main Content Wrapper -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
-      <!-- Top Mobile Header -->
       <header
         class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
         <div class="logo-badge p-2">
@@ -628,6 +614,12 @@
 
       <main class="flex-1 overflow-y-auto p-6 relative z-10">
         <form id="order-form" class="manager-panel">
+          <input type="hidden" id="id-tecnico-hidden" name="idMecanico" />
+          <input type="hidden" id="id-cliente-hidden" name="idCliente" />
+          <input type="hidden" id="id-vehiculo-hidden" name="idVehiculo" />
+          <input type="hidden" id="id-tipo-orden-hidden" name="idTipoOrden" />
+          <input type="hidden" id="id-taller-hidden" name="idSucursal" />
+
           <div class="form-header">
             <h2 class="form-main-title">Orden de Reparación</h2>
             <div class="form-header-actions">
@@ -637,7 +629,6 @@
             </div>
           </div>
 
-          <!-- SECCIÓN DE DATOS GENERALES -->
           <div class="form-section">
             <div class="form-grid grid-cols-4">
               <div class="form-group">
@@ -660,14 +651,13 @@
                 <label for="taller">Taller *</label>
                 <select id="taller" name="taller" class="form-select" required>
                   <option value="" disabled selected>Seleccionar Taller</option>
-                  <option value="CALLE EL TESORO">CALLE EL TESORO</option>
-                  <option value="VAZQUEZ DE MELLA">VAZQUEZ DE MELLA</option>
+                  <option value="2">CALLE EL TESORO</option>
+                  <option value="1">VAZQUEZ DE MELLA</option>
                 </select>
               </div>
             </div>
           </div>
 
-          <!-- SECCIÓN DE CLIENTE Y VEHÍCULO -->
           <div class="form-section">
             <div class="form-grid grid-cols-5">
               <div class="form-group" style="grid-column: span 2;">
@@ -705,15 +695,14 @@
             </div>
           </div>
 
-          <!-- SECCIÓN DE DETALLES DE LA ORDEN -->
           <div class="form-section">
             <div class="form-grid grid-cols-4">
               <div class="form-group">
                 <label for="concepto">Concepto</label>
                 <select id="concepto" name="concepto" class="form-select">
-                  <option>Reparación</option>
-                  <option>Mantenimiento</option>
-                  <option>Diagnóstico</option>
+                  <option value="1">Reparación</option>
+                  <option value="2">Mantenimiento</option>
+                  <option value="3">Diagnóstico</option>
                 </select>
               </div>
               <div class="form-group">
@@ -745,7 +734,6 @@
             </div>
           </div>
 
-          <!-- SECCIÓN DE ITEMS -->
           <div class="form-section">
             <table class="items-table">
               <thead>
@@ -760,11 +748,11 @@
                 </tr>
               </thead>
               <tbody id="order-items-list">
-                <!-- Filas de items aquí -->
-              </tbody>
+                </tbody>
               <tfoot>
                 <tr id="add-item-row">
                   <td>
+                    <input type="hidden" id="new-item-id-hidden" />
                     <div class="custom-select-container">
                       <input type="text" id="new-item-name" class="form-input custom-select-input"
                         placeholder="Buscar Producto o Servicio...">
@@ -787,7 +775,6 @@
             </table>
           </div>
 
-          <!-- SECCIÓN DE FOTOS DEL VEHÍCULO -->
           <div class="form-section">
             <div class="form-group">
               <label for="vehicle-images-upload">Fotos del Vehículo</label>
@@ -797,12 +784,10 @@
                 <small>(Puedes seleccionar varios archivos a la vez)</small>
               </label>
               <div id="previews-container">
-                <!-- Vistas previas de las imágenes aquí -->
-              </div>
+                </div>
             </div>
           </div>
 
-          <!-- SECCIÓN FINAL: RESUMEN Y OBSERVACIONES -->
           <div class="form-section">
             <div class="summary-payment-grid">
               <div>
@@ -887,7 +872,6 @@
       </main>
       <div id="toast-notification"></div>
 
-      <!-- MODAL DE ÉXITO -->
       <div id="success-modal" class="modal-overlay">
         <div class="modal-content">
           <div class="modal-icon">
@@ -983,6 +967,16 @@
         window.location.href = 'crear-vehiculo.html';
       });
 
+      // Captura del ID del Taller/Sucursal
+      document.getElementById('taller').addEventListener('change', (e) => {
+        document.getElementById('id-taller-hidden').value = e.target.value;
+      });
+
+      // Captura del ID del Tipo de Orden/Concepto
+      document.getElementById('concepto').addEventListener('change', (e) => {
+        document.getElementById('id-tipo-orden-hidden').value = e.target.value;
+      });
+
       // --- LÓGICA DEL MODAL ---
       const successModal = document.getElementById('success-modal');
       const closeModalBtn = document.getElementById('close-modal-btn');
@@ -1000,6 +994,13 @@
         orderForm.reset();
         orderItems = [];
         uploadedFiles = [];
+        // Reset hidden inputs
+        document.getElementById('id-tecnico-hidden').value = '';
+        document.getElementById('id-cliente-hidden').value = '';
+        document.getElementById('id-vehiculo-hidden').value = '';
+        document.getElementById('id-taller-hidden').value = '';
+        document.getElementById('id-tipo-orden-hidden').value = '';
+
         renderItems();
         calculateNetTotals();
         document.getElementById('previews-container').innerHTML = '';
@@ -1098,7 +1099,7 @@
         });
 
         document.addEventListener("click", (e) => {
-          if (!input.contains(e.target) && !optionsContainer.contains(e.target)) {
+          if (!input.contains(e.target) && !optionsContainer.contains(e.target) && !document.getElementById('add-item-btn').contains(e.target)) {
             optionsContainer.classList.remove('show');
           }
         });
@@ -1110,7 +1111,10 @@
         optionsId: 'tecnico-options',
         searchUrl: MAKE_TECHNICIAN_SEARCH_URL,
         renderOption: item => item.nombre,
-        onSelect: item => document.getElementById('tecnico').value = item.nombre
+        onSelect: item => {
+          document.getElementById('tecnico').value = item.nombre;
+          document.getElementById('id-tecnico-hidden').value = item.id; // CAPTURA DE ID
+        }
       });
       setupCustomSelect({
         inputId: 'buscar-cliente',
@@ -1120,6 +1124,7 @@
         onSelect: item => {
           document.getElementById('buscar-cliente').value = item.nombre;
           document.getElementById('cliente-info').textContent = `${item.dni} | ${item.telefono}`;
+          document.getElementById('id-cliente-hidden').value = item.id; // CAPTURA DE ID
         }
       });
       setupCustomSelect({
@@ -1130,6 +1135,7 @@
         onSelect: item => {
           document.getElementById('buscar-vehiculo').value = `${item.Marca} ${item.Propietario}`;
           document.getElementById('vehiculo-info').textContent = item.Matricula;
+          document.getElementById('id-vehiculo-hidden').value = item.id; // CAPTURA DE ID
         }
       });
       setupCustomSelect({
@@ -1140,6 +1146,7 @@
         onSelect: item => {
           document.getElementById('new-item-name').value = item.nombre;
           document.getElementById('new-item-price').value = parseFloat(item.precio_venta || 0).toFixed(2);
+          document.getElementById('new-item-id-hidden').value = item.id; // CAPTURA DE ID
         }
       });
 
@@ -1147,6 +1154,7 @@
       // --- LÓGICA DE LA TABLA DE ITEMS ---
       document.getElementById('add-item-btn').addEventListener('click', () => {
         const newItem = {
+          id: document.getElementById('new-item-id-hidden').value, // ID del Producto/Servicio
           name: document.getElementById('new-item-name').value,
           price: parseFloat(document.getElementById('new-item-price').value) || 0,
           quantity: parseInt(document.getElementById('new-item-quantity').value) || 1,
@@ -1155,7 +1163,7 @@
         };
 
         if (!newItem.name || newItem.price <= 0) {
-          alert("Por favor, introduce un nombre y un precio válido para el item.");
+          showToast("Por favor, selecciona un item de la lista y un precio válido.", true);
           return;
         }
 
@@ -1172,7 +1180,7 @@
           const subtotal = (item.price * item.quantity) - item.bonus;
           const row = document.createElement('tr');
           row.innerHTML = `
-                    <td>${item.name}</td>
+                    <td>${item.name} (${item.id || ''})</td>
                     <td>${item.price.toFixed(2)}€</td>
                     <td>${item.quantity}</td>
                     <td>${item.type}</td>
@@ -1194,6 +1202,7 @@
       });
 
       function clearAddItemRow() {
+        document.getElementById('new-item-id-hidden').value = ''; // Limpiar ID
         document.getElementById('new-item-name').value = '';
         document.getElementById('new-item-price').value = '';
         document.getElementById('new-item-quantity').value = '1';
@@ -1329,11 +1338,21 @@
       orderForm.addEventListener('submit', (e) => {
         e.preventDefault();
 
-        if (!document.getElementById('taller').value) {
+        // Asignar manualmente los valores de los selects si no se han seteado por cambio
+        const idTaller = document.getElementById('taller').value;
+        document.getElementById('id-taller-hidden').value = idTaller;
+        
+        const idTipoOrden = document.getElementById('concepto').value;
+        document.getElementById('id-tipo-orden-hidden').value = idTipoOrden;
+
+        const idCliente = document.getElementById('id-cliente-hidden').value;
+        const idVehiculo = document.getElementById('id-vehiculo-hidden').value;
+
+        if (!idTaller) {
           showToast('Debes seleccionar un taller.', true);
           return;
         }
-        if (!document.getElementById('buscar-cliente').value) {
+        if (!idCliente) {
           showToast('Debes seleccionar un cliente.', true);
           return;
         }
@@ -1353,26 +1372,53 @@
           return;
         }
 
-        const formData = new FormData(orderForm);
 
-        if (isCuentaCorriente) {
-          formData.set('metodo_pago', 'Cuenta Corriente');
-        } else {
-          formData.set('metodo_pago', document.getElementById('metodo-pago').value);
-        }
+        // 1. Preparar el Payload de la Orden (JSON Estructurado)
+        const lineasPayload = orderItems.map(item => ({
+          idProducto: item.id,
+          nombre: item.name,
+          precio_unitario: item.price,
+          cantidad: item.quantity,
+          tipo: item.type,
+          bonificacion: item.bonus
+        }));
 
-        formData.append('cliente_info', document.getElementById('cliente-info').textContent);
-        formData.append('vehiculo_placa', document.getElementById('vehiculo-info').textContent);
-        formData.append('items', JSON.stringify(orderItems));
+        const ordenPayload = {
+          idSucursal: idTaller,
+          idCliente: idCliente,
+          idVehiculo: idVehiculo || '',
+          idMecanico: document.getElementById('id-tecnico-hidden').value || '',
+          idTipoOrden: idTipoOrden,
+          fechaIngreso: document.getElementById('fecha-ingreso').value,
+          fechaEgreso: document.getElementById('fecha-egreso').value,
+          kilometraje: document.getElementById('kilometraje').value,
+          combustible: document.getElementById('combustible').value,
+          inspector: document.getElementById('nombre-inspector').value,
+          siniestro: document.getElementById('numero-siniestro').value,
+          franquicia: document.getElementById('franquicia').value,
+          observaciones: document.getElementById('observaciones').value,
+          comentarioInterno: document.getElementById('comentario-interno').value,
+          // Datos de Pago/Resumen
+          descuento_porcentaje: document.getElementById('discount-input').value,
+          iva_porcentaje: document.getElementById('iva-percentage').value,
+          total_repuestos: document.getElementById('summary-repuestos').textContent,
+          total_mano_obra: document.getElementById('summary-mano-obra').textContent,
+          total_neto: document.getElementById('summary-neto').textContent,
+          iva_calculado: document.getElementById('summary-iva').textContent,
+          total_final: document.getElementById('summary-total').textContent,
+          metodo_pago: isCuentaCorriente ? 'Cuenta Corriente' : document.getElementById('metodo-pago').value,
+          pago_manual: pagoManual,
+          lineas: lineasPayload,
+        };
+        
+        console.log("Payload JSON de la Orden:", ordenPayload);
 
-        formData.append('total_repuestos', document.getElementById('summary-repuestos').textContent);
-        formData.append('total_mano_obra', document.getElementById('summary-mano-obra').textContent);
-        formData.append('total_neto', document.getElementById('summary-neto').textContent);
-        formData.append('iva_calculado', document.getElementById('summary-iva').textContent);
-        formData.append('total_final', document.getElementById('summary-total').textContent);
+        // 2. Crear un FormData para enviar tanto el JSON como los archivos.
+        const formData = new FormData();
+        formData.append('payload_json', JSON.stringify(ordenPayload)); // El JSON de la orden
 
         uploadedFiles.forEach((fileWrapper, index) => {
-          formData.append(`vehiculo_imagen_${index + 1}`, fileWrapper.file);
+          formData.append(`vehiculo_imagen_${index + 1}`, fileWrapper.file); // Archivos adjuntos
         });
 
         console.log("Enviando datos de la orden a Make...");
