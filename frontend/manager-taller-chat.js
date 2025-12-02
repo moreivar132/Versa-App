@@ -1,4 +1,7 @@
-const API_URL = '/api/crm/chat';
+import { getApiBaseUrl } from './auth.js';
+
+const API_BASE_URL = getApiBaseUrl();
+const API_URL = `${API_BASE_URL}/api/crm/chat`;
 let currentConversationId = null;
 let pollingIntervalId = null;
 let conversations = [];
@@ -37,7 +40,7 @@ async function loadConversations() {
         const search = filterSearch.value;
 
         // Construir URL con params
-        const url = new URL(`${API_URL}/conversaciones`, window.location.origin);
+        const url = new URL(`${API_URL}/conversaciones`);
         if (status) url.searchParams.append('estado', status);
         if (search) url.searchParams.append('search', search);
 
