@@ -1,6 +1,7 @@
 class ChatWidget {
     constructor(config = {}) {
-        this.apiUrl = config.apiUrl || '/api/chat';
+        const baseUrl = import.meta.env.VITE_API_URL || '';
+        this.apiUrl = config.apiUrl || `${baseUrl}/api/chat`;
         this.tenantId = config.tenantId || 1;
         this.clientId = config.clientId || 1; // En prod, esto vendría de otro lado
         this.pollingInterval = config.pollingInterval || 3000;
