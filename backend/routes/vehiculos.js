@@ -132,4 +132,33 @@ router.put('/:id', verifyJWT, async (req, res) => {
     }
 });
 
+// GET /api/vehiculos/search - Buscar vehículos
+router.get('/search', verifyJWT, async (req, res) => {
+    const { q } = req.query;
+    const id_tenant = req.user.id_tenant;
+
+    if (!q) {
+        return res.status(400).json({ error: 'Parámetro de búsqueda requerido (q)' });
+    }
+
+    try {
+        const searchTerm = `%${q}%`;
+        const query = `
+            SELECT v.*, c.nombre as nombre_cliente 
+            FROM vehiculo v
+            LEFT JOIN clientefinal c ON v.id_cliente = c.id
+            LEFT JOIN sucursal s ON v.id_sucursal = s.id
+            WHERE s.id_tenant = $1 
+            AND (v.matricula ILIKE $2 OR v.marca ILIKE $2 OR v.modelo ILIKE $2 OR c.nombre ILIKE $2)
+            LIMIT 20
+        `;
+
+        const result = await pool.query(query, [id_tenant, searchTerm]);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error en búsqueda de vehículos:', error);
+        res.status(500).json({ error: 'Error al buscar vehículos' });
+    }
+});
+
 module.exports = router;
