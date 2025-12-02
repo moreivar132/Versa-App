@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Material Symbols (Iconos) -->
@@ -170,7 +171,7 @@
                         </div>
                     </div>
                     <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                        href="login.html">
+                        href="#" data-logout>
                         <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
                         <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
                     </a>
@@ -532,12 +533,208 @@
             </div>
 
             <div id="client-details-content" class="space-y-4">
+                Servicio / Sucursal</th>
+                <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                    Estado</th>
+                <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                    Acción</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-[#2a2a2a] bg-transparent" id="citas-tbody">
+                    <!-- Filas dinámicas aquí -->
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-[#a0a0a0]">Cargando
+                            citas...</td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Column: Chart & Alerts -->
+        <div class="flex flex-col gap-6">
+
+            <!-- Performance Chart (Dinámico) -->
+            <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 flex flex-col h-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white">Ocupación Semanal</h3>
+                    <div class="flex items-center gap-2 bg-[#2a2a2a] rounded-lg p-1">
+                        <button onclick="changeWeek(-1)"
+                            class="p-1 hover:text-white text-[#a0a0a0] transition-colors"><span
+                                class="material-symbols-outlined text-sm">chevron_left</span></button>
+                        <span id="current-week-label" class="text-xs font-medium text-white px-2">Semana
+                            Actual</span>
+                        <button onclick="changeWeek(1)"
+                            class="p-1 hover:text-white text-[#a0a0a0] transition-colors"><span
+                                class="material-symbols-outlined text-sm">chevron_right</span></button>
+                    </div>
+                </div>
+
+                <div id="occupancy-chart"
+                    class="flex h-full items-end justify-between gap-2 mt-auto min-h-[150px] px-2">
+                    <!-- Barras dinámicas se insertarán aquí -->
+                    <div class="w-full text-center text-[#a0a0a0] text-xs">Cargando...</div>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex justify-center gap-4 mt-4 pt-4 border-t border-[#2a2a2a]">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                        <span class="text-xs text-[#a0a0a0]">Coche</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-[var(--brand-orange)]"></span>
+                        <span class="text-xs text-[#a0a0a0]">Moto</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span class="text-xs text-[#a0a0a0]">Bici</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas Rápidas -->
+            <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5">
+                <h3 class="mb-4 text-sm font-bold text-[#a0a0a0] uppercase tracking-wider">Alertas</h3>
+                <div class="space-y-3">
+                    <div class="flex gap-3 items-start">
+                        <div class="bg-red-500/10 p-2 rounded-lg text-red-500">
+                            <span class="material-symbols-outlined text-sm">warning</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-white font-medium">Stock bajo Aceite 10W40</p>
+                            <p class="text-xs text-[#a0a0a0]">Quedan 2 unidades en Tesoro</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                        <div class="bg-blue-500/10 p-2 rounded-lg text-blue-500">
+                            <span class="material-symbols-outlined text-sm">info</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-white font-medium">Nueva Solicitud Web</p>
+                            <p class="text-xs text-[#a0a0a0]">Hace 10 min - Revisar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+    </main>
+    </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Modal Cita -->
+    <div id="cita-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <h3 class="mb-4 text-xl font-bold text-white" id="modal-title">Nueva Cita</h3>
+            <form id="cita-form" class="space-y-4">
+                <input type="hidden" id="cita-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Cliente</label>
+                    <input type="text" id="cita-cliente"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Nombre del cliente" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Email</label>
+                    <input type="email" id="cita-email"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Email (para notificaciones)" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Sucursal</label>
+                    <select id="cita-sucursal"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Mecánico</label>
+                    <select id="cita-mecanico"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Cualquiera</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Fecha</label>
+                        <input type="date" id="cita-fecha"
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Hora</label>
+                        <input type="time" id="cita-hora"
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                            required>
+                    </div>
+                </div>
+
+                <!-- Availability Visualization -->
+                <div id="availability-container" class="hidden rounded-lg border border-[#2a2a2a] bg-[#111318] p-3">
+                    <h4 class="text-xs font-bold text-[#a0a0a0] mb-2">Disponibilidad del día</h4>
+                    <div id="availability-slots" class="flex flex-wrap gap-2 text-xs text-white">
+                        <!-- Slots will be injected here -->
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Vehículo</label>
+                    <select id="cita-vehiculo-tipo"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="coche">Coche</option>
+                        <option value="moto">Moto</option>
+                        <option value="bicicleta">Bicicleta</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Motivo / Servicio</label>
+                    <input type="text" id="cita-motivo"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Ej: Revisión General">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="rounded-lg px-4 py-2 text-sm font-medium text-[#a0a0a0] hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="rounded-lg bg-[var(--brand-orange)] px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 transition-colors">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cliente Detalles -->
+    <div id="client-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-white">Detalles del Cliente</h3>
+                <button onclick="closeClientModal()" class="text-[#a0a0a0] hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div id="client-details-content" class="space-y-4">
                 <!-- Content injected via JS -->
             </div>
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import { getApiBaseUrl } from './auth.js';
+        const API_BASE_URL = getApiBaseUrl();
+
         // --- SIDEBAR LOGIC ---
         window.toggleSubmenu = function (id) {
             const submenu = document.getElementById(id);
@@ -598,8 +795,6 @@
         document.addEventListener("DOMContentLoaded", () => {
             toggleSubmenu('taller-submenu');
             updateWeekLabel();
-            toggleSubmenu('taller-submenu');
-            updateWeekLabel();
             loadCitas();
             loadConfig(); // Fetch branches and mechanics
 
@@ -630,7 +825,8 @@
             renderTable(filtered);
         }
 
-        function changeWeek(offset) {
+        // Expose functions to window for onclick handlers
+        window.changeWeek = function (offset) {
             currentWeekStart.setDate(currentWeekStart.getDate() + (offset * 7));
             updateWeekLabel();
             loadCitas();
@@ -684,7 +880,7 @@
         }
 
         // Cargar citas
-        async function loadCitas() {
+        window.loadCitas = async function () {
             const tbody = document.getElementById('citas-tbody');
             const chartContainer = document.getElementById('occupancy-chart');
 
@@ -699,7 +895,7 @@
             const endStr = endOfWeek.toISOString();
 
             try {
-                const response = await fetch(`/api/citas?start_date=${startStr}&end_date=${endStr}`);
+                const response = await fetch(`${API_BASE_URL}/api/citas?start_date=${startStr}&end_date=${endStr}`);
                 const data = await response.json();
 
                 if (data.ok && data.citas) {
@@ -740,11 +936,6 @@
         function renderTable(citas) {
             const tbody = document.getElementById('citas-tbody');
             tbody.innerHTML = '';
-
-            // Update stats for "Today" - Handled by backend stats now, but we keep this for table logic if needed
-            // const todayStr = new Date().toISOString().split('T')[0];
-            // const citasHoy = citas.filter(c => c.fecha_hora && c.fecha_hora.startsWith(todayStr)).length;
-            // document.getElementById('stats-citas-hoy').textContent = citasHoy;
 
             if (citas.length === 0) {
                 tbody.innerHTML = `
@@ -880,7 +1071,7 @@
 
         async function loadConfig() {
             try {
-                const res = await fetch('/api/citas/config');
+                const res = await fetch(`${API_BASE_URL}/api/citas/config`);
                 const data = await res.json();
                 if (data.ok) {
                     globalConfig = data;
@@ -917,7 +1108,7 @@
             end.setHours(23, 59, 59, 999);
 
             try {
-                const res = await fetch(`/api/citas?start_date=${start.toISOString()}&end_date=${end.toISOString()}`);
+                const res = await fetch(`${API_BASE_URL}/api/citas?start_date=${start.toISOString()}&end_date=${end.toISOString()}`);
                 const data = await res.json();
 
                 if (data.ok && data.citas) {
@@ -943,7 +1134,7 @@
             }
         }
 
-        function openModal(cita = null) {
+        window.openModal = function (cita = null) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
@@ -985,7 +1176,7 @@
             }
         }
 
-        function closeModal() {
+        window.closeModal = function () {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
@@ -1014,11 +1205,11 @@
             };
 
             try {
-                let url = '/api/citas/crear';
+                let url = `${API_BASE_URL}/api/citas/crear`;
                 let method = 'POST';
 
                 if (id) {
-                    url = `/api/citas/${id}`;
+                    url = `${API_BASE_URL}/api/citas/${id}`;
                     method = 'PUT';
                     // For update, we might send different structure depending on backend
                     // The backend PUT expects: estado, motivo, notas, fecha_hora
@@ -1044,11 +1235,11 @@
             }
         });
 
-        async function deleteCita(id) {
+        window.deleteCita = async function (id) {
             if (!confirm('¿Estás seguro de eliminar esta cita?')) return;
 
             try {
-                const res = await fetch(`/api/citas/${id}`, { method: 'DELETE' });
+                const res = await fetch(`${API_BASE_URL}/api/citas/${id}`, { method: 'DELETE' });
                 const data = await res.json();
                 if (data.ok) loadCitas();
                 else alert('Error al eliminar');
@@ -1057,12 +1248,12 @@
             }
         }
 
-        async function toggleStatus(id, currentStatus) {
+        window.toggleStatus = async function (id, currentStatus) {
             const newStatus = currentStatus === 'pendiente' ? 'en proceso' :
                 (currentStatus === 'en proceso' ? 'completado' : 'pendiente');
 
             try {
-                await fetch(`/api/citas/${id}`, {
+                await fetch(`${API_BASE_URL}/api/citas/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ estado: newStatus })
@@ -1080,7 +1271,7 @@
 
 
 
-        function editCita(id) {
+        window.editCita = function (id) {
             const cita = currentCitas.find(c => c.id == id);
             if (cita) openModal(cita);
         }
@@ -1088,7 +1279,7 @@
         // --- CLIENT MODAL ---
         const clientModal = document.getElementById('client-modal');
 
-        function openClientModal(citaId) {
+        window.openClientModal = function (citaId) {
             const cita = currentCitas.find(c => c.id == citaId);
             if (!cita) return;
 
@@ -1140,7 +1331,7 @@
             clientModal.classList.add('flex');
         }
 
-        function closeClientModal() {
+        window.closeClientModal = function () {
             clientModal.classList.add('hidden');
             clientModal.classList.remove('flex');
         }
