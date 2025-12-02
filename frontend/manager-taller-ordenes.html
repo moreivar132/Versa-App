@@ -703,14 +703,10 @@
                 <input type="datetime-local" id="fecha-egreso" name="fecha_egreso" class="form-input" />
               </div>
               <div class="form-group">
-                <label for="tecnico">Técnico</label>
-                <div class="custom-select-container">
-                  <input type="text" id="tecnico" name="tecnico" class="form-input custom-select-input"
-                    placeholder="Buscar técnico..." autocomplete="off">
-                  <div class="custom-select-options" id="tecnico-options">
-                    <!-- Las opciones se inyectan con JS -->
-                  </div>
-                </div>
+                <label for="tecnico-select">Técnico</label>
+                <select id="tecnico-select" name="tecnico" class="form-select">
+                  <option value="">Seleccionar técnico</option>
+                </select>
               </div>
               <div class="form-group">
                 <label for="taller">Taller *</label>
@@ -972,6 +968,8 @@
   <script type="module">
     import { loadSucursales } from './loadSucursales.js';
     import { searchTecnicos } from './services/tecnicos-service.js';
+    import { searchClientes } from './services/clientes-service.js';
+    import { searchVehiculos } from './services/vehiculos-service.js';
     // --- LÓGICA DE INTERFAZ (UI) ---
     // (Sidebar, Menús, Pestañas - Sin backend)
 
@@ -1026,6 +1024,17 @@
     // --- LÓGICA DEL FORMULARIO ---
     document.addEventListener("DOMContentLoaded", () => {
       loadSucursales();
+      loadTecnicosSelect();
+
+      const tallerSelect = document.getElementById('taller');
+      tallerSelect.addEventListener('change', () => {
+        document.getElementById('id-taller-hidden').value = tallerSelect.value;
+      });
+
+      const tecnicoSelect = document.getElementById('tecnico-select');
+      tecnicoSelect.addEventListener('change', () => {
+        document.getElementById('id-tecnico-hidden').value = tecnicoSelect.value;
+      });
 
       // Fecha Inicial
       const fechaIngresoInput = document.getElementById('fecha-ingreso');
@@ -1078,25 +1087,32 @@
         document.getElementById('vehiculo-info').textContent = '';
       }
 
-      // --- MOCK DATA PARA DEMOSTRACIÓN VISUAL ---
-      // IMPORTANTE: Conectar esto con tu Backend real (API/Fetch)
-      const MOCK_TECNICOS = [
-        { id: 101, nombre: "Juan Pérez" },
-        { id: 102, nombre: "Ana Gómez" }
-      ];
-      const MOCK_CLIENTES = [
-        { id: 201, nombre: "Cliente Ejemplo S.L.", dni: "B123456", telefono: "600111222" },
-        { id: 202, nombre: "María Garcia", dni: "12345678Z", telefono: "600999888" }
-      ];
-      const MOCK_VEHICULOS = [
-        { id: 301, Marca: "Toyota", Propietario: "Corolla", Matricula: "1234-ABC" },
-        { id: 302, Marca: "Ford", Propietario: "Focus", Matricula: "5678-XYZ" }
-      ];
       const MOCK_PRODUCTOS = [
         { id: 401, nombre: "Aceite 5W30", precio_venta: 45.50 },
         { id: 402, nombre: "Filtro de Aire", precio_venta: 15.20 },
         { id: 403, nombre: "Mano de Obra (h)", precio_venta: 50.00 }
       ];
+
+      async function loadTecnicosSelect() {
+        const select = document.getElementById('tecnico-select');
+        if (!select) return;
+
+        select.innerHTML = '<option value="">Seleccionar técnico</option>';
+        try {
+          const tecnicos = await searchTecnicos('');
+          tecnicos.forEach(tec => {
+            const option = document.createElement('option');
+            option.value = tec.id;
+            option.textContent = tec.nombre;
+            select.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Error cargando técnicos:', error);
+          const option = document.createElement('option');
+          option.textContent = 'No se pudieron cargar técnicos';
+          select.appendChild(option);
+        }
+      }
 
       // Configuración de Buscadores (Selects Personalizados)
       function setupCustomSelect({ inputId, optionsId, mockData, searchFunction, renderOption, onSelect }) {
@@ -1106,7 +1122,7 @@
 
         input.addEventListener("keyup", () => {
           clearTimeout(debounceTimeout);
-          const query = input.value.toLowerCase();
+          const query = input.value.trim();
 
           if (query.length < 1) {
             optionsContainer.classList.remove('show');
@@ -1156,17 +1172,6 @@
 
       // Inicializar buscadores
       setupCustomSelect({
-        inputId: 'tecnico',
-        optionsId: 'tecnico-options',
-        searchFunction: searchTecnicos,
-        renderOption: item => item.nombre,
-        onSelect: item => {
-          document.getElementById('tecnico').value = item.nombre;
-          document.getElementById('id-tecnico-hidden').value = item.id;
-        }
-      });
-
-      setupCustomSelect({
         inputId: 'buscar-cliente',
         optionsId: 'cliente-options',
         searchFunction: searchClientes,
@@ -1179,11 +1184,13 @@
       });
 
       setupCustomSelect({
-        inputId: 'buscar-vehiculo', optionsId: 'vehiculo-options', mockData: MOCK_VEHICULOS,
-        renderOption: item => `${item.Marca} ${item.Propietario} <small>(${item.Matricula})</small>`,
+        inputId: 'buscar-vehiculo',
+        optionsId: 'vehiculo-options',
+        searchFunction: searchVehiculos,
+        renderOption: item => `${item.marca || ''} ${item.modelo || ''} <small>(${item.matricula || 'Sin matrícula'})</small> ${item.nombre_cliente ? '- ' + item.nombre_cliente : ''}`,
         onSelect: item => {
-          document.getElementById('buscar-vehiculo').value = `${item.Marca} ${item.Propietario}`;
-          document.getElementById('vehiculo-info').textContent = item.Matricula;
+          document.getElementById('buscar-vehiculo').value = `${item.marca || ''} ${item.modelo || ''}`.trim();
+          document.getElementById('vehiculo-info').textContent = `${item.matricula || ''} ${item.nombre_cliente ? '| ' + item.nombre_cliente : ''}`.trim();
           document.getElementById('id-vehiculo-hidden').value = item.id;
         }
       });
