@@ -1,8 +1,10 @@
 import Quagga from 'quagga';
+import { getApiBaseUrl } from './auth.js';
 
 // Endpoints
-const API_BASE_URL = '/api/inventory';
-const PROVIDERS_SEARCH_URL = '/api/proveedores/search'; // Assuming this exists or will be created
+const BASE_URL = getApiBaseUrl();
+const API_BASE_URL = `${BASE_URL}/api/inventory`;
+const PROVIDERS_SEARCH_URL = `${BASE_URL}/api/proveedores/search`;
 
 function setupCustomSelect(inputId, optionsId, searchUrl, onSelectCallback) {
   const input = document.getElementById(inputId);
@@ -155,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // So we need to populate #taller-options and handle click.
     const tallerOptions = document.getElementById('taller-options');
 
-    fetch('/api/sucursales', { headers: getHeaders() })
+    fetch(`${BASE_URL}/api/sucursales`, { headers: getHeaders() })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && tallerOptions) {
