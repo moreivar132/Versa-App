@@ -29,7 +29,9 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[data-logout]').forEach((el) => {
+        const logoutTargets = document.querySelectorAll('[data-logout], #logoutBtn, #btnLogout');
+
+        logoutTargets.forEach((el) => {
             el.addEventListener('click', (event) => {
                 event.preventDefault();
                 localStorage.removeItem(SESSION_KEY);
