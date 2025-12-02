@@ -43,6 +43,7 @@ router.post('/', verifyJWT, async (req, res) => {
         id_proveedor,
         nombre_proveedor, // Fallback if ID is missing (create new?)
         id_sucursal,
+        id_almacen, // Nuevo campo: Almacén destino
         fecha_emision,
         metodo_pago,
         observaciones,
@@ -92,6 +93,24 @@ router.post('/', verifyJWT, async (req, res) => {
             throw new Error('Debe especificar un proveedor válido o un nombre para crearlo.');
         }
 
+        // 1.1 Resolver Almacén (Si no viene, buscar uno de la sucursal o crear uno por defecto)
+        let finalAlmacenId = id_almacen;
+        if (!finalAlmacenId) {
+            const almacenRes = await client.query('SELECT id FROM almacen WHERE id_sucursal = $1 LIMIT 1', [id_sucursal]);
+            if (almacenRes.rows.length > 0) {
+                finalAlmacenId = almacenRes.rows[0].id;
+            } else {
+                // Crear almacén por defecto
+                const sucursalNameRes = await client.query('SELECT nombre FROM sucursal WHERE id = $1', [id_sucursal]);
+                const sucursalName = sucursalNameRes.rows[0]?.nombre || 'Sucursal';
+                const createAlmacen = await client.query(
+                    'INSERT INTO almacen (id_sucursal, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id',
+                    [id_sucursal, `Almacén Principal - ${sucursalName}`]
+                );
+                finalAlmacenId = createAlmacen.rows[0].id;
+            }
+        }
+
         // 2. Insertar Cabecera (Inicialmente con total 0, se actualizará al final)
         // Ensure fecha_emision is formatted
         let fecha = new Date();
@@ -102,8 +121,8 @@ router.post('/', verifyJWT, async (req, res) => {
 
         const insertCabeceraQuery = `
             INSERT INTO compracabecera 
-            (id_tenant, id_proveedor, id_sucursal, fecha_emision, metodo_pago, observaciones, total, created_at, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, 0, NOW(), $7)
+            (id_tenant, id_proveedor, id_sucursal, id_almacen, fecha_emision, metodo_pago, observaciones, total, created_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, NOW(), $8)
             RETURNING id
         `;
 
@@ -111,6 +130,7 @@ router.post('/', verifyJWT, async (req, res) => {
             id_tenant,
             finalProveedorId,
             id_sucursal,
+            finalAlmacenId,
             fecha,
             metodo_pago,
             observaciones,
@@ -151,7 +171,7 @@ router.post('/', verifyJWT, async (req, res) => {
                     productId = prodRes.rows[0].id;
                 } else {
                     const createProd = await client.query(
-                        'INSERT INTO producto (id_tenant, nombre, precio, id_sucursal, tipo, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id',
+                        'INSERT INTO producto (id_tenant, nombre, precio, id_sucursal, tipo, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
                         [id_tenant, item.name, item.price, id_sucursal, item.type || 'Producto']
                     );
                     productId = createProd.rows[0].id;
@@ -183,6 +203,19 @@ router.post('/', verifyJWT, async (req, res) => {
                 item.iva,
                 lineTotal
             ]);
+
+            // Insertar Movimiento de Inventario (Entrada por Compra)
+            await client.query(`
+                INSERT INTO movimientoinventario
+                (id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_at, created_by)
+                VALUES ($1, $2, 'ENTRADA', $3, 'COMPRA', $4, NOW(), $5)
+            `, [productId, finalAlmacenId, item.quantity, id_compra, id_usuario]);
+
+            // Actualizar stock en la tabla producto (Cache de stock actual)
+            await client.query(
+                'UPDATE producto SET stock = COALESCE(stock, 0) + $1 WHERE id = $2',
+                [item.quantity, productId]
+            );
         }
 
         // 4. Actualizar Total en Cabecera

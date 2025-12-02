@@ -231,7 +231,8 @@ router.post('/', verifyJWT, async (req, res) => {
                 SET nombre = $3, modelo = $4, descripcion = $5, marca = $6, categoria = $7, 
                     id_proveedor = $8, id_sucursal = $9, costo = $10, recargo = $11, precio = $12, 
                     id_impuesto = $13, stock_minimo = $14, unidad_medida = $15, activo = $16,
-                    updated_at = NOW(), updated_by = $17
+                    stock = $17,
+                    updated_at = NOW(), updated_by = $18
                 WHERE id = $1 AND id_tenant = $2
                 RETURNING *
             `;
@@ -240,8 +241,9 @@ router.post('/', verifyJWT, async (req, res) => {
                 checkRes.rows[0].id, id_tenant,
                 nombre, modelo, descripcion, marca, categoria,
                 id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
-                null, // id_impuesto (need to resolve iva to id_impuesto or just store iva?)
+                null, // id_impuesto
                 stock_minimo, unidad_medida, activo,
+                stock, // Update stock
                 req.user.id
             ]);
 
@@ -251,14 +253,16 @@ router.post('/', verifyJWT, async (req, res) => {
                 INSERT INTO producto
                 (id_tenant, codigo_barras, nombre, modelo, descripcion, marca, categoria, 
                  id_proveedor, id_sucursal, costo, recargo, precio, stock_minimo, unidad_medida, activo,
-                 created_at, created_by)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW(), $16)
+                 tipo, stock, created_at, created_by)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), $18)
                 RETURNING *
             `;
             result = await client.query(insertQuery, [
                 id_tenant, codigo_barras_articulo, nombre, modelo, descripcion, marca, categoria,
                 id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
                 stock_minimo, unidad_medida, activo,
+                'Producto', // Default tipo
+                stock || 0, // Initial stock
                 req.user.id
             ]);
         }
@@ -359,8 +363,9 @@ router.put('/:id', verifyJWT, async (req, res) => {
             SET nombre = $1, modelo = $2, descripcion = $3, marca = $4, categoria = $5, 
                 id_proveedor = $6, id_sucursal = $7, costo = $8, recargo = $9, precio = $10, 
                 stock_minimo = $11, unidad_medida = $12, activo = $13, codigo_barras = $14,
-                updated_at = NOW(), updated_by = $15
-            WHERE id = $16 AND id_tenant = $17
+                stock = $15,
+                updated_at = NOW(), updated_by = $16
+            WHERE id = $17 AND id_tenant = $18
             RETURNING *
         `;
 
@@ -368,6 +373,7 @@ router.put('/:id', verifyJWT, async (req, res) => {
             nombre, modelo, descripcion, marca, categoria,
             id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
             stock_minimo, unidad_medida, activo, codigo_barras_articulo,
+            req.body.stock || 0, // Add stock from body
             req.user.id, id, id_tenant
         ]);
 
