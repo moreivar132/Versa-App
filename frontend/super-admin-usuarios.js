@@ -1,6 +1,15 @@
 import { fetchWithAuth, requireAuth, clearSession } from './auth.js';
+import usersService from './services/users-service.js';
+import tenantsService from './services/tenants-service.js';
+import rolesService from './services/roles-service.js';
+import sucursalesService from './services/sucursales-service.js';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API = {
+    ...usersService,
+    ...tenantsService,
+    ...rolesService,
+    ...sucursalesService
+};
 
 // ============================================================================
 // ESTADO GLOBAL
@@ -347,6 +356,25 @@ async function handleDeleteUser(userId) {
 // ============================================================================
 // CARGA DE DATOS
 // ============================================================================
+
+async function loadTenants() {
+    try {
+        state.tenants = await API.getTenants();
+        populateTenantSelect();
+        renderUsersTable(); // Re-render table to show tenant names
+    } catch (error) {
+        showFeedback('Error al cargar tenants', 'error');
+    }
+}
+
+async function loadRoles() {
+    try {
+        state.roles = await API.getRoles();
+        populateRolesSelect();
+    } catch (error) {
+        showFeedback('Error al cargar roles', 'error');
+    }
+}
 
 async function loadUsers() {
     try {

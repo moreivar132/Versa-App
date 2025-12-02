@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="./guard.js"></script>
+    <script src="/guard.js"></script>
     <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Material Symbols (Iconos) -->
@@ -447,12 +447,206 @@
     </div>
 
     <!-- FOOTER -->
+    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+    </div>
+    </div>
+
+    <!-- Tienda Dropdown -->
+    <div class="nav-group">
+        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+            onclick="toggleSubmenu('tienda-submenu')">
+            <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+            <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+            <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="tienda-arrow"></i>
+        </a>
+        <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+            <a href="manager-taller-compras.html" class="text-gray-500 hover:text-white text-sm py-1 block">Nueva
+                Compra</a>
+            <a href="manager-taller-compras-historial.html"
+                class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+            <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+            <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+        </div>
+    </div>
+
+    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+        href="#">
+        <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+        <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+    </a>
+
+    <!-- Cuentas Dropdown -->
+    <div class="nav-group">
+        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+            onclick="toggleSubmenu('cuentas-submenu')">
+            <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+            <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+            <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
+        </a>
+        <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+            <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+            <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+        </div>
+    </div>
+
+    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+        href="manager-taller-inventario.html">
+        <span class="icon-container"><i class="fas fa-boxes"></i></span>
+        <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+    </a>
+
+    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+        href="manager-taller-trabajadores.html">
+        <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+        <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+    </a>
+
+    <!-- Contactos -->
+    <div class="nav-group">
+        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+            onclick="toggleSubmenu('contactos-submenu')">
+            <span class="icon-container"><i class="fas fa-address-book"></i></span>
+            <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+            <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="contactos-arrow"></i>
+        </a>
+        <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+            <a href="manager-taller-clientes.html"
+                class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+            <a href="manager-taller-proveedores.html"
+                class="text-gray-500 hover:text-white text-sm py-1 block">Proveedores</a>
+        </div>
+    </div>
+    </nav>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+        <div class="flex items-center gap-3 px-3 py-2 mb-2">
+            <div
+                class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                IM
+            </div>
+            <div class="flex flex-col sidebar-text overflow-hidden">
+                <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                <span class="text-gray-500 text-xs truncate">admin</span>
+            </div>
+        </div>
+        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+            href="#" data-logout>
+            <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+            <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+        </a>
+    </div>
+    </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+        <!-- Top Mobile Header -->
+        <header
+            class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+            <div class="logo-badge p-2">
+                <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+            </div>
+            <button id="mobile-menu-btn" class="text-white">
+                <i class="fas fa-bars"></i>
+            </button>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-6">
+            <div class="max-w-7xl mx-auto">
+                <!-- PANEL PRINCIPAL CON FORMULARIO Y BUSCADOR -->
+                <div id="vehicles-panel" class="main-panel">
+
+                    <!-- COLUMNA IZQUIERDA: FORMULARIO DE REGISTRO DE VEHÍCULOS -->
+                    <div class="card form-container">
+                        <h2>Registrar Nuevo Vehículo</h2>
+                        <form id="vehicle-form" novalidate>
+                            <div class="form-grid">
+                                <label for="placa" class="form-label">Placa <span class="required">*</span>
+                                    <input type="text" id="placa" name="placa" class="form-input" required>
+                                </label>
+                                <label for="ano" class="form-label">Año
+                                    <input type="number" id="ano" name="ano" class="form-input">
+                                </label>
+
+                                <!-- CAMPO DE MARCA MODIFICADO -->
+                                <label for="marca" class="form-label">Marca
+                                    <div class="custom-select-container">
+                                        <input type="text" name="marca" class="form-input custom-select-input"
+                                            id="marca" placeholder="Buscar o escribir marca...">
+                                        <div class="custom-select-options" id="marca-options">
+                                            <!-- Se rellena dinámicamente con JavaScript -->
+                                        </div>
+                                    </div>
+                                </label>
+
+                                <label for="chasis" class="form-label">Nº Chasis
+                                    <input type="text" id="chasis" name="chasis" class="form-input">
+                                </label>
+                                <label for="modelo" class="form-label">Modelo
+                                    <input type="text" id="modelo" name="modelo" class="form-input">
+                                </label>
+                                <label for="cc" class="form-label">CC
+                                    <input type="text" id="cc" name="cc" class="form-input">
+                                </label>
+                                <label for="tipo" class="form-label">Tipo
+                                    <select id="tipo" name="tipo" class="form-select">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Coche">Coche</option>
+                                        <option value="Moto">Moto</option>
+                                        <option value="Furgoneta">Furgoneta</option>
+                                        <option value="Camion">Camión</option>
+                                    </select>
+                                </label>
+                                <label for="seguro" class="form-label">Seguro
+                                    <input type="text" id="seguro" name="seguro" class="form-input">
+                                </label>
+                                <label for="color" class="form-label full-width">Color
+                                    <select id="color" name="color" class="form-select">
+                                        <option value="">Seleccionar...</option>
+                                        <option value="Negro">Negro</option>
+                                        <option value="Blanco">Blanco</option>
+                                        <option value="Gris">Gris</option>
+                                        <option value="Rojo">Rojo</option>
+                                        <option value="Azul">Azul</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <button type="submit" id="submit-button" class="submit-button full-width">Registrar
+                                Vehículo</button>
+                        </form>
+                        <p id="form-status" style="text-align: center; margin-top: 20px;"></p>
+                    </div>
+
+                    <!-- COLUMNA DERECHA: BUSCADOR Y RESULTADOS -->
+                    <div class="card search-container">
+                        <h2>Buscar Vehículo</h2>
+                        <form id="search-form">
+                            <div class="search-form">
+                                <input type="search" id="search-input" placeholder="Buscar por matrícula, chasis..."
+                                    class="search-input">
+                                <button type="submit" id="search-button" class="search-button">Buscar</button>
+                            </div>
+                        </form>
+                        <div id="search-results-info" style="text-align:center; margin-top:20px;"></div>
+                        <div id="search-results"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    </div>
+
+    <!-- FOOTER -->
     <footer>
         <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
     </footer>
     </div>
 
-    <script>
+    <script type="module">
+        import { fetchWithAuth } from './auth.js';
+
         // --- SIDEBAR LOGIC ---
         window.toggleSubmenu = function (id) {
             const submenu = document.getElementById(id);
@@ -474,32 +668,36 @@
         const sidebarTexts = document.querySelectorAll('.sidebar-text');
         let isCollapsed = false;
 
-        toggleBtn.addEventListener('click', () => {
-            isCollapsed = !isCollapsed;
-            if (isCollapsed) {
-                sidebar.classList.remove('w-64');
-                sidebar.classList.add('w-20');
-                sidebarTexts.forEach(el => el.classList.add('hidden'));
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-                document.querySelectorAll('[id$="-submenu"]').forEach(el => {
-                    el.classList.add('hidden');
-                    el.classList.remove('flex');
-                });
-            } else {
-                sidebar.classList.add('w-64');
-                sidebar.classList.remove('w-20');
-                sidebarTexts.forEach(el => el.classList.remove('hidden'));
-                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
-            }
-        });
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                isCollapsed = !isCollapsed;
+                if (isCollapsed) {
+                    sidebar.classList.remove('w-64');
+                    sidebar.classList.add('w-20');
+                    sidebarTexts.forEach(el => el.classList.add('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                    document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                        el.classList.add('hidden');
+                        el.classList.remove('flex');
+                    });
+                } else {
+                    sidebar.classList.add('w-64');
+                    sidebar.classList.remove('w-20');
+                    sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                }
+            });
+        }
 
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        mobileMenuBtn.addEventListener('click', () => {
-            sidebar.classList.toggle('-translate-x-full');
-            sidebar.classList.toggle('absolute');
-            sidebar.classList.toggle('z-50');
-            sidebar.classList.toggle('h-full');
-        });
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+                sidebar.classList.toggle('absolute');
+                sidebar.classList.toggle('z-50');
+                sidebar.classList.toggle('h-full');
+            });
+        }
 
         // Expand Taller submenu by default
         document.addEventListener("DOMContentLoaded", () => {
@@ -507,7 +705,7 @@
         });
 
         // --- URLs PARA VEHÍCULOS ---
-        const VEHICLE_REGISTER_API_URL = 'http://localhost:3000/api/vehiculos';
+        const VEHICLE_REGISTER_API_URL = '/api/vehiculos';
         const MAKE_VEHICLE_SEARCH_WEBHOOK_URL = 'https://hook.eu2.make.com/z8b2jaicivbiuuhc819wcwlq2mw2em32';
 
         // --- NUEVA LÓGICA PARA DROPDOWN BUSCABLE ---
@@ -579,9 +777,8 @@
             const data = {};
             formData.forEach((value, key) => { data[key] = value; });
 
-            fetch(VEHICLE_REGISTER_API_URL, {
+            fetchWithAuth(VEHICLE_REGISTER_API_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data),
             })
                 .then(async response => {
