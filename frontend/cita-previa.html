@@ -2475,6 +2475,20 @@
             init();
         });
     </script>
+    <script type="module">
+        import ChatWidget from './components/ChatWidget.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inicializar chat widget
+            // En un caso real, pasaríamos el ID del tenant y cliente dinámicamente.
+            // Aquí hardcodeamos para demo, o intentamos leer de localStorage si existiera.
+            new ChatWidget({
+                apiUrl: '/api/chat',
+                tenantId: 1,
+                clientId: 1 // Simulado
+            });
+        });
+    </script>
 </body>
 
 </html>

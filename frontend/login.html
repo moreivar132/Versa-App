@@ -159,6 +159,18 @@
   <script>
     feather.replace();
   </script>
+  <script type="module">
+    import ChatWidget from './components/ChatWidget.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Inicializar chat widget
+      new ChatWidget({
+        apiUrl: '/api/chat',
+        tenantId: 1,
+        clientId: 1 // Simulado
+      });
+    });
+  </script>
 </body>
 
 </html>

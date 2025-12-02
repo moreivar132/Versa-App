@@ -521,74 +521,75 @@
                 <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
                 <a href="manager-taller-vehiculos.html"
                   class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                <a href="manager-taller-chat.html" class="text-gray-500 hover:text-white text-sm py-1 block">Chat
+                  Clientes</a>
               </div>
-            </div>
 
-            <!-- Tienda Dropdown -->
-            <div class="nav-group">
-              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                onclick="toggleSubmenu('tienda-submenu')">
-                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
-                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
-                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="tienda-arrow"></i>
+              <!-- Tienda Dropdown -->
+              <div class="nav-group">
+                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                  onclick="toggleSubmenu('tienda-submenu')">
+                  <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                  <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                  <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="tienda-arrow"></i>
+                </a>
+                <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                  <a href="manager-taller-compras.html" class="text-gray-500 hover:text-white text-sm py-1 block">Nueva
+                    Compra</a>
+                  <a href="manager-taller-compras-historial.html"
+                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+                  <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                  <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                </div>
+              </div>
+
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                href="#">
+                <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
               </a>
-              <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                <a href="manager-taller-compras.html" class="text-gray-500 hover:text-white text-sm py-1 block">Nueva
-                  Compra</a>
-                <a href="manager-taller-compras-historial.html"
-                  class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
-                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
-                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+
+              <!-- Cuentas Dropdown -->
+              <div class="nav-group">
+                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                  onclick="toggleSubmenu('cuentas-submenu')">
+                  <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                  <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                  <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
+                </a>
+                <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                  <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+                  <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                </div>
               </div>
-            </div>
 
-            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="#">
-              <span class="icon-container"><i class="fas fa-cash-register"></i></span>
-              <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
-            </a>
-
-            <!-- Cuentas Dropdown -->
-            <div class="nav-group">
-              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                onclick="toggleSubmenu('cuentas-submenu')">
-                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
-                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
-                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                href="manager-taller-inventario.html">
+                <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
               </a>
-              <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
-                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
-              </div>
-            </div>
 
-            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="manager-taller-inventario.html">
-              <span class="icon-container"><i class="fas fa-boxes"></i></span>
-              <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
-            </a>
-
-            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="manager-taller-trabajadores.html">
-              <span class="icon-container"><i class="fas fa-users-cog"></i></span>
-              <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
-            </a>
-
-            <!-- Contactos -->
-            <div class="nav-group">
-              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                onclick="toggleSubmenu('contactos-submenu')">
-                <span class="icon-container"><i class="fas fa-address-book"></i></span>
-                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
-                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="contactos-arrow"></i>
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                href="manager-taller-trabajadores.html">
+                <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
               </a>
-              <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                <a href="manager-taller-clientes.html"
-                  class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
-                <a href="manager-taller-proveedores.html"
-                  class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+
+              <!-- Contactos -->
+              <div class="nav-group">
+                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                  onclick="toggleSubmenu('contactos-submenu')">
+                  <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                  <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                  <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="contactos-arrow"></i>
+                </a>
+                <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                  <a href="manager-taller-clientes.html"
+                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                  <a href="manager-taller-proveedores.html"
+                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                </div>
               </div>
-            </div>
           </nav>
         </div>
 

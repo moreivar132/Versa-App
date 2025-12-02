@@ -20,6 +20,7 @@ export default defineConfig({
                 managerTallerCitas: 'manager-taller-citas.html',
                 managerTallerCompras: 'manager-taller-compras.html',
                 managerTallerComprasHistorial: 'manager-taller-compras-historial.html',
+                managerTallerChat: 'manager-taller-chat.html',
                 citaPrevia: 'cita-previa.html',
             }
         }
