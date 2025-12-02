@@ -63,7 +63,7 @@ router.get('/conversacion-actual', async (req, res) => {
 
         // Obtener mensajes
         const queryMensajes = `
-            SELECT id, emisor_tipo as "emisorTipo", texto, created_at as "createdAt"
+            SELECT id, emisor_tipo as "emisorTipo", texto, tipo_mensaje as "tipoMensaje", url_adjunto as "urlAdjunto", created_at as "createdAt"
             FROM chat_mensaje
             WHERE id_conversacion = $1
             ORDER BY created_at ASC
@@ -92,9 +92,9 @@ router.get('/conversacion-actual', async (req, res) => {
 router.post('/mensajes', async (req, res) => {
     try {
         const { idTenant, idCliente } = getClientContext(req);
-        const { idConversacion, texto } = req.body;
+        const { idConversacion, texto, tipoMensaje, urlAdjunto } = req.body;
 
-        if (!idConversacion || !texto) {
+        if (!idConversacion) {
             return res.status(400).json({ ok: false, error: 'Faltan datos' });
         }
 
@@ -112,13 +112,17 @@ router.post('/mensajes', async (req, res) => {
         // Insertar mensaje
         const queryInsert = `
             INSERT INTO chat_mensaje (
-                id_conversacion, id_usuario, emisor_tipo, texto, created_at
+                id_conversacion, id_usuario, emisor_tipo, texto, tipo_mensaje, url_adjunto, created_at
             ) VALUES (
-                $1, NULL, 'CLIENTE', $2, NOW()
+                $1, NULL, 'CLIENTE', $2, $3, $4, NOW()
             )
-            RETURNING id, id_conversacion as "idConversacion", emisor_tipo as "emisorTipo", texto, created_at as "createdAt"
+            RETURNING id, id_conversacion as "idConversacion", emisor_tipo as "emisorTipo", texto, tipo_mensaje as "tipoMensaje", url_adjunto as "urlAdjunto", created_at as "createdAt"
         `;
-        const resultInsert = await pool.query(queryInsert, [idConversacion, texto]);
+
+        const tipo = tipoMensaje || 'TEXTO';
+        const url = urlAdjunto || null;
+
+        const resultInsert = await pool.query(queryInsert, [idConversacion, texto || '', tipo, url]);
         const mensaje = resultInsert.rows[0];
 
         // Actualizar conversación
@@ -159,7 +163,7 @@ router.get('/conversaciones/:id/mensajes', async (req, res) => {
 
         // Obtener mensajes
         const queryMensajes = `
-            SELECT id, emisor_tipo as "emisorTipo", texto, created_at as "createdAt"
+            SELECT id, emisor_tipo as "emisorTipo", texto, tipo_mensaje as "tipoMensaje", url_adjunto as "urlAdjunto", created_at as "createdAt"
             FROM chat_mensaje
             WHERE id_conversacion = $1
             ORDER BY created_at ASC

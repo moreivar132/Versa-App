@@ -36,6 +36,10 @@ app.use('/api/sucursales', require('./routes/sucursales'));
 app.use('/api/compras', require('./routes/compras'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/crm/chat', require('./routes/crm_chat'));
+app.use('/api/upload', require('./routes/upload'));
+
+// Servir archivos estáticos subidos
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Ruta de test para la base de datos
 app.get('/api/db-test', async (req, res) => {

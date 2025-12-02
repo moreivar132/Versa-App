@@ -22,7 +22,7 @@ const devVerifyJWT = (req, res, next) => {
 
     // Fallback for dev
     req.user = {
-        id: 1,
+        id: 8,
         id_tenant: 1,
         email: 'admin@versa.com',
         nombre: 'Admin Dev',
@@ -122,6 +122,8 @@ router.get('/conversaciones/:id/mensajes', async (req, res) => {
                 m.id_usuario as "idUsuario",
                 u.nombre as "usuarioNombre",
                 m.texto,
+                m.tipo_mensaje as "tipoMensaje",
+                m.url_adjunto as "urlAdjunto",
                 m.created_at as "createdAt"
             FROM chat_mensaje m
             LEFT JOIN usuario u ON u.id = m.id_usuario
@@ -147,11 +149,7 @@ router.post('/conversaciones/:id/mensajes', async (req, res) => {
         const idTenant = req.user.id_tenant;
         const idUsuario = req.user.id;
         const idConversacion = req.params.id;
-        const { texto } = req.body;
-
-        if (!texto) {
-            return res.status(400).json({ ok: false, error: 'Falta el texto' });
-        }
+        const { texto, tipoMensaje, urlAdjunto } = req.body;
 
         // Validar acceso
         const queryValidar = `SELECT id FROM chat_conversacion WHERE id = $1 AND id_tenant = $2`;
@@ -164,13 +162,17 @@ router.post('/conversaciones/:id/mensajes', async (req, res) => {
         // Insertar mensaje
         const queryInsert = `
             INSERT INTO chat_mensaje (
-                id_conversacion, id_usuario, emisor_tipo, texto, created_at
+                id_conversacion, id_usuario, emisor_tipo, texto, tipo_mensaje, url_adjunto, created_at
             ) VALUES (
-                $1, $2, 'USUARIO', $3, NOW()
+                $1, $2, 'USUARIO', $3, $4, $5, NOW()
             )
             RETURNING id, created_at
         `;
-        const resultInsert = await pool.query(queryInsert, [idConversacion, idUsuario, texto]);
+
+        const tipo = tipoMensaje || 'TEXTO';
+        const url = urlAdjunto || null;
+
+        const resultInsert = await pool.query(queryInsert, [idConversacion, idUsuario, texto || '', tipo, url]);
         const nuevoMensaje = resultInsert.rows[0];
 
         // Actualizar conversación
@@ -186,7 +188,9 @@ router.post('/conversaciones/:id/mensajes', async (req, res) => {
                 id: nuevoMensaje.id,
                 idConversacion,
                 emisorTipo: 'USUARIO',
-                texto,
+                texto: texto || '',
+                tipoMensaje: tipo,
+                urlAdjunto: url,
                 createdAt: nuevoMensaje.created_at
             }
         });

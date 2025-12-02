@@ -134,8 +134,15 @@ class ChatWidget {
                 padding: 15px;
                 background-color: #0f172a; /* Slate 900 */
                 display: flex;
+                flex-direction: column;
                 gap: 10px;
                 border-top: 1px solid #334155;
+            }
+            .chat-input-wrapper {
+                display: flex;
+                gap: 10px;
+                align-items: center;
+                width: 100%;
             }
             .chat-input {
                 flex: 1;
@@ -152,6 +159,25 @@ class ChatWidget {
             }
             .chat-input:focus {
                 border-color: #ea580c;
+            }
+            .chat-attach-btn {
+                background: none;
+                border: none;
+                color: #94a3b8;
+                cursor: pointer;
+                padding: 5px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: color 0.2s;
+            }
+            .chat-attach-btn:hover {
+                color: white;
+            }
+            .chat-attach-btn svg {
+                width: 24px;
+                height: 24px;
+                fill: currentColor;
             }
             .chat-send-btn {
                 background-color: #ea580c;
@@ -173,6 +199,28 @@ class ChatWidget {
                 width: 20px;
                 height: 20px;
                 fill: white;
+            }
+            .attachment-preview {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 5px 10px;
+                background-color: #1e293b;
+                border-radius: 8px;
+                font-size: 12px;
+                color: #cbd5e1;
+            }
+            .attachment-preview img, .attachment-preview video {
+                height: 40px;
+                width: 40px;
+                object-fit: cover;
+                border-radius: 4px;
+            }
+            .remove-attachment {
+                margin-left: auto;
+                cursor: pointer;
+                color: #ef4444;
+                font-weight: bold;
             }
             /* Scrollbar styling */
             .chat-messages::-webkit-scrollbar {
@@ -212,12 +260,22 @@ class ChatWidget {
                 <!-- Mensajes aquí -->
             </div>
             <div class="chat-input-area">
-                <input type="text" class="chat-input" placeholder="Escribe un mensaje..." />
-                <button class="chat-send-btn">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                    </svg>
-                </button>
+                <div id="attachment-preview-container" style="display: none;"></div>
+                <div class="chat-input-wrapper">
+                    <button class="chat-attach-btn" id="attach-btn" title="Adjuntar archivo">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+                        </svg>
+                    </button>
+                    <input type="file" id="file-input" style="display: none;" accept="image/*,video/*">
+                    
+                    <input type="text" class="chat-input" placeholder="Escribe un mensaje..." />
+                    <button class="chat-send-btn">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         `;
         document.body.appendChild(this.container);
@@ -226,6 +284,11 @@ class ChatWidget {
         this.input = this.container.querySelector('.chat-input');
         this.sendBtn = this.container.querySelector('.chat-send-btn');
         this.closeBtn = this.container.querySelector('.chat-close');
+        this.attachBtn = this.container.querySelector('#attach-btn');
+        this.fileInput = this.container.querySelector('#file-input');
+        this.previewContainer = this.container.querySelector('#attachment-preview-container');
+
+        this.pendingAttachment = null;
     }
 
     attachEvents() {
@@ -235,6 +298,70 @@ class ChatWidget {
         this.sendBtn.addEventListener('click', () => this.sendMessage());
         this.input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.sendMessage();
+        });
+
+        this.attachBtn.addEventListener('click', () => this.fileInput.click());
+        this.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+    }
+
+    async handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Show loading state or similar if needed
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Error subiendo archivo');
+
+            const data = await response.json();
+            if (data.ok) {
+                this.pendingAttachment = {
+                    url: data.url,
+                    type: data.type, // IMAGEN or VIDEO
+                    name: data.originalName
+                };
+                this.showPreview();
+            }
+        } catch (error) {
+            console.error('Upload error:', error);
+            alert('Error al subir el archivo');
+        }
+
+        // Reset input
+        this.fileInput.value = '';
+    }
+
+    showPreview() {
+        if (!this.pendingAttachment) {
+            this.previewContainer.style.display = 'none';
+            this.previewContainer.innerHTML = '';
+            return;
+        }
+
+        this.previewContainer.style.display = 'block';
+        const isImage = this.pendingAttachment.type === 'IMAGEN';
+
+        this.previewContainer.innerHTML = `
+            <div class="attachment-preview">
+                ${isImage
+                ? `<img src="${this.pendingAttachment.url}" alt="Preview">`
+                : `<video src="${this.pendingAttachment.url}"></video>`
+            }
+                <span>${this.pendingAttachment.name}</span>
+                <span class="remove-attachment">&times;</span>
+            </div>
+        `;
+
+        this.previewContainer.querySelector('.remove-attachment').addEventListener('click', () => {
+            this.pendingAttachment = null;
+            this.showPreview();
         });
     }
 
@@ -283,8 +410,20 @@ class ChatWidget {
         this.mensajes.forEach(msg => {
             const div = document.createElement('div');
             div.className = `message-bubble ${msg.emisorTipo.toLowerCase()}`;
+
+            let content = '';
+            if (msg.tipoMensaje === 'IMAGEN') {
+                content = `<img src="${msg.urlAdjunto}" alt="Imagen adjunta" style="max-width: 100%; border-radius: 8px; margin-bottom: 5px;">`;
+                if (msg.texto) content += `<div style="margin-top: 5px;">${msg.texto}</div>`;
+            } else if (msg.tipoMensaje === 'VIDEO') {
+                content = `<video src="${msg.urlAdjunto}" controls style="max-width: 100%; border-radius: 8px; margin-bottom: 5px;"></video>`;
+                if (msg.texto) content += `<div style="margin-top: 5px;">${msg.texto}</div>`;
+            } else {
+                content = msg.texto;
+            }
+
             div.innerHTML = `
-                ${msg.texto}
+                ${content}
                 <div class="message-time">${new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
             `;
             this.messagesContainer.appendChild(div);
@@ -298,19 +437,39 @@ class ChatWidget {
 
     async sendMessage() {
         const texto = this.input.value.trim();
-        if (!texto || !this.conversacion) return;
+
+        // Allow sending if there is text OR an attachment
+        if ((!texto && !this.pendingAttachment) || !this.conversacion) return;
+
+        const attachment = this.pendingAttachment; // Capture current attachment
 
         // Optimistic UI
         const tempMsg = {
             emisorTipo: 'CLIENTE',
             texto: texto,
+            tipoMensaje: attachment ? attachment.type : 'TEXTO',
+            urlAdjunto: attachment ? attachment.url : null,
             createdAt: new Date().toISOString()
         };
         this.mensajes.push(tempMsg);
         this.renderMessages();
+
+        // Clear input and attachment
         this.input.value = '';
+        this.pendingAttachment = null;
+        this.showPreview();
 
         try {
+            const body = {
+                idConversacion: this.conversacion.id,
+                texto: texto
+            };
+
+            if (attachment) {
+                body.tipoMensaje = attachment.type;
+                body.urlAdjunto = attachment.url;
+            }
+
             const response = await fetch(`${this.apiUrl}/mensajes`, {
                 method: 'POST',
                 headers: {
@@ -318,10 +477,7 @@ class ChatWidget {
                     'x-tenant-id': this.tenantId,
                     'x-client-id': this.clientId
                 },
-                body: JSON.stringify({
-                    idConversacion: this.conversacion.id,
-                    texto: texto
-                })
+                body: JSON.stringify(body)
             });
 
             if (!response.ok) {
@@ -330,12 +486,9 @@ class ChatWidget {
 
             const data = await response.json();
             if (data.ok) {
-                // Reemplazar el último mensaje con el real si es necesario, 
-                // o simplemente dejar que el polling lo actualice/confirme.
-                // Aquí ya lo tenemos en local.
+                // Success
             } else {
                 console.error('Error enviando mensaje:', data.error);
-                // Rollback optimistic UI si falla (opcional)
             }
         } catch (error) {
             console.error('Error enviando mensaje:', error);

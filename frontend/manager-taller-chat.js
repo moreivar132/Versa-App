@@ -167,8 +167,19 @@ function renderMessages(mensajes) {
             // Podríamos poner el nombre del usuario si quisiéramos
         }
 
+        let content = '';
+        if (msg.tipoMensaje === 'IMAGEN') {
+            content = `<img src="${msg.urlAdjunto}" alt="Imagen adjunta" class="max-w-full rounded-lg mb-2">`;
+            if (msg.texto) content += `<div class="mt-1">${msg.texto}</div>`;
+        } else if (msg.tipoMensaje === 'VIDEO') {
+            content = `<video src="${msg.urlAdjunto}" controls class="max-w-full rounded-lg mb-2"></video>`;
+            if (msg.texto) content += `<div class="mt-1">${msg.texto}</div>`;
+        } else {
+            content = msg.texto;
+        }
+
         div.innerHTML = `
-            ${msg.texto}
+            ${content}
             <div class="message-time">${new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
         `;
         chatMessages.appendChild(div);
