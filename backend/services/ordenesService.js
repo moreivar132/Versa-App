@@ -71,6 +71,12 @@ class OrdenesService {
         // También validamos Medios de Pago si existen
         const lineasProcesadas = [];
         console.log('Procesando líneas para orden:', JSON.stringify(lineas)); // DEBUG LOG
+        const normalizarTipoItem = (tipo) => {
+            const raw = (tipo || '').toString().trim().toUpperCase().replace(/[-\s]+/g, '_');
+            if (raw === 'SERVICIO' || raw === 'MANO_OBRA') return 'SERVICIO';
+            return 'PRODUCTO';
+        };
+
         for (const linea of lineas) {
             // Validar producto SOLO si se proporcionó un ID
             let producto = null;
@@ -78,6 +84,9 @@ class OrdenesService {
                 producto = await ordenesRepository.getProductoById(linea.idProducto, id_tenant);
                 if (!producto) throw new Error(`Producto ID ${linea.idProducto} no encontrado o no pertenece al tenant`);
             }
+
+            const tipoItemNormalizado = normalizarTipoItem(linea.tipoItem || linea.tipo_item);
+            const esServicio = tipoItemNormalizado === 'SERVICIO';
 
             // Determinar Impuesto: Si viene en linea, usarlo. Si no, del producto (si existe).
             let impuestoId = linea.idImpuesto;
@@ -108,6 +117,13 @@ class OrdenesService {
             if (cantidad <= 0) throw new Error(`Cantidad inválida en ${linea.descripcion || productoNombre}`);
             if (precio < 0) throw new Error(`Precio inválido en ${linea.descripcion || productoNombre}`);
 
+            if (producto && !esServicio) {
+                const stockDisponible = Number(producto.stock) || 0;
+                if (stockDisponible < cantidad) {
+                    throw new Error(`Stock insuficiente para ${producto.nombre}. Disponible: ${stockDisponible}, solicitado: ${cantidad}`);
+                }
+            }
+
             // Cálculos
             const subtotal = (cantidad * precio) - descuento;
             const montoIva = subtotal * (impuestoPorcentaje / 100);
@@ -117,6 +133,10 @@ class OrdenesService {
                 ...linea,
                 idImpuesto: impuestoId,
                 ivaPorcentaje: impuestoPorcentaje,
+                tipoItem: tipoItemNormalizado,
+                cantidad,
+                precio,
+                descuento,
                 subtotal, // Base imponible
                 montoIva,
                 totalLinea,
@@ -186,8 +206,7 @@ class OrdenesService {
                 });
 
                 // Actualizar stock SOLO si es un producto y NO es un servicio
-                // Si el usuario selecciona "Servicio" en el frontend, tipoItem será 'Servicio'
-                const esServicio = linea.tipoItem && linea.tipoItem.toUpperCase() === 'SERVICIO';
+                const esServicio = normalizarTipoItem(linea.tipoItem) === 'SERVICIO';
 
                 if (linea.idProducto && !esServicio) {
                     await ordenesRepository.decreaseProductoStock(client, linea.idProducto, linea.cantidad);
