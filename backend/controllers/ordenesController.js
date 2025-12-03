@@ -17,7 +17,7 @@ class OrdenesController {
             } else if (error.message.includes('no encontrado') || error.message.includes('no pertenece')) {
                 res.status(404).json({ ok: false, error: error.message });
             } else {
-                res.status(500).json({ ok: false, error: 'Error interno al crear la orden' });
+                res.status(500).json({ ok: false, error: `Error interno al crear la orden: ${error.message}` });
             }
         }
     }

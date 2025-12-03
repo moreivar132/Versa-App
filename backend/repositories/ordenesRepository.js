@@ -108,9 +108,9 @@ class OrdenesRepository {
             concepto,
             descripcion,
             comentario_interno,
-            total_bruto,
-            total_iva,
-            total_neto,
+            total_bruto = 0,
+            total_iva = 0,
+            total_neto = 0,
             created_by
         } = ordenData;
 
@@ -211,6 +211,15 @@ class OrdenesRepository {
 
         const result = await client.query(query, values);
         return result.rows[0];
+    }
+    async updateOrdenTotales(client, idOrden, totals) {
+        const { total_bruto, total_iva, total_neto } = totals;
+        const query = `
+            UPDATE orden
+            SET total_bruto = $1, total_iva = $2, total_neto = $3, updated_at = NOW()
+            WHERE id = $4
+        `;
+        await client.query(query, [total_bruto, total_iva, total_neto, idOrden]);
     }
 }
 
