@@ -17,6 +17,12 @@ class OrdenesService {
             lineas
         } = data;
 
+        const kmNumber = km !== undefined && km !== null && km !== '' ? Number(km) : 0;
+
+        if (Number.isNaN(kmNumber) || kmNumber < 0) {
+            throw new Error('Kilometraje inválido');
+        }
+
         // 1. Validaciones básicas
         if (!idSucursal || !idCliente || !idVehiculo || !idMecanico || !idTipoOrden || !lineas || lineas.length === 0) {
             throw new Error('Faltan campos obligatorios');
@@ -64,7 +70,7 @@ class OrdenesService {
                 id_mecanico: idMecanico,
                 id_tipoorden: idTipoOrden,
                 id_estadoorden: estadoAbierta.id,
-                km: km || 0,
+                km: kmNumber,
                 concepto,
                 descripcion: descripcion || '',
                 comentario_interno: comentarioInterno || '',

@@ -135,26 +135,38 @@ router.get('/export', verifyJWT, async (req, res) => {
 
 // GET /api/inventory/search - Search products (Specific autocomplete endpoint)
 router.get('/search', verifyJWT, async (req, res) => {
-    const { q } = req.query;
+    const { q, id_sucursal } = req.query;
     const id_tenant = req.user.id_tenant;
 
     if (!q) {
         return res.status(400).json({ error: 'Parámetro de búsqueda requerido (q)' });
     }
 
+    const sucursalId = parseInt(id_sucursal, 10);
+
+    if (!id_sucursal || Number.isNaN(sucursalId)) {
+        return res.status(400).json({ error: 'Debe especificar la sucursal' });
+    }
+
     try {
+        const sucursalValida = await pool.query('SELECT id FROM sucursal WHERE id = $1 AND id_tenant = $2', [sucursalId, id_tenant]);
+        if (sucursalValida.rows.length === 0) {
+            return res.status(404).json({ error: 'Sucursal no válida para el tenant' });
+        }
+
         const searchTerm = `%${q}%`;
         const query = `
             SELECT p.*, pr.nombre as proveedor_nombre, s.nombre as sucursal_nombre
             FROM producto p
             LEFT JOIN proveedor pr ON p.id_proveedor = pr.id
             LEFT JOIN sucursal s ON p.id_sucursal = s.id
-            WHERE p.id_tenant = $1 
-            AND (p.nombre ILIKE $2 OR p.codigo_barras ILIKE $2 OR p.modelo ILIKE $2)
+            WHERE p.id_tenant = $1
+            AND p.id_sucursal = $2
+            AND (p.nombre ILIKE $3 OR p.codigo_barras ILIKE $3 OR p.modelo ILIKE $3)
             LIMIT 20
         `;
 
-        const result = await pool.query(query, [id_tenant, searchTerm]);
+        const result = await pool.query(query, [id_tenant, sucursalId, searchTerm]);
         res.json(result.rows);
     } catch (error) {
         console.error('Error en búsqueda de inventario:', error);

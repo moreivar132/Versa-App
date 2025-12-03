@@ -1229,6 +1229,8 @@
     import { searchClientes } from './services/clientes-service.js';
     import { searchVehiculos, createVehicle } from './services/vehiculos-service.js';
     import { createClient } from './services/clientes-service.js';
+    import { searchInventario } from './services/inventory-service.js';
+    import { createOrden } from './services/ordenes-service.js';
     // --- LÓGICA DE INTERFAZ (UI) ---
     // (Sidebar, Menús, Pestañas - Sin backend)
 
@@ -1393,12 +1395,6 @@
         document.getElementById('vehiculo-info').textContent = '';
       }
 
-      const MOCK_PRODUCTOS = [
-        { id: 401, nombre: "Aceite 5W30", precio_venta: 45.50 },
-        { id: 402, nombre: "Filtro de Aire", precio_venta: 15.20 },
-        { id: 403, nombre: "Mano de Obra (h)", precio_venta: 50.00 }
-      ];
-
       async function loadTecnicosSelect() {
         const select = document.getElementById('tecnico-select');
         if (!select) return;
@@ -1452,7 +1448,7 @@
             if (searchFunction) {
               try {
                 const extraParams = getSearchParams ? getSearchParams() : {};
-                results = await searchFunction(query, extraParams.clientId);
+                results = await searchFunction(query, extraParams);
               } catch (e) {
                 console.error("Error en búsqueda:", e);
               }
@@ -1547,12 +1543,37 @@
       });
 
       setupCustomSelect({
-        inputId: 'new-item-name', optionsId: 'product-options', mockData: MOCK_PRODUCTOS,
-        renderOption: item => `${item.nombre} <small>(${item.precio_venta}€)</small>`,
+        inputId: 'new-item-name',
+        optionsId: 'product-options',
+        searchFunction: async (query, params) => {
+          const sucursalId = params?.idSucursal || document.getElementById('taller').value;
+          if (!sucursalId) {
+            showToast('Selecciona un taller para buscar en el inventario', true);
+            return [];
+          }
+          return searchInventario(query, sucursalId);
+        },
+        getSearchParams: () => ({ idSucursal: document.getElementById('taller').value }),
+        renderOption: item => {
+          const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
+          const price = parseFloat(rawPrice);
+          return `${item.nombre} <small>(${price.toFixed(2)}€)</small>`;
+        },
         onSelect: item => {
+          const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
+          const price = parseFloat(rawPrice);
+          const ivaValue = item.iva ?? '';
+          const typeSelect = document.getElementById('new-item-type');
+          const inferredType = item.tipo || item.tipo_item || (item.categoria && item.categoria.toLowerCase().includes('servicio') ? 'Servicio' : null);
+
           document.getElementById('new-item-name').value = item.nombre;
-          document.getElementById('new-item-price').value = item.precio_venta.toFixed(2);
-          document.getElementById('new-item-id-hidden').value = item.id;
+          document.getElementById('new-item-price').value = price.toFixed(2);
+          document.getElementById('new-item-id-hidden').value = item.id || '';
+          document.getElementById('new-item-id-hidden').dataset.iva = ivaValue;
+
+          if (inferredType) {
+            typeSelect.value = inferredType;
+          }
         }
       });
       // --- GESTIÓN DE ITEMS (Tabla) ---
@@ -1563,13 +1584,24 @@
         const type = document.getElementById('new-item-type').value;
         const bonus = parseFloat(document.getElementById('new-item-bonus').value) || 0;
         const id = document.getElementById('new-item-id-hidden').value;
+        const ivaFromProduct = parseFloat(document.getElementById('new-item-id-hidden').dataset.iva);
+        const ivaGlobal = parseFloat(document.getElementById('iva-percentage').value) || 0;
+        const iva = !Number.isNaN(ivaFromProduct) ? ivaFromProduct : ivaGlobal;
 
         if (!name || price <= 0) {
           showToast("Selecciona un item y precio válido.", true);
           return;
         }
 
-        orderItems.push({ id, name, price, quantity: qty, type, bonus });
+        orderItems.push({
+          idProducto: id || null,
+          descripcion: name,
+          precio: price,
+          cantidad: qty,
+          tipoItem: type,
+          descuento: bonus,
+          iva
+        });
         renderItems();
         calculateNetTotals();
 
@@ -1579,20 +1611,21 @@
         document.getElementById('new-item-quantity').value = '1';
         document.getElementById('new-item-bonus').value = '0';
         document.getElementById('new-item-id-hidden').value = '';
+        delete document.getElementById('new-item-id-hidden').dataset.iva;
       });
 
       function renderItems() {
         const tbody = document.getElementById('order-items-list');
         tbody.innerHTML = '';
         orderItems.forEach((item, index) => {
-          const subtotal = (item.price * item.quantity) - item.bonus;
+          const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${item.name}</td>
-            <td>${item.price.toFixed(2)}€</td>
-            <td>${item.quantity}</td>
-            <td>${item.type}</td>
-            <td>${item.bonus.toFixed(2)}€</td>
+            <td>${item.descripcion}</td>
+            <td>${item.precio.toFixed(2)}€</td>
+            <td>${item.cantidad}</td>
+            <td>${item.tipoItem}</td>
+            <td>${(item.descuento || 0).toFixed(2)}€</td>
             <td>${subtotal.toFixed(2)}€</td>
             <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold" data-index="${index}">&times;</button></td>
           `;
@@ -1610,20 +1643,24 @@
 
       // --- CÁLCULOS FINANCIEROS ---
       function calculateNetTotals() {
-        let totalRepuestos = 0, totalMano = 0;
+        let totalRepuestos = 0, totalMano = 0, totalIva = 0;
+        const descuentoPct = parseFloat(document.getElementById('discount-input').value) || 0;
+        const globalDiscountFactor = 1 - (descuentoPct / 100);
+
         orderItems.forEach(item => {
-          const sub = (item.price * item.quantity) - item.bonus;
-          if (item.type === 'Repuesto') totalRepuestos += sub;
-          else totalMano += sub;
+          const base = (item.precio * item.cantidad) - (item.descuento || 0);
+          const baseConDescuento = base * globalDiscountFactor;
+          const ivaLinea = baseConDescuento * ((item.iva || 0) / 100);
+
+          if (item.tipoItem === 'Repuesto') totalRepuestos += baseConDescuento;
+          else totalMano += baseConDescuento;
+
+          totalIva += ivaLinea;
         });
 
-        const descuentoPct = parseFloat(document.getElementById('discount-input').value) || 0;
         const subtotal = totalRepuestos + totalMano;
-        const descuentoMonto = subtotal * (descuentoPct / 100);
-        const neto = subtotal - descuentoMonto;
-
-        const ivaPct = parseFloat(document.getElementById('iva-percentage').value) || 0;
-        const ivaMonto = neto * (ivaPct / 100);
+        const neto = subtotal;
+        const ivaMonto = totalIva;
         const total = neto + ivaMonto;
 
         // Actualizar UI
@@ -1699,7 +1736,7 @@
       }
 
       // --- SUBMIT DEL FORMULARIO (LIMPIO PARA BACKEND) ---
-      orderForm.addEventListener('submit', (e) => {
+      orderForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         // Validaciones Básicas
@@ -1707,42 +1744,46 @@
         if (!document.getElementById('id-cliente-hidden').value) return showToast('Selecciona un cliente', true);
         if (orderItems.length === 0) return showToast('Agrega items a la orden', true);
 
+        const kmValue = document.getElementById('kilometraje').value;
+        const kmNumber = kmValue !== '' ? Number(kmValue) : 0;
+
+        if (Number.isNaN(kmNumber) || kmNumber < 0) {
+          return showToast('Kilometraje inválido', true);
+        }
+
+        const lineasPayload = orderItems.map(item => ({
+          idProducto: item.idProducto,
+          descripcion: item.descripcion,
+          cantidad: item.cantidad,
+          precio: item.precio,
+          descuento: item.descuento || 0,
+          iva: item.iva || 0,
+          tipoItem: item.tipoItem
+        }));
+
         // RECOPILACIÓN DE DATOS (LISTO PARA API)
         const payload = {
-          sucursal_id: document.getElementById('taller').value,
-          cliente_id: document.getElementById('id-cliente-hidden').value,
-          vehiculo_id: document.getElementById('id-vehiculo-hidden').value,
-          mecanico_id: document.getElementById('id-tecnico-hidden').value,
-          tipo_orden: document.getElementById('concepto').value,
-          fechas: {
-            ingreso: document.getElementById('fecha-ingreso').value,
-            egreso: document.getElementById('fecha-egreso').value
-          },
-          detalles: {
-            km: document.getElementById('kilometraje').value,
-            combustible: document.getElementById('combustible').value,
-            inspector: document.getElementById('nombre-inspector').value
-          },
-          items: orderItems, // Array con los productos/servicios
-          totales: {
-            neto: document.getElementById('summary-neto').textContent,
-            iva: document.getElementById('summary-iva').textContent,
-            total: document.getElementById('summary-total').textContent
-          },
-          pago: {
-            metodo: ccCheck.checked ? 'Cuenta Corriente' : metodoSelect.value,
-            monto: document.getElementById('payment-amount-input').value
-          }
+          idSucursal: Number(document.getElementById('taller').value),
+          idCliente: Number(document.getElementById('id-cliente-hidden').value),
+          idVehiculo: Number(document.getElementById('id-vehiculo-hidden').value),
+          idMecanico: Number(document.getElementById('id-tecnico-hidden').value),
+          idTipoOrden: Number(document.getElementById('concepto').value || document.getElementById('id-tipo-orden-hidden').value),
+          km: kmNumber,
+          concepto: document.getElementById('concepto').selectedOptions[0]?.textContent || '',
+          descripcion: document.getElementById('observaciones').value || '',
+          comentarioInterno: document.getElementById('comentario-interno').value || '',
+          lineas: lineasPayload
         };
 
-        console.log("--- DATOS LISTOS PARA ENVIAR AL BACKEND ---");
-        console.log(payload);
-
-        // AQUÍ IRÍA TU CÓDIGO DE BACKEND (fetch/axios)
-        // fetch('/api/ordenes', { method: 'POST', body: JSON.stringify(payload) ... })
-
-        // Simulación de éxito
-        showSuccessModal();
+        try {
+          const response = await createOrden(payload);
+          console.log("--- ORDEN CREADA ---", response);
+          showToast('Orden creada con éxito');
+          showSuccessModal();
+        } catch (error) {
+          console.error('Error al crear orden', error);
+          showToast(error.message || 'No se pudo crear la orden', true);
+        }
       });
 
       // --- LÓGICA MODAL NUEVO VEHÍCULO ---
