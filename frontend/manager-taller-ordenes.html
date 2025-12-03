@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gestión de Órdenes - Goversa</title>
 
-  <!-- Fuentes e Iconos -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
@@ -15,7 +14,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
@@ -609,12 +607,10 @@
 
 <body>
   <div class="flex h-screen w-full">
-    <!-- SIDEBAR -->
     <aside id="sidebar"
       class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
       <div class="flex h-full flex-col justify-between">
         <div class="flex flex-col gap-4">
-          <!-- Logo -->
           <div class="flex items-center gap-3 p-2 mb-4">
             <div class="logo-badge"
               style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
@@ -629,7 +625,6 @@
             </button>
           </div>
 
-          <!-- Navegación -->
           <nav class="flex flex-col gap-2">
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
               href="index.html">
@@ -637,7 +632,6 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
             </a>
 
-            <!-- Submenú Taller (Activo) -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('taller-submenu')">
@@ -655,7 +649,6 @@
               </div>
             </div>
 
-            <!-- Submenú Tienda -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('tienda-submenu')">
@@ -679,7 +672,6 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
 
-            <!-- Submenú Cuentas -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('cuentas-submenu')">
@@ -705,7 +697,6 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
             </a>
 
-            <!-- Submenú Contactos -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('contactos-submenu')">
@@ -723,7 +714,6 @@
           </nav>
         </div>
 
-        <!-- Usuario Footer -->
         <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
           <div class="flex items-center gap-3 px-3 py-2 mb-2">
             <div
@@ -744,9 +734,7 @@
       </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
-      <!-- Header Mobile -->
       <header
         class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
         <div class="logo-badge p-2">
@@ -758,17 +746,13 @@
       </header>
 
       <main class="flex-1 overflow-y-auto p-6 relative z-10">
-        <!-- FORMULARIO PRINCIPAL -->
-        <!-- NOTA: 'action' y 'method' deben configurarse según tu backend -->
         <form id="order-form" class="manager-panel">
-          <!-- Inputs Ocultos para almacenar IDs seleccionados -->
           <input type="hidden" id="id-tecnico-hidden" name="idMecanico" />
           <input type="hidden" id="id-cliente-hidden" name="idCliente" />
           <input type="hidden" id="id-vehiculo-hidden" name="idVehiculo" />
           <input type="hidden" id="id-tipo-orden-hidden" name="idTipoOrden" />
           <input type="hidden" id="id-taller-hidden" name="idSucursal" />
 
-          <!-- Cabecera del Formulario -->
           <div class="form-header">
             <h2 class="form-main-title">Orden de Reparación</h2>
             <div class="form-header-actions">
@@ -778,7 +762,6 @@
             </div>
           </div>
 
-          <!-- SECCIÓN 1: Datos Generales -->
           <div class="form-section">
             <div class="form-grid grid-cols-4">
               <div class="form-group">
@@ -799,7 +782,6 @@
                 <label for="taller">Taller *</label>
                 <select id="taller" name="taller" class="form-select" required>
                   <option value="" disabled selected>Seleccionar Taller</option>
-                  <!-- BACKEND: Llenar estas opciones dinámicamente -->
                   <option value="1">SUCURSAL PRINCIPAL</option>
                   <option value="2">SUCURSAL CENTRO</option>
                 </select>
@@ -807,7 +789,6 @@
             </div>
           </div>
 
-          <!-- SECCIÓN 2: Cliente y Vehículo -->
           <div class="form-section">
             <div class="form-grid grid-cols-5">
               <div class="form-group" style="grid-column: span 2;">
@@ -847,7 +828,6 @@
             </div>
           </div>
 
-          <!-- SECCIÓN 3: Detalles de Recepción -->
           <div class="form-section">
             <div class="form-grid grid-cols-4">
               <div class="form-group">
@@ -887,7 +867,6 @@
             </div>
           </div>
 
-          <!-- SECCIÓN 4: Items (Productos/Servicios) -->
           <div class="form-section">
             <table class="items-table">
               <thead>
@@ -898,11 +877,11 @@
                   <th style="width: 15%;">Tipo</th>
                   <th style="width: 10%;">Bonif.</th>
                   <th style="width: 10%;">Subtotal</th>
+                  <th style="width: 10%;">IVA</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody id="order-items-list">
-                <!-- Items agregados por JS -->
               </tbody>
               <tfoot>
                 <tr id="add-item-row">
@@ -924,13 +903,19 @@
                   </td>
                   <td><input type="number" id="new-item-bonus" class="form-input" value="0"></td>
                   <td id="new-item-subtotal">0.00€</td>
+                  <td>
+                    <select id="new-item-iva" class="form-select">
+                      <option value="0">0%</option>
+                      <option value="10">10%</option>
+                      <option value="21" selected>21%</option>
+                    </select>
+                  </td>
                   <td><button type="button" id="add-item-btn" class="btn">Agregar</button></td>
                 </tr>
               </tfoot>
             </table>
           </div>
 
-          <!-- SECCIÓN 5: Fotos -->
           <div class="form-section">
             <div class="form-group">
               <label for="vehicle-images-upload">Fotos del Vehículo</label>
@@ -943,10 +928,8 @@
             </div>
           </div>
 
-          <!-- SECCIÓN 6: Totales y Pago -->
           <div class="form-section">
             <div class="summary-payment-grid">
-              <!-- Comentarios -->
               <div>
                 <div class="form-group">
                   <label for="observaciones">Observaciones</label>
@@ -958,7 +941,6 @@
                 </div>
               </div>
 
-              <!-- Totales -->
               <div>
                 <h4>Resumen</h4>
                 <table class="summary-table">
@@ -984,9 +966,9 @@
                       <td id="summary-neto">0.00€</td>
                     </tr>
                     <tr>
-                      <td>IVA (<input type="number" id="iva-percentage" name="iva_percentage" value="21"
-                          class="form-input"
-                          style="width: 70px; display: inline-block; text-align: right; margin: 0 5px;">%)</td>
+                      <td>Total IVA</td>
+
+
                       <td id="summary-iva">0.00€</td>
                     </tr>
                     <tr class="total-row">
@@ -1033,7 +1015,6 @@
         </form>
       </main>
 
-      <!-- Toast y Modales -->
       <div id="toast-notification"></div>
 
       <div id="success-modal" class="modal-overlay">
@@ -1055,7 +1036,6 @@
     </div>
   </div>
 
-  <!-- Modal Nuevo Cliente -->
   <div id="new-client-modal" class="modal-overlay">
     <div class="modal-content modal-content-large">
       <h2 class="modal-header-title">Registro de Nuevo Cliente</h2>
@@ -1063,7 +1043,6 @@
 
       <form id="new-client-form">
         <div class="modal-grid">
-          <!-- Fila 1 -->
           <div class="modal-input-group col-span-4">
             <label>Nombre Completo *</label>
             <input type="text" name="nombre" class="modal-input" placeholder="Nombre y Apellidos" required>
@@ -1093,7 +1072,6 @@
             </select>
           </div>
 
-          <!-- Datos de Contacto -->
           <div class="col-span-12">
             <h3 class="modal-section-title">Datos de Contacto</h3>
           </div>
@@ -1110,7 +1088,6 @@
             <input type="email" name="email" class="modal-input" placeholder="cliente@ejemplo.com">
           </div>
 
-          <!-- Dirección -->
           <div class="col-span-12">
             <h3 class="modal-section-title">Dirección</h3>
           </div>
@@ -1127,7 +1104,6 @@
             <input type="text" name="cp_cliente" class="modal-input" placeholder="28000">
           </div>
 
-          <!-- Comentarios -->
           <div class="col-span-12">
             <h3 class="modal-section-title">Comentarios / Observaciones</h3>
           </div>
@@ -1145,7 +1121,6 @@
     </div>
   </div>
 
-  <!-- Modal Nuevo Vehículo -->
   <div id="new-vehicle-modal" class="modal-overlay">
     <div class="modal-content modal-content-large">
       <h2 class="modal-header-title">Registro de Nuevo Vehículo</h2>
@@ -1153,13 +1128,11 @@
 
       <form id="new-vehicle-form">
         <div class="modal-grid">
-          <!-- Información del Cliente -->
           <div class="col-span-12">
             <h3 class="modal-section-title">Información del Cliente</h3>
           </div>
           <div class="modal-input-group col-span-6">
             <label>Cliente *</label>
-            <!-- Usaremos un input de búsqueda simple o un select poblado dinámicamente -->
             <div class="custom-select-container">
               <input type="text" id="new-vehicle-client-search" class="modal-input" placeholder="Buscar cliente..."
                 autocomplete="off">
@@ -1171,11 +1144,9 @@
             <label>Sucursal *</label>
             <select name="id_sucursal" id="new-vehicle-sucursal" class="modal-input" required>
               <option value="">Seleccionar Sucursal...</option>
-              <!-- Se llenará dinámicamente -->
             </select>
           </div>
 
-          <!-- Datos del Vehículo -->
           <div class="col-span-12">
             <h3 class="modal-section-title">Datos del Vehículo</h3>
           </div>
@@ -1231,6 +1202,7 @@
     import { createClient } from './services/clientes-service.js';
     import { searchInventario } from './services/inventory-service.js';
     import { createOrden } from './services/ordenes-service.js';
+    import { getImpuestos } from './services/impuestos-service.js';
     // --- LÓGICA DE INTERFAZ (UI) ---
     // (Sidebar, Menús, Pestañas - Sin backend)
 
@@ -1286,6 +1258,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       loadSucursales();
       loadTecnicosSelect();
+      loadImpuestos();
 
       const tallerSelect = document.getElementById('taller');
       tallerSelect.addEventListener('change', () => {
@@ -1295,6 +1268,15 @@
       const tecnicoSelect = document.getElementById('tecnico-select');
       tecnicoSelect.addEventListener('change', () => {
         document.getElementById('id-tecnico-hidden').value = tecnicoSelect.value;
+      });
+
+      const vehiculoSelect = document.getElementById('vehiculo-select');
+      vehiculoSelect.addEventListener('change', () => {
+        const selectedOption = vehiculoSelect.options[vehiculoSelect.selectedIndex];
+        if (selectedOption) {
+          document.getElementById('id-vehiculo-hidden').value = vehiculoSelect.value;
+          document.getElementById('vehiculo-info').textContent = selectedOption.dataset.matricula || '';
+        }
       });
 
       // Fecha Inicial
@@ -1416,6 +1398,44 @@
         }
       }
 
+      async function loadImpuestos() {
+        const select = document.getElementById('new-item-iva');
+        if (!select) return;
+
+        select.innerHTML = '<option value="" disabled>Cargando...</option>';
+
+        try {
+          const impuestos = await getImpuestos();
+          select.innerHTML = ''; // Clear loading
+
+          if (impuestos.length === 0) {
+            select.innerHTML = '<option value="">Sin impuestos</option>';
+            return;
+          }
+
+          impuestos.forEach(imp => {
+            const option = document.createElement('option');
+            option.value = imp.id;
+            option.textContent = `${imp.nombre} (${imp.porcentaje}%)`;
+            option.dataset.percentage = imp.porcentaje;
+
+            // Default to 21% if possible
+            if (imp.porcentaje == 21) option.selected = true;
+
+            select.appendChild(option);
+          });
+
+          // If no 21% found and nothing selected, select the first one
+          if (select.selectedIndex === -1 && select.options.length > 0) {
+            select.options[0].selected = true;
+          }
+
+        } catch (error) {
+          console.error('Error cargando impuestos:', error);
+          select.innerHTML = '<option value="">Error</option>';
+        }
+      }
+
       // Configuración de Buscadores (Selects Personalizados)
       function setupCustomSelect({ inputId, optionsId, mockData, searchFunction, renderOption, onSelect, getSearchParams }) {
         const input = document.getElementById(inputId);
@@ -1523,22 +1543,6 @@
             console.error("Error loading vehicles", e);
             vehicleSelect.innerHTML = '<option value="" disabled selected>Error al cargar</option>';
           }
-
-
-
-
-
-        }
-      });
-
-
-      // Listener para el select de vehículos
-      document.getElementById('vehiculo-select').addEventListener('change', (e) => {
-        const select = e.target;
-        const selectedOption = select.options[select.selectedIndex];
-        if (selectedOption && selectedOption.value) {
-          document.getElementById('vehiculo-info').textContent = selectedOption.dataset.matricula || '';
-          document.getElementById('id-vehiculo-hidden').value = selectedOption.value;
         }
       });
 
@@ -1562,20 +1566,27 @@
         onSelect: item => {
           const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
           const price = parseFloat(rawPrice);
-          const ivaValue = item.iva ?? '';
+          const ivaId = item.id_impuesto;
           const typeSelect = document.getElementById('new-item-type');
-          const inferredType = item.tipo || item.tipo_item || (item.categoria && item.categoria.toLowerCase().includes('servicio') ? 'Servicio' : null);
+          const inferredType = item.tipo || item.tipo_item || (item.categoria && item.categoria.toLowerCase().includes('servicio') ? 'Servicio' : 'Repuesto');
 
           document.getElementById('new-item-name').value = item.nombre;
           document.getElementById('new-item-price').value = price.toFixed(2);
           document.getElementById('new-item-id-hidden').value = item.id || '';
-          document.getElementById('new-item-id-hidden').dataset.iva = ivaValue;
+
+          if (ivaId) {
+            const ivaSelect = document.getElementById('new-item-iva');
+            if (ivaSelect && ivaSelect.querySelector(`option[value="${ivaId}"]`)) {
+              ivaSelect.value = ivaId;
+            }
+          }
 
           if (inferredType) {
             typeSelect.value = inferredType;
           }
         }
       });
+
       // --- GESTIÓN DE ITEMS (Tabla) ---
       document.getElementById('add-item-btn').addEventListener('click', () => {
         const name = document.getElementById('new-item-name').value;
@@ -1584,23 +1595,25 @@
         const type = document.getElementById('new-item-type').value;
         const bonus = parseFloat(document.getElementById('new-item-bonus').value) || 0;
         const id = document.getElementById('new-item-id-hidden').value;
-        const ivaFromProduct = parseFloat(document.getElementById('new-item-id-hidden').dataset.iva);
-        const ivaGlobal = parseFloat(document.getElementById('iva-percentage').value) || 0;
-        const iva = !Number.isNaN(ivaFromProduct) ? ivaFromProduct : ivaGlobal;
+        const ivaSelect = document.getElementById('new-item-iva');
+        const selectedOption = ivaSelect.options[ivaSelect.selectedIndex];
+        const ivaPercentage = parseFloat(selectedOption?.dataset.percentage) || 0;
+        const ivaId = selectedOption?.value || null;
 
-        if (!name || price <= 0) {
+        if (!name || price < 0) {
           showToast("Selecciona un item y precio válido.", true);
           return;
         }
 
         orderItems.push({
           idProducto: id || null,
+          idImpuesto: ivaId,
           descripcion: name,
           precio: price,
           cantidad: qty,
           tipoItem: type,
           descuento: bonus,
-          iva
+          iva: ivaPercentage
         });
         renderItems();
         calculateNetTotals();
@@ -1611,6 +1624,7 @@
         document.getElementById('new-item-quantity').value = '1';
         document.getElementById('new-item-bonus').value = '0';
         document.getElementById('new-item-id-hidden').value = '';
+        document.getElementById('new-item-iva').value = '21';
         delete document.getElementById('new-item-id-hidden').dataset.iva;
       });
 
@@ -1619,14 +1633,29 @@
         tbody.innerHTML = '';
         orderItems.forEach((item, index) => {
           const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
+
+          // Badges para Tipo
+          let typeBadge = '';
+          if (item.tipoItem === 'Repuesto') {
+            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-blue-900 text-blue-200 border border-blue-700">Repuesto</span>';
+          } else if (item.tipoItem === 'Servicio') {
+            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-orange-900 text-orange-200 border border-orange-700">Servicio</span>';
+          } else {
+            typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${item.tipoItem}</span>`;
+          }
+
+          // Icono de Inventario
+          const isProduct = item.idProducto ? '<span class="text-green-500 mr-1" title="Producto de inventario">📦</span>' : '<span class="text-gray-500 mr-1" title="Item libre">📝</span>';
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${item.descripcion}</td>
+            <td>${isProduct} ${item.descripcion}</td>
             <td>${item.precio.toFixed(2)}€</td>
             <td>${item.cantidad}</td>
-            <td>${item.tipoItem}</td>
+            <td>${typeBadge}</td>
             <td>${(item.descuento || 0).toFixed(2)}€</td>
             <td>${subtotal.toFixed(2)}€</td>
+            <td>${item.iva}%</td>
             <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold" data-index="${index}">&times;</button></td>
           `;
           tbody.appendChild(tr);
@@ -1634,8 +1663,9 @@
       }
 
       document.getElementById('order-items-list').addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item-btn')) {
-          orderItems.splice(e.target.dataset.index, 1);
+        if (e.target.classList.contains('remove-item-btn') || e.target.closest('.remove-item-btn')) {
+          const btn = e.target.classList.contains('remove-item-btn') ? e.target : e.target.closest('.remove-item-btn');
+          orderItems.splice(btn.dataset.index, 1);
           renderItems();
           calculateNetTotals();
         }
@@ -1692,7 +1722,7 @@
 
       // Event Listeners para cálculos
       document.getElementById('discount-input').addEventListener('input', calculateNetTotals);
-      document.getElementById('iva-percentage').addEventListener('input', calculateNetTotals);
+
       document.getElementById('payment-amount-input').addEventListener('input', validatePayment);
 
       const ccCheck = document.getElementById('cuenta-corriente-check');
@@ -1727,7 +1757,6 @@
             wrapper.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-img-btn">&times;</button>`;
             wrapper.querySelector('button').addEventListener('click', () => {
               wrapper.remove();
-              // Aquí lógica para remover del array de archivos si fuese necesario
             });
             previewsContainer.appendChild(wrapper);
           };
@@ -1805,7 +1834,7 @@
             document.getElementById('new-vehicle-client-search').value = currentClientName;
           }
 
-          // Cargar sucursales si no están cargadas (reutilizando la lógica existente o clonando)
+          // Cargar sucursales si no están cargadas
           const sucursalSelect = document.getElementById('new-vehicle-sucursal');
           const mainSucursalSelect = document.getElementById('taller');
           if (sucursalSelect.options.length <= 1 && mainSucursalSelect.options.length > 1) {
@@ -1854,7 +1883,7 @@
 
           try {
             const result = await createVehicle(vehicleData);
-            const newVehicle = result; // El backend devuelve el objeto vehículo directamente
+            const newVehicle = result;
 
             showToast('Vehículo creado exitosamente');
 

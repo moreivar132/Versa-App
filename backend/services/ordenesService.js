@@ -70,6 +70,7 @@ class OrdenesService {
         // 5. Validar Productos y Calcular Líneas PREVIO a la transacción (Fail fast)
         // También validamos Medios de Pago si existen
         const lineasProcesadas = [];
+        console.log('Procesando líneas para orden:', JSON.stringify(lineas)); // DEBUG LOG
         for (const linea of lineas) {
             // Validar producto SOLO si se proporcionó un ID
             let producto = null;
@@ -144,6 +145,9 @@ class OrdenesService {
         try {
             await client.query('BEGIN');
 
+            // 0. Resolver Almacén (Para movimientos de inventario)
+            const idAlmacen = await ordenesRepository.ensureAlmacenPrincipal(idSucursal, client);
+
             // Crear Cabecera Orden
             const ordenData = {
                 id_sucursal: idSucursal,
@@ -180,6 +184,25 @@ class OrdenesService {
                     iva: linea.montoIva, // Guardamos el MONTO del IVA
                     subtotal: linea.subtotal // Base imponible
                 });
+
+                // Actualizar stock SOLO si es un producto y NO es un servicio
+                // Si el usuario selecciona "Servicio" en el frontend, tipoItem será 'Servicio'
+                const esServicio = linea.tipoItem && linea.tipoItem.toUpperCase() === 'SERVICIO';
+
+                if (linea.idProducto && !esServicio) {
+                    await ordenesRepository.decreaseProductoStock(client, linea.idProducto, linea.cantidad);
+
+                    // Registrar Movimiento de Inventario
+                    await ordenesRepository.createMovimientoInventario(client, {
+                        id_producto: linea.idProducto,
+                        id_almacen: idAlmacen,
+                        tipo: 'SALIDA',
+                        cantidad: linea.cantidad,
+                        origen_tipo: 'ORDEN',
+                        origen_id: idOrden,
+                        created_by: id_usuario
+                    });
+                }
 
                 totalBruto += linea.subtotal;
                 totalIva += linea.montoIva;

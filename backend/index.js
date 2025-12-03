@@ -29,6 +29,7 @@ app.use('/api/inventory', require('./routes/inventory'));
 app.use('/api/sucursales', require('./routes/sucursales'));
 app.use('/api/compras', require('./routes/compras'));
 app.use('/api/ordenes', require('./routes/ordenes'));
+app.use('/api/impuestos', require('./routes/impuestos'));
 
 // Ruta de test para la base de datos
 app.get('/api/db-test', async (req, res) => {

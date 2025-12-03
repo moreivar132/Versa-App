@@ -221,6 +221,40 @@ class OrdenesRepository {
         `;
         await client.query(query, [total_bruto, total_iva, total_neto, idOrden]);
     }
+
+    async decreaseProductoStock(client, idProducto, cantidad) {
+        const query = `
+            UPDATE producto
+            SET stock = stock - $1, updated_at = NOW()
+            WHERE id = $2
+        `;
+        await client.query(query, [cantidad, idProducto]);
+    }
+
+    async ensureAlmacenPrincipal(idSucursal, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM almacen WHERE id_sucursal = $1 ORDER BY id ASC LIMIT 1', [idSucursal]);
+        if (result.rows.length > 0) {
+            return result.rows[0].id;
+        }
+
+        // Create default if not exists
+        const createResult = await executor.query(
+            'INSERT INTO almacen (id_sucursal, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id',
+            [idSucursal, 'Almacén Principal']
+        );
+        return createResult.rows[0].id;
+    }
+
+    async createMovimientoInventario(client, data) {
+        const { id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_by } = data;
+        const query = `
+            INSERT INTO movimientoinventario
+            (id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
+        `;
+        await client.query(query, [id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_by]);
+    }
 }
 
 module.exports = new OrdenesRepository();
