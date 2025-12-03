@@ -897,8 +897,8 @@
                   <td><input type="number" id="new-item-quantity" class="form-input" value="1"></td>
                   <td>
                     <select id="new-item-type" class="form-select">
-                      <option value="Servicio">Servicio</option>
-                      <option value="Repuesto">Repuesto</option>
+                      <option value="PRODUCTO">Repuesto</option>
+                      <option value="SERVICIO">Servicio</option>
                     </select>
                   </td>
                   <td><input type="number" id="new-item-bonus" class="form-input" value="0"></td>
@@ -1568,7 +1568,8 @@
           const price = parseFloat(rawPrice);
           const ivaId = item.id_impuesto;
           const typeSelect = document.getElementById('new-item-type');
-          const inferredType = item.tipo || item.tipo_item || (item.categoria && item.categoria.toLowerCase().includes('servicio') ? 'Servicio' : 'Repuesto');
+          const inferredTypeRaw = item.tipo || item.tipo_item || (item.categoria && item.categoria.toLowerCase().includes('servicio') ? 'SERVICIO' : 'PRODUCTO');
+          const inferredType = (inferredTypeRaw || '').toString().toUpperCase().includes('SERVICIO') ? 'SERVICIO' : 'PRODUCTO';
 
           document.getElementById('new-item-name').value = item.nombre;
           document.getElementById('new-item-price').value = price.toFixed(2);
@@ -1605,13 +1606,17 @@
           return;
         }
 
+        const normalizedType = (type || '').toUpperCase() === 'SERVICIO' ? 'SERVICIO' : 'PRODUCTO';
+        const displayType = normalizedType === 'SERVICIO' ? 'Servicio' : 'Repuesto';
+
         orderItems.push({
           idProducto: id || null,
           idImpuesto: ivaId,
           descripcion: name,
           precio: price,
           cantidad: qty,
-          tipoItem: type,
+          tipoItem: normalizedType,
+          tipoItemLabel: displayType,
           descuento: bonus,
           iva: ivaPercentage
         });
@@ -1635,13 +1640,14 @@
           const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
 
           // Badges para Tipo
+          const typeLabel = item.tipoItemLabel || (item.tipoItem === 'SERVICIO' ? 'Servicio' : 'Repuesto');
           let typeBadge = '';
-          if (item.tipoItem === 'Repuesto') {
+          if (item.tipoItem === 'PRODUCTO') {
             typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-blue-900 text-blue-200 border border-blue-700">Repuesto</span>';
-          } else if (item.tipoItem === 'Servicio') {
+          } else if (item.tipoItem === 'SERVICIO') {
             typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-orange-900 text-orange-200 border border-orange-700">Servicio</span>';
           } else {
-            typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${item.tipoItem}</span>`;
+            typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${typeLabel}</span>`;
           }
 
           // Icono de Inventario
@@ -1682,7 +1688,7 @@
           const baseConDescuento = base * globalDiscountFactor;
           const ivaLinea = baseConDescuento * ((item.iva || 0) / 100);
 
-          if (item.tipoItem === 'Repuesto') totalRepuestos += baseConDescuento;
+          if (item.tipoItem === 'PRODUCTO') totalRepuestos += baseConDescuento;
           else totalMano += baseConDescuento;
 
           totalIva += ivaLinea;
@@ -1782,12 +1788,13 @@
 
         const lineasPayload = orderItems.map(item => ({
           idProducto: item.idProducto,
+          idImpuesto: item.idImpuesto,
           descripcion: item.descripcion,
           cantidad: item.cantidad,
           precio: item.precio,
           descuento: item.descuento || 0,
           iva: item.iva || 0,
-          tipoItem: item.tipoItem
+          tipoItem: (item.tipoItem || '').toUpperCase() || 'PRODUCTO'
         }));
 
         // RECOPILACIÓN DE DATOS (LISTO PARA API)

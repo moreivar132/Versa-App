@@ -57,7 +57,7 @@ class OrdenesRepository {
     async getProductoById(id, id_tenant, client) {
         const executor = getExecutor(client);
         const result = await executor.query(
-            'SELECT id, id_impuesto, nombre, precio FROM producto WHERE id = $1 AND id_tenant = $2',
+            'SELECT id, id_impuesto, nombre, precio, COALESCE(stock, 0) AS stock FROM producto WHERE id = $1 AND id_tenant = $2',
             [id, id_tenant]
         );
         return result.rows[0];
@@ -225,10 +225,15 @@ class OrdenesRepository {
     async decreaseProductoStock(client, idProducto, cantidad) {
         const query = `
             UPDATE producto
-            SET stock = stock - $1, updated_at = NOW()
-            WHERE id = $2
+            SET stock = COALESCE(stock, 0) - $1, updated_at = NOW()
+            WHERE id = $2 AND COALESCE(stock, 0) >= $1
+            RETURNING stock
         `;
-        await client.query(query, [cantidad, idProducto]);
+        const result = await client.query(query, [cantidad, idProducto]);
+
+        if (result.rowCount === 0) {
+            throw new Error('Stock insuficiente para el producto seleccionado');
+        }
     }
 
     async ensureAlmacenPrincipal(idSucursal, client) {
