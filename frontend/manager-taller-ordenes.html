@@ -517,6 +517,93 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Estilos Modal Nuevo Cliente (Dark Theme) */
+    .modal-content-large {
+      width: 95%;
+      max-width: 900px;
+      background-color: #1a1d24;
+      /* Darker background like the image */
+      padding: 30px;
+      border: 1px solid #333;
+      text-align: left;
+    }
+
+    .modal-header-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 5px;
+    }
+
+    .modal-subtitle {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 25px;
+    }
+
+    .modal-section-title {
+      color: var(--brand-orange);
+      font-size: 16px;
+      font-weight: 600;
+      margin: 20px 0 15px 0;
+      border-bottom: 1px solid #333;
+      padding-bottom: 5px;
+    }
+
+    .modal-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 15px;
+    }
+
+    .col-span-12 {
+      grid-column: span 12;
+    }
+
+    .col-span-6 {
+      grid-column: span 6;
+    }
+
+    .col-span-4 {
+      grid-column: span 4;
+    }
+
+    .col-span-3 {
+      grid-column: span 3;
+    }
+
+    .modal-input-group label {
+      display: block;
+      color: #ccc;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .modal-input {
+      width: 100%;
+      background-color: #0b0d11;
+      /* Very dark input bg */
+      border: 1px solid #333;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .modal-input:focus {
+      border-color: var(--brand-orange);
+      outline: none;
+    }
+
+    .modal-footer {
+      margin-top: 30px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 15px;
+      border-top: 1px solid #333;
+      padding-top: 20px;
+    }
   </style>
 </head>
 
@@ -740,19 +827,21 @@
                 <div id="cliente-info" class="info-display"></div>
               </div>
               <div class="form-group" style="grid-column: span 1;">
-                <label for="buscar-vehiculo">Buscar Vehículo</label>
-                <div class="custom-select-container">
-                  <div class="input-group">
-                    <input type="text" id="buscar-vehiculo" name="vehiculo_desc" class="form-input custom-select-input"
-                      placeholder="Matrícula..." autocomplete="off">
-                    <button type="button" id="add-vehicle-btn" class="btn btn-secondary"
-                      title="Crear nuevo vehículo">+</button>
-                  </div>
-                  <div class="custom-select-options" id="vehiculo-options"></div>
+                <label for="vehiculo-select">Seleccionar Vehículo</label>
+
+                <div class="input-group">
+                  <select id="vehiculo-select" name="vehiculo_id" class="form-select" disabled>
+                    <option value="" disabled selected>Seleccione un cliente primero</option>
+                  </select>
+
+                  <button type="button" id="add-vehicle-btn" class="btn btn-secondary"
+                    title="Crear nuevo vehículo">+</button>
                 </div>
+
+
               </div>
               <div class="form-group" style="grid-column: span 1;">
-                <label>Placa</label>
+                <label>Matrícula</label>
                 <div id="vehiculo-info" class="info-display"></div>
               </div>
             </div>
@@ -878,7 +967,8 @@
                       <td>Descuento</td>
                       <td>
                         <input type="number" id="discount-input" name="descuento" class="form-input"
-                          style="text-align: right; width: 80px; display: inline-block; margin-left: auto;" value="0"> %
+                          style="text-align: right; width: 80px; display: inline-block; margin-left: auto;" value="0">
+                        %
                       </td>
                     </tr>
                     <tr>
@@ -965,11 +1055,180 @@
     </div>
   </div>
 
+  <!-- Modal Nuevo Cliente -->
+  <div id="new-client-modal" class="modal-overlay">
+    <div class="modal-content modal-content-large">
+      <h2 class="modal-header-title">Registro de Nuevo Cliente</h2>
+      <p class="modal-subtitle">Los campos marcados con * son obligatorios.</p>
+
+      <form id="new-client-form">
+        <div class="modal-grid">
+          <!-- Fila 1 -->
+          <div class="modal-input-group col-span-4">
+            <label>Nombre Completo *</label>
+            <input type="text" name="nombre" class="modal-input" placeholder="Nombre y Apellidos" required>
+          </div>
+          <div class="modal-input-group col-span-2">
+            <label>Tipo Documento</label>
+            <select name="tipo_documento" class="modal-input">
+              <option value="DNI">DNI</option>
+              <option value="NIE">NIE</option>
+              <option value="CIF">CIF</option>
+              <option value="Pasaporte">Pasaporte</option>
+            </select>
+          </div>
+          <div class="modal-input-group col-span-3">
+            <label>Documento (DNI/NIF/NIE) *</label>
+            <input type="text" name="documento" class="modal-input" placeholder="Ej: 12345678Z" required>
+          </div>
+          <div class="modal-input-group col-span-3">
+            <label>Origen del Cliente</label>
+            <select name="origen_cliente" class="modal-input">
+              <option value="">Seleccionar...</option>
+              <option value="Google">Google</option>
+              <option value="Redes Sociales">Redes Sociales</option>
+              <option value="Recomendación">Recomendación</option>
+              <option value="Pasante">Pasante</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+
+          <!-- Datos de Contacto -->
+          <div class="col-span-12">
+            <h3 class="modal-section-title">Datos de Contacto</h3>
+          </div>
+          <div class="modal-input-group col-span-4">
+            <label>Teléfono Principal *</label>
+            <input type="text" name="telefono" class="modal-input" placeholder="+34 ..." required>
+          </div>
+          <div class="modal-input-group col-span-4">
+            <label>Teléfono Alternativo</label>
+            <input type="text" name="telefono_alternativo" class="modal-input" placeholder="Opcional">
+          </div>
+          <div class="modal-input-group col-span-4">
+            <label>Correo Electrónico</label>
+            <input type="email" name="email" class="modal-input" placeholder="cliente@ejemplo.com">
+          </div>
+
+          <!-- Dirección -->
+          <div class="col-span-12">
+            <h3 class="modal-section-title">Dirección</h3>
+          </div>
+          <div class="modal-input-group col-span-6">
+            <label>Dirección</label>
+            <input type="text" name="direccion" class="modal-input" placeholder="Calle, Número, Piso...">
+          </div>
+          <div class="modal-input-group col-span-4">
+            <label>Localidad</label>
+            <input type="text" name="localidad" class="modal-input">
+          </div>
+          <div class="modal-input-group col-span-2">
+            <label>Código Postal</label>
+            <input type="text" name="cp_cliente" class="modal-input" placeholder="28000">
+          </div>
+
+          <!-- Comentarios -->
+          <div class="col-span-12">
+            <h3 class="modal-section-title">Comentarios / Observaciones</h3>
+          </div>
+          <div class="modal-input-group col-span-12">
+            <textarea name="comentario" class="modal-input" rows="3" placeholder="Notas sobre el cliente..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="cancel-new-client-btn" class="btn btn-outline"
+            style="border: none; color: #aaa;">Cancelar</button>
+          <button type="submit" class="btn">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Nuevo Vehículo -->
+  <div id="new-vehicle-modal" class="modal-overlay">
+    <div class="modal-content modal-content-large">
+      <h2 class="modal-header-title">Registro de Nuevo Vehículo</h2>
+      <p class="modal-subtitle">Los campos marcados con * son obligatorios.</p>
+
+      <form id="new-vehicle-form">
+        <div class="modal-grid">
+          <!-- Información del Cliente -->
+          <div class="col-span-12">
+            <h3 class="modal-section-title">Información del Cliente</h3>
+          </div>
+          <div class="modal-input-group col-span-6">
+            <label>Cliente *</label>
+            <!-- Usaremos un input de búsqueda simple o un select poblado dinámicamente -->
+            <div class="custom-select-container">
+              <input type="text" id="new-vehicle-client-search" class="modal-input" placeholder="Buscar cliente..."
+                autocomplete="off">
+              <input type="hidden" name="id_cliente" id="new-vehicle-client-id">
+              <div class="custom-select-options" id="new-vehicle-client-options"></div>
+            </div>
+          </div>
+          <div class="modal-input-group col-span-6">
+            <label>Sucursal *</label>
+            <select name="id_sucursal" id="new-vehicle-sucursal" class="modal-input" required>
+              <option value="">Seleccionar Sucursal...</option>
+              <!-- Se llenará dinámicamente -->
+            </select>
+          </div>
+
+          <!-- Datos del Vehículo -->
+          <div class="col-span-12">
+            <h3 class="modal-section-title">Datos del Vehículo</h3>
+          </div>
+          <div class="modal-input-group col-span-4">
+            <label>Matrícula *</label>
+            <input type="text" name="matricula" class="modal-input" placeholder="Ej: 1234ABC" required>
+          </div>
+          <div class="modal-input-group col-span-4">
+            <label>Marca *</label>
+            <input type="text" name="marca" class="modal-input" placeholder="Ej: Toyota" required>
+          </div>
+          <div class="modal-input-group col-span-4">
+            <label>Modelo *</label>
+            <input type="text" name="modelo" class="modal-input" placeholder="Ej: Corolla" required>
+          </div>
+
+          <div class="modal-input-group col-span-3">
+            <label>Año</label>
+            <input type="number" name="anio" class="modal-input" placeholder="Ej: 2020">
+          </div>
+          <div class="modal-input-group col-span-3">
+            <label>Color</label>
+            <input type="text" name="color" class="modal-input">
+          </div>
+          <div class="modal-input-group col-span-3">
+            <label>CC</label>
+            <input type="text" name="cilindrada" class="modal-input">
+          </div>
+          <div class="modal-input-group col-span-3">
+            <label>Seguro</label>
+            <input type="text" name="seguro" class="modal-input">
+          </div>
+          <div class="modal-input-group col-span-6">
+            <label>Serial (VIN)</label>
+            <input type="text" name="vin" class="modal-input" placeholder="Número de chasis">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" id="cancel-new-vehicle-btn" class="btn btn-outline"
+            style="border: none; color: #aaa;">Cancelar</button>
+          <button type="submit" class="btn">Guardar Vehículo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module">
     import { loadSucursales } from './loadSucursales.js';
     import { searchTecnicos } from './services/tecnicos-service.js';
     import { searchClientes } from './services/clientes-service.js';
-    import { searchVehiculos } from './services/vehiculos-service.js';
+    import { searchVehiculos, createVehicle } from './services/vehiculos-service.js';
+    import { createClient } from './services/clientes-service.js';
     // --- LÓGICA DE INTERFAZ (UI) ---
     // (Sidebar, Menús, Pestañas - Sin backend)
 
@@ -1057,6 +1316,53 @@
       function showSuccessModal() { successModal.classList.add('show'); }
       function hideSuccessModal() { successModal.classList.remove('show'); }
 
+      // --- LÓGICA MODAL NUEVO CLIENTE ---
+      const newClientModal = document.getElementById('new-client-modal');
+      const addClientBtn = document.getElementById('add-client-btn');
+      const cancelNewClientBtn = document.getElementById('cancel-new-client-btn');
+      const newClientForm = document.getElementById('new-client-form');
+
+      if (addClientBtn) {
+        addClientBtn.addEventListener('click', () => {
+          newClientModal.classList.add('show');
+        });
+      }
+
+      if (cancelNewClientBtn) {
+        cancelNewClientBtn.addEventListener('click', () => {
+          newClientModal.classList.remove('show');
+          newClientForm.reset();
+        });
+      }
+
+      if (newClientForm) {
+        newClientForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const formData = new FormData(newClientForm);
+          const clientData = Object.fromEntries(formData.entries());
+
+          try {
+            const result = await createClient(clientData);
+            const newClient = result.cliente;
+
+            showToast('Cliente creado exitosamente');
+
+            // Auto-seleccionar el nuevo cliente
+            document.getElementById('buscar-cliente').value = newClient.nombre;
+            document.getElementById('cliente-info').textContent = `${newClient.documento || ''} | ${newClient.telefono || ''}`;
+            document.getElementById('id-cliente-hidden').value = newClient.id;
+
+            // Cerrar modal
+            newClientModal.classList.remove('show');
+            newClientForm.reset();
+
+          } catch (error) {
+            console.error(error);
+            showToast(error.message, true);
+          }
+        });
+      }
+
       closeModalBtn.addEventListener('click', hideSuccessModal);
       newOrderBtn.addEventListener('click', () => {
         hideSuccessModal();
@@ -1115,16 +1421,27 @@
       }
 
       // Configuración de Buscadores (Selects Personalizados)
-      function setupCustomSelect({ inputId, optionsId, mockData, searchFunction, renderOption, onSelect }) {
+      function setupCustomSelect({ inputId, optionsId, mockData, searchFunction, renderOption, onSelect, getSearchParams }) {
         const input = document.getElementById(inputId);
         const optionsContainer = document.getElementById(optionsId);
         let debounceTimeout;
+
+        input.addEventListener("focus", () => {
+          if (inputId === 'buscar-vehiculo') {
+            const clientId = document.getElementById('id-cliente-hidden').value;
+            if (clientId) {
+              // Trigger search manually
+              input.dispatchEvent(new Event('keyup'));
+            }
+          }
+        });
 
         input.addEventListener("keyup", () => {
           clearTimeout(debounceTimeout);
           const query = input.value.trim();
 
-          if (query.length < 1) {
+          const clientId = inputId === 'buscar-vehiculo' ? document.getElementById('id-cliente-hidden').value : null;
+          if (query.length < 1 && !clientId) {
             optionsContainer.classList.remove('show');
             return;
           }
@@ -1134,7 +1451,8 @@
 
             if (searchFunction) {
               try {
-                results = await searchFunction(query);
+                const extraParams = getSearchParams ? getSearchParams() : {};
+                results = await searchFunction(query, extraParams.clientId);
               } catch (e) {
                 console.error("Error en búsqueda:", e);
               }
@@ -1176,22 +1494,55 @@
         optionsId: 'cliente-options',
         searchFunction: searchClientes,
         renderOption: item => `${item.nombre} <small>(${item.documento || 'Sin Doc'})</small>`,
-        onSelect: item => {
+        onSelect: async (item) => {
           document.getElementById('buscar-cliente').value = item.nombre;
           document.getElementById('cliente-info').textContent = `${item.documento || ''} | ${item.telefono || ''}`;
           document.getElementById('id-cliente-hidden').value = item.id;
+
+          // Limpiar vehículo anterior
+          // Reset vehicle select
+          const vehicleSelect = document.getElementById('vehiculo-select');
+          vehicleSelect.innerHTML = '<option value="" disabled selected>Cargando vehículos...</option>';
+          vehicleSelect.disabled = true;
+          document.getElementById('vehiculo-info').textContent = '';
+          document.getElementById('id-vehiculo-hidden').value = '';
+
+          try {
+            const vehicles = await searchVehiculos('', item.id);
+            vehicleSelect.innerHTML = '<option value="" disabled selected>Seleccionar vehículo</option>';
+
+            if (vehicles.length > 0) {
+              vehicles.forEach(v => {
+                const option = document.createElement('option');
+                option.value = v.id;
+                option.textContent = `${v.marca} ${v.modelo} (${v.matricula})`;
+                option.dataset.matricula = v.matricula;
+                vehicleSelect.appendChild(option);
+              });
+              vehicleSelect.disabled = false;
+            } else {
+              vehicleSelect.innerHTML = '<option value="" disabled selected>No hay vehículos registrados</option>';
+            }
+          } catch (e) {
+            console.error("Error loading vehicles", e);
+            vehicleSelect.innerHTML = '<option value="" disabled selected>Error al cargar</option>';
+          }
+
+
+
+
+
         }
       });
 
-      setupCustomSelect({
-        inputId: 'buscar-vehiculo',
-        optionsId: 'vehiculo-options',
-        searchFunction: searchVehiculos,
-        renderOption: item => `${item.marca || ''} ${item.modelo || ''} <small>(${item.matricula || 'Sin matrícula'})</small> ${item.nombre_cliente ? '- ' + item.nombre_cliente : ''}`,
-        onSelect: item => {
-          document.getElementById('buscar-vehiculo').value = `${item.marca || ''} ${item.modelo || ''}`.trim();
-          document.getElementById('vehiculo-info').textContent = `${item.matricula || ''} ${item.nombre_cliente ? '| ' + item.nombre_cliente : ''}`.trim();
-          document.getElementById('id-vehiculo-hidden').value = item.id;
+
+      // Listener para el select de vehículos
+      document.getElementById('vehiculo-select').addEventListener('change', (e) => {
+        const select = e.target;
+        const selectedOption = select.options[select.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+          document.getElementById('vehiculo-info').textContent = selectedOption.dataset.matricula || '';
+          document.getElementById('id-vehiculo-hidden').value = selectedOption.value;
         }
       });
 
@@ -1393,6 +1744,109 @@
         // Simulación de éxito
         showSuccessModal();
       });
+
+      // --- LÓGICA MODAL NUEVO VEHÍCULO ---
+      const newVehicleModal = document.getElementById('new-vehicle-modal');
+      const addVehicleBtn = document.getElementById('add-vehicle-btn');
+      const cancelNewVehicleBtn = document.getElementById('cancel-new-vehicle-btn');
+      const newVehicleForm = document.getElementById('new-vehicle-form');
+
+      if (addVehicleBtn) {
+        addVehicleBtn.addEventListener('click', () => {
+          newVehicleModal.classList.add('show');
+
+          // Pre-seleccionar cliente si ya está seleccionado en el formulario principal
+          const currentClientId = document.getElementById('id-cliente-hidden').value;
+          const currentClientName = document.getElementById('buscar-cliente').value;
+
+          if (currentClientId) {
+            document.getElementById('new-vehicle-client-id').value = currentClientId;
+            document.getElementById('new-vehicle-client-search').value = currentClientName;
+          }
+
+          // Cargar sucursales si no están cargadas (reutilizando la lógica existente o clonando)
+          const sucursalSelect = document.getElementById('new-vehicle-sucursal');
+          const mainSucursalSelect = document.getElementById('taller');
+          if (sucursalSelect.options.length <= 1 && mainSucursalSelect.options.length > 1) {
+            Array.from(mainSucursalSelect.options).forEach(opt => {
+              if (opt.value) {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = opt.textContent;
+                sucursalSelect.appendChild(newOpt);
+              }
+            });
+          }
+        });
+      }
+
+      if (cancelNewVehicleBtn) {
+        cancelNewVehicleBtn.addEventListener('click', () => {
+          newVehicleModal.classList.remove('show');
+          newVehicleForm.reset();
+        });
+      }
+
+      // Buscador de clientes dentro del modal de vehículo
+      setupCustomSelect({
+        inputId: 'new-vehicle-client-search',
+        optionsId: 'new-vehicle-client-options',
+        searchFunction: searchClientes,
+        renderOption: item => `${item.nombre} <small>(${item.documento || 'Sin Doc'})</small>`,
+        onSelect: item => {
+          document.getElementById('new-vehicle-client-search').value = item.nombre;
+          document.getElementById('new-vehicle-client-id').value = item.id;
+        }
+      });
+
+      if (newVehicleForm) {
+        newVehicleForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const formData = new FormData(newVehicleForm);
+          const rawData = Object.fromEntries(formData.entries());
+          const vehicleData = { ...rawData, year: rawData.anio, serial: rawData.vin, cc: rawData.cilindrada };
+
+          if (!vehicleData.id_cliente) {
+            showToast('Debes seleccionar un cliente para el vehículo', true);
+            return;
+          }
+
+          try {
+            const result = await createVehicle(vehicleData);
+            const newVehicle = result; // El backend devuelve el objeto vehículo directamente
+
+            showToast('Vehículo creado exitosamente');
+
+            // Añadir el nuevo vehículo al select y seleccionarlo
+            const vehicleSelect = document.getElementById('vehiculo-select');
+
+            // Si el select estaba deshabilitado o vacío, limpiarlo
+            if (vehicleSelect.disabled || vehicleSelect.options[0].disabled) {
+              vehicleSelect.innerHTML = '';
+              vehicleSelect.disabled = false;
+            }
+
+            const option = document.createElement('option');
+            option.value = newVehicle.id;
+            option.textContent = `${newVehicle.marca} ${newVehicle.modelo} (${newVehicle.matricula})`;
+            option.dataset.matricula = newVehicle.matricula;
+            option.selected = true;
+            vehicleSelect.appendChild(option);
+
+            // Actualizar info visual
+            document.getElementById('vehiculo-info').textContent = newVehicle.matricula;
+            document.getElementById('id-vehiculo-hidden').value = newVehicle.id;
+
+            // Cerrar modal
+            newVehicleModal.classList.remove('show');
+            newVehicleForm.reset();
+
+          } catch (error) {
+            console.error(error);
+            showToast(error.message, true);
+          }
+        });
+      }
 
     });
   </script>

@@ -14,8 +14,15 @@ export async function getTecnicos() {
         if (!response.ok) throw new Error("Error al obtener técnicos");
 
         const users = await response.json();
-        // Aquí idealmente filtraríamos por rol 'Mecánico' si tuviéramos esa info
-        return users;
+
+        // Filtrar solo usuarios con rol de mecánico
+        return users.filter(user => {
+            const roles = user.roles || [];
+            return roles.some(role => {
+                const r = String(role).toLowerCase();
+                return r.includes('mecanico') || r.includes('mecánico');
+            });
+        });
 
     } catch (error) {
         console.error("Error obteniendo técnicos:", error);
