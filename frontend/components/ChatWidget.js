@@ -3,12 +3,22 @@ class ChatWidget {
         const baseUrl = import.meta.env.VITE_API_URL || '';
         this.apiUrl = config.apiUrl || `${baseUrl}/api/chat`;
         this.tenantId = config.tenantId || 1;
-        this.clientId = config.clientId || 1; // En prod, esto vendría de otro lado
+        // this.clientId se establecerá dinámicamente
+        this.clientId = null;
         this.pollingInterval = config.pollingInterval || 3000;
         this.isOpen = false;
         this.conversacion = null;
         this.mensajes = [];
         this.intervalId = null;
+
+        // Cargar identidad guardada
+        const savedIdentity = localStorage.getItem('chat_user_identity');
+        if (savedIdentity) {
+            this.userContext = JSON.parse(savedIdentity);
+            this.clientId = this.userContext.id;
+        } else {
+            this.userContext = null;
+        }
 
         this.init();
     }
@@ -97,6 +107,58 @@ class ChatWidget {
             .chat-close:hover {
                 color: white;
             }
+            /* Views */
+            .chat-view-messages {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                overflow: hidden;
+            }
+            .chat-view-form {
+                display: flex;
+                flex-direction: column;
+                flex: 1;
+                padding: 20px;
+                justify-content: center;
+                background-color: #1e293b;
+            }
+            .form-group {
+                margin-bottom: 15px;
+            }
+            .form-group label {
+                display: block;
+                color: #cbd5e1;
+                margin-bottom: 5px;
+                font-size: 14px;
+            }
+            .form-input {
+                width: 100%;
+                padding: 10px;
+                background-color: #334155;
+                border: 1px solid #475569;
+                border-radius: 8px;
+                color: white;
+                font-size: 14px;
+                outline: none;
+            }
+            .form-input:focus {
+                border-color: #ea580c;
+            }
+            .form-btn {
+                width: 100%;
+                padding: 12px;
+                background-color: #ea580c;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+            .form-btn:hover {
+                background-color: #c2410c;
+            }
+            
             .chat-messages {
                 flex: 1;
                 padding: 15px;
@@ -252,34 +314,70 @@ class ChatWidget {
         // Container
         this.container = document.createElement('div');
         this.container.className = 'chat-widget-container';
-        this.container.innerHTML = `
+
+        // Header
+        const headerHTML = `
             <div class="chat-header">
                 <h3>Chat con el Taller</h3>
                 <button class="chat-close">&times;</button>
             </div>
-            <div class="chat-messages" id="chat-messages">
-                <!-- Mensajes aquí -->
+        `;
+
+        // Form View
+        const formHTML = `
+            <div class="chat-view-form" id="chat-identity-form">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h4 style="color: white; margin-bottom: 5px;">¡Hola! 👋</h4>
+                    <p style="color: #94a3b8; font-size: 14px;">Por favor, introduce tus datos para comenzar el chat.</p>
+                </div>
+                <div class="form-group">
+                    <label for="chat-name">Nombre</label>
+                    <input type="text" id="chat-name" class="form-input" placeholder="Tu nombre completo">
+                </div>
+                <div class="form-group">
+                    <label for="chat-phone">Teléfono</label>
+                    <input type="tel" id="chat-phone" class="form-input" placeholder="Tu número de teléfono">
+                </div>
+                <button id="start-chat-btn" class="form-btn">Comenzar Chat</button>
             </div>
-            <div class="chat-input-area">
-                <div id="attachment-preview-container" style="display: none;"></div>
-                <div class="chat-input-wrapper">
-                    <button class="chat-attach-btn" id="attach-btn" title="Adjuntar archivo">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
-                        </svg>
-                    </button>
-                    <input type="file" id="file-input" style="display: none;" accept="image/*,video/*">
-                    
-                    <input type="text" class="chat-input" placeholder="Escribe un mensaje..." />
-                    <button class="chat-send-btn">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
-                    </button>
+        `;
+
+        // Chat View
+        const chatHTML = `
+            <div class="chat-view-messages" id="chat-interface" style="display: none;">
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Mensajes aquí -->
+                </div>
+                <div class="chat-input-area">
+                    <div id="attachment-preview-container" style="display: none;"></div>
+                    <div class="chat-input-wrapper">
+                        <button class="chat-attach-btn" id="attach-btn" title="Adjuntar archivo">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+                            </svg>
+                        </button>
+                        <input type="file" id="file-input" style="display: none;" accept="image/*,video/*">
+                        
+                        <input type="text" class="chat-input" placeholder="Escribe un mensaje..." />
+                        <button class="chat-send-btn">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
+
+        this.container.innerHTML = headerHTML + formHTML + chatHTML;
         document.body.appendChild(this.container);
+
+        // References
+        this.identityForm = this.container.querySelector('#chat-identity-form');
+        this.chatInterface = this.container.querySelector('#chat-interface');
+        this.startChatBtn = this.container.querySelector('#start-chat-btn');
+        this.nameInput = this.container.querySelector('#chat-name');
+        this.phoneInput = this.container.querySelector('#chat-phone');
 
         this.messagesContainer = this.container.querySelector('#chat-messages');
         this.input = this.container.querySelector('.chat-input');
@@ -296,6 +394,10 @@ class ChatWidget {
         this.launcher.addEventListener('click', () => this.toggleChat());
         this.closeBtn.addEventListener('click', () => this.toggleChat());
 
+        // Identity Form
+        this.startChatBtn.addEventListener('click', () => this.handleIdentitySubmit());
+
+        // Chat Interface
         this.sendBtn.addEventListener('click', () => this.sendMessage());
         this.input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.sendMessage();
@@ -303,6 +405,59 @@ class ChatWidget {
 
         this.attachBtn.addEventListener('click', () => this.fileInput.click());
         this.fileInput.addEventListener('change', (e) => this.handleFileUpload(e));
+    }
+
+    async handleIdentitySubmit() {
+        const nombre = this.nameInput.value.trim();
+        const telefono = this.phoneInput.value.trim();
+
+        if (!nombre || !telefono) {
+            alert('Por favor, introduce tu nombre y teléfono.');
+            return;
+        }
+
+        this.startChatBtn.textContent = 'Conectando...';
+        this.startChatBtn.disabled = true;
+
+        try {
+            const response = await fetch(`${this.apiUrl}/identificar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre,
+                    telefono,
+                    idTenant: this.tenantId
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.ok && data.cliente) {
+                // Guardar identidad
+                this.userContext = data.cliente;
+                this.clientId = data.cliente.id;
+                localStorage.setItem('chat_user_identity', JSON.stringify(this.userContext));
+
+                // Cambiar vista
+                this.showChatInterface();
+                await this.loadConversation();
+                this.startPolling();
+            } else {
+                alert('Error al conectar: ' + (data.error || 'Desconocido'));
+                this.startChatBtn.textContent = 'Comenzar Chat';
+                this.startChatBtn.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error identificación:', error);
+            alert('Error de conexión');
+            this.startChatBtn.textContent = 'Comenzar Chat';
+            this.startChatBtn.disabled = false;
+        }
+    }
+
+    showChatInterface() {
+        this.identityForm.style.display = 'none';
+        this.chatInterface.style.display = 'flex';
     }
 
     async handleFileUpload(event) {
@@ -371,9 +526,18 @@ class ChatWidget {
         if (this.isOpen) {
             this.container.classList.add('open');
             this.launcher.style.display = 'none';
-            await this.loadConversation();
-            this.startPolling();
-            this.scrollToBottom();
+
+            if (this.userContext && this.clientId) {
+                this.showChatInterface();
+                await this.loadConversation();
+                this.startPolling();
+                this.scrollToBottom();
+            } else {
+                // Mostrar formulario (default state)
+                this.identityForm.style.display = 'flex';
+                this.chatInterface.style.display = 'none';
+            }
+
         } else {
             this.container.classList.remove('open');
             this.launcher.style.display = 'flex';
@@ -382,6 +546,8 @@ class ChatWidget {
     }
 
     async loadConversation() {
+        if (!this.clientId) return;
+
         try {
             const response = await fetch(`${this.apiUrl}/conversacion-actual`, {
                 headers: {
