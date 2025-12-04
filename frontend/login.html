@@ -7,6 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Acceso seguro al portal Versa Finanzas para el envío de facturas y tickets." />
   <title>Acceso | Versa Finanzas</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./theme.css" />
   <script src="https://unpkg.com/feather-icons"></script>
@@ -159,18 +160,19 @@
   <script>
     feather.replace();
   </script>
-  import ChatWidget from './components/ChatWidget.js';
-  import { getApiBaseUrl } from './auth.js';
+  <script type="module">
+    import ChatWidget from './components/ChatWidget.js';
+    import { getApiBaseUrl } from './auth.js';
 
-  document.addEventListener('DOMContentLoaded', () => {
-  const API_BASE_URL = getApiBaseUrl();
-  // Inicializar chat widget
-  new ChatWidget({
-  apiUrl: `${API_BASE_URL}/api/chat`,
-  tenantId: 1,
-  clientId: 1 // Simulado
-  });
-  });
+    document.addEventListener('DOMContentLoaded', () => {
+      const API_BASE_URL = getApiBaseUrl();
+      // Inicializar chat widget
+      new ChatWidget({
+        apiUrl: `${API_BASE_URL}/api/chat`,
+        tenantId: 1,
+        clientId: 1 // Simulado
+      });
+    });
   </script>
 </body>
 

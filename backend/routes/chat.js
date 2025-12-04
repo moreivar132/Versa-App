@@ -25,6 +25,66 @@ const getClientContext = (req) => {
     return { idTenant, idCliente };
 };
 
+// 1.0. Identificar o crear cliente para el chat
+router.post('/identificar', async (req, res) => {
+    try {
+        const { nombre, telefono, email, idTenant } = req.body;
+
+        if (!nombre || !telefono) {
+            return res.status(400).json({ ok: false, error: 'Nombre y teléfono son obligatorios' });
+        }
+
+        const tenantId = idTenant || 1;
+
+        // 1. Buscar si ya existe por teléfono
+        const queryBuscar = `
+            SELECT id, nombre, telefono 
+            FROM clientefinal 
+            WHERE id_tenant = $1 AND telefono = $2
+            LIMIT 1
+        `;
+        const resultBuscar = await pool.query(queryBuscar, [tenantId, telefono]);
+
+        if (resultBuscar.rows.length > 0) {
+            // Cliente existe
+            return res.json({
+                ok: true,
+                cliente: resultBuscar.rows[0]
+            });
+        }
+
+        // 2. Si no existe, crear nuevo
+        // Generamos un documento dummy porque es obligatorio en la tabla
+        const documentoDummy = `CHAT-${Date.now()}`;
+
+        const queryInsert = `
+            INSERT INTO clientefinal (
+                id_tenant, nombre, documento, telefono, email, origen_cliente, created_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, 'WEB_CHAT', NOW()
+            )
+            RETURNING id, nombre, telefono
+        `;
+
+        const resultInsert = await pool.query(queryInsert, [
+            tenantId,
+            nombre,
+            documentoDummy,
+            telefono,
+            email || null
+        ]);
+
+        res.json({
+            ok: true,
+            cliente: resultInsert.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error en /identificar:', error);
+        res.status(500).json({ ok: false, error: error.message });
+    }
+});
+
 // 1.1. Obtener o crear la conversación actual del cliente
 router.get('/conversacion-actual', async (req, res) => {
     console.log('Hit /conversacion-actual');
