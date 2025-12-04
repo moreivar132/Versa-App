@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gestión de Órdenes - Goversa</title>
-    <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
@@ -1693,7 +1693,8 @@
                 optionsContainer.innerHTML = `<div class="option" style="color: var(--error-color);">Error de conexión.</div>`;
                 optionsContainer.classList.add('show');
               });
-            }
+          }, 300);
+        });
 
         function renderResults(results) {
           optionsContainer.innerHTML = '';
@@ -2033,7 +2034,7 @@
           }))
         };
 
-        console.log("Payload JSON de la Orden:", ordenPayload);
+        console.log("Payload JSON de la Orden:", payload);
 
         try {
           let response;
