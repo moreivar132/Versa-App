@@ -53,7 +53,7 @@ router.get('/', verifyJWT, async (req, res) => {
     }
 });
 
-// GET /api/inventory/resumen - Aggregated inventory grouped by codigo_barras
+// GET /api/inventory/resumen - Inventory list (simplified - no duplicates after cleanup)
 router.get('/resumen', verifyJWT, async (req, res) => {
     const limit = parseInt(req.query.limit) || 100;
     const offset = parseInt(req.query.offset) || 0;
@@ -79,31 +79,29 @@ router.get('/resumen', verifyJWT, async (req, res) => {
             params.push(provider);
         }
 
+        // Query simplificada - sin agrupación porque ya no hay duplicados
         const query = `
-            WITH aggregated AS (
-                SELECT
-                    MIN(p.id) AS id_representative,
-                    p.codigo_barras,
-                    MAX(p.nombre) AS nombre,
-                    MAX(p.categoria) AS categoria,
-                    MAX(p.id_sucursal) AS id_sucursal,
-                    MAX(p.id_proveedor) AS id_proveedor,
-                    SUM(p.stock) AS stock_total,
-                    MIN(p.stock_minimo) AS stock_minimo, -- Usamos el mínimo como umbral más conservador
-                    MAX(p.precio) AS precio_representativo, -- Precio más alto para no subestimar
-                    MAX(p.marca) AS marca,
-                    MAX(p.modelo) AS modelo,
-                    MIN(p.unidad_medida) AS unidad_medida
-                FROM producto p
-                ${filterClause}
-                GROUP BY p.codigo_barras
-            )
-            SELECT a.*, pr.nombre AS proveedor_nombre, s.nombre AS sucursal_nombre
-            FROM aggregated a
-            LEFT JOIN proveedor pr ON a.id_proveedor = pr.id
-            LEFT JOIN sucursal s ON a.id_sucursal = s.id
-            ORDER BY a.nombre ASC
-            LIMIT $${params.length + 1} OFFSET $${params.length + 2};
+            SELECT 
+                p.id AS id_representative,
+                p.codigo_barras,
+                p.nombre,
+                p.categoria,
+                p.id_sucursal,
+                p.id_proveedor,
+                COALESCE(p.stock, 0) AS stock_total,
+                COALESCE(p.stock_minimo, 0) AS stock_minimo,
+                p.precio AS precio_representativo,
+                p.marca,
+                p.modelo,
+                p.unidad_medida,
+                pr.nombre AS proveedor_nombre, 
+                s.nombre AS sucursal_nombre
+            FROM producto p
+            LEFT JOIN proveedor pr ON p.id_proveedor = pr.id
+            LEFT JOIN sucursal s ON p.id_sucursal = s.id
+            ${filterClause}
+            ORDER BY p.nombre ASC
+            LIMIT $${params.length + 1} OFFSET $${params.length + 2}
         `;
 
         params.push(limit, offset);
@@ -197,6 +195,7 @@ router.get('/export', verifyJWT, async (req, res) => {
 });
 
 // GET /api/inventory/search - Search products (Specific autocomplete endpoint)
+// Groups products by barcode to avoid duplicates, shows total stock
 router.get('/search', verifyJWT, async (req, res) => {
     const { q, id_sucursal } = req.query;
     const id_tenant = req.user.id_tenant;
@@ -218,14 +217,26 @@ router.get('/search', verifyJWT, async (req, res) => {
         }
 
         const searchTerm = `%${q}%`;
+
+        // Query simplificada - sin agrupación porque ya no hay duplicados
         const query = `
-            SELECT p.*, pr.nombre as proveedor_nombre, s.nombre as sucursal_nombre
+            SELECT 
+                p.id,
+                p.codigo_barras,
+                p.nombre,
+                p.precio,
+                COALESCE(p.stock, 0) AS stock,
+                p.tipo,
+                p.categoria,
+                p.id_impuesto,
+                p.marca,
+                p.modelo,
+                p.unidad_medida
             FROM producto p
-            LEFT JOIN proveedor pr ON p.id_proveedor = pr.id
-            LEFT JOIN sucursal s ON p.id_sucursal = s.id
             WHERE p.id_tenant = $1
             AND p.id_sucursal = $2
             AND (p.nombre ILIKE $3 OR p.codigo_barras ILIKE $3 OR p.modelo ILIKE $3)
+            ORDER BY p.nombre
             LIMIT 20
         `;
 
@@ -301,8 +312,12 @@ router.post('/', verifyJWT, async (req, res) => {
             }
         }
 
-        // 3. Check if product exists (by barcode)
-        const checkQuery = 'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2';
+        // 3. Check if product exists (by barcode + tenant - ignore sucursal for uniqueness)
+        // Un código de barras debe ser único por tenant, sin importar la sucursal
+        const checkQuery = `
+            SELECT id, stock, id_sucursal FROM producto 
+            WHERE codigo_barras = $1 AND id_tenant = $2
+        `;
         const checkRes = await client.query(checkQuery, [codigo_barras_articulo, id_tenant]);
 
         let result;

@@ -182,33 +182,33 @@ router.post('/', verifyJWT, async (req, res) => {
                 throw new Error('Cada item debe tener un precio válido.');
             }
 
-            // Resolver Producto (Buscar o Crear)
+            // Resolver Producto (Buscar o Crear) - Incluye id_sucursal para unicidad
             if (!productId && item.barcode) {
                 const prodRes = await client.query(
-                    'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2',
-                    [item.barcode, id_tenant]
+                    'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2 AND id_sucursal = $3',
+                    [item.barcode, id_tenant, id_sucursal]
                 );
                 if (prodRes.rows.length > 0) {
                     productId = prodRes.rows[0].id;
                 } else {
                     // Crear producto básico vinculado a la sucursal de la compra
                     const createProd = await client.query(
-                        'INSERT INTO producto (id_tenant, codigo_barras, nombre, precio, id_sucursal, tipo, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id',
+                        'INSERT INTO producto (id_tenant, codigo_barras, nombre, precio, id_sucursal, tipo, stock, created_at) VALUES ($1, $2, $3, $4, $5, $6, 0, NOW()) RETURNING id',
                         [id_tenant, item.barcode, item.name, item.price, id_sucursal, item.type || 'Producto']
                     );
                     productId = createProd.rows[0].id;
                 }
             } else if (!productId) {
-                // Producto sin código, buscar por nombre exacto o crear
+                // Producto sin código, buscar por nombre exacto y sucursal o crear
                 const prodRes = await client.query(
-                    'SELECT id FROM producto WHERE nombre = $1 AND id_tenant = $2',
-                    [item.name, id_tenant]
+                    'SELECT id FROM producto WHERE nombre = $1 AND id_tenant = $2 AND id_sucursal = $3',
+                    [item.name, id_tenant, id_sucursal]
                 );
                 if (prodRes.rows.length > 0) {
                     productId = prodRes.rows[0].id;
                 } else {
                     const createProd = await client.query(
-                        'INSERT INTO producto (id_tenant, nombre, precio, id_sucursal, tipo, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
+                        'INSERT INTO producto (id_tenant, nombre, precio, id_sucursal, tipo, stock, created_at) VALUES ($1, $2, $3, $4, $5, 0, NOW()) RETURNING id',
                         [id_tenant, item.name, item.price, id_sucursal, item.type || 'Producto']
                     );
                     productId = createProd.rows[0].id;

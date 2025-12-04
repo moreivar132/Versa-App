@@ -7,10 +7,10 @@ class OrdenPagoController {
      */
     async crearPago(req, res) {
         try {
-            const { id } = req.params; // idOrden desde la URL
+            const { id } = req.params;
             const datosPago = req.body;
+            const userId = req.user?.id;
 
-            // Asegurar que el ID de la orden sea numérico
             const idOrden = parseInt(id, 10);
             if (isNaN(idOrden)) {
                 return res.status(400).json({
@@ -19,23 +19,20 @@ class OrdenPagoController {
                 });
             }
 
-            const pago = await ordenPagoService.registrarPago(idOrden, datosPago);
+            // Añadir el usuario que registra el pago
+            datosPago.createdBy = userId;
+
+            const resultado = await ordenPagoService.registrarPago(idOrden, datosPago);
 
             res.status(201).json({
                 success: true,
-                pago
+                ...resultado
             });
         } catch (error) {
             console.error('Error al crear pago:', error);
-
-            // Manejo de errores controlados (con status) vs errores inesperados
             const status = error.status || 500;
             const message = error.message || 'Error interno del servidor al registrar el pago.';
-
-            res.status(status).json({
-                success: false,
-                message
-            });
+            res.status(status).json({ success: false, message });
         }
     }
 }

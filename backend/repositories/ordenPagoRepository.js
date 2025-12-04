@@ -20,27 +20,17 @@ class OrdenPagoRepository {
         let query;
         let values;
 
-        // Si es un número, buscamos por ID. Si es string, por código.
-        // Nota: A veces el input puede venir como string numérico ("1"), 
-        // así que intentamos parsearlo o chequear si es numérico.
         const esNumero = !isNaN(identificador);
 
         if (esNumero) {
             query = 'SELECT * FROM mediopago WHERE id = $1';
             values = [identificador];
         } else {
-            // Asumimos que si no es número, es el código (ej: 'EFECTIVO')
-            // Usamos UPPER para asegurar coincidencia si la tabla usa mayúsculas
             query = 'SELECT * FROM mediopago WHERE UPPER(codigo) = UPPER($1)';
             values = [identificador];
         }
 
         const result = await pool.query(query, values);
-
-        // Si no se encontró por ID y era un número, podría ser que el código sea un número (raro pero posible)
-        // O si se pasó un string que parece número pero era código. 
-        // Por ahora mantenemos la lógica simple: numero -> id, texto -> codigo.
-
         return result.rows[0] || null;
     }
 
@@ -64,22 +54,40 @@ class OrdenPagoRepository {
         const { id_orden, id_medio_pago, importe, referencia, id_caja, created_by } = pagoData;
 
         const query = `
-      INSERT INTO ordenpago (
-        id_orden, 
-        id_medio_pago, 
-        importe, 
-        referencia, 
-        id_caja, 
-        created_by
-      )
-      VALUES ($1, $2, $3, $4, $5, $6)
-      RETURNING *
-    `;
+            INSERT INTO ordenpago (
+                id_orden, 
+                id_medio_pago, 
+                importe, 
+                referencia, 
+                id_caja, 
+                created_by,
+                created_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            RETURNING *
+        `;
 
         const values = [id_orden, id_medio_pago, importe, referencia, id_caja, created_by];
 
         const result = await client.query(query, values);
         return result.rows[0];
+    }
+
+    /**
+     * Obtiene todos los pagos de una orden.
+     * @param {number} idOrden 
+     * @returns {Promise<Array>}
+     */
+    async obtenerPagosPorOrden(idOrden) {
+        const query = `
+            SELECT op.*, mp.nombre as medio_pago_nombre, mp.codigo as medio_pago_codigo
+            FROM ordenpago op
+            JOIN mediopago mp ON op.id_medio_pago = mp.id
+            WHERE op.id_orden = $1
+            ORDER BY op.created_at DESC
+        `;
+        const result = await pool.query(query, [idOrden]);
+        return result.rows;
     }
 }
 

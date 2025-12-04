@@ -1,0 +1,56 @@
+[
+  {
+    "constraint_name": "orden_id_sucursal_fkey",
+    "column_name": "id_sucursal",
+    "foreign_table_name": "sucursal",
+    "foreign_column_name": "id"
+  },
+  {
+    "constraint_name": "orden_id_cliente_fkey",
+    "column_name": "id_cliente",
+    "foreign_table_name": "clientefinal",
+    "foreign_column_name": "id"
+  },
+  {
+    "constraint_name": "orden_id_vehiculo_fkey",
+    "column_name": "id_vehiculo",
+    "foreign_table_name": "vehiculo",
+    "foreign_column_name": "id"
+  },
+  {
+    "constraint_name": "orden_id_usuario_fkey",
+    "column_name": "id_usuario",
+    "foreign_table_name": "usuario",
+    "foreign_column_name": "id"
+  },
+  {
+    "constraint_name": "orden_id_mecanico_fkey",
+    "column_name": "id_mecanico",
+    "foreign_table_name": "usuario",
+    "foreign_column_name": "id"
+  },
+  {
+    "constraint_name": "orden_id_tipo_orden_fkey",
+    "column_name": "id_tipo_orden",
+    "foreign_table_name": "tipoorden",
+    "foreign_column_name": "id"
+  },
+  {
+    "constraint_name": "orden_id_estado_orden_fkey",
+    "column_name": "id_estado_orden",
+    "foreign_table_name": "estadoorden",
+    "foreign_column_name": "id"
+  },
+  {
+    "constraint_name": "orden_created_by_fkey",
+    "column_name": "created_by",
+    "foreign_table_name": "usuario",
+    "foreign_column_name": "id"
+  },
+  {
+    "constraint_name": "orden_updated_by_fkey",
+    "column_name": "updated_by",
+    "foreign_table_name": "usuario",
+    "foreign_column_name": "id"
+  }
+]

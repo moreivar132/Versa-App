@@ -211,7 +211,7 @@ class OrdenesService {
                 if (linea.idProducto && !esServicio) {
                     await ordenesRepository.decreaseProductoStock(client, linea.idProducto, linea.cantidad);
 
-                    // Registrar Movimiento de Inventario
+                    // Registrar Movimiento de Inventario (SALIDA por ORDEN)
                     await ordenesRepository.createMovimientoInventario(client, {
                         id_producto: linea.idProducto,
                         id_almacen: idAlmacen,
@@ -265,6 +265,135 @@ class OrdenesService {
         } finally {
             client.release();
         }
+    }
+
+    /**
+     * Obtiene lista de órdenes con estado de pago calculado
+     */
+    async getOrdenes(filtros, userContext) {
+        const { id_tenant } = userContext;
+        const { estado, estadoPago, busqueda, fechaDesde, fechaHasta, limit, offset } = filtros;
+
+        // Query principal con estado de pago calculado
+        let query = `
+            SELECT 
+                o.id,
+                o.created_at as fecha_ingreso,
+                o.km,
+                o.descripcion,
+                o.total_bruto,
+                o.total_iva,
+                o.total_neto,
+                c.nombre as cliente_nombre,
+                c.telefono as cliente_telefono,
+                v.marca as vehiculo_marca,
+                v.modelo as vehiculo_modelo,
+                v.matricula as vehiculo_matricula,
+                eo.codigo as estado_codigo,
+                eo.nombre as estado_nombre,
+                to_field.codigo as tipo_orden_codigo,
+                to_field.nombre as tipo_orden_nombre,
+                COALESCE(SUM(op.importe), 0) as total_pagado,
+                CASE 
+                    WHEN COALESCE(SUM(op.importe), 0) = 0 THEN 'PENDIENTE'
+                    WHEN COALESCE(SUM(op.importe), 0) < o.total_neto THEN 'PARCIAL'
+                    ELSE 'PAGADO'
+                END as estado_pago,
+                (SELECT mp.nombre FROM ordenpago op2 
+                 JOIN mediopago mp ON op2.id_medio_pago = mp.id 
+                 WHERE op2.id_orden = o.id 
+                 ORDER BY op2.created_at DESC LIMIT 1) as ultimo_medio_pago
+            FROM orden o
+            JOIN clientefinal c ON o.id_cliente = c.id
+            JOIN vehiculo v ON o.id_vehiculo = v.id
+            LEFT JOIN estadoorden eo ON o.id_estado_orden = eo.id
+            LEFT JOIN tipoorden to_field ON o.id_tipo_orden = to_field.id
+            LEFT JOIN ordenpago op ON o.id = op.id_orden
+            WHERE 1=1
+        `;
+
+        const values = [];
+        let paramIndex = 1;
+
+        // Filtro por estado de orden
+        if (estado) {
+            query += ` AND UPPER(eo.codigo) = UPPER($${paramIndex})`;
+            values.push(estado);
+            paramIndex++;
+        }
+
+        // Filtro por búsqueda (cliente, matrícula, id)
+        if (busqueda) {
+            query += ` AND (
+                c.nombre ILIKE $${paramIndex} OR 
+                v.matricula ILIKE $${paramIndex} OR 
+                CAST(o.id AS TEXT) ILIKE $${paramIndex}
+            )`;
+            values.push(`%${busqueda}%`);
+            paramIndex++;
+        }
+
+        // Filtro por fechas
+        if (fechaDesde) {
+            query += ` AND o.created_at >= $${paramIndex}`;
+            values.push(fechaDesde);
+            paramIndex++;
+        }
+        if (fechaHasta) {
+            query += ` AND o.created_at <= $${paramIndex}`;
+            values.push(fechaHasta);
+            paramIndex++;
+        }
+
+        // Agrupar por orden
+        query += ` GROUP BY o.id, c.nombre, c.telefono, v.marca, v.modelo, v.matricula, 
+                   eo.codigo, eo.nombre, to_field.codigo, to_field.nombre`;
+
+        // Filtro por estado de pago (después del GROUP BY, en HAVING)
+        if (estadoPago) {
+            query += ` HAVING CASE 
+                WHEN COALESCE(SUM(op.importe), 0) = 0 THEN 'PENDIENTE'
+                WHEN COALESCE(SUM(op.importe), 0) < o.total_neto THEN 'PARCIAL'
+                ELSE 'PAGADO'
+            END = UPPER($${paramIndex})`;
+            values.push(estadoPago.toUpperCase());
+            paramIndex++;
+        }
+
+        // Ordenar y paginar
+        query += ` ORDER BY o.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+        values.push(limit, offset);
+
+        const result = await pool.query(query, values);
+
+        // Obtener total para paginación (sin LIMIT)
+        let countQuery = `
+            SELECT COUNT(DISTINCT o.id) as total
+            FROM orden o
+            JOIN clientefinal c ON o.id_cliente = c.id
+            JOIN vehiculo v ON o.id_vehiculo = v.id
+            LEFT JOIN estadoorden eo ON o.id_estado_orden = eo.id
+            WHERE 1=1
+        `;
+        const countValues = [];
+
+        if (estado) {
+            countQuery += ` AND UPPER(eo.codigo) = UPPER($${countValues.length + 1})`;
+            countValues.push(estado);
+        }
+        if (busqueda) {
+            countQuery += ` AND (c.nombre ILIKE $${countValues.length + 1} OR v.matricula ILIKE $${countValues.length + 1})`;
+            countValues.push(`%${busqueda}%`);
+        }
+
+        const countResult = await pool.query(countQuery, countValues);
+
+        return {
+            ordenes: result.rows,
+            total: parseInt(countResult.rows[0]?.total || 0),
+            limit,
+            offset
+        };
     }
 }
 

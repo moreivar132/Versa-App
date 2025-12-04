@@ -6,6 +6,7 @@ const verifyJWT = require('../middleware/auth');
 const ordenPagoController = require('../controllers/ordenPagoController');
 
 router.post('/', verifyJWT, ordenesController.createOrden);
+router.get('/', verifyJWT, ordenesController.getOrdenes);
 
 // Ruta para pagos de órdenes
 router.post('/:id/pagos', verifyJWT, ordenPagoController.crearPago);
