@@ -543,7 +543,7 @@
       tableBody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Cargando...</td></tr>';
 
       try {
-        let url = `/api/inventory?q=${encodeURIComponent(query)}`;
+        let url = `/api/inventory/resumen?q=${encodeURIComponent(query)}`;
         if (category) url += `&category=${encodeURIComponent(category)}`;
         if (provider) url += `&provider=${encodeURIComponent(provider)}`;
 
@@ -576,29 +576,29 @@
                 <td>
                     <div class="font-semibold text-white">${p.nombre}</div>
                 </td>
-                <td class="cell-id">${p.id}</td>
+                <td class="cell-id">${p.id_representative}</td>
                 <td class="cell-code">${p.codigo_barras || '-'}</td>
                 <td class="cell-brand">${p.marca || '-'}</td>
                 <td class="text-sm text-gray-300">${p.modelo || '-'}</td>
                 <td class="text-sm text-gray-400">${p.proveedor_nombre || '-'}</td>
                 <td>
                     <div class="stock-container">
-                        <span class="stock-val ${p.stock_minimo && Number(p.stock || 0) <= Number(p.stock_minimo) ? 'text-red-400' : 'text-white'}">${Number(p.stock || 0)} ${p.unidad_medida || 'Uds'}</span>
+                        <span class="stock-val ${p.stock_minimo && Number(p.stock_total || 0) <= Number(p.stock_minimo) ? 'text-red-400' : 'text-white'}">${Number(p.stock_total || 0)} ${p.unidad_medida || 'Uds'}</span>
                         <span class="stock-unit">Stock mínimo: ${Number(p.stock_minimo || 0)}</span>
                     </div>
                 </td>
-                <td class="cell-price">€${parseFloat(p.precio || 0).toFixed(2)}</td>
+                <td class="cell-price">€${parseFloat(p.precio_representativo || 0).toFixed(2)}</td>
                 <td>
                     <div class="relative group action-menu-container">
-                        <button class="action-btn text-gray-400 hover:text-white" onclick="toggleActionMenu(this, ${p.id})">
+                        <button class="action-btn text-gray-400 hover:text-white" onclick="toggleActionMenu(this, ${p.id_representative})">
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                         <!-- Dropdown menu -->
-                        <div id="action-menu-${p.id}" class="hidden absolute right-0 mt-2 w-32 bg-[#1a1a1f] border border-[var(--border-subtle)] rounded-lg shadow-lg z-50">
-                            <a href="manager-taller-inventario-nuevo.html?id=${p.id}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white">
+                        <div id="action-menu-${p.id_representative}" class="hidden absolute right-0 mt-2 w-32 bg-[#1a1a1f] border border-[var(--border-subtle)] rounded-lg shadow-lg z-50">
+                            <a href="manager-taller-inventario-nuevo.html?id=${p.id_representative}" class="block px-4 py-2 text-sm text-gray-300 hover:bg-white/5 hover:text-white">
                                 <i class="fas fa-edit mr-2"></i> Editar
                             </a>
-                            <button onclick="deleteProduct(${p.id})" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 hover:text-red-300">
+                            <button onclick="deleteProduct(${p.id_representative})" class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-white/5 hover:text-red-300">
                                 <i class="fas fa-trash-alt mr-2"></i> Eliminar
                             </button>
                         </div>
