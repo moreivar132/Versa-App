@@ -206,6 +206,13 @@ router.post('/', verifyJWT, async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        // Normalize numeric fields
+        const parsedCosto = parseFloat(costo_compra) || 0;
+        const parsedRecargo = parseFloat(recargo) || 0;
+        const parsedPrecio = parseFloat(precio_venta_bruto) || 0;
+        const parsedStock = parseFloat(stock) || 0;
+        const parsedStockMinimo = parseFloat(stock_minimo) || 0;
+
         // 1. Resolve Sucursal ID
         let id_sucursal = null;
         if (taller) {
@@ -252,10 +259,10 @@ router.post('/', verifyJWT, async (req, res) => {
             result = await client.query(updateQuery, [
                 checkRes.rows[0].id, id_tenant,
                 nombre, modelo, descripcion, marca, categoria,
-                id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
+                id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
                 null, // id_impuesto
-                stock_minimo, unidad_medida, activo,
-                stock, // Update stock
+                parsedStockMinimo, unidad_medida, activo,
+                parsedStock, // Update stock
                 req.user.id
             ]);
 
@@ -271,10 +278,10 @@ router.post('/', verifyJWT, async (req, res) => {
             `;
             result = await client.query(insertQuery, [
                 id_tenant, codigo_barras_articulo, nombre, modelo, descripcion, marca, categoria,
-                id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
-                stock_minimo, unidad_medida, activo,
+                id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
+                parsedStockMinimo, unidad_medida, activo,
                 'Producto', // Default tipo
-                stock || 0, // Initial stock
+                parsedStock, // Initial stock
                 req.user.id
             ]);
         }
@@ -348,6 +355,12 @@ router.put('/:id', verifyJWT, async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        const parsedCosto = parseFloat(costo_compra) || 0;
+        const parsedRecargo = parseFloat(recargo) || 0;
+        const parsedPrecio = parseFloat(precio_venta_bruto) || 0;
+        const parsedStockMinimo = parseFloat(stock_minimo) || 0;
+        const parsedStock = parseFloat(stock) || 0;
+
         // 1. Resolve Sucursal ID
         let id_sucursal = null;
         if (taller) {
@@ -372,8 +385,8 @@ router.put('/:id', verifyJWT, async (req, res) => {
 
         const updateQuery = `
             UPDATE producto
-            SET nombre = $1, modelo = $2, descripcion = $3, marca = $4, categoria = $5, 
-                id_proveedor = $6, id_sucursal = $7, costo = $8, recargo = $9, precio = $10, 
+            SET nombre = $1, modelo = $2, descripcion = $3, marca = $4, categoria = $5,
+                id_proveedor = $6, id_sucursal = $7, costo = $8, recargo = $9, precio = $10,
                 stock_minimo = $11, unidad_medida = $12, activo = $13, codigo_barras = $14,
                 stock = $15,
                 updated_at = NOW(), updated_by = $16
@@ -383,9 +396,9 @@ router.put('/:id', verifyJWT, async (req, res) => {
 
         const result = await client.query(updateQuery, [
             nombre, modelo, descripcion, marca, categoria,
-            id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
-            stock_minimo, unidad_medida, activo, codigo_barras_articulo,
-            req.body.stock || 0, // Add stock from body
+            id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
+            parsedStockMinimo, unidad_medida, activo, codigo_barras_articulo,
+            parsedStock, // Add stock from body
             req.user.id, id, id_tenant
         ]);
 
