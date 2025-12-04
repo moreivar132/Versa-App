@@ -84,10 +84,10 @@ router.get('/resumen', verifyJWT, async (req, res) => {
                 SELECT
                     MIN(p.id) AS id_representative,
                     p.codigo_barras,
-                    p.nombre,
-                    p.id_sucursal,
-                    p.id_proveedor,
-                    p.categoria,
+                    MAX(p.nombre) AS nombre,
+                    MAX(p.categoria) AS categoria,
+                    MAX(p.id_sucursal) AS id_sucursal,
+                    MAX(p.id_proveedor) AS id_proveedor,
                     SUM(p.stock) AS stock_total,
                     MIN(p.stock_minimo) AS stock_minimo, -- Usamos el mínimo como umbral más conservador
                     MAX(p.precio) AS precio_representativo, -- Precio más alto para no subestimar
@@ -96,7 +96,7 @@ router.get('/resumen', verifyJWT, async (req, res) => {
                     MIN(p.unidad_medida) AS unidad_medida
                 FROM producto p
                 ${filterClause}
-                GROUP BY p.codigo_barras, p.nombre, p.id_sucursal, p.id_proveedor, p.categoria
+                GROUP BY p.codigo_barras
             )
             SELECT a.*, pr.nombre AS proveedor_nombre, s.nombre AS sucursal_nombre
             FROM aggregated a
