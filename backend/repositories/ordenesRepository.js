@@ -1,93 +1,150 @@
 const pool = require('../db');
 
+const getExecutor = (client) => client || pool;
+
 class OrdenesRepository {
-    async getEstadoAbierta() {
-        const result = await pool.query("SELECT id FROM estadoorden WHERE nombre = 'ABIERTA' LIMIT 1");
+    async getEstadoOrdenByCodigoOrId({ codigo, id }, client) {
+        const executor = getExecutor(client);
+        const params = [];
+        let query = 'SELECT id FROM estadoorden WHERE ';
+        if (id) {
+            query += 'id = $1';
+            params.push(id);
+        } else {
+            query += 'codigo = $1';
+            params.push(codigo);
+        }
+        const result = await executor.query(query, params);
         return result.rows[0];
     }
 
-    async checkSucursal(id, id_tenant) {
-        const result = await pool.query("SELECT id FROM sucursal WHERE id = $1 AND id_tenant = $2", [id, id_tenant]);
+    async getTipoOrdenByCodigoOrId({ codigo, id }, client) {
+        const executor = getExecutor(client);
+        const params = [];
+        let query = 'SELECT id FROM tipoorden WHERE ';
+        if (id) {
+            query += 'id = $1';
+            params.push(id);
+        } else {
+            query += 'codigo = $1';
+            params.push(codigo);
+        }
+        const result = await executor.query(query, params);
+        return result.rows[0];
+    }
+
+    async getMedioPagoByCodigoOrId({ codigo, id }, client) {
+        const executor = getExecutor(client);
+        const params = [];
+        let query = 'SELECT id FROM mediopago WHERE ';
+        if (id) {
+            query += 'id = $1';
+            params.push(id);
+        } else {
+            query += 'codigo = $1';
+            params.push(codigo);
+        }
+        const result = await executor.query(query, params);
+        return result.rows[0];
+    }
+
+    async getImpuestoById(id, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id, porcentaje FROM impuesto WHERE id = $1', [id]);
+        return result.rows[0];
+    }
+
+    async getProductoById(id, id_tenant, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query(
+            'SELECT id, id_impuesto, nombre, precio, COALESCE(stock, 0) AS stock FROM producto WHERE id = $1 AND id_tenant = $2',
+            [id, id_tenant]
+        );
+        return result.rows[0];
+    }
+
+    async checkSucursal(id, id_tenant, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM sucursal WHERE id = $1 AND id_tenant = $2', [id, id_tenant]);
         return result.rows.length > 0;
     }
 
-    async checkCliente(id, id_tenant) {
-        const result = await pool.query("SELECT id FROM clientefinal WHERE id = $1 AND id_tenant = $2", [id, id_tenant]);
+    async checkCliente(id, id_tenant, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM clientefinal WHERE id = $1 AND id_tenant = $2', [id, id_tenant]);
         return result.rows.length > 0;
     }
 
-    async checkVehiculo(id, id_tenant) {
-        // Vehiculo might not have id_tenant directly if it's linked to client, but usually it does or we check via client.
-        // Assuming vehiculo has id_tenant based on context (or we check via client ownership).
-        // Let's check the schema if possible. The user said "vehículo pertenece al tenant".
-        // I'll assume it has id_tenant or I check if the client it belongs to belongs to the tenant.
-        // For now, I'll assume it has id_tenant or I'll check if the client matches.
-        // But wait, the user said "vehículo pertenece al tenant (y si aplica, vinculado al cliente)".
-        // I'll check if the vehicle exists. If the vehicle table has id_tenant, I use it.
-        // If not, I might skip tenant check for vehicle if I can't verify it easily without schema.
-        // However, `backend/routes/citas.js` inserts vehicle with `id_sucursal` (which implies tenant via sucursal) but not `id_tenant` directly in the INSERT.
-        // Wait, `INSERT INTO vehiculo (id_cliente, id_sucursal, ...)`
-        // So vehicle is linked to client. Client is linked to tenant.
-        // So I should check if the vehicle's client belongs to the tenant.
-        const result = await pool.query(`
-      SELECT v.id 
-      FROM vehiculo v 
-      JOIN clientefinal c ON v.id_cliente = c.id 
-      WHERE v.id = $1 AND c.id_tenant = $2
-    `, [id, id_tenant]);
+    async checkVehiculo(id, id_tenant, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query(
+            `
+            SELECT v.id
+            FROM vehiculo v
+            JOIN clientefinal c ON v.id_cliente = c.id
+            WHERE v.id = $1 AND c.id_tenant = $2
+        `,
+            [id, id_tenant]
+        );
         return result.rows.length > 0;
     }
 
-    async checkMecanico(id, id_tenant) {
-        // Mecanico is a user. Users might not have id_tenant directly if they are global, but usually they do.
-        // `usuario` table.
-        const result = await pool.query("SELECT id FROM usuario WHERE id = $1 AND id_tenant = $2", [id, id_tenant]);
-        return result.rows.length > 0;
-    }
-
-    async checkTipoOrden(id) {
-        const result = await pool.query("SELECT id FROM tipoorden WHERE id = $1", [id]);
-        return result.rows.length > 0;
-    }
-
-    async checkProducto(id, id_tenant) {
-        // Assuming `producto` table has `id_tenant`.
-        const result = await pool.query("SELECT id FROM producto WHERE id = $1 AND id_tenant = $2", [id, id_tenant]);
+    async checkMecanico(id, id_tenant, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM usuario WHERE id = $1 AND id_tenant = $2', [id, id_tenant]);
         return result.rows.length > 0;
     }
 
     async createOrden(client, ordenData) {
         const {
-            id_tenant,
             id_sucursal,
             id_cliente,
             id_vehiculo,
+            id_usuario,
             id_mecanico,
-            id_tipoorden,
-            id_estadoorden,
+            id_tipo_orden,
+            id_estado_orden,
             km,
             concepto,
             descripcion,
             comentario_interno,
-            creado_por
+            total_bruto = 0,
+            total_iva = 0,
+            total_neto = 0,
+            created_by
         } = ordenData;
 
         const query = `
-      INSERT INTO orden (
-        id_tenant, id_sucursal, id_cliente, id_vehiculo, id_mecanico, 
-        id_tipoorden, id_estadoorden, km, concepto, descripcion, 
-        comentario_interno, total_bruto, total_iva, total_neto, creado_por, created_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, 
-        $6, $7, $8, $9, $10, 
-        $11, 0, 0, 0, $12, NOW()
-      ) RETURNING id
-    `;
+            INSERT INTO orden (
+                id_sucursal, id_cliente, id_vehiculo, id_usuario, id_mecanico,
+                id_tipo_orden, id_estado_orden, km, concepto, descripcion,
+                comentario_interno, total_bruto, total_iva, total_neto,
+                created_by, updated_by, created_at, updated_at
+            ) VALUES (
+                $1, $2, $3, $4, $5,
+                $6, $7, $8, $9, $10,
+                $11, $12, $13, $14,
+                $15, $15, NOW(), NOW()
+            ) RETURNING id, id_sucursal, id_cliente, id_vehiculo, id_usuario, id_mecanico, id_tipo_orden,
+                     id_estado_orden, km, concepto, descripcion, comentario_interno, total_bruto, total_iva, total_neto
+        `;
 
         const values = [
-            id_tenant, id_sucursal, id_cliente, id_vehiculo, id_mecanico,
-            id_tipoorden, id_estadoorden, km, concepto, descripcion,
-            comentario_interno, creado_por
+            id_sucursal,
+            id_cliente,
+            id_vehiculo,
+            id_usuario,
+            id_mecanico,
+            id_tipo_orden,
+            id_estado_orden,
+            km,
+            concepto,
+            descripcion,
+            comentario_interno,
+            total_bruto,
+            total_iva,
+            total_neto,
+            created_by
         ];
 
         const result = await client.query(query, values);
@@ -98,43 +155,127 @@ class OrdenesRepository {
         const {
             id_orden,
             id_producto,
+            id_impuesto,
+            tipo_item,
             descripcion,
             cantidad,
             precio,
             descuento,
             iva,
-            total_bruto_linea,
-            total_iva_linea,
-            total_neto_linea
+            subtotal
         } = lineaData;
 
         const query = `
-      INSERT INTO ordenlinea (
-        id_orden, id_producto, descripcion, cantidad, precio, 
-        descuento, iva, total_bruto, total_iva, total_neto
-      ) VALUES (
-        $1, $2, $3, $4, $5, 
-        $6, $7, $8, $9, $10
-      ) RETURNING id
-    `;
+            INSERT INTO ordenlinea (
+                id_orden, id_producto, id_impuesto, tipo_item, descripcion,
+                cantidad, precio, descuento, iva, subtotal,
+                created_at, updated_at
+            ) VALUES (
+                $1, $2, $3, $4, $5,
+                $6, $7, $8, $9, $10,
+                NOW(), NOW()
+            ) RETURNING id, id_orden, id_producto, id_impuesto, tipo_item, descripcion, cantidad, precio, descuento, iva, subtotal
+        `;
 
         const values = [
-            id_orden, id_producto, descripcion, cantidad, precio,
-            descuento, iva, total_bruto_linea, total_iva_linea, total_neto_linea
+            id_orden,
+            id_producto,
+            id_impuesto,
+            tipo_item,
+            descripcion,
+            cantidad,
+            precio,
+            descuento,
+            iva,
+            subtotal
         ];
 
         const result = await client.query(query, values);
         return result.rows[0];
     }
 
-    async updateOrdenTotales(client, id_orden, totales) {
-        const { total_bruto, total_iva, total_neto } = totales;
+    async createOrdenPago(client, pagoData) {
+        const { id_orden, id_medio_pago, importe, referencia, id_caja, created_by } = pagoData;
+
         const query = `
-      UPDATE orden 
-      SET total_bruto = $1, total_iva = $2, total_neto = $3
-      WHERE id = $4
-    `;
-        await client.query(query, [total_bruto, total_iva, total_neto, id_orden]);
+            INSERT INTO ordenpago (
+                id_orden, id_medio_pago, importe, referencia, id_caja,
+                created_at, created_by
+            ) VALUES (
+                $1, $2, $3, $4, $5,
+                NOW(), $6
+            ) RETURNING id, id_orden, id_medio_pago, importe, referencia, id_caja
+        `;
+
+        const values = [id_orden, id_medio_pago, importe, referencia, id_caja, created_by];
+
+        const result = await client.query(query, values);
+        return result.rows[0];
+    }
+    async updateOrdenTotales(client, idOrden, totals) {
+        const { total_bruto, total_iva, total_neto } = totals;
+        const query = `
+            UPDATE orden
+            SET total_bruto = $1, total_iva = $2, total_neto = $3, updated_at = NOW()
+            WHERE id = $4
+        `;
+        await client.query(query, [total_bruto, total_iva, total_neto, idOrden]);
+    }
+
+    async decreaseProductoStock(client, idProducto, cantidad) {
+        const query = `
+            UPDATE producto
+            SET stock = COALESCE(stock, 0) - $1, updated_at = NOW()
+            WHERE id = $2 AND COALESCE(stock, 0) >= $1
+            RETURNING stock
+        `;
+        const result = await client.query(query, [cantidad, idProducto]);
+
+        if (result.rowCount === 0) {
+            throw new Error('Stock insuficiente para el producto seleccionado');
+        }
+    }
+
+    async ensureAlmacenPrincipal(idSucursal, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM almacen WHERE id_sucursal = $1 ORDER BY id ASC LIMIT 1', [idSucursal]);
+        if (result.rows.length > 0) {
+            return result.rows[0].id;
+        }
+
+        // Create default if not exists
+        const createResult = await executor.query(
+            'INSERT INTO almacen (id_sucursal, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id',
+            [idSucursal, 'Almacén Principal']
+        );
+        return createResult.rows[0].id;
+    }
+
+    async createMovimientoInventario(client, data) {
+        const { id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_by } = data;
+        const query = `
+            INSERT INTO movimientoinventario
+            (id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
+        `;
+        await client.query(query, [id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_by]);
+    }
+
+    /**
+     * Crea un movimiento de caja (ingreso/egreso)
+     * @param {object} client - Cliente de transacción
+     * @param {object} data - Datos del movimiento
+     */
+    async createCajaMovimiento(client, data) {
+        const { id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, created_by } = data;
+        const query = `
+            INSERT INTO cajamovimiento
+            (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, origen_id, created_at, created_by)
+            VALUES ($1, $2, $3, $4, NOW(), $5, $6, NOW(), $7)
+            RETURNING id
+        `;
+        const result = await client.query(query, [id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, created_by]);
+        return result.rows[0];
     }
 }
 

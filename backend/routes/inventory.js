@@ -53,6 +53,82 @@ router.get('/', verifyJWT, async (req, res) => {
     }
 });
 
+// GET /api/inventory/resumen - Inventory list (simplified - no duplicates after cleanup)
+router.get('/resumen', verifyJWT, async (req, res) => {
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = parseInt(req.query.offset) || 0;
+    const { q, category, provider } = req.query;
+    const id_tenant = req.user.id_tenant;
+
+    try {
+        let filterClause = 'WHERE p.id_tenant = $1';
+        const params = [id_tenant];
+
+        if (q) {
+            filterClause += ` AND (p.nombre ILIKE $${params.length + 1} OR p.codigo_barras ILIKE $${params.length + 1} OR p.modelo ILIKE $${params.length + 1})`;
+            params.push(`%${q}%`);
+        }
+
+        if (category && category !== 'Todas las Categorías') {
+            filterClause += ` AND p.categoria = $${params.length + 1}`;
+            params.push(category);
+        }
+
+        if (provider && provider !== 'Todos los Proveedores' && !isNaN(provider)) {
+            filterClause += ` AND p.id_proveedor = $${params.length + 1}`;
+            params.push(provider);
+        }
+
+        // Query simplificada - sin agrupación porque ya no hay duplicados
+        const query = `
+            SELECT 
+                p.id AS id_representative,
+                p.codigo_barras,
+                p.nombre,
+                p.categoria,
+                p.id_sucursal,
+                p.id_proveedor,
+                COALESCE(p.stock, 0) AS stock_total,
+                COALESCE(p.stock_minimo, 0) AS stock_minimo,
+                p.precio AS precio_representativo,
+                p.marca,
+                p.modelo,
+                p.unidad_medida,
+                pr.nombre AS proveedor_nombre, 
+                s.nombre AS sucursal_nombre
+            FROM producto p
+            LEFT JOIN proveedor pr ON p.id_proveedor = pr.id
+            LEFT JOIN sucursal s ON p.id_sucursal = s.id
+            ${filterClause}
+            ORDER BY p.nombre ASC
+            LIMIT $${params.length + 1} OFFSET $${params.length + 2}
+        `;
+
+        params.push(limit, offset);
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener resumen de inventario:', error);
+        res.status(500).json({ error: 'Error al obtener resumen de inventario' });
+    }
+});
+
+// GET /api/inventory/stock-bajo - Get count of low stock products
+router.get('/stock-bajo', verifyJWT, async (req, res) => {
+    const id_tenant = req.user.id_tenant;
+    try {
+        const result = await pool.query(
+            'SELECT COUNT(*) FROM producto WHERE id_tenant = $1 AND stock <= stock_minimo',
+            [id_tenant]
+        );
+        res.json({ count: parseInt(result.rows[0].count) });
+    } catch (error) {
+        console.error('Error al obtener stock bajo:', error);
+        res.status(500).json({ error: 'Error al obtener stock bajo' });
+    }
+});
+
 // GET /api/inventory/categories - List distinct categories
 router.get('/categories', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
@@ -134,27 +210,52 @@ router.get('/export', verifyJWT, async (req, res) => {
 });
 
 // GET /api/inventory/search - Search products (Specific autocomplete endpoint)
+// Groups products by barcode to avoid duplicates, shows total stock
 router.get('/search', verifyJWT, async (req, res) => {
-    const { q } = req.query;
+    const { q, id_sucursal } = req.query;
     const id_tenant = req.user.id_tenant;
 
     if (!q) {
         return res.status(400).json({ error: 'Parámetro de búsqueda requerido (q)' });
     }
 
+    const sucursalId = parseInt(id_sucursal, 10);
+
+    if (!id_sucursal || Number.isNaN(sucursalId)) {
+        return res.status(400).json({ error: 'Debe especificar la sucursal' });
+    }
+
     try {
+        const sucursalValida = await pool.query('SELECT id FROM sucursal WHERE id = $1 AND id_tenant = $2', [sucursalId, id_tenant]);
+        if (sucursalValida.rows.length === 0) {
+            return res.status(404).json({ error: 'Sucursal no válida para el tenant' });
+        }
+
         const searchTerm = `%${q}%`;
+
+        // Query simplificada - sin agrupación porque ya no hay duplicados
         const query = `
-            SELECT p.*, pr.nombre as proveedor_nombre, s.nombre as sucursal_nombre
+            SELECT 
+                p.id,
+                p.codigo_barras,
+                p.nombre,
+                p.precio,
+                COALESCE(p.stock, 0) AS stock,
+                p.tipo,
+                p.categoria,
+                p.id_impuesto,
+                p.marca,
+                p.modelo,
+                p.unidad_medida
             FROM producto p
-            LEFT JOIN proveedor pr ON p.id_proveedor = pr.id
-            LEFT JOIN sucursal s ON p.id_sucursal = s.id
-            WHERE p.id_tenant = $1 
-            AND (p.nombre ILIKE $2 OR p.codigo_barras ILIKE $2 OR p.modelo ILIKE $2)
+            WHERE p.id_tenant = $1
+            AND p.id_sucursal = $2
+            AND (p.nombre ILIKE $3 OR p.codigo_barras ILIKE $3 OR p.modelo ILIKE $3)
+            ORDER BY p.nombre
             LIMIT 20
         `;
 
-        const result = await pool.query(query, [id_tenant, searchTerm]);
+        const result = await pool.query(query, [id_tenant, sucursalId, searchTerm]);
         res.json(result.rows);
     } catch (error) {
         console.error('Error en búsqueda de inventario:', error);
@@ -194,6 +295,13 @@ router.post('/', verifyJWT, async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        // Normalize numeric fields
+        const parsedCosto = parseFloat(costo_compra) || 0;
+        const parsedRecargo = parseFloat(recargo) || 0;
+        const parsedPrecio = parseFloat(precio_venta_bruto) || 0;
+        const parsedStock = parseFloat(stock) || 0;
+        const parsedStockMinimo = parseFloat(stock_minimo) || 0;
+
         // 1. Resolve Sucursal ID
         let id_sucursal = null;
         if (taller) {
@@ -219,8 +327,12 @@ router.post('/', verifyJWT, async (req, res) => {
             }
         }
 
-        // 3. Check if product exists (by barcode)
-        const checkQuery = 'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2';
+        // 3. Check if product exists (by barcode + tenant - ignore sucursal for uniqueness)
+        // Un código de barras debe ser único por tenant, sin importar la sucursal
+        const checkQuery = `
+            SELECT id, stock, id_sucursal FROM producto 
+            WHERE codigo_barras = $1 AND id_tenant = $2
+        `;
         const checkRes = await client.query(checkQuery, [codigo_barras_articulo, id_tenant]);
 
         let result;
@@ -240,10 +352,10 @@ router.post('/', verifyJWT, async (req, res) => {
             result = await client.query(updateQuery, [
                 checkRes.rows[0].id, id_tenant,
                 nombre, modelo, descripcion, marca, categoria,
-                id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
+                id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
                 null, // id_impuesto
-                stock_minimo, unidad_medida, activo,
-                stock, // Update stock
+                parsedStockMinimo, unidad_medida, activo,
+                parsedStock, // Update stock
                 req.user.id
             ]);
 
@@ -259,10 +371,10 @@ router.post('/', verifyJWT, async (req, res) => {
             `;
             result = await client.query(insertQuery, [
                 id_tenant, codigo_barras_articulo, nombre, modelo, descripcion, marca, categoria,
-                id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
-                stock_minimo, unidad_medida, activo,
+                id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
+                parsedStockMinimo, unidad_medida, activo,
                 'Producto', // Default tipo
-                stock || 0, // Initial stock
+                parsedStock, // Initial stock
                 req.user.id
             ]);
         }
@@ -336,6 +448,12 @@ router.put('/:id', verifyJWT, async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        const parsedCosto = parseFloat(costo_compra) || 0;
+        const parsedRecargo = parseFloat(recargo) || 0;
+        const parsedPrecio = parseFloat(precio_venta_bruto) || 0;
+        const parsedStockMinimo = parseFloat(stock_minimo) || 0;
+        const parsedStock = parseFloat(stock) || 0;
+
         // 1. Resolve Sucursal ID
         let id_sucursal = null;
         if (taller) {
@@ -360,8 +478,8 @@ router.put('/:id', verifyJWT, async (req, res) => {
 
         const updateQuery = `
             UPDATE producto
-            SET nombre = $1, modelo = $2, descripcion = $3, marca = $4, categoria = $5, 
-                id_proveedor = $6, id_sucursal = $7, costo = $8, recargo = $9, precio = $10, 
+            SET nombre = $1, modelo = $2, descripcion = $3, marca = $4, categoria = $5,
+                id_proveedor = $6, id_sucursal = $7, costo = $8, recargo = $9, precio = $10,
                 stock_minimo = $11, unidad_medida = $12, activo = $13, codigo_barras = $14,
                 stock = $15,
                 updated_at = NOW(), updated_by = $16
@@ -371,9 +489,9 @@ router.put('/:id', verifyJWT, async (req, res) => {
 
         const result = await client.query(updateQuery, [
             nombre, modelo, descripcion, marca, categoria,
-            id_proveedor, id_sucursal, costo_compra, recargo, precio_venta_bruto,
-            stock_minimo, unidad_medida, activo, codigo_barras_articulo,
-            req.body.stock || 0, // Add stock from body
+            id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
+            parsedStockMinimo, unidad_medida, activo, codigo_barras_articulo,
+            parsedStock, // Add stock from body
             req.user.id, id, id_tenant
         ]);
 

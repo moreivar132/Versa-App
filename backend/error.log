@@ -1,0 +1,1 @@
+insert or update on table "orden" violates foreign key constraint "orden_id_usuario_fkey"
