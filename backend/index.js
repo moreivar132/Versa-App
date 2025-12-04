@@ -37,6 +37,7 @@ app.use('/api/compras', require('./routes/compras'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/crm/chat', require('./routes/crm_chat'));
 app.use('/api/upload', require('./routes/upload'));
+app.use('/api/whatsapp', require('./routes/whatsapp'));
 
 // Servir archivos estáticos subidos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
