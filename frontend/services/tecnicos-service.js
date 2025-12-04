@@ -1,6 +1,8 @@
+// Get API base URL from environment variable or use localhost as fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export async function getTecnicos() {
-    const API_URL = 'http://localhost:3000/api/admin/users';
+    const API_URL = `${API_BASE_URL}/api/admin/users`;
 
     try {
         const sessionRaw = localStorage.getItem('versa_session_v1');

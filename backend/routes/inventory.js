@@ -114,6 +114,21 @@ router.get('/resumen', verifyJWT, async (req, res) => {
     }
 });
 
+// GET /api/inventory/stock-bajo - Get count of low stock products
+router.get('/stock-bajo', verifyJWT, async (req, res) => {
+    const id_tenant = req.user.id_tenant;
+    try {
+        const result = await pool.query(
+            'SELECT COUNT(*) FROM producto WHERE id_tenant = $1 AND stock <= stock_minimo',
+            [id_tenant]
+        );
+        res.json({ count: parseInt(result.rows[0].count) });
+    } catch (error) {
+        console.error('Error al obtener stock bajo:', error);
+        res.status(500).json({ error: 'Error al obtener stock bajo' });
+    }
+});
+
 // GET /api/inventory/categories - List distinct categories
 router.get('/categories', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;

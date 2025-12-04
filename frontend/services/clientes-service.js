@@ -1,5 +1,8 @@
+// Get API base URL from environment variable or use localhost as fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export async function searchClientes(query) {
-    const API_URL = 'http://localhost:3000/api/clientes/search';
+    const API_URL = `${API_BASE_URL}/api/clientes/search`;
 
     try {
         const sessionRaw = localStorage.getItem('versa_session_v1');
@@ -23,7 +26,7 @@ export async function searchClientes(query) {
 }
 
 export async function createClient(clientData) {
-    const API_URL = 'http://localhost:3000/api/clientes';
+    const API_URL = `${API_BASE_URL}/api/clientes`;
 
     try {
         const sessionRaw = localStorage.getItem('versa_session_v1');

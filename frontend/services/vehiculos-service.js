@@ -1,6 +1,8 @@
+// Get API base URL from environment variable or use localhost as fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 export async function searchVehiculos(query, clientId = null) {
-    const API_URL = 'http://localhost:3000/api/vehiculos/search';
+    const API_URL = `${API_BASE_URL}/api/vehiculos/search`;
 
     try {
         // Obtener token
@@ -27,7 +29,7 @@ export async function searchVehiculos(query, clientId = null) {
 }
 
 export async function createVehicle(vehicleData) {
-    const API_URL = 'http://localhost:3000/api/vehiculos';
+    const API_URL = `${API_BASE_URL}/api/vehiculos`;
 
     try {
         const sessionRaw = localStorage.getItem('versa_session_v1');

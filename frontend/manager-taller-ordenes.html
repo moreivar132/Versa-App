@@ -627,7 +627,7 @@
 
           <nav class="flex flex-col gap-2">
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="index.html">
+              href="manager-taller-inicio.html">
               <span class="icon-container"><i class="fas fa-home"></i></span>
               <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
             </a>
@@ -1238,8 +1238,13 @@
     import { searchVehiculos, createVehicle } from './services/vehiculos-service.js';
     import { createClient } from './services/clientes-service.js';
     import { searchInventario } from './services/inventory-service.js';
-    import { createOrden } from './services/ordenes-service.js';
+    import { createOrden, getOrdenById, updateOrden } from './services/ordenes-service.js';
     import { getImpuestos } from './services/impuestos-service.js';
+
+    // Variable global para modo edición
+    let modoEdicion = false;
+    let ordenIdEdicion = null;
+
 
     // --- LÓGICA DE INTERFAZ (UI) ---
     // (Sidebar, Menús, Pestañas - Sin backend)
@@ -1352,10 +1357,172 @@
       function showSuccessModal() { successModal.classList.add('show'); }
       function hideSuccessModal() { successModal.classList.remove('show'); }
 
+      // --- DETECCIÓN MODO EDICIÓN ---
+      const urlParams = new URLSearchParams(window.location.search);
+      const ordenIdParam = urlParams.get('id');
+
+      if (ordenIdParam) {
+        modoEdicion = true;
+        ordenIdEdicion = parseInt(ordenIdParam);
+
+        // Cambiar título y texto del botón
+        const mainTitle = document.querySelector('.form-main-title');
+        if (mainTitle) mainTitle.textContent = `Editar Orden #${ordenIdEdicion}`;
+
+        const submitBtn = document.querySelector('#order-form button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = 'Actualizar Orden';
+
+        // Cargar datos de la orden
+        cargarOrdenParaEdicion(ordenIdEdicion);
+      }
+
+      // Función para cargar orden existente
+      async function cargarOrdenParaEdicion(ordenId) {
+        try {
+          showToast('Cargando datos de la orden...', false);
+          const data = await getOrdenById(ordenId);
+
+          if (!data.orden) {
+            showToast('Orden no encontrada', true);
+            return;
+          }
+
+          const orden = data.orden;
+          const lineas = data.lineas || [];
+          const pagos = data.pagos || [];
+
+          // Rellenar campos de cabecera - usando verificaciones null-safe
+          if (orden.id_sucursal) {
+            const tallerEl = document.getElementById('taller');
+            if (tallerEl) tallerEl.value = orden.id_sucursal;
+            const tallerHidden = document.getElementById('id-taller-hidden');
+            if (tallerHidden) tallerHidden.value = orden.id_sucursal;
+          }
+
+          if (orden.id_mecanico) {
+            // Esperar a que carguen los técnicos y entonces seleccionar
+            setTimeout(() => {
+              const tecnicoSelect = document.getElementById('tecnico-select');
+              if (tecnicoSelect) tecnicoSelect.value = orden.id_mecanico;
+              const tecnicoHidden = document.getElementById('id-tecnico-hidden');
+              if (tecnicoHidden) tecnicoHidden.value = orden.id_mecanico;
+            }, 500);
+          }
+
+          // Cliente
+          if (orden.id_cliente) {
+            const clienteHidden = document.getElementById('id-cliente-hidden');
+            if (clienteHidden) clienteHidden.value = orden.id_cliente;
+            const buscarCliente = document.getElementById('buscar-cliente');
+            if (buscarCliente) buscarCliente.value = orden.cliente_nombre || '';
+          }
+
+          // Vehículo - usar verificación null-safe
+          if (orden.id_vehiculo) {
+            const vehiculoHidden = document.getElementById('id-vehiculo-hidden');
+            if (vehiculoHidden) vehiculoHidden.value = orden.id_vehiculo;
+
+            const vehiculoSelect = document.getElementById('vehiculo-select');
+            if (vehiculoSelect) {
+              // Habilitar el select y añadir la opción del vehículo
+              vehiculoSelect.disabled = false;
+              const optionText = `${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} - ${orden.vehiculo_matricula || ''}`.trim();
+              const option = document.createElement('option');
+              option.value = orden.id_vehiculo;
+              option.textContent = optionText;
+              option.selected = true;
+              vehiculoSelect.innerHTML = '';
+              vehiculoSelect.appendChild(option);
+            }
+
+            const vehiculoInfo = document.getElementById('vehiculo-info');
+            if (vehiculoInfo) vehiculoInfo.textContent = orden.vehiculo_matricula || '';
+          }
+
+          // Kilometraje
+          if (orden.km) {
+            const kmEl = document.getElementById('kilometraje');
+            if (kmEl) kmEl.value = orden.km;
+          }
+
+          // Tipo de orden (concepto)
+          if (orden.id_tipo_orden) {
+            setTimeout(() => {
+              const conceptoEl = document.getElementById('concepto');
+              if (conceptoEl) conceptoEl.value = orden.id_tipo_orden;
+              const tipoOrdenHidden = document.getElementById('id-tipo-orden-hidden');
+              if (tipoOrdenHidden) tipoOrdenHidden.value = orden.id_tipo_orden;
+            }, 500);
+          }
+
+          // Observaciones y comentario interno (verificar si existen los elementos)
+          const observacionesEl = document.getElementById('observaciones');
+          if (observacionesEl && orden.descripcion) {
+            observacionesEl.value = orden.descripcion;
+          }
+          const comentarioEl = document.getElementById('comentario-interno');
+          if (comentarioEl && orden.comentario_interno) {
+            comentarioEl.value = orden.comentario_interno;
+          }
+
+          // Fecha de ingreso
+          if (orden.fecha_ingreso) {
+            const fecha = new Date(orden.fecha_ingreso);
+            const fechaIngresoEl = document.getElementById('fecha-ingreso');
+            if (fechaIngresoEl) {
+              fechaIngresoEl.value = fecha.toLocaleString("es-ES", {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit'
+              }).replace(",", "");
+            }
+          }
+
+          // Cargar líneas de la orden
+          lineas.forEach(linea => {
+            orderItems.push({
+              id: linea.id, // ID de la línea para actualizaciones
+              idProducto: linea.id_producto || null,
+              idImpuesto: linea.id_impuesto || null,
+              descripcion: linea.descripcion || linea.producto_nombre || 'Item',
+              precio: parseFloat(linea.precio) || 0,
+              cantidad: parseInt(linea.cantidad) || 1,
+              tipoItem: linea.tipo_item || 'PRODUCTO',
+              tipoItemLabel: linea.tipo_item === 'SERVICIO' ? 'Servicio' : 'Repuesto',
+              descuento: parseFloat(linea.descuento) || 0,
+              iva: parseFloat(linea.impuesto_porcentaje) || 0
+            });
+          });
+
+          // Renderizar items y calcular totales
+          renderItems();
+          calculateNetTotals();
+
+          // Cargar pagos existentes (si los hay)
+          if (pagos.length > 0) {
+            window.orderPayments = pagos.map(pago => ({
+              idMedioPago: pago.id_medio_pago,
+              codigoMedioPago: pago.medio_pago_codigo,
+              nombreMedioPago: pago.medio_pago_nombre,
+              importe: parseFloat(pago.importe),
+              referencia: pago.referencia
+            }));
+            // Si existe función de renderizar pagos
+            if (typeof window.renderPayments === 'function') {
+              window.renderPayments();
+            }
+          }
+
+          showToast('Orden cargada correctamente', false);
+        } catch (error) {
+          console.error('Error cargando orden:', error);
+          showToast('Error al cargar la orden: ' + error.message, true);
+        }
+      }
+
       // Resetear formulario completo al crear nueva orden
       if (newOrderBtn) {
         newOrderBtn.addEventListener('click', () => {
-          window.location.reload();
+          window.location.href = 'manager-taller-ordenes.html'; // Sin ID = nueva orden
         });
       }
 
@@ -1793,6 +1960,7 @@
         }
 
         const lineasPayload = orderItems.map(item => ({
+          id: item.id || null, // ID de línea existente para actualizaciones
           idProducto: item.idProducto,
           idImpuesto: item.idImpuesto,
           descripcion: item.descripcion,
@@ -1825,13 +1993,22 @@
         };
 
         try {
-          const response = await createOrden(payload);
-          console.log("--- ORDEN CREADA ---", response);
-          showToast('Orden creada con éxito');
+          let response;
+          if (modoEdicion && ordenIdEdicion) {
+            // MODO EDICIÓN - Actualizar orden existente
+            response = await updateOrden(ordenIdEdicion, payload);
+            console.log("--- ORDEN ACTUALIZADA ---", response);
+            showToast('Orden actualizada con éxito');
+          } else {
+            // MODO CREACIÓN - Crear nueva orden
+            response = await createOrden(payload);
+            console.log("--- ORDEN CREADA ---", response);
+            showToast('Orden creada con éxito');
+          }
           showSuccessModal();
         } catch (error) {
-          console.error('Error al crear orden', error);
-          showToast(error.message || 'No se pudo crear la orden', true);
+          console.error('Error al guardar orden', error);
+          showToast(error.message || 'No se pudo guardar la orden', true);
         }
       });
 

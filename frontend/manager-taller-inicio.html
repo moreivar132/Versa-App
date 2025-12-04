@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inicio - Goversa Taller Manager</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <style>
+    :root {
+      --brand-orange: #ff5f00;
+      --surface-border: #282e39;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+
+    /* Scrollbar personalizada para coincidir con el diseño */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #111318;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #282e39;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff5f00;
+    }
+  </style>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: "#ff5f00",
+              dark: "#0b0d11",
+              surface: "#111318",
+              border: "#282e39",
+              input: "#1a1d24",
+              text: "#ffffff",
+              muted: "#9da6b9"
+            }
+          },
+          fontFamily: {
+            main: ["Montserrat", "sans-serif"]
+          },
+        },
+      },
+    }
+  </script>
+</head>
+
+<body class="bg-[#0b0d11] font-[Montserrat] text-white">
+  <div class="flex h-screen w-full">
+
+    <aside id="sidebar"
+      class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+      <div class="flex h-full flex-col justify-between">
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center gap-3 p-2 mb-4">
+            <div class="logo-badge"
+              style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+              <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img" style="height: 24px; width: auto;">
+            </div>
+            <div class="flex flex-col sidebar-text">
+              <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">Goversa</h1>
+              <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">Gestión</p>
+            </div>
+            <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+          </div>
+
+          <nav class="flex flex-col gap-2">
+            <a class="flex items-center gap-3 px-3 py-2 bg-[#282e39] text-white rounded-lg transition-colors border-l-2 border-[var(--brand-orange)]"
+              href="#">
+              <span class="icon-container"><i class="fas fa-home text-[var(--brand-orange)]"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+            </a>
+
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('taller-submenu')">
+                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="taller-arrow"></i>
+              </a>
+              <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-citas.html" class="text-gray-500 hover:text-white text-sm py-1 block">Citas</a>
+                <a href="manager-taller-ordenes-lista.html"
+                  class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                <a href="manager-taller-vehiculos.html"
+                  class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+              </div>
+            </div>
+
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('tienda-submenu')">
+                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="tienda-arrow"></i>
+              </a>
+              <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-compras.html" class="text-gray-500 hover:text-white text-sm py-1 block">Nueva
+                  Compra</a>
+                <a href="manager-taller-compras-historial.html"
+                  class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+              </div>
+            </div>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="#">
+              <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+            </a>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-inventario.html">
+              <span class="icon-container"><i class="fas fa-boxes"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+            </a>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-trabajadores.html">
+              <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+            </a>
+
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('contactos-submenu')">
+                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="contactos-arrow"></i>
+              </a>
+              <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-clientes.html"
+                  class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                <a href="manager-taller-proveedores.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+              </div>
+            </div>
+          </nav>
+        </div>
+
+        <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+          <div class="flex items-center gap-3 px-3 py-2 mb-2">
+            <div
+              class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+              IM</div>
+            <div class="flex flex-col sidebar-text overflow-hidden">
+              <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+              <span class="text-gray-500 text-xs truncate">admin</span>
+            </div>
+          </div>
+          <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+            href="#" data-logout>
+            <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+            <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
+      <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+
+        <header class="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-[#282e39]">
+          <div class="logo-badge">
+            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+          </div>
+          <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+        </header>
+
+        <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div class="flex-1">
+            <div class="flex flex-col gap-1">
+              <h1 class="text-2xl font-bold tracking-tight text-white">Resumen General</h1>
+              <p class="text-[#9da6b9] text-sm font-normal">Bienvenido, Manager. Aquí tienes un resumen de la actividad
+                de hoy.</p>
+            </div>
+          </div>
+          <div class="flex w-full items-center gap-4 sm:w-auto">
+            <label class="flex-1 sm:flex-none sm:w-64">
+              <div class="relative flex w-full items-stretch">
+                <span
+                  class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">search</span>
+                <input
+                  class="h-10 w-full min-w-0 flex-1 rounded-lg border border-[#282e39] bg-[#1a1d24] pl-10 text-white placeholder:text-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] text-sm"
+                  placeholder="Buscar órdenes, clientes..." />
+              </div>
+            </label>
+            <div class="flex items-center gap-2">
+              <button
+                class="relative rounded-lg p-2 text-[#9da6b9] hover:bg-[#282e39] hover:text-white transition-colors">
+                <span class="material-symbols-outlined">notifications</span>
+                <span class="absolute right-1.5 top-1.5 flex h-2.5 w-2.5 items-center justify-center">
+                  <span
+                    class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--brand-orange)] opacity-75"></span>
+                  <span class="relative inline-flex h-2 w-2 rounded-full bg-[var(--brand-orange)]"></span>
+                </span>
+              </button>
+            </div>
+            <a href="manager-taller-ordenes.html"
+              class="flex h-10 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg bg-[var(--brand-orange)] px-4 text-sm font-bold text-white shadow-lg shadow-orange-900/20 hover:bg-[#e05300] transition-colors">
+              <span class="material-symbols-outlined" style="font-size: 20px;">add_circle</span>
+              <span class="truncate">Nueva Orden</span>
+            </a>
+          </div>
+        </header>
+
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div
+            class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-[var(--brand-orange)] transition-colors group cursor-pointer"
+            onclick="window.location='manager-taller-ordenes-lista.html'">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-[#9da6b9] uppercase">Órdenes Activas</p>
+              <span class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">build_circle</span>
+            </div>
+            <p id="stat-ordenes-activas"
+              class="text-3xl font-bold tracking-tight text-white group-hover:text-[var(--brand-orange)] transition-colors">
+              -</p>
+          </div>
+          <div
+            class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-[var(--brand-orange)] transition-colors group">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-[#9da6b9] uppercase">Ingresos del Día</p>
+              <span class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">payments</span>
+            </div>
+            <p id="stat-ingresos-dia"
+              class="text-3xl font-bold tracking-tight text-white group-hover:text-green-400 transition-colors">-</p>
+          </div>
+          <div
+            class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-[var(--brand-orange)] transition-colors group cursor-pointer"
+            onclick="window.location='manager-taller-ordenes-lista.html?estado=COMPLETADA'">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-[#9da6b9] uppercase">Listas x Entregar</p>
+              <span class="material-symbols-outlined text-blue-500 bg-blue-500/10 p-2 rounded-lg">local_shipping</span>
+            </div>
+            <p id="stat-listas-entregar"
+              class="text-3xl font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">-</p>
+          </div>
+          <div
+            class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-[var(--brand-orange)] transition-colors group cursor-pointer"
+            onclick="window.location='manager-taller-inventario.html?stock_bajo=1'">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-[#9da6b9] uppercase">Stock Bajo</p>
+              <span class="material-symbols-outlined text-red-500 bg-red-500/10 p-2 rounded-lg">warning</span>
+            </div>
+            <p id="stat-stock-bajo"
+              class="text-3xl font-bold tracking-tight text-white group-hover:text-red-400 transition-colors">-</p>
+          </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+          <div class="overflow-hidden rounded-xl border border-[#282e39] bg-[#111318] lg:col-span-2 shadow-sm">
+            <div class="border-b border-[#282e39] p-5 flex justify-between items-center">
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <span class="material-symbols-outlined text-[var(--brand-orange)]">assignment</span>
+                Últimas Órdenes
+              </h3>
+              <a href="manager-taller-ordenes-lista.html"
+                class="text-xs text-[#9da6b9] hover:text-white transition-colors">Ver todas</a>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-[#282e39]">
+                <thead class="bg-[#1c1f27]">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]"
+                      scope="col">#</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]"
+                      scope="col">Cliente</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]"
+                      scope="col">Vehículo</th>
+                    <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]"
+                      scope="col">Estado</th>
+                    <th class="relative px-6 py-3" scope="col"><span class="sr-only">Acción</span></th>
+                  </tr>
+                </thead>
+                <tbody id="ultimas-ordenes-tbody" class="divide-y divide-[#282e39] bg-[#111318]">
+                  <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+
+          <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6 shadow-sm flex flex-col justify-between">
+            <h3 class="mb-6 text-base font-bold text-white flex items-center gap-2">
+              <span class="material-symbols-outlined text-[var(--brand-orange)]">bar_chart</span>
+              Rendimiento Semanal
+            </h3>
+            <div class="flex h-64 items-end justify-between gap-2">
+              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
+                <div
+                  class="h-[40%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
+                  title="Lunes"></div>
+                <span class="text-xs text-[#9da6b9]">L</span>
+              </div>
+              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
+                <div
+                  class="h-[60%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
+                  title="Martes"></div>
+                <span class="text-xs text-[#9da6b9]">M</span>
+              </div>
+              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
+                <div
+                  class="h-[50%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
+                  title="Miércoles"></div>
+                <span class="text-xs text-[#9da6b9]">X</span>
+              </div>
+              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
+                <div
+                  class="h-[80%] w-full max-w-[24px] rounded-t bg-[var(--brand-orange)] shadow-[0_0_15px_rgba(255,95,0,0.3)]">
+                </div>
+                <span class="text-xs font-bold text-white">J</span>
+              </div>
+              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
+                <div
+                  class="h-[75%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
+                  title="Viernes"></div>
+                <span class="text-xs text-[#9da6b9]">V</span>
+              </div>
+              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
+                <div
+                  class="h-[30%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
+                  title="Sábado"></div>
+                <span class="text-xs text-[#9da6b9]">S</span>
+              </div>
+              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
+                <div
+                  class="h-[20%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
+                  title="Domingo"></div>
+                <span class="text-xs text-[#9da6b9]">D</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    window.toggleSubmenu = function (id) {
+      const submenu = document.getElementById(id);
+      const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+      if (submenu.classList.contains('hidden')) {
+        submenu.classList.remove('hidden');
+        submenu.classList.add('flex');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.classList.remove('flex');
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const sidebarTexts = document.querySelectorAll('.sidebar-text');
+    let isCollapsed = false;
+
+    toggleBtn.addEventListener('click', () => {
+      isCollapsed = !isCollapsed;
+      if (isCollapsed) {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-20');
+        sidebarTexts.forEach(el => el.classList.add('hidden'));
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+          el.classList.add('hidden');
+          el.classList.remove('flex');
+        });
+      } else {
+        sidebar.classList.add('w-64');
+        sidebar.classList.remove('w-20');
+        sidebarTexts.forEach(el => el.classList.remove('hidden'));
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+      }
+    });
+
+    // Mobile Menu Logic
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+      sidebar.classList.toggle('-translate-x-full');
+      sidebar.classList.toggle('absolute');
+      sidebar.classList.toggle('z-50');
+      sidebar.classList.toggle('h-full');
+    });
+  </script>
+
+  <script type="module">
+    import { getOrdenes } from './services/ordenes-service.js';
+
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    // Cargar estadísticas del dashboard
+    async function cargarEstadisticas() {
+      try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) {
+          window.location.href = 'login.html';
+          return;
+        }
+        const token = JSON.parse(sessionRaw).token;
+
+        // Cargar órdenes para obtener conteos
+        const ordenes = await getOrdenes({});
+
+        // Calcular estadísticas
+        const ordenesActivas = ordenes.filter(o =>
+          o.estado_codigo !== 'ENTREGADA' && o.estado_codigo !== 'CANCELADA'
+        ).length;
+
+        const listasEntregar = ordenes.filter(o =>
+          o.estado_codigo === 'COMPLETADA'
+        ).length;
+
+        // Actualizar UI
+        document.getElementById('stat-ordenes-activas').textContent = ordenesActivas;
+        document.getElementById('stat-listas-entregar').textContent = listasEntregar;
+
+        // Calcular ingresos del día
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const ingresosHoy = ordenes
+          .filter(o => new Date(o.fecha_ingreso) >= hoy)
+          .reduce((sum, o) => sum + parseFloat(o.total_neto || 0), 0);
+        document.getElementById('stat-ingresos-dia').textContent = `€${ingresosHoy.toFixed(2)}`;
+
+        // Stock bajo (placeholder por ahora)
+        document.getElementById('stat-stock-bajo').textContent = '0';
+
+        // Renderizar últimas órdenes
+        renderUltimasOrdenes(ordenes.slice(0, 5));
+
+      } catch (error) {
+        console.error('Error cargando estadísticas:', error);
+        document.getElementById('stat-ordenes-activas').textContent = '-';
+        document.getElementById('stat-ingresos-dia').textContent = '-';
+        document.getElementById('stat-listas-entregar').textContent = '-';
+        document.getElementById('stat-stock-bajo').textContent = '-';
+      }
+    }
+
+    function renderUltimasOrdenes(ordenes) {
+      const tbody = document.getElementById('ultimas-ordenes-tbody');
+
+      if (ordenes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">No hay órdenes</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = ordenes.map(orden => {
+        // Determinar colores del estado
+        let estadoClass = 'bg-yellow-400/10 text-yellow-400 ring-yellow-400/20';
+        if (orden.estado_codigo === 'EN_PROGRESO') {
+          estadoClass = 'bg-blue-400/10 text-blue-400 ring-blue-400/20';
+        } else if (orden.estado_codigo === 'COMPLETADA') {
+          estadoClass = 'bg-green-400/10 text-green-400 ring-green-400/20';
+        } else if (orden.estado_codigo === 'ENTREGADA') {
+          estadoClass = 'bg-purple-400/10 text-purple-400 ring-purple-400/20';
+        }
+
+        return `
+          <tr class="hover:bg-[#1a1d24] transition-colors">
+            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-white">#${orden.id}</td>
+            <td class="whitespace-nowrap px-6 py-4 text-sm text-[#9da6b9]">${orden.cliente_nombre || '-'}</td>
+            <td class="whitespace-nowrap px-6 py-4 text-sm text-[#9da6b9]">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''}</td>
+            <td class="whitespace-nowrap px-6 py-4 text-sm text-[#9da6b9]">
+              <span class="inline-flex items-center rounded-md ${estadoClass} px-2 py-1 text-xs font-medium ring-1 ring-inset">${orden.estado_nombre || 'Abierta'}</span>
+            </td>
+            <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+              <a class="text-[var(--brand-orange)] hover:text-[#e05300]" href="manager-taller-ordenes.html?id=${orden.id}">Ver</a>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Cargar al inicio
+    cargarEstadisticas();
+  </script>
+</body>
+
+</html>

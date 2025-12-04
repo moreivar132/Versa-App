@@ -1,5 +1,8 @@
+// Get API base URL from environment variable or use localhost as fallback
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
 export async function searchInventario(query, idSucursal) {
-    const API_URL = 'http://localhost:3000/api/inventory/search';
+    const API_URL = `${API_BASE_URL}/api/inventory/search`;
 
     try {
         const sessionRaw = localStorage.getItem('versa_session_v1');

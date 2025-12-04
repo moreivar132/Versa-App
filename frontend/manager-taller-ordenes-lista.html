@@ -49,6 +49,98 @@
       background-color: rgba(255, 95, 0, 0.1) !important;
       border-left: 3px solid #ff5f00;
     }
+
+    /* Estilos para dropdown de cambio de estado */
+    .estado-dropdown-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .estado-badge {
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .estado-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .estado-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 100;
+      min-width: 160px;
+      margin-top: 4px;
+      background-color: #1a1d24;
+      border: 1px solid #282e39;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+    }
+
+    .estado-dropdown.show {
+      display: block;
+    }
+
+    .estado-option {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+      color: #fff;
+    }
+
+    .estado-option:hover {
+      background-color: #282e39;
+    }
+
+    .estado-option.active {
+      background-color: rgba(255, 95, 0, 0.15);
+      color: #ff5f00;
+    }
+
+    .estado-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #10b981;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 1000;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast-notification.error {
+      background-color: #ef4444;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
   </style>
 
   <script>
@@ -97,7 +189,7 @@
 
           <nav class="flex flex-col gap-2">
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="index.html">
+              href="manager-taller-inicio.html">
               <span class="icon-container"><i class="fas fa-home"></i></span>
               <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
             </a>
@@ -568,12 +660,42 @@
   </script>
 
   <script type="module">
-    import { getOrdenes } from './services/ordenes-service.js';
+    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from './services/ordenes-service.js';
     import { registrarPago } from './services/pagos-service.js';
 
     let ordenes = [];
     let ordenSeleccionada = null;
     let filtrosActuales = {};
+    let estadosDisponibles = [];
+
+    // Función toast para notificaciones
+    function showToast(message, isError = false) {
+      // Eliminar toast anterior si existe
+      const existingToast = document.querySelector('.toast-notification');
+      if (existingToast) existingToast.remove();
+
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${isError ? 'error' : ''}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Cargar estados disponibles al inicio
+    async function cargarEstados() {
+      try {
+        estadosDisponibles = await getEstadosOrden();
+      } catch (error) {
+        console.error('Error cargando estados:', error);
+        // Estados por defecto si falla la carga
+        estadosDisponibles = [
+          { id: 1, codigo: 'ABIERTA', nombre: 'Abierta' },
+          { id: 2, codigo: 'EN_PROGRESO', nombre: 'En Progreso' },
+          { id: 3, codigo: 'COMPLETADA', nombre: 'Completada' }
+        ];
+      }
+    }
 
     // --- CARGAR ÓRDENES ---
     async function cargarOrdenes(filtros = {}) {
@@ -624,8 +746,12 @@
             <td class="px-5 py-4 text-[#9da6b9]">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} <span class="text-xs border border-[#282e39] px-1 rounded ml-1">${orden.vehiculo_matricula || ''}</span></td>
             <td class="px-5 py-4 text-[#9da6b9]">${fecha}</td>
             <td class="px-5 py-4">
-              <div class="inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium ${estadoClass} border">
-                <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span> ${orden.estado_nombre || 'Abierta'}
+              <div class="estado-dropdown-container" data-orden-id="${orden.id}">
+                <div class="estado-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${estadoClass} border" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
+                  <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span> ${orden.estado_nombre || 'Abierta'}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
+                </div>
+                <div class="estado-dropdown" id="dropdown-${orden.id}"></div>
               </div>
             </td>
             <td class="px-5 py-4">
@@ -646,6 +772,7 @@
       document.querySelectorAll('.order-row').forEach(row => {
         row.addEventListener('click', (e) => {
           if (e.target.closest('.btn-editar-fila')) return;
+          if (e.target.closest('.estado-dropdown-container')) return; // No seleccionar al click en dropdown
           document.querySelectorAll('.order-row').forEach(r => r.classList.remove('active'));
           row.classList.add('active');
           const id = parseInt(row.dataset.id);
@@ -663,11 +790,91 @@
         });
       });
 
+      // Click en badge de estado para mostrar dropdown
+      document.querySelectorAll('.estado-badge').forEach(badge => {
+        badge.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const container = badge.closest('.estado-dropdown-container');
+          const ordenId = container.dataset.ordenId;
+          const dropdown = document.getElementById(`dropdown-${ordenId}`);
+          const estadoActual = badge.dataset.estadoCodigo;
+
+          // Cerrar otros dropdowns
+          document.querySelectorAll('.estado-dropdown.show').forEach(d => {
+            if (d.id !== `dropdown-${ordenId}`) d.classList.remove('show');
+          });
+
+          // Renderizar opciones
+          dropdown.innerHTML = estadosDisponibles.map(estado => {
+            const dotColor = getEstadoDotColor(estado.codigo);
+            const isActive = estado.codigo === estadoActual;
+            return `
+              <div class="estado-option ${isActive ? 'active' : ''}" data-codigo="${estado.codigo}" data-id="${estado.id}">
+                <span class="estado-dot" style="background-color: ${dotColor}"></span>
+                ${estado.nombre}
+              </div>
+            `;
+          }).join('');
+
+          // Event listeners para opciones
+          dropdown.querySelectorAll('.estado-option').forEach(option => {
+            option.addEventListener('click', async (ev) => {
+              ev.stopPropagation();
+              const estadoId = parseInt(option.dataset.id);
+              const estadoCodigo = option.dataset.codigo;
+              await cambiarEstadoOrden(parseInt(ordenId), estadoId, estadoCodigo);
+              dropdown.classList.remove('show');
+            });
+          });
+
+          dropdown.classList.toggle('show');
+        });
+      });
+
       if (ordenes.length > 0) {
         ordenSeleccionada = ordenes[0];
         actualizarPanel();
       }
     }
+
+    // Obtener color del dot según código de estado
+    function getEstadoDotColor(codigo) {
+      if (codigo === 'EN_PROGRESO' || codigo === 'RECAMBIO') return '#60a5fa';
+      if (codigo === 'COMPLETADA' || codigo === 'ENTREGADA') return '#22c55e';
+      return '#eab308'; // Amarillo para ABIERTA y otros
+    }
+
+    // Función para cambiar el estado de una orden
+    async function cambiarEstadoOrden(ordenId, estadoId, estadoCodigo) {
+      try {
+        const result = await updateEstadoOrden(ordenId, { idEstadoOrden: estadoId });
+
+        // Actualizar la orden en el array local
+        const ordenIndex = ordenes.findIndex(o => o.id === ordenId);
+        if (ordenIndex !== -1) {
+          ordenes[ordenIndex].estado_codigo = result.estado.codigo;
+          ordenes[ordenIndex].estado_nombre = result.estado.nombre;
+
+          // Si es la orden seleccionada, actualizar el panel
+          if (ordenSeleccionada && ordenSeleccionada.id === ordenId) {
+            ordenSeleccionada = ordenes[ordenIndex];
+            actualizarPanel();
+          }
+        }
+
+        // Re-renderizar la tabla para reflejar el cambio
+        renderOrdenes();
+        showToast(`Estado actualizado a "${result.estado.nombre}"`);
+      } catch (error) {
+        console.error('Error cambiando estado:', error);
+        showToast(error.message || 'Error al cambiar el estado', true);
+      }
+    }
+
+    // Cerrar dropdowns al hacer click fuera
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.estado-dropdown.show').forEach(d => d.classList.remove('show'));
+    });
 
     function actualizarPanel() {
       if (!ordenSeleccionada) return;
@@ -811,7 +1018,7 @@
     });
 
     // Cargar al inicio
-    cargarOrdenes();
+    cargarEstados().then(() => cargarOrdenes());
   </script>
 </body>
 

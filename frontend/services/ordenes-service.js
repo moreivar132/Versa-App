@@ -74,3 +74,138 @@ export async function getOrdenes(filtros = {}) {
         throw error;
     }
 }
+
+/**
+ * Obtiene una orden específica con sus líneas y pagos
+ * @param {number} idOrden - ID de la orden
+ * @returns {Promise<Object>} - Orden completa con líneas y pagos
+ */
+export async function getOrdenById(idOrden) {
+    const API_URL = `${API_BASE_URL}/api/ordenes/${idOrden}`;
+
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) throw new Error('No autenticado');
+        const token = JSON.parse(sessionRaw).token;
+
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.ok === false) {
+            throw new Error(data.error || 'Error al obtener la orden');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error obteniendo orden:', error);
+        throw error;
+    }
+}
+
+/**
+ * Actualiza una orden existente
+ * @param {number} idOrden - ID de la orden a actualizar
+ * @param {Object} ordenData - Datos actualizados de la orden
+ * @returns {Promise<Object>} - Resultado de la actualización
+ */
+export async function updateOrden(idOrden, ordenData) {
+    const API_URL = `${API_BASE_URL}/api/ordenes/${idOrden}`;
+
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) throw new Error('No autenticado');
+        const token = JSON.parse(sessionRaw).token;
+
+        const response = await fetch(API_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(ordenData)
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.ok === false) {
+            throw new Error(data.error || 'Error al actualizar la orden');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error actualizando orden:', error);
+        throw error;
+    }
+}
+
+/**
+ * Actualiza solo el estado de una orden (cambio rápido)
+ * @param {number} idOrden - ID de la orden
+ * @param {Object} estadoData - { idEstadoOrden } o { codigoEstado }
+ * @returns {Promise<Object>} - Estado actualizado
+ */
+export async function updateEstadoOrden(idOrden, estadoData) {
+    const API_URL = `${API_BASE_URL}/api/ordenes/${idOrden}/estado`;
+
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) throw new Error('No autenticado');
+        const token = JSON.parse(sessionRaw).token;
+
+        const response = await fetch(API_URL, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(estadoData)
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.ok === false) {
+            throw new Error(data.error || 'Error al actualizar el estado');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error actualizando estado:', error);
+        throw error;
+    }
+}
+
+/**
+ * Obtiene la lista de estados de orden disponibles
+ * @returns {Promise<Array>} - Lista de estados
+ */
+export async function getEstadosOrden() {
+    const API_URL = `${API_BASE_URL}/api/ordenes/estados`;
+
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) throw new Error('No autenticado');
+        const token = JSON.parse(sessionRaw).token;
+
+        const response = await fetch(API_URL, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.ok === false) {
+            throw new Error(data.error || 'Error al obtener estados');
+        }
+
+        return data.estados || [];
+    } catch (error) {
+        console.error('Error obteniendo estados:', error);
+        throw error;
+    }
+}
