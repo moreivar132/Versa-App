@@ -980,20 +980,23 @@
 
                 <h4 style="margin-top: 30px; display: flex; justify-content: space-between; align-items: center;">
                   <span>Pagos</span>
-                  <span id="pagos-badge" style="background: var(--brand-orange); color: white; padding: 2px 8px; border-radius: 50%; font-size: 12px; display: none;">0</span>
+                  <span id="pagos-badge"
+                    style="background: var(--brand-orange); color: white; padding: 2px 8px; border-radius: 50%; font-size: 12px; display: none;">0</span>
                 </h4>
-                
+
                 <div id="pagos-list" style="max-height: 150px; overflow-y: auto; margin-bottom: 15px;">
                   <table class="summary-table" id="pagos-table" style="font-size: 13px;">
                     <tbody id="pagos-tbody">
                     </tbody>
                   </table>
-                  <p id="pagos-empty" style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 10px;">
+                  <p id="pagos-empty"
+                    style="color: var(--text-secondary); font-size: 13px; text-align: center; padding: 10px;">
                     No hay pagos registrados
                   </p>
                 </div>
 
-                <div style="background: rgba(255,95,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                <div
+                  style="background: rgba(255,95,0,0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                   <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
                     <div class="form-group" style="margin-bottom: 0;">
                       <label for="nuevo-pago-metodo" style="font-size: 12px;">Método de Pago</label>
@@ -1003,27 +1006,29 @@
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
                       <label for="nuevo-pago-importe" style="font-size: 12px;">Importe (€)</label>
-                      <input type="number" step="0.01" min="0" id="nuevo-pago-importe" class="form-input" 
-                             style="padding: 8px; font-size: 13px; text-align: right;" placeholder="0.00">
+                      <input type="number" step="0.01" min="0" id="nuevo-pago-importe" class="form-input"
+                        style="padding: 8px; font-size: 13px; text-align: right;" placeholder="0.00">
                     </div>
-                    <button type="button" id="btn-agregar-pago" class="btn" 
-                            style="padding: 8px 15px; font-size: 13px; height: 38px;">
+                    <button type="button" id="btn-agregar-pago" class="btn"
+                      style="padding: 8px 15px; font-size: 13px; height: 38px;">
                       <i class="fas fa-plus"></i>
                     </button>
                   </div>
                   <div class="form-group" style="margin-bottom: 0; margin-top: 10px;">
                     <label for="nuevo-pago-referencia" style="font-size: 12px;">Referencia (opcional)</label>
-                    <input type="text" id="nuevo-pago-referencia" class="form-input" 
-                           style="padding: 8px; font-size: 13px;" placeholder="Nº transacción, ticket, etc.">
+                    <input type="text" id="nuevo-pago-referencia" class="form-input"
+                      style="padding: 8px; font-size: 13px;" placeholder="Nº transacción, ticket, etc.">
                   </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                <div
+                  style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border-color);">
                   <span style="color: var(--text-secondary); font-size: 14px;">Cuenta Corriente</span>
                   <div style="display: flex; align-items: center; gap: 10px;">
                     <input type="checkbox" id="cuenta-corriente-check" name="cuenta_corriente" value="true"
-                           style="width: 18px; height: 18px; vertical-align: middle;">
-                    <label for="cuenta-corriente-check" style="vertical-align: middle; font-size: 13px;">Enviar saldo</label>
+                      style="width: 18px; height: 18px; vertical-align: middle;">
+                    <label for="cuenta-corriente-check" style="vertical-align: middle; font-size: 13px;">Enviar
+                      saldo</label>
                   </div>
                 </div>
 
@@ -1031,7 +1036,8 @@
                   <tbody>
                     <tr>
                       <td style="color: var(--text-secondary);">Total Pagado</td>
-                      <td id="resumen-total-pagado" style="text-align: right; color: var(--success-color); font-weight: 600;">0.00€</td>
+                      <td id="resumen-total-pagado"
+                        style="text-align: right; color: var(--success-color); font-weight: 600;">0.00€</td>
                     </tr>
                     <tr class="total-row">
                       <td>Saldo Pendiente</td>
@@ -1233,6 +1239,7 @@
     import { searchInventario } from './services/inventory-service.js';
     import { createOrden } from './services/ordenes-service.js';
     import { getImpuestos } from './services/impuestos-service.js';
+    
     // --- LÓGICA DE INTERFAZ (UI) ---
     // (Sidebar, Menús, Pestañas - Sin backend)
 
@@ -1286,6 +1293,17 @@
 
     // --- LÓGICA DEL FORMULARIO ---
     document.addEventListener("DOMContentLoaded", () => {
+      // Definición de showToast si no existe y exposición global
+      function showToast(message, isError = false) {
+        const toast = document.getElementById("toast-notification");
+        toast.textContent = message;
+        toast.style.backgroundColor = isError ? 'var(--error-color)' : 'var(--success-color)';
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 3000);
+      }
+      // Exponer globalmente para pagos-logic.js
+      window.showToast = showToast;
+
       loadSucursales();
       loadTecnicosSelect();
       loadImpuestos();
@@ -1319,6 +1337,9 @@
       // Variables Globales del Formulario
       let orderItems = [];
       let uploadedFiles = [];
+      
+      // Variable global para pagos - accesible desde pagos-logic.js
+      window.orderPayments = [];
 
       // Elementos del DOM
       const successModal = document.getElementById('success-modal');
@@ -1329,6 +1350,13 @@
       // Mostrar/Ocultar Modal
       function showSuccessModal() { successModal.classList.add('show'); }
       function hideSuccessModal() { successModal.classList.remove('show'); }
+
+      // Resetear formulario completo al crear nueva orden
+      if (newOrderBtn) {
+        newOrderBtn.addEventListener('click', () => {
+           window.location.reload();
+        });
+      }
 
       // --- LÓGICA MODAL NUEVO CLIENTE ---
       const newClientModal = document.getElementById('new-client-modal');
@@ -1365,11 +1393,10 @@
             document.getElementById('buscar-cliente').value = newClient.nombre;
             document.getElementById('cliente-info').textContent = `${newClient.documento || ''} | ${newClient.telefono || ''}`;
             document.getElementById('id-cliente-hidden').value = newClient.id;
-
+            
             // Cerrar modal
             newClientModal.classList.remove('show');
             newClientForm.reset();
-
           } catch (error) {
             console.error(error);
             showToast(error.message, true);
@@ -1377,315 +1404,285 @@
         });
       }
 
-      closeModalBtn.addEventListener('click', hideSuccessModal);
-      newOrderBtn.addEventListener('click', () => {
-        hideSuccessModal();
-        resetForm();
-      });
+            async function loadTecnicosSelect() {
+              const select = document.getElementById('tecnico-select');
+              if (!select) return;
 
-      function showToast(message, isError = false) {
-        const toast = document.getElementById("toast-notification");
-        toast.textContent = message;
-        toast.style.backgroundColor = isError ? 'var(--error-color)' : 'var(--success-color)';
-        toast.classList.add("show");
-        setTimeout(() => toast.classList.remove("show"), 3000);
-      }
-
-      function resetForm() {
-        orderForm.reset();
-        orderItems = [];
-        uploadedFiles = [];
-        document.getElementById('id-tecnico-hidden').value = '';
-        document.getElementById('id-cliente-hidden').value = '';
-        document.getElementById('id-vehiculo-hidden').value = '';
-        document.getElementById('id-taller-hidden').value = '';
-        document.getElementById('id-tipo-orden-hidden').value = '';
-        renderItems();
-        calculateNetTotals();
-        document.getElementById('previews-container').innerHTML = '';
-        document.getElementById('cliente-info').textContent = '';
-        document.getElementById('vehiculo-info').textContent = '';
-      }
-
-      async function loadTecnicosSelect() {
-        const select = document.getElementById('tecnico-select');
-        if (!select) return;
-
-        select.innerHTML = '<option value="">Seleccionar técnico</option>';
-        try {
-          const tecnicos = await searchTecnicos('');
-          tecnicos.forEach(tec => {
-            const option = document.createElement('option');
-            option.value = tec.id;
-            option.textContent = tec.nombre;
-            select.appendChild(option);
-          });
-        } catch (error) {
-          console.error('Error cargando técnicos:', error);
-          const option = document.createElement('option');
-          option.textContent = 'No se pudieron cargar técnicos';
-          select.appendChild(option);
-        }
-      }
-
-      async function loadImpuestos() {
-        const select = document.getElementById('new-item-iva');
-        if (!select) return;
-
-        select.innerHTML = '<option value="" disabled>Cargando...</option>';
-
-        try {
-          const impuestos = await getImpuestos();
-          select.innerHTML = ''; // Clear loading
-
-          if (impuestos.length === 0) {
-            select.innerHTML = '<option value="">Sin impuestos</option>';
-            return;
-          }
-
-          impuestos.forEach(imp => {
-            const option = document.createElement('option');
-            option.value = imp.id;
-            option.textContent = `${imp.nombre} (${imp.porcentaje}%)`;
-            option.dataset.percentage = imp.porcentaje;
-
-            // Default to 21% if possible
-            if (imp.porcentaje == 21) option.selected = true;
-
-            select.appendChild(option);
-          });
-
-          // If no 21% found and nothing selected, select the first one
-          if (select.selectedIndex === -1 && select.options.length > 0) {
-            select.options[0].selected = true;
-          }
-
-        } catch (error) {
-          console.error('Error cargando impuestos:', error);
-          select.innerHTML = '<option value="">Error</option>';
-        }
-      }
-
-      // Configuración de Buscadores (Selects Personalizados)
-      function setupCustomSelect({ inputId, optionsId, mockData, searchFunction, renderOption, onSelect, getSearchParams }) {
-        const input = document.getElementById(inputId);
-        const optionsContainer = document.getElementById(optionsId);
-        let debounceTimeout;
-
-        input.addEventListener("focus", () => {
-          if (inputId === 'buscar-vehiculo') {
-            const clientId = document.getElementById('id-cliente-hidden').value;
-            if (clientId) {
-              // Trigger search manually
-              input.dispatchEvent(new Event('keyup'));
-            }
-          }
-        });
-
-        input.addEventListener("keyup", () => {
-          clearTimeout(debounceTimeout);
-          const query = input.value.trim();
-
-          const clientId = inputId === 'buscar-vehiculo' ? document.getElementById('id-cliente-hidden').value : null;
-          if (query.length < 1 && !clientId) {
-            optionsContainer.classList.remove('show');
-            return;
-          }
-
-          debounceTimeout = setTimeout(async () => {
-            let results = [];
-
-            if (searchFunction) {
+              select.innerHTML = '<option value="">Seleccionar técnico</option>';
               try {
-                const extraParams = getSearchParams ? getSearchParams() : {};
-                results = await searchFunction(query, extraParams);
-              } catch (e) {
-                console.error("Error en búsqueda:", e);
-              }
-            } else if (mockData) {
-              results = mockData.filter(item => {
-                return Object.values(item).some(val => String(val).toLowerCase().includes(query));
-              });
-            }
-
-            optionsContainer.innerHTML = '';
-            if (results && results.length > 0) {
-              results.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'option';
-                div.innerHTML = renderOption(item);
-                div.addEventListener('click', () => {
-                  onSelect(item);
-                  optionsContainer.classList.remove('show');
+                const tecnicos = await searchTecnicos('');
+                tecnicos.forEach(tec => {
+                  const option = document.createElement('option');
+                  option.value = tec.id;
+                  option.textContent = tec.nombre;
+                  select.appendChild(option);
                 });
-                optionsContainer.appendChild(div);
-              });
-              optionsContainer.classList.add('show');
-            } else {
-              optionsContainer.classList.remove('show');
-            }
-          }, 300);
-        });
-
-        document.addEventListener("click", (e) => {
-          if (!input.contains(e.target) && !optionsContainer.contains(e.target)) {
-            optionsContainer.classList.remove('show');
-          }
-        });
-      }
-
-      // Inicializar buscadores
-      setupCustomSelect({
-        inputId: 'buscar-cliente',
-        optionsId: 'cliente-options',
-        searchFunction: searchClientes,
-        renderOption: item => `${item.nombre} <small>(${item.documento || 'Sin Doc'})</small>`,
-        onSelect: async (item) => {
-          document.getElementById('buscar-cliente').value = item.nombre;
-          document.getElementById('cliente-info').textContent = `${item.documento || ''} | ${item.telefono || ''}`;
-          document.getElementById('id-cliente-hidden').value = item.id;
-
-          // Limpiar vehículo anterior
-          // Reset vehicle select
-          const vehicleSelect = document.getElementById('vehiculo-select');
-          vehicleSelect.innerHTML = '<option value="" disabled selected>Cargando vehículos...</option>';
-          vehicleSelect.disabled = true;
-          document.getElementById('vehiculo-info').textContent = '';
-          document.getElementById('id-vehiculo-hidden').value = '';
-
-          try {
-            const vehicles = await searchVehiculos('', item.id);
-            vehicleSelect.innerHTML = '<option value="" disabled selected>Seleccionar vehículo</option>';
-
-            if (vehicles.length > 0) {
-              vehicles.forEach(v => {
+              } catch (error) {
+                console.error('Error cargando técnicos:', error);
                 const option = document.createElement('option');
-                option.value = v.id;
-                option.textContent = `${v.marca} ${v.modelo} (${v.matricula})`;
-                option.dataset.matricula = v.matricula;
-                vehicleSelect.appendChild(option);
+                option.textContent = 'No se pudieron cargar técnicos';
+                select.appendChild(option);
+              }
+            }
+
+            async function loadImpuestos() {
+              const select = document.getElementById('new-item-iva');
+              if (!select) return;
+
+              select.innerHTML = '<option value="" disabled>Cargando...</option>';
+
+              try {
+                const impuestos = await getImpuestos();
+                select.innerHTML = ''; // Clear loading
+
+                if (impuestos.length === 0) {
+                  select.innerHTML = '<option value="">Sin impuestos</option>';
+                  return;
+                }
+
+                impuestos.forEach(imp => {
+                  const option = document.createElement('option');
+                  option.value = imp.id;
+                  option.textContent = `${imp.nombre} (${imp.porcentaje}%)`;
+                  option.dataset.percentage = imp.porcentaje;
+
+                  // Default to 21% if possible
+                  if (imp.porcentaje == 21) option.selected = true;
+
+                  select.appendChild(option);
+                });
+
+                // If no 21% found and nothing selected, select the first one
+                if (select.selectedIndex === -1 && select.options.length > 0) {
+                  select.options[0].selected = true;
+                }
+
+              } catch (error) {
+                console.error('Error cargando impuestos:', error);
+                select.innerHTML = '<option value="">Error</option>';
+              }
+            }
+
+            // Configuración de Buscadores (Selects Personalizados)
+            function setupCustomSelect({ inputId, optionsId, mockData, searchFunction, renderOption, onSelect, getSearchParams }) {
+              const input = document.getElementById(inputId);
+              const optionsContainer = document.getElementById(optionsId);
+              let debounceTimeout;
+
+              input.addEventListener("focus", () => {
+                if (inputId === 'buscar-vehiculo') {
+                  const clientId = document.getElementById('id-cliente-hidden').value;
+                  if (clientId) {
+                    // Trigger search manually
+                    input.dispatchEvent(new Event('keyup'));
+                  }
+                }
               });
-              vehicleSelect.disabled = false;
-            } else {
-              vehicleSelect.innerHTML = '<option value="" disabled selected>No hay vehículos registrados</option>';
+
+              input.addEventListener("keyup", () => {
+                clearTimeout(debounceTimeout);
+                const query = input.value.trim();
+
+                const clientId = inputId === 'buscar-vehiculo' ? document.getElementById('id-cliente-hidden').value : null;
+                if (query.length < 1 && !clientId) {
+                  optionsContainer.classList.remove('show');
+                  return;
+                }
+
+                debounceTimeout = setTimeout(async () => {
+                  let results = [];
+
+                  if (searchFunction) {
+                    try {
+                      const extraParams = getSearchParams ? getSearchParams() : {};
+                      results = await searchFunction(query, extraParams);
+                    } catch (e) {
+                      console.error("Error en búsqueda:", e);
+                    }
+                  } else if (mockData) {
+                    results = mockData.filter(item => {
+                      return Object.values(item).some(val => String(val).toLowerCase().includes(query));
+                    });
+                  }
+
+                  optionsContainer.innerHTML = '';
+                  if (results && results.length > 0) {
+                    results.forEach(item => {
+                      const div = document.createElement('div');
+                      div.className = 'option';
+                      div.innerHTML = renderOption(item);
+                      div.addEventListener('click', () => {
+                        onSelect(item);
+                        optionsContainer.classList.remove('show');
+                      });
+                      optionsContainer.appendChild(div);
+                    });
+                    optionsContainer.classList.add('show');
+                  } else {
+                    optionsContainer.classList.remove('show');
+                  }
+                }, 300);
+              });
+
+              document.addEventListener("click", (e) => {
+                if (!input.contains(e.target) && !optionsContainer.contains(e.target)) {
+                  optionsContainer.classList.remove('show');
+                }
+              });
             }
-          } catch (e) {
-            console.error("Error loading vehicles", e);
-            vehicleSelect.innerHTML = '<option value="" disabled selected>Error al cargar</option>';
-          }
-        }
-      });
 
-      setupCustomSelect({
-        inputId: 'new-item-name',
-        optionsId: 'product-options',
-        searchFunction: async (query, params) => {
-          const sucursalId = params?.idSucursal || document.getElementById('taller').value;
-          if (!sucursalId) {
-            showToast('Selecciona un taller para buscar en el inventario', true);
-            return [];
-          }
-          return searchInventario(query, sucursalId);
-        },
-        getSearchParams: () => ({ idSucursal: document.getElementById('taller').value }),
-        renderOption: item => {
-          const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
-          const price = parseFloat(rawPrice);
-          const stock = parseInt(item.stock) || 0;
-          return `${item.nombre} <small>(${price.toFixed(2)}€ - Stock: ${stock})</small>`;
-        },
-        onSelect: item => {
-          const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
-          const price = parseFloat(rawPrice);
-          const ivaId = item.id_impuesto;
-          const typeSelect = document.getElementById('new-item-type');
-          const inferredTypeRaw = item.tipo || item.tipo_item || (item.categoria && item.categoria.toLowerCase().includes('servicio') ? 'SERVICIO' : 'PRODUCTO');
-          const inferredType = (inferredTypeRaw || '').toString().toUpperCase().includes('SERVICIO') ? 'SERVICIO' : 'PRODUCTO';
+            // Inicializar buscadores
+            setupCustomSelect({
+              inputId: 'buscar-cliente',
+              optionsId: 'cliente-options',
+              searchFunction: searchClientes,
+              renderOption: item => `${item.nombre} <small>(${item.documento || 'Sin Doc'})</small>`,
+              onSelect: async (item) => {
+                document.getElementById('buscar-cliente').value = item.nombre;
+                document.getElementById('cliente-info').textContent = `${item.documento || ''} | ${item.telefono || ''}`;
+                document.getElementById('id-cliente-hidden').value = item.id;
 
-          document.getElementById('new-item-name').value = item.nombre;
-          document.getElementById('new-item-price').value = price.toFixed(2);
-          document.getElementById('new-item-id-hidden').value = item.id || '';
+                // Limpiar vehículo anterior
+                // Reset vehicle select
+                const vehicleSelect = document.getElementById('vehiculo-select');
+                vehicleSelect.innerHTML = '<option value="" disabled selected>Cargando vehículos...</option>';
+                vehicleSelect.disabled = true;
+                document.getElementById('vehiculo-info').textContent = '';
+                document.getElementById('id-vehiculo-hidden').value = '';
 
-          if (ivaId) {
-            const ivaSelect = document.getElementById('new-item-iva');
-            if (ivaSelect && ivaSelect.querySelector(`option[value="${ivaId}"]`)) {
-              ivaSelect.value = ivaId;
-            }
-          }
+                try {
+                  const vehicles = await searchVehiculos('', item.id);
+                  vehicleSelect.innerHTML = '<option value="" disabled selected>Seleccionar vehículo</option>';
 
-          if (inferredType) {
-            typeSelect.value = inferredType;
-          }
-        }
-      });
+                  if (vehicles.length > 0) {
+                    vehicles.forEach(v => {
+                      const option = document.createElement('option');
+                      option.value = v.id;
+                      option.textContent = `${v.marca} ${v.modelo} (${v.matricula})`;
+                      option.dataset.matricula = v.matricula;
+                      vehicleSelect.appendChild(option);
+                    });
+                    vehicleSelect.disabled = false;
+                  } else {
+                    vehicleSelect.innerHTML = '<option value="" disabled selected>No hay vehículos registrados</option>';
+                  }
+                } catch (e) {
+                  console.error("Error loading vehicles", e);
+                  vehicleSelect.innerHTML = '<option value="" disabled selected>Error al cargar</option>';
+                }
+              }
+            });
 
-      // --- GESTIÓN DE ITEMS (Tabla) ---
-      document.getElementById('add-item-btn').addEventListener('click', () => {
-        const name = document.getElementById('new-item-name').value;
-        const price = parseFloat(document.getElementById('new-item-price').value) || 0;
-        const qty = parseInt(document.getElementById('new-item-quantity').value) || 1;
-        const type = document.getElementById('new-item-type').value;
-        const bonus = parseFloat(document.getElementById('new-item-bonus').value) || 0;
-        const id = document.getElementById('new-item-id-hidden').value;
-        const ivaSelect = document.getElementById('new-item-iva');
-        const selectedOption = ivaSelect.options[ivaSelect.selectedIndex];
-        const ivaPercentage = parseFloat(selectedOption?.dataset.percentage) || 0;
-        const ivaId = selectedOption?.value || null;
+            setupCustomSelect({
+              inputId: 'new-item-name',
+              optionsId: 'product-options',
+              searchFunction: async (query, params) => {
+                const sucursalId = params?.idSucursal || document.getElementById('taller').value;
+                if (!sucursalId) {
+                  showToast('Selecciona un taller para buscar en el inventario', true);
+                  return [];
+                }
+                return searchInventario(query, sucursalId);
+              },
+              getSearchParams: () => ({ idSucursal: document.getElementById('taller').value }),
+              renderOption: item => {
+                const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
+                const price = parseFloat(rawPrice);
+                const stock = parseInt(item.stock) || 0;
+                return `${item.nombre} <small>(${price.toFixed(2)}€ - Stock: ${stock})</small>`;
+              },
+              onSelect: item => {
+                const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
+                const price = parseFloat(rawPrice);
+                const ivaId = item.id_impuesto;
+                const typeSelect = document.getElementById('new-item-type');
+                const inferredTypeRaw = item.tipo || item.tipo_item || (item.categoria && item.categoria.toLowerCase().includes('servicio') ? 'SERVICIO' : 'PRODUCTO');
+                const inferredType = (inferredTypeRaw || '').toString().toUpperCase().includes('SERVICIO') ? 'SERVICIO' : 'PRODUCTO';
 
-        if (!name || price < 0) {
-          showToast("Selecciona un item y precio válido.", true);
-          return;
-        }
+                document.getElementById('new-item-name').value = item.nombre;
+                document.getElementById('new-item-price').value = price.toFixed(2);
+                document.getElementById('new-item-id-hidden').value = item.id || '';
 
-        const normalizedType = (type || '').toUpperCase() === 'SERVICIO' ? 'SERVICIO' : 'PRODUCTO';
-        const displayType = normalizedType === 'SERVICIO' ? 'Servicio' : 'Repuesto';
+                if (ivaId) {
+                  const ivaSelect = document.getElementById('new-item-iva');
+                  if (ivaSelect && ivaSelect.querySelector(`option[value="${ivaId}"]`)) {
+                    ivaSelect.value = ivaId;
+                  }
+                }
 
-        orderItems.push({
-          idProducto: id || null,
-          idImpuesto: ivaId,
-          descripcion: name,
-          precio: price,
-          cantidad: qty,
-          tipoItem: normalizedType,
-          tipoItemLabel: displayType,
-          descuento: bonus,
-          iva: ivaPercentage
-        });
-        renderItems();
-        calculateNetTotals();
+                if (inferredType) {
+                  typeSelect.value = inferredType;
+                }
+              }
+            });
 
-        // Limpiar inputs de "Agregar Item"
-        document.getElementById('new-item-name').value = '';
-        document.getElementById('new-item-price').value = '';
-        document.getElementById('new-item-quantity').value = '1';
-        document.getElementById('new-item-bonus').value = '0';
-        document.getElementById('new-item-id-hidden').value = '';
-        document.getElementById('new-item-iva').value = '21';
-        delete document.getElementById('new-item-id-hidden').dataset.iva;
-      });
+            // --- GESTIÓN DE ITEMS (Tabla) ---
+            document.getElementById('add-item-btn').addEventListener('click', () => {
+              const name = document.getElementById('new-item-name').value;
+              const price = parseFloat(document.getElementById('new-item-price').value) || 0;
+              const qty = parseInt(document.getElementById('new-item-quantity').value) || 1;
+              const type = document.getElementById('new-item-type').value;
+              const bonus = parseFloat(document.getElementById('new-item-bonus').value) || 0;
+              const id = document.getElementById('new-item-id-hidden').value;
+              const ivaSelect = document.getElementById('new-item-iva');
+              const selectedOption = ivaSelect.options[ivaSelect.selectedIndex];
+              const ivaPercentage = parseFloat(selectedOption?.dataset.percentage) || 0;
+              const ivaId = selectedOption?.value || null;
 
-      function renderItems() {
-        const tbody = document.getElementById('order-items-list');
-        tbody.innerHTML = '';
-        orderItems.forEach((item, index) => {
-          const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
+              if (!name || price < 0) {
+                showToast("Selecciona un item y precio válido.", true);
+                return;
+              }
 
-          // Badges para Tipo
-          const typeLabel = item.tipoItemLabel || (item.tipoItem === 'SERVICIO' ? 'Servicio' : 'Repuesto');
-          let typeBadge = '';
-          if (item.tipoItem === 'PRODUCTO') {
-            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-blue-900 text-blue-200 border border-blue-700">Repuesto</span>';
-          } else if (item.tipoItem === 'SERVICIO') {
-            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-orange-900 text-orange-200 border border-orange-700">Servicio</span>';
-          } else {
-            typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${typeLabel}</span>`;
-          }
+              const normalizedType = (type || '').toUpperCase() === 'SERVICIO' ? 'SERVICIO' : 'PRODUCTO';
+              const displayType = normalizedType === 'SERVICIO' ? 'Servicio' : 'Repuesto';
 
-          // Icono de Inventario
-          const isProduct = item.idProducto ? '<span class="text-green-500 mr-1" title="Producto de inventario">📦</span>' : '<span class="text-gray-500 mr-1" title="Item libre">📝</span>';
+              orderItems.push({
+                idProducto: id || null,
+                idImpuesto: ivaId,
+                descripcion: name,
+                precio: price,
+                cantidad: qty,
+                tipoItem: normalizedType,
+                tipoItemLabel: displayType,
+                descuento: bonus,
+                iva: ivaPercentage
+              });
+              renderItems();
+              calculateNetTotals();
 
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
+              // Limpiar inputs de "Agregar Item"
+              document.getElementById('new-item-name').value = '';
+              document.getElementById('new-item-price').value = '';
+              document.getElementById('new-item-quantity').value = '1';
+              document.getElementById('new-item-bonus').value = '0';
+              document.getElementById('new-item-id-hidden').value = '';
+              document.getElementById('new-item-iva').value = '21';
+              delete document.getElementById('new-item-id-hidden').dataset.iva;
+            });
+
+            function renderItems() {
+              const tbody = document.getElementById('order-items-list');
+              tbody.innerHTML = '';
+              orderItems.forEach((item, index) => {
+                const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
+
+                // Badges para Tipo
+                const typeLabel = item.tipoItemLabel || (item.tipoItem === 'SERVICIO' ? 'Servicio' : 'Repuesto');
+                let typeBadge = '';
+                if (item.tipoItem === 'PRODUCTO') {
+                  typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-blue-900 text-blue-200 border border-blue-700">Repuesto</span>';
+                } else if (item.tipoItem === 'SERVICIO') {
+                  typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-orange-900 text-orange-200 border border-orange-700">Servicio</span>';
+                } else {
+                  typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${typeLabel}</span>`;
+                }
+
+                // Icono de Inventario
+                const isProduct = item.idProducto ? '<span class="text-green-500 mr-1" title="Producto de inventario">📦</span>' : '<span class="text-gray-500 mr-1" title="Item libre">📝</span>';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
             <td>${isProduct} ${item.descripcion}</td>
             <td>${item.precio.toFixed(2)}€</td>
             <td>${item.cantidad}</td>
@@ -1695,268 +1692,252 @@
             <td>${item.iva}%</td>
             <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold" data-index="${index}">&times;</button></td>
           `;
-          tbody.appendChild(tr);
-        });
-      }
-
-      document.getElementById('order-items-list').addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item-btn') || e.target.closest('.remove-item-btn')) {
-          const btn = e.target.classList.contains('remove-item-btn') ? e.target : e.target.closest('.remove-item-btn');
-          orderItems.splice(btn.dataset.index, 1);
-          renderItems();
-          calculateNetTotals();
-        }
-      });
-
-      // --- CÁLCULOS FINANCIEROS ---
-      function calculateNetTotals() {
-        let totalRepuestos = 0, totalMano = 0, totalIva = 0;
-        const descuentoPct = parseFloat(document.getElementById('discount-input').value) || 0;
-        const globalDiscountFactor = 1 - (descuentoPct / 100);
-
-        orderItems.forEach(item => {
-          const base = (item.precio * item.cantidad) - (item.descuento || 0);
-          const baseConDescuento = base * globalDiscountFactor;
-          const ivaLinea = baseConDescuento * ((item.iva || 0) / 100);
-
-          if (item.tipoItem === 'PRODUCTO') totalRepuestos += baseConDescuento;
-          else totalMano += baseConDescuento;
-
-          totalIva += ivaLinea;
-        });
-
-        const subtotal = totalRepuestos + totalMano;
-        const neto = subtotal;
-        const ivaMonto = totalIva;
-        const total = neto + ivaMonto;
-
-        // Actualizar UI
-        document.getElementById('summary-repuestos').textContent = totalRepuestos.toFixed(2) + '€';
-        document.getElementById('summary-mano-obra').textContent = totalMano.toFixed(2) + '€';
-        document.getElementById('summary-neto').textContent = neto.toFixed(2) + '€';
-        document.getElementById('summary-iva').textContent = ivaMonto.toFixed(2) + '€';
-        document.getElementById('summary-total').textContent = total.toFixed(2) + '€';
-
-        // Auto-llenar pago si no es cuenta corriente
-        if (!document.getElementById('cuenta-corriente-check').checked) {
-          document.getElementById('payment-amount-input').value = total.toFixed(2);
-        }
-        validatePayment();
-      }
-
-      function validatePayment() {
-        const total = parseFloat(document.getElementById('summary-total').textContent) || 0;
-        const pago = parseFloat(document.getElementById('payment-amount-input').value) || 0;
-        const input = document.getElementById('payment-amount-input');
-        const isCC = document.getElementById('cuenta-corriente-check').checked;
-
-        if (pago.toFixed(2) !== total.toFixed(2) && !isCC) {
-          input.classList.add('mismatch-amount');
-        } else {
-          input.classList.remove('mismatch-amount');
-        }
-      }
-
-      // Event Listeners para cálculos
-      document.getElementById('discount-input').addEventListener('input', calculateNetTotals);
-
-      document.getElementById('payment-amount-input').addEventListener('input', validatePayment);
-
-      const ccCheck = document.getElementById('cuenta-corriente-check');
-      const metodoSelect = document.getElementById('metodo-pago');
-      ccCheck.addEventListener('change', () => {
-        metodoSelect.disabled = ccCheck.checked;
-        validatePayment();
-      });
-
-      // --- SUBIDA DE IMÁGENES (FRONTEND) ---
-      const uploadInput = document.getElementById('vehicle-images-upload');
-      const dropZone = document.querySelector('.multi-image-upload-box');
-      const previewsContainer = document.getElementById('previews-container');
-
-      dropZone.addEventListener('click', () => uploadInput.click());
-      dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-      dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        handleFiles(e.dataTransfer.files);
-      });
-      uploadInput.addEventListener('change', (e) => handleFiles(e.target.files));
-
-      function handleFiles(files) {
-        Array.from(files).forEach(file => {
-          if (!file.type.startsWith('image/')) return;
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'img-preview-wrapper';
-            wrapper.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-img-btn">&times;</button>`;
-            wrapper.querySelector('button').addEventListener('click', () => {
-              wrapper.remove();
-            });
-            previewsContainer.appendChild(wrapper);
-          };
-          reader.readAsDataURL(file);
-        });
-      }
-
-      // --- SUBMIT DEL FORMULARIO (LIMPIO PARA BACKEND) ---
-      orderForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        // Validaciones Básicas
-        if (!document.getElementById('taller').value) return showToast('Selecciona un taller', true);
-        if (!document.getElementById('id-cliente-hidden').value) return showToast('Selecciona un cliente', true);
-        if (orderItems.length === 0) return showToast('Agrega items a la orden', true);
-
-        const kmValue = document.getElementById('kilometraje').value;
-        const kmNumber = kmValue !== '' ? Number(kmValue) : 0;
-
-        if (Number.isNaN(kmNumber) || kmNumber < 0) {
-          return showToast('Kilometraje inválido', true);
-        }
-
-        const lineasPayload = orderItems.map(item => ({
-          idProducto: item.idProducto,
-          idImpuesto: item.idImpuesto,
-          descripcion: item.descripcion,
-          cantidad: item.cantidad,
-          precio: item.precio,
-          descuento: item.descuento || 0,
-          iva: item.iva || 0,
-          tipoItem: (item.tipoItem || '').toUpperCase() || 'PRODUCTO'
-        }));
-
-        // RECOPILACIÓN DE DATOS (LISTO PARA API)
-        const payload = {
-          idSucursal: Number(document.getElementById('taller').value),
-          idCliente: Number(document.getElementById('id-cliente-hidden').value),
-          idVehiculo: Number(document.getElementById('id-vehiculo-hidden').value),
-          idMecanico: Number(document.getElementById('id-tecnico-hidden').value),
-          idTipoOrden: Number(document.getElementById('concepto').value || document.getElementById('id-tipo-orden-hidden').value),
-          km: kmNumber,
-          concepto: document.getElementById('concepto').selectedOptions[0]?.textContent || '',
-          descripcion: document.getElementById('observaciones').value || '',
-          comentarioInterno: document.getElementById('comentario-interno').value || '',
-          lineas: lineasPayload
-        };
-
-        try {
-          const response = await createOrden(payload);
-          console.log("--- ORDEN CREADA ---", response);
-          showToast('Orden creada con éxito');
-          showSuccessModal();
-        } catch (error) {
-          console.error('Error al crear orden', error);
-          showToast(error.message || 'No se pudo crear la orden', true);
-        }
-      });
-
-      // --- LÓGICA MODAL NUEVO VEHÍCULO ---
-      const newVehicleModal = document.getElementById('new-vehicle-modal');
-      const addVehicleBtn = document.getElementById('add-vehicle-btn');
-      const cancelNewVehicleBtn = document.getElementById('cancel-new-vehicle-btn');
-      const newVehicleForm = document.getElementById('new-vehicle-form');
-
-      if (addVehicleBtn) {
-        addVehicleBtn.addEventListener('click', () => {
-          newVehicleModal.classList.add('show');
-
-          // Pre-seleccionar cliente si ya está seleccionado en el formulario principal
-          const currentClientId = document.getElementById('id-cliente-hidden').value;
-          const currentClientName = document.getElementById('buscar-cliente').value;
-
-          if (currentClientId) {
-            document.getElementById('new-vehicle-client-id').value = currentClientId;
-            document.getElementById('new-vehicle-client-search').value = currentClientName;
-          }
-
-          // Cargar sucursales si no están cargadas
-          const sucursalSelect = document.getElementById('new-vehicle-sucursal');
-          const mainSucursalSelect = document.getElementById('taller');
-          if (sucursalSelect.options.length <= 1 && mainSucursalSelect.options.length > 1) {
-            Array.from(mainSucursalSelect.options).forEach(opt => {
-              if (opt.value) {
-                const newOpt = document.createElement('option');
-                newOpt.value = opt.value;
-                newOpt.textContent = opt.textContent;
-                sucursalSelect.appendChild(newOpt);
-              }
-            });
-          }
-        });
-      }
-
-      if (cancelNewVehicleBtn) {
-        cancelNewVehicleBtn.addEventListener('click', () => {
-          newVehicleModal.classList.remove('show');
-          newVehicleForm.reset();
-        });
-      }
-
-      // Buscador de clientes dentro del modal de vehículo
-      setupCustomSelect({
-        inputId: 'new-vehicle-client-search',
-        optionsId: 'new-vehicle-client-options',
-        searchFunction: searchClientes,
-        renderOption: item => `${item.nombre} <small>(${item.documento || 'Sin Doc'})</small>`,
-        onSelect: item => {
-          document.getElementById('new-vehicle-client-search').value = item.nombre;
-          document.getElementById('new-vehicle-client-id').value = item.id;
-        }
-      });
-
-      if (newVehicleForm) {
-        newVehicleForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const formData = new FormData(newVehicleForm);
-          const rawData = Object.fromEntries(formData.entries());
-          const vehicleData = { ...rawData, year: rawData.anio, serial: rawData.vin, cc: rawData.cilindrada };
-
-          if (!vehicleData.id_cliente) {
-            showToast('Debes seleccionar un cliente para el vehículo', true);
-            return;
-          }
-
-          try {
-            const result = await createVehicle(vehicleData);
-            const newVehicle = result;
-
-            showToast('Vehículo creado exitosamente');
-
-            // Añadir el nuevo vehículo al select y seleccionarlo
-            const vehicleSelect = document.getElementById('vehiculo-select');
-
-            // Si el select estaba deshabilitado o vacío, limpiarlo
-            if (vehicleSelect.disabled || vehicleSelect.options[0].disabled) {
-              vehicleSelect.innerHTML = '';
-              vehicleSelect.disabled = false;
+                tbody.appendChild(tr);
+              });
             }
 
-            const option = document.createElement('option');
-            option.value = newVehicle.id;
-            option.textContent = `${newVehicle.marca} ${newVehicle.modelo} (${newVehicle.matricula})`;
-            option.dataset.matricula = newVehicle.matricula;
-            option.selected = true;
-            vehicleSelect.appendChild(option);
+            document.getElementById('order-items-list').addEventListener('click', (e) => {
+              if (e.target.classList.contains('remove-item-btn') || e.target.closest('.remove-item-btn')) {
+                const btn = e.target.classList.contains('remove-item-btn') ? e.target : e.target.closest('.remove-item-btn');
+                orderItems.splice(btn.dataset.index, 1);
+                renderItems();
+                calculateNetTotals();
+              }
+            });
 
-            // Actualizar info visual
-            document.getElementById('vehiculo-info').textContent = newVehicle.matricula;
-            document.getElementById('id-vehiculo-hidden').value = newVehicle.id;
+            // --- CÁLCULOS FINANCIEROS ---
+            function calculateNetTotals() {
+              let totalRepuestos = 0, totalMano = 0, totalIva = 0;
+              const descuentoPct = parseFloat(document.getElementById('discount-input').value) || 0;
+              const globalDiscountFactor = 1 - (descuentoPct / 100);
 
-            // Cerrar modal
-            newVehicleModal.classList.remove('show');
-            newVehicleForm.reset();
+              orderItems.forEach(item => {
+                const base = (item.precio * item.cantidad) - (item.descuento || 0);
+                const baseConDescuento = base * globalDiscountFactor;
+                const ivaLinea = baseConDescuento * ((item.iva || 0) / 100);
 
-          } catch (error) {
-            console.error(error);
-            showToast(error.message, true);
-          }
-        });
-      }
+                if (item.tipoItem === 'PRODUCTO') totalRepuestos += baseConDescuento;
+                else totalMano += baseConDescuento;
 
-    });
+                totalIva += ivaLinea;
+              });
+
+              const subtotal = totalRepuestos + totalMano;
+              const neto = subtotal;
+              const ivaMonto = totalIva;
+              const total = neto + ivaMonto;
+
+              // Actualizar UI
+              document.getElementById('summary-repuestos').textContent = totalRepuestos.toFixed(2) + '€';
+              document.getElementById('summary-mano-obra').textContent = totalMano.toFixed(2) + '€';
+              document.getElementById('summary-neto').textContent = neto.toFixed(2) + '€';
+              document.getElementById('summary-iva').textContent = ivaMonto.toFixed(2) + '€';
+              document.getElementById('summary-total').textContent = total.toFixed(2) + '€';
+
+              // Actualizar resumen de pagos (de pagos-logic.js)
+              if (typeof updatePaymentSummary === 'function') updatePaymentSummary(total);
+            }
+
+            // Event Listeners para cálculos
+            document.getElementById('discount-input').addEventListener('input', calculateNetTotals);
+
+            // Nota: La gestiu00f3n de pagos estu00e1 en pagos-logic.js
+
+            // --- SUBIDA DE IMÁGENES (FRONTEND) ---
+            const uploadInput = document.getElementById('vehicle-images-upload');
+            const dropZone = document.querySelector('.multi-image-upload-box');
+            const previewsContainer = document.getElementById('previews-container');
+
+            dropZone.addEventListener('click', () => uploadInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+              e.preventDefault();
+              dropZone.classList.remove('dragover');
+              handleFiles(e.dataTransfer.files);
+            });
+            uploadInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+            function handleFiles(files) {
+              Array.from(files).forEach(file => {
+                if (!file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                  const wrapper = document.createElement('div');
+                  wrapper.className = 'img-preview-wrapper';
+                  wrapper.innerHTML = `<img src="${e.target.result}"><button type="button" class="remove-img-btn">&times;</button>`;
+                  wrapper.querySelector('button').addEventListener('click', () => {
+                    wrapper.remove();
+                  });
+                  previewsContainer.appendChild(wrapper);
+                };
+                reader.readAsDataURL(file);
+              });
+            }
+
+            // --- SUBMIT DEL FORMULARIO (LIMPIO PARA BACKEND) ---
+            orderForm.addEventListener('submit', async (e) => {
+              e.preventDefault();
+
+              // Validaciones Básicas
+              if (!document.getElementById('taller').value) return showToast('Selecciona un taller', true);
+              if (!document.getElementById('id-cliente-hidden').value) return showToast('Selecciona un cliente', true);
+              if (orderItems.length === 0) return showToast('Agrega items a la orden', true);
+
+              const kmValue = document.getElementById('kilometraje').value;
+              const kmNumber = kmValue !== '' ? Number(kmValue) : 0;
+
+              if (Number.isNaN(kmNumber) || kmNumber < 0) {
+                return showToast('Kilometraje inválido', true);
+              }
+
+              const lineasPayload = orderItems.map(item => ({
+                idProducto: item.idProducto,
+                idImpuesto: item.idImpuesto,
+                descripcion: item.descripcion,
+                cantidad: item.cantidad,
+                precio: item.precio,
+                descuento: item.descuento || 0,
+                iva: item.iva || 0,
+                tipoItem: (item.tipoItem || '').toUpperCase() || 'PRODUCTO'
+              }));
+
+              // RECOPILACIÓN DE DATOS (LISTO PARA API)
+              const payload = {
+                idSucursal: Number(document.getElementById('taller').value),
+                idCliente: Number(document.getElementById('id-cliente-hidden').value),
+                idVehiculo: Number(document.getElementById('id-vehiculo-hidden').value),
+                idMecanico: Number(document.getElementById('id-tecnico-hidden').value),
+                idTipoOrden: Number(document.getElementById('concepto').value || document.getElementById('id-tipo-orden-hidden').value),
+                km: kmNumber,
+                concepto: document.getElementById('concepto').selectedOptions[0]?.textContent || '',
+                descripcion: document.getElementById('observaciones').value || '',
+                comentarioInterno: document.getElementById('comentario-interno').value || '',
+                lineas: lineasPayload,
+                pagos: (window.orderPayments || []).map(p => ({
+                  idMedioPago: p.idMedioPago,
+                  codigoMedioPago: p.codigoMedioPago,
+                  importe: p.importe,
+                  referencia: p.referencia || null,
+                  idCaja: p.idCaja || 1
+                }))
+              };
+
+              try {
+                const response = await createOrden(payload);
+                console.log("--- ORDEN CREADA ---", response);
+                showToast('Orden creada con éxito');
+                showSuccessModal();
+              } catch (error) {
+                console.error('Error al crear orden', error);
+                showToast(error.message || 'No se pudo crear la orden', true);
+              }
+            });
+
+            // --- LÓGICA MODAL NUEVO VEHÍCULO ---
+            const newVehicleModal = document.getElementById('new-vehicle-modal');
+            const addVehicleBtn = document.getElementById('add-vehicle-btn');
+            const cancelNewVehicleBtn = document.getElementById('cancel-new-vehicle-btn');
+            const newVehicleForm = document.getElementById('new-vehicle-form');
+
+            if (addVehicleBtn) {
+              addVehicleBtn.addEventListener('click', () => {
+                newVehicleModal.classList.add('show');
+
+                // Pre-seleccionar cliente si ya está seleccionado en el formulario principal
+                const currentClientId = document.getElementById('id-cliente-hidden').value;
+                const currentClientName = document.getElementById('buscar-cliente').value;
+
+                if (currentClientId) {
+                  document.getElementById('new-vehicle-client-id').value = currentClientId;
+                  document.getElementById('new-vehicle-client-search').value = currentClientName;
+                }
+
+                // Cargar sucursales si no están cargadas
+                const sucursalSelect = document.getElementById('new-vehicle-sucursal');
+                const mainSucursalSelect = document.getElementById('taller');
+                if (sucursalSelect.options.length <= 1 && mainSucursalSelect.options.length > 1) {
+                  Array.from(mainSucursalSelect.options).forEach(opt => {
+                    if (opt.value) {
+                      const newOpt = document.createElement('option');
+                      newOpt.value = opt.value;
+                      newOpt.textContent = opt.textContent;
+                      sucursalSelect.appendChild(newOpt);
+                    }
+                  });
+                }
+              });
+            }
+
+            if (cancelNewVehicleBtn) {
+              cancelNewVehicleBtn.addEventListener('click', () => {
+                newVehicleModal.classList.remove('show');
+                newVehicleForm.reset();
+              });
+            }
+
+            // Buscador de clientes dentro del modal de vehículo
+            setupCustomSelect({
+              inputId: 'new-vehicle-client-search',
+              optionsId: 'new-vehicle-client-options',
+              searchFunction: searchClientes,
+              renderOption: item => `${item.nombre} <small>(${item.documento || 'Sin Doc'})</small>`,
+              onSelect: item => {
+                document.getElementById('new-vehicle-client-search').value = item.nombre;
+                document.getElementById('new-vehicle-client-id').value = item.id;
+              }
+            });
+
+            if (newVehicleForm) {
+              newVehicleForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(newVehicleForm);
+                const rawData = Object.fromEntries(formData.entries());
+                const vehicleData = { ...rawData, year: rawData.anio, serial: rawData.vin, cc: rawData.cilindrada };
+
+                if (!vehicleData.id_cliente) {
+                  showToast('Debes seleccionar un cliente para el vehículo', true);
+                  return;
+                }
+
+                try {
+                  const result = await createVehicle(vehicleData);
+                  const newVehicle = result;
+
+                  showToast('Vehículo creado exitosamente');
+
+                  // Añadir el nuevo vehículo al select y seleccionarlo
+                  const vehicleSelect = document.getElementById('vehiculo-select');
+
+                  // Si el select estaba deshabilitado o vacío, limpiarlo
+                  if (vehicleSelect.disabled || vehicleSelect.options[0].disabled) {
+                    vehicleSelect.innerHTML = '';
+                    vehicleSelect.disabled = false;
+                  }
+
+                  const option = document.createElement('option');
+                  option.value = newVehicle.id;
+                  option.textContent = `${newVehicle.marca} ${newVehicle.modelo} (${newVehicle.matricula})`;
+                  option.dataset.matricula = newVehicle.matricula;
+                  option.selected = true;
+                  vehicleSelect.appendChild(option);
+
+                  // Actualizar info visual
+                  document.getElementById('vehiculo-info').textContent = newVehicle.matricula;
+                  document.getElementById('id-vehiculo-hidden').value = newVehicle.id;
+
+                  // Cerrar modal
+                  newVehicleModal.classList.remove('show');
+                  newVehicleForm.reset();
+
+                } catch (error) {
+                  console.error(error);
+                  showToast(error.message, true);
+                }
+              });
+            }
+
+          });
   </script>
   <script src="pagos-logic.js"></script>
 </body>

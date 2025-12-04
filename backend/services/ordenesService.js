@@ -229,9 +229,9 @@ class OrdenesService {
 
             const totalNeto = totalBruto + totalIva;
 
-            // Insertar Pagos
+            // Insertar Pagos y Movimientos de Caja
             for (const pago of pagosProcesados) {
-                await ordenesRepository.createOrdenPago(client, {
+                const pagoCreado = await ordenesRepository.createOrdenPago(client, {
                     id_orden: idOrden,
                     id_medio_pago: pago.idMedioPago,
                     importe: pago.importe,
@@ -239,6 +239,19 @@ class OrdenesService {
                     id_caja: pago.idCaja,
                     created_by: id_usuario
                 });
+
+                // Crear movimiento de caja (INGRESO por pago de orden)
+                if (pago.idCaja) {
+                    await ordenesRepository.createCajaMovimiento(client, {
+                        id_caja: pago.idCaja,
+                        id_usuario: id_usuario,
+                        tipo: 'INGRESO',
+                        monto: pago.importe,
+                        origen_tipo: 'ORDEN',
+                        origen_id: idOrden,
+                        created_by: id_usuario
+                    });
+                }
             }
 
             // Actualizar Totales en Orden

@@ -260,6 +260,23 @@ class OrdenesRepository {
         `;
         await client.query(query, [id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_by]);
     }
+
+    /**
+     * Crea un movimiento de caja (ingreso/egreso)
+     * @param {object} client - Cliente de transacción
+     * @param {object} data - Datos del movimiento
+     */
+    async createCajaMovimiento(client, data) {
+        const { id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, created_by } = data;
+        const query = `
+            INSERT INTO cajamovimiento
+            (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, origen_id, created_at, created_by)
+            VALUES ($1, $2, $3, $4, NOW(), $5, $6, NOW(), $7)
+            RETURNING id
+        `;
+        const result = await client.query(query, [id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, created_by]);
+        return result.rows[0];
+    }
 }
 
 module.exports = new OrdenesRepository();

@@ -1,5 +1,9 @@
 // --- GESTIÓN DE PAGOS ---
-const orderPayments = [];
+// Usar la variable global definida en el HTML principal
+// Se inicializa si no existe (por seguridad)
+if (typeof window.orderPayments === 'undefined') {
+    window.orderPayments = [];
+}
 
 // Cargar medios de pago (IDs correctos según BD: Efectivo=3, Tarjeta=2, Transferencia=1)
 function loadMediosPago() {
@@ -16,7 +20,7 @@ function updatePaymentSummary(totalOrden = null) {
     if (totalOrden === null) {
         totalOrden = parseFloat(document.getElementById('summary-total')?.textContent) || 0;
     }
-    const totalPagado = orderPayments.reduce((sum, p) => sum + p.importe, 0);
+    const totalPagado = window.orderPayments.reduce((sum, p) => sum + p.importe, 0);
     const saldoPendiente = Math.max(0, totalOrden - totalPagado);
 
     const totalPagadoEl = document.getElementById('resumen-total-pagado');
@@ -26,8 +30,8 @@ function updatePaymentSummary(totalOrden = null) {
 
     const badge = document.getElementById('pagos-badge');
     if (badge) {
-        badge.textContent = orderPayments.length;
-        badge.style.display = orderPayments.length > 0 ? 'inline' : 'none';
+        badge.textContent = window.orderPayments.length;
+        badge.style.display = window.orderPayments.length > 0 ? 'inline' : 'none';
     }
 
     const importeInput = document.getElementById('nuevo-pago-importe');
@@ -42,11 +46,11 @@ function renderPayments() {
     if (!tbody) return;
 
     tbody.innerHTML = '';
-    if (orderPayments.length === 0) {
+    if (window.orderPayments.length === 0) {
         if (emptyMsg) emptyMsg.style.display = 'block';
     } else {
         if (emptyMsg) emptyMsg.style.display = 'none';
-        orderPayments.forEach((pago, index) => {
+        window.orderPayments.forEach((pago, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
         <td style="color: var(--text-secondary);">${pago.metodoNombre}</td>
@@ -87,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const totalOrden = parseFloat(document.getElementById('summary-total')?.textContent) || 0;
-            const totalPagado = orderPayments.reduce((sum, p) => sum + p.importe, 0);
+            const totalPagado = window.orderPayments.reduce((sum, p) => sum + p.importe, 0);
             const saldoPendiente = totalOrden - totalPagado;
 
             if (importe > saldoPendiente + 0.01) {
@@ -95,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            orderPayments.push({
+            window.orderPayments.push({
                 idMedioPago: parseInt(metodoId),
                 codigoMedioPago: metodoCodigo,
                 metodoNombre,
@@ -119,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pagosTbody.addEventListener('click', (e) => {
             if (e.target.classList.contains('remove-pago-btn')) {
                 const index = parseInt(e.target.dataset.index);
-                orderPayments.splice(index, 1);
+                window.orderPayments.splice(index, 1);
                 renderPayments();
                 updatePaymentSummary();
             }
