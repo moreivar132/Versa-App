@@ -583,8 +583,8 @@
                 <td class="text-sm text-gray-400">${p.proveedor_nombre || '-'}</td>
                 <td>
                     <div class="stock-container">
-                        <span class="stock-val ${p.stock_minimo && Number(p.stock || 0) <= Number(p.stock_minimo) ? 'text-red-400' : 'text-white'}">${Number(p.stock || 0)}</span>
-                        <span class="stock-unit">${p.unidad_medida || 'Uds'}${p.stock_minimo ? ` · Min ${p.stock_minimo}` : ''}</span>
+                        <span class="stock-val ${p.stock_minimo && Number(p.stock || 0) <= Number(p.stock_minimo) ? 'text-red-400' : 'text-white'}">${Number(p.stock || 0)} ${p.unidad_medida || 'Uds'}</span>
+                        <span class="stock-unit">Stock mínimo: ${Number(p.stock_minimo || 0)}</span>
                     </div>
                 </td>
                 <td class="cell-price">€${parseFloat(p.precio || 0).toFixed(2)}</td>

@@ -489,6 +489,10 @@
                                 class="form-input" placeholder="0.00" />
                         </div>
                         <div class="form-group">
+                            <label for="stock">Stock real</label>
+                            <input type="number" id="stock" name="stock" class="form-input" value="0" />
+                        </div>
+                        <div class="form-group">
                             <label for="stock_minimo">Stock Mínimo</label>
                             <input type="number" id="stock_minimo" name="stock_minimo" class="form-input" value="0" />
                         </div>
@@ -739,6 +743,7 @@
                     document.getElementById('costo_compra').value = product.costo || '';
                     document.getElementById('recargo').value = product.recargo || 0;
                     document.getElementById('precio_venta_bruto').value = product.precio || '';
+                    document.getElementById('stock').value = product.stock ?? 0;
                     document.getElementById('stock_minimo').value = product.stock_minimo || 0;
                     document.getElementById('unidad_medida').value = product.unidad_medida || 'Unidades';
                     document.getElementById('descripcion').value = product.descripcion || '';
@@ -817,6 +822,7 @@
                 data.costo_compra = parseFloat(data.costo_compra) || 0;
                 data.recargo = parseFloat(data.recargo) || 0;
                 data.precio_venta_bruto = parseFloat(data.precio_venta_bruto) || 0;
+                data.stock = parseFloat(data.stock) || 0;
                 data.stock_minimo = parseInt(data.stock_minimo) || 0;
 
                 try {
