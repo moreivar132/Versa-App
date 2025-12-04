@@ -21,10 +21,12 @@ export default defineConfig({
                 managerTallerCompras: 'manager-taller-compras.html',
                 managerTallerComprasHistorial: 'manager-taller-compras-historial.html',
                 managerTallerChat: 'manager-taller-chat.html',
+                managerTallerWhatsapp: 'manager-taller-whatsapp.html',
                 citaPrevia: 'cita-previa.html',
             }
         }
     },
+    publicDir: 'public',
     server: {
         port: 5173,
         proxy: {
