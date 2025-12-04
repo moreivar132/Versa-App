@@ -53,6 +53,69 @@ router.get('/', verifyJWT, async (req, res) => {
     }
 });
 
+// GET /api/inventory/resumen - Aggregated inventory grouped by codigo_barras
+router.get('/resumen', verifyJWT, async (req, res) => {
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = parseInt(req.query.offset) || 0;
+    const { q, category, provider } = req.query;
+    const id_tenant = req.user.id_tenant;
+
+    try {
+        let filterClause = 'WHERE p.id_tenant = $1';
+        const params = [id_tenant];
+
+        if (q) {
+            filterClause += ` AND (p.nombre ILIKE $${params.length + 1} OR p.codigo_barras ILIKE $${params.length + 1} OR p.modelo ILIKE $${params.length + 1})`;
+            params.push(`%${q}%`);
+        }
+
+        if (category && category !== 'Todas las Categorías') {
+            filterClause += ` AND p.categoria = $${params.length + 1}`;
+            params.push(category);
+        }
+
+        if (provider && provider !== 'Todos los Proveedores' && !isNaN(provider)) {
+            filterClause += ` AND p.id_proveedor = $${params.length + 1}`;
+            params.push(provider);
+        }
+
+        const query = `
+            WITH aggregated AS (
+                SELECT
+                    MIN(p.id) AS id_representative,
+                    p.codigo_barras,
+                    p.nombre,
+                    p.id_sucursal,
+                    MIN(p.id_proveedor) AS id_proveedor,
+                    MIN(p.categoria) AS categoria,
+                    SUM(p.stock) AS stock_total,
+                    MIN(p.stock_minimo) AS stock_minimo, -- Usamos el mínimo como umbral más conservador
+                    MAX(p.precio) AS precio_representativo, -- Precio más alto para no subestimar
+                    MAX(p.marca) AS marca,
+                    MAX(p.modelo) AS modelo,
+                    MIN(p.unidad_medida) AS unidad_medida
+                FROM producto p
+                ${filterClause}
+                GROUP BY p.codigo_barras, p.nombre, p.id_sucursal
+            )
+            SELECT a.*, pr.nombre AS proveedor_nombre, s.nombre AS sucursal_nombre
+            FROM aggregated a
+            LEFT JOIN proveedor pr ON a.id_proveedor = pr.id
+            LEFT JOIN sucursal s ON a.id_sucursal = s.id
+            ORDER BY a.nombre ASC, a.codigo_barras ASC
+            LIMIT $${params.length + 1} OFFSET $${params.length + 2};
+        `;
+
+        params.push(limit, offset);
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error al obtener resumen de inventario:', error);
+        res.status(500).json({ error: 'Error al obtener resumen de inventario' });
+    }
+});
+
 // GET /api/inventory/categories - List distinct categories
 router.get('/categories', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
