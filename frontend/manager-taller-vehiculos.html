@@ -107,7 +107,7 @@
 
         /* Result Card / Detail View */
         .search-result-card {
-            background: rgba(255, 255, 255, 0.03);
+            --surface-border: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--surface-border);
             border-radius: 10px;
             padding: 0;
@@ -548,7 +548,7 @@
                 </div>
 
                 <!-- Bottom Actions -->
-                <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
                     <div class="flex items-center gap-3 px-3 py-2 mb-2">
                         <div
                             class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
@@ -559,8 +559,8 @@
                             <span class="text-gray-500 text-xs truncate">admin</span>
                         </div>
                     </div>
-                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="#" data-logout>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
                         <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
                         <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
                     </a>

@@ -585,7 +585,7 @@
           </nav>
         </div>
 
-        <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+        <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
           <div class="flex items-center gap-3 px-3 py-2 mb-2">
             <div
               class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
@@ -752,7 +752,7 @@
                 </tr>
               </thead>
               <tbody id="order-items-list">
-                </tbody>
+              </tbody>
               <tfoot>
                 <tr id="add-item-row">
                   <td>
@@ -788,7 +788,7 @@
                 <small>(Puedes seleccionar varios archivos a la vez)</small>
               </label>
               <div id="previews-container">
-                </div>
+              </div>
             </div>
           </div>
 
@@ -1034,14 +1034,14 @@
       }
 
       // --- LÓGICA DE BÚSQUEDA DINÁMICA ---
-            const USE_MOCK_DATA = true; // Set to false when backend is fixed
+      const USE_MOCK_DATA = true; // Set to false when backend is fixed
 
       const MOCK_TECNICOS = [
         { id: 101, nombre: "Juan Pérez" },
         { id: 102, nombre: "Ana Gómez" },
         { id: 103, nombre: "Carlos Ruiz" }
       ];
-      
+
       const MOCK_CLIENTES = [
         { id: 201, nombre: "Empresa ABC S.L.", dni: "B12345678", telefono: "600111222" },
         { id: 202, nombre: "Laura Martínez", dni: "12345678Z", telefono: "600333444" }
@@ -1068,7 +1068,7 @@
         input.addEventListener("keyup", () => {
           clearTimeout(debounceTimeout);
           const query = input.value.toLowerCase();
-          
+
           if (query.length < 1) {
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('show');
@@ -1077,14 +1077,14 @@
 
           debounceTimeout = setTimeout(() => {
             if (USE_MOCK_DATA) {
-                console.log(`Buscando en MOCK data para ${inputId}...`);
-                const results = mockData.filter(item => {
-                    return Object.values(item).some(val => 
-                        String(val).toLowerCase().includes(query)
-                    );
-                });
-                renderResults(results);
-                return;
+              console.log(`Buscando en MOCK data para ${inputId}...`);
+              const results = mockData.filter(item => {
+                return Object.values(item).some(val =>
+                  String(val).toLowerCase().includes(query)
+                );
+              });
+              renderResults(results);
+              return;
             }
 
             fetch(searchUrl, {
@@ -1107,7 +1107,7 @@
                   data = JSON.parse(text);
                 } catch (e) {
                   console.error("Error parsing JSON:", text);
-                  renderResults([]); 
+                  renderResults([]);
                   return;
                 }
                 const results = Array.isArray(data) ? data : (data ? [data] : []);
@@ -1122,22 +1122,22 @@
         });
 
         function renderResults(results) {
-            optionsContainer.innerHTML = '';
-            if (results.length > 0) {
-              results.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'option';
-                div.innerHTML = renderOption(item);
-                div.addEventListener('click', () => {
-                  onSelect(item);
-                  optionsContainer.classList.remove('show');
-                });
-                optionsContainer.appendChild(div);
+          optionsContainer.innerHTML = '';
+          if (results.length > 0) {
+            results.forEach(item => {
+              const div = document.createElement('div');
+              div.className = 'option';
+              div.innerHTML = renderOption(item);
+              div.addEventListener('click', () => {
+                onSelect(item);
+                optionsContainer.classList.remove('show');
               });
-            } else {
-              optionsContainer.innerHTML = `<div class="option" style="color: var(--text-secondary);">No se encontraron resultados.</div>`;
-            }
-            optionsContainer.classList.add('show');
+              optionsContainer.appendChild(div);
+            });
+          } else {
+            optionsContainer.innerHTML = `<div class="option" style="color: var(--text-secondary);">No se encontraron resultados.</div>`;
+          }
+          optionsContainer.classList.add('show');
         }
 
         document.addEventListener("click", (e) => {
@@ -1196,8 +1196,8 @@
         }
       });
 
-      
-// --- LÓGICA DE LA TABLA DE ITEMS ---
+
+      // --- LÓGICA DE LA TABLA DE ITEMS ---
       document.getElementById('add-item-btn').addEventListener('click', () => {
         const newItem = {
           id: document.getElementById('new-item-id-hidden').value, // ID del Producto/Servicio
@@ -1387,7 +1387,7 @@
         // Asignar manualmente los valores de los selects si no se han seteado por cambio
         const idTaller = document.getElementById('taller').value;
         document.getElementById('id-taller-hidden').value = idTaller;
-        
+
         const idTipoOrden = document.getElementById('concepto').value;
         document.getElementById('id-tipo-orden-hidden').value = idTipoOrden;
 
@@ -1456,7 +1456,7 @@
           pago_manual: pagoManual,
           lineas: lineasPayload,
         };
-        
+
         console.log("Payload JSON de la Orden:", ordenPayload);
 
         // 2. Crear un FormData para enviar tanto el JSON como los archivos.
