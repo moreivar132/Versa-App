@@ -3,6 +3,31 @@ const router = express.Router();
 const pool = require('../db');
 const verifyJWT = require('../middleware/auth');
 
+async function registrarEntradaInventario(client, {
+    productId,
+    quantity,
+    idAlmacen,
+    idCompra,
+    idUsuario
+}) {
+    const parsedQuantity = parseFloat(quantity);
+
+    if (Number.isNaN(parsedQuantity) || parsedQuantity <= 0) {
+        throw new Error('La cantidad del item es inválida para actualizar stock.');
+    }
+
+    await client.query(`
+        INSERT INTO movimientoinventario
+        (id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_at, created_by)
+        VALUES ($1, $2, 'ENTRADA', $3, 'COMPRA', $4, NOW(), $5)
+    `, [productId, idAlmacen, parsedQuantity, idCompra, idUsuario]);
+
+    await client.query(
+        'UPDATE producto SET stock = COALESCE(stock, 0) + $1 WHERE id = $2',
+        [parsedQuantity, productId]
+    );
+}
+
 // GET /api/compras - Listar compras (Historial)
 router.get('/', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
@@ -144,6 +169,18 @@ router.post('/', verifyJWT, async (req, res) => {
 
         for (const item of items) {
             let productId = item.id_producto;
+            const quantity = parseFloat(item.quantity);
+            const price = parseFloat(item.price);
+            const bonus = parseFloat(item.bonus) || 0;
+            const iva = parseFloat(item.iva) || 0;
+
+            if (Number.isNaN(quantity) || quantity <= 0) {
+                throw new Error('Cada item debe tener una cantidad válida mayor a cero.');
+            }
+
+            if (Number.isNaN(price) || price < 0) {
+                throw new Error('Cada item debe tener un precio válido.');
+            }
 
             // Resolver Producto (Buscar o Crear)
             if (!productId && item.barcode) {
@@ -191,31 +228,26 @@ router.post('/', verifyJWT, async (req, res) => {
             // Calcular total línea: (precio * cantidad) - bonus (si aplica)
             // Nota: El usuario no mencionó 'bonus' en el modelo, pero el frontend lo envía.
             // Asumiremos que el total_linea debe reflejar el coste real.
-            const lineTotal = (item.price * item.quantity) - (item.bonus || 0);
+            const lineTotal = (price * quantity) - bonus;
             calculatedTotal += lineTotal;
 
             await client.query(insertLineaQuery, [
                 id_compra,
                 productId,
                 item.name,
-                item.quantity,
-                item.price,
-                item.iva,
+                quantity,
+                price,
+                iva,
                 lineTotal
             ]);
 
-            // Insertar Movimiento de Inventario (Entrada por Compra)
-            await client.query(`
-                INSERT INTO movimientoinventario
-                (id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_at, created_by)
-                VALUES ($1, $2, 'ENTRADA', $3, 'COMPRA', $4, NOW(), $5)
-            `, [productId, finalAlmacenId, item.quantity, id_compra, id_usuario]);
-
-            // Actualizar stock en la tabla producto (Cache de stock actual)
-            await client.query(
-                'UPDATE producto SET stock = COALESCE(stock, 0) + $1 WHERE id = $2',
-                [item.quantity, productId]
-            );
+            await registrarEntradaInventario(client, {
+                productId,
+                quantity,
+                idAlmacen: finalAlmacenId,
+                idCompra: id_compra,
+                idUsuario: id_usuario
+            });
         }
 
         // 4. Actualizar Total en Cabecera
