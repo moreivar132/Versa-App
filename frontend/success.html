@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>¡Pago Exitoso! - VERSA Manager</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+
+        @keyframes checkmark {
+            0% {
+                stroke-dashoffset: 100;
+            }
+
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes scale-in {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .animate-checkmark {
+            animation: checkmark 0.8s ease-out forwards;
+        }
+
+        .animate-scale-in {
+            animation: scale-in 0.5s ease-out;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff4400",
+                        "background-dark": "#121212",
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-dark text-white font-display min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-2xl w-full">
+        <div
+            class="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 md:p-12 text-center animate-scale-in">
+
+            <!-- Icono de éxito -->
+            <div class="mx-auto w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center mb-6">
+                <svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path class="animate-checkmark" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 13l4 4L19 7" style="stroke-dasharray: 100; stroke-dashoffset: 100;"></path>
+                </svg>
+            </div>
+
+            <!-- Título -->
+            <h1 class="text-3xl md:text-4xl font-black text-white mb-4">
+                ¡Pago Exitoso!
+            </h1>
+
+            <!-- Descripción -->
+            <p class="text-lg text-gray-300 mb-8">
+                Tu suscripción a VERSA Manager ha sido activada correctamente.
+                <br class="hidden md:block">
+                ¡Bienvenido a bordo!
+            </p>
+
+            <!-- Detalles de la suscripción -->
+            <div class="bg-white/5 rounded-lg border border-white/10 p-6 mb-8 text-left">
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">receipt_long</span>
+                    Detalles de tu suscripción
+                </h2>
+                <div id="subscription-details" class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Estado:</span>
+                        <span class="text-green-500 font-bold">✓ Activa</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Plan:</span>
+                        <span class="text-white font-medium" id="plan-name">Cargando...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Duración:</span>
+                        <span class="text-white font-medium" id="plan-duration">Cargando...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Email de confirmación:</span>
+                        <span class="text-white font-medium">Enviado ✓</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Siguiente paso -->
+            <div class="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-8">
+                <p class="text-sm text-gray-300">
+                    <span class="material-symbols-outlined text-primary inline-block align-middle mr-1">info</span>
+                    Hemos enviado un email de confirmación con los detalles de tu suscripción y los pasos para empezar.
+                </p>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="login.html"
+                    class="flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-white font-bold py-3 px-6 rounded-lg transition-all">
+                    <span>Ir al Panel de Control</span>
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
+                <a href="index.html"
+                    class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-6 rounded-lg transition-all border border-white/10">
+                    <span>Volver al Inicio</span>
+                </a>
+            </div>
+
+            <!-- Soporte -->
+            <p class="text-sm text-gray-400 mt-8">
+                ¿Necesitas ayuda? <a href="#" class="text-primary hover:underline">Contacta con soporte</a>
+            </p>
+
+        </div>
+    </div>
+
+    <script>
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const tenantId = urlParams.get('tenant_id');
+
+        // Aquí podrías hacer una llamada al backend para obtener los detalles
+        // de la sesión de checkout y mostrar información más precisa
+
+        // Por ahora, mostrar información genérica
+        document.getElementById('plan-name').textContent = 'Plan Pro';
+        document.getElementById('plan-duration').textContent = 'Mensual';
+
+        console.log('Session ID:', sessionId);
+        console.log('Tenant ID:', tenantId);
+    </script>
+
+</body>
+
+</html>

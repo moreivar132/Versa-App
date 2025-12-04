@@ -16,6 +16,12 @@ const port = process.env.PORT || 3000;
 
 // --- Middlewares ---
 app.use(cors());
+
+// IMPORTANTE: El webhook de Stripe debe ir ANTES de express.json()
+// porque necesita acceso al raw body para verificar la firma
+app.use('/api/stripe/webhook', require('./routes/stripeWebhook'));
+
+// Ahora sí, aplicar el parser JSON para el resto de rutas
 app.use(express.json());
 
 // Logger Middleware
@@ -38,6 +44,8 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/crm/chat', require('./routes/crm_chat'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/whatsapp', require('./routes/whatsapp'));
+app.use('/api/stripe', require('./routes/stripe'));
+app.use('/api/subscriptions', require('./routes/subscriptions'));
 
 // Servir archivos estáticos subidos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

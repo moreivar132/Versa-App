@@ -74,6 +74,23 @@
         opacity: 0;
       }
     }
+
+    /* Animación para el modal */
+    @keyframes scale-in {
+      0% {
+        transform: scale(0.95);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .animate-scale-in {
+      animation: scale-in 0.2s ease-out forwards;
+    }
   </style>
   <script id="tailwind-config">
     tailwind.config = {
@@ -113,7 +130,7 @@
             <a class="transition-colors hover:text-white" href="#contacto">Contacto</a>
           </nav>
           <div class="flex items-center gap-4">
-            <a href="login.html"
+            <a href="/login.html"
               class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide transition-opacity hover:opacity-90">
               <span class="truncate">Ingresar</span>
             </a>
@@ -462,7 +479,7 @@
                   <p class="text-[#A0A0A0] text-base font-normal leading-normal">Sin compromisos, no se requiere tarjeta
                     de crédito.</p>
                 </div>
-                <button
+                <button id="btn-start-trial"
                   class="flex min-w-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold leading-normal hover:opacity-90 transition-opacity whitespace-nowrap">
                   <span class="truncate">Comenzar Prueba Gratuita</span>
                 </button>
@@ -484,8 +501,9 @@
                     <span class="text-[#A0A0A0] text-base font-bold leading-tight">/mes</span>
                   </div>
                 </div>
-                <button
-                  class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-white/10 hover:bg-white/20 text-white text-sm font-bold leading-normal transition-all border border-white/10">
+                <button data-plan="basic"
+                  class="btn-subscribe
+                  flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-white/10 hover:bg-white/20 text-white text-sm font-bold leading-normal transition-all border border-white/10">
                   <span class="truncate">Empezar</span>
                 </button>
                 <div class="flex flex-col gap-3">
@@ -536,8 +554,9 @@
                     <span class="text-[#A0A0A0] text-base font-bold leading-tight">/mes</span>
                   </div>
                 </div>
-                <button
-                  class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-primary hover:opacity-90 text-white text-sm font-bold leading-normal transition-all">
+                <button data-plan="pro"
+                  class="btn-subscribe
+                  flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-primary hover:opacity-90 text-white text-sm font-bold leading-normal transition-all">
                   <span class="truncate">Elegir Plan Pro</span>
                 </button>
                 <div class="flex flex-col gap-3">
@@ -588,8 +607,9 @@
                     <span class="text-[#A0A0A0] text-base font-bold leading-tight">/mes</span>
                   </div>
                 </div>
-                <button
-                  class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-white/10 hover:bg-white/20 text-white text-sm font-bold leading-normal transition-all border border-white/10">
+                <button data-plan="fleet"
+                  class="btn-subscribe
+                  flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-white/10 hover:bg-white/20 text-white text-sm font-bold leading-normal transition-all border border-white/10">
                   <span class="truncate">Contactar</span>
                 </button>
                 <div class="flex flex-col gap-3">
@@ -768,10 +788,227 @@
     </main>
   </div>
 
+  <!-- Modal de Email para Suscripción -->
+  <div id="email-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div
+      class="bg-[#1E1E1E] rounded-2xl border border-white/10 max-w-md w-full p-8 shadow-2xl transform transition-all animate-scale-in">
+
+      <!-- Icono -->
+      <div class="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+        <span class="material-symbols-outlined text-primary text-4xl">email</span>
+      </div>
+
+      <!-- Título -->
+      <h3 class="text-2xl font-black text-white text-center mb-2">
+        ¡Casi listo!
+      </h3>
+      <p class="text-gray-400 text-center mb-6">
+        Ingresa tu email para continuar con la suscripción
+      </p>
+
+      <!-- Input de Email -->
+      <div class="mb-4">
+        <label for="email-input" class="block text-sm font-medium text-gray-300 mb-2">
+          Email
+        </label>
+        <input type="email" id="email-input" placeholder="tu@email.com"
+          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
+
+        <!-- Mensaje de error -->
+        <p id="email-error" class="hidden text-red-500 text-sm mt-2 flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">error</span>
+          <span></span>
+        </p>
+      </div>
+
+      <!-- Nota de privacidad -->
+      <p class="text-xs text-gray-500 mb-6 text-center">
+        <span class="material-symbols-outlined text-sm inline-block align-middle">lock</span>
+        Tu email está seguro. No compartimos tus datos.
+      </p>
+
+      <!-- Botones -->
+      <div class="flex gap-3">
+        <button id="cancel-email-btn"
+          class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium rounded-lg transition-all">
+          Cancelar
+        </button>
+        <button id="submit-email-btn"
+          class="flex-1 px-4 py-3 bg-primary hover:opacity-90 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+          <span>Continuar</span>
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Leaflet Script -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
+    // ====================================
+    // FUNCIONES GLOBALES (disponibles en todo el documento)
+    // ====================================
+
+    // Detectar el puerto correcto del backend
+    const API_BASE_URL = window.location.hostname === 'localhost'
+      ? 'http://localhost:3000'
+      : 'https://versa-app-dev.up.railway.app';
+
+    // Variables globales para almacenar el plan seleccionado
+    let selectedPlan = null;
+    let selectedBillingInterval = null;
+    let currentButton = null;
+
+    /**
+     * Muestra el modal de email
+     */
+    function showEmailModal(plan, billingInterval, button) {
+      selectedPlan = plan;
+      selectedBillingInterval = billingInterval;
+      currentButton = button;
+
+      const modal = document.getElementById('email-modal');
+      const emailInput = document.getElementById('email-input');
+
+      if (modal && emailInput) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Focus en el input después de la animación
+        setTimeout(() => emailInput.focus(), 100);
+      }
+    }
+
+    /**
+     * Cierra el modal de email
+     */
+    function closeEmailModal() {
+      const modal = document.getElementById('email-modal');
+      const emailInput = document.getElementById('email-input');
+      const errorMsg = document.getElementById('email-error');
+
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      if (emailInput) {
+        emailInput.value = '';
+        emailInput.classList.remove('border-red-500');
+      }
+
+      if (errorMsg) {
+        errorMsg.classList.add('hidden');
+      }
+
+      // Restaurar botón si existe
+      if (currentButton) {
+        currentButton.disabled = false;
+        currentButton.innerHTML = currentButton.dataset.originalText || currentButton.innerHTML;
+      }
+    }
+
+    /**
+     * Valida el email
+     */
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    /**
+     * Procesa la suscripción
+     */
+    async function processSubscription() {
+      const emailInput = document.getElementById('email-input');
+      const errorMsg = document.getElementById('email-error');
+      const submitBtn = document.getElementById('submit-email-btn');
+
+      if (!emailInput || !errorMsg || !submitBtn) {
+        console.error('Elementos del modal no encontrados');
+        return;
+      }
+
+      const email = emailInput.value.trim();
+
+      // Validar email
+      if (!email) {
+        errorMsg.textContent = 'Por favor, ingresa tu email';
+        errorMsg.classList.remove('hidden');
+        emailInput.classList.add('border-red-500');
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        errorMsg.textContent = 'Por favor, ingresa un email válido';
+        errorMsg.classList.remove('hidden');
+        emailInput.classList.add('border-red-500');
+        return;
+      }
+
+      // Ocultar error
+      errorMsg.classList.add('hidden');
+      emailInput.classList.remove('border-red-500');
+
+      // Mostrar loading
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="ml-2">Procesando...</span>
+      `;
+
+      try {
+        // Llamar al backend para crear la checkout session
+        const response = await fetch(`${API_BASE_URL}/api/stripe/create-checkout-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tenantId: 1, // TEMPORAL: En producción, esto vendría del registro/login
+            plan: selectedPlan,
+            billingInterval: selectedBillingInterval,
+            email: email,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.ok && data.url) {
+          // Éxito - Redirigir a Stripe Checkout
+          window.location.href = data.url;
+        } else {
+          // Error del servidor
+          throw new Error(data.error || 'Error al crear la sesión de pago');
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+
+        // Mostrar error en el modal
+        errorMsg.textContent = error.message || 'Error al conectar con el servidor. Por favor, intenta de nuevo.';
+        errorMsg.classList.remove('hidden');
+
+        // Restaurar botón
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+    }
+
+    // Exponer funciones al scope global (para onclick)
+    window.showEmailModal = showEmailModal;
+    window.closeEmailModal = closeEmailModal;
+    window.processSubscription = processSubscription;
+
+    // ====================================
+    // INICIALIZACIÓN DEL DOCUMENTO
+    // ====================================
+
     document.addEventListener('DOMContentLoaded', function () {
       // Mobile Menu Logic
       const menuBtn = document.getElementById('mobile-menu-btn');
@@ -809,6 +1046,83 @@
         monthlyPlanRadio.addEventListener('change', togglePricing);
         annualPlanRadio.addEventListener('change', togglePricing);
       }
+
+      // --- INTEGRACIÓN CON STRIPE ---
+
+      // Agregar event listeners a todos los botones de suscripción
+      document.querySelectorAll('.btn-subscribe').forEach(button => {
+        button.addEventListener('click', (event) => {
+          event.preventDefault();
+          const plan = button.dataset.plan; // 'basic', 'pro', o 'fleet'
+
+          // Determinar si es mensual o anual según el toggle
+          const isAnnual = annualPlanRadio && annualPlanRadio.checked;
+          const billingInterval = isAnnual ? 'yearly' : 'monthly';
+
+          // Guardar el texto original para restaurarlo en caso de error
+          button.dataset.originalText = button.innerHTML;
+
+          // Mostrar modal
+          showEmailModal(plan, billingInterval, button);
+        });
+      });
+
+      // Botón de "Comenzar Prueba Gratuita"
+      const btnStartTrial = document.getElementById('btn-start-trial');
+      if (btnStartTrial) {
+        btnStartTrial.addEventListener('click', (event) => {
+          event.preventDefault();
+          const button = event.target.closest('button');
+          button.dataset.originalText = button.innerHTML;
+
+          // Por defecto, la prueba gratuita será con el plan PRO y mensual
+          showEmailModal('pro', 'monthly', button);
+        });
+      }
+
+      // Cerrar modal al hacer clic fuera
+      document.addEventListener('click', (e) => {
+        const modal = document.getElementById('email-modal');
+        if (e.target === modal) {
+          closeEmailModal();
+        }
+      });
+
+      // Cerrar modal con ESC
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeEmailModal();
+        }
+      });
+
+      // Submit al presionar Enter en el input
+      const emailInput = document.getElementById('email-input');
+      if (emailInput) {
+        emailInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            processSubscription();
+          }
+        });
+      }
+
+      // Event listeners para botones del modal
+      const cancelEmailBtn = document.getElementById('cancel-email-btn');
+      const submitEmailBtn = document.getElementById('submit-email-btn');
+
+      if (cancelEmailBtn) {
+        cancelEmailBtn.addEventListener('click', () => {
+          closeEmailModal();
+        });
+      }
+
+      if (submitEmailBtn) {
+        submitEmailBtn.addEventListener('click', () => {
+          processSubscription();
+        });
+      }
+
+      // --- FIN INTEGRACIÓN STRIPE ---
 
       // Initialize map centered on Spain/Portugal to show density, but zoomed out enough to see context
       var map = L.map('map').setView([40.4168, -3.7038], 5);

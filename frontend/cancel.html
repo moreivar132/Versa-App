@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Pago Cancelado - VERSA Manager</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+
+        @keyframes fade-in {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.5s ease-out;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff4400",
+                        "background-dark": "#121212",
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-dark text-white font-display min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-2xl w-full">
+        <div
+            class="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 md:p-12 text-center animate-fade-in">
+
+            <!-- Icono de cancelación -->
+            <div class="mx-auto w-24 h-24 rounded-full bg-yellow-500/10 flex items-center justify-center mb-6">
+                <span class="material-symbols-outlined text-yellow-500" style="font-size: 4rem;">cancel</span>
+            </div>
+
+            <!-- Título -->
+            <h1 class="text-3xl md:text-4xl font-black text-white mb-4">
+                Pago Cancelado
+            </h1>
+
+            <!-- Descripción -->
+            <p class="text-lg text-gray-300 mb-8">
+                No te preocupes, no se ha realizado ningún cargo.
+                <br class="hidden md:block">
+                Puedes volver a intentarlo cuando estés listo.
+            </p>
+
+            <!-- Razones comunes -->
+            <div class="bg-white/5 rounded-lg border border-white/10 p-6 mb-8 text-left">
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">help</span>
+                    ¿Por qué podrías querer cancelar?
+                </h2>
+                <ul class="space-y-3 text-sm text-gray-300">
+                    <li class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-gray-500 text-lg">check_circle</span>
+                        <span>Necesitas más tiempo para decidir qué plan es el mejor para ti</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-gray-500 text-lg">check_circle</span>
+                        <span>Quieres revisar las características de cada plan con más detalle</span>
+                    </li>
+                    <li class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-gray-500 text-lg">check_circle</span>
+                        <span>Prefieres hablar con nuestro equipo antes de suscribirte</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Recordatorio de prueba gratuita -->
+            <div class="bg-primary/10 border border-primary/30 rounded-lg p-6 mb-8">
+                <div class="flex items-start gap-4">
+                    <span class="material-symbols-outlined text-primary text-3xl flex-shrink-0">lightbulb</span>
+                    <div class="text-left">
+                        <h3 class="font-bold text-white mb-2">¿Sabías que ofrecemos 15 días gratis?</h3>
+                        <p class="text-sm text-gray-300">
+                            Prueba VERSA Manager sin compromiso y sin tarjeta de crédito. Descubre todas las
+                            funcionalidades antes de decidirte.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center mb-6">
+                <a href="index.html#pricing"
+                    class="flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-white font-bold py-3 px-6 rounded-lg transition-all">
+                    <span class="material-symbols-outlined">creditcard</span>
+                    <span>Intentar de Nuevo</span>
+                </a>
+                <a href="index.html"
+                    class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-6 rounded-lg transition-all border border-white/10">
+                    <span>Volver al Inicio</span>
+                </a>
+            </div>
+
+            <!-- Contacto -->
+            <div class="border-t border-white/10 pt-6">
+                <h3 class="text-sm font-bold text-white mb-3">¿Necesitas ayuda para decidir?</h3>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center text-sm">
+                    <a href="#" class="flex items-center justify-center gap-2 text-primary hover:underline">
+                        <span class="material-symbols-outlined text-lg">chat</span>
+                        <span>Hablar con un asesor</span>
+                    </a>
+                    <a href="index.html#faq"
+                        class="flex items-center justify-center gap-2 text-primary hover:underline">
+                        <span class="material-symbols-outlined text-lg">help_center</span>
+                        <span>Ver preguntas frecuentes</span>
+                    </a>
+                    <a href="mailto:soporte@versa-manager.com"
+                        class="flex items-center justify-center gap-2 text-primary hover:underline">
+                        <span class="material-symbols-outlined text-lg">email</span>
+                        <span>Enviar un email</span>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>
