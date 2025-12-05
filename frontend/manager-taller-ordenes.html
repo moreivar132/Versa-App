@@ -220,20 +220,6 @@
     .items-table th {
       background: #2a2a2a;
       color: var(--text-secondary);
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 4px;
-    }
-
-    .items-table .form-input,
-    .items-table .form-select {
-      padding: 8px;
-      font-size: 14px;
-    }
-
-    /* Estilos Resumen y Pago */
-    .summary-payment-grid {
-      display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 40px;
     }
@@ -1317,6 +1303,26 @@
 
       loadSucursales();
       loadTecnicosSelect();
+      // Función para cargar impuestos en el select de IVA
+      async function loadImpuestos() {
+        const ivaSelect = document.getElementById('new-item-iva');
+        if (!ivaSelect) return;
+
+        try {
+          const impuestos = await getImpuestos();
+          ivaSelect.innerHTML = '<option value="">Seleccionar IVA</option>';
+          impuestos.forEach(imp => {
+            const option = document.createElement('option');
+            option.value = imp.id;
+            option.textContent = `${imp.nombre} (${imp.porcentaje}%)`;
+            option.dataset.percentage = imp.porcentaje;
+            ivaSelect.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Error cargando impuestos:', error);
+        }
+      }
+
       loadImpuestos();
 
       const tallerSelect = document.getElementById('taller');
@@ -1599,7 +1605,7 @@
       }
 
       // --- LÓGICA DE BÚSQUEDA DINÁMICA ---
-      const USE_MOCK_DATA = true; // Set to false when backend is fixed
+      const USE_MOCK_DATA = false; // Set to false when backend is fixed
 
       const MOCK_TECNICOS = [
         { id: 101, nombre: "Juan Pérez" },
@@ -1625,7 +1631,7 @@
       ];
 
       // --- LÓGICA DE BÚSQUEDA DINÁMICA ---
-      function setupCustomSelect({ inputId, optionsId, searchUrl, onSelect, renderOption, mockData = [] }) {
+      function setupCustomSelect({ inputId, optionsId, searchUrl, searchFunction, getSearchParams, onSelect, renderOption, mockData = [] }) {
         const input = document.getElementById(inputId);
         const optionsContainer = document.getElementById(optionsId);
         let debounceTimeout;
@@ -1650,7 +1656,7 @@
             return;
           }
 
-          debounceTimeout = setTimeout(() => {
+          debounceTimeout = setTimeout(async () => {
             if (USE_MOCK_DATA) {
               console.log(`Buscando en MOCK data para ${inputId}...`);
               const results = mockData.filter(item => {
@@ -1662,37 +1668,52 @@
               return;
             }
 
-            fetch(searchUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ query: query })
-            })
-              .then(async response => {
-                const responseText = await response.text();
-                if (!response.ok) {
-                  throw new Error(`Error de red: ${response.status} ${response.statusText} - ${responseText}`);
-                }
-                return responseText;
-              })
-              .then(text => {
-                let data = [];
-                try {
-                  data = JSON.parse(text);
-                } catch (e) {
-                  console.error("Error parsing JSON:", text);
-                  renderResults([]);
-                  return;
-                }
-                const results = Array.isArray(data) ? data : (data ? [data] : []);
-                renderResults(results);
-              })
-              .catch(error => {
+            if (searchFunction) {
+              try {
+                const params = getSearchParams ? getSearchParams() : {};
+                const results = await searchFunction(query, params);
+                renderResults(results || []);
+              } catch (error) {
                 console.error('Error durante la búsqueda:', error);
                 optionsContainer.innerHTML = `<div class="option" style="color: var(--error-color);">Error de conexión.</div>`;
                 optionsContainer.classList.add('show');
-              });
+              }
+              return;
+            }
+
+            if (searchUrl) {
+              fetch(searchUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: query })
+              })
+                .then(async response => {
+                  const responseText = await response.text();
+                  if (!response.ok) {
+                    throw new Error(`Error de red: ${response.status} ${response.statusText} - ${responseText}`);
+                  }
+                  return responseText;
+                })
+                .then(text => {
+                  let data = [];
+                  try {
+                    data = JSON.parse(text);
+                  } catch (e) {
+                    console.error("Error parsing JSON:", text);
+                    renderResults([]);
+                    return;
+                  }
+                  const results = Array.isArray(data) ? data : (data ? [data] : []);
+                  renderResults(results);
+                })
+                .catch(error => {
+                  console.error('Error durante la búsqueda:', error);
+                  optionsContainer.innerHTML = `<div class="option" style="color: var(--error-color);">Error de conexión.</div>`;
+                  optionsContainer.classList.add('show');
+                });
+            }
           }, 300);
         });
 

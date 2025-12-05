@@ -46,6 +46,10 @@ app.use('/api/upload', require('./routes/upload'));
 app.use('/api/whatsapp', require('./routes/whatsapp'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/subscriptions', require('./routes/subscriptions'));
+app.use('/api/ordenes', require('./routes/ordenes'));
+app.use('/api/ordenpago', require('./routes/ordenPago'));
+app.use('/api/medio-pago', require('./routes/medioPago'));
+app.use('/api/impuestos', require('./routes/impuestos'));
 
 // Servir archivos estáticos subidos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
