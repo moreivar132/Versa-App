@@ -662,6 +662,21 @@
   <script type="module">
     import { getOrdenes, updateEstadoOrden, getEstadosOrden } from './services/ordenes-service.js';
     import { registrarPago } from './services/pagos-service.js';
+    import { requireAuth, clearSession, redirectToLogin } from './auth.js';
+
+    // Security check
+    const user = await requireAuth();
+    if (!user) {
+      // requireAuth handles redirection
+      throw new Error('No authenticated');
+    }
+
+    // Logout logic
+    document.querySelector('[data-logout]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      clearSession();
+      redirectToLogin();
+    });
 
     let ordenes = [];
     let ordenSeleccionada = null;

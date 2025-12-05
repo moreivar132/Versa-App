@@ -41,10 +41,5 @@ export default defineConfig({
                 secure: false,
             }
         }
-    },
-    resolve: {
-        alias: {
-            '@': path.resolve(__dirname, './frontend')
-        }
     }
 });

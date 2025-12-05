@@ -418,18 +418,23 @@
 
   <script type="module">
     import { getOrdenes } from './services/ordenes-service.js';
+    import { requireAuth, clearSession, redirectToLogin } from './auth.js';
+
+    // Logout logic
+    document.querySelector('[data-logout]')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      clearSession();
+      redirectToLogin();
+    });
 
     const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
     // Cargar estadísticas del dashboard
     async function cargarEstadisticas() {
       try {
-        const sessionRaw = localStorage.getItem('versa_session_v1');
-        if (!sessionRaw) {
-          window.location.href = 'login.html';
-          return;
-        }
-        const token = JSON.parse(sessionRaw).token;
+        const user = await requireAuth();
+        if (!user) return;
+
 
         // Cargar órdenes para obtener conteos
         const ordenes = await getOrdenes({});

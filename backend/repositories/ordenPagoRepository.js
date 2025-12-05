@@ -89,6 +89,16 @@ class OrdenPagoRepository {
         const result = await pool.query(query, [idOrden]);
         return result.rows;
     }
+
+    /**
+     * Obtiene todos los medios de pago disponibles.
+     * @returns {Promise<Array>}
+     */
+    async obtenerTodosMediosPago() {
+        const query = 'SELECT * FROM mediopago ORDER BY id ASC';
+        const result = await pool.query(query);
+        return result.rows;
+    }
 }
 
 module.exports = new OrdenPagoRepository();

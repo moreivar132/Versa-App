@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (existingSession?.token) {
     requireAuth().then((user) => {
       if (user) {
-        window.location.replace('index.html');
+        window.location.replace('manager-taller-inicio.html');
       }
     });
   }
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       await login(email, password);
-      window.location.replace('index.html');
+      window.location.replace('manager-taller-inicio.html');
     } catch (error) {
       console.error('Error en login:', error);
       showError(error.message || 'No se pudo iniciar sesión.');
