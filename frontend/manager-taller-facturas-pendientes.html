@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendientes Facturar - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Manager CSS Base -->
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-orange);
+        }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            background: rgba(17, 19, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: rgba(26, 26, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(8px);
+        }
+
+        /* --- TABLE --- */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: rgba(30, 30, 35, 0.8);
+            color: #bca39a;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 101, 43, 0.06);
+        }
+
+        /* --- BADGES --- */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-estado {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 101, 43, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 101, 43, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(50, 50, 55, 0.8);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(60, 60, 65, 0.9);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- FORM INPUTS CON DESTELLO NARANJA --- */
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background-color: rgba(40, 40, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.25s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 101, 43, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
+        }
+
+        ::placeholder {
+            color: #bca39a;
+            opacity: 0.7;
+        }
+
+        /* --- STAT CARDS CON EFECTO ANTIGRAVITY --- */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(26, 26, 30, 0.9) 0%, rgba(35, 35, 40, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.6),
+                0 0 15px rgba(255, 101, 43, 0.3);
+            border-color: var(--brand-orange);
+        }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        /* --- LOADING SPINNER --- */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 101, 43, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--brand-orange);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(26, 26, 30, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            max-width: 450px;
+            width: 90%;
+            padding: 30px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex h-screen w-full">
+        <!-- SideNavBar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="#">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown (ACTIVO) -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-white font-semibold text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" id="logout-btn">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+            <!-- Top Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-7xl mx-auto">
+                    <!-- Header -->
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-white mb-2">Órdenes Pendientes de Facturar</h1>
+                        <p class="text-gray-400">Órdenes que requieren factura y aún no han sido facturadas</p>
+                    </div>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-1">Pendientes</p>
+                                    <p id="statTotal" class="text-3xl font-bold text-[var(--brand-orange)]">0</p>
+                                </div>
+                                <div class="stat-icon bg-[var(--brand-orange)] bg-opacity-20">
+                                    <i class="fas fa-file-invoice text-[var(--brand-orange)]"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-1">Importe Total</p>
+                                    <p id="statImporte" class="text-3xl font-bold text-green-500">0 €</p>
+                                </div>
+                                <div class="stat-icon bg-green-500 bg-opacity-20">
+                                    <i class="fas fa-euro-sign text-green-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-400 mb-1">Promedio</p>
+                                    <p id="statPromedio" class="text-3xl font-bold text-blue-500">0 €</p>
+                                </div>
+                                <div class="stat-icon bg-blue-500 bg-opacity-20">
+                                    <i class="fas fa-chart-line text-blue-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Órdenes Pendientes -->
+                    <div class="card">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nº Orden</th>
+                                        <th>Fecha</th>
+                                        <th>Cliente</th>
+                                        <th>Vehículo</th>
+                                        <th>Estado</th>
+                                        <th class="text-right">Total</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaOrdenes">
+                                    <!-- Las órdenes se cargarán aquí dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="loadingState" class="p-8 text-center">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="mt-3 text-gray-400">Cargando órdenes...</p>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="emptyState" class="p-8 text-center hidden">
+                            <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+                            <p class="text-white font-semibold mb-1">¡Excelente!</p>
+                            <p class="text-gray-400">No hay órdenes pendientes de facturar</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación -->
+    <div id="modalConfirmacion" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="text-xl font-bold text-white mb-4">
+                <i class="fas fa-file-invoice text-[var(--brand-orange)] mr-2"></i>Generar Factura
+            </h3>
+            <p class="text-gray-400 mb-6">¿Estás seguro de que deseas generar la factura para esta orden?</p>
+
+            <div class="bg-[#222] rounded-lg p-4 mb-6">
+                <p class="text-sm text-gray-400">Orden: <span id="modalOrdenNumero"
+                        class="font-semibold text-white"></span></p>
+                <p class="text-sm text-gray-400">Cliente: <span id="modalCliente"
+                        class="font-semibold text-white"></span></p>
+                <p class="text-sm text-gray-400">Total: <span id="modalTotal" class="font-semibold text-white"></span>
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-400 mb-2">Observaciones (opcional)</label>
+                <textarea id="observacionesFactura" rows="3" class="form-input"
+                    placeholder="Añade observaciones a la factura..."></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="cerrarModal()" class="btn btn-secondary flex-1">
+                    Cancelar
+                </button>
+                <button onclick="confirmarGenerarFactura()" class="btn btn-primary flex-1">
+                    <i class="fas fa-check mr-2"></i>Generar Factura
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from './auth.js';
+
+        const API_BASE_URL = '/api';
+        let userData = null;
+        let ordenSeleccionada = null;
+
+        // --- SIDEBAR LOGIC ---
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isCollapsed = false;
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                isCollapsed = !isCollapsed;
+                if (isCollapsed) {
+                    sidebar.classList.remove('w-64');
+                    sidebar.classList.add('w-20');
+                    sidebarTexts.forEach(el => el.classList.add('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                    document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                        el.classList.add('hidden');
+                        el.classList.remove('flex');
+                    });
+                } else {
+                    sidebar.classList.add('w-64');
+                    sidebar.classList.remove('w-20');
+                    sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                }
+            });
+        }
+
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+                sidebar.classList.toggle('absolute');
+                sidebar.classList.toggle('z-50');
+                sidebar.classList.toggle('h-full');
+            });
+        }
+
+        // Cargar datos del usuario
+        function cargarDatosUsuario() {
+            const session = getSession();
+            if (!session || !session.user) {
+                redirectToLogin();
+                return false;
+            }
+            userData = session.user;
+
+            // Actualizar info del usuario en el sidebar
+            const initials = (userData.nombre || 'U').substring(0, 2).toUpperCase();
+            document.getElementById('user-avatar').textContent = initials;
+            document.getElementById('user-name').textContent = userData.nombre || 'Usuario';
+            document.getElementById('user-role').textContent = userData.rol || 'admin';
+            return true;
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            clearSession();
+            redirectToLogin();
+        });
+
+        // Cargar órdenes pendientes
+        async function cargarOrdenesPendientes() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const tablaOrdenes = document.getElementById('tablaOrdenes');
+
+            loadingState.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            tablaOrdenes.innerHTML = '';
+
+            try {
+                const params = new URLSearchParams();
+                params.append('tenantId', userData.id_tenant);
+
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/ordenes/pendientes?${params.toString()}`);
+                const data = await response.json();
+
+                loadingState.classList.add('hidden');
+
+                if (!data.success || data.data.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    actualizarEstadisticas([], 0);
+                    return;
+                }
+
+                renderizarOrdenes(data.data);
+                actualizarEstadisticas(data.data, data.data.length);
+
+            } catch (error) {
+                console.error('Error al cargar órdenes:', error);
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
+        }
+
+        // Actualizar estadísticas
+        function actualizarEstadisticas(ordenes, total) {
+            document.getElementById('statTotal').textContent = total;
+
+            const importeTotal = ordenes.reduce((sum, orden) => sum + parseFloat(orden.importe_total || 0), 0);
+            document.getElementById('statImporte').textContent = importeTotal.toFixed(2) + ' €';
+
+            const promedio = total > 0 ? importeTotal / total : 0;
+            document.getElementById('statPromedio').textContent = promedio.toFixed(2) + ' €';
+        }
+
+        // Renderizar órdenes en la tabla
+        function renderizarOrdenes(ordenes) {
+            const tabla = document.getElementById('tablaOrdenes');
+            tabla.innerHTML = '';
+
+            ordenes.forEach(orden => {
+                const tr = document.createElement('tr');
+
+                tr.innerHTML = `
+                    <td>
+                        <span class="font-semibold">${orden.numero_orden || `#${orden.id}`}</span>
+                    </td>
+                    <td class="text-gray-400">
+                        ${new Date(orden.fecha_creacion).toLocaleDateString('es-ES')}
+                    </td>
+                    <td>
+                        <div class="font-medium">${orden.cliente_nombre}</div>
+                    </td>
+                    <td class="text-gray-400">
+                        ${orden.vehiculo_matricula ? `
+                            <div class="font-medium">${orden.vehiculo_matricula}</div>
+                            <div class="text-sm text-gray-500">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''}</div>
+                        ` : 'N/A'}
+                    </td>
+                    <td>
+                        <span class="badge badge-estado">
+                            ${orden.estado_nombre || 'Sin estado'}
+                        </span>
+                    </td>
+                    <td class="text-right font-semibold">
+                        ${parseFloat(orden.importe_total || 0).toFixed(2)} €
+                    </td>
+                    <td class="text-center">
+                        <button onclick="mostrarModalConfirmacion(${orden.id}, '${orden.numero_orden || '#' + orden.id}', '${orden.cliente_nombre}', ${orden.importe_total || 0})" 
+                                class="btn btn-primary text-sm">
+                            <i class="fas fa-file-invoice mr-2"></i>Facturar
+                        </button>
+                    </td>
+                `;
+
+                tabla.appendChild(tr);
+            });
+        }
+
+        // Mostrar modal de confirmación
+        window.mostrarModalConfirmacion = function (idOrden, numeroOrden, cliente, total) {
+            ordenSeleccionada = idOrden;
+            document.getElementById('modalOrdenNumero').textContent = numeroOrden;
+            document.getElementById('modalCliente').textContent = cliente;
+            document.getElementById('modalTotal').textContent = parseFloat(total).toFixed(2) + ' €';
+            document.getElementById('observacionesFactura').value = '';
+            document.getElementById('modalConfirmacion').classList.add('active');
+        }
+
+        // Cerrar modal
+        window.cerrarModal = function () {
+            document.getElementById('modalConfirmacion').classList.remove('active');
+            ordenSeleccionada = null;
+        }
+
+        // Confirmar generación de factura
+        window.confirmarGenerarFactura = async function () {
+            if (!ordenSeleccionada) return;
+
+            const observaciones = document.getElementById('observacionesFactura').value.trim();
+
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/ordenes/${ordenSeleccionada}/emitir`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id_usuario: userData.id,
+                        observaciones: observaciones || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ ${data.message}\n\nNúmero de factura: ${data.data.factura.numero_factura}`);
+                    cerrarModal();
+                    cargarOrdenesPendientes();
+                } else {
+                    alert(`❌ Error: ${data.error}`);
+                }
+
+            } catch (error) {
+                console.error('Error al generar factura:', error);
+                alert('Error al generar la factura');
+            }
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            if (cargarDatosUsuario()) {
+                cargarOrdenesPendientes();
+            }
+        });
+    </script>
+</body>
+
+</html>

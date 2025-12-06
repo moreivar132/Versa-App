@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Histórico de Compras - Goversa</title>
+    <title>Historial de Ventas - Goversa</title>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,6 +90,10 @@
             border-color: var(--brand-orange);
         }
 
+        .stat-card.antigravity-float:hover {
+            animation-play-state: paused;
+        }
+
         /* --- EFECTO ANTIGRAVEDAD (HOVER) --- */
         .antigravity-card {
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -114,6 +118,10 @@
             font-size: 28px;
             font-weight: 700;
             letter-spacing: -0.02em;
+        }
+
+        .stat-value.income {
+            color: #4ade80;
         }
 
         .stat-value.pending {
@@ -527,7 +535,6 @@
 <body>
 
     <div class="flex h-screen w-full">
-        <!-- ... (Sidebar and Header content remains same, skipping for brevity if not changing) ... -->
         <!-- SIDEBAR -->
         <aside id="sidebar"
             class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
@@ -596,9 +603,9 @@
                                 <a href="manager-taller-compras.html"
                                     class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
                                 <a href="manager-taller-compras-historial.html"
-                                    class="text-white font-semibold text-sm py-1 block">Historial Compras</a>
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
                                 <a href="manager-taller-ventas-historial.html"
-                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Ventas</a>
+                                    class="text-white font-semibold text-sm py-1 block">Historial Ventas</a>
                                 <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
                             </div>
                         </div>
@@ -700,25 +707,25 @@
 
                     <!-- HEADER -->
                     <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
-                        <h1 class="page-title">Historial de Compras</h1>
-                        <a href="manager-taller-compras.html" class="btn-new">
+                        <h1 class="page-title">Historial de Ventas</h1>
+                        <a href="manager-taller-ventas.html" class="btn-new">
                             <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
-                            <span>Nueva Compra</span>
+                            <span>Nueva Venta</span>
                         </a>
                     </div>
 
                     <!-- STATS CARDS -->
                     <div class="stats-grid">
-                        <div class="stat-card">
-                            <p class="stat-label">Total Compras (Periodo)</p>
-                            <p class="stat-value" id="stat-total">0,00 €</p>
+                        <div class="stat-card antigravity-float">
+                            <p class="stat-label">Total Ventas (Periodo)</p>
+                            <p class="stat-value income" id="stat-total">0,00 €</p>
                         </div>
-                        <div class="stat-card">
-                            <p class="stat-label">Compras Pagadas</p>
-                            <p class="stat-value" id="stat-paid">0,00 €</p>
+                        <div class="stat-card antigravity-float" style="animation-delay: 0.5s;">
+                            <p class="stat-label">Ventas Cobradas</p>
+                            <p class="stat-value income" id="stat-paid">0,00 €</p>
                         </div>
-                        <div class="stat-card">
-                            <p class="stat-label">Pendiente de Pago</p>
+                        <div class="stat-card antigravity-float" style="animation-delay: 1s;">
+                            <p class="stat-label">Pendiente de Cobro</p>
                             <p class="stat-value pending" id="stat-pending">0,00 €</p>
                         </div>
                     </div>
@@ -736,19 +743,19 @@
                             </div>
                         </div>
                         <div class="flex-grow min-w-[150px]">
-                            <label class="stat-label block mb-1.5" for="filter-type">Tipo de Compra</label>
+                            <label class="stat-label block mb-1.5" for="filter-type">Tipo de Venta</label>
                             <select id="filter-type" class="filter-select">
                                 <option value="all">Todas</option>
                                 <option value="factura">Factura</option>
-                                <option value="albaran">Albarán</option>
                                 <option value="ticket">Ticket</option>
+                                <option value="albaran">Albarán</option>
                             </select>
                         </div>
                         <div class="flex-grow min-w-[150px]">
-                            <label class="stat-label block mb-1.5" for="filter-status">Estado de Pago</label>
+                            <label class="stat-label block mb-1.5" for="filter-status">Estado de Cobro</label>
                             <select id="filter-status" class="filter-select">
                                 <option value="all">Todos</option>
-                                <option value="paid">Pagado</option>
+                                <option value="paid">Cobrado</option>
                                 <option value="pending">Pendiente</option>
                             </select>
                         </div>
@@ -764,7 +771,7 @@
                             <span
                                 class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#bca39a]"
                                 style="font-size: 20px;">search</span>
-                            <input type="text" id="search-input" placeholder="Buscar por proveedor, NIF, referencia..."
+                            <input type="text" id="search-input" placeholder="Buscar por cliente, NIF, referencia..."
                                 class="filter-input pl-12 w-full">
                         </div>
                     </div>
@@ -775,10 +782,10 @@
                             <thead>
                                 <tr>
                                     <th>Nº Factura</th>
-                                    <th>Proveedor</th>
+                                    <th>Cliente</th>
                                     <th>Fecha</th>
                                     <th>Tipo</th>
-                                    <th>Estado Pago</th>
+                                    <th>Estado Cobro</th>
                                     <th class="text-right">Total</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -818,11 +825,15 @@
             <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
             Ver Detalles
         </button>
-        <button class="action-item" onclick="editPurchase()">
+        <button class="action-item" onclick="editSale()">
             <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
             Editar
         </button>
-        <button class="action-item danger" onclick="deletePurchase()">
+        <button class="action-item" onclick="printInvoice()">
+            <span class="material-symbols-outlined" style="font-size: 18px;">print</span>
+            Imprimir
+        </button>
+        <button class="action-item danger" onclick="deleteSale()">
             <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
             Eliminar
         </button>
@@ -880,7 +891,19 @@
     <script type="module">
         import { fetchWithAuth } from './auth.js';
 
-        let allPurchases = [];
+        let allSales = [];
+
+        // Datos de ejemplo para ventas (hasta que se implemente el backend)
+        const mockSales = [
+            { id: 1, cliente_nombre: 'Antonio García López', fecha_venta: '2024-06-28T10:30:00', tipo: 'factura', estado: 'pagado', total: 450.20 },
+            { id: 2, cliente_nombre: 'María Fernández Ruiz', fecha_venta: '2024-06-27T14:15:00', tipo: 'ticket', estado: 'pagado', total: 89.50 },
+            { id: 3, cliente_nombre: 'Carlos Martínez Soto', fecha_venta: '2024-06-26T09:00:00', tipo: 'factura', estado: 'pending', total: 1280.00 },
+            { id: 4, cliente_nombre: 'Laura Jiménez Pérez', fecha_venta: '2024-06-25T16:45:00', tipo: 'albaran', estado: 'pending', total: 320.75 },
+            { id: 5, cliente_nombre: 'Pedro Sánchez Díaz', fecha_venta: '2024-06-24T11:20:00', tipo: 'factura', estado: 'pagado', total: 175.00 },
+            { id: 6, cliente_nombre: 'Ana Rodríguez Martín', fecha_venta: '2024-06-23T13:30:00', tipo: 'ticket', estado: 'pagado', total: 55.90 },
+            { id: 7, cliente_nombre: 'José López García', fecha_venta: '2024-06-22T10:00:00', tipo: 'factura', estado: 'pagado', total: 890.00 },
+            { id: 8, cliente_nombre: 'Carmen Ruiz Fernández', fecha_venta: '2024-06-21T15:45:00', tipo: 'factura', estado: 'pending', total: 1500.50 },
+        ];
 
         document.addEventListener("DOMContentLoaded", () => {
             // Set default dates
@@ -893,7 +916,7 @@
             document.getElementById('filter-date-start').value = formatDate(firstDay);
             document.getElementById('filter-date-end').value = formatDate(today);
 
-            loadPurchases();
+            loadSales();
 
             // Event Listeners for Filters
             document.getElementById('search-input').addEventListener('keyup', applyFilters);
@@ -902,7 +925,7 @@
             document.getElementById('filter-date-end').addEventListener('change', applyFilters);
             document.getElementById('btn-search-trigger').addEventListener('click', applyFilters);
 
-            // Filter type listener (new)
+            // Filter type listener
             const filterType = document.getElementById('filter-type');
             if (filterType) filterType.addEventListener('change', applyFilters);
 
@@ -914,21 +937,26 @@
             });
         });
 
-        async function loadPurchases() {
+        async function loadSales() {
             const tableBody = document.getElementById('history-table-body');
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-[#bca39a]">Cargando compras...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-[#bca39a]">Cargando ventas...</td></tr>';
 
             try {
-                // Fetch more items to allow for better client-side filtering
-                const response = await fetchWithAuth('/api/compras?limit=200');
-                if (!response.ok) throw new Error('Error al cargar compras');
-
-                allPurchases = await response.json();
+                // Intenta cargar desde el backend
+                const response = await fetchWithAuth('/api/ventas?limit=200');
+                if (response.ok) {
+                    allSales = await response.json();
+                } else {
+                    // Si no hay API disponible, usa datos de ejemplo
+                    console.log('API de ventas no disponible, usando datos de ejemplo');
+                    allSales = mockSales;
+                }
                 applyFilters();
 
             } catch (error) {
-                console.error(error);
-                tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Error al cargar el historial.</td></tr>';
+                console.log('Error al conectar con API, usando datos de ejemplo:', error);
+                allSales = mockSales;
+                applyFilters();
             }
         }
 
@@ -945,40 +973,40 @@
             // Adjust end date to include the full day
             if (endDate) endDate.setHours(23, 59, 59, 999);
 
-            let filtered = allPurchases.filter(p => {
+            let filtered = allSales.filter(s => {
                 // 1. Search Text
-                const searchText = `${p.proveedor_nombre || ''} ${p.sucursal_nombre || ''} ${p.id} ${p.total}`.toLowerCase();
+                const searchText = `${s.cliente_nombre || ''} ${s.id} ${s.total}`.toLowerCase();
                 if (search && !searchText.includes(search)) return false;
 
                 // 2. Date Range
-                const pDate = new Date(p.fecha_emision);
-                if (startDate && pDate < startDate) return false;
-                if (endDate && pDate > endDate) return false;
+                const sDate = new Date(s.fecha_venta);
+                if (startDate && sDate < startDate) return false;
+                if (endDate && sDate > endDate) return false;
 
                 // 3. Status filter
-                if (status === 'pending') return false; // Currently no pending state in DB
-                if (status === 'paid' && p.estado !== 'pagado') return false;
+                if (status === 'pending' && s.estado !== 'pending') return false;
+                if (status === 'paid' && s.estado === 'pending') return false;
 
                 // 4. Type filter
                 if (type !== 'all') {
-                    const pType = (p.tipo || 'factura').toLowerCase();
-                    if (pType !== type) return false;
+                    const sType = (s.tipo || 'factura').toLowerCase();
+                    if (sType !== type) return false;
                 }
 
                 return true;
             });
 
             // Sort by date (newest first by default)
-            filtered.sort((a, b) => new Date(b.fecha_emision) - new Date(a.fecha_emision));
+            filtered.sort((a, b) => new Date(b.fecha_venta) - new Date(a.fecha_venta));
 
             // Update stats
             updateStats(filtered);
             renderTable(filtered);
         }
 
-        function updateStats(purchases) {
-            const total = purchases.reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
-            const paid = purchases.filter(p => p.estado !== 'pending').reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
+        function updateStats(sales) {
+            const total = sales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+            const paid = sales.filter(s => s.estado !== 'pending').reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
             const pending = total - paid;
 
             const formatCurrency = (val) => val.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
@@ -992,47 +1020,50 @@
             if (statPending) statPending.textContent = formatCurrency(pending);
         }
 
-        function renderTable(purchases) {
+        function renderTable(sales) {
             const tableBody = document.getElementById('history-table-body');
             const infoDiv = document.getElementById('records-info');
 
             tableBody.innerHTML = '';
-            infoDiv.textContent = `Mostrando ${purchases.length} de ${allPurchases.length} registros`;
+            infoDiv.textContent = `Mostrando ${sales.length} de ${allSales.length} registros`;
 
-            if (purchases.length === 0) {
+            if (sales.length === 0) {
                 tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-[#bca39a]">No se encontraron resultados.</td></tr>';
                 return;
             }
 
-            purchases.forEach(p => {
-                const date = new Date(p.fecha_emision);
+            sales.forEach(s => {
+                const date = new Date(s.fecha_venta);
                 const formattedDate = date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
-                const isPaid = p.estado !== 'pending';
-                const tipo = (p.tipo || 'Factura').charAt(0).toUpperCase() + (p.tipo || 'factura').slice(1).toLowerCase();
-                const refNum = `${tipo.substring(0, 3).toUpperCase()}-${new Date(p.fecha_emision).getFullYear()}-${p.id.toString().padStart(4, '0')}`;
+                const isPaid = s.estado !== 'pending';
+                const tipo = (s.tipo || 'Factura').charAt(0).toUpperCase() + (s.tipo || 'factura').slice(1).toLowerCase();
+                const refNum = `${tipo.substring(0, 3).toUpperCase()}-${new Date(s.fecha_venta).getFullYear()}-${s.id.toString().padStart(4, '0')}`;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="font-medium whitespace-nowrap">${refNum}</td>
-                    <td>${p.proveedor_nombre || 'Desconocido'}</td>
+                    <td>${s.cliente_nombre || 'Cliente Desconocido'}</td>
                     <td>${formattedDate}</td>
                     <td>${tipo}</td>
                     <td>
                         <span class="status-badge ${isPaid ? 'paid' : 'pending'}">
                             <span class="dot"></span>
-                            ${isPaid ? 'Pagado' : 'Pendiente'}
+                            ${isPaid ? 'Cobrado' : 'Pendiente'}
                         </span>
                     </td>
-                    <td class="text-right font-bold whitespace-nowrap">${parseFloat(p.total).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</td>
+                    <td class="text-right font-bold whitespace-nowrap">${parseFloat(s.total).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</td>
                     <td>
                         <div class="actions-cell">
-                            <button class="action-btn" onclick="viewDetails(${p.id})" title="Ver detalles">
+                            <button class="action-btn" onclick="viewDetails(${s.id})" title="Ver detalles">
                                 <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
                             </button>
-                            <button class="action-btn" onclick="editPurchase(${p.id})" title="Editar">
+                            <button class="action-btn" onclick="editSale(${s.id})" title="Editar">
                                 <span class="material-symbols-outlined" style="font-size: 20px;">edit</span>
                             </button>
-                            <button class="action-btn delete" onclick="deletePurchase(${p.id})" title="Eliminar">
+                            <button class="action-btn" onclick="printInvoice(${s.id})" title="Imprimir">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">print</span>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteSale(${s.id})" title="Eliminar">
                                 <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
                             </button>
                         </div>
@@ -1044,65 +1075,78 @@
 
         // Action functions (exposed globally)
         window.viewDetails = async function (id) {
-            console.log('viewDetails llamado con id:', id);
             try {
                 // Fetch el HTML del PDF con autenticación
-                console.log('Fetching /api/compras/' + id + '/pdf');
-                const response = await fetchWithAuth(`/api/compras/${id}/pdf`);
-                console.log('Response status:', response.status);
-
+                const response = await fetchWithAuth(`/api/ventas/${id}/pdf`);
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('Error response:', errorText);
-                    alert('Error al cargar el documento: ' + response.status);
+                    // Si no hay API de ventas, mostrar mensaje
+                    alert('El documento de venta no está disponible aún. API pendiente de implementar.');
                     return;
                 }
-
                 const htmlContent = await response.text();
-                console.log('HTML content length:', htmlContent.length);
-
-                if (!htmlContent || htmlContent.length < 100) {
-                    console.error('Contenido vacío o muy corto');
-                    alert('El documento está vacío');
-                    return;
-                }
 
                 // Abrir en nueva ventana y escribir el contenido
-                const pdfWindow = window.open('about:blank', '_blank');
+                const pdfWindow = window.open('', '_blank');
                 if (pdfWindow) {
-                    pdfWindow.document.open();
                     pdfWindow.document.write(htmlContent);
                     pdfWindow.document.close();
-                    console.log('Documento escrito en ventana');
                 } else {
                     alert('Por favor, permite las ventanas emergentes para ver el documento');
                 }
             } catch (error) {
                 console.error('Error al cargar documento:', error);
-                alert('Error al cargar el documento: ' + error.message);
+                alert('El documento de venta no está disponible aún');
             }
         }
 
-        window.editPurchase = function (id) {
-            // Redirigir a la página de compras para editar
-            window.location.href = `manager-taller-compras.html?id=${id}&mode=edit`;
+        window.editSale = function (id) {
+            // Redirigir a la página de ventas para editar
+            window.location.href = `manager-taller-ventas.html?id=${id}&mode=edit`;
         }
 
-        window.deletePurchase = function (id) {
-            if (confirm(`¿Estás seguro de eliminar la compra #${id}?`)) {
+        window.printInvoice = async function (id) {
+            try {
+                // Fetch el HTML del PDF con autenticación
+                const response = await fetchWithAuth(`/api/ventas/${id}/pdf`);
+                if (!response.ok) {
+                    alert('El documento de venta no está disponible aún');
+                    return;
+                }
+                const htmlContent = await response.text();
+
+                // Abrir en nueva ventana, escribir contenido e imprimir
+                const pdfWindow = window.open('', '_blank');
+                if (pdfWindow) {
+                    pdfWindow.document.write(htmlContent);
+                    pdfWindow.document.close();
+                    // Esperar a que cargue el contenido antes de imprimir
+                    setTimeout(() => {
+                        pdfWindow.print();
+                    }, 500);
+                } else {
+                    alert('Por favor, permite las ventanas emergentes para imprimir');
+                }
+            } catch (error) {
+                console.error('Error al cargar documento:', error);
+                alert('Error al cargar el documento para imprimir');
+            }
+        }
+
+        window.deleteSale = function (id) {
+            if (confirm(`¿Estás seguro de eliminar la venta #${id}?`)) {
                 // Llamar al API para eliminar
-                fetchWithAuth(`/api/compras/${id}`, { method: 'DELETE' })
+                fetchWithAuth(`/api/ventas/${id}`, { method: 'DELETE' })
                     .then(response => {
                         if (response.ok) {
-                            alert('Compra eliminada correctamente');
-                            loadPurchases(); // Recargar la tabla
+                            alert('Venta eliminada correctamente');
+                            loadSales(); // Recargar la tabla
                         } else {
-                            alert('Error al eliminar la compra');
+                            alert('Error al eliminar la venta');
                         }
                     })
                     .catch(err => {
                         console.error(err);
-                        alert('Error al eliminar la compra');
+                        alert('Error al eliminar la venta');
                     });
             }
         }

@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facturas - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Manager CSS Base -->
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-orange);
+        }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            background: rgba(17, 19, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: rgba(26, 26, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(8px);
+        }
+
+        /* --- TABLE --- */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: rgba(30, 30, 35, 0.8);
+            color: #bca39a;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 101, 43, 0.06);
+        }
+
+        /* --- BADGES --- */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-emitida {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .badge-borrador {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+        }
+
+        .badge-anulada {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 101, 43, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 101, 43, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(50, 50, 55, 0.8);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(60, 60, 65, 0.9);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- FORM INPUTS CON DESTELLO NARANJA --- */
+        .form-input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background-color: rgba(40, 40, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.25s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 101, 43, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
+        }
+
+        ::placeholder {
+            color: #bca39a;
+            opacity: 0.7;
+        }
+
+        /* --- STAT CARDS CON EFECTO ANTIGRAVITY --- */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(26, 26, 30, 0.9) 0%, rgba(35, 35, 40, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.6),
+                0 0 15px rgba(255, 101, 43, 0.3);
+            border-color: var(--brand-orange);
+        }
+
+        /* --- LOADING SPINNER --- */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 101, 43, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--brand-orange);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Añadir estilos de toast si no existen en main.css */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #1e242d 0%, #282e39 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            min-width: 300px;
+            max-width: 450px;
+            animation: slideIn 0.3s ease-out;
+            border-left: 4px solid var(--brand-orange);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex h-screen w-full">
+        <!-- SideNavBar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="#">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown (ACTIVO) -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-white font-semibold text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" id="logout-btn">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+            <!-- Top Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-7xl mx-auto">
+                    <!-- Header -->
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-white mb-2">Facturas Emitidas</h1>
+                        <p class="text-gray-400">Gestiona y visualiza todas las facturas del taller</p>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="card mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400 mb-2">Buscar</label>
+                                <input type="text" id="filtroTexto" placeholder="Nº factura, cliente, matrícula..."
+                                    class="form-input">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400 mb-2">Estado</label>
+                                <select id="filtroEstado" class="form-input">
+                                    <option value="">Todos</option>
+                                    <option value="EMITIDA">Emitida</option>
+                                    <option value="BORRADOR">Borrador</option>
+                                    <option value="ANULADA">Anulada</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400 mb-2">Desde</label>
+                                <input type="date" id="filtroFechaDesde" class="form-input">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-400 mb-2">Hasta</label>
+                                <input type="date" id="filtroFechaHasta" class="form-input">
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end gap-3">
+                            <button onclick="limpiarFiltros()" class="btn btn-secondary">
+                                Limpiar
+                            </button>
+                            <button onclick="buscarFacturas()" class="btn btn-primary">
+                                <i class="fas fa-search mr-2"></i>Buscar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Facturas -->
+                    <div class="card">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Nº Factura</th>
+                                        <th>Fecha</th>
+                                        <th>Cliente</th>
+                                        <th>Sucursal</th>
+                                        <th class="text-right">Total</th>
+                                        <th class="text-center">Estado</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaFacturas">
+                                    <!-- Las facturas se cargarán aquí dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="loadingState" class="p-8 text-center">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="mt-3 text-gray-400">Cargando facturas...</p>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="emptyState" class="p-8 text-center hidden">
+                            <i class="fas fa-file-invoice text-4xl text-gray-600 mb-4"></i>
+                            <p class="text-gray-400">No se encontraron facturas</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchWithAuth, getCurrentUser, getSession, clearSession, redirectToLogin } from './auth.js';
+
+        const API_BASE_URL = '/api';
+        let userData = null;
+
+        // --- SIDEBAR LOGIC ---
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isCollapsed = false;
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                isCollapsed = !isCollapsed;
+                if (isCollapsed) {
+                    sidebar.classList.remove('w-64');
+                    sidebar.classList.add('w-20');
+                    sidebarTexts.forEach(el => el.classList.add('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                    document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                        el.classList.add('hidden');
+                        el.classList.remove('flex');
+                    });
+                } else {
+                    sidebar.classList.add('w-64');
+                    sidebar.classList.remove('w-20');
+                    sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                }
+            });
+        }
+
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+                sidebar.classList.toggle('absolute');
+                sidebar.classList.toggle('z-50');
+                sidebar.classList.toggle('h-full');
+            });
+        }
+
+        // Cargar datos del usuario
+        function cargarDatosUsuario() {
+            const session = getSession();
+            if (!session || !session.user) {
+                redirectToLogin();
+                return false;
+            }
+            userData = session.user;
+
+            // Actualizar info del usuario en el sidebar
+            const initials = (userData.nombre || 'U').substring(0, 2).toUpperCase();
+            document.getElementById('user-avatar').textContent = initials;
+            document.getElementById('user-name').textContent = userData.nombre || 'Usuario';
+            document.getElementById('user-role').textContent = userData.rol || 'admin';
+            return true;
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            clearSession();
+            redirectToLogin();
+        });
+
+        // Cargar facturas
+        window.buscarFacturas = async function () {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const tablaFacturas = document.getElementById('tablaFacturas');
+
+            loadingState.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            tablaFacturas.innerHTML = '';
+
+            try {
+                const params = new URLSearchParams();
+                params.append('tenantId', userData.id_tenant);
+
+                const texto = document.getElementById('filtroTexto').value.trim();
+                if (texto) params.append('texto', texto);
+
+                const estado = document.getElementById('filtroEstado').value;
+                if (estado) params.append('estado', estado);
+
+                const fechaDesde = document.getElementById('filtroFechaDesde').value;
+                if (fechaDesde) params.append('fecha_desde', fechaDesde);
+
+                const fechaHasta = document.getElementById('filtroFechaHasta').value;
+                if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas?${params.toString()}`);
+                const data = await response.json();
+
+                loadingState.classList.add('hidden');
+
+                if (!data.success || data.data.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                renderizarFacturas(data.data);
+
+            } catch (error) {
+                console.error('Error al cargar facturas:', error);
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
+        }
+
+        // Renderizar facturas en la tabla
+        function renderizarFacturas(facturas) {
+            const tabla = document.getElementById('tablaFacturas');
+            tabla.innerHTML = '';
+
+            facturas.forEach(factura => {
+                const tr = document.createElement('tr');
+
+                const badgeClass = {
+                    'EMITIDA': 'badge-emitida',
+                    'BORRADOR': 'badge-borrador',
+                    'ANULADA': 'badge-anulada'
+                };
+
+                tr.innerHTML = `
+                    <td>
+                        <span class="font-semibold">${factura.numero_factura}</span>
+                    </td>
+                    <td class="text-gray-400">
+                        ${new Date(factura.fecha_emision).toLocaleDateString('es-ES')}
+                    </td>
+                    <td>
+                        <div class="font-medium">${factura.cliente_nombre}</div>
+                        ${factura.vehiculo_matricula ? `<div class="text-sm text-gray-500">${factura.vehiculo_matricula}</div>` : ''}
+                    </td>
+                    <td class="text-gray-400">
+                        ${factura.sucursal_nombre || 'N/A'}
+                    </td>
+                    <td class="text-right font-semibold">
+                        ${parseFloat(factura.total).toFixed(2)} €
+                    </td>
+                    <td class="text-center">
+                        <span class="badge ${badgeClass[factura.estado] || ''}">
+                            ${factura.estado}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="verFactura(${factura.id})" 
+                                    class="btn btn-secondary text-sm py-1 px-3"
+                                    title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="descargarPDF(${factura.id})" 
+                                    class="btn btn-primary text-sm py-1 px-3"
+                                    title="Descargar PDF">
+                                <i class="fas fa-file-pdf"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                tabla.appendChild(tr);
+            });
+        }
+
+        // Ver detalles de una factura (abre HTML en nueva ventana)
+        // Ver Factura
+        window.verFactura = async function (idFactura) {
+            try {
+                // Mostrar indicador de carga si es posible
+                document.body.style.cursor = 'wait';
+
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/${idFactura}/pdf`);
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+
+                    // Abrir en nueva pestaña
+                    const newWindow = window.open(url, '_blank');
+                    if (!newWindow) {
+                        alert('Por favor, permite las ventanas emergentes para ver la factura.');
+                    }
+
+                    // Limpiar objeto URL después de un tiempo
+                    setTimeout(() => URL.revokeObjectURL(url), 10000);
+                } else {
+                    const error = await response.json();
+                    alert('Error al obtener la factura: ' + (error.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al visualizar la factura');
+            } finally {
+                document.body.style.cursor = 'default';
+            }
+        };
+
+        // Descargar PDF (HTML)
+        window.descargarPDF = async function (idFactura) {
+            try {
+                document.body.style.cursor = 'wait';
+
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/${idFactura}/download`);
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+
+                    // Crear enlace temporal
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+
+                    // Obtener nombre del archivo del header o generar uno
+                    const contentDisposition = response.headers.get('Content-Disposition');
+                    let filename = `factura_${idFactura}.html`;
+                    if (contentDisposition) {
+                        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                        if (match) filename = match[1];
+                    }
+
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+
+                    // Limpieza
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    const error = await response.json();
+                    alert('Error al descargar la factura: ' + (error.error || 'Error desconocido'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al descargar la factura');
+            } finally {
+                document.body.style.cursor = 'default';
+            }
+        };
+
+        // Limpiar filtros
+        window.limpiarFiltros = function () {
+            document.getElementById('filtroTexto').value = '';
+            document.getElementById('filtroEstado').value = '';
+            document.getElementById('filtroFechaDesde').value = '';
+            document.getElementById('filtroFechaHasta').value = '';
+            buscarFacturas();
+        }
+
+        // Cargar estadísticas
+        async function cargarEstadisticas() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/stats/general?tenantId=${userData.id_tenant}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const stats = data.data;
+
+                    // Actualizar DOM
+                    document.getElementById('stat-total-facturado').textContent = formatCurrency(stats.total_facturado);
+                    document.getElementById('stat-pendiente-facturar').textContent = formatCurrency(stats.total_pendiente);
+                    document.getElementById('stat-cantidad-pendientes').textContent = stats.cantidad_pendientes;
+                    document.getElementById('stat-facturas-mes').textContent = stats.facturas_mes;
+                }
+            } catch (error) {
+                console.error('Error al cargar estadísticas:', error);
+            }
+        }
+
+        // Formatear moneda
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-ES', {
+                style: 'currency',
+                currency: 'EUR'
+            }).format(amount);
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            if (cargarDatosUsuario()) {
+                buscarFacturas();
+                cargarEstadisticas();
+            }
+        });
+    </script>
+</body>
+
+</html>

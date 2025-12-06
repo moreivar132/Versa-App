@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración Facturas - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Manager CSS Base -->
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        /* --- SCROLLBAR --- */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-orange);
+        }
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            background: rgba(17, 19, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        /* --- CARDS --- */
+        .card {
+            background: rgba(26, 26, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 25px;
+            backdrop-filter: blur(8px);
+        }
+
+        /* --- TABLE --- */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background-color: rgba(30, 30, 35, 0.8);
+            color: #bca39a;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 14px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+        }
+
+        tr:hover {
+            background-color: rgba(255, 101, 43, 0.06);
+        }
+
+        /* --- BADGES --- */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-activo {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .badge-inactivo {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 101, 43, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 101, 43, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(50, 50, 55, 0.8);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(60, 60, 65, 0.9);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* --- FORM INPUTS CON DESTELLO NARANJA --- */
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background-color: rgba(40, 40, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
+            font-family: 'Montserrat', Arial, sans-serif;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.25s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 101, 43, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        ::placeholder {
+            color: #bca39a;
+            opacity: 0.7;
+        }
+
+        /* --- LOADING SPINNER --- */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 101, 43, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--brand-orange);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- TABS --- */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .tab-btn {
+            padding: 14px 28px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #888;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-btn.active {
+            color: var(--brand-orange);
+            border-bottom-color: var(--brand-orange);
+        }
+
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* --- COLOR PICKER --- */
+        .color-picker-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .color-picker-container input[type="color"] {
+            width: 50px;
+            height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: transparent;
+        }
+
+        /* --- CHECKBOX CUSTOM --- */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .checkbox-container:last-child {
+            border-bottom: none;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--brand-orange);
+        }
+
+        /* --- TOAST NOTIFICATIONS --- */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #1e242d 0%, #282e39 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            min-width: 300px;
+            max-width: 450px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.toast-success {
+            border-left: 4px solid #22c55e;
+        }
+
+        .toast.toast-error {
+            border-left: 4px solid #ef4444;
+        }
+
+        .toast.toast-warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .toast.toast-info {
+            border-left: 4px solid var(--brand-orange);
+        }
+
+        .toast-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .toast-success .toast-icon {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .toast-error .toast-icon {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .toast-warning .toast-icon {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .toast-info .toast-icon {
+            background: rgba(255, 101, 43, 0.2);
+            color: var(--brand-orange);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .toast-close:hover {
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .toast.hiding {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="flex h-screen w-full">
+        <!-- SideNavBar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="#">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown (ACTIVO) -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-white font-semibold text-sm py-1 block">Configuración</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" id="logout-btn">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+            <!-- Top Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-7xl mx-auto">
+                    <!-- Header -->
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-white mb-2">Configuración de Facturas</h1>
+                        <p class="text-gray-400">Personaliza el diseño y contenido de tus facturas</p>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="tab-nav">
+                        <button class="tab-btn active" onclick="cambiarTab('diseño')">
+                            <i class="fas fa-palette mr-2"></i>Diseño
+                        </button>
+                        <button class="tab-btn" onclick="cambiarTab('series')">
+                            <i class="fas fa-list-ol mr-2"></i>Series de Facturación
+                        </button>
+                    </div>
+
+                    <!-- Panel Diseño -->
+                    <div id="panel-diseño" class="tab-panel active">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Formulario de Configuración -->
+                            <div class="space-y-6">
+                                <!-- Branding -->
+                                <div class="card">
+                                    <h3 class="text-lg font-semibold text-white mb-4">
+                                        <i class="fas fa-image text-[var(--brand-orange)] mr-2"></i>Branding
+                                    </h3>
+
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-400 mb-2">Logo de la
+                                            Empresa</label>
+
+                                        <!-- URL oculta -->
+                                        <input type="hidden" id="logoUrl" value="">
+                                        <input type="file" id="logoFile" accept="image/*" class="hidden"
+                                            onchange="subirLogo(this)">
+
+                                        <!-- Estado: Sin Logo -->
+                                        <div id="no-logo-state"
+                                            class="border-2 border-dashed border-gray-700 hover:border-[var(--brand-orange)] rounded-lg p-6 text-center transition-colors cursor-pointer"
+                                            onclick="document.getElementById('logoFile').click()">
+                                            <div
+                                                class="w-12 h-12 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400 group-hover:text-white">
+                                                <i class="fas fa-cloud-upload-alt text-xl"></i>
+                                            </div>
+                                            <p class="text-sm text-gray-300 font-medium">Click para subir logo</p>
+                                            <p class="text-xs text-gray-500 mt-1">PNG, JPG, GIF (Max. 2MB)</p>
+                                        </div>
+
+                                        <!-- Estado: Con Logo -->
+                                        <div id="has-logo-state"
+                                            class="hidden bg-[#1e242d] rounded-lg p-4 border border-gray-700">
+                                            <div class="flex items-center justify-between flex-wrap gap-4">
+                                                <div class="flex items-center gap-4">
+                                                    <div
+                                                        class="w-24 h-16 bg-[#2a303c] rounded-lg flex items-center justify-center p-2 border border-gray-700 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiMzMzMiLz48cGF0aCBkPSJNMCAwTDggOFpNOCAwTDAgOFoiIHN0cm9rZT0iIzQ0NCIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+')]">
+                                                        <img id="logoPreview" src="" alt="Logo"
+                                                            class="max-w-full max-h-full object-contain">
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-white text-sm font-medium">Logo actual</p>
+                                                        <p class="text-xs text-gray-500 mt-1">Visible en encabezados</p>
+                                                    </div>
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <button type="button"
+                                                        onclick="document.getElementById('logoFile').click()"
+                                                        class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded-md transition-colors flex items-center">
+                                                        <i class="fas fa-camera mr-1.5"></i>Cambiar
+                                                    </button>
+                                                    <button type="button" onclick="eliminarLogo()"
+                                                        class="px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs rounded-md transition-colors flex items-center">
+                                                        <i class="fas fa-trash-alt mr-1.5"></i>Eliminar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <p class="mt-2 text-xs text-gray-500">Formatos: PNG, JPG, GIF. Tamaño máximo:
+                                        2MB</p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-400 mb-2">Color
+                                        Primario</label>
+                                    <div class="color-picker-container">
+                                        <input type="color" id="colorPrimario" value="#ff652b">
+                                        <input type="text" id="colorPrimarioHex" value="#ff652b"
+                                            class="form-input flex-1">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="card">
+                                <h3 class="text-lg font-semibold text-white mb-4">
+                                    <i class="fas fa-file-alt text-[var(--brand-orange)] mr-2"></i>Contenido
+                                    Personalizado
+                                </h3>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-400 mb-2">Cabecera
+                                        HTML</label>
+                                    <textarea id="cabeceraHtml" class="form-textarea" rows="3"
+                                        placeholder="<div>Nombre del Taller<br>CIF: 12345678A</div>"></textarea>
+                                    <p class="mt-1 text-xs text-gray-500">HTML que aparecerá en la parte superior
+                                    </p>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-400 mb-2">Pie de Página
+                                        HTML</label>
+                                    <textarea id="pieHtml" class="form-textarea" rows="2"
+                                        placeholder="<p>Gracias por confiar en nuestro taller</p>"></textarea>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-400 mb-2">Texto Legal</label>
+                                    <textarea id="textoLegal" class="form-textarea" rows="2"
+                                        placeholder="Factura sujeta al Régimen General del IVA..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Opciones de Visualización -->
+                            <div class="card">
+                                <h3 class="text-lg font-semibold text-white mb-4">
+                                    <i class="fas fa-eye text-[var(--brand-orange)] mr-2"></i>Opciones de
+                                    Visualización
+                                </h3>
+
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="mostrarColumnaIva" checked>
+                                    <label for="mostrarColumnaIva" class="text-sm text-gray-300">Mostrar columna de
+                                        IVA</label>
+                                </div>
+
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="mostrarColumnaDescuento" checked>
+                                    <label for="mostrarColumnaDescuento" class="text-sm text-gray-300">Mostrar
+                                        columna de descuento</label>
+                                </div>
+
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="mostrarDomicilioCliente" checked>
+                                    <label for="mostrarDomicilioCliente" class="text-sm text-gray-300">Mostrar
+                                        domicilio del cliente</label>
+                                </div>
+
+                                <div class="checkbox-container">
+                                    <input type="checkbox" id="mostrarMatriculaVehiculo" checked>
+                                    <label for="mostrarMatriculaVehiculo" class="text-sm text-gray-300">Mostrar
+                                        matrícula del vehículo</label>
+                                </div>
+                            </div>
+
+                            <!-- Botón Guardar -->
+                            <button onclick="guardarConfiguracion()" class="btn btn-primary w-full py-3">
+                                <i class="fas fa-save mr-2"></i>Guardar Configuración
+                            </button>
+                        </div>
+
+                        <!-- Vista Previa -->
+                        <div class="card lg:sticky lg:top-6" style="max-height: calc(100vh - 200px);">
+                            <h3 class="text-lg font-semibold text-white mb-4">
+                                <i class="fas fa-desktop text-[var(--brand-orange)] mr-2"></i>Vista Previa
+                            </h3>
+                            <div id="vistaPrevia"
+                                class="bg-[#222] rounded-lg p-6 text-center text-gray-400 min-h-[300px] flex items-center justify-center">
+                                <div>
+                                    <i class="fas fa-file-invoice text-4xl mb-3"></i>
+                                    <p>La vista previa se actualizará al guardar la configuración</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Series -->
+                <div id="panel-series" class="tab-panel">
+                    <div class="card">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-semibold text-white">
+                                <i class="fas fa-list-ol text-[var(--brand-orange)] mr-2"></i>Series de Facturación
+                            </h3>
+                            <button onclick="mostrarFormularioNuevaSerie()" class="btn btn-primary">
+                                <i class="fas fa-plus mr-2"></i>Nueva Serie
+                            </button>
+                        </div>
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Serie</th>
+                                        <th>Prefijo</th>
+                                        <th>Sufijo</th>
+                                        <th class="text-right">Último Nº</th>
+                                        <th class="text-center">Estado</th>
+                                        <th class="text-center">Por Defecto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaSeries">
+                                    <!-- Series se cargarán aquí -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="loadingSeries" class="p-8 text-center">
+                            <div class="loading-spinner mx-auto"></div>
+                            <p class="mt-3 text-gray-400">Cargando series...</p>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="emptySeries" class="p-8 text-center hidden">
+                            <i class="fas fa-list text-4xl text-gray-600 mb-4"></i>
+                            <p class="text-gray-400">No hay series configuradas</p>
+                        </div>
+                    </div>
+                </div>
+        </div>
+        </main>
+    </div>
+    </div>
+
+    <script type="module">
+        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from './auth.js';
+
+        const API_BASE_URL = '/api';
+        let userData = null;
+        let configActual = null;
+
+        // --- SIDEBAR LOGIC ---
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isCollapsed = false;
+
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                isCollapsed = !isCollapsed;
+                if (isCollapsed) {
+                    sidebar.classList.remove('w-64');
+                    sidebar.classList.add('w-20');
+                    sidebarTexts.forEach(el => el.classList.add('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                    document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                        el.classList.add('hidden');
+                        el.classList.remove('flex');
+                    });
+                } else {
+                    sidebar.classList.add('w-64');
+                    sidebar.classList.remove('w-20');
+                    sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                    toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                }
+            });
+        }
+
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+                sidebar.classList.toggle('absolute');
+                sidebar.classList.toggle('z-50');
+                sidebar.classList.toggle('h-full');
+            });
+        }
+
+        // Cargar datos del usuario
+        function cargarDatosUsuario() {
+            const session = getSession();
+            if (!session || !session.user) {
+                redirectToLogin();
+                return false;
+            }
+            userData = session.user;
+
+            // Actualizar info del usuario en el sidebar
+            const initials = (userData.nombre || 'U').substring(0, 2).toUpperCase();
+            document.getElementById('user-avatar').textContent = initials;
+            document.getElementById('user-name').textContent = userData.nombre || 'Usuario';
+            document.getElementById('user-role').textContent = userData.rol || 'admin';
+            return true;
+        }
+
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            clearSession();
+            redirectToLogin();
+        });
+
+        // Cambiar tab
+        window.cambiarTab = function (tab) {
+            // Ocultar todos los paneles
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            // Resetear estilos de todos los botones
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            // Mostrar panel activo y marcar botón
+            if (tab === 'diseño') {
+                document.getElementById('panel-diseño').classList.add('active');
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            } else if (tab === 'series') {
+                document.getElementById('panel-series').classList.add('active');
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+                cargarSeries();
+            }
+        }
+
+        // Sincronizar color picker
+        document.getElementById('colorPrimario').addEventListener('change', (e) => {
+            document.getElementById('colorPrimarioHex').value = e.target.value;
+            actualizarVistaPrevia();
+        });
+
+        document.getElementById('colorPrimarioHex').addEventListener('change', (e) => {
+            document.getElementById('colorPrimario').value = e.target.value;
+            actualizarVistaPrevia();
+        });
+
+        // --- FUNCIONES DE LOGO ---
+
+        // Subir logo al servidor
+        // (Funciones de logo obsoletas eliminadas)
+        // Cargar configuración actual
+        async function cargarConfiguracion() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/config-tenant?tenantId=${userData.id_tenant}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    configActual = data.data;
+                    aplicarConfiguracion(configActual);
+                }
+            } catch (error) {
+                console.error('Error al cargar configuración:', error);
+            }
+        }
+
+        // Aplicar configuración al formulario
+        function aplicarConfiguracion(config) {
+            document.getElementById('logoUrl').value = config.logo_url || '';
+            document.getElementById('colorPrimario').value = config.color_primario || '#ff652b';
+            document.getElementById('colorPrimarioHex').value = config.color_primario || '#ff652b';
+            document.getElementById('cabeceraHtml').value = config.cabecera_html || '';
+            document.getElementById('pieHtml').value = config.pie_html || '';
+            document.getElementById('textoLegal').value = config.texto_legal || '';
+            document.getElementById('mostrarColumnaIva').checked = config.mostrar_columna_iva !== false;
+            document.getElementById('mostrarColumnaDescuento').checked = config.mostrar_columna_descuento !== false;
+            document.getElementById('mostrarDomicilioCliente').checked = config.mostrar_domicilio_cliente !== false;
+            document.getElementById('mostrarMatriculaVehiculo').checked = config.mostrar_matricula_vehiculo !== false;
+
+            // Mostrar preview del logo si existe
+            mostrarPreviewLogo(config.logo_url);
+        }
+
+        // --- GESTIÓN DE LOGO ---
+        window.subirLogo = async function (input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // Validar tamaño (2MB) y tipo
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('❌ El archivo es demasiado grande (Máx. 2MB)', true);
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                showToast('❌ Solo se permiten imágenes', true);
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                showToast('Subiendo logo...', false);
+
+                // Nota: fetchWithAuth podría intentar poner Content-Type: application/json
+                // Para FormData dejamos que el navegador ponga el Boundary correcto,
+                // así que quizás necesitemos pasar headers personalizados vacíos
+                const token = getSession()?.token;
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const fullUrl = `${API_BASE_URL}${data.url}`;
+                    document.getElementById('logoUrl').value = fullUrl;
+                    mostrarPreviewLogo(fullUrl);
+                    actualizarVistaPrevia();
+                    showToast('✅ Logo subido correctamente');
+                } else {
+                    showToast('❌ Error al subir logo: ' + (data.error || 'Desconocido'), true);
+                }
+            } catch (error) {
+                console.error('Error subiendo logo:', error);
+                showToast('❌ Error de conexión al subir logo', true);
+            }
+        };
+
+        window.eliminarLogo = function () {
+            document.getElementById('logoUrl').value = '';
+            document.getElementById('logoFile').value = '';
+            mostrarPreviewLogo('');
+            actualizarVistaPrevia();
+            showToast('Logo eliminado. Guarda los cambios para confirmar.');
+        };
+
+        window.mostrarPreviewLogo = function (url) {
+            const noLogoState = document.getElementById('no-logo-state');
+            const hasLogoState = document.getElementById('has-logo-state');
+            const previewImg = document.getElementById('logoPreview');
+
+            if (url) {
+                previewImg.src = url;
+                noLogoState.classList.add('hidden');
+                hasLogoState.classList.remove('hidden');
+            } else {
+                previewImg.src = '';
+                noLogoState.classList.remove('hidden');
+                hasLogoState.classList.add('hidden');
+            }
+        };
+
+        // Guardar configuración
+        window.guardarConfiguracion = async function () {
+            try {
+                const config = {
+                    tenantId: userData.id_tenant,
+                    logo_url: document.getElementById('logoUrl').value.trim() || null,
+                    color_primario: document.getElementById('colorPrimarioHex').value,
+                    cabecera_html: document.getElementById('cabeceraHtml').value.trim() || null,
+                    pie_html: document.getElementById('pieHtml').value.trim() || null,
+                    texto_legal: document.getElementById('textoLegal').value.trim() || null,
+                    mostrar_columna_iva: document.getElementById('mostrarColumnaIva').checked,
+                    mostrar_columna_descuento: document.getElementById('mostrarColumnaDescuento').checked,
+                    mostrar_domicilio_cliente: document.getElementById('mostrarDomicilioCliente').checked,
+                    mostrar_matricula_vehiculo: document.getElementById('mostrarMatriculaVehiculo').checked,
+                    id_usuario: userData.id
+                };
+
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/config-tenant`, {
+                    method: 'PUT',
+                    body: JSON.stringify(config)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ Configuración guardada correctamente');
+                    configActual = data.data;
+                } else {
+                    showToast('❌ Error al guardar: ' + data.error, true);
+                }
+            } catch (error) {
+                console.error('Error al guardar configuración:', error);
+                showToast('❌ Error al guardar la configuración', true);
+            }
+        }
+
+        // Cargar series de facturación
+        async function cargarSeries() {
+            const loading = document.getElementById('loadingSeries');
+            const empty = document.getElementById('emptySeries');
+            const tabla = document.getElementById('tablaSeries');
+
+            loading.classList.remove('hidden');
+            empty.classList.add('hidden');
+            tabla.innerHTML = '';
+
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/series?id_sucursal=${userData.id_sucursal || 1}`);
+                const data = await response.json();
+
+                loading.classList.add('hidden');
+
+                if (!data.success || data.data.length === 0) {
+                    empty.classList.remove('hidden');
+                    return;
+                }
+
+                renderizarSeries(data.data);
+            } catch (error) {
+                console.error('Error al cargar series:', error);
+                loading.classList.add('hidden');
+                empty.classList.remove('hidden');
+            }
+        }
+
+        // Renderizar series
+        function renderizarSeries(series) {
+            const tabla = document.getElementById('tablaSeries');
+            tabla.innerHTML = '';
+
+            series.forEach(serie => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="font-semibold">${serie.nombre_serie}</td>
+                    <td>${serie.prefijo}</td>
+                    <td>${serie.sufijo || '-'}</td>
+                    <td class="text-right font-mono">${serie.ultimo_numero}</td>
+                    <td class="text-center">
+                        <span class="badge ${serie.activo ? 'badge-activo' : 'badge-inactivo'}">
+                            ${serie.activo ? 'Activa' : 'Inactiva'}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        ${serie.es_por_defecto ? '<i class="fas fa-check text-[var(--brand-orange)]"></i>' : '-'}
+                    </td>
+                `;
+                tabla.appendChild(tr);
+            });
+        }
+
+        // Mostrar formulario de nueva serie
+        window.mostrarFormularioNuevaSerie = function () {
+            alert('Funcionalidad de crear nueva serie disponible próximamente');
+        }
+
+        // --- VISTA PREVIA EN TIEMPO REAL ---
+        function actualizarVistaPrevia() {
+            const logoUrl = document.getElementById('logoUrl').value.trim();
+            const colorPrimario = document.getElementById('colorPrimarioHex').value || '#ff652b';
+            const cabeceraHtml = document.getElementById('cabeceraHtml').value.trim();
+            const pieHtml = document.getElementById('pieHtml').value.trim();
+            const textoLegal = document.getElementById('textoLegal').value.trim();
+            const mostrarIva = document.getElementById('mostrarColumnaIva').checked;
+            const mostrarDescuento = document.getElementById('mostrarColumnaDescuento').checked;
+            const mostrarDomicilio = document.getElementById('mostrarDomicilioCliente').checked;
+            const mostrarMatricula = document.getElementById('mostrarMatriculaVehiculo').checked;
+
+            const fechaHoy = new Date().toLocaleDateString('es-ES', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+
+            // Generar HTML de vista previa
+            const vistaPrevia = document.getElementById('vistaPrevia');
+            vistaPrevia.innerHTML = `
+                <div style="background: white; color: #333; border-radius: 8px; padding: 20px; font-size: 11px; text-align: left; overflow-y: auto; max-height: 500px;">
+                    <!-- Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 15px; border-bottom: 2px solid ${colorPrimario}; margin-bottom: 15px;">
+                        <div>
+                            ${logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-height: 50px; max-width: 150px; object-fit: contain;" onerror="this.style.display='none'">` : ''}
+                            ${cabeceraHtml || '<div style="font-weight: bold; font-size: 14px;">Mi Taller</div><div style="color: #666;">CIF: B12345678</div>'}
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px; font-weight: bold; color: ${colorPrimario};">FACTURA</div>
+                            <div style="color: #666;">Nº FAC-2024-0001</div>
+                            <div style="color: #666;">${fechaHoy}</div>
+                        </div>
+                    </div>
+
+                    <!-- Cliente -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px; gap: 20px;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 9px; text-transform: uppercase; color: #999; margin-bottom: 4px;">Cliente</div>
+                            <div style="font-weight: 600;">Juan García López</div>
+                            <div style="color: #666;">NIF: 12345678A</div>
+                            ${mostrarDomicilio ? '<div style="color: #666;">C/ Mayor 123, 28001 Madrid</div>' : ''}
+                        </div>
+                        ${mostrarMatricula ? `
+                        <div style="flex: 1;">
+                            <div style="font-size: 9px; text-transform: uppercase; color: #999; margin-bottom: 4px;">Vehículo</div>
+                            <div style="font-weight: 600;">1234 ABC</div>
+                            <div style="color: #666;">Ford Focus 2020</div>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Tabla -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10px;">
+                        <thead>
+                            <tr style="background: #f5f5f5;">
+                                <th style="padding: 8px; text-align: left; border-bottom: 1px solid #ddd;">Descripción</th>
+                                <th style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">Cant.</th>
+                                <th style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">Precio</th>
+                                ${mostrarDescuento ? '<th style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">Dto.</th>' : ''}
+                                ${mostrarIva ? '<th style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">IVA</th>' : ''}
+                                <th style="padding: 8px; text-align: right; border-bottom: 1px solid #ddd;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 8px; border-bottom: 1px solid #eee;">Revisión general</td>
+                                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">1</td>
+                                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">50,00 €</td>
+                                ${mostrarDescuento ? '<td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">0%</td>' : ''}
+                                ${mostrarIva ? '<td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">21%</td>' : ''}
+                                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">60,50 €</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px; border-bottom: 1px solid #eee;">Cambio de aceite</td>
+                                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">1</td>
+                                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">35,00 €</td>
+                                ${mostrarDescuento ? '<td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">10%</td>' : ''}
+                                ${mostrarIva ? '<td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">21%</td>' : ''}
+                                <td style="padding: 8px; text-align: right; border-bottom: 1px solid #eee;">38,12 €</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Totales -->
+                    <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+                        <div style="width: 180px;">
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee;">
+                                <span>Base imponible:</span>
+                                <span>81,50 €</span>
+                            </div>
+                            ${mostrarIva ? `
+                            <div style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #eee;">
+                                <span>IVA (21%):</span>
+                                <span>17,12 €</span>
+                            </div>
+                            ` : ''}
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; font-weight: bold; font-size: 13px; color: ${colorPrimario};">
+                                <span>TOTAL:</span>
+                                <span>98,62 €</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Texto Legal -->
+                    ${textoLegal ? `<div style="font-size: 9px; color: #999; padding: 10px; background: #f9f9f9; border-radius: 4px; margin-bottom: 10px;">${textoLegal}</div>` : ''}
+
+                    <!-- Pie -->
+                    ${pieHtml ? `<div style="text-align: center; color: #666; font-size: 10px; padding-top: 10px; border-top: 1px solid #eee;">${pieHtml}</div>` : ''}
+                </div>
+            `;
+        }
+
+        // Conectar event listeners para actualización en tiempo real
+        function conectarEventListenersVistaPrevia() {
+            const campos = ['logoUrl', 'colorPrimario', 'colorPrimarioHex', 'cabeceraHtml', 'pieHtml', 'textoLegal'];
+            const checkboxes = ['mostrarColumnaIva', 'mostrarColumnaDescuento', 'mostrarDomicilioCliente', 'mostrarMatriculaVehiculo'];
+
+            campos.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', actualizarVistaPrevia);
+                    el.addEventListener('change', actualizarVistaPrevia);
+                }
+            });
+
+            checkboxes.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('change', actualizarVistaPrevia);
+                }
+            });
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            if (cargarDatosUsuario()) {
+                cargarConfiguracion();
+                conectarEventListenersVistaPrevia();
+                // Vista previa inicial después de un pequeño delay para que cargue la config
+                setTimeout(actualizarVistaPrevia, 500);
+            }
+        });
+        // Loader de inicio
+        window.onload = function () {
+            setTimeout(() => {
+                document.getElementById('toast-container')?.remove();
+                // Clean up any stale
+            }, 100);
+        };
+
+        // Toast Notification Helper
+        window.showToast = function (message, isError = false) {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'toast-container';
+                document.body.appendChild(container); // Fallback placement
+            }
+
+            const el = document.createElement('div');
+            el.className = `toast ${isError ? 'toast-error' : 'toast-success'}`;
+            el.innerHTML = `
+                 <div class="toast-icon">
+                     <i class="fas fa-${isError ? 'times' : 'check'}"></i>
+                 </div>
+                 <div class="toast-content">
+                     <div class="toast-title">${isError ? 'Error' : 'Éxito'}</div>
+                     <div class="toast-message">${message}</div>
+                 </div>
+                 <button class="toast-close" onclick="this.parentElement.remove()">
+                     <i class="fas fa-times"></i>
+                 </button>
+             `;
+
+            container.appendChild(el);
+            setTimeout(() => {
+                el.classList.add('hiding');
+                el.addEventListener('animationend', () => el.remove());
+            }, 3000);
+        }
+    </script>
+</body>
+
+</html>
