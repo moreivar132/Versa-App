@@ -50,6 +50,7 @@ app.use('/api/ordenes', require('./routes/ordenes'));
 app.use('/api/ordenpago', require('./routes/ordenPago'));
 app.use('/api/medio-pago', require('./routes/medioPago'));
 app.use('/api/impuestos', require('./routes/impuestos'));
+app.use('/api/caja', require('./routes/caja'));
 
 // Servir archivos estáticos subidos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

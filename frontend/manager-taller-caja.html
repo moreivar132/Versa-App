@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Caja - Goversa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style>
+        :root {
+            --brand-orange: #ff5f00;
+            --surface-border: #282e39;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111318;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #282e39;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff5f00;
+        }
+
+        .tab-active {
+            background: #282e39;
+            color: white;
+            border: 1px solid #282e39;
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { brand: { orange: "#ff5f00", dark: "#0b0d11", surface: "#111318", border: "#282e39", input: "#1a1d24", text: "#ffffff", muted: "#9da6b9" } },
+                    fontFamily: { main: ["Montserrat", "sans-serif"] }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-[#0b0d11] font-[Montserrat] text-white">
+    <div class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 border-r border-[#282e39]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding:8px;border-radius:12px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" style="height:24px;width:auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium" style="font-size:15px;">Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal" style="font-size:12px;">Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white"><i
+                                class="fas fa-chevron-left"></i></button>
+                    </div>
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Inicio</p>
+                        </a>
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial</a>
+                            </div>
+                        </div>
+                        <a class="flex items-center gap-3 px-3 py-2 bg-[#282e39] text-white rounded-lg transition-colors border-l-2 border-[var(--brand-orange)]"
+                            href="#">
+                            <span class="icon-container"><i
+                                    class="fas fa-cash-register text-[var(--brand-orange)]"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Caja</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Inventario</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Trabajadores</p>
+                        </a>
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+                <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --</div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Cargando...</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">-</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
+            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <!-- Mobile Header -->
+                <header class="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-[#282e39]">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                    <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+                </header>
+
+                <!-- Page Header -->
+                <header class="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[#282e39] pb-6">
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-white">Gestión de Caja</h1>
+                        <p class="text-[#9da6b9] text-sm mt-1">Control del flujo de efectivo y operaciones</p>
+                    </div>
+                    <div id="caja-status"
+                        class="flex items-center gap-2 bg-green-500/5 px-4 py-2 rounded-full border border-green-500/10">
+                        <span class="relative flex h-2.5 w-2.5">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                        </span>
+                        <span class="text-xs font-bold text-green-500 uppercase tracking-widest">Caja Abierta</span>
+                    </div>
+                </header>
+
+                <!-- Tabs -->
+                <div class="flex justify-center mb-8">
+                    <div class="inline-flex items-center rounded-xl bg-[#111318] p-1.5 border border-[#282e39]">
+                        <button class="tab-btn tab-active rounded-lg px-5 py-2 text-sm font-medium transition-all"
+                            data-tab="estado">Estado de Caja</button>
+                        <button
+                            class="tab-btn rounded-lg px-5 py-2 text-sm font-medium text-[#9da6b9] hover:text-white transition-all"
+                            data-tab="cierres">Cierres</button>
+                        <button
+                            class="tab-btn rounded-lg px-5 py-2 text-sm font-medium text-[#9da6b9] hover:text-white transition-all"
+                            data-tab="movimientos">Movimientos</button>
+                        <button
+                            class="tab-btn rounded-lg px-5 py-2 text-sm font-medium text-[#9da6b9] hover:text-white transition-all"
+                            data-tab="cajachica">Caja Chica</button>
+                    </div>
+                </div>
+
+                <!-- View: Estado de Caja -->
+                <section id="view-estado" class="view-section active">
+                    <!-- Header Info -->
+                    <div id="caja-header-info"
+                        class="grid grid-cols-2 md:grid-cols-4 gap-4 rounded-xl border border-[#282e39] bg-[#111318] p-5 mb-6">
+                        <div class="flex flex-col gap-1.5 border-r border-[#282e39] pr-4"><span
+                                class="text-[11px] text-[#9da6b9] font-bold uppercase tracking-wider">Abierta
+                                por</span><span id="info-usuario" class="text-white font-semibold text-sm">-</span>
+                        </div>
+                        <div class="flex flex-col gap-1.5 border-r border-[#282e39] pr-4"><span
+                                class="text-[11px] text-[#9da6b9] font-bold uppercase tracking-wider">Saldo
+                                apertura</span><span id="info-saldo-apertura"
+                                class="text-white font-semibold text-sm">€0.00</span></div>
+                        <div class="flex flex-col gap-1.5 border-r border-[#282e39] pr-4"><span
+                                class="text-[11px] text-[#9da6b9] font-bold uppercase tracking-wider">Fecha
+                                apertura</span><span id="info-fecha" class="text-white font-semibold text-sm">-</span>
+                        </div>
+                        <div class="flex flex-col gap-1.5"><span
+                                class="text-[11px] text-[#9da6b9] font-bold uppercase tracking-wider">ID
+                                Caja</span><span id="info-id"
+                                class="text-white font-semibold text-sm font-mono">#-</span></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 space-y-6">
+                            <!-- Stats -->
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div class="rounded-xl border border-[#282e39] bg-[#111318] p-5">
+                                    <h3 class="text-[11px] font-bold text-[#9da6b9] uppercase mb-3">Ingresos Efectivo
+                                    </h3>
+                                    <p id="stat-ingresos" class="text-2xl font-bold text-green-400">€0.00</p>
+                                </div>
+                                <div class="rounded-xl border border-[#282e39] bg-[#111318] p-5">
+                                    <h3 class="text-[11px] font-bold text-[#9da6b9] uppercase mb-3">Tarjeta/Transf.</h3>
+                                    <p id="stat-tarjeta" class="text-2xl font-bold text-blue-400">€0.00</p>
+                                </div>
+                                <div class="rounded-xl border border-[#282e39] bg-[#111318] p-5">
+                                    <h3 class="text-[11px] font-bold text-[#9da6b9] uppercase mb-3">Total Periodo</h3>
+                                    <p id="stat-total" class="text-2xl font-bold text-white">€0.00</p>
+                                </div>
+                            </div>
+                            <!-- Operations Table -->
+                            <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                                <div class="px-6 py-4 border-b border-[#282e39] flex justify-between items-center">
+                                    <h3 class="text-sm font-bold text-white">Detalle por Método de Pago</h3>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead class="bg-[#1c1f27] text-[10px] font-bold uppercase text-[#9da6b9]">
+                                            <tr>
+                                                <th class="px-6 py-4 text-left">Método</th>
+                                                <th class="px-6 py-4 text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="detalle-metodos-tbody" class="divide-y divide-[#282e39]">
+                                            <tr>
+                                                <td colspan="2" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            
+                            <!-- Detalle de Operaciones -->
+                            <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                                <div class="px-6 py-4 border-b border-[#282e39] flex justify-between items-center">
+                                    <h3 class="text-sm font-bold text-white">Detalle de Operaciones</h3>
+                                    <a href="#" class="text-xs text-[var(--brand-orange)] hover:underline">Ver todos</a>
+                                </div>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead class="bg-[#1c1f27] text-[10px] font-bold uppercase text-[#9da6b9]">
+                                            <tr>
+                                                <th class="px-6 py-4 text-left">Operación</th>
+                                                <th class="px-6 py-4 text-right">Efectivo</th>
+                                                <th class="px-6 py-4 text-right">Tarjeta/Transf.</th>
+                                                <th class="px-6 py-4 text-right">Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="detalle-operaciones-tbody" class="divide-y divide-[#282e39]">
+                                            <tr>
+                                                <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Column -->
+                        <div class="flex flex-col gap-6">
+                            <!-- Estado Real Efectivo -->
+                            <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                                <div class="px-6 py-4 border-b border-[#282e39] flex justify-between items-center">
+                                    <h3 class="text-sm font-bold text-white">Estado Real de Efectivo</h3>
+                                    <button id="btn-cerrar-caja"
+                                        class="flex items-center gap-2 rounded-lg bg-[var(--brand-orange)] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#e05300] transition-colors">
+                                        <span class="material-symbols-outlined text-[16px]">lock</span>Cerrar Caja
+                                    </button>
+                                </div>
+                                <div class="p-6 space-y-4">
+                                    <div class="flex justify-between text-sm"><span class="text-[#9da6b9]">Saldo
+                                            apertura</span><span id="efec-apertura"
+                                            class="text-white font-medium">€0.00</span></div>
+                                    <div class="flex justify-between text-sm"><span class="text-[#9da6b9]">Ingresos
+                                            efectivo</span><span id="efec-ingresos"
+                                            class="text-green-400 font-medium">+€0.00</span></div>
+                                    <div class="flex justify-between text-sm border-b border-[#282e39] pb-4"><span
+                                            class="text-[#9da6b9]">Egresos efectivo</span><span id="efec-egresos"
+                                            class="text-red-400 font-medium">-€0.00</span></div>
+                                    <div class="flex justify-between items-center pt-2">
+                                        <div><span
+                                                class="text-sm font-bold text-[var(--brand-orange)] uppercase">Efectivo
+                                                en Caja</span><br><span class="text-[10px] text-[#9da6b9]">Monto físico
+                                                esperado</span></div><span id="efec-esperado"
+                                            class="text-2xl font-bold text-white">€0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Caja Chica Card -->
+                            <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                                <div class="flex items-center gap-2 mb-4"><span
+                                        class="material-symbols-outlined text-indigo-400">savings</span>
+                                    <h3 class="text-xs font-bold text-[#9da6b9] uppercase">Caja Chica</h3>
+                                </div>
+                                <p id="caja-chica-saldo" class="text-2xl font-bold text-white mb-4">€0.00</p>
+                                <button id="btn-enviar-caja-chica"
+                                    class="w-full flex items-center justify-center gap-2 rounded-lg bg-[#1a1d24] border border-[#282e39] py-2 text-xs font-bold text-gray-300 hover:border-[var(--brand-orange)] transition-colors">
+                                    <span class="material-symbols-outlined text-[16px]">move_up</span>Enviar a Caja
+                                    Chica
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View: Cierres -->
+                <section id="view-cierres" class="view-section">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <div class="lg:col-span-3 rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                            <table class="w-full text-left">
+                                <thead class="text-[10px] font-bold uppercase text-[#9da6b9] bg-[#1c1f27]">
+                                    <tr>
+                                        <th class="px-6 py-4">Fecha Cierre</th>
+                                        <th class="px-6 py-4">Usuario</th>
+                                        <th class="px-6 py-4">Saldo Final</th>
+                                        <th class="px-6 py-4">Resultado</th>
+                                        <th class="px-6 py-4"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cierres-tbody" class="divide-y divide-[#282e39]">
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="cierre-detail"
+                            class="lg:col-span-2 rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <p class="text-[#9da6b9] text-center">Selecciona un cierre para ver detalles</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- View: Movimientos -->
+                <section id="view-movimientos" class="view-section">
+                    <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                        <div
+                            class="border-b border-[#282e39] px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+                            <h3 class="text-sm font-bold text-white">Registro de Movimientos</h3>
+                            <div class="flex items-center gap-2">
+                                <select id="mov-filter-tipo"
+                                    class="bg-[#1a1d24] border border-[#282e39] rounded-lg px-3 py-2 text-xs text-white">
+                                    <option value="">Todos</option>
+                                    <option value="INGRESO">Ingreso</option>
+                                    <option value="EGRESO">Egreso</option>
+                                    <option value="INTERNO">Interno</option>
+                                </select>
+                                <button id="btn-export-mov"
+                                    class="flex items-center gap-1 text-xs font-bold text-[var(--brand-orange)] bg-[var(--brand-orange)]/10 px-3 py-2 rounded-lg"><span
+                                        class="material-symbols-outlined text-[16px]">download</span>Exportar</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-left">
+                                <thead class="bg-[#1c1f27] text-[10px] font-bold uppercase text-[#9da6b9]">
+                                    <tr>
+                                        <th class="px-6 py-4">ID</th>
+                                        <th class="px-6 py-4">Tipo</th>
+                                        <th class="px-6 py-4">Método</th>
+                                        <th class="px-6 py-4">Descripción</th>
+                                        <th class="px-6 py-4">Usuario</th>
+                                        <th class="px-6 py-4">Fecha</th>
+                                        <th class="px-6 py-4 text-right">Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="movimientos-tbody" class="divide-y divide-[#282e39]">
+                                    <tr>
+                                        <td colspan="7" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="mov-pagination"
+                            class="border-t border-[#282e39] px-6 py-3 flex justify-between items-center"></div>
+                    </div>
+                </section>
+
+                <!-- View: Caja Chica -->
+                <section id="view-cajachica" class="view-section">
+                    <div class="flex flex-col md:flex-row gap-6 mb-6">
+                        <div class="flex-1 rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-sm font-bold text-[#9da6b9] uppercase mb-2">Saldo Actual</h3>
+                            <p id="cc-saldo" class="text-4xl font-bold text-white">€0.00</p>
+                        </div>
+                        <div
+                            class="flex-1 rounded-xl border border-[#282e39] bg-[#111318] p-6 flex flex-col justify-center gap-4">
+                            <h3 class="text-sm font-bold text-[#9da6b9] uppercase">Acciones Rápidas</h3>
+                            <div class="flex gap-3">
+                                <button id="btn-cc-egreso"
+                                    class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20 font-bold text-sm"><span
+                                        class="material-symbols-outlined">remove</span>Egreso</button>
+                                <button id="btn-cc-ingreso"
+                                    class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[var(--brand-orange)] text-white hover:bg-[#e05300] font-bold text-sm"><span
+                                        class="material-symbols-outlined">add</span>Ingreso</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                        <div class="border-b border-[#282e39] px-6 py-4">
+                            <h3 class="text-sm font-bold text-white">Movimientos de Caja Chica</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-left">
+                                <thead class="bg-[#1c1f27] text-[10px] font-bold uppercase text-[#9da6b9]">
+                                    <tr>
+                                        <th class="px-6 py-4">Fecha</th>
+                                        <th class="px-6 py-4">Descripción</th>
+                                        <th class="px-6 py-4">Tipo</th>
+                                        <th class="px-6 py-4 text-right">Importe</th>
+                                        <th class="px-6 py-4">Usuario</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cc-movimientos-tbody" class="divide-y divide-[#282e39]">
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-container"></div>
+
+    <script>
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+            if (submenu.classList.contains('hidden')) { submenu.classList.remove('hidden'); submenu.classList.add('flex'); if (arrow) arrow.style.transform = 'rotate(180deg)'; }
+            else { submenu.classList.add('hidden'); submenu.classList.remove('flex'); if (arrow) arrow.style.transform = 'rotate(0deg)'; }
+        }
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        let isCollapsed = false;
+        toggleBtn?.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) { sidebar.classList.remove('w-64'); sidebar.classList.add('w-20'); document.querySelectorAll('.sidebar-text').forEach(el => el.classList.add('hidden')); toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>'; }
+            else { sidebar.classList.add('w-64'); sidebar.classList.remove('w-20'); document.querySelectorAll('.sidebar-text').forEach(el => el.classList.remove('hidden')); toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>'; }
+        });
+        document.getElementById('mobile-menu-btn')?.addEventListener('click', () => { sidebar.classList.toggle('-translate-x-full'); sidebar.classList.toggle('absolute'); sidebar.classList.toggle('z-50'); });
+    </script>
+
+    <script type="module">
+        import { requireAuth, clearSession, redirectToLogin, getToken } from './auth.js';
+
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+        // API helper using fetch
+        async function apiGet(endpoint) {
+            const token = getToken();
+            const res = await fetch(API_BASE_URL + endpoint, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) throw new Error('API Error: ' + res.status);
+            return res.json();
+        }
+
+        async function apiPost(endpoint, data) {
+            const token = getToken();
+            const res = await fetch(API_BASE_URL + endpoint, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw { response: { data: errData } };
+            }
+            return res.json();
+        }
+
+        const formatCurrency = (val) => '€' + parseFloat(val || 0).toFixed(2);
+        const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+
+        let currentTab = 'estado';
+        let cajaData = null;
+        let currentSucursalId = null;
+        let puedeSeleccionarSucursal = false;
+
+        // Cargar sucursales disponibles y mostrar selector/label
+        async function loadSucursales() {
+            try {
+                const data = await apiGet('/api/caja/sucursales');
+                if (!data.ok) throw new Error(data.error);
+                puedeSeleccionarSucursal = data.puede_seleccionar;
+                currentSucursalId = data.sucursal_actual;
+                const cajaStatus = document.getElementById('caja-status');
+                if (!cajaStatus) return;
+                const existingSucursal = document.getElementById('sucursal-container');
+                if (existingSucursal) existingSucursal.remove();
+                const sucursalContainer = document.createElement('div');
+                sucursalContainer.id = 'sucursal-container';
+                sucursalContainer.className = 'flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]';
+                if (data.puede_seleccionar && data.sucursales.length > 1) {
+                    let options = data.sucursales.map(function(s) {
+                        const label = s.tenant_nombre ? s.tenant_nombre + ' - ' + s.nombre : s.nombre;
+                        return '<option value="' + s.id + '"' + (s.id == currentSucursalId ? ' selected' : '') + '>' + label + '</option>';
+                    }).join('');
+                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><select id="sucursal-select" class="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer">' + options + '</select>';
+                    setTimeout(function() {
+                        const sel = document.getElementById('sucursal-select');
+                        if (sel) sel.addEventListener('change', function(e) { currentSucursalId = parseInt(e.target.value); reloadAllData(); });
+                    }, 0);
+                } else {
+                    const sucursal = data.sucursales.find(function(s) { return s.id == currentSucursalId; }) || data.sucursales[0];
+                    const label = sucursal ? (sucursal.tenant_nombre ? sucursal.tenant_nombre + ' - ' + sucursal.nombre : sucursal.nombre) : 'Sin sucursal';
+                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><span class="text-white font-medium text-sm">' + label + '</span>';
+                }
+                cajaStatus.parentNode.insertBefore(sucursalContainer, cajaStatus);
+            } catch (e) { console.error('Error loading sucursales:', e); }
+        }
+        function reloadAllData() { loadEstadoCaja(); if (currentTab !== 'estado') loadTabData(currentTab); }
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('tab-active'); b.classList.add('text-[#9da6b9]'); });
+                btn.classList.add('tab-active'); btn.classList.remove('text-[#9da6b9]');
+                document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+                currentTab = btn.dataset.tab;
+                document.getElementById('view-' + currentTab).classList.add('active');
+                loadTabData(currentTab);
+            });
+        });
+
+        async function loadTabData(tab) {
+            if (tab === 'estado') await loadEstadoCaja();
+            else if (tab === 'cierres') await loadCierres();
+            else if (tab === 'movimientos') await loadMovimientos();
+            else if (tab === 'cajachica') await loadCajaChica();
+        }
+
+        async function loadEstadoCaja() {
+            try {
+                const url = currentSucursalId ? '/api/caja/estado-actual?idsucursal=' + currentSucursalId : '/api/caja/estado-actual';
+                const data = await apiGet(url);
+                if (!data.ok) throw new Error(data.error);
+                cajaData = data;
+                const caja = data.caja;
+                const totales = data.totales;
+                const caja_chica = data.caja_chica;
+                const detalle_metodos_pago = data.detalle_metodos_pago;
+
+                document.getElementById('info-usuario').textContent = caja.usuario_apertura || 'Usuario';
+                document.getElementById('info-saldo-apertura').textContent = formatCurrency(caja.saldo_apertura);
+                document.getElementById('info-fecha').textContent = formatDate(caja.fecha_apertura);
+                document.getElementById('info-id').textContent = '#CJ-' + caja.id;
+                document.getElementById('stat-ingresos').textContent = formatCurrency(totales.ingresos_efectivo);
+                document.getElementById('stat-tarjeta').textContent = formatCurrency(totales.tarjeta);
+                document.getElementById('stat-total').textContent = formatCurrency(totales.total_periodo);
+                document.getElementById('efec-apertura').textContent = formatCurrency(caja.saldo_apertura);
+                document.getElementById('efec-ingresos').textContent = '+' + formatCurrency(totales.ingresos_efectivo);
+                document.getElementById('efec-egresos').textContent = '-' + formatCurrency(totales.egresos_efectivo);
+                document.getElementById('efec-esperado').textContent = formatCurrency(totales.efectivo_esperado);
+                document.getElementById('caja-chica-saldo').textContent = formatCurrency(caja_chica.saldo);
+
+                const tbody = document.getElementById('detalle-metodos-tbody');
+                if (!detalle_metodos_pago || detalle_metodos_pago.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="2" class="px-6 py-4 text-center text-[#9da6b9]">Sin movimientos</td></tr>';
+                } else {
+                    tbody.innerHTML = detalle_metodos_pago.map(m => '<tr class="hover:bg-[#1a1d24]"><td class="px-6 py-4 text-sm text-white">' + m.nombre + '</td><td class="px-6 py-4 text-sm text-right font-bold text-green-400">' + formatCurrency(m.total) + '</td></tr>').join('');
+                }
+                
+                // Llenar detalle de operaciones
+                const opsTbody = document.getElementById('detalle-operaciones-tbody');
+                const detalle_operaciones = data.detalle_operaciones || [];
+                if (!detalle_operaciones || detalle_operaciones.length === 0) {
+                    opsTbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">Sin operaciones</td></tr>';
+                } else {
+                    opsTbody.innerHTML = detalle_operaciones.map(function(op) {
+                        const colorTotal = op.es_gasto ? 'text-red-400' : 'text-green-400';
+                        return '<tr class="hover:bg-[#1a1d24]">' +
+                            '<td class="px-6 py-4 text-sm text-white">' + op.operacion + '</td>' +
+                            '<td class="px-6 py-4 text-sm text-right text-green-400">' + op.efectivo + '</td>' +
+                            '<td class="px-6 py-4 text-sm text-right text-blue-400">' + op.tarjeta + '</td>' +
+                            '<td class="px-6 py-4 text-sm text-right font-bold ' + colorTotal + '">' + op.total + '</td>' +
+                            '</tr>';
+                    }).join('');
+                }
+            } catch (e) {
+                console.error('Error loading estado:', e);
+                document.getElementById('detalle-metodos-tbody').innerHTML = '<tr><td colspan="2" class="px-6 py-4 text-center text-red-400">Error al cargar datos</td></tr>';
+            }
+        }
+
+        async function loadCierres() {
+            try {
+                const url = currentSucursalId ? '/api/caja/cierres?idsucursal=' + currentSucursalId : '/api/caja/cierres';
+                const data = await apiGet(url);
+                const tbody = document.getElementById('cierres-tbody');
+                if (!data.cierres || data.cierres.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">Sin cierres registrados</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.cierres.map(c => {
+                    const resultado = parseFloat(c.saldo_real || 0) - parseFloat(c.saldo_inicial || 0);
+                    return '<tr class="hover:bg-[#1a1d24] cursor-pointer" data-cierre-id="' + c.id + '"><td class="px-6 py-4 text-sm text-white">' + formatDate(c.fecha_cierre) + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + (c.usuario_cierre || '-') + '</td><td class="px-6 py-4 text-sm font-medium text-white">' + formatCurrency(c.saldo_real) + '</td><td class="px-6 py-4 text-sm font-bold ' + (resultado >= 0 ? 'text-green-400' : 'text-red-400') + '">' + (resultado >= 0 ? '+' : '') + formatCurrency(resultado) + '</td><td class="px-6 py-4"><span class="material-symbols-outlined text-gray-600">chevron_right</span></td></tr>';
+                }).join('');
+                tbody.querySelectorAll('tr[data-cierre-id]').forEach(tr => { tr.addEventListener('click', () => loadCierreDetail(tr.dataset.cierreId)); });
+            } catch (e) { console.error('Error loading cierres:', e); }
+        }
+
+        async function loadCierreDetail(id) {
+            try {
+                const data = await apiGet('/api/caja/cierres/' + id);
+                const c = data.cierre;
+                document.getElementById('cierre-detail').innerHTML = '<h2 class="text-xl font-bold text-white mb-4">Cierre del ' + formatDate(c.fecha) + '</h2><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-[#1a1d24] p-4 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Saldo Inicial</span><p class="text-xl font-bold text-white">' + formatCurrency(c.saldo_inicial) + '</p></div><div class="bg-[#1a1d24] p-4 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Saldo Teórico</span><p class="text-xl font-bold text-blue-400">' + formatCurrency(c.saldo_teorico) + '</p></div><div class="bg-[#1a1d24] p-4 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Saldo Real</span><p class="text-xl font-bold text-white">' + formatCurrency(c.saldo_real) + '</p></div><div class="bg-[#1a1d24] p-4 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Diferencia</span><p class="text-xl font-bold ' + (parseFloat(c.diferencia) === 0 ? 'text-green-400' : 'text-red-400') + '">' + formatCurrency(c.diferencia) + '</p></div></div><div class="border-t border-[#282e39] pt-4"><p class="text-xs text-[#9da6b9]">Cerró: <span class="text-white">' + (c.usuario_cierre || '-') + '</span></p></div>';
+            } catch (e) { console.error('Error loading cierre detail:', e); }
+        }
+
+        async function loadMovimientos(page) {
+            page = page || 1;
+            try {
+                const tipo = document.getElementById('mov-filter-tipo').value;
+                let url = '/api/caja/movimientos?page=' + page + '&limit=20';
+                if (currentSucursalId) url += '&idsucursal=' + currentSucursalId;
+                if (tipo) url += '&tipo=' + tipo;
+                const data = await apiGet(url);
+                const tbody = document.getElementById('movimientos-tbody');
+                if (!data.movimientos || data.movimientos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-[#9da6b9]">Sin movimientos</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.movimientos.map(m => {
+                    const tipoClass = m.tipo === 'INGRESO' ? 'bg-green-500/10 text-green-500' : m.tipo === 'EGRESO' ? 'bg-red-500/10 text-red-500' : 'bg-gray-500/10 text-gray-400';
+                    const montoClass = m.tipo === 'INGRESO' ? 'text-green-400' : 'text-red-400';
+                    return '<tr class="hover:bg-[#1a1d24]"><td class="px-6 py-4 text-xs font-mono text-[#9da6b9]">' + m.id + '</td><td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs font-medium ' + tipoClass + '">' + m.tipo + '</span></td><td class="px-6 py-4 text-sm text-gray-300">Efectivo</td><td class="px-6 py-4 text-sm text-gray-300 max-w-[200px] truncate">' + (m.origen_tipo || '-') + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + m.usuario + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + formatDate(m.fecha) + '</td><td class="px-6 py-4 text-sm font-bold text-right ' + montoClass + '">' + formatCurrency(m.monto) + '</td></tr>';
+                }).join('');
+            } catch (e) { console.error('Error loading movimientos:', e); }
+        }
+
+        async function loadCajaChica() {
+            try {
+                const sucParam = currentSucursalId ? '?idsucursal=' + currentSucursalId : '';
+                const [estadoData, movData] = await Promise.all([apiGet('/api/caja/chica/estado' + sucParam), apiGet('/api/caja/chica/movimientos' + sucParam)]);
+                document.getElementById('cc-saldo').textContent = formatCurrency(estadoData.caja_chica.saldo_actual);
+                const tbody = document.getElementById('cc-movimientos-tbody');
+                if (!movData.movimientos || movData.movimientos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">Sin movimientos</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = movData.movimientos.map(m => {
+                    const tipoClass = m.tipo === 'INGRESO' || m.tipo === 'INTERNO' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500';
+                    const montoClass = m.tipo === 'INGRESO' || m.tipo === 'INTERNO' ? 'text-green-400' : 'text-red-400';
+                    const sign = m.tipo === 'EGRESO' ? '-' : '+';
+                    return '<tr class="hover:bg-[#1a1d24]"><td class="px-6 py-4 text-sm text-white">' + formatDate(m.fecha) + '</td><td class="px-6 py-4 text-sm text-gray-300">' + (m.descripcion || m.origen_tipo || '-') + '</td><td class="px-6 py-4"><span class="px-2.5 py-0.5 rounded text-xs font-medium ' + tipoClass + '">' + m.tipo + '</span></td><td class="px-6 py-4 text-sm font-bold text-right ' + montoClass + '">' + sign + formatCurrency(m.monto) + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + m.usuario + '</td></tr>';
+                }).join('');
+            } catch (e) { console.error('Error loading caja chica:', e); }
+        }
+
+        // Modal helpers
+        function showModal(title, content, onConfirm, confirmText, confirmClass) {
+            confirmText = confirmText || 'Confirmar';
+            confirmClass = confirmClass || 'bg-[var(--brand-orange)]';
+            const container = document.getElementById('modal-container');
+            container.innerHTML = '<div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"><div class="w-full max-w-lg rounded-2xl bg-[#111318] border border-[#282e39] shadow-2xl overflow-hidden"><div class="bg-[#1a1d24] p-6 border-b border-[#282e39] flex justify-between items-center"><h3 class="text-lg font-bold text-white">' + title + '</h3><button class="modal-close text-gray-500 hover:text-white"><span class="material-symbols-outlined">close</span></button></div><div class="p-6">' + content + '</div><div class="bg-[#1a1d24] p-5 border-t border-[#282e39] flex justify-end gap-3"><button class="modal-close rounded-xl px-5 py-2.5 text-sm font-bold text-gray-400 hover:text-white">Cancelar</button><button class="modal-confirm rounded-xl px-6 py-2.5 text-sm font-bold text-white ' + confirmClass + ' hover:opacity-90">' + confirmText + '</button></div></div></div>';
+            container.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', () => { container.innerHTML = ''; }));
+            container.querySelector('.modal-confirm').addEventListener('click', async () => { try { await onConfirm(); container.innerHTML = ''; } catch (err) { console.error(err); } });
+        }
+
+        function showToast(msg, type) {
+            type = type || 'success';
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 px-4 py-3 rounded-lg text-sm font-medium z-[200] ' + (type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white');
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Modal: Cerrar Caja
+        document.getElementById('btn-cerrar-caja').addEventListener('click', () => {
+            const esperado = cajaData && cajaData.totales ? cajaData.totales.efectivo_esperado : '0';
+            const saldoApertura = cajaData && cajaData.caja ? cajaData.caja.saldo_apertura : '0';
+            showModal('Cerrar Caja', '<div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-[#1a1d24] p-3 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Saldo Apertura</span><p class="text-white font-bold">' + formatCurrency(saldoApertura) + '</p></div><div class="bg-[var(--brand-orange)]/10 p-3 rounded-xl"><span class="text-[10px] text-[var(--brand-orange)] uppercase font-bold">Efectivo Esperado</span><p class="text-white font-bold">' + formatCurrency(esperado) + '</p></div></div><div class="space-y-4"><div><label class="text-sm font-medium text-gray-300 mb-2 block">Efectivo Contado (Real) *</label><div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span><input type="number" step="0.01" id="modal-saldo-real" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00"></div></div><div><label class="text-sm font-medium text-gray-300 mb-2 block">Enviar a Caja Chica (opcional)</label><div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span><input type="number" step="0.01" id="modal-acajachica" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00"></div></div><div><label class="text-sm font-medium text-gray-300 mb-2 block">Descripción</label><input type="text" id="modal-descripcion" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="Ej: Cierre normal"></div></div>', async () => {
+                const saldoReal = document.getElementById('modal-saldo-real').value;
+                const aCajaChica = document.getElementById('modal-acajachica').value;
+                const descripcion = document.getElementById('modal-descripcion').value;
+                if (!saldoReal) { showToast('El efectivo contado es requerido', 'error'); throw new Error('Validation'); }
+                try {
+                    await apiPost('/api/caja/cerrar', { saldo_real: saldoReal, a_caja_chica: aCajaChica || 0, descripcion: descripcion, idsucursal: currentSucursalId });
+                    showToast('Caja cerrada correctamente');
+                    loadEstadoCaja();
+                } catch (e) { showToast(e.response && e.response.data ? e.response.data.error : 'Error al cerrar caja', 'error'); throw e; }
+            }, 'Confirmar Cierre');
+        });
+
+        // Modal: Enviar a Caja Chica
+        document.getElementById('btn-enviar-caja-chica').addEventListener('click', () => {
+            const efectivoEsperado = cajaData && cajaData.totales ? cajaData.totales.efectivo_esperado : '0';
+            const cajaChicaSaldo = cajaData && cajaData.caja_chica ? cajaData.caja_chica.saldo : '0';
+            showModal('Enviar a Caja Chica', '<div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-[#1a1d24] p-3 rounded-xl text-center"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Efectivo Disponible</span><p class="text-lg text-white font-bold">' + formatCurrency(efectivoEsperado) + '</p></div><div class="bg-indigo-500/10 p-3 rounded-xl text-center"><span class="text-[10px] text-indigo-400 uppercase font-bold">Caja Chica Actual</span><p class="text-lg text-indigo-300 font-bold">' + formatCurrency(cajaChicaSaldo) + '</p></div></div><div class="space-y-4"><div><label class="text-sm font-medium text-gray-300 mb-2 block">Monto *</label><div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span><input type="number" step="0.01" id="modal-monto" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00"></div></div><div><label class="text-sm font-medium text-gray-300 mb-2 block">Descripción</label><textarea id="modal-desc" rows="2" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white resize-none focus:border-[var(--brand-orange)] focus:outline-none" placeholder="Motivo del envío..."></textarea></div></div>', async () => {
+                const monto = document.getElementById('modal-monto').value;
+                const descripcion = document.getElementById('modal-desc').value;
+                if (!monto) { showToast('El monto es requerido', 'error'); throw new Error('Validation'); }
+                try {
+                    await apiPost('/api/caja/enviar-caja-chica', { monto: monto, descripcion: descripcion, idsucursal: currentSucursalId });
+                    showToast('Transferencia realizada');
+                    loadEstadoCaja();
+                } catch (e) { showToast(e.response && e.response.data ? e.response.data.error : 'Error', 'error'); throw e; }
+            }, 'Transferir');
+        });
+
+        // Modal: Movimiento Caja Chica
+        window.openCajaChicaModal = function (tipo) {
+            const isEgreso = tipo === 'EGRESO';
+            showModal(isEgreso ? 'Registrar Egreso' : 'Registrar Ingreso', '<div class="space-y-4"><div><label class="text-sm font-medium text-gray-300 mb-2 block">Monto *</label><div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span><input type="number" step="0.01" id="modal-monto" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00"></div></div><div><label class="text-sm font-medium text-gray-300 mb-2 block">Descripción ' + (isEgreso ? '*' : '') + '</label><textarea id="modal-desc" rows="2" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white resize-none focus:border-[var(--brand-orange)] focus:outline-none" placeholder="' + (isEgreso ? 'Ej: Compra de material' : 'Ej: Aporte extra') + '"></textarea></div></div>', async () => {
+                const monto = document.getElementById('modal-monto').value;
+                const descripcion = document.getElementById('modal-desc').value;
+                if (!monto) { showToast('El monto es requerido', 'error'); throw new Error('Validation'); }
+                if (isEgreso && !descripcion) { showToast('La descripción es obligatoria para egresos', 'error'); throw new Error('Validation'); }
+                try {
+                    await apiPost('/api/caja/chica/movimientos', { tipo: tipo, monto: monto, descripcion: descripcion, idsucursal: currentSucursalId });
+                    showToast('Movimiento registrado');
+                    loadCajaChica();
+                } catch (e) { showToast(e.response && e.response.data ? e.response.data.error : 'Error', 'error'); throw e; }
+            }, 'Guardar', isEgreso ? 'bg-red-500' : 'bg-green-500');
+        };
+
+        document.getElementById('btn-cc-egreso').addEventListener('click', () => openCajaChicaModal('EGRESO'));
+        document.getElementById('btn-cc-ingreso').addEventListener('click', () => openCajaChicaModal('INGRESO'));
+
+        // Filtros
+        document.getElementById('mov-filter-tipo').addEventListener('change', () => loadMovimientos());
+
+        // Logout
+        document.querySelector('[data-logout]').addEventListener('click', (e) => { e.preventDefault(); clearSession(); redirectToLogin(); });
+
+        // Init
+        (async () => {
+            const user = await requireAuth();
+            if (!user) return;
+            document.getElementById('user-name').textContent = user.nombre || 'Usuario';
+            document.getElementById('user-role').textContent = user.rol ? user.rol.nombre : '-';
+            document.getElementById('user-avatar').textContent = (user.nombre || 'U').substring(0, 2).toUpperCase();
+            await loadSucursales();
+            loadEstadoCaja();
+        })();
+    </script>
+</body>
+
+</html>
