@@ -176,22 +176,18 @@ router.get('/estado-actual', async (req, res) => {
         const saldoApertura = ultimoCierreResult.rows[0]?.saldo_real || 0;
         const efectivoEsperado = parseFloat(saldoApertura) + efectivoPagos + totalIngresos - totalEgresos;
 
-        // Detalle de operaciones por tipo
-        const detalleOperacionesResult = await pool.query(`
+        // Detalle de operaciones - Total de ÓRDENES (sin agrupar por tipo)
+        const ordenesTotalResult = await pool.query(`
             SELECT 
-                COALESCE(to2.codigo, 'OTRO') as tipo_codigo,
-                COALESCE(to2.nombre, 'Otros') as tipo_nombre,
                 COALESCE(SUM(CASE WHEN mp.codigo = 'CASH' THEN op.importe ELSE 0 END), 0) as efectivo,
                 COALESCE(SUM(CASE WHEN mp.codigo != 'CASH' THEN op.importe ELSE 0 END), 0) as tarjeta,
                 COALESCE(SUM(op.importe), 0) as total
             FROM ordenpago op
             JOIN mediopago mp ON op.id_medio_pago = mp.id
-            JOIN orden o ON op.id_orden = o.id
-            LEFT JOIN tipoorden to2 ON o.id_tipoorden = to2.id
             WHERE op.id_caja = $1
-            GROUP BY to2.codigo, to2.nombre
-            ORDER BY total DESC
         `, [caja.id]);
+
+        const ordenesData = ordenesTotalResult.rows[0] || { efectivo: 0, tarjeta: 0, total: 0 };
 
         // Movimientos manuales de caja (ingresos/egresos)
         const movimientosCajaDetalle = await pool.query(`
@@ -203,16 +199,47 @@ router.get('/estado-actual', async (req, res) => {
             GROUP BY tipo
         `, [caja.id]);
 
+        // Consulta de COMPRAS - Total de compras por método de pago en el periodo de la caja
+        let comprasData = { efectivo: 0, tarjeta: 0, total: 0 };
+        try {
+            const comprasResult = await pool.query(`
+                SELECT 
+                    COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo,
+                    COALESCE(SUM(CASE WHEN LOWER(metodo_pago) NOT IN ('efectivo', 'cash') AND metodo_pago IS NOT NULL THEN total ELSE 0 END), 0) as tarjeta,
+                    COALESCE(SUM(total), 0) as total
+                FROM compracabecera 
+                WHERE id_sucursal = $1 
+                  AND created_at >= $2
+            `, [idSucursal, caja.created_at]);
+            comprasData = comprasResult.rows[0] || comprasData;
+        } catch (comprasError) {
+            console.warn('Error consultando compras (tabla puede no existir):', comprasError.message);
+        }
+
         // Construir detalle de operaciones
-        const detalleOperaciones = [
-            ...detalleOperacionesResult.rows.map(r => ({
-                operacion: r.tipo_nombre,
-                efectivo: formatCurrency(r.efectivo),
-                tarjeta: formatCurrency(r.tarjeta),
-                total: formatCurrency(r.total),
+        const detalleOperaciones = [];
+
+        // Agregar ÓRDENES (ingresos)
+        if (parseFloat(ordenesData.total) > 0) {
+            detalleOperaciones.push({
+                operacion: 'Órdenes de reparación',
+                efectivo: formatCurrency(ordenesData.efectivo),
+                tarjeta: formatCurrency(ordenesData.tarjeta),
+                total: formatCurrency(ordenesData.total),
                 es_gasto: false
-            }))
-        ];
+            });
+        }
+
+        // Agregar COMPRAS al detalle (como gasto/egreso)
+        if (parseFloat(comprasData.total) > 0) {
+            detalleOperaciones.push({
+                operacion: 'Compras',
+                efectivo: formatCurrency(-comprasData.efectivo),
+                tarjeta: formatCurrency(-comprasData.tarjeta),
+                total: formatCurrency(-comprasData.total),
+                es_gasto: true
+            });
+        }
 
         // Agregar movimientos manuales
         const ingresosManual = movimientosCajaDetalle.rows.find(r => r.tipo === 'INGRESO');
@@ -220,7 +247,7 @@ router.get('/estado-actual', async (req, res) => {
 
         if (ingresosManual && parseFloat(ingresosManual.total) > 0) {
             detalleOperaciones.push({
-                operacion: 'Movimientos de caja (ingresos)',
+                operacion: 'Movimientos de caja',
                 efectivo: formatCurrency(ingresosManual.total),
                 tarjeta: '-',
                 total: formatCurrency(ingresosManual.total),
@@ -237,6 +264,25 @@ router.get('/estado-actual', async (req, res) => {
                 es_gasto: true
             });
         }
+
+        // PLACEHOLDERS para módulos futuros:
+        // TODO: Cobros de cuentas corrientes - Cuando se implemente el módulo de cuentas corrientes
+        // detalleOperaciones.push({
+        //     operacion: 'Cobros de cuentas corrientes',
+        //     efectivo: formatCurrency(0),
+        //     tarjeta: formatCurrency(0),
+        //     total: formatCurrency(0),
+        //     es_gasto: false
+        // });
+
+        // TODO: Pagos a trabajadores - Cuando se implemente el módulo de nóminas/pagos
+        // detalleOperaciones.push({
+        //     operacion: 'Pagos a trabajadores',
+        //     efectivo: formatCurrency(0),
+        //     tarjeta: '-',
+        //     total: formatCurrency(0),
+        //     es_gasto: true
+        // });
 
         const cajaChica = await getCajaChica(idSucursal);
 
@@ -414,7 +460,7 @@ router.get('/cierres/:id', async (req, res) => {
 router.post('/cerrar', async (req, res) => {
     const client = await pool.connect();
     try {
-        const { saldo_real, a_caja_chica, descripcion } = req.body;
+        const { saldo_real, a_caja_chica, apertura_siguiente, descripcion } = req.body;
         const idSucursal = await resolverSucursal(req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
         const idUsuario = req.user.id;
@@ -490,11 +536,21 @@ router.post('/cerrar', async (req, res) => {
         // Cerrar caja actual
         await client.query(`UPDATE caja SET estado = 'CERRADA', updated_at = NOW() WHERE id = $1`, [caja.id]);
 
-        // Crear nueva caja abierta
-        await client.query(`
-            INSERT INTO caja (id_sucursal, nombre, estado, created_at, updated_at) 
-            VALUES ($1, 'Caja Principal', 'ABIERTA', NOW(), NOW())
-        `, [idSucursal]);
+        // Crear nueva caja abierta con saldo de apertura
+        const saldoAperturaNueva = parseFloat(apertura_siguiente) || 0;
+        const nuevaCajaResult = await client.query(`
+            INSERT INTO caja (id_sucursal, nombre, estado, id_usuario_apertura, created_at, created_by, updated_at) 
+            VALUES ($1, 'Caja Principal', 'ABIERTA', $2, NOW(), $2, NOW()) RETURNING id
+        `, [idSucursal, idUsuario]);
+
+        // Si hay saldo de apertura, registrar como cierre anterior con ese saldo
+        if (saldoAperturaNueva > 0) {
+            // Insertar un cierre "virtual" para la nueva caja con el saldo de apertura
+            await client.query(`
+                INSERT INTO cajacierre (id_caja, id_usuario, fecha, saldo_inicial, saldo_teorico, saldo_real, diferencia, created_at)
+                VALUES ($1, $2, NOW(), 0, $3, $3, 0, NOW())
+            `, [nuevaCajaResult.rows[0].id, idUsuario, saldoAperturaNueva]);
+        }
 
         await client.query('COMMIT');
         res.json({

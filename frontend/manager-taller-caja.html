@@ -254,7 +254,7 @@
                                     <p id="stat-total" class="text-2xl font-bold text-white">€0.00</p>
                                 </div>
                             </div>
-                            
+
                             <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
                                 <div class="px-6 py-4 border-b border-[#282e39] flex justify-between items-center">
                                     <h3 class="text-sm font-bold text-white">Detalle de Operaciones</h3>
@@ -265,14 +265,23 @@
                                         <thead class="bg-[#1c1f27] text-[10px] font-bold uppercase text-[#9da6b9]">
                                             <tr>
                                                 <th class="px-6 py-4 text-left">Operación</th>
-                                                <th class="px-6 py-4 text-right">Efectivo</th>
-                                                <th class="px-6 py-4 text-right">Tarjeta/Transf.</th>
+                                                <th class="px-6 py-4 text-right">
+                                                    <span class="inline-flex items-center gap-1">Efectivo <span
+                                                            class="material-symbols-outlined text-[14px] cursor-help"
+                                                            title="Pagos realizados en efectivo">info</span></span>
+                                                </th>
+                                                <th class="px-6 py-4 text-right">
+                                                    <span class="inline-flex items-center gap-1">Tarjeta/Transferencia
+                                                        <span class="material-symbols-outlined text-[14px] cursor-help"
+                                                            title="Pagos con tarjeta o transferencia bancaria">info</span></span>
+                                                </th>
                                                 <th class="px-6 py-4 text-right">Total</th>
                                             </tr>
                                         </thead>
                                         <tbody id="detalle-operaciones-tbody" class="divide-y divide-[#282e39]">
                                             <tr>
-                                                <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                                                <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -512,17 +521,17 @@
                 sucursalContainer.id = 'sucursal-container';
                 sucursalContainer.className = 'flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]';
                 if (data.puede_seleccionar && data.sucursales.length > 1) {
-                    let options = data.sucursales.map(function(s) {
+                    let options = data.sucursales.map(function (s) {
                         const label = s.tenant_nombre ? s.tenant_nombre + ' - ' + s.nombre : s.nombre;
                         return '<option value="' + s.id + '"' + (s.id == currentSucursalId ? ' selected' : '') + '>' + label + '</option>';
                     }).join('');
                     sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><select id="sucursal-select" class="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer">' + options + '</select>';
-                    setTimeout(function() {
+                    setTimeout(function () {
                         const sel = document.getElementById('sucursal-select');
-                        if (sel) sel.addEventListener('change', function(e) { currentSucursalId = parseInt(e.target.value); reloadAllData(); });
+                        if (sel) sel.addEventListener('change', function (e) { currentSucursalId = parseInt(e.target.value); reloadAllData(); });
                     }, 0);
                 } else {
-                    const sucursal = data.sucursales.find(function(s) { return s.id == currentSucursalId; }) || data.sucursales[0];
+                    const sucursal = data.sucursales.find(function (s) { return s.id == currentSucursalId; }) || data.sucursales[0];
                     const label = sucursal ? (sucursal.tenant_nombre ? sucursal.tenant_nombre + ' - ' + sucursal.nombre : sucursal.nombre) : 'Sin sucursal';
                     sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><span class="text-white font-medium text-sm">' + label + '</span>';
                 }
@@ -574,32 +583,27 @@
                 document.getElementById('efec-esperado').textContent = formatCurrency(totales.efectivo_esperado);
                 document.getElementById('caja-chica-saldo').textContent = formatCurrency(caja_chica.saldo);
 
-                const tbody = document.getElementById('detalle-metodos-tbody');
-                if (!detalle_metodos_pago || detalle_metodos_pago.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="2" class="px-6 py-4 text-center text-[#9da6b9]">Sin movimientos</td></tr>';
-                } else {
-                    tbody.innerHTML = detalle_metodos_pago.map(m => '<tr class="hover:bg-[#1a1d24]"><td class="px-6 py-4 text-sm text-white">' + m.nombre + '</td><td class="px-6 py-4 text-sm text-right font-bold text-green-400">' + formatCurrency(m.total) + '</td></tr>').join('');
-                }
-                
                 // Llenar detalle de operaciones
                 const opsTbody = document.getElementById('detalle-operaciones-tbody');
                 const detalle_operaciones = data.detalle_operaciones || [];
                 if (!detalle_operaciones || detalle_operaciones.length === 0) {
                     opsTbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">Sin operaciones</td></tr>';
                 } else {
-                    opsTbody.innerHTML = detalle_operaciones.map(function(op) {
+                    opsTbody.innerHTML = detalle_operaciones.map(function (op) {
                         const colorTotal = op.es_gasto ? 'text-red-400' : 'text-green-400';
+                        const colorEfectivo = op.es_gasto ? 'text-red-400' : 'text-green-400';
+                        const colorTarjeta = op.es_gasto ? 'text-red-400' : 'text-blue-400';
                         return '<tr class="hover:bg-[#1a1d24]">' +
                             '<td class="px-6 py-4 text-sm text-white">' + op.operacion + '</td>' +
-                            '<td class="px-6 py-4 text-sm text-right text-green-400">' + op.efectivo + '</td>' +
-                            '<td class="px-6 py-4 text-sm text-right text-blue-400">' + op.tarjeta + '</td>' +
+                            '<td class="px-6 py-4 text-sm text-right ' + colorEfectivo + '">' + op.efectivo + '</td>' +
+                            '<td class="px-6 py-4 text-sm text-right ' + colorTarjeta + '">' + (op.tarjeta === '-' ? '<span class="text-[#9da6b9]">-</span>' : op.tarjeta) + '</td>' +
                             '<td class="px-6 py-4 text-sm text-right font-bold ' + colorTotal + '">' + op.total + '</td>' +
                             '</tr>';
                     }).join('');
                 }
             } catch (e) {
                 console.error('Error loading estado:', e);
-                document.getElementById('detalle-metodos-tbody').innerHTML = '<tr><td colspan="2" class="px-6 py-4 text-center text-red-400">Error al cargar datos</td></tr>';
+                document.getElementById('detalle-operaciones-tbody').innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-red-400">Error al cargar datos</td></tr>';
             }
         }
 
@@ -691,13 +695,90 @@
         document.getElementById('btn-cerrar-caja').addEventListener('click', () => {
             const esperado = cajaData && cajaData.totales ? cajaData.totales.efectivo_esperado : '0';
             const saldoApertura = cajaData && cajaData.caja ? cajaData.caja.saldo_apertura : '0';
-            showModal('Cerrar Caja', '<div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-[#1a1d24] p-3 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Saldo Apertura</span><p class="text-white font-bold">' + formatCurrency(saldoApertura) + '</p></div><div class="bg-[var(--brand-orange)]/10 p-3 rounded-xl"><span class="text-[10px] text-[var(--brand-orange)] uppercase font-bold">Efectivo Esperado</span><p class="text-white font-bold">' + formatCurrency(esperado) + '</p></div></div><div class="space-y-4"><div><label class="text-sm font-medium text-gray-300 mb-2 block">Efectivo Contado (Real) *</label><div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span><input type="number" step="0.01" id="modal-saldo-real" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00"></div></div><div><label class="text-sm font-medium text-gray-300 mb-2 block">Enviar a Caja Chica (opcional)</label><div class="relative"><span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span><input type="number" step="0.01" id="modal-acajachica" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00"></div></div><div><label class="text-sm font-medium text-gray-300 mb-2 block">Descripción</label><input type="text" id="modal-descripcion" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="Ej: Cierre normal"></div></div>', async () => {
+            const ingresosEfec = cajaData && cajaData.totales ? cajaData.totales.ingresos_efectivo : '0';
+            const egresosEfec = cajaData && cajaData.totales ? cajaData.totales.egresos_efectivo : '0';
+
+            const modalContent = `
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--brand-orange)]/20 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-[var(--brand-orange)]">lock</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Cerrar Caja</h3>
+                        <p class="text-xs text-[#9da6b9]">Resumen del turno y arqueo final.</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-4 gap-2 mb-6 p-3 bg-[#0b0d11] rounded-xl">
+                    <div class="text-center">
+                        <span class="text-[9px] text-[#9da6b9] uppercase font-bold block">Apertura</span>
+                        <p class="text-white font-bold text-sm">${formatCurrency(saldoApertura)} €</p>
+                    </div>
+                    <div class="text-center">
+                        <span class="text-[9px] text-green-400 uppercase font-bold block">Ingresos Efec.</span>
+                        <p class="text-green-400 font-bold text-sm">+${formatCurrency(ingresosEfec)} €</p>
+                    </div>
+                    <div class="text-center">
+                        <span class="text-[9px] text-red-400 uppercase font-bold block">Egresos Efec.</span>
+                        <p class="text-red-400 font-bold text-sm">-${formatCurrency(egresosEfec)} €</p>
+                    </div>
+                    <div class="text-center bg-[var(--brand-orange)]/10 rounded-lg py-1">
+                        <span class="text-[9px] text-[var(--brand-orange)] uppercase font-bold block">Esperado</span>
+                        <p class="text-white font-bold text-sm">${formatCurrency(esperado)} €</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 flex items-center gap-1">
+                            Efectivo Contado <span class="material-symbols-outlined text-[14px] text-[#9da6b9]" title="Monto físico contado en caja">info</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span>
+                            <input type="number" step="0.01" id="modal-saldo-real" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 flex items-center gap-1">
+                            Enviar a Caja Chica <span class="material-symbols-outlined text-[14px] text-[#9da6b9]" title="Monto a transferir a caja chica">info</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span>
+                            <input type="number" step="0.01" id="modal-acajachica" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="text-sm font-medium text-gray-300 mb-2 flex items-center gap-1">
+                        Apertura Siguiente <span class="material-symbols-outlined text-[14px] text-[#9da6b9]" title="Saldo inicial para la próxima apertura de caja">info</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span>
+                        <input type="number" step="0.01" id="modal-apertura-siguiente" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-[var(--brand-orange)] focus:outline-none" placeholder="0.00">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="text-sm font-medium text-gray-300 mb-2 block">Descripción / Notas (Opcional)</label>
+                    <textarea id="modal-descripcion" rows="2" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white resize-none focus:border-[var(--brand-orange)] focus:outline-none" placeholder="Observaciones sobre el cierre..."></textarea>
+                </div>
+            `;
+
+            showModal('', modalContent, async () => {
                 const saldoReal = document.getElementById('modal-saldo-real').value;
                 const aCajaChica = document.getElementById('modal-acajachica').value;
+                const aperturaSiguiente = document.getElementById('modal-apertura-siguiente').value;
                 const descripcion = document.getElementById('modal-descripcion').value;
                 if (!saldoReal) { showToast('El efectivo contado es requerido', 'error'); throw new Error('Validation'); }
                 try {
-                    await apiPost('/api/caja/cerrar', { saldo_real: saldoReal, a_caja_chica: aCajaChica || 0, descripcion: descripcion, idsucursal: currentSucursalId });
+                    await apiPost('/api/caja/cerrar', {
+                        saldo_real: saldoReal,
+                        a_caja_chica: aCajaChica || 0,
+                        apertura_siguiente: aperturaSiguiente || 0,
+                        descripcion: descripcion,
+                        idsucursal: currentSucursalId
+                    });
                     showToast('Caja cerrada correctamente');
                     loadEstadoCaja();
                 } catch (e) { showToast(e.response && e.response.data ? e.response.data.error : 'Error al cerrar caja', 'error'); throw e; }
