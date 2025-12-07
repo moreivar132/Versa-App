@@ -36,7 +36,7 @@ class OrdenesRepository {
     async getMedioPagoByCodigoOrId({ codigo, id }, client) {
         const executor = getExecutor(client);
         const params = [];
-        let query = 'SELECT id FROM mediopago WHERE ';
+        let query = 'SELECT * FROM mediopago WHERE ';
         if (id) {
             query += 'id = $1';
             params.push(id);
@@ -275,6 +275,26 @@ class OrdenesRepository {
             RETURNING id
         `;
         const result = await client.query(query, [id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, created_by]);
+        return result.rows[0];
+    }
+
+    async getOpenCaja(client, idSucursal) {
+        const query = `
+            SELECT * FROM caja 
+            WHERE id_sucursal = $1 AND estado = 'ABIERTA' 
+            ORDER BY created_at DESC LIMIT 1
+        `;
+        const result = await client.query(query, [idSucursal]);
+        return result.rows[0];
+    }
+
+    async createOpenCaja(client, idSucursal, idUsuario) {
+        const query = `
+            INSERT INTO caja (id_sucursal, nombre, estado, id_usuario_apertura, created_by, created_at, updated_at) 
+            VALUES ($1, 'Caja Principal', 'ABIERTA', $2, $2, NOW(), NOW()) 
+            RETURNING *
+        `;
+        const result = await client.query(query, [idSucursal, idUsuario]);
         return result.rows[0];
     }
 }

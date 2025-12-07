@@ -71,7 +71,6 @@
 
 <body class="bg-[#0b0d11] font-[Montserrat] text-white">
     <div class="flex h-screen w-full">
-        <!-- Sidebar -->
         <aside id="sidebar"
             class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 border-r border-[#282e39]">
             <div class="flex h-full flex-col justify-between">
@@ -178,16 +177,13 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
             <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                <!-- Mobile Header -->
                 <header class="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-[#282e39]">
                     <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
                     <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
                 </header>
 
-                <!-- Page Header -->
                 <header class="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[#282e39] pb-6">
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight text-white">Gestión de Caja</h1>
@@ -204,7 +200,6 @@
                     </div>
                 </header>
 
-                <!-- Tabs -->
                 <div class="flex justify-center mb-8">
                     <div class="inline-flex items-center rounded-xl bg-[#111318] p-1.5 border border-[#282e39]">
                         <button class="tab-btn tab-active rounded-lg px-5 py-2 text-sm font-medium transition-all"
@@ -221,9 +216,7 @@
                     </div>
                 </div>
 
-                <!-- View: Estado de Caja -->
                 <section id="view-estado" class="view-section active">
-                    <!-- Header Info -->
                     <div id="caja-header-info"
                         class="grid grid-cols-2 md:grid-cols-4 gap-4 rounded-xl border border-[#282e39] bg-[#111318] p-5 mb-6">
                         <div class="flex flex-col gap-1.5 border-r border-[#282e39] pr-4"><span
@@ -246,7 +239,6 @@
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 space-y-6">
-                            <!-- Stats -->
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div class="rounded-xl border border-[#282e39] bg-[#111318] p-5">
                                     <h3 class="text-[11px] font-bold text-[#9da6b9] uppercase mb-3">Ingresos Efectivo
@@ -262,30 +254,7 @@
                                     <p id="stat-total" class="text-2xl font-bold text-white">€0.00</p>
                                 </div>
                             </div>
-                            <!-- Operations Table -->
-                            <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
-                                <div class="px-6 py-4 border-b border-[#282e39] flex justify-between items-center">
-                                    <h3 class="text-sm font-bold text-white">Detalle por Método de Pago</h3>
-                                </div>
-                                <div class="overflow-x-auto">
-                                    <table class="min-w-full">
-                                        <thead class="bg-[#1c1f27] text-[10px] font-bold uppercase text-[#9da6b9]">
-                                            <tr>
-                                                <th class="px-6 py-4 text-left">Método</th>
-                                                <th class="px-6 py-4 text-right">Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="detalle-metodos-tbody" class="divide-y divide-[#282e39]">
-                                            <tr>
-                                                <td colspan="2" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
                             
-                            <!-- Detalle de Operaciones -->
                             <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
                                 <div class="px-6 py-4 border-b border-[#282e39] flex justify-between items-center">
                                     <h3 class="text-sm font-bold text-white">Detalle de Operaciones</h3>
@@ -310,9 +279,7 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Right Column -->
                         <div class="flex flex-col gap-6">
-                            <!-- Estado Real Efectivo -->
                             <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
                                 <div class="px-6 py-4 border-b border-[#282e39] flex justify-between items-center">
                                     <h3 class="text-sm font-bold text-white">Estado Real de Efectivo</h3>
@@ -340,7 +307,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Caja Chica Card -->
                             <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
                                 <div class="flex items-center gap-2 mb-4"><span
                                         class="material-symbols-outlined text-indigo-400">savings</span>
@@ -357,7 +323,6 @@
                     </div>
                 </section>
 
-                <!-- View: Cierres -->
                 <section id="view-cierres" class="view-section">
                     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         <div class="lg:col-span-3 rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
@@ -385,7 +350,6 @@
                     </div>
                 </section>
 
-                <!-- View: Movimientos -->
                 <section id="view-movimientos" class="view-section">
                     <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
                         <div
@@ -429,7 +393,6 @@
                     </div>
                 </section>
 
-                <!-- View: Caja Chica -->
                 <section id="view-cajachica" class="view-section">
                     <div class="flex flex-col md:flex-row gap-6 mb-6">
                         <div class="flex-1 rounded-xl border border-[#282e39] bg-[#111318] p-6">
@@ -477,7 +440,6 @@
         </main>
     </div>
 
-    <!-- Modals -->
     <div id="modal-container"></div>
 
     <script>
