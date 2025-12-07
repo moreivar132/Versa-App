@@ -573,7 +573,7 @@
                 document.getElementById('info-usuario').textContent = caja.usuario_apertura || 'Usuario';
                 document.getElementById('info-saldo-apertura').textContent = formatCurrency(caja.saldo_apertura);
                 document.getElementById('info-fecha').textContent = formatDate(caja.fecha_apertura);
-                document.getElementById('info-id').textContent = '#CJ-' + caja.id;
+                document.getElementById('info-id').textContent = caja.codigo || '#CJ-' + caja.id;
                 document.getElementById('stat-ingresos').textContent = formatCurrency(totales.ingresos_efectivo);
                 document.getElementById('stat-tarjeta').textContent = formatCurrency(totales.tarjeta);
                 document.getElementById('stat-total').textContent = formatCurrency(totales.total_periodo);
@@ -628,7 +628,152 @@
             try {
                 const data = await apiGet('/api/caja/cierres/' + id);
                 const c = data.cierre;
-                document.getElementById('cierre-detail').innerHTML = '<h2 class="text-xl font-bold text-white mb-4">Cierre del ' + formatDate(c.fecha) + '</h2><div class="grid grid-cols-2 gap-4 mb-6"><div class="bg-[#1a1d24] p-4 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Saldo Inicial</span><p class="text-xl font-bold text-white">' + formatCurrency(c.saldo_inicial) + '</p></div><div class="bg-[#1a1d24] p-4 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Saldo Teórico</span><p class="text-xl font-bold text-blue-400">' + formatCurrency(c.saldo_teorico) + '</p></div><div class="bg-[#1a1d24] p-4 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Saldo Real</span><p class="text-xl font-bold text-white">' + formatCurrency(c.saldo_real) + '</p></div><div class="bg-[#1a1d24] p-4 rounded-xl"><span class="text-[10px] text-[#9da6b9] uppercase font-bold">Diferencia</span><p class="text-xl font-bold ' + (parseFloat(c.diferencia) === 0 ? 'text-green-400' : 'text-red-400') + '">' + formatCurrency(c.diferencia) + '</p></div></div><div class="border-t border-[#282e39] pt-4"><p class="text-xs text-[#9da6b9]">Cerró: <span class="text-white">' + (c.usuario_cierre || '-') + '</span></p></div>';
+                const desglose = data.desglose_pago || [];
+
+                const resultadoNum = parseFloat(c.resultado_periodo.replace(/[€,]/g, '').replace(',', '.')) || 0;
+                const resultadoClass = resultadoNum >= 0 ? 'text-green-400' : 'text-red-400';
+                const resultadoSign = resultadoNum >= 0 ? '+' : '';
+
+                // Calcular diferencia (teórico vs real)
+                const diferenciaNum = parseFloat(c.diferencia.replace(/[€,]/g, '').replace(',', '.')) || 0;
+                const diferenciaClass = diferenciaNum === 0 ? 'text-green-400' : diferenciaNum > 0 ? 'text-blue-400' : 'text-red-400';
+                const diferenciaIcon = diferenciaNum === 0 ? 'check_circle' : diferenciaNum > 0 ? 'trending_up' : 'trending_down';
+                const diferenciaLabel = diferenciaNum === 0 ? 'Sin diferencia' : diferenciaNum > 0 ? 'Sobrante' : 'Faltante';
+
+                // HTML para la sección de diferencia/descuadre
+                let diferenciaHtml = '';
+                if (diferenciaNum !== 0) {
+                    const alertClass = diferenciaNum > 0 ? 'bg-blue-500/10 border-blue-500/30' : 'bg-red-500/10 border-red-500/30';
+                    const textClass = diferenciaNum > 0 ? 'text-blue-400' : 'text-red-400';
+                    diferenciaHtml = `
+                        <div class="${alertClass} p-4 rounded-xl border mb-4">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined ${textClass} text-[24px]">${diferenciaIcon}</span>
+                                <div>
+                                    <span class="text-[10px] ${textClass} uppercase font-bold">${diferenciaLabel} en Arqueo</span>
+                                    <p class="text-xl font-bold ${textClass}">${formatCurrency(c.diferencia)}</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-3 border-t border-[#282e39]/50 grid grid-cols-2 gap-4 text-xs">
+                                <div>
+                                    <span class="text-[#9da6b9]">Efectivo Teórico:</span>
+                                    <span class="text-white font-medium ml-1">${formatCurrency(c.saldo_teorico)}</span>
+                                </div>
+                                <div>
+                                    <span class="text-[#9da6b9]">Efectivo Contado:</span>
+                                    <span class="text-white font-medium ml-1">${formatCurrency(c.saldo_real)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let desgloseHtml = '';
+                if (desglose.length > 0) {
+                    desgloseHtml = `
+                        <div class="border-t border-[#282e39] pt-4 mt-4">
+                            <h4 class="text-xs font-bold text-[#9da6b9] uppercase mb-3 flex items-center gap-2">
+                                <span class="w-1 h-4 bg-[var(--brand-orange)] rounded-full"></span>
+                                Desglose por Forma de Pago
+                            </h4>
+                            <div class="space-y-2">
+                                ${desglose.map(d => `
+                                    <div class="flex justify-between items-center py-2 border-b border-[#282e39]/50">
+                                        <span class="text-sm text-gray-300">${d.forma_pago}</span>
+                                        <span class="text-sm font-bold text-white">${formatCurrency(d.total)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                document.getElementById('cierre-detail').innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white">Cierre del ${formatDate(c.fecha)}</h2>
+                            <p class="text-xs text-[#9da6b9]">Periodo desde ${formatDate(c.fecha_apertura)} hasta ${formatDate(c.fecha)}</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="w-8 h-8 rounded-lg bg-[#1a1d24] border border-[#282e39] flex items-center justify-center text-[#9da6b9] hover:text-white" title="Imprimir">
+                                <span class="material-symbols-outlined text-[18px]">print</span>
+                            </button>
+                            <button class="w-8 h-8 rounded-lg bg-[#1a1d24] border border-[#282e39] flex items-center justify-center text-[#9da6b9] hover:text-white" title="Descargar">
+                                <span class="material-symbols-outlined text-[18px]">download</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-wrap gap-3 mb-5">
+                        <div class="flex items-center gap-2 px-3 py-1.5 bg-[#1a1d24] rounded-lg text-xs">
+                            <span class="material-symbols-outlined text-green-400 text-[14px]">lock_open</span>
+                            <span class="text-[#9da6b9]">Abre:</span>
+                            <span class="text-white font-medium">${c.usuario_apertura}</span>
+                        </div>
+                        <div class="flex items-center gap-2 px-3 py-1.5 bg-[#1a1d24] rounded-lg text-xs">
+                            <span class="material-symbols-outlined text-red-400 text-[14px]">lock</span>
+                            <span class="text-[#9da6b9]">Cierra:</span>
+                            <span class="text-white font-medium">${c.usuario_cierre}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-[#1a1d24] p-4 rounded-xl">
+                            <span class="text-[10px] text-[#9da6b9] uppercase font-bold flex items-center gap-1">
+                                Saldo Inicial <span class="material-symbols-outlined text-[12px]">info</span>
+                            </span>
+                            <p class="text-xl font-bold text-white mt-1">${formatCurrency(c.saldo_inicial)}</p>
+                        </div>
+                        <div class="bg-[#1a1d24] p-4 rounded-xl">
+                            <span class="text-[10px] text-[#9da6b9] uppercase font-bold flex items-center gap-1">
+                                Saldo Final <span class="material-symbols-outlined text-[12px]">info</span>
+                            </span>
+                            <p class="text-xl font-bold text-white mt-1">${formatCurrency(c.saldo_real)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
+                            <span class="text-[10px] text-green-400 uppercase font-bold">Resultado del Periodo</span>
+                            <p class="text-xl font-bold ${resultadoClass} mt-1">${resultadoSign}${formatCurrency(c.resultado_periodo)}</p>
+                        </div>
+                        <div class="bg-[#1a1d24] p-4 rounded-xl">
+                            <span class="text-[10px] text-[#9da6b9] uppercase font-bold">Apertura Siguiente</span>
+                            <p class="text-xl font-bold text-white mt-1">${formatCurrency(c.saldo_real)}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div class="bg-[#1a1d24] p-4 rounded-xl">
+                            <span class="text-[10px] text-green-400 uppercase font-bold">Total Ingresos</span>
+                            <p class="text-xl font-bold text-green-400 mt-1">${formatCurrency(c.total_ingresos)}</p>
+                        </div>
+                        <div class="bg-[#1a1d24] p-4 rounded-xl">
+                            <span class="text-[10px] text-red-400 uppercase font-bold">Total Egresos</span>
+                            <p class="text-xl font-bold text-red-400 mt-1">${formatCurrency(c.total_egresos)}</p>
+                        </div>
+                    </div>
+                    
+                    ${parseFloat(c.a_caja_chica) > 0 ? `
+                    <div class="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20 mb-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-[10px] text-indigo-400 uppercase font-bold flex items-center gap-1">
+                                    A Caja Chica <span class="material-symbols-outlined text-[12px]">info</span>
+                                </span>
+                                <p class="text-xl font-bold text-white mt-1">${formatCurrency(c.a_caja_chica)}</p>
+                            </div>
+                            <a href="#" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1">
+                                Ver en Caja Chica <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+                            </a>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${diferenciaHtml}
+                    
+                    ${desgloseHtml}
+                `;
             } catch (e) { console.error('Error loading cierre detail:', e); }
         }
 
@@ -699,8 +844,8 @@
             const egresosEfec = cajaData && cajaData.totales ? cajaData.totales.egresos_efectivo : '0';
 
             const modalContent = `
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 rounded-xl bg-[var(--brand-orange)]/20 flex items-center justify-center">
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-10 h-10 rounded-xl bg-[var(--brand-orange)]/20 flex items-center justify-center flex-shrink-0">
                         <span class="material-symbols-outlined text-[var(--brand-orange)]">lock</span>
                     </div>
                     <div>
@@ -709,22 +854,22 @@
                     </div>
                 </div>
                 
-                <div class="grid grid-cols-4 gap-2 mb-6 p-3 bg-[#0b0d11] rounded-xl">
-                    <div class="text-center">
-                        <span class="text-[9px] text-[#9da6b9] uppercase font-bold block">Apertura</span>
-                        <p class="text-white font-bold text-sm">${formatCurrency(saldoApertura)} €</p>
+                <div class="grid grid-cols-4 gap-3 mb-6">
+                    <div class="bg-[#1a1d24] rounded-xl p-3 flex flex-col items-center justify-center min-h-[70px]">
+                        <span class="text-[10px] text-[#9da6b9] uppercase font-bold tracking-wide">Apertura</span>
+                        <p class="text-white font-bold text-base mt-1">${formatCurrency(saldoApertura)}</p>
                     </div>
-                    <div class="text-center">
-                        <span class="text-[9px] text-green-400 uppercase font-bold block">Ingresos Efec.</span>
-                        <p class="text-green-400 font-bold text-sm">+${formatCurrency(ingresosEfec)} €</p>
+                    <div class="bg-green-500/10 rounded-xl p-3 flex flex-col items-center justify-center min-h-[70px] border border-green-500/20">
+                        <span class="text-[10px] text-green-400 uppercase font-bold tracking-wide">Ingresos</span>
+                        <p class="text-green-400 font-bold text-base mt-1">+${formatCurrency(ingresosEfec)}</p>
                     </div>
-                    <div class="text-center">
-                        <span class="text-[9px] text-red-400 uppercase font-bold block">Egresos Efec.</span>
-                        <p class="text-red-400 font-bold text-sm">-${formatCurrency(egresosEfec)} €</p>
+                    <div class="bg-red-500/10 rounded-xl p-3 flex flex-col items-center justify-center min-h-[70px] border border-red-500/20">
+                        <span class="text-[10px] text-red-400 uppercase font-bold tracking-wide">Egresos</span>
+                        <p class="text-red-400 font-bold text-base mt-1">-${formatCurrency(egresosEfec)}</p>
                     </div>
-                    <div class="text-center bg-[var(--brand-orange)]/10 rounded-lg py-1">
-                        <span class="text-[9px] text-[var(--brand-orange)] uppercase font-bold block">Esperado</span>
-                        <p class="text-white font-bold text-sm">${formatCurrency(esperado)} €</p>
+                    <div class="bg-[var(--brand-orange)]/10 rounded-xl p-3 flex flex-col items-center justify-center min-h-[70px] border border-[var(--brand-orange)]/30">
+                        <span class="text-[10px] text-[var(--brand-orange)] uppercase font-bold tracking-wide">Esperado</span>
+                        <p class="text-white font-bold text-base mt-1">${formatCurrency(esperado)}</p>
                     </div>
                 </div>
                 

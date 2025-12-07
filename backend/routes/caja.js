@@ -286,10 +286,30 @@ router.get('/estado-actual', async (req, res) => {
 
         const cajaChica = await getCajaChica(idSucursal);
 
+        // Obtener nombre de sucursal y calcular código de caja
+        const sucursalResult = await pool.query('SELECT nombre FROM sucursal WHERE id = $1', [idSucursal]);
+        const nombreSucursal = sucursalResult.rows[0]?.nombre || 'Principal';
+
+        // Generar código corto de sucursal (primeras letras de cada palabra, máx 3 caracteres)
+        const codigoSucursal = nombreSucursal
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase())
+            .join('')
+            .substring(0, 4);
+
+        // Calcular número secuencial de caja para esta sucursal
+        const secuencialResult = await pool.query(
+            'SELECT COUNT(*) as total FROM caja WHERE id_sucursal = $1 AND id <= $2',
+            [idSucursal, caja.id]
+        );
+        const secuencial = String(secuencialResult.rows[0].total).padStart(3, '0');
+        const codigoCaja = `#CJ-${codigoSucursal}-${secuencial}`;
+
         res.json({
             ok: true,
             caja: {
                 id: caja.id,
+                codigo: codigoCaja,
                 estado: caja.estado,
                 nombre: caja.nombre,
                 usuario_apertura: caja.usuario_apertura_nombre || 'Usuario',
@@ -424,31 +444,81 @@ router.get('/cierres', async (req, res) => {
 // GET /api/caja/cierres/:id
 router.get('/cierres/:id', async (req, res) => {
     try {
+        // Obtener cierre con información de caja y usuarios
         const result = await pool.query(`
-            SELECT cc.*, c.nombre as caja_nombre, u.nombre as usuario_cierre
+            SELECT cc.*, 
+                   c.nombre as caja_nombre, 
+                   c.id_sucursal,
+                   c.created_at as fecha_apertura,
+                   u_cierre.nombre as usuario_cierre,
+                   u_apertura.nombre as usuario_apertura
             FROM cajacierre cc 
             JOIN caja c ON cc.id_caja = c.id 
-            LEFT JOIN usuario u ON cc.id_usuario = u.id 
+            LEFT JOIN usuario u_cierre ON cc.id_usuario = u_cierre.id 
+            LEFT JOIN usuario u_apertura ON c.id_usuario_apertura = u_apertura.id
             WHERE cc.id = $1
         `, [req.params.id]);
 
         if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Cierre no encontrado' });
         const cierre = result.rows[0];
 
-        const movResult = await pool.query(
-            `SELECT id, tipo, monto, fecha, origen_tipo FROM cajamovimiento WHERE id_caja = $1 ORDER BY fecha DESC`,
-            [cierre.id_caja]
-        );
+        // Obtener totales de ingresos y egresos del periodo
+        const movimientosResult = await pool.query(`
+            SELECT 
+                COALESCE(SUM(CASE WHEN tipo = 'INGRESO' THEN monto ELSE 0 END), 0) as total_ingresos,
+                COALESCE(SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END), 0) as total_egresos
+            FROM cajamovimiento 
+            WHERE id_caja = $1
+        `, [cierre.id_caja]);
+        const movTotales = movimientosResult.rows[0] || { total_ingresos: 0, total_egresos: 0 };
+
+        // Obtener desglose por forma de pago (pagos de órdenes en este cierre)
+        const desglosePagoResult = await pool.query(`
+            SELECT 
+                mp.nombre,
+                COALESCE(SUM(op.importe), 0) as total
+            FROM ordenpago op
+            JOIN mediopago mp ON op.id_medio_pago = mp.id
+            WHERE op.id_caja = $1
+            GROUP BY mp.nombre
+            ORDER BY total DESC
+        `, [cierre.id_caja]);
+
+        // Buscar si hubo envío a caja chica en este cierre
+        const cajaChicaMovResult = await pool.query(`
+            SELECT cm.monto, ccm.id as id_movimiento_caja_chica
+            FROM cajamovimiento cm
+            LEFT JOIN cajachicamovimiento ccm ON ccm.id_cajamovimiento = cm.id
+            WHERE cm.id_caja = $1 AND cm.origen_tipo = 'CIERRE' AND cm.origen_id = $2
+        `, [cierre.id_caja, cierre.id]);
+        const cajaChicaData = cajaChicaMovResult.rows[0] || { monto: 0, id_movimiento_caja_chica: null };
+
+        // Calcular resultado del periodo
+        const resultadoPeriodo = parseFloat(cierre.saldo_real) - parseFloat(cierre.saldo_inicial);
 
         res.json({
             ok: true,
             cierre: {
-                ...cierre,
+                id: cierre.id,
+                fecha: cierre.fecha,
+                fecha_apertura: cierre.fecha_apertura,
+                caja_nombre: cierre.caja_nombre,
+                usuario_apertura: cierre.usuario_apertura || 'Usuario',
+                usuario_cierre: cierre.usuario_cierre || 'Usuario',
                 saldo_inicial: formatCurrency(cierre.saldo_inicial),
                 saldo_teorico: formatCurrency(cierre.saldo_teorico),
-                saldo_real: formatCurrency(cierre.saldo_real)
+                saldo_real: formatCurrency(cierre.saldo_real),
+                diferencia: formatCurrency(cierre.diferencia),
+                resultado_periodo: formatCurrency(resultadoPeriodo),
+                total_ingresos: formatCurrency(movTotales.total_ingresos),
+                total_egresos: formatCurrency(movTotales.total_egresos),
+                a_caja_chica: formatCurrency(cajaChicaData.monto),
+                id_movimiento_caja_chica: cajaChicaData.id_movimiento_caja_chica
             },
-            movimientos: movResult.rows
+            desglose_pago: desglosePagoResult.rows.map(r => ({
+                forma_pago: r.nombre,
+                total: formatCurrency(r.total)
+            }))
         });
     } catch (error) {
         console.error('Error:', error);
