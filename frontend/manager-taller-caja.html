@@ -62,6 +62,97 @@
             color: white;
             padding: 8px;
         }
+
+        /* Tooltips personalizados */
+        .tooltip-container {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .tooltip-trigger {
+            cursor: help;
+            color: #6b7280;
+            transition: color 0.2s;
+            font-size: inherit;
+        }
+
+        .tooltip-trigger:hover {
+            color: #9da6b9;
+        }
+
+        .tooltip-content {
+            visibility: hidden;
+            opacity: 0;
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e2028;
+            border: 1px solid #2d3240;
+            border-radius: 8px;
+            padding: 10px 12px;
+            width: max-content;
+            max-width: 220px;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: opacity 0.15s, visibility 0.15s;
+        }
+
+        .tooltip-content::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #2d3240;
+        }
+
+        .tooltip-container:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip-title {
+            display: none;
+        }
+
+        .tooltip-text {
+            font-size: 11px;
+            font-weight: 400;
+            color: #d1d5db;
+            line-height: 1.4;
+            text-transform: none;
+        }
+
+        /* Tooltip que aparece hacia abajo (para usar en tablas) */
+        thead .tooltip-content {
+            bottom: auto;
+            top: calc(100% + 6px);
+        }
+
+        thead .tooltip-content::after {
+            top: auto;
+            bottom: 100%;
+            border-top-color: transparent;
+            border-bottom-color: #2d3240;
+        }
+
+        /* Fix para que el tooltip no se recorte */
+        thead,
+        thead tr,
+        thead th {
+            overflow: visible;
+        }
+
+        .overflow-x-auto {
+            overflow: visible !important;
+        }
+
+        table {
+            overflow: visible;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -257,8 +348,24 @@
                                     <p id="stat-tarjeta" class="text-2xl font-bold text-blue-400">€0.00</p>
                                 </div>
                                 <div class="rounded-xl border border-[#282e39] bg-[#111318] p-5">
-                                    <h3 class="text-[11px] font-bold text-[#9da6b9] uppercase mb-3">Total Periodo</h3>
+                                    <h3 class="text-[11px] font-bold text-[#9da6b9] uppercase mb-3">
+                                        <span class="inline-flex items-center gap-1">
+                                            Resultado de Caja
+                                            <span class="tooltip-container">
+                                                <span
+                                                    class="material-symbols-outlined text-[14px] tooltip-trigger">info</span>
+                                                <span class="tooltip-content">
+                                                    <span class="tooltip-title">Resultado de Caja</span>
+                                                    <span class="tooltip-text">Mide cómo ha cambiado la caja principal
+                                                        durante el periodo. Incluye retiros a Caja Chica porque son
+                                                        movimientos que disminuyen el efectivo disponible.</span>
+                                                </span>
+                                            </span>
+                                        </span>
+                                    </h3>
                                     <p id="stat-total" class="text-2xl font-bold text-white">€0.00</p>
+                                    <p class="text-[10px] text-[#6b7280] mt-2">Refleja solo la caja principal. Los
+                                        retiros internos afectan este valor.</p>
                                 </div>
                             </div>
 
@@ -273,14 +380,30 @@
                                             <tr>
                                                 <th class="px-6 py-4 text-left">Operación</th>
                                                 <th class="px-6 py-4 text-right">
-                                                    <span class="inline-flex items-center gap-1">Efectivo <span
-                                                            class="material-symbols-outlined text-[14px] cursor-help"
-                                                            title="Pagos realizados en efectivo">info</span></span>
+                                                    <span class="inline-flex items-center gap-1">Efectivo
+                                                        <span class="tooltip-container">
+                                                            <span
+                                                                class="material-symbols-outlined text-[14px] tooltip-trigger">info</span>
+                                                            <span class="tooltip-content">
+                                                                <span class="tooltip-title">Efectivo</span>
+                                                                <span class="tooltip-text">Pagos realizados en efectivo
+                                                                    durante el periodo.</span>
+                                                            </span>
+                                                        </span>
+                                                    </span>
                                                 </th>
                                                 <th class="px-6 py-4 text-right">
                                                     <span class="inline-flex items-center gap-1">Tarjeta/Transferencia
-                                                        <span class="material-symbols-outlined text-[14px] cursor-help"
-                                                            title="Pagos con tarjeta o transferencia bancaria">info</span></span>
+                                                        <span class="tooltip-container">
+                                                            <span
+                                                                class="material-symbols-outlined text-[14px] tooltip-trigger">info</span>
+                                                            <span class="tooltip-content">
+                                                                <span class="tooltip-title">Tarjeta/Transferencia</span>
+                                                                <span class="tooltip-text">Pagos con tarjeta de
+                                                                    crédito/débito o transferencia bancaria.</span>
+                                                            </span>
+                                                        </span>
+                                                    </span>
                                                 </th>
                                                 <th class="px-6 py-4 text-right">Total</th>
                                             </tr>
@@ -390,29 +513,59 @@
                                         <th class="px-5 py-4">
                                             <span class="inline-flex items-center gap-1">
                                                 Total Facturado
-                                                <span class="material-symbols-outlined text-[12px] cursor-help"
-                                                    title="Suma de todas las ventas cobradas en el periodo (efectivo + tarjeta + transferencia)">info</span>
+                                                <span class="tooltip-container">
+                                                    <span
+                                                        class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                                                    <span class="tooltip-content">
+                                                        <span class="tooltip-title">Total Facturado</span>
+                                                        <span class="tooltip-text">Suma de todas las ventas cobradas en
+                                                            el periodo (efectivo + tarjeta + transferencia).</span>
+                                                    </span>
+                                                </span>
                                             </span>
                                         </th>
                                         <th class="px-5 py-4">
                                             <span class="inline-flex items-center gap-1">
                                                 Efectivo Teórico
-                                                <span class="material-symbols-outlined text-[12px] cursor-help"
-                                                    title="Saldo inicial + ingresos efectivo - egresos efectivo - retiros a caja chica">info</span>
+                                                <span class="tooltip-container">
+                                                    <span
+                                                        class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                                                    <span class="tooltip-content">
+                                                        <span class="tooltip-title">Efectivo Teórico</span>
+                                                        <span class="tooltip-text">Efectivo que debería haber en caja
+                                                            según los movimientos registrados (saldo inicial + cobros en
+                                                            efectivo − pagos en efectivo − retiros).</span>
+                                                    </span>
+                                                </span>
                                             </span>
                                         </th>
                                         <th class="px-5 py-4">
                                             <span class="inline-flex items-center gap-1">
                                                 Efectivo Contado
-                                                <span class="material-symbols-outlined text-[12px] cursor-help"
-                                                    title="Efectivo físico contado al momento del cierre">info</span>
+                                                <span class="tooltip-container">
+                                                    <span
+                                                        class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                                                    <span class="tooltip-content">
+                                                        <span class="tooltip-title">Efectivo Contado</span>
+                                                        <span class="tooltip-text">Efectivo físico contado al momento
+                                                            del cierre de caja.</span>
+                                                    </span>
+                                                </span>
                                             </span>
                                         </th>
                                         <th class="px-5 py-4">
                                             <span class="inline-flex items-center gap-1">
                                                 Diferencia
-                                                <span class="material-symbols-outlined text-[12px] cursor-help"
-                                                    title="Diferencia entre efectivo contado y efectivo teórico">info</span>
+                                                <span class="tooltip-container">
+                                                    <span
+                                                        class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                                                    <span class="tooltip-content">
+                                                        <span class="tooltip-title">Diferencia de Arqueo</span>
+                                                        <span class="tooltip-text">Diferencia entre efectivo contado y
+                                                            efectivo teórico. Positivo = sobrante, Negativo =
+                                                            faltante.</span>
+                                                    </span>
+                                                </span>
                                             </span>
                                         </th>
                                         <th class="px-5 py-4 text-center">Acciones</th>
@@ -908,15 +1061,30 @@
                         </div>
                         <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#282e39]">
                             <span class="text-[10px] text-[#9da6b9] uppercase font-bold flex items-center gap-1">
-                                Final (Contable) <span class="material-symbols-outlined text-[12px] cursor-help" title="Saldo inicial + ventas totales − egresos">info</span>
+                                Final (Contable) 
+                                <span class="tooltip-container">
+                                    <span class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                                    <span class="tooltip-content">
+                                        <span class="tooltip-title">Final Contable</span>
+                                        <span class="tooltip-text">Saldo inicial + ventas totales − gastos operativos. No incluye envíos a Caja Chica.</span>
+                                    </span>
+                                </span>
                             </span>
                             <p class="text-xl font-bold text-white mt-1">${formatCurrency(finalContable)}</p>
                         </div>
                         <div class="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
                             <span class="text-[10px] text-green-400 uppercase font-bold flex items-center gap-1">
-                                Resultado (Neto) <span class="material-symbols-outlined text-[12px] cursor-help" title="Ventas totales − gastos del período">info</span>
+                                Resultado Neto 
+                                <span class="tooltip-container">
+                                    <span class="material-symbols-outlined text-[12px] tooltip-trigger" style="color: #4ade80;">info</span>
+                                    <span class="tooltip-content">
+                                        <span class="tooltip-title">Resultado Neto</span>
+                                        <span class="tooltip-text">Ingresos totales del periodo menos gastos operativos. No incluye movimientos internos como envíos a Caja Chica, porque no afectan la rentabilidad del negocio.</span>
+                                    </span>
+                                </span>
                             </span>
                             <p class="text-xl font-bold ${resultadoNeto >= 0 ? 'text-green-400' : 'text-red-400'} mt-1">${resultadoNeto >= 0 ? '+' : ''}${formatCurrency(resultadoNeto)}</p>
+                            <p class="text-[9px] text-green-400/60 mt-1">Rentabilidad del periodo. Caja Chica no afecta.</p>
                         </div>
                     </div>
 
