@@ -126,31 +126,19 @@
             text-transform: none;
         }
 
-        /* Tooltip que aparece hacia abajo (para usar en tablas) */
+        /* Tooltips en tablas: usar position fixed */
         thead .tooltip-content {
+            position: fixed;
             bottom: auto;
-            top: calc(100% + 6px);
+            left: auto;
+            transform: none;
+            pointer-events: none;
         }
 
-        thead .tooltip-content::after {
-            top: auto;
-            bottom: 100%;
-            border-top-color: transparent;
-            border-bottom-color: #2d3240;
-        }
-
-        /* Fix para que el tooltip no se recorte */
+        /* Mantener el scroll horizontal de tablas */
         thead,
         thead tr,
         thead th {
-            overflow: visible;
-        }
-
-        .overflow-x-auto {
-            overflow: visible !important;
-        }
-
-        table {
             overflow: visible;
         }
     </style>
@@ -335,6 +323,7 @@
                                 class="text-white font-semibold text-sm font-mono">#-</span></div>
                     </div>
 
+
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 space-y-6">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -484,6 +473,13 @@
                             class="px-6 py-4 border-b border-[#282e39] flex flex-wrap justify-between items-center gap-4">
                             <h3 class="text-sm font-bold text-white">Historial de Cierres</h3>
                             <div class="flex flex-wrap items-center gap-2">
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">
+                                        <span class="material-symbols-outlined text-[16px]">search</span>
+                                    </span>
+                                    <input type="text" id="cierres-filter-buscar" placeholder="Buscar ID o usuario..."
+                                        class="bg-[#1a1d24] border border-[#282e39] rounded-lg pl-9 pr-3 py-2 text-xs text-white w-44 focus:border-[var(--brand-orange)] focus:outline-none">
+                                </div>
                                 <div class="flex items-center gap-2">
                                     <label class="text-[10px] text-[#9da6b9] uppercase">Desde</label>
                                     <input type="date" id="cierres-filter-desde"
@@ -788,6 +784,19 @@
         let currentSucursalId = null;
         let puedeSeleccionarSucursal = false;
 
+        // Posicionar tooltips en tablas (position: fixed)
+        document.addEventListener('mouseover', function (e) {
+            const trigger = e.target.closest('.tooltip-trigger');
+            if (trigger && trigger.closest('thead')) {
+                const content = trigger.parentElement.querySelector('.tooltip-content');
+                if (content) {
+                    const rect = trigger.getBoundingClientRect();
+                    content.style.top = (rect.bottom + 8) + 'px';
+                    content.style.left = (rect.left + rect.width / 2 - content.offsetWidth / 2) + 'px';
+                }
+            }
+        });
+
         // Cargar sucursales disponibles y mostrar selector/label
         async function loadSucursales() {
             try {
@@ -883,6 +892,8 @@
                             '</tr>';
                     }).join('');
                 }
+
+                // Auditoría banner eliminado - funcionalidad pendiente de implementar
             } catch (e) {
                 console.error('Error loading estado:', e);
                 document.getElementById('detalle-operaciones-tbody').innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-red-400">Error al cargar datos</td></tr>';
@@ -891,6 +902,7 @@
 
         async function loadCierres() {
             try {
+                const buscar = document.getElementById('cierres-filter-buscar')?.value || '';
                 const fechaDesde = document.getElementById('cierres-filter-desde')?.value || '';
                 const fechaHasta = document.getElementById('cierres-filter-hasta')?.value || '';
 
@@ -898,6 +910,7 @@
                 if (currentSucursalId) url += 'idsucursal=' + currentSucursalId;
                 if (fechaDesde) url += '&fecha_desde=' + fechaDesde;
                 if (fechaHasta) url += '&fecha_hasta=' + fechaHasta;
+                if (buscar) url += '&buscar=' + encodeURIComponent(buscar);
 
                 const data = await apiGet(url);
                 const tbody = document.getElementById('cierres-tbody');
@@ -1687,9 +1700,13 @@
         // Filtros de Cierres
         document.getElementById('btn-cierres-filter').addEventListener('click', () => loadCierres());
         document.getElementById('btn-cierres-clear').addEventListener('click', () => {
+            document.getElementById('cierres-filter-buscar').value = '';
             document.getElementById('cierres-filter-desde').value = '';
             document.getElementById('cierres-filter-hasta').value = '';
             loadCierres();
+        });
+        document.getElementById('cierres-filter-buscar').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') loadCierres();
         });
 
         // Filtros de Caja Chica

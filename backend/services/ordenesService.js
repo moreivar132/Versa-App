@@ -285,7 +285,7 @@ class OrdenesService {
      */
     async getOrdenes(filtros, userContext) {
         const { id_tenant } = userContext;
-        const { estado, estadoPago, busqueda, fechaDesde, fechaHasta, limit, offset } = filtros;
+        const { estado, estadoPago, busqueda, fechaDesde, fechaHasta, idMecanico, idSucursal, limit, offset } = filtros;
 
         // Query principal con estado de pago calculado
         let query = `
@@ -355,6 +355,20 @@ class OrdenesService {
         if (fechaHasta) {
             query += ` AND o.created_at <= $${paramIndex}`;
             values.push(fechaHasta);
+            paramIndex++;
+        }
+
+        // Filtro por mecánico
+        if (idMecanico) {
+            query += ` AND o.id_mecanico = $${paramIndex}`;
+            values.push(idMecanico);
+            paramIndex++;
+        }
+
+        // Filtro por sucursal
+        if (idSucursal) {
+            query += ` AND o.id_sucursal = $${paramIndex}`;
+            values.push(idSucursal);
             paramIndex++;
         }
 

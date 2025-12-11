@@ -305,6 +305,44 @@ router.get('/estado-actual', async (req, res) => {
         const secuencial = String(secuencialResult.rows[0].total).padStart(3, '0');
         const codigoCaja = `#CJ-${codigoSucursal}-${secuencial}`;
 
+        // === INFORMACIÓN DE AUDITORÍA ===
+        // Obtener nombre del usuario actual (el que está consultando)
+        const usuarioActualResult = await pool.query('SELECT nombre FROM usuario WHERE id = $1', [req.user.id]);
+        const usuarioActualNombre = usuarioActualResult.rows[0]?.nombre || 'Usuario';
+
+        // Último movimiento de caja (ingreso/egreso manual)
+        const ultimoMovResult = await pool.query(`
+            SELECT cm.*, u.nombre as usuario_nombre 
+            FROM cajamovimiento cm 
+            LEFT JOIN usuario u ON cm.id_usuario = u.id 
+            WHERE cm.id_caja = $1 
+            ORDER BY cm.fecha DESC LIMIT 1
+        `, [caja.id]);
+        const ultimoMovimiento = ultimoMovResult.rows[0] || null;
+
+        // Último pago registrado (de órdenes)
+        const ultimoPagoResult = await pool.query(`
+            SELECT op.*, u.nombre as usuario_nombre, mp.nombre as medio_pago_nombre
+            FROM ordenpago op 
+            LEFT JOIN usuario u ON op.created_by = u.id 
+            LEFT JOIN mediopago mp ON op.id_medio_pago = mp.id
+            WHERE op.id_caja = $1 
+            ORDER BY op.created_at DESC LIMIT 1
+        `, [caja.id]);
+        const ultimoPago = ultimoPagoResult.rows[0] || null;
+
+        // Determinar la última actividad (el más reciente entre movimiento y pago)
+        let ultimaActividad = null;
+        if (ultimoMovimiento && ultimoPago) {
+            ultimaActividad = new Date(ultimoMovimiento.fecha) > new Date(ultimoPago.created_at)
+                ? { tipo: 'movimiento', usuario: ultimoMovimiento.usuario_nombre, fecha: ultimoMovimiento.fecha, descripcion: ultimoMovimiento.concepto || ultimoMovimiento.origen_tipo }
+                : { tipo: 'pago', usuario: ultimoPago.usuario_nombre, fecha: ultimoPago.created_at, descripcion: `Pago ${ultimoPago.medio_pago_nombre}` };
+        } else if (ultimoMovimiento) {
+            ultimaActividad = { tipo: 'movimiento', usuario: ultimoMovimiento.usuario_nombre, fecha: ultimoMovimiento.fecha, descripcion: ultimoMovimiento.concepto || ultimoMovimiento.origen_tipo };
+        } else if (ultimoPago) {
+            ultimaActividad = { tipo: 'pago', usuario: ultimoPago.usuario_nombre, fecha: ultimoPago.created_at, descripcion: `Pago ${ultimoPago.medio_pago_nombre}` };
+        }
+
         res.json({
             ok: true,
             caja: {
@@ -334,7 +372,13 @@ router.get('/estado-actual', async (req, res) => {
                 nombre: r.nombre,
                 total: formatCurrency(r.total)
             })),
-            detalle_operaciones: detalleOperaciones
+            detalle_operaciones: detalleOperaciones,
+            // === AUDITORÍA ===
+            auditoria: {
+                usuario_actual: usuarioActualNombre,
+                usuario_actual_id: req.user.id,
+                ultima_actividad: ultimaActividad
+            }
         });
     } catch (error) {
         console.error('Error en /caja/estado-actual:', error);
@@ -458,7 +502,7 @@ router.post('/movimientos', async (req, res) => {
 // GET /api/caja/cierres
 router.get('/cierres', async (req, res) => {
     try {
-        const { fecha_desde, fecha_hasta, page = 1, limit = 20 } = req.query;
+        const { fecha_desde, fecha_hasta, buscar, page = 1, limit = 20 } = req.query;
         const idSucursal = await resolverSucursal(req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
 
@@ -469,6 +513,19 @@ router.get('/cierres', async (req, res) => {
 
         if (fecha_desde) { whereClause += ` AND cc.fecha >= $${pi++}`; params.push(fecha_desde); }
         if (fecha_hasta) { whereClause += ` AND cc.fecha <= $${pi++}`; params.push(fecha_hasta + ' 23:59:59'); }
+        if (buscar) {
+            // Buscar por ID de cierre (numérico) o por nombre de usuario
+            const buscarNum = parseInt(buscar);
+            if (!isNaN(buscarNum)) {
+                whereClause += ` AND (cc.id = $${pi} OR u.nombre ILIKE $${pi + 1})`;
+                params.push(buscarNum, '%' + buscar + '%');
+                pi += 2;
+            } else {
+                whereClause += ` AND u.nombre ILIKE $${pi}`;
+                params.push('%' + buscar + '%');
+                pi++;
+            }
+        }
 
         // Obtener cierres con el total facturado (suma de pagos en ordenpago)
         const result = await pool.query(`
