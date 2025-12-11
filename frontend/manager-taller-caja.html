@@ -55,6 +55,13 @@
         .view-section.active {
             display: block;
         }
+
+        /* Fix para opciones del select de sucursales */
+        #sucursal-select option {
+            background-color: #111318;
+            color: white;
+            padding: 8px;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -314,6 +321,22 @@
                                                 esperado</span></div><span id="efec-esperado"
                                             class="text-2xl font-bold text-white">€0.00</span>
                                     </div>
+
+                                    <!-- Acciones rápidas -->
+                                    <div class="border-t border-[#282e39] pt-4 mt-2">
+                                        <span class="text-[10px] text-[#9da6b9] uppercase font-bold mb-3 block">Acciones
+                                            Rápidas</span>
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <button id="btn-ingreso-caja"
+                                                class="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-green-500/10 border border-green-500/20 text-sm font-bold text-green-400 hover:bg-green-500/20 transition-colors">
+                                                <span class="material-symbols-outlined text-[18px]">add</span>Ingreso
+                                            </button>
+                                            <button id="btn-gasto-caja"
+                                                class="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-sm font-bold text-red-400 hover:bg-red-500/20 transition-colors">
+                                                <span class="material-symbols-outlined text-[18px]">remove</span>Gasto
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
@@ -333,28 +356,53 @@
                 </section>
 
                 <section id="view-cierres" class="view-section">
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <div class="lg:col-span-3 rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                    <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                        <div class="px-6 py-4 border-b border-[#282e39] flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-white">Historial de Cierres</h3>
+                        </div>
+                        <div class="overflow-x-auto">
                             <table class="w-full text-left">
                                 <thead class="text-[10px] font-bold uppercase text-[#9da6b9] bg-[#1c1f27]">
                                     <tr>
-                                        <th class="px-6 py-4">Fecha Cierre</th>
-                                        <th class="px-6 py-4">Usuario</th>
-                                        <th class="px-6 py-4">Saldo Final</th>
-                                        <th class="px-6 py-4">Resultado</th>
-                                        <th class="px-6 py-4"></th>
+                                        <th class="px-5 py-4">Fecha Cierre</th>
+                                        <th class="px-5 py-4">Usuario</th>
+                                        <th class="px-5 py-4">
+                                            <span class="inline-flex items-center gap-1">
+                                                Total Facturado
+                                                <span class="material-symbols-outlined text-[12px] cursor-help"
+                                                    title="Suma de todas las ventas cobradas en el periodo (efectivo + tarjeta + transferencia)">info</span>
+                                            </span>
+                                        </th>
+                                        <th class="px-5 py-4">
+                                            <span class="inline-flex items-center gap-1">
+                                                Efectivo Teórico
+                                                <span class="material-symbols-outlined text-[12px] cursor-help"
+                                                    title="Saldo inicial + ingresos efectivo - egresos efectivo - retiros a caja chica">info</span>
+                                            </span>
+                                        </th>
+                                        <th class="px-5 py-4">
+                                            <span class="inline-flex items-center gap-1">
+                                                Efectivo Contado
+                                                <span class="material-symbols-outlined text-[12px] cursor-help"
+                                                    title="Efectivo físico contado al momento del cierre">info</span>
+                                            </span>
+                                        </th>
+                                        <th class="px-5 py-4">
+                                            <span class="inline-flex items-center gap-1">
+                                                Diferencia
+                                                <span class="material-symbols-outlined text-[12px] cursor-help"
+                                                    title="Diferencia entre efectivo contado y efectivo teórico">info</span>
+                                            </span>
+                                        </th>
+                                        <th class="px-5 py-4 text-center">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="cierres-tbody" class="divide-y divide-[#282e39]">
                                     <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                                        <td colspan="7" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
                                     </tr>
                                 </tbody>
                             </table>
-                        </div>
-                        <div id="cierre-detail"
-                            class="lg:col-span-2 rounded-xl border border-[#282e39] bg-[#111318] p-6">
-                            <p class="text-[#9da6b9] text-center">Selecciona un cierre para ver detalles</p>
                         </div>
                     </div>
                 </section>
@@ -613,168 +661,321 @@
                 const data = await apiGet(url);
                 const tbody = document.getElementById('cierres-tbody');
                 if (!data.cierres || data.cierres.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">Sin cierres registrados</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-[#9da6b9]">Sin cierres registrados</td></tr>';
                     return;
                 }
                 tbody.innerHTML = data.cierres.map(c => {
-                    const resultado = parseFloat(c.saldo_real || 0) - parseFloat(c.saldo_inicial || 0);
-                    return '<tr class="hover:bg-[#1a1d24] cursor-pointer" data-cierre-id="' + c.id + '"><td class="px-6 py-4 text-sm text-white">' + formatDate(c.fecha_cierre) + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + (c.usuario_cierre || '-') + '</td><td class="px-6 py-4 text-sm font-medium text-white">' + formatCurrency(c.saldo_real) + '</td><td class="px-6 py-4 text-sm font-bold ' + (resultado >= 0 ? 'text-green-400' : 'text-red-400') + '">' + (resultado >= 0 ? '+' : '') + formatCurrency(resultado) + '</td><td class="px-6 py-4"><span class="material-symbols-outlined text-gray-600">chevron_right</span></td></tr>';
+                    // Helper para parsear valores monetarios
+                    const parseMonetario = (val) => {
+                        if (typeof val === 'number') return val;
+                        if (!val) return 0;
+                        return parseFloat(String(val).replace(/[€$\s]/g, '').replace(',', '.')) || 0;
+                    };
+
+                    // Valores principales
+                    const totalFacturado = parseMonetario(c.total_facturado || c.total_periodo);
+                    const saldoTeorico = parseMonetario(c.saldo_teorico || c.efectivo_esperado);
+                    const saldoReal = parseMonetario(c.saldo_real);
+                    const diferenciaCaja = saldoReal - saldoTeorico;
+
+                    // Colores para diferencia: 0 = verde, > 0 = azul (sobrante), < 0 = rojo (faltante)
+                    let diffClass = 'text-green-400';
+                    if (diferenciaCaja > 0.01) {
+                        diffClass = 'text-blue-400';
+                    } else if (diferenciaCaja < -0.01) {
+                        diffClass = 'text-red-400';
+                    }
+
+                    return '<tr class="hover:bg-[#1a1d24]">' +
+                        '<td class="px-5 py-4 text-sm text-white">' + formatDate(c.fecha_cierre) + '</td>' +
+                        '<td class="px-5 py-4 text-sm text-[#9da6b9]">' + (c.usuario_cierre || '-') + '</td>' +
+                        '<td class="px-5 py-4 text-sm font-bold text-green-400">' + formatCurrency(totalFacturado) + '</td>' +
+                        '<td class="px-5 py-4 text-sm text-gray-300">' + formatCurrency(saldoTeorico) + '</td>' +
+                        '<td class="px-5 py-4 text-sm font-medium text-white">' + formatCurrency(saldoReal) + '</td>' +
+                        '<td class="px-5 py-4 text-sm font-bold ' + diffClass + '">' + (diferenciaCaja >= 0 ? '+' : '') + formatCurrency(diferenciaCaja) + '</td>' +
+                        '<td class="px-5 py-4 text-center">' +
+                        '<button class="btn-ver-cierre inline-flex items-center gap-1 text-xs text-[#9da6b9] hover:text-white transition-colors" data-cierre-id="' + c.id + '">' +
+                        '<span class="material-symbols-outlined text-[16px]">visibility</span>' +
+                        '<span class="hidden sm:inline">Ver Detalle</span>' +
+                        '</button>' +
+                        '</td>' +
+                        '</tr>';
                 }).join('');
-                tbody.querySelectorAll('tr[data-cierre-id]').forEach(tr => { tr.addEventListener('click', () => loadCierreDetail(tr.dataset.cierreId)); });
+                // Event listeners para abrir modal de detalle
+                tbody.querySelectorAll('.btn-ver-cierre').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openCierreDetailModal(btn.dataset.cierreId);
+                    });
+                });
             } catch (e) { console.error('Error loading cierres:', e); }
         }
 
-        async function loadCierreDetail(id) {
+        // Modal de detalle de cierre con diseño de dos columnas: Arqueo + Facturación
+        async function openCierreDetailModal(id) {
             try {
                 const data = await apiGet('/api/caja/cierres/' + id);
                 const c = data.cierre;
                 const desglose = data.desglose_pago || [];
 
-                const resultadoNum = parseFloat(c.resultado_periodo.replace(/[€,]/g, '').replace(',', '.')) || 0;
-                const resultadoClass = resultadoNum >= 0 ? 'text-green-400' : 'text-red-400';
-                const resultadoSign = resultadoNum >= 0 ? '+' : '';
+                // Helper para parsear valores monetarios del backend
+                const parseMonetario = (val) => {
+                    if (typeof val === 'number') return val;
+                    if (!val) return 0;
+                    // Quitar símbolos de moneda, espacios y convertir coma decimal
+                    return parseFloat(String(val).replace(/[€$\s]/g, '').replace(',', '.')) || 0;
+                };
 
-                // Calcular diferencia (teórico vs real)
-                const diferenciaNum = parseFloat(c.diferencia.replace(/[€,]/g, '').replace(',', '.')) || 0;
-                const diferenciaClass = diferenciaNum === 0 ? 'text-green-400' : diferenciaNum > 0 ? 'text-blue-400' : 'text-red-400';
-                const diferenciaIcon = diferenciaNum === 0 ? 'check_circle' : diferenciaNum > 0 ? 'trending_up' : 'trending_down';
-                const diferenciaLabel = diferenciaNum === 0 ? 'Sin diferencia' : diferenciaNum > 0 ? 'Sobrante' : 'Faltante';
+                // Desglose por forma de pago para la sección de facturación
+                const efectivoDesglose = desglose.find(d => d.forma_pago && d.forma_pago.toLowerCase().includes('efectivo'));
+                const tarjetaDesglose = desglose.find(d => d.forma_pago && (d.forma_pago.toLowerCase().includes('tarjeta') || d.forma_pago.toLowerCase().includes('tpv')));
+                const transferenciaDesglose = desglose.find(d => d.forma_pago && d.forma_pago.toLowerCase().includes('transferencia'));
 
-                // HTML para la sección de diferencia/descuadre
-                let diferenciaHtml = '';
-                if (diferenciaNum !== 0) {
-                    const alertClass = diferenciaNum > 0 ? 'bg-blue-500/10 border-blue-500/30' : 'bg-red-500/10 border-red-500/30';
-                    const textClass = diferenciaNum > 0 ? 'text-blue-400' : 'text-red-400';
-                    diferenciaHtml = `
-                        <div class="${alertClass} p-4 rounded-xl border mb-4">
-                            <div class="flex items-center gap-3">
-                                <span class="material-symbols-outlined ${textClass} text-[24px]">${diferenciaIcon}</span>
-                                <div>
-                                    <span class="text-[10px] ${textClass} uppercase font-bold">${diferenciaLabel} en Arqueo</span>
-                                    <p class="text-xl font-bold ${textClass}">${formatCurrency(c.diferencia)}</p>
-                                </div>
-                            </div>
-                            <div class="mt-3 pt-3 border-t border-[#282e39]/50 grid grid-cols-2 gap-4 text-xs">
-                                <div>
-                                    <span class="text-[#9da6b9]">Efectivo Teórico:</span>
-                                    <span class="text-white font-medium ml-1">${formatCurrency(c.saldo_teorico)}</span>
-                                </div>
-                                <div>
-                                    <span class="text-[#9da6b9]">Efectivo Contado:</span>
-                                    <span class="text-white font-medium ml-1">${formatCurrency(c.saldo_real)}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                // === VALORES DEL BACKEND (usar directamente para consistencia con la tabla) ===
+                const saldoInicial = parseMonetario(c.saldo_inicial);
+                const saldoTeorico = parseMonetario(c.saldo_teorico); // El teórico calculado por el backend al momento del cierre
+                const saldoReal = parseMonetario(c.saldo_real); // Efectivo físico contado al cerrar
+                const diferenciaBackend = parseMonetario(c.diferencia); // Diferencia calculada por el backend
+
+                // Ventas por método de pago (del desglose)
+                const ventasEfectivo = parseMonetario(efectivoDesglose?.total);
+                const ventasTarjeta = parseMonetario(tarjetaDesglose?.total);
+                const ventasTransferencia = parseMonetario(transferenciaDesglose?.total);
+
+                // Total facturado = suma de ventas por todos los métodos
+                const totalFacturado = ventasEfectivo + ventasTarjeta + ventasTransferencia;
+
+                // Movimientos manuales
+                const totalIngresos = parseMonetario(c.total_ingresos);
+                const totalEgresos = parseMonetario(c.total_egresos);
+
+                // Retiros a caja chica 
+                const retirosCajaChica = parseMonetario(c.a_caja_chica);
+
+                // === USAR VALORES DEL BACKEND PARA CONSISTENCIA ===
+                // El backend calcula: saldoTeorico = saldoInicial + efectivoPagos + totalIngresos - totalEgresos
+                // IMPORTANTE: Los retiros a caja chica se registran DESPUÉS del cálculo del teórico
+                const teoricoEnCaja = saldoTeorico; // Usar el valor del backend directamente
+                const diferencia = diferenciaBackend; // Usar la diferencia del backend
+
+                // Ingresos de efectivo para mostrar en el desglose
+                const ingresosEfectivo = ventasEfectivo + totalIngresos;
+
+                // Egresos para mostrar (movimientos manuales, NO incluye retiros aún)
+                const egresosEfectivo = totalEgresos;
+
+                // === MÉTRICAS CONTABLES (informativas, no afectan arqueo) ===
+                const finalContable = saldoInicial + totalFacturado - totalEgresos;
+                const resultadoNeto = totalFacturado - totalEgresos;
+
+                // === CLASES PARA EL ESTADO DEL ARQUEO ===
+                let diffClass = 'text-green-400';
+                let diffBgClass = 'bg-green-500/10 border-green-500/30';
+                let diffIcon = 'check_circle';
+                let diffLabel = 'Arqueo correcto';
+                const tolerancia = 0.01;
+                const hayDiferencia = Math.abs(diferencia) > tolerancia;
+
+                if (diferencia > tolerancia) {
+                    // Sobrante: SaldoRealContado > Teórico
+                    diffClass = 'text-blue-400';
+                    diffBgClass = 'bg-blue-500/10 border-blue-500/30';
+                    diffIcon = 'trending_up';
+                    diffLabel = 'Sobrante';
+                } else if (diferencia < -tolerancia) {
+                    // Faltante: SaldoRealContado < Teórico
+                    diffClass = 'text-red-400';
+                    diffBgClass = 'bg-red-500/10 border-red-500/30';
+                    diffIcon = 'trending_down';
+                    diffLabel = 'Faltante';
                 }
 
-                let desgloseHtml = '';
-                if (desglose.length > 0) {
-                    desgloseHtml = `
-                        <div class="border-t border-[#282e39] pt-4 mt-4">
-                            <h4 class="text-xs font-bold text-[#9da6b9] uppercase mb-3 flex items-center gap-2">
-                                <span class="w-1 h-4 bg-[var(--brand-orange)] rounded-full"></span>
-                                Desglose por Forma de Pago
-                            </h4>
-                            <div class="space-y-2">
-                                ${desglose.map(d => `
-                                    <div class="flex justify-between items-center py-2 border-b border-[#282e39]/50">
-                                        <span class="text-sm text-gray-300">${d.forma_pago}</span>
-                                        <span class="text-sm font-bold text-white">${formatCurrency(d.total)}</span>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-
-                document.getElementById('cierre-detail').innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
+                const modalContent = `
+                    <!-- Header con periodo e info -->
+                    <div class="bg-[#1a1d24] -mx-6 -mt-6 px-6 py-4 mb-6 border-b border-[#282e39] flex justify-between items-start">
                         <div>
-                            <h2 class="text-xl font-bold text-white">Cierre del ${formatDate(c.fecha)}</h2>
-                            <p class="text-xs text-[#9da6b9]">Periodo desde ${formatDate(c.fecha_apertura)} hasta ${formatDate(c.fecha)}</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button class="w-8 h-8 rounded-lg bg-[#1a1d24] border border-[#282e39] flex items-center justify-center text-[#9da6b9] hover:text-white" title="Imprimir">
-                                <span class="material-symbols-outlined text-[18px]">print</span>
-                            </button>
-                            <button class="w-8 h-8 rounded-lg bg-[#1a1d24] border border-[#282e39] flex items-center justify-center text-[#9da6b9] hover:text-white" title="Descargar">
-                                <span class="material-symbols-outlined text-[18px]">download</span>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="flex flex-wrap gap-3 mb-5">
-                        <div class="flex items-center gap-2 px-3 py-1.5 bg-[#1a1d24] rounded-lg text-xs">
-                            <span class="material-symbols-outlined text-green-400 text-[14px]">lock_open</span>
-                            <span class="text-[#9da6b9]">Abre:</span>
-                            <span class="text-white font-medium">${c.usuario_apertura}</span>
-                        </div>
-                        <div class="flex items-center gap-2 px-3 py-1.5 bg-[#1a1d24] rounded-lg text-xs">
-                            <span class="material-symbols-outlined text-red-400 text-[14px]">lock</span>
-                            <span class="text-[#9da6b9]">Cierra:</span>
-                            <span class="text-white font-medium">${c.usuario_cierre}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-[#1a1d24] p-4 rounded-xl">
-                            <span class="text-[10px] text-[#9da6b9] uppercase font-bold flex items-center gap-1">
-                                Saldo Inicial <span class="material-symbols-outlined text-[12px]">info</span>
-                            </span>
-                            <p class="text-xl font-bold text-white mt-1">${formatCurrency(c.saldo_inicial)}</p>
-                        </div>
-                        <div class="bg-[#1a1d24] p-4 rounded-xl">
-                            <span class="text-[10px] text-[#9da6b9] uppercase font-bold flex items-center gap-1">
-                                Saldo Final <span class="material-symbols-outlined text-[12px]">info</span>
-                            </span>
-                            <p class="text-xl font-bold text-white mt-1">${formatCurrency(c.saldo_real)}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
-                            <span class="text-[10px] text-green-400 uppercase font-bold">Resultado del Periodo</span>
-                            <p class="text-xl font-bold ${resultadoClass} mt-1">${resultadoSign}${formatCurrency(c.resultado_periodo)}</p>
-                        </div>
-                        <div class="bg-[#1a1d24] p-4 rounded-xl">
-                            <span class="text-[10px] text-[#9da6b9] uppercase font-bold">Apertura Siguiente</span>
-                            <p class="text-xl font-bold text-white mt-1">${formatCurrency(c.saldo_real)}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-[#1a1d24] p-4 rounded-xl">
-                            <span class="text-[10px] text-green-400 uppercase font-bold">Total Ingresos</span>
-                            <p class="text-xl font-bold text-green-400 mt-1">${formatCurrency(c.total_ingresos)}</p>
-                        </div>
-                        <div class="bg-[#1a1d24] p-4 rounded-xl">
-                            <span class="text-[10px] text-red-400 uppercase font-bold">Total Egresos</span>
-                            <p class="text-xl font-bold text-red-400 mt-1">${formatCurrency(c.total_egresos)}</p>
-                        </div>
-                    </div>
-                    
-                    ${parseFloat(c.a_caja_chica) > 0 ? `
-                    <div class="bg-indigo-500/10 p-4 rounded-xl border border-indigo-500/20 mb-4">
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <span class="text-[10px] text-indigo-400 uppercase font-bold flex items-center gap-1">
-                                    A Caja Chica <span class="material-symbols-outlined text-[12px]">info</span>
-                                </span>
-                                <p class="text-xl font-bold text-white mt-1">${formatCurrency(c.a_caja_chica)}</p>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs text-[#9da6b9]">Periodo:</span>
+                                <span class="text-sm font-medium text-white">${formatDate(c.fecha_apertura)} - ${formatDate(c.fecha || c.fecha_cierre)}</span>
                             </div>
-                            <a href="#" class="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1">
-                                Ver en Caja Chica <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-[#9da6b9]">Usuario:</span>
+                                <span class="text-sm font-medium text-white">${c.usuario_cierre || '-'}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-[#9da6b9] uppercase">ID Cierre:</span>
+                            <span class="text-sm font-mono text-[var(--brand-orange)] ml-1">#${c.id || id}</span>
                         </div>
                     </div>
-                    ` : ''}
-                    
-                    ${diferenciaHtml}
-                    
-                    ${desgloseHtml}
+
+                    <!-- 3 Tarjetas de resumen principal (métricas contables, NO afectan arqueo) -->
+                    <div class="grid grid-cols-3 gap-3 mb-6">
+                        <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#282e39]">
+                            <span class="text-[10px] text-[#9da6b9] uppercase font-bold">Inicial (Efectivo)</span>
+                            <p class="text-xl font-bold text-white mt-1">${formatCurrency(saldoInicial)}</p>
+                        </div>
+                        <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#282e39]">
+                            <span class="text-[10px] text-[#9da6b9] uppercase font-bold flex items-center gap-1">
+                                Final (Contable) <span class="material-symbols-outlined text-[12px] cursor-help" title="Saldo inicial + ventas totales − egresos">info</span>
+                            </span>
+                            <p class="text-xl font-bold text-white mt-1">${formatCurrency(finalContable)}</p>
+                        </div>
+                        <div class="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
+                            <span class="text-[10px] text-green-400 uppercase font-bold flex items-center gap-1">
+                                Resultado (Neto) <span class="material-symbols-outlined text-[12px] cursor-help" title="Ventas totales − gastos del período">info</span>
+                            </span>
+                            <p class="text-xl font-bold ${resultadoNeto >= 0 ? 'text-green-400' : 'text-red-400'} mt-1">${resultadoNeto >= 0 ? '+' : ''}${formatCurrency(resultadoNeto)}</p>
+                        </div>
+                    </div>
+
+                    <!-- Dos columnas: Arqueo + Facturación -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <!-- Columna izquierda: ARQUEO DE EFECTIVO -->
+                        <div class="bg-[#1a1d24] rounded-xl p-5 border border-[#282e39]">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">account_balance_wallet</span>
+                                <h4 class="text-sm font-bold text-white uppercase">Arqueo de Efectivo</h4>
+                            </div>
+                            
+                            <div class="space-y-3 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-[#9da6b9]">Saldo inicial</span>
+                                    <span class="text-white font-medium">${formatCurrency(saldoInicial)}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-[#9da6b9]">+ Ingresos efectivo</span>
+                                    <span class="text-green-400 font-medium">+${formatCurrency(ingresosEfectivo)}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-[#9da6b9]">- Egresos efectivo</span>
+                                    <span class="text-red-400 font-medium">-${formatCurrency(egresosEfectivo)}</span>
+                                </div>
+                                ${retirosCajaChica > 0 ? `
+                                <div class="flex justify-between text-sm pl-4 text-[11px]">
+                                    <span class="text-[#9da6b9] italic">(incl. ${formatCurrency(retirosCajaChica)} a Caja Chica)</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="border-t border-[#282e39] pt-4 space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-[#9da6b9] flex items-center gap-1">
+                                        Teórico en caja <span class="material-symbols-outlined text-[12px] cursor-help" title="Saldo inicial + ingresos efectivo − egresos efectivo">info</span>
+                                    </span>
+                                    <span class="text-lg font-bold text-white">${formatCurrency(teoricoEnCaja)}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm font-medium text-[var(--brand-orange)] flex items-center gap-1">
+                                        Saldo real contado <span class="material-symbols-outlined text-[12px] cursor-help" title="Efectivo físico contado al cerrar">info</span>
+                                    </span>
+                                    <span class="text-lg font-bold text-white">${formatCurrency(saldoReal)}</span>
+                                </div>
+                            </div>
+                            
+                            ${hayDiferencia ? `
+                            <div class="${diffBgClass} p-3 rounded-lg border mt-4 flex justify-between items-center">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined ${diffClass}">${diffIcon}</span>
+                                    <span class="text-sm font-medium ${diffClass}">${diffLabel}</span>
+                                </div>
+                                <span class="text-lg font-bold ${diffClass}">${diferencia >= 0 ? '+' : ''}${formatCurrency(diferencia)}</span>
+                            </div>
+                            ` : `
+                            <div class="bg-green-500/10 p-3 rounded-lg border border-green-500/30 mt-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-green-400">check_circle</span>
+                                <span class="text-sm font-medium text-green-400">Arqueo correcto - Sin diferencias</span>
+                            </div>
+                            `}
+                        </div>
+                        
+                        <!-- Columna derecha: FACTURACIÓN DEL PERIODO -->
+                        <div class="bg-[#1a1d24] rounded-xl p-5 border border-[#282e39]">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="material-symbols-outlined text-blue-400">receipt_long</span>
+                                <h4 class="text-sm font-bold text-white uppercase">Facturación del Periodo</h4>
+                            </div>
+                            
+                            <div class="bg-green-500/5 rounded-xl p-4 mb-4 text-center border border-green-500/20">
+                                <span class="text-[10px] text-green-400 uppercase font-bold">Total Facturado</span>
+                                <p class="text-3xl font-bold text-green-400 mt-1">${formatCurrency(totalFacturado)}</p>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2 border-b border-[#282e39]/50">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-green-400 text-[18px]">payments</span>
+                                        <span class="text-sm text-gray-300">Efectivo</span>
+                                    </div>
+                                    <span class="text-sm font-bold text-green-400">${formatCurrency(ventasEfectivo)}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-[#282e39]/50">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-blue-400 text-[18px]">credit_card</span>
+                                        <span class="text-sm text-gray-300">Tarjeta</span>
+                                    </div>
+                                    <span class="text-sm font-bold text-blue-400">${formatCurrency(ventasTarjeta)}</span>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-purple-400 text-[18px]">account_balance</span>
+                                        <span class="text-sm text-gray-300">Transferencia</span>
+                                    </div>
+                                    <span class="text-sm font-bold text-purple-400">${formatCurrency(ventasTransferencia)}</span>
+                                </div>
+                            </div>
+                            
+                            <p class="text-[10px] text-[#9da6b9] mt-4 italic">
+                                El total facturado incluye todas las ventas cobradas en el periodo (efectivo, tarjeta y otros métodos de pago).
+                            </p>
+                        </div>
+                    </div>
                 `;
-            } catch (e) { console.error('Error loading cierre detail:', e); }
+
+                // Mostrar modal específico para detalle de cierre (más ancho)
+                const container = document.getElementById('modal-container');
+                container.innerHTML = `
+                    <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 modal-overlay">
+                        <div class="w-full max-w-3xl max-h-[90vh] rounded-2xl bg-[#111318] border border-[#282e39] shadow-2xl flex flex-col" onclick="event.stopPropagation()">
+                            <div class="bg-[#1a1d24] px-6 py-5 border-b border-[#282e39] flex justify-between items-center flex-shrink-0">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-[var(--brand-orange)]/20 flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-[var(--brand-orange)]">lock</span>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-white">Cierre del ${formatDate(c.fecha || c.fecha_cierre)}</h3>
+                                        <p class="text-xs text-[#9da6b9]">Resumen del turno y arqueo final</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button class="w-9 h-9 rounded-lg bg-[#0b0d11] border border-[#282e39] flex items-center justify-center text-[#9da6b9] hover:text-white" title="Imprimir">
+                                        <span class="material-symbols-outlined text-[18px]">print</span>
+                                    </button>
+                                    <button class="w-9 h-9 rounded-lg bg-[#0b0d11] border border-[#282e39] flex items-center justify-center text-[#9da6b9] hover:text-white" title="Descargar">
+                                        <span class="material-symbols-outlined text-[18px]">download</span>
+                                    </button>
+                                    <button class="modal-close w-9 h-9 rounded-lg bg-[#0b0d11] border border-[#282e39] flex items-center justify-center text-[#9da6b9] hover:text-white">
+                                        <span class="material-symbols-outlined">close</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-6 overflow-y-auto flex-grow">${modalContent}</div>
+                        </div>
+                    </div>
+                `;
+
+                // Event listeners para cerrar
+                container.querySelector('.modal-overlay').addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal-overlay')) {
+                        container.innerHTML = '';
+                    }
+                });
+                container.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', () => { container.innerHTML = ''; }));
+
+            } catch (e) {
+                console.error('Error loading cierre detail:', e);
+                showToast('Error al cargar detalle del cierre', 'error');
+            }
         }
 
         async function loadMovimientos(page) {
@@ -822,7 +1023,29 @@
             confirmText = confirmText || 'Confirmar';
             confirmClass = confirmClass || 'bg-[var(--brand-orange)]';
             const container = document.getElementById('modal-container');
-            container.innerHTML = '<div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"><div class="w-full max-w-lg rounded-2xl bg-[#111318] border border-[#282e39] shadow-2xl overflow-hidden"><div class="bg-[#1a1d24] p-6 border-b border-[#282e39] flex justify-between items-center"><h3 class="text-lg font-bold text-white">' + title + '</h3><button class="modal-close text-gray-500 hover:text-white"><span class="material-symbols-outlined">close</span></button></div><div class="p-6">' + content + '</div><div class="bg-[#1a1d24] p-5 border-t border-[#282e39] flex justify-end gap-3"><button class="modal-close rounded-xl px-5 py-2.5 text-sm font-bold text-gray-400 hover:text-white">Cancelar</button><button class="modal-confirm rounded-xl px-6 py-2.5 text-sm font-bold text-white ' + confirmClass + ' hover:opacity-90">' + confirmText + '</button></div></div></div>';
+            container.innerHTML = `
+                <div class="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 modal-overlay">
+                    <div class="w-full max-w-lg max-h-[90vh] rounded-2xl bg-[#111318] border border-[#282e39] shadow-2xl flex flex-col" onclick="event.stopPropagation()">
+                        <div class="bg-[#1a1d24] p-6 border-b border-[#282e39] flex justify-between items-center flex-shrink-0">
+                            <h3 class="text-lg font-bold text-white">${title}</h3>
+                            <button class="modal-close text-gray-500 hover:text-white">
+                                <span class="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div class="p-6 overflow-y-auto flex-grow">${content}</div>
+                        <div class="bg-[#1a1d24] p-5 border-t border-[#282e39] flex justify-end gap-3 flex-shrink-0">
+                            <button class="modal-close rounded-xl px-5 py-2.5 text-sm font-bold text-gray-400 hover:text-white">Cancelar</button>
+                            <button class="modal-confirm rounded-xl px-6 py-2.5 text-sm font-bold text-white ${confirmClass} hover:opacity-90">${confirmText}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            // Cerrar al hacer clic en el overlay (fondo oscuro)
+            container.querySelector('.modal-overlay').addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-overlay')) {
+                    container.innerHTML = '';
+                }
+            });
             container.querySelectorAll('.modal-close').forEach(b => b.addEventListener('click', () => { container.innerHTML = ''; }));
             container.querySelector('.modal-confirm').addEventListener('click', async () => { try { await onConfirm(); container.innerHTML = ''; } catch (err) { console.error(err); } });
         }
@@ -842,6 +1065,8 @@
             const saldoApertura = cajaData && cajaData.caja ? cajaData.caja.saldo_apertura : '0';
             const ingresosEfec = cajaData && cajaData.totales ? cajaData.totales.ingresos_efectivo : '0';
             const egresosEfec = cajaData && cajaData.totales ? cajaData.totales.egresos_efectivo : '0';
+            // TPV: Total del sistema (tarjeta) - viene del backend
+            const totalTpvSistema = cajaData && cajaData.totales ? cajaData.totales.tarjeta : '0';
 
             const modalContent = `
                 <div class="flex items-center gap-3 mb-5">
@@ -904,30 +1129,228 @@
                     </div>
                 </div>
                 
-                <div>
+                <div class="border-t border-[#282e39] pt-5 mt-5">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="material-symbols-outlined text-blue-400">credit_card</span>
+                        <h4 class="text-sm font-bold text-white">Conciliación TPV (Tarjeta del Taller)</h4>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="bg-blue-500/10 rounded-xl p-3 border border-blue-500/20">
+                            <span class="text-[10px] text-blue-400 uppercase font-bold">Total TPV (Sistema)</span>
+                            <p id="modal-tpv-sistema" class="text-lg text-white font-bold mt-1">${formatCurrency(totalTpvSistema)}</p>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-[#9da6b9] uppercase font-bold mb-1 flex items-center gap-1">
+                                Total TPV (Real) <span class="material-symbols-outlined text-[12px]" title="Importe total cobrado por tarjeta según el datáfono">info</span>
+                            </label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span>
+                                <input type="number" step="0.01" id="modal-tpv-real" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-blue-400 focus:outline-none" placeholder="0.00" oninput="calcularDiferenciaTPV()">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-[11px] text-[#9da6b9] mb-4 bg-[#1a1d24] rounded-lg p-3 border-l-2 border-blue-400">
+                        <span class="material-symbols-outlined text-[14px] align-middle mr-1">info</span>
+                        Introduce aquí solo el total cobrado por tarjeta correspondiente al <strong>Taller</strong> en el periodo del cierre. Si el TPV también tiene cobros de otros negocios (bicicletas, etc.), no los incluyas.
+                    </p>
+                    
+                    <div id="tpv-diferencia-container" class="hidden mb-4">
+                        <div id="tpv-diferencia-box" class="p-3 rounded-xl border flex justify-between items-center">
+                            <span class="text-sm font-medium">Diferencia TPV:</span>
+                            <span id="tpv-diferencia-valor" class="text-lg font-bold">€0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div id="tpv-motivo-container" class="hidden">
+                        <label class="text-sm font-medium text-gray-300 mb-2 flex items-center gap-1">
+                            Motivo de la diferencia TPV <span class="text-red-400">*</span>
+                        </label>
+                        <textarea id="modal-tpv-motivo" rows="2" class="w-full rounded-xl bg-[#1a1d24] border border-red-500/30 px-4 py-3 text-white resize-none focus:border-red-400 focus:outline-none" placeholder="Explica el descuadre entre el TPV del sistema y el real..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="border-t border-[#282e39] pt-5 mt-5">
                     <label class="text-sm font-medium text-gray-300 mb-2 block">Descripción / Notas (Opcional)</label>
                     <textarea id="modal-descripcion" rows="2" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white resize-none focus:border-[var(--brand-orange)] focus:outline-none" placeholder="Observaciones sobre el cierre..."></textarea>
                 </div>
             `;
+
+            // Función para calcular diferencia TPV en tiempo real
+            window.calcularDiferenciaTPV = function () {
+                const tpvSistema = parseFloat(totalTpvSistema) || 0;
+                const tpvRealInput = document.getElementById('modal-tpv-real');
+                const tpvReal = parseFloat(tpvRealInput ? tpvRealInput.value : 0) || 0;
+                const diferencia = tpvReal - tpvSistema;
+
+                const diffContainer = document.getElementById('tpv-diferencia-container');
+                const diffBox = document.getElementById('tpv-diferencia-box');
+                const diffValor = document.getElementById('tpv-diferencia-valor');
+                const motivoContainer = document.getElementById('tpv-motivo-container');
+
+                if (tpvRealInput && tpvRealInput.value !== '') {
+                    diffContainer.classList.remove('hidden');
+                    diffValor.textContent = (diferencia >= 0 ? '+' : '') + formatCurrency(diferencia);
+
+                    if (diferencia === 0) {
+                        diffBox.className = 'p-3 rounded-xl border border-green-500/30 bg-green-500/10 flex justify-between items-center';
+                        diffValor.className = 'text-lg font-bold text-green-400';
+                        motivoContainer.classList.add('hidden');
+                    } else if (diferencia > 0) {
+                        diffBox.className = 'p-3 rounded-xl border border-blue-500/30 bg-blue-500/10 flex justify-between items-center';
+                        diffValor.className = 'text-lg font-bold text-blue-400';
+                        motivoContainer.classList.remove('hidden');
+                    } else {
+                        diffBox.className = 'p-3 rounded-xl border border-red-500/30 bg-red-500/10 flex justify-between items-center';
+                        diffValor.className = 'text-lg font-bold text-red-400';
+                        motivoContainer.classList.remove('hidden');
+                    }
+                } else {
+                    diffContainer.classList.add('hidden');
+                    motivoContainer.classList.add('hidden');
+                }
+            };
 
             showModal('', modalContent, async () => {
                 const saldoReal = document.getElementById('modal-saldo-real').value;
                 const aCajaChica = document.getElementById('modal-acajachica').value;
                 const aperturaSiguiente = document.getElementById('modal-apertura-siguiente').value;
                 const descripcion = document.getElementById('modal-descripcion').value;
+                const tpvReal = document.getElementById('modal-tpv-real').value;
+                const tpvMotivo = document.getElementById('modal-tpv-motivo') ? document.getElementById('modal-tpv-motivo').value : '';
+
+                // Validaciones
                 if (!saldoReal) { showToast('El efectivo contado es requerido', 'error'); throw new Error('Validation'); }
+
+                // Validar motivo TPV si hay diferencia
+                if (tpvReal && tpvReal !== '') {
+                    const tpvSistema = parseFloat(totalTpvSistema) || 0;
+                    const tpvRealNum = parseFloat(tpvReal) || 0;
+                    const diferenciaTpv = tpvRealNum - tpvSistema;
+                    if (diferenciaTpv !== 0 && !tpvMotivo.trim()) {
+                        showToast('El motivo de la diferencia TPV es obligatorio cuando hay descuadre', 'error');
+                        throw new Error('Validation');
+                    }
+                }
+
                 try {
                     await apiPost('/api/caja/cerrar', {
                         saldo_real: saldoReal,
                         a_caja_chica: aCajaChica || 0,
                         apertura_siguiente: aperturaSiguiente || 0,
                         descripcion: descripcion,
-                        idsucursal: currentSucursalId
+                        idsucursal: currentSucursalId,
+                        // Campos TPV (el backend puede ignorarlos si no los procesa aún)
+                        tpv_real: tpvReal || null,
+                        tpv_motivo_diferencia: tpvMotivo || null
                     });
                     showToast('Caja cerrada correctamente');
                     loadEstadoCaja();
                 } catch (e) { showToast(e.response && e.response.data ? e.response.data.error : 'Error al cerrar caja', 'error'); throw e; }
             }, 'Confirmar Cierre');
+        });
+
+        // Modal: Ingreso en Caja Principal
+        document.getElementById('btn-ingreso-caja').addEventListener('click', () => {
+            showModal('Registrar Ingreso en Caja', `
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-10 h-10 rounded-xl bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-green-400">add_circle</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Nuevo Ingreso</h3>
+                        <p class="text-xs text-[#9da6b9]">Registrar entrada de efectivo en caja.</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 block">Monto *</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span>
+                            <input type="number" step="0.01" id="modal-ingreso-monto" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-green-400 focus:outline-none" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 block">Concepto *</label>
+                        <input type="text" id="modal-ingreso-concepto" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white focus:border-green-400 focus:outline-none" placeholder="Ej: Anticipo de cliente, devolución, etc.">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 block">Descripción (Opcional)</label>
+                        <textarea id="modal-ingreso-desc" rows="2" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white resize-none focus:border-green-400 focus:outline-none" placeholder="Detalles adicionales..."></textarea>
+                    </div>
+                </div>
+            `, async () => {
+                const monto = document.getElementById('modal-ingreso-monto').value;
+                const concepto = document.getElementById('modal-ingreso-concepto').value;
+                const descripcion = document.getElementById('modal-ingreso-desc').value;
+                if (!monto) { showToast('El monto es requerido', 'error'); throw new Error('Validation'); }
+                if (!concepto) { showToast('El concepto es requerido', 'error'); throw new Error('Validation'); }
+                try {
+                    await apiPost('/api/caja/movimientos', {
+                        tipo: 'INGRESO',
+                        monto: monto,
+                        concepto: concepto,
+                        descripcion: descripcion,
+                        metodo_pago: 'EFECTIVO',
+                        idsucursal: currentSucursalId
+                    });
+                    showToast('Ingreso registrado correctamente');
+                    loadEstadoCaja();
+                } catch (e) { showToast(e.response && e.response.data ? e.response.data.error : 'Error al registrar ingreso', 'error'); throw e; }
+            }, 'Registrar Ingreso', 'bg-green-500');
+        });
+
+        // Modal: Gasto en Caja Principal
+        document.getElementById('btn-gasto-caja').addEventListener('click', () => {
+            showModal('Registrar Gasto de Caja', `
+                <div class="flex items-center gap-3 mb-5">
+                    <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-red-400">remove_circle</span>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Nuevo Gasto</h3>
+                        <p class="text-xs text-[#9da6b9]">Registrar salida de efectivo de caja.</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 block">Monto *</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span>
+                            <input type="number" step="0.01" id="modal-gasto-monto" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 pl-8 text-white focus:border-red-400 focus:outline-none" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 block">Concepto *</label>
+                        <input type="text" id="modal-gasto-concepto" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white focus:border-red-400 focus:outline-none" placeholder="Ej: Compra de material, pago proveedor, etc.">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-300 mb-2 block">Descripción (Opcional)</label>
+                        <textarea id="modal-gasto-desc" rows="2" class="w-full rounded-xl bg-[#1a1d24] border border-[#282e39] px-4 py-3 text-white resize-none focus:border-red-400 focus:outline-none" placeholder="Detalles adicionales..."></textarea>
+                    </div>
+                </div>
+            `, async () => {
+                const monto = document.getElementById('modal-gasto-monto').value;
+                const concepto = document.getElementById('modal-gasto-concepto').value;
+                const descripcion = document.getElementById('modal-gasto-desc').value;
+                if (!monto) { showToast('El monto es requerido', 'error'); throw new Error('Validation'); }
+                if (!concepto) { showToast('El concepto es requerido', 'error'); throw new Error('Validation'); }
+                try {
+                    await apiPost('/api/caja/movimientos', {
+                        tipo: 'EGRESO',
+                        monto: monto,
+                        concepto: concepto,
+                        descripcion: descripcion,
+                        metodo_pago: 'EFECTIVO',
+                        idsucursal: currentSucursalId
+                    });
+                    showToast('Gasto registrado correctamente');
+                    loadEstadoCaja();
+                } catch (e) { showToast(e.response && e.response.data ? e.response.data.error : 'Error al registrar gasto', 'error'); throw e; }
+            }, 'Registrar Gasto', 'bg-red-500');
         });
 
         // Modal: Enviar a Caja Chica

@@ -400,9 +400,12 @@ router.get('/cierres', async (req, res) => {
         const { page = 1, limit = 20 } = req.query;
         const idSucursal = await resolverSucursal(req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
+
+        // Obtener cierres con el total facturado (suma de pagos en ordenpago)
         const result = await pool.query(`
             SELECT cc.id, cc.fecha, cc.saldo_inicial, cc.saldo_teorico, cc.saldo_real, cc.diferencia,
-                   c.nombre as caja_nombre, u.nombre as usuario_cierre
+                   c.nombre as caja_nombre, u.nombre as usuario_cierre,
+                   COALESCE((SELECT SUM(op.importe) FROM ordenpago op WHERE op.id_caja = c.id), 0) as total_facturado
             FROM cajacierre cc 
             JOIN caja c ON cc.id_caja = c.id 
             LEFT JOIN usuario u ON cc.id_usuario = u.id
@@ -425,6 +428,7 @@ router.get('/cierres', async (req, res) => {
                 saldo_teorico: formatCurrency(c.saldo_teorico),
                 saldo_real: formatCurrency(c.saldo_real),
                 diferencia: formatCurrency(c.diferencia),
+                total_facturado: formatCurrency(c.total_facturado),
                 caja_nombre: c.caja_nombre,
                 usuario_cierre: c.usuario_cierre,
                 resultado_periodo: formatCurrency(parseFloat(c.saldo_real) - parseFloat(c.saldo_inicial))
@@ -493,6 +497,9 @@ router.get('/cierres/:id', async (req, res) => {
         `, [cierre.id_caja, cierre.id]);
         const cajaChicaData = cajaChicaMovResult.rows[0] || { monto: 0, id_movimiento_caja_chica: null };
 
+        // Calcular total facturado (suma del desglose de pagos)
+        const totalFacturado = desglosePagoResult.rows.reduce((sum, r) => sum + parseFloat(r.total), 0);
+
         // Calcular resultado del periodo
         const resultadoPeriodo = parseFloat(cierre.saldo_real) - parseFloat(cierre.saldo_inicial);
 
@@ -510,8 +517,11 @@ router.get('/cierres/:id', async (req, res) => {
                 saldo_real: formatCurrency(cierre.saldo_real),
                 diferencia: formatCurrency(cierre.diferencia),
                 resultado_periodo: formatCurrency(resultadoPeriodo),
+                total_facturado: formatCurrency(totalFacturado),
                 total_ingresos: formatCurrency(movTotales.total_ingresos),
                 total_egresos: formatCurrency(movTotales.total_egresos),
+                ingresos_efectivo: formatCurrency(parseFloat(movTotales.total_ingresos) + parseFloat(desglosePagoResult.rows.find(r => r.nombre?.toLowerCase().includes('efectivo'))?.total || 0)),
+                egresos_efectivo: formatCurrency(movTotales.total_egresos),
                 a_caja_chica: formatCurrency(cajaChicaData.monto),
                 id_movimiento_caja_chica: cajaChicaData.id_movimiento_caja_chica
             },
