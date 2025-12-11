@@ -275,14 +275,23 @@ router.get('/estado-actual', async (req, res) => {
         //     es_gasto: false
         // });
 
-        // TODO: Pagos a trabajadores - Cuando se implemente el módulo de nóminas/pagos
-        // detalleOperaciones.push({
-        //     operacion: 'Pagos a trabajadores',
-        //     efectivo: formatCurrency(0),
-        //     tarjeta: '-',
-        //     total: formatCurrency(0),
-        //     es_gasto: true
-        // });
+        // Pagos a trabajadores - Obtener desde cajamovimiento con origen_tipo = 'PAGO_TRABAJADOR'
+        const pagosTrabajadoresResult = await pool.query(`
+            SELECT COALESCE(SUM(monto), 0) as total
+            FROM cajamovimiento 
+            WHERE id_caja = $1 AND origen_tipo = 'PAGO_TRABAJADOR'
+        `, [caja.id]);
+        const pagosTrabajadoresTotal = parseFloat(pagosTrabajadoresResult.rows[0]?.total) || 0;
+
+        if (pagosTrabajadoresTotal > 0) {
+            detalleOperaciones.push({
+                operacion: 'Pago Trabajadores',
+                efectivo: formatCurrency(-pagosTrabajadoresTotal),
+                tarjeta: '-',
+                total: formatCurrency(-pagosTrabajadoresTotal),
+                es_gasto: true
+            });
+        }
 
         const cajaChica = await getCajaChica(idSucursal);
 
