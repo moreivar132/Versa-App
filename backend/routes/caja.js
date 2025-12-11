@@ -394,6 +394,60 @@ router.get('/movimientos', async (req, res) => {
     }
 });
 
+// POST /api/caja/movimientos - Registrar ingreso o egreso manual en caja
+router.post('/movimientos', async (req, res) => {
+    try {
+        const { tipo, monto, concepto, descripcion, metodo_pago, idsucursal } = req.body;
+
+        // Validaciones
+        if (!tipo || !['INGRESO', 'EGRESO'].includes(tipo)) {
+            return res.status(400).json({ ok: false, error: 'Tipo debe ser INGRESO o EGRESO' });
+        }
+        if (!monto || parseFloat(monto) <= 0) {
+            return res.status(400).json({ ok: false, error: 'Monto debe ser mayor a 0' });
+        }
+        if (!concepto) {
+            return res.status(400).json({ ok: false, error: 'Concepto es requerido' });
+        }
+
+        const idSucursal = idsucursal || await resolverSucursal(req);
+        if (!idSucursal) {
+            return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
+        }
+
+        const idUsuario = req.user.id;
+        const montoNum = parseFloat(monto);
+
+        // Obtener caja abierta
+        const caja = await getCajaAbierta(idSucursal, idUsuario);
+        if (!caja) {
+            return res.status(400).json({ ok: false, error: 'No hay caja abierta para esta sucursal' });
+        }
+
+        // Insertar movimiento
+        const result = await pool.query(`
+            INSERT INTO cajamovimiento (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, descripcion, created_at)
+            VALUES ($1, $2, $3, $4, NOW(), $5, $6, NOW())
+            RETURNING *
+        `, [caja.id, idUsuario, tipo, montoNum, 'MANUAL', concepto + (descripcion ? ': ' + descripcion : '')]);
+
+        res.json({
+            ok: true,
+            message: `${tipo === 'INGRESO' ? 'Ingreso' : 'Egreso'} registrado correctamente`,
+            movimiento: {
+                id: result.rows[0].id,
+                tipo: result.rows[0].tipo,
+                monto: formatCurrency(result.rows[0].monto),
+                fecha: result.rows[0].fecha,
+                concepto: concepto
+            }
+        });
+    } catch (error) {
+        console.error('Error en POST /caja/movimientos:', error);
+        res.status(500).json({ ok: false, error: 'Error al registrar movimiento', details: error.message });
+    }
+});
+
 // GET /api/caja/cierres
 router.get('/cierres', async (req, res) => {
     try {
