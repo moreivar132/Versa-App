@@ -765,8 +765,11 @@
                 const egresosEfectivo = totalEgresos;
 
                 // === MÉTRICAS CONTABLES (informativas, no afectan arqueo) ===
-                const finalContable = saldoInicial + totalFacturado - totalEgresos;
-                const resultadoNeto = totalFacturado - totalEgresos;
+                // Gastos operativos REALES = totalEgresos - retiros a caja chica (que son movimientos internos)
+                const gastosOperativos = totalEgresos - retirosCajaChica;
+                // Final Contable y Resultado Neto NO deben incluir movimientos internos (Caja Chica)
+                const finalContable = saldoInicial + totalFacturado - gastosOperativos;
+                const resultadoNeto = totalFacturado - gastosOperativos;
 
                 // === CLASES PARA EL ESTADO DEL ARQUEO ===
                 let diffClass = 'text-green-400';
