@@ -345,13 +345,13 @@ router.get('/estado-actual', async (req, res) => {
 // GET /api/caja/movimientos
 router.get('/movimientos', async (req, res) => {
     try {
-        const { tipo, fecha_desde, fecha_hasta, page = 1, limit = 20 } = req.query;
+        const { tipo, fecha_desde, fecha_hasta, buscar, page = 1, limit = 20 } = req.query;
         const idSucursal = await resolverSucursal(req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
         const offset = (page - 1) * limit;
 
         let query = `
-            SELECT cm.id, cm.tipo, cm.monto, cm.fecha, cm.origen_tipo, u.nombre as usuario
+            SELECT cm.id, cm.tipo, cm.monto, cm.fecha, cm.origen_tipo, cm.concepto, cm.descripcion, u.nombre as usuario
             FROM cajamovimiento cm 
             JOIN caja c ON cm.id_caja = c.id 
             LEFT JOIN usuario u ON cm.id_usuario = u.id 
@@ -361,7 +361,12 @@ router.get('/movimientos', async (req, res) => {
 
         if (tipo) { query += ` AND cm.tipo = $${pi++}`; params.push(tipo); }
         if (fecha_desde) { query += ` AND cm.fecha >= $${pi++}`; params.push(fecha_desde); }
-        if (fecha_hasta) { query += ` AND cm.fecha <= $${pi++}`; params.push(fecha_hasta); }
+        if (fecha_hasta) { query += ` AND cm.fecha <= $${pi++}`; params.push(fecha_hasta + ' 23:59:59'); }
+        if (buscar) {
+            query += ` AND (cm.concepto ILIKE $${pi} OR cm.descripcion ILIKE $${pi} OR cm.origen_tipo ILIKE $${pi})`;
+            params.push('%' + buscar + '%');
+            pi++;
+        }
 
         const countResult = await pool.query(
             query.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM'),
@@ -379,7 +384,9 @@ router.get('/movimientos', async (req, res) => {
                 monto: formatCurrency(m.monto),
                 fecha: m.fecha,
                 usuario: m.usuario || 'Sistema',
-                origen_tipo: m.origen_tipo
+                origen_tipo: m.origen_tipo,
+                concepto: m.concepto,
+                descripcion: m.descripcion
             })),
             pagination: {
                 page: parseInt(page),
@@ -426,10 +433,10 @@ router.post('/movimientos', async (req, res) => {
 
         // Insertar movimiento
         const result = await pool.query(`
-            INSERT INTO cajamovimiento (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, descripcion, created_at)
-            VALUES ($1, $2, $3, $4, NOW(), $5, $6, NOW())
+            INSERT INTO cajamovimiento (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, concepto, descripcion, created_at)
+            VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, NOW())
             RETURNING *
-        `, [caja.id, idUsuario, tipo, montoNum, 'MANUAL', concepto + (descripcion ? ': ' + descripcion : '')]);
+        `, [caja.id, idUsuario, tipo, montoNum, 'MANUAL', concepto, descripcion || null]);
 
         res.json({
             ok: true,
@@ -451,9 +458,17 @@ router.post('/movimientos', async (req, res) => {
 // GET /api/caja/cierres
 router.get('/cierres', async (req, res) => {
     try {
-        const { page = 1, limit = 20 } = req.query;
+        const { fecha_desde, fecha_hasta, page = 1, limit = 20 } = req.query;
         const idSucursal = await resolverSucursal(req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
+
+        // Construir query con filtros
+        let whereClause = 'WHERE c.id_sucursal = $1';
+        const params = [idSucursal];
+        let pi = 2;
+
+        if (fecha_desde) { whereClause += ` AND cc.fecha >= $${pi++}`; params.push(fecha_desde); }
+        if (fecha_hasta) { whereClause += ` AND cc.fecha <= $${pi++}`; params.push(fecha_hasta + ' 23:59:59'); }
 
         // Obtener cierres con el total facturado (suma de pagos en ordenpago)
         const result = await pool.query(`
@@ -463,14 +478,14 @@ router.get('/cierres', async (req, res) => {
             FROM cajacierre cc 
             JOIN caja c ON cc.id_caja = c.id 
             LEFT JOIN usuario u ON cc.id_usuario = u.id
-            WHERE c.id_sucursal = $1 
+            ${whereClause}
             ORDER BY cc.fecha DESC 
-            LIMIT $2 OFFSET $3
-        `, [idSucursal, parseInt(limit), (page - 1) * limit]);
+            LIMIT $${pi++} OFFSET $${pi++}
+        `, [...params, parseInt(limit), (page - 1) * limit]);
 
         const countResult = await pool.query(
-            `SELECT COUNT(*) as total FROM cajacierre cc JOIN caja c ON cc.id_caja = c.id WHERE c.id_sucursal = $1`,
-            [idSucursal]
+            `SELECT COUNT(*) as total FROM cajacierre cc JOIN caja c ON cc.id_caja = c.id ${whereClause}`,
+            params
         );
 
         res.json({
@@ -781,7 +796,7 @@ router.get('/chica/estado', async (req, res) => {
 // GET /api/caja/chica/movimientos
 router.get('/chica/movimientos', async (req, res) => {
     try {
-        const { tipo, fecha_desde, fecha_hasta, page = 1, limit = 20 } = req.query;
+        const { tipo, fecha_desde, fecha_hasta, buscar, page = 1, limit = 20 } = req.query;
         const idSucursal = await resolverSucursal(req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
         const cajaChica = await getCajaChica(idSucursal);
@@ -796,7 +811,12 @@ router.get('/chica/movimientos', async (req, res) => {
 
         if (tipo) { query += ` AND ccm.tipo = $${pi++}`; params.push(tipo); }
         if (fecha_desde) { query += ` AND ccm.fecha >= $${pi++}`; params.push(fecha_desde); }
-        if (fecha_hasta) { query += ` AND ccm.fecha <= $${pi++}`; params.push(fecha_hasta); }
+        if (fecha_hasta) { query += ` AND ccm.fecha <= $${pi++}`; params.push(fecha_hasta + ' 23:59:59'); }
+        if (buscar) {
+            query += ` AND (ccm.descripcion ILIKE $${pi} OR ccm.origen_tipo ILIKE $${pi})`;
+            params.push('%' + buscar + '%');
+            pi++;
+        }
 
         const countResult = await pool.query(
             query.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM'),
