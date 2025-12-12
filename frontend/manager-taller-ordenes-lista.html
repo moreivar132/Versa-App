@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="/guard.js"></script>
 
   <style>
     :root {
@@ -141,6 +142,69 @@
         opacity: 1;
       }
     }
+
+    /* Estilos de Tooltip - Estandarizados */
+    .tooltip-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tooltip-trigger {
+      cursor: help;
+      color: #6b7280;
+      transition: color 0.2s;
+      font-size: inherit;
+    }
+
+    .tooltip-trigger:hover {
+      color: #9da6b9;
+    }
+
+    .tooltip-content {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      transform: translateX(0);
+      background: #1e2028;
+      border: 1px solid #2d3240;
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: max-content;
+      max-width: 260px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: opacity 0.15s, visibility 0.15s;
+    }
+
+    .tooltip-content::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 12px;
+      transform: translateX(0);
+      border: 5px solid transparent;
+      border-top-color: #2d3240;
+    }
+
+    .tooltip-container:hover .tooltip-content {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .tooltip-title {
+      display: none;
+    }
+
+    .tooltip-text {
+      font-size: 11px;
+      font-weight: 400;
+      color: #d1d5db;
+      line-height: 1.4;
+      text-transform: none;
+    }
   </style>
 
   <script>
@@ -228,7 +292,7 @@
             </div>
 
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="#">
+              href="manager-taller-caja.html">
               <span class="icon-container"><i class="fas fa-cash-register"></i></span>
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
@@ -322,29 +386,42 @@
                 </div>
               </div>
 
-              <div class="flex h-12 items-center rounded-lg bg-[#111318] p-1 border border-[#282e39] shrink-0">
+              <div
+                class="flex h-12 items-center rounded-lg bg-[#111318] p-1 border border-[#282e39] shrink-0 overflow-x-auto">
                 <label
-                  class="cursor-pointer h-full px-4 flex items-center rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-[var(--brand-orange)] has-[:checked]:text-white has-[:checked]:font-semibold">
+                  class="cursor-pointer h-full px-4 flex items-center rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-[var(--brand-orange)] has-[:checked]:text-white has-[:checked]:font-semibold whitespace-nowrap">
                   <span>Todas</span>
                   <input type="radio" name="estado-filter" value="all" class="hidden" checked />
                 </label>
                 <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-yellow-500/20 has-[:checked]:text-yellow-400 has-[:checked]:font-semibold">
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-yellow-500/20 has-[:checked]:text-yellow-400 has-[:checked]:font-semibold whitespace-nowrap">
                   <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
                   <span>Abierta</span>
                   <input type="radio" name="estado-filter" value="ABIERTA" class="hidden" />
                 </label>
                 <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-blue-500/20 has-[:checked]:text-blue-400 has-[:checked]:font-semibold">
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-blue-500/20 has-[:checked]:text-blue-400 has-[:checked]:font-semibold whitespace-nowrap">
                   <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                   <span>En Progreso</span>
                   <input type="radio" name="estado-filter" value="EN_PROGRESO" class="hidden" />
                 </label>
                 <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-green-500/20 has-[:checked]:text-green-400 has-[:checked]:font-semibold">
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-orange-500/20 has-[:checked]:text-orange-400 has-[:checked]:font-semibold whitespace-nowrap">
+                  <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                  <span>Recambio</span>
+                  <input type="radio" name="estado-filter" value="RECAMBIO" class="hidden" />
+                </label>
+                <label
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-green-500/20 has-[:checked]:text-green-400 has-[:checked]:font-semibold whitespace-nowrap">
                   <span class="w-2 h-2 rounded-full bg-green-500"></span>
                   <span>Completadas</span>
                   <input type="radio" name="estado-filter" value="COMPLETADA" class="hidden" />
+                </label>
+                <label
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-purple-500/20 has-[:checked]:text-purple-400 has-[:checked]:font-semibold whitespace-nowrap">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                  <span>Entregadas</span>
+                  <input type="radio" name="estado-filter" value="ENTREGADA" class="hidden" />
                 </label>
               </div>
             </div>
@@ -373,6 +450,32 @@
                 <i
                   class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[#9da6b9] text-xs pointer-events-none"></i>
               </div>
+
+              <!-- Toggle Solo Activas -->
+              <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
+                <span class="text-xs text-[#9da6b9] whitespace-nowrap flex items-center gap-1">
+                  Solo activas
+                  <span class="tooltip-container">
+                    <span class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                    <span class="tooltip-content">
+                      <span class="tooltip-text">
+                        <strong style="color: #ff5f00;">ON:</strong> Pendientes de entrega/pago<br>
+                        <strong style="color: #6b7280;">OFF:</strong> Todas (incluye historial)
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <div class="relative">
+                  <input type="checkbox" id="toggle-solo-activas" class="sr-only peer" checked />
+                  <div
+                    class="w-9 h-5 bg-[#282e39] rounded-full peer peer-checked:bg-[var(--brand-orange)] transition-colors">
+                  </div>
+                  <div
+                    class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4">
+                  </div>
+                </div>
+              </label>
+
               <span class="ml-auto text-xs text-[#9da6b9]" id="orders-count">Cargando...</span>
             </div>
           </div>
@@ -720,7 +823,8 @@
 
         try {
           const response = await getOrdenes(filtros);
-          ordenes = response.ordenes || [];
+          // Excluir presupuestos de la lista de órdenes (se muestran en sección separada)
+          ordenes = (response.ordenes || []).filter(o => o.estado_codigo !== 'PRESUPUESTO');
           document.getElementById('orders-count').textContent = `${ordenes.length} orden(es)`;
           renderOrdenes();
         } catch (error) {
@@ -731,25 +835,49 @@
 
       function renderOrdenes() {
         const tbody = document.getElementById('orders-table-body');
+        const soloActivasToggle = document.getElementById('toggle-solo-activas');
+        const mostrarSoloActivas = soloActivasToggle?.checked ?? true;
 
-        if (ordenes.length === 0) {
+        // Aplicar filtro "solo activas": ocultar órdenes (Entregada + Pagado) y Canceladas
+        let ordenesVisibles = ordenes;
+        if (mostrarSoloActivas) {
+          ordenesVisibles = ordenes.filter(o => {
+            // Ocultar si es (ENTREGADA + PAGADO) o CANCELADA
+            const esEntregadaYPagada = o.estado_codigo === 'ENTREGADA' && o.estado_pago === 'PAGADO';
+            const esCancelada = o.estado_codigo === 'CANCELADA';
+            return !esEntregadaYPagada && !esCancelada;
+          });
+        }
+
+        // Actualizar contador con órdenes visibles
+        document.getElementById('orders-count').textContent = mostrarSoloActivas
+          ? `${ordenesVisibles.length} activa(s) de ${ordenes.length}`
+          : `${ordenes.length} orden(es)`;
+
+        if (ordenesVisibles.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]">No hay órdenes que coincidan con los filtros</td></tr>';
           return;
         }
 
-        tbody.innerHTML = ordenes.map((orden, index) => {
+        tbody.innerHTML = ordenesVisibles.map((orden, index) => {
           const fecha = orden.fecha_ingreso ? new Date(orden.fecha_ingreso).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
           const estadoPagoClass = orden.estado_pago === 'PAGADO' ? 'text-green-500' : orden.estado_pago === 'PARCIAL' ? 'text-yellow-500' : 'text-red-400';
           const estadoPagoLabel = orden.estado_pago === 'PAGADO' ? 'Pagado' : orden.estado_pago === 'PARCIAL' ? 'Parcial' : 'Pendiente';
 
           let estadoClass = 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
           let dotClass = 'bg-yellow-500';
-          if (orden.estado_codigo === 'EN_PROGRESO' || orden.estado_codigo === 'RECAMBIO') {
+          if (orden.estado_codigo === 'EN_PROGRESO') {
             estadoClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
             dotClass = 'bg-blue-400';
-          } else if (orden.estado_codigo === 'COMPLETADA' || orden.estado_codigo === 'ENTREGADA') {
+          } else if (orden.estado_codigo === 'RECAMBIO') {
+            estadoClass = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+            dotClass = 'bg-orange-400';
+          } else if (orden.estado_codigo === 'COMPLETADA') {
             estadoClass = 'bg-green-500/10 text-green-400 border-green-500/20';
             dotClass = 'bg-green-400';
+          } else if (orden.estado_codigo === 'ENTREGADA') {
+            estadoClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            dotClass = 'bg-purple-400';
           }
 
           return `
@@ -820,8 +948,9 @@
               if (d.id !== `dropdown-${ordenId}`) d.classList.remove('show');
             });
 
-            // Renderizar opciones
-            dropdown.innerHTML = estadosDisponibles.map(estado => {
+            // Renderizar opciones (excluir PRESUPUESTO ya que se usa solo para presupuestos separados)
+            const estadosOrden = estadosDisponibles.filter(e => e.codigo !== 'PRESUPUESTO');
+            dropdown.innerHTML = estadosOrden.map(estado => {
               const dotColor = getEstadoDotColor(estado.codigo);
               const isActive = estado.codigo === estadoActual;
               return `
@@ -855,8 +984,10 @@
 
       // Obtener color del dot según código de estado
       function getEstadoDotColor(codigo) {
-        if (codigo === 'EN_PROGRESO' || codigo === 'RECAMBIO') return '#60a5fa';
-        if (codigo === 'COMPLETADA' || codigo === 'ENTREGADA') return '#22c55e';
+        if (codigo === 'EN_PROGRESO') return '#60a5fa'; // Azul
+        if (codigo === 'RECAMBIO') return '#f97316'; // Naranja
+        if (codigo === 'COMPLETADA') return '#22c55e'; // Verde
+        if (codigo === 'ENTREGADA') return '#a855f7'; // Púrpura
         return '#eab308'; // Amarillo para ABIERTA y otros
       }
 
@@ -1023,6 +1154,11 @@
 
       document.getElementById('filter-fecha').addEventListener('change', aplicarFiltros);
       document.getElementById('filter-pago').addEventListener('change', aplicarFiltros);
+
+      // Toggle "Solo activas": al cambiar, vuelve a renderizar sin recargar datos
+      document.getElementById('toggle-solo-activas').addEventListener('change', () => {
+        renderOrdenes();
+      });
 
       let searchTimeout;
       document.getElementById('search-input').addEventListener('input', (e) => {
