@@ -502,8 +502,10 @@
           userInitialsEl.textContent = initials;
         }
 
-        // Cargar órdenes para obtener conteos
-        const response = await getOrdenes({});
+        // Cargar órdenes para obtener conteos (filtrar por sucursal si está seleccionada)
+        const sucursalSelect = document.getElementById('sucursal-select');
+        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        const response = await getOrdenes(sucursalId ? { sucursal: sucursalId } : {});
         const ordenes = response.ordenes || [];
 
         // Calcular estadísticas - misma lógica que en lista de órdenes
@@ -603,8 +605,15 @@
       const chartContainer = document.getElementById('chart-semanal');
       const totalSemanalEl = document.getElementById('total-semanal');
 
+      // Obtener sucursal seleccionada
+      const sucursalSelect = document.getElementById('sucursal-select');
+      const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+      const url = sucursalId
+        ? `/api/ordenpago/estadisticas/semanal?sucursal=${sucursalId}`
+        : '/api/ordenpago/estadisticas/semanal';
+
       try {
-        const response = await fetchWithAuth('/api/ordenpago/estadisticas/semanal');
+        const response = await fetchWithAuth(url);
         if (!response.ok) throw new Error('Error al cargar estadísticas');
 
         const data = await response.json();
@@ -694,6 +703,17 @@
               ${options}
             </select>
           `;
+
+          // Agregar event listener para cambio de sucursal
+          setTimeout(() => {
+            const select = document.getElementById('sucursal-select');
+            if (select) {
+              select.addEventListener('change', () => {
+                // Recargar estadísticas cuando cambia la sucursal
+                cargarEstadisticas();
+              });
+            }
+          }, 0);
         } else {
           // Solo una sucursal - mostrar label
           const sucursal = data.sucursales.find(s => s.id == data.sucursal_actual) || data.sucursales[0];

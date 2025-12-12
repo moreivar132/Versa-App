@@ -95,6 +95,7 @@ router.get('/orden/:idOrden', verifyJWT, async (req, res) => {
 // GET /api/ordenpago/estadisticas/semanal - Obtener pagos por día de la semana actual
 router.get('/estadisticas/semanal', verifyJWT, async (req, res) => {
     try {
+        const { sucursal } = req.query; // Parámetro opcional de sucursal
 
         // Calcular inicio de la semana (lunes) en hora local
         const hoy = new Date();
@@ -105,28 +106,47 @@ router.get('/estadisticas/semanal', verifyJWT, async (req, res) => {
         inicioSemana.setHours(0, 0, 0, 0);
 
         // Formato YYYY-MM-DD para evitar problemas de timezone
-        const fechaInicio = inicioSemana.toLocaleDateString('en-CA'); // Formato YYYY-MM-DD
+        const fechaInicio = inicioSemana.toLocaleDateString('en-CA');
 
-        // Consulta que usa DATE para comparar solo la parte de fecha
-        const query = `
-            SELECT 
-                EXTRACT(ISODOW FROM op.created_at AT TIME ZONE 'Europe/Madrid') as dia_semana,
-                COALESCE(SUM(op.importe), 0) as total_dia
-            FROM ordenpago op
-            WHERE DATE(op.created_at AT TIME ZONE 'Europe/Madrid') >= $1::date
-            GROUP BY EXTRACT(ISODOW FROM op.created_at AT TIME ZONE 'Europe/Madrid')
-            ORDER BY dia_semana
-        `;
+        // Consulta base con JOIN a orden para filtrar por sucursal
+        let query;
+        let params;
 
-        console.log('[estadisticas/semanal] Desde:', fechaInicio);
-        const result = await pool.query(query, [fechaInicio]);
-        console.log('[estadisticas/semanal] Resultado:', result.rows);
+        if (sucursal && sucursal !== 'all') {
+            // Filtrar por sucursal específica
+            query = `
+                SELECT 
+                    EXTRACT(ISODOW FROM op.created_at AT TIME ZONE 'Europe/Madrid') as dia_semana,
+                    COALESCE(SUM(op.importe), 0) as total_dia
+                FROM ordenpago op
+                JOIN orden o ON op.id_orden = o.id
+                WHERE DATE(op.created_at AT TIME ZONE 'Europe/Madrid') >= $1::date
+                  AND o.id_sucursal = $2
+                GROUP BY EXTRACT(ISODOW FROM op.created_at AT TIME ZONE 'Europe/Madrid')
+                ORDER BY dia_semana
+            `;
+            params = [fechaInicio, parseInt(sucursal)];
+        } else {
+            // Sin filtro de sucursal
+            query = `
+                SELECT 
+                    EXTRACT(ISODOW FROM op.created_at AT TIME ZONE 'Europe/Madrid') as dia_semana,
+                    COALESCE(SUM(op.importe), 0) as total_dia
+                FROM ordenpago op
+                WHERE DATE(op.created_at AT TIME ZONE 'Europe/Madrid') >= $1::date
+                GROUP BY EXTRACT(ISODOW FROM op.created_at AT TIME ZONE 'Europe/Madrid')
+                ORDER BY dia_semana
+            `;
+            params = [fechaInicio];
+        }
+
+        console.log('[estadisticas/semanal] Desde:', fechaInicio, 'Sucursal:', sucursal || 'todas');
+        const result = await pool.query(query, params);
 
         // Inicializar array con 7 días (lunes=0 a domingo=6)
         const pagosPorDia = [0, 0, 0, 0, 0, 0, 0];
 
         result.rows.forEach(row => {
-            // ISODOW: 1=lunes, 7=domingo -> convertir a índice 0-6
             const idx = parseInt(row.dia_semana) - 1;
             if (idx >= 0 && idx <= 6) {
                 pagosPorDia[idx] = parseFloat(row.total_dia) || 0;
@@ -142,7 +162,7 @@ router.get('/estadisticas/semanal', verifyJWT, async (req, res) => {
             inicioSemana: inicioSemana.toISOString()
         });
     } catch (error) {
-        console.error('[estadisticas/semanal] Error:', error.message, error.stack);
+        console.error('[estadisticas/semanal] Error:', error.message);
         res.status(500).json({ success: false, mensaje: error.message });
     }
 });
