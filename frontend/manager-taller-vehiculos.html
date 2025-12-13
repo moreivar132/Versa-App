@@ -970,20 +970,28 @@
             });
         }
 
+        // Constante para leer la sucursal guardada
+        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
         async function loadCatalogs() {
             try {
                 const sucursales = await fetchWithAuth('/api/admin/sucursales').then(r => r.ok ? r.json() : []);
                 allSucursales = sucursales;
 
                 const sucursalSelect = document.getElementById('id_sucursal');
+
+                // Leer sucursal guardada
+                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+
                 sucursalSelect.innerHTML = '<option value="">Seleccionar Sucursal...</option>' +
-                    sucursales.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+                    sucursales.map(s => {
+                        const selected = savedSucursal && s.id == savedSucursal ? ' selected' : '';
+                        return `<option value="${s.id}"${selected}>${s.nombre}</option>`;
+                    }).join('');
 
             } catch (e) { console.error('Error loading catalogs', e); }
         }
 
-        // Constante para leer la sucursal guardada
-        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
 
         async function loadVehicles() {
             const grid = document.getElementById('recent-vehicles-grid');

@@ -1070,6 +1070,9 @@
 
         let globalConfig = { sucursales: [], tecnicos: [] };
 
+        // Constante para leer la sucursal guardada
+        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
         async function loadConfig() {
             try {
                 const res = await fetch(`${API_BASE_URL}/api/citas/config`);
@@ -1079,7 +1082,13 @@
                     const sucursalSelect = document.getElementById('cita-sucursal');
                     const mecanicoSelect = document.getElementById('cita-mecanico');
 
-                    sucursalSelect.innerHTML = data.sucursales.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+                    // Leer sucursal guardada
+                    const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+
+                    sucursalSelect.innerHTML = data.sucursales.map(s => {
+                        const selected = savedSucursal && s.id == savedSucursal ? ' selected' : '';
+                        return `<option value="${s.id}"${selected}>${s.nombre}</option>`;
+                    }).join('');
                     mecanicoSelect.innerHTML = '<option value="">Cualquiera</option>' + data.tecnicos.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
                 }
             } catch (e) {
@@ -1169,8 +1178,11 @@
                 document.getElementById('cita-id').value = '';
                 document.getElementById('cita-fecha').value = new Date().toISOString().split('T')[0];
 
-                // Set default sucursal if available
-                if (globalConfig.sucursales.length > 0) {
+                // Set sucursal from localStorage or first available
+                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+                if (savedSucursal && globalConfig.sucursales.some(s => s.id == savedSucursal)) {
+                    document.getElementById('cita-sucursal').value = savedSucursal;
+                } else if (globalConfig.sucursales.length > 0) {
                     document.getElementById('cita-sucursal').value = globalConfig.sucursales[0].id;
                 }
                 checkAvailability();
