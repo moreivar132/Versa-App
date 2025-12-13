@@ -167,4 +167,192 @@ router.get('/estadisticas/semanal', verifyJWT, async (req, res) => {
     }
 });
 
+// GET /api/ordenpago/estadisticas/ticket-medio - Ticket Medio Mensual
+router.get('/estadisticas/ticket-medio', verifyJWT, async (req, res) => {
+    try {
+        const { sucursal } = req.query;
+
+        // Calcular fechas del mes actual
+        const hoy = new Date();
+        const inicioMesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        const finMesActual = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59);
+
+        // Calcular fechas del mes anterior
+        const inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+        const finMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0, 23, 59, 59);
+
+        // Nombres de meses para mostrar
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const mesActualNombre = meses[hoy.getMonth()];
+        const mesAnteriorNombre = meses[hoy.getMonth() - 1 < 0 ? 11 : hoy.getMonth() - 1];
+
+        // Query base para ticket medio
+        // Buscar órdenes con estado 'ENTREGADA' o 'CERRADA' (según la nomenclatura del sistema)
+        // Usamos updated_at como fecha de cierre cuando el estado cambió a ENTREGADA
+        const buildQuery = (fechaInicio, fechaFin, params, paramStart) => {
+            let query = `
+                SELECT 
+                    COALESCE(SUM(o.total_neto), 0) as facturacion_total,
+                    COUNT(o.id) as ordenes_cerradas
+                FROM orden o
+                JOIN estadoorden eo ON o.id_estado_orden = eo.id
+                WHERE o.total_neto > 0
+                  AND UPPER(eo.codigo) IN ('ENTREGADA', 'CERRADA', 'COMPLETADA', 'FINALIZADA')
+                  AND o.updated_at >= $${paramStart}
+                  AND o.updated_at <= $${paramStart + 1}
+            `;
+            params.push(fechaInicio.toISOString(), fechaFin.toISOString());
+
+            if (sucursal && sucursal !== 'all') {
+                query += ` AND o.id_sucursal = $${paramStart + 2}`;
+                params.push(parseInt(sucursal));
+            }
+
+            return query;
+        };
+
+        // Consulta mes actual
+        const paramsActual = [];
+        const queryActual = buildQuery(inicioMesActual, finMesActual, paramsActual, 1);
+        const resultActual = await pool.query(queryActual, paramsActual);
+
+        // Consulta mes anterior
+        const paramsAnterior = [];
+        const queryAnterior = buildQuery(inicioMesAnterior, finMesAnterior, paramsAnterior, 1);
+        const resultAnterior = await pool.query(queryAnterior, paramsAnterior);
+
+        // Calcular ticket medio
+        const datosActual = resultActual.rows[0];
+        const datosAnterior = resultAnterior.rows[0];
+
+        const facturacionActual = parseFloat(datosActual.facturacion_total) || 0;
+        const ordenesActuales = parseInt(datosActual.ordenes_cerradas) || 0;
+        const ticketMedioActual = ordenesActuales > 0 ? facturacionActual / ordenesActuales : 0;
+
+        const facturacionAnterior = parseFloat(datosAnterior.facturacion_total) || 0;
+        const ordenesAnteriores = parseInt(datosAnterior.ordenes_cerradas) || 0;
+        const ticketMedioAnterior = ordenesAnteriores > 0 ? facturacionAnterior / ordenesAnteriores : 0;
+
+        // Calcular variación porcentual
+        let variacionPorcentaje = 0;
+        if (ticketMedioAnterior > 0) {
+            variacionPorcentaje = ((ticketMedioActual - ticketMedioAnterior) / ticketMedioAnterior) * 100;
+        } else if (ticketMedioActual > 0) {
+            variacionPorcentaje = 100; // Si antes era 0 y ahora hay algo, es +100%
+        }
+
+        console.log('[ticket-medio] Mes actual:', mesActualNombre,
+            '| Órdenes:', ordenesActuales,
+            '| Facturación:', facturacionActual.toFixed(2),
+            '| Ticket:', ticketMedioActual.toFixed(2));
+
+        res.json({
+            success: true,
+            mesActual: {
+                nombre: mesActualNombre,
+                año: hoy.getFullYear(),
+                ticketMedio: ticketMedioActual,
+                ordenesCerradas: ordenesActuales,
+                facturacionTotal: facturacionActual
+            },
+            mesAnterior: {
+                nombre: mesAnteriorNombre,
+                ticketMedio: ticketMedioAnterior,
+                ordenesCerradas: ordenesAnteriores,
+                facturacionTotal: facturacionAnterior
+            },
+            variacion: {
+                porcentaje: variacionPorcentaje,
+                tendencia: variacionPorcentaje >= 0 ? 'up' : 'down'
+            }
+        });
+    } catch (error) {
+        console.error('[estadisticas/ticket-medio] Error:', error.message);
+        res.status(500).json({ success: false, mensaje: error.message });
+    }
+});
+
+// GET /api/ordenpago/estadisticas/ticket-medio/historico - Histórico últimos 12 meses
+router.get('/estadisticas/ticket-medio/historico', verifyJWT, async (req, res) => {
+    try {
+        const { sucursal, meses = 12 } = req.query;
+
+        const hoy = new Date();
+        const numMeses = Math.min(parseInt(meses) || 12, 24);
+
+        // Generar todos los meses del período (de más antiguo a más reciente)
+        const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+            'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+        const todosMeses = [];
+        for (let i = numMeses - 1; i >= 0; i--) {
+            const fecha = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+            todosMeses.push({
+                fecha: fecha,
+                mesKey: `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`,
+                mesNombre: `${mesesNombres[fecha.getMonth()]} ${fecha.getFullYear()}`
+            });
+        }
+
+        // Construir query para obtener datos agrupados por mes
+        let query = `
+            SELECT 
+                DATE_TRUNC('month', o.updated_at) as mes,
+                COALESCE(SUM(o.total_neto), 0) as facturacion_total,
+                COUNT(o.id) as ordenes_cerradas
+            FROM orden o
+            JOIN estadoorden eo ON o.id_estado_orden = eo.id
+            WHERE o.total_neto > 0
+              AND UPPER(eo.codigo) IN ('ENTREGADA', 'CERRADA', 'COMPLETADA', 'FINALIZADA')
+              AND o.updated_at >= $1
+        `;
+
+        const fechaInicio = new Date(hoy.getFullYear(), hoy.getMonth() - numMeses + 1, 1);
+        const params = [fechaInicio.toISOString()];
+
+        if (sucursal && sucursal !== 'all') {
+            query += ` AND o.id_sucursal = $2`;
+            params.push(parseInt(sucursal));
+        }
+
+        query += ` GROUP BY DATE_TRUNC('month', o.updated_at) ORDER BY mes ASC`;
+
+        const result = await pool.query(query, params);
+
+        // Crear un mapa con los datos existentes
+        const datosMap = new Map();
+        result.rows.forEach(row => {
+            const fecha = new Date(row.mes);
+            const mesKey = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+            datosMap.set(mesKey, {
+                facturacion: parseFloat(row.facturacion_total) || 0,
+                ordenes: parseInt(row.ordenes_cerradas) || 0
+            });
+        });
+
+        // Generar histórico completo (todos los meses, con datos o sin ellos)
+        const historico = todosMeses.map(m => {
+            const datos = datosMap.get(m.mesKey) || { facturacion: 0, ordenes: 0 };
+            const ticketMedio = datos.ordenes > 0 ? datos.facturacion / datos.ordenes : 0;
+
+            return {
+                mes: m.mesNombre,
+                mesKey: m.mesKey,
+                ordenesCerradas: datos.ordenes,
+                facturacionTotal: datos.facturacion,
+                ticketMedio: ticketMedio
+            };
+        });
+
+        res.json({
+            success: true,
+            historico
+        });
+    } catch (error) {
+        console.error('[estadisticas/ticket-medio/historico] Error:', error.message);
+        res.status(500).json({ success: false, mensaje: error.message });
+    }
+});
+
 module.exports = router;

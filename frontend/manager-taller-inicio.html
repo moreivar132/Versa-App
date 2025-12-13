@@ -307,7 +307,7 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
           <div
             class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-[var(--brand-orange)] transition-colors group cursor-pointer"
             onclick="window.location='manager-taller-ordenes-lista.html'">
@@ -328,6 +328,39 @@
             <p id="stat-ingresos-dia"
               class="text-3xl font-bold tracking-tight text-white group-hover:text-green-400 transition-colors">-</p>
           </div>
+
+          <!-- Ticket Medio Mensual -->
+          <div
+            class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-purple-500 transition-colors group cursor-pointer"
+            id="ticket-medio-card">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-[#9da6b9] uppercase flex items-center gap-1">
+                Ticket Medio (Mes)
+                <span class="tooltip-container">
+                  <span class="material-symbols-outlined text-[12px] tooltip-trigger cursor-help">info</span>
+                  <span class="tooltip-content" style="width: 260px;">
+                    <span class="tooltip-text">
+                      Importe medio por orden cerrada y entregada en el mes actual.<br><br>
+                      <span style="color: #9da6b9;">Se calcula según la fecha de cierre de la orden, aunque se haya
+                        abierto en otro mes.</span><br><br>
+                      <span style="color: #9da6b9;">No depende de si la orden está pagada o pendiente.</span>
+                    </span>
+                  </span>
+                </span>
+              </p>
+              <span
+                class="material-symbols-outlined text-purple-500 bg-purple-500/10 p-2 rounded-lg">receipt_long</span>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <p id="stat-ticket-medio"
+                class="text-3xl font-bold tracking-tight text-white group-hover:text-purple-400 transition-colors">-</p>
+              <span id="ticket-medio-variacion" class="text-sm font-medium flex items-center gap-0.5">
+                <!-- Se llena dinámicamente -->
+              </span>
+            </div>
+            <p id="ticket-medio-subtexto" class="text-xs text-[#6b7280]">Órdenes cerradas · Mes actual</p>
+          </div>
+
           <div
             class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-[var(--brand-orange)] transition-colors group cursor-pointer"
             onclick="window.location='manager-taller-ordenes-lista.html?estado=COMPLETADA'">
@@ -419,6 +452,73 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Modal Histórico Ticket Medio -->
+  <div id="ticket-medio-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+    style="background: rgba(0,0,0,0.8);">
+    <div
+      class="bg-[#111318] rounded-2xl border border-[#282e39] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      <!-- Header del Modal -->
+      <div class="flex items-center justify-between p-6 border-b border-[#282e39]">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-purple-500 bg-purple-500/10 p-2 rounded-lg">receipt_long</span>
+          <div>
+            <h2 class="text-xl font-bold text-white">Ticket Medio Mensual</h2>
+            <p class="text-sm text-[#9da6b9]">Histórico de los últimos 12 meses</p>
+          </div>
+        </div>
+        <button onclick="cerrarModalTicketMedio()"
+          class="text-[#9da6b9] hover:text-white transition-colors p-2 hover:bg-[#282e39] rounded-lg">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <!-- Gráfico de Barras -->
+        <div class="bg-[#0b0d11] rounded-xl p-6 border border-[#282e39] mb-6">
+          <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-purple-400">bar_chart</span>
+            Evolución del Ticket Medio
+          </h3>
+          <div id="historico-chart" class="h-64 flex items-end justify-between gap-2">
+            <!-- Barras se generan dinámicamente -->
+            <div class="flex items-center justify-center w-full h-full text-[#9da6b9] text-sm">
+              <i class="fas fa-spinner fa-spin mr-2"></i> Cargando...
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Datos -->
+        <div class="bg-[#0b0d11] rounded-xl border border-[#282e39] overflow-hidden">
+          <h3 class="text-base font-bold text-white p-4 border-b border-[#282e39] flex items-center gap-2">
+            <span class="material-symbols-outlined text-purple-400">table_chart</span>
+            Detalle por Mes
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-[#1a1d24]">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">Mes</th>
+                  <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#9da6b9]">Órdenes
+                    Cerradas</th>
+                  <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#9da6b9]">Facturación
+                    Total</th>
+                  <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#9da6b9]">Ticket
+                    Medio</th>
+                </tr>
+              </thead>
+              <tbody id="historico-tabla-body" class="divide-y divide-[#282e39]">
+                <tr>
+                  <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -556,6 +656,9 @@
         // Cargar y renderizar gráfico de rendimiento semanal (pagos reales)
         await cargarRendimientoSemanal();
 
+        // Cargar ticket medio mensual
+        await cargarTicketMedio();
+
       } catch (error) {
         console.error('Error cargando estadísticas:', error);
         document.getElementById('stat-ordenes-activas').textContent = '-';
@@ -680,6 +783,243 @@
       totalSemanalEl.textContent = `€${totalSemanal.toFixed(2)}`;
     }
 
+    // Cargar y mostrar Ticket Medio Mensual
+    async function cargarTicketMedio() {
+      const ticketMedioEl = document.getElementById('stat-ticket-medio');
+      const variacionEl = document.getElementById('ticket-medio-variacion');
+      const subtextoEl = document.getElementById('ticket-medio-subtexto');
+
+      if (!ticketMedioEl) return;
+
+      try {
+        // Obtener sucursal seleccionada
+        const sucursalSelect = document.getElementById('sucursal-select');
+        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        const url = sucursalId
+          ? `/api/ordenpago/estadisticas/ticket-medio?sucursal=${sucursalId}`
+          : '/api/ordenpago/estadisticas/ticket-medio';
+
+        const response = await fetchWithAuth(url);
+        if (!response.ok) throw new Error('Error al cargar ticket medio');
+
+        const data = await response.json();
+
+        if (data.success) {
+          const { mesActual, variacion } = data;
+
+          // Mostrar ticket medio
+          if (mesActual.ordenesCerradas > 0) {
+            ticketMedioEl.textContent = `€${mesActual.ticketMedio.toFixed(2)}`;
+          } else {
+            ticketMedioEl.textContent = '—';
+          }
+
+          // Mostrar variación con flecha
+          if (variacion.porcentaje !== 0 && mesActual.ordenesCerradas > 0) {
+            const isPositive = variacion.tendencia === 'up';
+            const arrow = isPositive ? '↑' : '↓';
+            const colorClass = isPositive ? 'text-green-400' : 'text-red-400';
+            variacionEl.innerHTML = `
+              <span class="${colorClass}">${arrow} ${Math.abs(variacion.porcentaje).toFixed(1)}%</span>
+            `;
+          } else {
+            variacionEl.innerHTML = '';
+          }
+
+          // Actualizar subtexto
+          subtextoEl.textContent = `${mesActual.ordenesCerradas} órdenes cerradas · ${mesActual.nombre}`;
+        }
+      } catch (error) {
+        console.warn('Error cargando ticket medio:', error);
+        ticketMedioEl.textContent = '—';
+        variacionEl.innerHTML = '';
+        subtextoEl.textContent = 'Error al cargar';
+      }
+    }
+
+    // Abrir modal de histórico de ticket medio
+    function abrirModalTicketMedio() {
+      const modal = document.getElementById('ticket-medio-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      cargarHistoricoTicketMedio();
+    }
+
+    // Cerrar modal
+    window.cerrarModalTicketMedio = function () {
+      const modal = document.getElementById('ticket-medio-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Cargar datos históricos
+    async function cargarHistoricoTicketMedio() {
+      const chartContainer = document.getElementById('historico-chart');
+      const tablaBody = document.getElementById('historico-tabla-body');
+
+      try {
+        // Obtener sucursal seleccionada
+        const sucursalSelect = document.getElementById('sucursal-select');
+        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        const url = sucursalId
+          ? `/api/ordenpago/estadisticas/ticket-medio/historico?sucursal=${sucursalId}&meses=12`
+          : '/api/ordenpago/estadisticas/ticket-medio/historico?meses=12';
+
+        const response = await fetchWithAuth(url);
+        if (!response.ok) throw new Error('Error al cargar histórico');
+
+        const data = await response.json();
+
+        if (data.success && data.historico) {
+          renderHistoricoChart(data.historico);
+          renderHistoricoTabla(data.historico);
+        } else {
+          throw new Error('Sin datos');
+        }
+      } catch (error) {
+        console.warn('Error cargando histórico ticket medio:', error);
+        chartContainer.innerHTML = `
+          <div class="flex items-center justify-center w-full h-full text-[#9da6b9] text-sm">
+            <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i> No hay datos disponibles
+          </div>
+        `;
+        tablaBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">No hay datos disponibles</td>
+          </tr>
+        `;
+      }
+    }
+
+    // Renderizar gráfico de barras del histórico
+    function renderHistoricoChart(historico) {
+      const chartContainer = document.getElementById('historico-chart');
+
+      if (!historico || historico.length === 0) {
+        chartContainer.innerHTML = `
+          <div class="flex items-center justify-center w-full h-full text-[#9da6b9] text-sm">
+            No hay datos para mostrar
+          </div>
+        `;
+        return;
+      }
+
+      // Encontrar el máximo para escalar (solo de meses con datos)
+      const maxTicket = Math.max(...historico.map(h => h.ticketMedio), 1);
+
+      chartContainer.innerHTML = historico.map((item, idx) => {
+        const esUltimo = idx === historico.length - 1;
+        const sinDatos = item.ordenesCerradas === 0;
+
+        let altura, barClass, valorMostrar;
+
+        if (sinDatos) {
+          // Mes sin datos: barra mínima con patrón diferente
+          altura = 3;
+          barClass = "bg-[#1a1d24] border border-dashed border-[#3a4050]";
+          valorMostrar = "—";
+        } else {
+          const porcentaje = (item.ticketMedio / maxTicket) * 100;
+          altura = Math.max(porcentaje, 8);
+          barClass = esUltimo
+            ? "bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+            : "bg-[#282e39] hover:bg-purple-500 transition-all duration-300";
+          valorMostrar = `€${item.ticketMedio.toFixed(0)}`;
+        }
+
+        const labelClass = sinDatos
+          ? "text-[10px] text-[#555] whitespace-nowrap"
+          : "text-[10px] text-[#9da6b9] whitespace-nowrap";
+
+        return `
+          <div class="flex h-full flex-col items-center gap-1 flex-1 group cursor-pointer" 
+               title="${item.mes}: ${sinDatos ? 'Sin datos' : `€${item.ticketMedio.toFixed(2)} (${item.ordenesCerradas} órdenes)`}">
+            <span class="text-[10px] ${sinDatos ? 'text-[#555]' : 'text-purple-400'} opacity-0 group-hover:opacity-100 transition-opacity font-medium whitespace-nowrap">
+              ${valorMostrar}
+            </span>
+            <div class="flex-1 flex flex-col-reverse w-full">
+              <div class="w-full max-w-[40px] mx-auto rounded-t ${barClass}" style="height: ${altura}%;"></div>
+            </div>
+            <span class="${labelClass}">${item.mes.split(' ')[0]}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Renderizar tabla del histórico
+    function renderHistoricoTabla(historico) {
+      const tablaBody = document.getElementById('historico-tabla-body');
+
+      if (!historico || historico.length === 0) {
+        tablaBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">No hay datos disponibles</td>
+          </tr>
+        `;
+        return;
+      }
+
+      // Mostrar de más reciente a más antiguo
+      const historicoOrdenado = [...historico].reverse();
+
+      tablaBody.innerHTML = historicoOrdenado.map((item, idx) => {
+        const esActual = idx === 0;
+        const sinDatos = item.ordenesCerradas === 0;
+
+        let rowClass, textClass, ticketClass, badge;
+
+        if (esActual) {
+          rowClass = 'bg-purple-500/5';
+          textClass = 'text-white';
+          ticketClass = 'text-purple-400 font-bold';
+          badge = '<span class="ml-2 text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Actual</span>';
+        } else if (sinDatos) {
+          rowClass = 'bg-[#0a0b0d]';
+          textClass = 'text-[#555]';
+          ticketClass = 'text-[#555]';
+          badge = '<span class="ml-2 text-xs bg-[#1a1d24] text-[#555] px-2 py-0.5 rounded">Sin actividad</span>';
+        } else {
+          rowClass = 'hover:bg-[#1a1d24]';
+          textClass = 'text-[#9da6b9]';
+          ticketClass = 'text-white';
+          badge = '';
+        }
+
+        return `
+          <tr class="${rowClass} transition-colors">
+            <td class="px-6 py-4 text-sm ${sinDatos && !esActual ? 'text-[#555]' : 'text-white'} font-medium">
+              ${item.mes}
+              ${badge}
+            </td>
+            <td class="px-6 py-4 text-sm text-right ${textClass}">${item.ordenesCerradas}</td>
+            <td class="px-6 py-4 text-sm text-right ${textClass}">${sinDatos ? '—' : `€${item.facturacionTotal.toFixed(2)}`}</td>
+            <td class="px-6 py-4 text-sm text-right ${ticketClass}">${sinDatos ? '—' : `€${item.ticketMedio.toFixed(2)}`}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Agregar evento click a la card de ticket medio
+    document.addEventListener('DOMContentLoaded', () => {
+      const ticketCard = document.getElementById('ticket-medio-card');
+      if (ticketCard) {
+        ticketCard.addEventListener('click', abrirModalTicketMedio);
+      }
+
+      // Cerrar modal al hacer clic fuera
+      const modal = document.getElementById('ticket-medio-modal');
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            cerrarModalTicketMedio();
+          }
+        });
+      }
+    });
+
+    // Constante para la clave de localStorage
+    const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
     // Cargar sucursales y mostrar en selector
     async function loadSucursales() {
       try {
@@ -691,10 +1031,17 @@
         if (!sucursalContainer) return;
 
         if (data.puede_seleccionar && data.sucursales.length > 1) {
+          // Verificar si hay una selección guardada en localStorage
+          const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+          // Usar la guardada si existe y es válida, sino usar la actual del backend
+          const selectedSucursalId = savedSucursal && data.sucursales.some(s => s.id == savedSucursal)
+            ? savedSucursal
+            : data.sucursal_actual;
+
           // Usuario puede seleccionar entre múltiples sucursales
           const options = data.sucursales.map(s => {
             const label = s.tenant_nombre ? `${s.tenant_nombre} - ${s.nombre}` : s.nombre;
-            return `<option value="${s.id}"${s.id == data.sucursal_actual ? ' selected' : ''}>${label}</option>`;
+            return `<option value="${s.id}"${s.id == selectedSucursalId ? ' selected' : ''}>${label}</option>`;
           }).join('');
 
           sucursalContainer.innerHTML = `
@@ -709,6 +1056,8 @@
             const select = document.getElementById('sucursal-select');
             if (select) {
               select.addEventListener('change', () => {
+                // Guardar selección en localStorage para persistencia
+                localStorage.setItem(SUCURSAL_STORAGE_KEY, select.value);
                 // Recargar estadísticas cuando cambia la sucursal
                 cargarEstadisticas();
               });
@@ -722,6 +1071,10 @@
             <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
             <span class="text-white font-medium text-sm">${label}</span>
           `;
+          // Si solo hay una sucursal, guardarla también
+          if (sucursal) {
+            localStorage.setItem(SUCURSAL_STORAGE_KEY, sucursal.id);
+          }
         }
       } catch (error) {
         console.warn('Error loading sucursales:', error);

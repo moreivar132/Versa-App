@@ -982,10 +982,20 @@
             } catch (e) { console.error('Error loading catalogs', e); }
         }
 
+        // Constante para leer la sucursal guardada
+        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
         async function loadVehicles() {
             const grid = document.getElementById('recent-vehicles-grid');
             try {
-                const res = await fetchWithAuth('/api/vehiculos');
+                // Construir URL con filtro de sucursal si existe
+                let url = '/api/vehiculos';
+                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+                if (savedSucursal) {
+                    url += `?idSucursal=${savedSucursal}`;
+                }
+
+                const res = await fetchWithAuth(url);
                 if (!res.ok) throw new Error('Error cargando vehículos');
                 allVehicles = await res.json();
 

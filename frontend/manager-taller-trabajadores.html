@@ -680,12 +680,21 @@
         let currentSucursalId = null;
         let puedeSeleccionarSucursal = false;
 
+        // Constante para la clave de localStorage
+        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
         async function loadSucursales() {
             try {
                 const data = await apiGet('/api/caja/sucursales');
                 if (!data.ok) throw new Error(data.error);
                 puedeSeleccionarSucursal = data.puede_seleccionar;
-                currentSucursalId = data.sucursal_actual;
+
+                // Verificar si hay una sucursal guardada en localStorage
+                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+                // Usar la guardada si existe y es válida, sino usar la actual del backend
+                currentSucursalId = savedSucursal && data.sucursales.some(s => s.id == savedSucursal)
+                    ? parseInt(savedSucursal)
+                    : data.sucursal_actual;
 
                 const sucursalContainer = document.getElementById('sucursal-container');
                 if (!sucursalContainer) return;
@@ -704,6 +713,8 @@
                         if (sel) {
                             sel.addEventListener('change', function (e) {
                                 currentSucursalId = parseInt(e.target.value);
+                                // Guardar selección en localStorage para persistencia
+                                localStorage.setItem(SUCURSAL_STORAGE_KEY, currentSucursalId);
                                 // Recargar datos cuando cambia la sucursal
                                 updateDashboard();
                             });
@@ -714,6 +725,10 @@
                     const sucursal = data.sucursales.find(function (s) { return s.id == currentSucursalId; }) || data.sucursales[0];
                     const label = sucursal ? (sucursal.tenant_nombre ? sucursal.tenant_nombre + ' - ' + sucursal.nombre : sucursal.nombre) : 'Sin sucursal';
                     sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><span class="text-white font-medium text-sm">' + label + '</span>';
+                    // Si solo hay una sucursal, guardarla también
+                    if (sucursal) {
+                        localStorage.setItem(SUCURSAL_STORAGE_KEY, sucursal.id);
+                    }
                 }
             } catch (e) {
                 console.error('Error loading sucursales:', e);

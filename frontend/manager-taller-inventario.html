@@ -537,6 +537,9 @@
       }
     }
 
+    // Constante para leer la sucursal guardada
+    const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
     async function loadInventory() {
       const query = document.getElementById('table-search').value;
       const category = document.getElementById('filter-category').value;
@@ -549,6 +552,12 @@
         let url = `/api/inventory/resumen?q=${encodeURIComponent(query)}`;
         if (category) url += `&category=${encodeURIComponent(category)}`;
         if (provider) url += `&provider=${encodeURIComponent(provider)}`;
+
+        // Agregar filtro de sucursal desde localStorage
+        const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+        if (savedSucursal) {
+          url += `&idSucursal=${savedSucursal}`;
+        }
 
         const response = await fetchWithAuth(url);
         if (!response.ok) {

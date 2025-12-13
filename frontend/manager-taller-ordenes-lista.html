@@ -816,12 +816,21 @@
         }
       }
 
+      // Constante para leer la sucursal guardada
+      const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
       // --- CARGAR ÓRDENES ---
       async function cargarOrdenes(filtros = {}) {
         const tbody = document.getElementById('orders-table-body');
         tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...</td></tr>';
 
         try {
+          // Leer sucursal guardada de localStorage y agregarla a los filtros
+          const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+          if (savedSucursal) {
+            filtros.sucursal = savedSucursal;
+          }
+
           const response = await getOrdenes(filtros);
           // Excluir presupuestos de la lista de órdenes (se muestran en sección separada)
           ordenes = (response.ordenes || []).filter(o => o.estado_codigo !== 'PRESUPUESTO');

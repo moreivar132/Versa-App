@@ -174,7 +174,33 @@ router.get('/estado-actual', async (req, res) => {
             [caja.id]
         );
         const saldoApertura = ultimoCierreResult.rows[0]?.saldo_real || 0;
-        const efectivoEsperado = parseFloat(saldoApertura) + efectivoPagos + totalIngresos - totalEgresos;
+
+        // Consulta de COMPRAS - Total de compras por método de pago en el periodo de la caja
+        // Movida ANTES del cálculo del efectivo esperado
+        let comprasData = { efectivo: 0, tarjeta: 0, total: 0 };
+        try {
+            const comprasResult = await pool.query(`
+                SELECT 
+                    COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo,
+                    COALESCE(SUM(CASE WHEN LOWER(metodo_pago) NOT IN ('efectivo', 'cash') AND metodo_pago IS NOT NULL THEN total ELSE 0 END), 0) as tarjeta,
+                    COALESCE(SUM(total), 0) as total
+                FROM compracabecera 
+                WHERE id_sucursal = $1 
+                  AND created_at >= $2
+            `, [idSucursal, caja.created_at]);
+            comprasData = comprasResult.rows[0] || comprasData;
+        } catch (comprasError) {
+            console.warn('Error consultando compras (tabla puede no existir):', comprasError.message);
+        }
+
+        // Calcular compras en efectivo como egreso
+        const comprasEfectivo = parseFloat(comprasData.efectivo) || 0;
+
+        // Egresos totales = movimientos manuales + compras en efectivo
+        const egresosEfectivoTotal = totalEgresos + comprasEfectivo;
+
+        // Efectivo esperado = apertura + ingresos en efectivo - egresos en efectivo
+        const efectivoEsperado = parseFloat(saldoApertura) + efectivoPagos + totalIngresos - egresosEfectivoTotal;
 
         // Detalle de operaciones - Total de ÓRDENES (sin agrupar por tipo)
         const ordenesTotalResult = await pool.query(`
@@ -199,22 +225,7 @@ router.get('/estado-actual', async (req, res) => {
             GROUP BY tipo
         `, [caja.id]);
 
-        // Consulta de COMPRAS - Total de compras por método de pago en el periodo de la caja
-        let comprasData = { efectivo: 0, tarjeta: 0, total: 0 };
-        try {
-            const comprasResult = await pool.query(`
-                SELECT 
-                    COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo,
-                    COALESCE(SUM(CASE WHEN LOWER(metodo_pago) NOT IN ('efectivo', 'cash') AND metodo_pago IS NOT NULL THEN total ELSE 0 END), 0) as tarjeta,
-                    COALESCE(SUM(total), 0) as total
-                FROM compracabecera 
-                WHERE id_sucursal = $1 
-                  AND created_at >= $2
-            `, [idSucursal, caja.created_at]);
-            comprasData = comprasResult.rows[0] || comprasData;
-        } catch (comprasError) {
-            console.warn('Error consultando compras (tabla puede no existir):', comprasError.message);
-        }
+        // NOTA: comprasData ya fue consultado arriba para calcular egresos
 
         // Construir detalle de operaciones
         const detalleOperaciones = [];
@@ -368,9 +379,9 @@ router.get('/estado-actual', async (req, res) => {
                 efectivo: formatCurrency(efectivoPagos),
                 tarjeta: formatCurrency(tarjetaPagos),
                 ingresos_efectivo: formatCurrency(efectivoPagos + totalIngresos),
-                egresos_efectivo: formatCurrency(totalEgresos),
+                egresos_efectivo: formatCurrency(egresosEfectivoTotal),
                 efectivo_esperado: formatCurrency(efectivoEsperado),
-                total_periodo: formatCurrency(efectivoPagos + tarjetaPagos + totalIngresos - totalEgresos)
+                total_periodo: formatCurrency(efectivoPagos + tarjetaPagos + totalIngresos - egresosEfectivoTotal)
             },
             caja_chica: {
                 saldo: formatCurrency(cajaChica.saldo_actual),
@@ -713,13 +724,28 @@ router.post('/cerrar', async (req, res) => {
         `, [caja.id]);
         const efectivoPagos = parseFloat(efPagosResult.rows[0].total);
 
+        // Obtener compras en efectivo del periodo
+        let comprasEfectivo = 0;
+        try {
+            const comprasResult = await client.query(`
+                SELECT COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo
+                FROM compracabecera 
+                WHERE id_sucursal = $1 AND created_at >= $2
+            `, [idSucursal, caja.created_at]);
+            comprasEfectivo = parseFloat(comprasResult.rows[0]?.efectivo) || 0;
+        } catch (e) {
+            console.warn('Error consultando compras en cierre:', e.message);
+        }
+
         // Obtener saldo inicial del último cierre
         const ultimoCierreResult = await client.query(
             `SELECT saldo_real FROM cajacierre WHERE id_caja = $1 ORDER BY fecha DESC LIMIT 1`,
             [caja.id]
         );
         const saldoInicial = parseFloat(ultimoCierreResult.rows[0]?.saldo_real || 0);
-        const saldoTeorico = saldoInicial + efectivoPagos + totalIngresos - totalEgresos;
+
+        // Saldo teórico = saldo inicial + ingresos en efectivo (pagos + movimientos) - egresos (movimientos + compras en efectivo)
+        const saldoTeorico = saldoInicial + efectivoPagos + totalIngresos - totalEgresos - comprasEfectivo;
         const saldoRealNum = parseFloat(saldo_real);
         const diferencia = saldoRealNum - saldoTeorico;
 
