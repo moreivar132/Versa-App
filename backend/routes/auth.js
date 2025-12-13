@@ -64,6 +64,7 @@ router.post('/login', async (req, res) => {
     const payload = {
       id: user.id,
       id_tenant: user.id_tenant,
+      id_sucursal: user.id_sucursal,
       email: user.email,
       nombre: user.nombre,
       is_super_admin: user.is_super_admin,

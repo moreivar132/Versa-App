@@ -219,16 +219,45 @@ router.post('/', verifyJWT, async (req, res) => {
                 throw new Error(`No se pudo resolver el producto para el item: ${item.name}`);
             }
 
+            // Obtener el porcentaje de IVA desde la tabla impuesto
+            let ivaPorcentaje = 0;
+
+            // Prioridad: 1) id_impuesto del item, 2) id_impuesto del producto en BD
+            let idImpuesto = item.id_impuesto;
+
+            if (!idImpuesto && productId) {
+                // Buscar el id_impuesto del producto
+                const prodImpuestoRes = await client.query(
+                    'SELECT id_impuesto FROM producto WHERE id = $1',
+                    [productId]
+                );
+                if (prodImpuestoRes.rows.length > 0 && prodImpuestoRes.rows[0].id_impuesto) {
+                    idImpuesto = prodImpuestoRes.rows[0].id_impuesto;
+                }
+            }
+
+            // Buscar el porcentaje del impuesto en la tabla impuesto
+            if (idImpuesto) {
+                const impuestoRes = await client.query(
+                    'SELECT porcentaje FROM impuesto WHERE id = $1',
+                    [idImpuesto]
+                );
+                if (impuestoRes.rows.length > 0) {
+                    ivaPorcentaje = parseFloat(impuestoRes.rows[0].porcentaje) || 0;
+                }
+            }
+
             const insertLineaQuery = `
                 INSERT INTO compralinea
                 (id_compra, id_producto, descripcion, cantidad, precio_unitario, iva, total_linea)
                 VALUES ($1, $2, $3, $4, $5, $6, $7)
             `;
 
-            // Calcular total línea: (precio * cantidad) - bonus (si aplica)
-            // Nota: El usuario no mencionó 'bonus' en el modelo, pero el frontend lo envía.
-            // Asumiremos que el total_linea debe reflejar el coste real.
-            const lineTotal = (price * quantity) - bonus;
+            // Calcular total línea: (precio * cantidad - bonus) * (1 + iva/100)
+            // El IVA se aplica sobre el subtotal (precio * cantidad - bonus)
+            const subtotal = (price * quantity) - bonus;
+            const ivaAmount = subtotal * (ivaPorcentaje / 100);
+            const lineTotal = subtotal + ivaAmount;
             calculatedTotal += lineTotal;
 
             await client.query(insertLineaQuery, [
@@ -237,7 +266,7 @@ router.post('/', verifyJWT, async (req, res) => {
                 item.name,
                 quantity,
                 price,
-                iva,
+                ivaPorcentaje, // Guardar el porcentaje del impuesto
                 lineTotal
             ]);
 

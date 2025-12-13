@@ -57,12 +57,18 @@ router.get('/', verifyJWT, async (req, res) => {
 router.get('/resumen', verifyJWT, async (req, res) => {
     const limit = parseInt(req.query.limit) || 100;
     const offset = parseInt(req.query.offset) || 0;
-    const { q, category, provider } = req.query;
+    const { q, category, provider, idSucursal } = req.query;
     const id_tenant = req.user.id_tenant;
 
     try {
         let filterClause = 'WHERE p.id_tenant = $1';
         const params = [id_tenant];
+
+        // Filtro por sucursal
+        if (idSucursal) {
+            filterClause += ` AND p.id_sucursal = $${params.length + 1}`;
+            params.push(idSucursal);
+        }
 
         if (q) {
             filterClause += ` AND (p.nombre ILIKE $${params.length + 1} OR p.codigo_barras ILIKE $${params.length + 1} OR p.modelo ILIKE $${params.length + 1})`;
@@ -78,6 +84,7 @@ router.get('/resumen', verifyJWT, async (req, res) => {
             filterClause += ` AND p.id_proveedor = $${params.length + 1}`;
             params.push(provider);
         }
+
 
         // Query simplificada - sin agrupación porque ya no hay duplicados
         const query = `
@@ -240,6 +247,7 @@ router.get('/search', verifyJWT, async (req, res) => {
                 p.codigo_barras,
                 p.nombre,
                 p.precio,
+                p.costo,
                 COALESCE(p.stock, 0) AS stock,
                 p.tipo,
                 p.categoria,

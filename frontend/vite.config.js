@@ -26,6 +26,7 @@ export default defineConfig({
                 managerTallerChat: 'manager-taller-chat.html',
                 managerTallerWhatsapp: 'manager-taller-whatsapp.html',
                 citaPrevia: 'cita-previa.html',
+                managerTallerCaja: 'manager-taller-caja.html',
             }
         }
     },

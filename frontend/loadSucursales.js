@@ -1,4 +1,8 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+// Constante para leer la sucursal guardada
+const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
 export async function loadSucursales() {
     const API_URL = `${API_BASE_URL}/api/sucursales`;
 
@@ -17,8 +21,6 @@ export async function loadSucursales() {
 
         if (!token) {
             console.error("❌ No hay token de sesión. El usuario debe loguearse.");
-            // Opcional: Redirigir al login si es crítico
-            // window.location.href = '/login.html';
             throw new Error("No autenticado");
         }
 
@@ -45,6 +47,9 @@ export async function loadSucursales() {
             return;
         }
 
+        // Leer la sucursal guardada en localStorage
+        const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+
         // Guardar la opción por defecto
         const defaultOption = tallerSelect.querySelector('option[value=""]');
         tallerSelect.innerHTML = '';
@@ -57,10 +62,26 @@ export async function loadSucursales() {
             const option = document.createElement('option');
             option.value = sucursal.id;
             option.textContent = sucursal.nombre;
+
+            // Pre-seleccionar si coincide con la guardada
+            if (savedSucursal && sucursal.id == savedSucursal) {
+                option.selected = true;
+            }
+
             tallerSelect.appendChild(option);
         });
 
-        console.log(`✅ Cargadas ${sucursales.length} sucursales`);
+        // Si hay sucursal guardada pero no se encontró (usuario cambió de tenant), seleccionar la primera
+        if (savedSucursal && !sucursales.some(s => s.id == savedSucursal) && sucursales.length > 0) {
+            tallerSelect.value = sucursales[0].id;
+        }
+
+        // Si no hay sucursal guardada y hay sucursales disponibles, seleccionar la primera
+        if (!savedSucursal && sucursales.length > 0) {
+            tallerSelect.value = sucursales[0].id;
+        }
+
+        console.log(`✅ Cargadas ${sucursales.length} sucursales${savedSucursal ? ` (pre-seleccionada: ${savedSucursal})` : ''}`);
     } catch (error) {
         console.error("❌ Error cargando sucursales:", error);
         const tallerSelect = document.getElementById('taller');
@@ -72,3 +93,4 @@ export async function loadSucursales() {
         }
     }
 }
+

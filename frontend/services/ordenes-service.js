@@ -50,6 +50,7 @@ export async function getOrdenes(filtros = {}) {
         if (filtros.busqueda) params.append('busqueda', filtros.busqueda);
         if (filtros.fechaDesde) params.append('fechaDesde', filtros.fechaDesde);
         if (filtros.fechaHasta) params.append('fechaHasta', filtros.fechaHasta);
+        if (filtros.sucursal) params.append('idSucursal', filtros.sucursal);
         if (filtros.limit) params.append('limit', filtros.limit);
         if (filtros.offset) params.append('offset', filtros.offset);
 
