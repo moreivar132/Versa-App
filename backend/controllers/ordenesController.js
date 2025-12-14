@@ -36,6 +36,8 @@ class OrdenesController {
                 busqueda: req.query.busqueda,
                 fechaDesde: req.query.fechaDesde,
                 fechaHasta: req.query.fechaHasta,
+                idMecanico: req.query.idMecanico ? parseInt(req.query.idMecanico) : null,
+                idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
                 limit: parseInt(req.query.limit) || 50,
                 offset: parseInt(req.query.offset) || 0
             };

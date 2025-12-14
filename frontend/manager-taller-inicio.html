@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="/guard.js"></script>
 
   <style>
     :root {
@@ -44,6 +45,70 @@
 
     ::-webkit-scrollbar-thumb:hover {
       background: #ff5f00;
+    }
+
+    /* Fix para opciones del select de sucursales */
+    #sucursal-select option {
+      background-color: #111318;
+      color: white;
+      padding: 8px;
+    }
+
+    /* Tooltip styles */
+    .tooltip-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tooltip-trigger {
+      color: #6b7280;
+      cursor: help;
+      transition: color 0.15s;
+    }
+
+    .tooltip-trigger:hover {
+      color: #9da6b9;
+    }
+
+    .tooltip-content {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e2028;
+      border: 1px solid #2d3240;
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: max-content;
+      max-width: 280px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: opacity 0.15s, visibility 0.15s;
+    }
+
+    .tooltip-content::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 5px solid transparent;
+      border-top-color: #2d3240;
+    }
+
+    .tooltip-container:hover .tooltip-content {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .tooltip-text {
+      font-size: 12px;
+      font-weight: 400;
+      color: #d1d5db;
+      line-height: 1.5;
     }
   </style>
 
@@ -133,7 +198,7 @@
             </div>
 
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="#">
+              href="manager-taller-caja.html">
               <span class="icon-container"><i class="fas fa-cash-register"></i></span>
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
@@ -233,7 +298,16 @@
           </div>
         </header>
 
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <!-- Sucursal Selector - Centrado -->
+        <div class="flex justify-center mb-6">
+          <div id="sucursal-container"
+            class="flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]">
+            <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
+            <span class="text-white font-medium text-sm">Cargando...</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
           <div
             class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-[var(--brand-orange)] transition-colors group cursor-pointer"
             onclick="window.location='manager-taller-ordenes-lista.html'">
@@ -254,6 +328,39 @@
             <p id="stat-ingresos-dia"
               class="text-3xl font-bold tracking-tight text-white group-hover:text-green-400 transition-colors">-</p>
           </div>
+
+          <!-- Ticket Medio Mensual -->
+          <div
+            class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-purple-500 transition-colors group cursor-pointer"
+            id="ticket-medio-card">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-[#9da6b9] uppercase flex items-center gap-1">
+                Ticket Medio (Mes)
+                <span class="tooltip-container">
+                  <span class="material-symbols-outlined text-[12px] tooltip-trigger cursor-help">info</span>
+                  <span class="tooltip-content" style="width: 260px;">
+                    <span class="tooltip-text">
+                      Importe medio por orden cerrada y entregada en el mes actual.<br><br>
+                      <span style="color: #9da6b9;">Se calcula según la fecha de cierre de la orden, aunque se haya
+                        abierto en otro mes.</span><br><br>
+                      <span style="color: #9da6b9;">No depende de si la orden está pagada o pendiente.</span>
+                    </span>
+                  </span>
+                </span>
+              </p>
+              <span
+                class="material-symbols-outlined text-purple-500 bg-purple-500/10 p-2 rounded-lg">receipt_long</span>
+            </div>
+            <div class="flex items-baseline gap-2">
+              <p id="stat-ticket-medio"
+                class="text-3xl font-bold tracking-tight text-white group-hover:text-purple-400 transition-colors">-</p>
+              <span id="ticket-medio-variacion" class="text-sm font-medium flex items-center gap-0.5">
+                <!-- Se llena dinámicamente -->
+              </span>
+            </div>
+            <p id="ticket-medio-subtexto" class="text-xs text-[#6b7280]">Órdenes cerradas · Mes actual</p>
+          </div>
+
           <div
             class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-[var(--brand-orange)] transition-colors group cursor-pointer"
             onclick="window.location='manager-taller-ordenes-lista.html?estado=COMPLETADA'">
@@ -315,57 +422,103 @@
           <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6 shadow-sm flex flex-col justify-between">
             <h3 class="mb-6 text-base font-bold text-white flex items-center gap-2">
               <span class="material-symbols-outlined text-[var(--brand-orange)]">bar_chart</span>
-              Rendimiento Semanal
+              <span class="flex items-center gap-1">
+                Rendimiento Semanal
+                <span class="tooltip-container">
+                  <span class="material-symbols-outlined text-[14px] tooltip-trigger cursor-help">info</span>
+                  <span class="tooltip-content">
+                    <span class="tooltip-text">
+                      Muestra los <strong style="color: #22c55e;">pagos realmente cobrados</strong> cada día de la
+                      semana actual.<br><br>
+                      <span style="color: #9da6b9;">No incluye facturación pendiente de cobro, solo dinero efectivamente
+                        recibido.</span>
+                    </span>
+                  </span>
+                </span>
+              </span>
             </h3>
-            <div class="flex h-64 items-end justify-between gap-2">
-              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
-                <div
-                  class="h-[40%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
-                  title="Lunes"></div>
-                <span class="text-xs text-[#9da6b9]">L</span>
+            <div class="flex h-64 items-end justify-between gap-2" id="chart-semanal">
+              <!-- Las barras se generan dinámicamente desde JS -->
+              <div class="flex items-center justify-center w-full h-full text-[#9da6b9] text-sm">
+                <i class="fas fa-spinner fa-spin mr-2"></i> Cargando...
               </div>
-              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
-                <div
-                  class="h-[60%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
-                  title="Martes"></div>
-                <span class="text-xs text-[#9da6b9]">M</span>
-              </div>
-              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
-                <div
-                  class="h-[50%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
-                  title="Miércoles"></div>
-                <span class="text-xs text-[#9da6b9]">X</span>
-              </div>
-              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
-                <div
-                  class="h-[80%] w-full max-w-[24px] rounded-t bg-[var(--brand-orange)] shadow-[0_0_15px_rgba(255,95,0,0.3)]">
-                </div>
-                <span class="text-xs font-bold text-white">J</span>
-              </div>
-              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
-                <div
-                  class="h-[75%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
-                  title="Viernes"></div>
-                <span class="text-xs text-[#9da6b9]">V</span>
-              </div>
-              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
-                <div
-                  class="h-[30%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
-                  title="Sábado"></div>
-                <span class="text-xs text-[#9da6b9]">S</span>
-              </div>
-              <div class="flex h-full flex-col-reverse items-center gap-2 w-full">
-                <div
-                  class="h-[20%] w-full max-w-[24px] rounded-t bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300"
-                  title="Domingo"></div>
-                <span class="text-xs text-[#9da6b9]">D</span>
-              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-[#282e39] flex justify-between items-center">
+              <span class="text-xs text-[#9da6b9] uppercase">Total Semanal</span>
+              <span id="total-semanal" class="text-lg font-bold text-green-400">€0.00</span>
             </div>
           </div>
 
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Modal Histórico Ticket Medio -->
+  <div id="ticket-medio-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+    style="background: rgba(0,0,0,0.8);">
+    <div
+      class="bg-[#111318] rounded-2xl border border-[#282e39] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      <!-- Header del Modal -->
+      <div class="flex items-center justify-between p-6 border-b border-[#282e39]">
+        <div class="flex items-center gap-3">
+          <span class="material-symbols-outlined text-purple-500 bg-purple-500/10 p-2 rounded-lg">receipt_long</span>
+          <div>
+            <h2 class="text-xl font-bold text-white">Ticket Medio Mensual</h2>
+            <p class="text-sm text-[#9da6b9]">Histórico de los últimos 12 meses</p>
+          </div>
+        </div>
+        <button onclick="cerrarModalTicketMedio()"
+          class="text-[#9da6b9] hover:text-white transition-colors p-2 hover:bg-[#282e39] rounded-lg">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Contenido del Modal -->
+      <div class="flex-1 overflow-y-auto p-6">
+        <!-- Gráfico de Barras -->
+        <div class="bg-[#0b0d11] rounded-xl p-6 border border-[#282e39] mb-6">
+          <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-purple-400">bar_chart</span>
+            Evolución del Ticket Medio
+          </h3>
+          <div id="historico-chart" class="h-64 flex items-end justify-between gap-2">
+            <!-- Barras se generan dinámicamente -->
+            <div class="flex items-center justify-center w-full h-full text-[#9da6b9] text-sm">
+              <i class="fas fa-spinner fa-spin mr-2"></i> Cargando...
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Datos -->
+        <div class="bg-[#0b0d11] rounded-xl border border-[#282e39] overflow-hidden">
+          <h3 class="text-base font-bold text-white p-4 border-b border-[#282e39] flex items-center gap-2">
+            <span class="material-symbols-outlined text-purple-400">table_chart</span>
+            Detalle por Mes
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead class="bg-[#1a1d24]">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">Mes</th>
+                  <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#9da6b9]">Órdenes
+                    Cerradas</th>
+                  <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#9da6b9]">Facturación
+                    Total</th>
+                  <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#9da6b9]">Ticket
+                    Medio</th>
+                </tr>
+              </thead>
+              <tbody id="historico-tabla-body" class="divide-y divide-[#282e39]">
+                <tr>
+                  <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">Cargando...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -418,7 +571,7 @@
 
   <script type="module">
     import { getOrdenes } from './services/ordenes-service.js';
-    import { requireAuth, clearSession, redirectToLogin } from './auth.js';
+    import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getCurrentUser } from './auth.js';
 
     // Logout logic
     document.querySelector('[data-logout]')?.addEventListener('click', (e) => {
@@ -427,22 +580,42 @@
       redirectToLogin();
     });
 
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
     // Cargar estadísticas del dashboard
     async function cargarEstadisticas() {
       try {
         const user = await requireAuth();
         if (!user) return;
 
+        // Actualizar nombre del usuario en el sidebar
+        const userNameEl = document.querySelector('.sidebar-text .text-white.truncate');
+        const userRoleEl = document.querySelector('.sidebar-text .text-gray-500.truncate');
+        const userInitialsEl = document.querySelector('.w-8.h-8.rounded-full');
 
-        // Cargar órdenes para obtener conteos
-        const ordenes = await getOrdenes({});
+        if (userNameEl && user.nombre) {
+          userNameEl.textContent = user.nombre;
+        }
+        if (userRoleEl && user.rol) {
+          userRoleEl.textContent = user.rol;
+        }
+        if (userInitialsEl && user.nombre) {
+          const initials = user.nombre.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+          userInitialsEl.textContent = initials;
+        }
 
-        // Calcular estadísticas
-        const ordenesActivas = ordenes.filter(o =>
-          o.estado_codigo !== 'ENTREGADA' && o.estado_codigo !== 'CANCELADA'
-        ).length;
+        // Cargar órdenes para obtener conteos (filtrar por sucursal si está seleccionada)
+        const sucursalSelect = document.getElementById('sucursal-select');
+        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        const response = await getOrdenes(sucursalId ? { sucursal: sucursalId } : {});
+        const ordenes = response.ordenes || [];
+
+        // Calcular estadísticas - misma lógica que en lista de órdenes
+        // Activa = NO es (ENTREGADA + PAGADO) y NO es CANCELADA ni PRESUPUESTO
+        const ordenesActivas = ordenes.filter(o => {
+          const esEntregadaYPagada = o.estado_codigo === 'ENTREGADA' && o.estado_pago === 'PAGADO';
+          const esCancelada = o.estado_codigo === 'CANCELADA';
+          const esPresupuesto = o.estado_codigo === 'PRESUPUESTO';
+          return !esEntregadaYPagada && !esCancelada && !esPresupuesto;
+        }).length;
 
         const listasEntregar = ordenes.filter(o =>
           o.estado_codigo === 'COMPLETADA'
@@ -452,7 +625,7 @@
         document.getElementById('stat-ordenes-activas').textContent = ordenesActivas;
         document.getElementById('stat-listas-entregar').textContent = listasEntregar;
 
-        // Calcular ingresos del día
+        // Calcular ingresos del día (basado en pagos de hoy, no en fecha de orden)
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         const ingresosHoy = ordenes
@@ -460,11 +633,31 @@
           .reduce((sum, o) => sum + parseFloat(o.total_neto || 0), 0);
         document.getElementById('stat-ingresos-dia').textContent = `€${ingresosHoy.toFixed(2)}`;
 
-        // Stock bajo (placeholder por ahora)
-        document.getElementById('stat-stock-bajo').textContent = '0';
+        // Cargar productos con stock bajo
+        try {
+          const invResponse = await fetchWithAuth('/api/inventory/resumen');
+          if (invResponse.ok) {
+            const productos = await invResponse.json();
+            const stockBajo = productos.filter(p =>
+              p.stock_minimo && Number(p.stock_total || 0) <= Number(p.stock_minimo)
+            ).length;
+            document.getElementById('stat-stock-bajo').textContent = stockBajo;
+          } else {
+            document.getElementById('stat-stock-bajo').textContent = '0';
+          }
+        } catch (e) {
+          console.warn('No se pudo cargar stock bajo:', e);
+          document.getElementById('stat-stock-bajo').textContent = '0';
+        }
 
         // Renderizar últimas órdenes
         renderUltimasOrdenes(ordenes.slice(0, 5));
+
+        // Cargar y renderizar gráfico de rendimiento semanal (pagos reales)
+        await cargarRendimientoSemanal();
+
+        // Cargar ticket medio mensual
+        await cargarTicketMedio();
 
       } catch (error) {
         console.error('Error cargando estadísticas:', error);
@@ -478,15 +671,15 @@
     function renderUltimasOrdenes(ordenes) {
       const tbody = document.getElementById('ultimas-ordenes-tbody');
 
-      if (ordenes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">No hay órdenes</td></tr>';
+      if (!ordenes || ordenes.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-[#9da6b9]">No hay órdenes recientes</td></tr>';
         return;
       }
 
       tbody.innerHTML = ordenes.map(orden => {
         // Determinar colores del estado
         let estadoClass = 'bg-yellow-400/10 text-yellow-400 ring-yellow-400/20';
-        if (orden.estado_codigo === 'EN_PROGRESO') {
+        if (orden.estado_codigo === 'EN_PROGRESO' || orden.estado_codigo === 'RECAMBIO') {
           estadoClass = 'bg-blue-400/10 text-blue-400 ring-blue-400/20';
         } else if (orden.estado_codigo === 'COMPLETADA') {
           estadoClass = 'bg-green-400/10 text-green-400 ring-green-400/20';
@@ -510,7 +703,393 @@
       }).join('');
     }
 
+    // Cargar y renderizar gráfico de rendimiento semanal (pagos reales cobrados)
+    async function cargarRendimientoSemanal() {
+      const chartContainer = document.getElementById('chart-semanal');
+      const totalSemanalEl = document.getElementById('total-semanal');
+
+      // Obtener sucursal seleccionada
+      const sucursalSelect = document.getElementById('sucursal-select');
+      const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+      const url = sucursalId
+        ? `/api/ordenpago/estadisticas/semanal?sucursal=${sucursalId}`
+        : '/api/ordenpago/estadisticas/semanal';
+
+      try {
+        const response = await fetchWithAuth(url);
+        if (!response.ok) throw new Error('Error al cargar estadísticas');
+
+        const data = await response.json();
+        const pagosPorDia = data.pagosPorDia || [0, 0, 0, 0, 0, 0, 0];
+        const totalSemanal = data.totalSemanal || 0;
+
+        renderGraficoSemanal(pagosPorDia, totalSemanal);
+      } catch (error) {
+        console.warn('Error cargando rendimiento semanal:', error);
+        // Mostrar mensaje de error en el gráfico
+        chartContainer.innerHTML = `
+          <div class="flex items-center justify-center w-full h-full text-[#9da6b9] text-sm">
+            <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i> No se pudo cargar
+          </div>
+        `;
+        totalSemanalEl.textContent = '€0.00';
+      }
+    }
+
+    // Renderizar gráfico con los datos
+    function renderGraficoSemanal(pagosPorDia, totalSemanal) {
+      const chartContainer = document.getElementById('chart-semanal');
+      const totalSemanalEl = document.getElementById('total-semanal');
+
+      const diasLabels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+      const diasNombres = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+      // Encontrar el máximo para escalar las barras
+      const maxPago = Math.max(...pagosPorDia, 1);
+
+      // Determinar el día actual (lunes=0, domingo=6)
+      const hoy = new Date();
+      const diaSemana = hoy.getDay();
+      const diaActualIdx = diaSemana === 0 ? 6 : diaSemana - 1;
+
+      // Renderizar barras
+      chartContainer.innerHTML = pagosPorDia.map((pago, idx) => {
+        const porcentaje = (pago / maxPago) * 100;
+        const altura = Math.max(porcentaje, 5); // mínimo 5% para que se vea
+        const esHoy = idx === diaActualIdx;
+
+        const barClass = esHoy
+          ? "bg-[var(--brand-orange)] shadow-[0_0_15px_rgba(255,95,0,0.3)]"
+          : "bg-[#282e39] hover:bg-[var(--brand-orange)] transition-all duration-300";
+        const textClass = esHoy ? "text-xs font-bold text-white" : "text-xs text-[#9da6b9]";
+
+        return `
+          <div class="flex h-full flex-col items-center gap-1 w-full group">
+            <span class="text-[10px] text-green-400 opacity-0 group-hover:opacity-100 transition-opacity font-medium">
+              €${pago.toFixed(0)}
+            </span>
+            <div class="flex-1 flex flex-col-reverse w-full">
+              <div class="w-full max-w-[28px] mx-auto rounded-t ${barClass}" 
+                   style="height: ${altura}%;" 
+                   title="${diasNombres[idx]}: €${pago.toFixed(2)} cobrado">
+              </div>
+            </div>
+            <span class="${textClass}">${diasLabels[idx]}</span>
+          </div>
+        `;
+      }).join('');
+
+      // Mostrar total semanal
+      totalSemanalEl.textContent = `€${totalSemanal.toFixed(2)}`;
+    }
+
+    // Cargar y mostrar Ticket Medio Mensual
+    async function cargarTicketMedio() {
+      const ticketMedioEl = document.getElementById('stat-ticket-medio');
+      const variacionEl = document.getElementById('ticket-medio-variacion');
+      const subtextoEl = document.getElementById('ticket-medio-subtexto');
+
+      if (!ticketMedioEl) return;
+
+      try {
+        // Obtener sucursal seleccionada
+        const sucursalSelect = document.getElementById('sucursal-select');
+        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        const url = sucursalId
+          ? `/api/ordenpago/estadisticas/ticket-medio?sucursal=${sucursalId}`
+          : '/api/ordenpago/estadisticas/ticket-medio';
+
+        const response = await fetchWithAuth(url);
+        if (!response.ok) throw new Error('Error al cargar ticket medio');
+
+        const data = await response.json();
+
+        if (data.success) {
+          const { mesActual, variacion } = data;
+
+          // Mostrar ticket medio
+          if (mesActual.ordenesCerradas > 0) {
+            ticketMedioEl.textContent = `€${mesActual.ticketMedio.toFixed(2)}`;
+          } else {
+            ticketMedioEl.textContent = '—';
+          }
+
+          // Mostrar variación con flecha
+          if (variacion.porcentaje !== 0 && mesActual.ordenesCerradas > 0) {
+            const isPositive = variacion.tendencia === 'up';
+            const arrow = isPositive ? '↑' : '↓';
+            const colorClass = isPositive ? 'text-green-400' : 'text-red-400';
+            variacionEl.innerHTML = `
+              <span class="${colorClass}">${arrow} ${Math.abs(variacion.porcentaje).toFixed(1)}%</span>
+            `;
+          } else {
+            variacionEl.innerHTML = '';
+          }
+
+          // Actualizar subtexto
+          subtextoEl.textContent = `${mesActual.ordenesCerradas} órdenes cerradas · ${mesActual.nombre}`;
+        }
+      } catch (error) {
+        console.warn('Error cargando ticket medio:', error);
+        ticketMedioEl.textContent = '—';
+        variacionEl.innerHTML = '';
+        subtextoEl.textContent = 'Error al cargar';
+      }
+    }
+
+    // Abrir modal de histórico de ticket medio
+    function abrirModalTicketMedio() {
+      const modal = document.getElementById('ticket-medio-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      cargarHistoricoTicketMedio();
+    }
+
+    // Cerrar modal
+    window.cerrarModalTicketMedio = function () {
+      const modal = document.getElementById('ticket-medio-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // Cargar datos históricos
+    async function cargarHistoricoTicketMedio() {
+      const chartContainer = document.getElementById('historico-chart');
+      const tablaBody = document.getElementById('historico-tabla-body');
+
+      try {
+        // Obtener sucursal seleccionada
+        const sucursalSelect = document.getElementById('sucursal-select');
+        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        const url = sucursalId
+          ? `/api/ordenpago/estadisticas/ticket-medio/historico?sucursal=${sucursalId}&meses=12`
+          : '/api/ordenpago/estadisticas/ticket-medio/historico?meses=12';
+
+        const response = await fetchWithAuth(url);
+        if (!response.ok) throw new Error('Error al cargar histórico');
+
+        const data = await response.json();
+
+        if (data.success && data.historico) {
+          renderHistoricoChart(data.historico);
+          renderHistoricoTabla(data.historico);
+        } else {
+          throw new Error('Sin datos');
+        }
+      } catch (error) {
+        console.warn('Error cargando histórico ticket medio:', error);
+        chartContainer.innerHTML = `
+          <div class="flex items-center justify-center w-full h-full text-[#9da6b9] text-sm">
+            <i class="fas fa-exclamation-triangle mr-2 text-yellow-500"></i> No hay datos disponibles
+          </div>
+        `;
+        tablaBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">No hay datos disponibles</td>
+          </tr>
+        `;
+      }
+    }
+
+    // Renderizar gráfico de barras del histórico
+    function renderHistoricoChart(historico) {
+      const chartContainer = document.getElementById('historico-chart');
+
+      if (!historico || historico.length === 0) {
+        chartContainer.innerHTML = `
+          <div class="flex items-center justify-center w-full h-full text-[#9da6b9] text-sm">
+            No hay datos para mostrar
+          </div>
+        `;
+        return;
+      }
+
+      // Encontrar el máximo para escalar (solo de meses con datos)
+      const maxTicket = Math.max(...historico.map(h => h.ticketMedio), 1);
+
+      chartContainer.innerHTML = historico.map((item, idx) => {
+        const esUltimo = idx === historico.length - 1;
+        const sinDatos = item.ordenesCerradas === 0;
+
+        let altura, barClass, valorMostrar;
+
+        if (sinDatos) {
+          // Mes sin datos: barra mínima con patrón diferente
+          altura = 3;
+          barClass = "bg-[#1a1d24] border border-dashed border-[#3a4050]";
+          valorMostrar = "—";
+        } else {
+          const porcentaje = (item.ticketMedio / maxTicket) * 100;
+          altura = Math.max(porcentaje, 8);
+          barClass = esUltimo
+            ? "bg-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+            : "bg-[#282e39] hover:bg-purple-500 transition-all duration-300";
+          valorMostrar = `€${item.ticketMedio.toFixed(0)}`;
+        }
+
+        const labelClass = sinDatos
+          ? "text-[10px] text-[#555] whitespace-nowrap"
+          : "text-[10px] text-[#9da6b9] whitespace-nowrap";
+
+        return `
+          <div class="flex h-full flex-col items-center gap-1 flex-1 group cursor-pointer" 
+               title="${item.mes}: ${sinDatos ? 'Sin datos' : `€${item.ticketMedio.toFixed(2)} (${item.ordenesCerradas} órdenes)`}">
+            <span class="text-[10px] ${sinDatos ? 'text-[#555]' : 'text-purple-400'} opacity-0 group-hover:opacity-100 transition-opacity font-medium whitespace-nowrap">
+              ${valorMostrar}
+            </span>
+            <div class="flex-1 flex flex-col-reverse w-full">
+              <div class="w-full max-w-[40px] mx-auto rounded-t ${barClass}" style="height: ${altura}%;"></div>
+            </div>
+            <span class="${labelClass}">${item.mes.split(' ')[0]}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Renderizar tabla del histórico
+    function renderHistoricoTabla(historico) {
+      const tablaBody = document.getElementById('historico-tabla-body');
+
+      if (!historico || historico.length === 0) {
+        tablaBody.innerHTML = `
+          <tr>
+            <td colspan="4" class="px-6 py-4 text-center text-[#9da6b9]">No hay datos disponibles</td>
+          </tr>
+        `;
+        return;
+      }
+
+      // Mostrar de más reciente a más antiguo
+      const historicoOrdenado = [...historico].reverse();
+
+      tablaBody.innerHTML = historicoOrdenado.map((item, idx) => {
+        const esActual = idx === 0;
+        const sinDatos = item.ordenesCerradas === 0;
+
+        let rowClass, textClass, ticketClass, badge;
+
+        if (esActual) {
+          rowClass = 'bg-purple-500/5';
+          textClass = 'text-white';
+          ticketClass = 'text-purple-400 font-bold';
+          badge = '<span class="ml-2 text-xs bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">Actual</span>';
+        } else if (sinDatos) {
+          rowClass = 'bg-[#0a0b0d]';
+          textClass = 'text-[#555]';
+          ticketClass = 'text-[#555]';
+          badge = '<span class="ml-2 text-xs bg-[#1a1d24] text-[#555] px-2 py-0.5 rounded">Sin actividad</span>';
+        } else {
+          rowClass = 'hover:bg-[#1a1d24]';
+          textClass = 'text-[#9da6b9]';
+          ticketClass = 'text-white';
+          badge = '';
+        }
+
+        return `
+          <tr class="${rowClass} transition-colors">
+            <td class="px-6 py-4 text-sm ${sinDatos && !esActual ? 'text-[#555]' : 'text-white'} font-medium">
+              ${item.mes}
+              ${badge}
+            </td>
+            <td class="px-6 py-4 text-sm text-right ${textClass}">${item.ordenesCerradas}</td>
+            <td class="px-6 py-4 text-sm text-right ${textClass}">${sinDatos ? '—' : `€${item.facturacionTotal.toFixed(2)}`}</td>
+            <td class="px-6 py-4 text-sm text-right ${ticketClass}">${sinDatos ? '—' : `€${item.ticketMedio.toFixed(2)}`}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Agregar evento click a la card de ticket medio
+    document.addEventListener('DOMContentLoaded', () => {
+      const ticketCard = document.getElementById('ticket-medio-card');
+      if (ticketCard) {
+        ticketCard.addEventListener('click', abrirModalTicketMedio);
+      }
+
+      // Cerrar modal al hacer clic fuera
+      const modal = document.getElementById('ticket-medio-modal');
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            cerrarModalTicketMedio();
+          }
+        });
+      }
+    });
+
+    // Constante para la clave de localStorage
+    const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
+    // Cargar sucursales y mostrar en selector
+    async function loadSucursales() {
+      try {
+        const response = await fetchWithAuth('/api/caja/sucursales');
+        if (!response.ok) throw new Error('Error cargando sucursales');
+        const data = await response.json();
+
+        const sucursalContainer = document.getElementById('sucursal-container');
+        if (!sucursalContainer) return;
+
+        if (data.puede_seleccionar && data.sucursales.length > 1) {
+          // Verificar si hay una selección guardada en localStorage
+          const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+          // Usar la guardada si existe y es válida, sino usar la actual del backend
+          const selectedSucursalId = savedSucursal && data.sucursales.some(s => s.id == savedSucursal)
+            ? savedSucursal
+            : data.sucursal_actual;
+
+          // Usuario puede seleccionar entre múltiples sucursales
+          const options = data.sucursales.map(s => {
+            const label = s.tenant_nombre ? `${s.tenant_nombre} - ${s.nombre}` : s.nombre;
+            return `<option value="${s.id}"${s.id == selectedSucursalId ? ' selected' : ''}>${label}</option>`;
+          }).join('');
+
+          sucursalContainer.innerHTML = `
+            <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
+            <select id="sucursal-select" class="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer">
+              ${options}
+            </select>
+          `;
+
+          // Agregar event listener para cambio de sucursal
+          setTimeout(() => {
+            const select = document.getElementById('sucursal-select');
+            if (select) {
+              select.addEventListener('change', () => {
+                // Guardar selección en localStorage para persistencia
+                localStorage.setItem(SUCURSAL_STORAGE_KEY, select.value);
+                // Recargar estadísticas cuando cambia la sucursal
+                cargarEstadisticas();
+              });
+            }
+          }, 0);
+        } else {
+          // Solo una sucursal - mostrar label
+          const sucursal = data.sucursales.find(s => s.id == data.sucursal_actual) || data.sucursales[0];
+          const label = sucursal ? (sucursal.tenant_nombre ? `${sucursal.tenant_nombre} - ${sucursal.nombre}` : sucursal.nombre) : 'Sin sucursal';
+          sucursalContainer.innerHTML = `
+            <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
+            <span class="text-white font-medium text-sm">${label}</span>
+          `;
+          // Si solo hay una sucursal, guardarla también
+          if (sucursal) {
+            localStorage.setItem(SUCURSAL_STORAGE_KEY, sucursal.id);
+          }
+        }
+      } catch (error) {
+        console.warn('Error loading sucursales:', error);
+        const sucursalContainer = document.getElementById('sucursal-container');
+        if (sucursalContainer) {
+          sucursalContainer.innerHTML = `
+            <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
+            <span class="text-[#9da6b9] font-medium text-sm">Sin sucursal</span>
+          `;
+        }
+      }
+    }
+
     // Cargar al inicio
+    loadSucursales();
     cargarEstadisticas();
   </script>
 </body>

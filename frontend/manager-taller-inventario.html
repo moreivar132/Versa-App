@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Listado de Productos - Goversa</title>
-    <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
@@ -280,7 +280,7 @@
             </div>
 
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="#">
+              href="manager-taller-caja.html">
               <span class="icon-container"><i class="fas fa-cash-register"></i></span>
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
@@ -537,6 +537,9 @@
       }
     }
 
+    // Constante para leer la sucursal guardada
+    const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
     async function loadInventory() {
       const query = document.getElementById('table-search').value;
       const category = document.getElementById('filter-category').value;
@@ -549,6 +552,12 @@
         let url = `/api/inventory/resumen?q=${encodeURIComponent(query)}`;
         if (category) url += `&category=${encodeURIComponent(category)}`;
         if (provider) url += `&provider=${encodeURIComponent(provider)}`;
+
+        // Agregar filtro de sucursal desde localStorage
+        const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+        if (savedSucursal) {
+          url += `&idSucursal=${savedSucursal}`;
+        }
 
         const response = await fetchWithAuth(url);
         if (!response.ok) {

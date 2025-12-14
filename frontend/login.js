@@ -1,4 +1,4 @@
-import { getSession, requireAuth, login } from './auth.js';
+import { clearSession, login } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('loginForm');
@@ -15,14 +15,9 @@ document.addEventListener('DOMContentLoaded', () => {
     errorEl.textContent = message;
   };
 
-  const existingSession = getSession();
-  if (existingSession?.token) {
-    requireAuth().then((user) => {
-      if (user) {
-        window.location.replace('manager-taller-inicio.html');
-      }
-    });
-  }
+  // Limpiar cualquier sesión existente al acceder a login
+  // Esto asegura que cada usuario haga login intencionalmente (importante para auditoría)
+  clearSession();
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();

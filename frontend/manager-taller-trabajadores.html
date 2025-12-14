@@ -1,525 +1,1454 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Trabajadores - Goversa</title>
-    <link rel="icon" type="image/png" href="assets/favicon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
-    rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="/guard.js"></script>
-  <!-- FontAwesome para iconos -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Material Symbols (Iconos) -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-    rel="stylesheet" />
-  <link rel="stylesheet" href="manager.css">
-  <style>
-    /* Estilos Generales (Reutilizados para consistencia) */
-    /* Redundant variables removed */
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Personal - Goversa Taller Manager</title>
 
-    /* Estructura del formulario */
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="/guard.js"></script>
 
+    <style>
+        :root {
+            --brand-orange: #ff5f00;
+            --surface-border: #282e39;
+        }
 
-    .form-main-title {
-      font-size: 28px;
-      font-weight: 800;
-      margin: 0 0 10px 0;
-    }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
 
-    .form-section-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--brand-orange);
-      margin-top: 30px;
-      margin-bottom: 20px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-color);
-    }
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
 
-    .form-section {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 25px;
-    }
+        ::-webkit-scrollbar-track {
+            background: #111318;
+        }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
+        ::-webkit-scrollbar-thumb {
+            background: #282e39;
+            border-radius: 4px;
+        }
 
-    .form-group label {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      margin-bottom: 8px;
-    }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff5f00;
+        }
 
-    .form-input,
-    .form-select {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      background-color: var(--input-bg);
-      border: 1px solid #444;
-      color: var(--text-primary);
-      font-family: "Montserrat", Arial, sans-serif;
-      font-size: 15px;
-      box-sizing: border-box;
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-    }
+        /* Worker card hover effect */
+        .worker-card {
+            transition: all 0.2s ease;
+        }
 
-    .form-select {
-      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5z%22%20fill%3D%22%23A0A0A0%22/%3E%3C/svg%3E');
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 20px;
-    }
+        .worker-card:hover {
+            background: rgba(255, 95, 0, 0.1);
+            border-color: rgba(255, 95, 0, 0.3);
+        }
 
-    .form-input:focus,
-    .form-select:focus {
-      outline: none;
-      border-color: var(--brand-orange);
-      box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.2);
-    }
+        .worker-card.active {
+            background: linear-gradient(135deg, rgba(255, 95, 0, 0.2), rgba(255, 95, 0, 0.08));
+            border-color: var(--brand-orange);
+        }
 
-    .btn {
-      background-color: var(--brand-orange);
-      color: var(--text-primary);
-      border: none;
-      cursor: pointer;
-      font-weight: 600;
-      font-family: "Montserrat", Arial, sans-serif;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.2s;
-      border-radius: 8px;
-      padding: 12px 20px;
-    }
+        /* KPI Cards */
+        .kpi-card {
+            position: relative;
+            overflow: hidden;
+        }
 
-    .btn:hover {
-      background-color: #e05300;
-    }
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 95, 0, 0.08) 0%, transparent 60%);
+            pointer-events: none;
+        }
 
-    /* --- ESTILOS PARA MODAL DE ÉXITO --- */
-    .success-modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.05);
-      z-index: 2000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.3s ease, visibility 0.3s;
-    }
+        /* Balance colors */
+        .balance-positive {
+            color: #4ade80;
+        }
 
-    .success-modal-overlay.show {
-      opacity: 1;
-      visibility: visible;
-    }
+        .balance-negative {
+            color: #f87171;
+        }
 
-    .success-modal-content {
-      background-color: var(--surface-bg);
-      padding: 40px;
-      border-radius: 12px;
-      border: 1px solid var(--border-color);
-      width: 90%;
-      max-width: 450px;
-      text-align: center;
-      transform: scale(0.95);
-      transition: transform 0.3s ease;
-    }
+        /* Timeline styling */
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 2rem;
+            bottom: -1rem;
+            width: 2px;
+            background: #282e39;
+        }
 
-    .success-modal-overlay.show .success-modal-content {
-      transform: scale(1);
-    }
+        .timeline-item:last-child::before {
+            display: none;
+        }
 
-    .success-modal-content h3 {
-      font-size: 24px;
-      margin-top: 20px;
-      margin-bottom: 10px;
-      color: var(--success-color);
-    }
+        /* Select styling */
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239da6b9' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
 
-    .success-modal-content p {
-      color: var(--text-secondary);
-      margin-bottom: 30px;
-    }
+        /* Badge profession */
+        .badge-profession {
+            font-size: 0.65rem;
+            letter-spacing: 0.08em;
+            padding: 0.25rem 0.75rem;
+        }
 
-    .success-modal-icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto;
-      border: 4px solid var(--success-color);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+        /* Fix para opciones del select de sucursales */
+        #sucursal-select option {
+            background-color: #111318;
+            color: white;
+            padding: 8px;
+        }
+    </style>
 
-    .success-modal-icon svg {
-      width: 40px;
-      height: 40px;
-      color: var(--success-color);
-    }
-
-    @media (max-width: 768px) {
-      .form-section {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: "#ff5f00",
+                            dark: "#0b0d11",
+                            surface: "#111318",
+                            border: "#282e39",
+                            input: "#1a1d24",
+                            text: "#ffffff",
+                            muted: "#9da6b9"
+                        }
+                    },
+                    fontFamily: {
+                        main: ["Montserrat", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
 </head>
 
-<body>
-  <div class="flex h-screen w-full">
-    <!-- SideNavBar -->
-    <aside id="sidebar"
-      class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
-      <div class="flex h-full flex-col justify-between">
-        <div class="flex flex-col gap-4">
-          <!-- User Profile / Logo Area -->
-          <div class="flex items-center gap-3 p-2 mb-4">
-            <div class="logo-badge"
-              style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-              <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img" style="height: 24px; width: auto;">
-            </div>
-            <div class="flex flex-col sidebar-text">
-              <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">Goversa</h1>
-              <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">Gestión</p>
-            </div>
-            <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
-              <i class="fas fa-chevron-left"></i>
-            </button>
-          </div>
+<body class="bg-[#0b0d11] font-[Montserrat] text-white">
+    <div class="flex h-screen w-full">
 
-          <!-- Navigation Links -->
-          <nav class="flex flex-col gap-2">
-            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="manager-taller-inicio.html">
-              <span class="icon-container"><i class="fas fa-home"></i></span>
-              <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
-            </a>
+        <!-- SIDEBAR -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">Goversa
+                            </h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
 
-            <!-- Taller Dropdown -->
-            <div class="nav-group">
-              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                onclick="toggleSubmenu('taller-submenu')">
-                <span class="icon-container"><i class="fas fa-wrench"></i></span>
-                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
-                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="taller-arrow"></i>
-              </a>
-              <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                <a href="manager-taller-citas.html" class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
-                <a href="manager-taller-ordenes.html"
-                  class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
-                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar órdenes</a>
-                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
-                <a href="manager-taller-vehiculos.html"
-                  class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
-                <a href="manager-taller-chat.html" class="text-gray-500 hover:text-white text-sm py-1 block">Chat
-                  Clientes</a>
-              </div>
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
 
-              <!-- Tienda Dropdown -->
-              <div class="nav-group">
-                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                  onclick="toggleSubmenu('tienda-submenu')">
-                  <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
-                  <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
-                  <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="tienda-arrow"></i>
-                </a>
-                <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                  <a href="manager-taller-compras.html" class="text-gray-500 hover:text-white text-sm py-1 block">Nueva
-                    Compra</a>
-                  <a href="manager-taller-compras-historial.html"
-                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
-                  <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
-                  <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Nueva
+                                    Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-caja.html">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 bg-[#282e39] text-white rounded-lg transition-colors border-l-2 border-[var(--brand-orange)]"
+                            href="#">
+                            <span class="icon-container"><i
+                                    class="fas fa-users-cog text-[var(--brand-orange)]"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
                 </div>
-              </div>
 
-              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                href="#">
-                <span class="icon-container"><i class="fas fa-cash-register"></i></span>
-                <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
-              </a>
-
-              <!-- Cuentas Dropdown -->
-              <div class="nav-group">
-                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                  onclick="toggleSubmenu('cuentas-submenu')">
-                  <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
-                  <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
-                  <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
-                </a>
-                <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                  <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
-                  <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs"
+                            id="user-avatar">
+                            IM</div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate" id="user-name">Iván Moreno</span>
+                            <span class="text-gray-500 text-xs truncate" id="user-role">admin</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
                 </div>
-              </div>
+            </div>
+        </aside>
 
-              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                href="manager-taller-inventario.html">
-                <span class="icon-container"><i class="fas fa-boxes"></i></span>
-                <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
-              </a>
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
+            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <header class="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-[#282e39]">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                    <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+                </header>
 
-              <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors"
-                href="manager-taller-trabajadores.html">
-                <span class="icon-container"><i class="fas fa-users-cog"></i></span>
-                <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
-              </a>
+                <header
+                    class="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[#282e39] pb-6 relative">
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-white">Gestión de Personal</h1>
+                        <p class="text-[#9da6b9] text-sm mt-1">Control del flujo de liquidaciones y comisiones</p>
+                    </div>
+                    <!-- Sucursal Selector Container - centrado -->
+                    <div id="sucursal-container"
+                        class="flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]">
+                        <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
+                        <span class="text-white font-medium text-sm">Cargando...</span>
+                    </div>
+                    <!-- Spacer para mantener el selector centrado (ancho igual al título aprox) -->
+                    <div class="w-[200px] hidden md:block"></div>
+                </header>
 
-              <!-- Contactos -->
-              <div class="nav-group">
-                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                  onclick="toggleSubmenu('contactos-submenu')">
-                  <span class="icon-container"><i class="fas fa-address-book"></i></span>
-                  <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
-                  <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="contactos-arrow"></i>
-                </a>
-                <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                  <a href="manager-taller-clientes.html"
-                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
-                  <a href="manager-taller-proveedores.html"
-                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                <!-- Main Grid: Workers List + Dashboard -->
+                <div class="flex gap-6" style="min-height: calc(100vh - 200px)">
+
+                    <!-- LEFT PANEL: Workers List -->
+                    <div class="w-80 border-r border-[#282e39] flex flex-col bg-[#111318]">
+                        <div class="p-4 border-b border-[#282e39]">
+                            <h2 class="text-lg font-semibold text-white mb-3">Trabajadores</h2>
+                            <div class="relative">
+                                <span
+                                    class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#9da6b9] text-lg">search</span>
+                                <input type="text" id="worker-search" placeholder="Buscar por nombre..."
+                                    class="w-full h-10 pl-10 pr-4 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white placeholder:text-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] text-sm">
+                            </div>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto p-3 space-y-2" id="workers-list">
+                            <!-- Workers will be rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- RIGHT PANEL: Dashboard -->
+                    <div class="flex-1 flex flex-col overflow-hidden" id="dashboard-panel">
+
+                        <!-- Worker Header + Date Filters -->
+                        <div class="p-6 border-b border-[#282e39] bg-[#0b0d11]">
+                            <div class="flex items-start justify-between gap-6">
+                                <!-- Worker Profile -->
+                                <div class="flex items-center gap-4" id="worker-profile">
+                                    <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-[var(--brand-orange)] to-orange-600 flex items-center justify-center text-white font-bold text-xl"
+                                        id="selected-worker-avatar">
+                                        AG
+                                    </div>
+                                    <div>
+                                        <h2 class="text-xl font-bold text-white" id="selected-worker-name">Ana Gómez
+                                        </h2>
+                                        <span
+                                            class="inline-block mt-1 badge-profession bg-[var(--brand-orange)] text-white rounded-full uppercase font-semibold tracking-wider">
+                                            ELECTRICISTA AUTOMOTRIZ
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Date Range -->
+                                <div class="flex items-center gap-3">
+                                    <span
+                                        class="text-[#9da6b9] text-sm font-medium uppercase tracking-wider">PERIODO:</span>
+                                    <input type="date" id="start-date"
+                                        class="h-10 px-3 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white text-sm focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                                    <span class="text-[#9da6b9]">—</span>
+                                    <input type="date" id="end-date"
+                                        class="h-10 px-3 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white text-sm focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                                    <button id="btn-clear-dates"
+                                        class="p-2 rounded-lg bg-[#282e39] text-[#9da6b9] hover:text-white hover:bg-[#3d4451] transition-colors"
+                                        title="Limpiar fechas">
+                                        <span class="material-symbols-outlined text-lg">close</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Filter Controls -->
+                            <div class="flex items-center gap-4 mt-5">
+                                <select id="calc-mode"
+                                    class="h-10 px-3 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white text-sm focus:border-[var(--brand-orange)] cursor-pointer">
+                                    <option value="no_tax">Sumar total sin impuestos</option>
+                                    <option value="with_tax">Sumar con IVA (21%)</option>
+                                    <option value="profit">Margen de beneficio</option>
+                                </select>
+
+                                <select id="item-filter"
+                                    class="h-10 px-3 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white text-sm focus:border-[var(--brand-orange)] cursor-pointer">
+                                    <option value="all">Todas las ordenes</option>
+                                    <option value="labor">Filtrar solo mano de obra</option>
+                                    <option value="products">Filtrar solo productos</option>
+                                </select>
+
+                                <select id="order-status"
+                                    class="h-10 px-3 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white text-sm focus:border-[var(--brand-orange)] cursor-pointer">
+                                    <option value="all">Todas las ordenes</option>
+                                    <option value="paid">Solo ordenes pagadas</option>
+                                </select>
+
+                                <button id="btn-refresh"
+                                    class="ml-auto flex items-center gap-2 h-10 px-5 rounded-lg bg-[var(--brand-orange)] text-white font-semibold text-sm hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/30">
+                                    Actualizar
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Scrollable Content Area -->
+                        <div class="flex-1 overflow-y-auto p-6">
+                            <!-- KPI Cards -->
+                            <div class="grid grid-cols-3 gap-6 mb-6">
+                                <!-- Generated -->
+                                <div class="kpi-card rounded-xl border border-[#282e39] bg-[#111318] p-5">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <p
+                                                class="text-[#9da6b9] text-xs font-semibold uppercase tracking-wider mb-1">
+                                                GENERADO EN PERIODO</p>
+                                            <p class="text-[#9da6b9] text-xs">Base sin impuestos</p>
+                                        </div>
+                                        <div class="w-10 h-10 rounded-lg bg-[#282e39] flex items-center justify-center">
+                                            <span
+                                                class="material-symbols-outlined text-[var(--brand-orange)]">trending_up</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-3xl font-bold text-white mb-2" id="kpi-generated">0,00 €</p>
+                                    <p class="text-[#9da6b9] text-xs" id="kpi-generated-count">0 Registros</p>
+                                </div>
+
+                                <!-- Paid -->
+                                <div class="kpi-card rounded-xl border border-[#282e39] bg-[#111318] p-5">
+                                    <div class="flex items-start justify-between mb-3">
+                                        <div>
+                                            <p
+                                                class="text-[#9da6b9] text-xs font-semibold uppercase tracking-wider mb-1">
+                                                PAGADO / ADELANTADO</p>
+                                            <p class="text-[#9da6b9] text-xs">Abonos realizados en fechas</p>
+                                        </div>
+                                        <div class="w-10 h-10 rounded-lg bg-[#282e39] flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-blue-400">payments</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-3xl font-bold text-white" id="kpi-paid">0,00 €</p>
+                                </div>
+
+                                <!-- Balance -->
+                                <div
+                                    class="kpi-card rounded-xl border border-[var(--brand-orange)] bg-gradient-to-br from-[#1a1510] to-[#111318] p-5">
+                                    <div class="mb-3">
+                                        <p class="text-[#9da6b9] text-xs font-semibold uppercase tracking-wider mb-1">
+                                            Restante por Pagar</p>
+                                    </div>
+                                    <p class="text-4xl font-bold mb-4" id="kpi-balance">0,00 €</p>
+                                    <button id="btn-liquidar"
+                                        class="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-[var(--brand-orange)] text-white font-semibold text-sm hover:bg-[#e05300] transition-colors">
+                                        LIQUIDAR PERIODO
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Detail Tables Grid -->
+                            <div class="grid grid-cols-2 gap-6">
+                                <!-- Production Table -->
+                                <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                                    <div class="p-4 border-b border-[#282e39] flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span
+                                                class="material-symbols-outlined text-[var(--brand-orange)]">assignment</span>
+                                            <h3 class="text-white font-semibold">Producción</h3>
+                                        </div>
+                                        <span
+                                            class="text-[#9da6b9] text-xs font-medium px-3 py-1 bg-[#282e39] rounded-full"
+                                            id="filter-label">Filtrado Mano de Obra</span>
+                                    </div>
+                                    <div class="max-h-80 overflow-y-auto">
+                                        <table class="w-full text-sm">
+                                            <thead class="bg-[#1a1d24] sticky top-0">
+                                                <tr>
+                                                    <th
+                                                        class="text-left px-4 py-3 text-[#9da6b9] font-semibold uppercase text-xs tracking-wider">
+                                                        Fecha</th>
+                                                    <th
+                                                        class="text-left px-4 py-3 text-[#9da6b9] font-semibold uppercase text-xs tracking-wider">
+                                                        Orden</th>
+                                                    <th
+                                                        class="text-left px-4 py-3 text-[#9da6b9] font-semibold uppercase text-xs tracking-wider">
+                                                        Servicio</th>
+                                                    <th
+                                                        class="text-right px-4 py-3 text-[#9da6b9] font-semibold uppercase text-xs tracking-wider">
+                                                        Base €</th>
+                                                    <th
+                                                        class="text-right px-4 py-3 text-[#9da6b9] font-semibold uppercase text-xs tracking-wider">
+                                                        %</th>
+                                                    <th
+                                                        class="text-right px-4 py-3 text-[#9da6b9] font-semibold uppercase text-xs tracking-wider">
+                                                        Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="production-table-body" class="divide-y divide-[#282e39]">
+                                                <!-- Rows will be rendered here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Payments Timeline -->
+                                <div class="rounded-xl border border-[#282e39] bg-[#111318] overflow-hidden">
+                                    <div class="p-4 border-b border-[#282e39] flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <span
+                                                class="material-symbols-outlined text-green-400">account_balance_wallet</span>
+                                            <h3 class="text-white font-semibold">Pagos y Adelantos</h3>
+                                        </div>
+                                    </div>
+                                    <div class="max-h-80 overflow-y-auto p-4" id="payments-timeline">
+                                        <!-- Timeline items will be rendered here -->
+                                    </div>
+                                    <div class="p-4 border-t border-[#282e39]">
+                                        <button id="btn-registrar-pago"
+                                            class="w-full flex items-center justify-center gap-2 h-10 rounded-lg border border-dashed border-[#282e39] text-[#9da6b9] hover:text-white hover:border-[var(--brand-orange)] transition-colors">
+                                            <span class="material-symbols-outlined text-lg">add</span>
+                                            <span class="text-sm font-medium">Registrar Adelanto / Pago</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State (when no worker selected) -->
+                    <div class="flex-1 hidden items-center justify-center bg-[#0b0d11]" id="empty-state">
+                        <div class="text-center">
+                            <div
+                                class="w-20 h-20 mx-auto mb-4 rounded-full bg-[#282e39] flex items-center justify-center">
+                                <span class="material-symbols-outlined text-4xl text-[#9da6b9]">person_search</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-white mb-2">Selecciona un trabajador</h3>
+                            <p class="text-[#9da6b9] text-sm">Elige un trabajador de la lista para ver sus
+                                estadísticas y
+                                liquidaciones</p>
+                        </div>
+                    </div>
                 </div>
-              </div>
-          </nav>
-        </div>
-
-        <!-- Bottom Actions -->
-        <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
-          <div class="flex items-center gap-3 px-3 py-2 mb-2">
-            <div
-              class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
-              IM
             </div>
-            <div class="flex flex-col sidebar-text overflow-hidden">
-              <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
-              <span class="text-gray-500 text-xs truncate">admin</span>
-            </div>
-          </div>
-          <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-            href="#" data-logout>
-            <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
-            <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
-          </a>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main Content Wrapper -->
-    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
-      <!-- Top Mobile Header -->
-      <header
-        class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
-        <div class="logo-badge p-2">
-          <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
-        </div>
-        <button id="mobile-menu-btn" class="text-white">
-          <i class="fas fa-bars"></i>
-        </button>
-      </header>
-
-      <main class="flex-1 overflow-y-auto p-6 relative z-10">
-        <form id="worker-form" class="manager-panel">
-          <h2 class="form-main-title">Registro de Trabajador</h2>
-
-          <div class="form-section">
-            <div class="form-group">
-              <label for="nombre">Nombre *</label>
-              <input type="text" id="nombre" name="nombre" class="form-input" required>
-            </div>
-            <div class="form-group">
-              <label for="tipo_documento">Tipo Documento</label>
-              <select id="tipo_documento" name="tipo_documento" class="form-select">
-                <option value="DNI">DNI</option>
-                <option value="NIE">NIE</option>
-                <option value="Pasaporte">Pasaporte</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="nif">NIF *</label>
-              <input type="text" id="nif" name="nif" class="form-input" required>
-            </div>
-            <div class="form-group">
-              <label for="domicilio">Domicilio</label>
-              <input type="text" id="domicilio" name="domicilio" class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="tarea">Tarea</label>
-              <select id="tarea" name="tarea" class="form-select">
-                <option value="Mecanico">Mecánico</option>
-                <option value="Vendedor">Vendedor</option>
-                <option value="Cajero">Cajero</option>
-                <option value="Contador">Contador</option>
-                <option value="Encargado">Encargado</option>
-                <option value="Mantenimiento">Mantenimiento</option>
-                <option value="Administrador general">Administrador general</option>
-                <option value="RRHH">RRHH</option>
-                <option value="Staff">Staff</option>
-                <option value="Otras">Otras</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="comision">Comisión %</label>
-              <input type="number" step="0.01" id="comision" name="comision" class="form-input"
-                placeholder="Ej: 0.05 para 5%">
-            </div>
-          </div>
-
-          <h3 class="form-section-title">Contacto</h3>
-          <div class="form-section">
-            <div class="form-group">
-              <label for="telefono">Teléfono</label>
-              <input type="tel" id="telefono" name="telefono" class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="telefono_alternativo">Teléfono Alternativo</label>
-              <input type="tel" id="telefono_alternativo" name="telefono_alternativo" class="form-input">
-            </div>
-            <div class="form-group">
-              <label for="email">Email</label>
-              <input type="email" id="email" name="email" class="form-input">
-            </div>
-          </div>
-
-          <button type="submit" class="btn" style="width: 100%; padding: 15px; font-size: 16px; margin-top: 20px;">
-            Confirmar Registro
-          </button>
-        </form>
-      </main>
+        </main>
     </div>
-  </div>
 
-  <!-- MODAL DE ÉXITO -->
-  <div id="success-modal" class="success-modal-overlay">
-    <div class="success-modal-content">
-      <div class="success-modal-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
-          <path
-            d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z" />
-        </svg>
-      </div>
-      <h3>¡Éxito!</h3>
-      <p>El trabajador ha sido registrado correctamente.</p>
-      <button id="close-success-modal" class="btn">Cerrar</button>
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
+
+    <!-- Modal: Registrar Pago a Trabajador -->
+    <div id="modal-pago" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div class="bg-[#111318] rounded-2xl border border-[#282e39] w-full max-w-md mx-4 shadow-2xl">
+            <!-- Modal Header -->
+            <div class="p-6 border-b border-[#282e39]">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-lg bg-[var(--brand-orange)]/20 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-[var(--brand-orange)]">payments</span>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white" id="modal-pago-title">Registrar Pago</h3>
+                            <p class="text-[#9da6b9] text-sm" id="modal-pago-worker">Trabajador</p>
+                        </div>
+                    </div>
+                    <button id="modal-pago-close" class="text-[#9da6b9] hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-5">
+                <!-- Tipo de Pago -->
+                <div>
+                    <label class="block text-sm font-medium text-[#9da6b9] mb-2">Tipo de Pago</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="tipo-pago-total"
+                            class="tipo-pago-btn flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-[#282e39] bg-[#0b0d11] text-white hover:border-[var(--brand-orange)] transition-colors">
+                            <span class="material-symbols-outlined text-lg">check_circle</span>
+                            <span class="text-sm font-medium">Pago Total</span>
+                        </button>
+                        <button type="button" id="tipo-pago-parcial"
+                            class="tipo-pago-btn flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-[#282e39] bg-[#0b0d11] text-white hover:border-[var(--brand-orange)] transition-colors">
+                            <span class="material-symbols-outlined text-lg">pending</span>
+                            <span class="text-sm font-medium">Pago Parcial</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Monto -->
+                <div>
+                    <label for="pago-monto" class="block text-sm font-medium text-[#9da6b9] mb-2">Monto a Pagar</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#9da6b9] font-medium">€</span>
+                        <input type="number" id="pago-monto" step="0.01" min="0.01" placeholder="0.00"
+                            class="w-full h-12 pl-10 pr-4 rounded-lg border border-[#282e39] bg-[#0b0d11] text-white text-lg font-semibold focus:outline-none focus:border-[var(--brand-orange)] transition-colors">
+                    </div>
+                    <p class="text-xs text-[#9da6b9] mt-1">Saldo pendiente: <span id="pago-saldo-pendiente"
+                            class="text-[var(--brand-orange)] font-semibold">0,00 €</span></p>
+                </div>
+
+                <!-- Método de Pago -->
+                <div>
+                    <label for="pago-metodo" class="block text-sm font-medium text-[#9da6b9] mb-2">Método de
+                        Pago</label>
+                    <select id="pago-metodo"
+                        class="w-full h-12 px-4 rounded-lg border border-[#282e39] bg-[#0b0d11] text-white focus:outline-none focus:border-[var(--brand-orange)] transition-colors">
+                        <option value="">Seleccionar método...</option>
+                        <!-- Options will be loaded dynamically -->
+                    </select>
+                </div>
+
+                <!-- Concepto/Descripción -->
+                <div>
+                    <label for="pago-descripcion" class="block text-sm font-medium text-[#9da6b9] mb-2">Descripción
+                        (opcional)</label>
+                    <textarea id="pago-descripcion" rows="2" placeholder="Ej: Liquidación mes de diciembre..."
+                        class="w-full px-4 py-3 rounded-lg border border-[#282e39] bg-[#0b0d11] text-white focus:outline-none focus:border-[var(--brand-orange)] transition-colors resize-none"></textarea>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-[#282e39] flex gap-3">
+                <button id="modal-pago-cancel"
+                    class="flex-1 h-12 rounded-lg border border-[#282e39] text-[#9da6b9] font-semibold hover:text-white hover:border-[#9da6b9] transition-colors">
+                    Cancelar
+                </button>
+                <button id="modal-pago-confirm"
+                    class="flex-1 h-12 rounded-lg bg-[var(--brand-orange)] text-white font-semibold hover:bg-[#e05300] transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">check</span>
+                    Confirmar Pago
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <script>
-    // --- SIDEBAR LOGIC ---
-    window.toggleSubmenu = function (id) {
-      const submenu = document.getElementById(id);
-      const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+    <script>
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
 
-      if (submenu.classList.contains('hidden')) {
-        submenu.classList.remove('hidden');
-        submenu.classList.add('flex');
-        if (arrow) arrow.style.transform = 'rotate(180deg)';
-      } else {
-        submenu.classList.add('hidden');
-        submenu.classList.remove('flex');
-        if (arrow) arrow.style.transform = 'rotate(0deg)';
-      }
-    }
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isCollapsed = false;
 
-    const sidebar = document.getElementById('sidebar');
-    const toggleBtn = document.getElementById('toggle-sidebar');
-    const sidebarTexts = document.querySelectorAll('.sidebar-text');
-    let isCollapsed = false;
-
-    toggleBtn.addEventListener('click', () => {
-      isCollapsed = !isCollapsed;
-      if (isCollapsed) {
-        sidebar.classList.remove('w-64');
-        sidebar.classList.add('w-20');
-        sidebarTexts.forEach(el => el.classList.add('hidden'));
-        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-        document.querySelectorAll('[id$="-submenu"]').forEach(el => {
-          el.classList.add('hidden');
-          el.classList.remove('flex');
+        toggleBtn.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                sidebarTexts.forEach(el => el.classList.add('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                });
+            } else {
+                sidebar.classList.add('w-64');
+                sidebar.classList.remove('w-20');
+                sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            }
         });
-      } else {
-        sidebar.classList.add('w-64');
-        sidebar.classList.remove('w-20');
-        sidebarTexts.forEach(el => el.classList.remove('hidden'));
-        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
-      }
-    });
+    </script>
 
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    mobileMenuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('-translate-x-full');
-      sidebar.classList.toggle('absolute');
-      sidebar.classList.toggle('z-50');
-      sidebar.classList.toggle('h-full');
-    });
-  </script>
+    <script type="module">
+        import { requireAuth, clearSession, redirectToLogin, getToken } from './auth.js';
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      // --- URL DE WEBHOOK (DEBES REEMPLAZARLA) ---
-      const MAKE_WORKER_SAVE_URL = "https://hook.eu2.make.com/tbx80d01vf61z9lwty4mslubrgrapd8t";
+        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-      const form = document.getElementById("worker-form");
+        // API helper using fetch
+        async function apiGet(endpoint) {
+            const token = getToken();
+            const res = await fetch(API_BASE_URL + endpoint, {
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) throw new Error('API Error: ' + res.status);
+            return res.json();
+        }
 
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
+        // ==========================================
+        // SUCURSAL MANAGEMENT
+        // ==========================================
+        let currentSucursalId = null;
+        let puedeSeleccionarSucursal = false;
 
-        console.log("Enviando datos del trabajador:", data);
+        // Constante para la clave de localStorage
+        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
 
-        fetch(MAKE_WORKER_SAVE_URL, {
-          method: "POST",
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        })
-          .then(response => {
-            if (!response.ok) throw new Error("La respuesta del servidor no fue exitosa.");
-            return response.text();
-          })
-          .then(result => {
-            console.log("Respuesta de Make:", result);
-            showSuccessModal();
-          })
-          .catch(err => {
-            console.error("Error al registrar el trabajador:", err);
-            alert("Hubo un error al registrar el trabajador.");
-          });
-      });
+        async function loadSucursales() {
+            try {
+                const data = await apiGet('/api/caja/sucursales');
+                if (!data.ok) throw new Error(data.error);
+                puedeSeleccionarSucursal = data.puede_seleccionar;
 
-      // --- LÓGICA DE MODAL DE ÉXITO ---
-      const successModal = document.getElementById('success-modal');
-      const closeSuccessModalBtn = document.getElementById('close-success-modal');
+                // Verificar si hay una sucursal guardada en localStorage
+                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+                // Usar la guardada si existe y es válida, sino usar la actual del backend
+                currentSucursalId = savedSucursal && data.sucursales.some(s => s.id == savedSucursal)
+                    ? parseInt(savedSucursal)
+                    : data.sucursal_actual;
 
-      function showSuccessModal() {
-        successModal.classList.add('show');
-      }
-      function closeSuccessModal() {
-        successModal.classList.remove('show');
-        form.reset();
-      }
-      closeSuccessModalBtn.addEventListener('click', closeSuccessModal);
-    });
-  </script>
+                const sucursalContainer = document.getElementById('sucursal-container');
+                if (!sucursalContainer) return;
+
+                if (data.puede_seleccionar && data.sucursales.length > 1) {
+                    // Usuario puede seleccionar entre múltiples sucursales - mostrar select
+                    let options = data.sucursales.map(function (s) {
+                        const label = s.tenant_nombre ? s.tenant_nombre + ' - ' + s.nombre : s.nombre;
+                        return '<option value="' + s.id + '"' + (s.id == currentSucursalId ? ' selected' : '') + '>' + label + '</option>';
+                    }).join('');
+                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><select id="sucursal-select" class="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer">' + options + '</select>';
+
+                    // Event listener para cambio de sucursal
+                    setTimeout(function () {
+                        const sel = document.getElementById('sucursal-select');
+                        if (sel) {
+                            sel.addEventListener('change', function (e) {
+                                currentSucursalId = parseInt(e.target.value);
+                                // Guardar selección en localStorage para persistencia
+                                localStorage.setItem(SUCURSAL_STORAGE_KEY, currentSucursalId);
+                                // Recargar datos cuando cambia la sucursal
+                                updateDashboard();
+                            });
+                        }
+                    }, 0);
+                } else {
+                    // Solo una sucursal o usuario no puede seleccionar - mostrar label
+                    const sucursal = data.sucursales.find(function (s) { return s.id == currentSucursalId; }) || data.sucursales[0];
+                    const label = sucursal ? (sucursal.tenant_nombre ? sucursal.tenant_nombre + ' - ' + sucursal.nombre : sucursal.nombre) : 'Sin sucursal';
+                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><span class="text-white font-medium text-sm">' + label + '</span>';
+                    // Si solo hay una sucursal, guardarla también
+                    if (sucursal) {
+                        localStorage.setItem(SUCURSAL_STORAGE_KEY, sucursal.id);
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading sucursales:', e);
+                const sucursalContainer = document.getElementById('sucursal-container');
+                if (sucursalContainer) {
+                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><span class="text-white font-medium text-sm">Error al cargar</span>';
+                }
+            }
+        }
+
+        // ==========================================
+        // DATA LOADING - Real API Integration
+        // ==========================================
+        let workersData = []; // Will be populated from API
+
+        // Load workers from API
+        async function loadWorkers(searchQuery = '') {
+            try {
+                let url = API_BASE_URL + '/api/trabajadores';
+                if (searchQuery) {
+                    url += '?buscar=' + encodeURIComponent(searchQuery);
+                }
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Error loading workers');
+                const data = await response.json();
+
+                // Transform API data to our format
+                workersData = (data.trabajadores || []).map(w => ({
+                    id: w.id,
+                    name: w.nombre,
+                    email: w.email,
+                    role: 'Técnico',
+                    initials: getInitials(w.nombre)
+                }));
+
+                return workersData;
+            } catch (e) {
+                console.error('Error loading workers:', e);
+                return [];
+            }
+        }
+
+        // Load orders for a specific worker (mecanico)
+        async function loadWorkerOrders(workerId) {
+            try {
+                // Build URL with filters
+                let url = API_BASE_URL + '/api/ordenes?idMecanico=' + workerId;
+                if (currentSucursalId) {
+                    url += '&idSucursal=' + currentSucursalId;
+                }
+                if (startDate) {
+                    url += '&fechaDesde=' + startDate + 'T00:00:00';
+                }
+                if (endDate) {
+                    url += '&fechaHasta=' + endDate + 'T23:59:59';
+                }
+                url += '&limit=100&offset=0';
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Error loading worker orders');
+                const data = await response.json();
+                return data.ordenes || [];
+            } catch (e) {
+                console.error('Error loading worker orders:', e);
+                return [];
+            }
+        }
+
+        // Load worker account movements (payments, advances, etc.)
+        async function loadWorkerMovimientos(workerId) {
+            try {
+                let url = API_BASE_URL + '/api/trabajadores/' + workerId + '/movimientos?limit=50';
+                if (startDate) {
+                    url += '&fechaDesde=' + startDate + 'T00:00:00';
+                }
+                if (endDate) {
+                    url += '&fechaHasta=' + endDate + 'T23:59:59';
+                }
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Error loading worker movements');
+                const data = await response.json();
+                return {
+                    movimientos: data.movimientos || [],
+                    totales: data.totales || { ingresos: 0, egresos: 0, saldo: 0 }
+                };
+            } catch (e) {
+                console.error('Error loading worker movements:', e);
+                return { movimientos: [], totales: { ingresos: 0, egresos: 0, saldo: 0 } };
+            }
+        }
+
+        // Register a payment or advance for a worker
+        async function registrarMovimiento(workerId, tipo, monto, idMedioPago, descripcion = '') {
+            try {
+                const response = await fetch(API_BASE_URL + '/api/trabajadores/' + workerId + '/movimientos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tipo: tipo, // 'PAGO', 'ADELANTO', 'AJUSTE'
+                        monto: parseFloat(monto),
+                        fecha: new Date().toISOString(),
+                        origen_tipo: 'MANUAL',
+                        descripcion: descripcion,
+                        id_medio_pago: parseInt(idMedioPago),
+                        id_sucursal: currentSucursalId
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Error registrando movimiento');
+                }
+
+                return await response.json();
+            } catch (e) {
+                console.error('Error registrando movimiento:', e);
+                throw e;
+            }
+        }
+
+        // Get initials from name
+        function getInitials(name) {
+            if (!name) return '??';
+            const parts = name.split(' ').filter(p => p.length > 0);
+            if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+            return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-ES', {
+                style: 'currency',
+                currency: 'EUR'
+            }).format(amount || 0);
+        }
+
+        // Format date
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            return new Date(dateString).toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+
+        // ==========================================
+        // STATE MANAGEMENT
+        // ==========================================
+        let selectedWorkerId = null; // Will be set when workers load
+        let startDate = '';
+        let endDate = '';
+        let calcMode = 'no_tax';
+        let itemFilter = 'all';
+        let orderStatus = 'all';
+
+        // ==========================================
+        // DOM ELEMENTS
+        // ==========================================
+        const workersList = document.getElementById('workers-list');
+        const dashboardPanel = document.getElementById('dashboard-panel');
+        const emptyState = document.getElementById('empty-state');
+        const workerSearch = document.getElementById('worker-search');
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        const calcModeSelect = document.getElementById('calc-mode');
+        const itemFilterSelect = document.getElementById('item-filter');
+        const orderStatusSelect = document.getElementById('order-status');
+        const btnRefresh = document.getElementById('btn-refresh');
+        const btnClearDates = document.getElementById('btn-clear-dates');
+
+        // KPI Elements
+        const kpiGenerated = document.getElementById('kpi-generated');
+        const kpiGeneratedCount = document.getElementById('kpi-generated-count');
+        const kpiPaid = document.getElementById('kpi-paid');
+        const kpiBalance = document.getElementById('kpi-balance');
+        const filterLabel = document.getElementById('filter-label');
+        const productionTableBody = document.getElementById('production-table-body');
+        const paymentsTimeline = document.getElementById('payments-timeline');
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        async function init() {
+            try {
+                const user = await requireAuth();
+                if (!user) return;
+
+                // Set default date range (current month)
+                const now = new Date();
+                const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+                startDateInput.value = firstDay.toISOString().split('T')[0];
+                endDateInput.value = lastDay.toISOString().split('T')[0];
+                startDate = startDateInput.value;
+                endDate = endDateInput.value;
+
+                // Load sucursales (dynamic selector)
+                await loadSucursales();
+
+                // Load workers from API
+                await loadWorkers();
+
+                // Select first worker by default
+                if (workersData.length > 0) {
+                    selectedWorkerId = workersData[0].id;
+                }
+
+                // Render workers list
+                renderWorkersList();
+
+                // Setup event listeners
+                setupEventListeners();
+
+                // Initial render of selected worker
+                if (selectedWorkerId) {
+                    await updateDashboard();
+                }
+
+            } catch (error) {
+                console.error('Error initializing WorkersView:', error);
+            }
+        }
+
+        // ==========================================
+        // RENDER WORKERS LIST
+        // ==========================================
+        function renderWorkersList(searchTerm = '') {
+            if (workersData.length === 0) {
+                workersList.innerHTML = '<p class="text-center text-[#9da6b9] py-4">No hay trabajadores</p>';
+                return;
+            }
+
+            const filtered = workersData.filter(w =>
+                w.name.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            workersList.innerHTML = filtered.map(worker => {
+                const isActive = worker.id == selectedWorkerId;
+
+                return `
+          <div class="worker-card cursor-pointer rounded-lg border border-[#282e39] p-3 ${isActive ? 'active' : ''}"
+               data-worker-id="${worker.id}">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--brand-orange)] to-orange-600 flex items-center justify-center text-white font-bold text-sm">
+                ${worker.initials}
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-white font-medium text-sm truncate">${worker.name}</p>
+                <p class="text-[#9da6b9] text-xs truncate">${worker.email || worker.role}</p>
+              </div>
+            </div>
+          </div>
+        `;
+            }).join('');
+
+            // Add click handlers
+            document.querySelectorAll('.worker-card').forEach(card => {
+                card.addEventListener('click', async () => {
+                    selectedWorkerId = parseInt(card.dataset.workerId);
+                    renderWorkersList(workerSearch.value);
+                    await updateDashboard();
+                });
+            });
+        }
+
+        // ==========================================
+        // UPDATE DASHBOARD (MAIN CALCULATION LOGIC)
+        // ==========================================
+        async function updateDashboard() {
+            const worker = workersData.find(w => w.id == selectedWorkerId);
+            if (!worker) {
+                dashboardPanel.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            dashboardPanel.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            // Update worker profile
+            document.getElementById('selected-worker-avatar').textContent = worker.initials;
+            document.getElementById('selected-worker-name').textContent = worker.name;
+            document.querySelector('.badge-profession').textContent = (worker.role || 'TÉCNICO').toUpperCase();
+
+            // Get filter values
+            startDate = startDateInput.value;
+            endDate = endDateInput.value;
+            calcMode = calcModeSelect.value;
+            itemFilter = itemFilterSelect.value;
+            orderStatus = orderStatusSelect.value;
+
+            // Load orders for this worker from API
+            const ordenes = await loadWorkerOrders(selectedWorkerId);
+
+            // Update filter label
+            if (itemFilter === 'labor') {
+                filterLabel.textContent = 'Filtrado Mano de Obra';
+            } else if (itemFilter === 'products') {
+                filterLabel.textContent = 'Filtrado Productos';
+            } else {
+                filterLabel.textContent = 'Todas las órdenes';
+            }
+
+            // Filter by payment status if needed
+            let filteredOrdenes = ordenes;
+            if (orderStatus === 'paid') {
+                filteredOrdenes = ordenes.filter(o => o.estado_pago === 'PAGADO');
+            }
+
+            // Load worker account movements to get payment data
+            const movData = await loadWorkerMovimientos(selectedWorkerId);
+
+            // ==========================================
+            // CALCULATE KPIs
+            // ==========================================
+            // GENERADO = Total de órdenes asignadas al mecánico (base o con IVA)
+            let totalGenerated = filteredOrdenes.reduce((sum, o) => {
+                if (calcMode === 'no_tax') {
+                    return sum + parseFloat(o.total_bruto || 0);
+                } else if (calcMode === 'with_tax') {
+                    return sum + parseFloat(o.total_neto || 0);
+                }
+                return sum + parseFloat(o.total_bruto || 0);
+            }, 0);
+
+            // PAGADO = Total de pagos/adelantos realizados al mecánico (desde cuentamecanicomovimiento)
+            const totalPaidToWorker = movData.totales.egresos || 0;
+
+            // BALANCE = Lo que el taller le debe al mecánico (Generado - Pagado al mecánico)
+            const balance = totalGenerated - totalPaidToWorker;
+
+            // Store balance for modal use
+            saldoPendiente = balance > 0 ? balance : 0;
+
+            // Update KPI displays
+            kpiGenerated.textContent = formatCurrency(totalGenerated);
+            kpiGeneratedCount.textContent = `${filteredOrdenes.length} Órdenes`;
+            kpiPaid.textContent = formatCurrency(totalPaidToWorker);
+
+            // Balance with color coding
+            kpiBalance.textContent = formatCurrency(Math.abs(balance));
+            const balanceLabel = document.querySelector('.kpi-card:last-child p:first-of-type');
+            if (balance > 0) {
+                kpiBalance.classList.remove('balance-negative');
+                kpiBalance.classList.add('balance-positive');
+                if (balanceLabel) balanceLabel.textContent = 'Restante por Pagar';
+            } else if (balance < 0) {
+                kpiBalance.classList.add('balance-negative');
+                kpiBalance.classList.remove('balance-positive');
+                if (balanceLabel) balanceLabel.textContent = 'Sobrepago';
+            } else {
+                kpiBalance.classList.remove('balance-positive', 'balance-negative');
+                kpiBalance.classList.add('text-white');
+                if (balanceLabel) balanceLabel.textContent = 'Balance';
+            }
+
+            // ==========================================
+            // RENDER PRODUCTION TABLE (Orders)
+            // ==========================================
+            if (filteredOrdenes.length === 0) {
+                productionTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center text-[#9da6b9]">
+                            No hay órdenes en el periodo seleccionado
+                        </td>
+                    </tr>
+                `;
+            } else {
+                productionTableBody.innerHTML = filteredOrdenes.map(orden => {
+                    const estadoPagoBadge = orden.estado_pago === 'PAGADO'
+                        ? '<span class="text-green-400 text-xs">✓</span>'
+                        : orden.estado_pago === 'PARCIAL'
+                            ? '<span class="text-yellow-400 text-xs">◐</span>'
+                            : '<span class="text-orange-400 text-xs">⏳</span>';
+
+                    const vehiculo = [orden.vehiculo_marca, orden.vehiculo_modelo, orden.vehiculo_matricula]
+                        .filter(Boolean).join(' ');
+
+                    return `
+                        <tr class="hover:bg-[#1a1d24] transition-colors">
+                            <td class="px-4 py-3 text-white">${formatDate(orden.fecha_ingreso)}</td>
+                            <td class="px-4 py-3">
+                                <a href="manager-taller-ordenes.html?id=${orden.id}" class="text-[var(--brand-orange)] hover:underline">#${orden.id}</a>
+                            </td>
+                            <td class="px-4 py-3 text-[#9da6b9]">
+                                <div>${orden.cliente_nombre || 'Sin cliente'}</div>
+                                <div class="text-xs text-gray-500">${vehiculo || 'Sin vehículo'}</div>
+                            </td>
+                            <td class="px-4 py-3 text-right text-white">${formatCurrency(orden.total_bruto)}</td>
+                            <td class="px-4 py-3 text-right text-[#9da6b9]">${estadoPagoBadge} ${orden.estado_pago || 'PENDIENTE'}</td>
+                            <td class="px-4 py-3 text-right text-green-400 font-medium">
+                                ${formatCurrency(orden.total_neto)}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // ==========================================
+            // RENDER PAYMENTS TIMELINE
+            // ==========================================
+            // movData was already loaded earlier for KPI calculations
+            const movimientos = movData.movimientos;
+
+            if (movimientos.length === 0) {
+                paymentsTimeline.innerHTML = `
+                    <div class="text-center py-8 text-[#9da6b9]">
+                        <span class="material-symbols-outlined text-3xl mb-2">payments</span>
+                        <p class="text-sm">No hay pagos registrados en este periodo</p>
+                    </div>
+                `;
+            } else {
+                paymentsTimeline.innerHTML = movimientos.map(mov => {
+                    const isPago = mov.tipo === 'PAGO' || mov.tipo === 'ADELANTO';
+                    const iconColor = mov.tipo === 'ADELANTO' ? 'bg-orange-500'
+                        : mov.tipo === 'PAGO' ? 'bg-green-500'
+                            : mov.tipo === 'INGRESO' || mov.tipo === 'COMISION' ? 'bg-blue-500'
+                                : 'bg-gray-500';
+                    const icon = mov.tipo === 'ADELANTO' ? '💵'
+                        : mov.tipo === 'PAGO' ? '✓'
+                            : mov.tipo === 'INGRESO' || mov.tipo === 'COMISION' ? '📈'
+                                : '📝';
+
+                    // Método de pago
+                    const metodoPago = mov.medio_pago_nombre || 'Sin especificar';
+                    const esEfectivo = mov.medio_pago_codigo === 'CASH';
+                    const metodoBadgeClass = esEfectivo ? 'bg-green-500/20 text-green-400'
+                        : mov.medio_pago_codigo === 'CARD' ? 'bg-blue-500/20 text-blue-400'
+                            : 'bg-gray-500/20 text-gray-400';
+
+                    return `
+                        <div class="timeline-item relative pl-8 pb-6 border-l border-[#282e39]">
+                            <div class="absolute left-[-8px] top-1 w-4 h-4 rounded-full ${iconColor} flex items-center justify-center">
+                                <span class="text-white text-xs">${icon}</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[var(--brand-orange)] text-xs font-semibold uppercase tracking-wider">${mov.tipo}</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] font-medium ${metodoBadgeClass}">${metodoPago}</span>
+                                </div>
+                                <p class="text-white font-bold ${isPago ? 'text-red-400' : 'text-green-400'}">${isPago ? '-' : '+'}${formatCurrency(mov.monto)}</p>
+                                <p class="text-[#9da6b9] text-xs mt-1">${formatDate(mov.fecha)}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+
+        // ==========================================
+        // MODAL PAGO - STATE & FUNCTIONS
+        // ==========================================
+        let mediosPago = [];
+        let saldoPendiente = 0;
+        let tipoPagoSeleccionado = 'PAGO'; // 'PAGO' (total) o 'ADELANTO' (parcial)
+
+        // Modal elements
+        const modalPago = document.getElementById('modal-pago');
+        const modalPagoTitle = document.getElementById('modal-pago-title');
+        const modalPagoWorker = document.getElementById('modal-pago-worker');
+        const pagoMontoInput = document.getElementById('pago-monto');
+        const pagoMetodoSelect = document.getElementById('pago-metodo');
+        const pagoDescripcionInput = document.getElementById('pago-descripcion');
+        const pagoSaldoPendienteSpan = document.getElementById('pago-saldo-pendiente');
+        const tipoPagoTotalBtn = document.getElementById('tipo-pago-total');
+        const tipoPagoParcialBtn = document.getElementById('tipo-pago-parcial');
+
+        // Load payment methods from API
+        async function loadMediosPago() {
+            try {
+                const response = await fetch(API_BASE_URL + '/api/medio-pago', {
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken(),
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (!response.ok) throw new Error('Error loading payment methods');
+                const data = await response.json();
+                mediosPago = data.mediosPago || data || [];
+
+                // Populate select
+                pagoMetodoSelect.innerHTML = '<option value="">Seleccionar método...</option>';
+                mediosPago.forEach(mp => {
+                    const option = document.createElement('option');
+                    option.value = mp.id;
+                    option.textContent = mp.nombre;
+                    if (mp.afecta_caja) {
+                        option.textContent += ' (Efectivo)';
+                    }
+                    pagoMetodoSelect.appendChild(option);
+                });
+            } catch (e) {
+                console.error('Error loading payment methods:', e);
+            }
+        }
+
+        // Open payment modal
+        function openModalPago(esLiquidacion = false) {
+            const worker = workersData.find(w => w.id == selectedWorkerId);
+            if (!worker) return;
+
+            // Set title and worker name
+            modalPagoTitle.textContent = esLiquidacion ? 'Liquidar Periodo' : 'Registrar Pago/Adelanto';
+            modalPagoWorker.textContent = worker.name;
+
+            // Set pending balance
+            pagoSaldoPendienteSpan.textContent = formatCurrency(saldoPendiente);
+
+            // Reset form
+            pagoMontoInput.value = '';
+            pagoDescripcionInput.value = '';
+            pagoMetodoSelect.value = '';
+
+            // Default to total payment if liquidacion
+            if (esLiquidacion) {
+                selectTipoPago('total');
+                pagoMontoInput.value = saldoPendiente.toFixed(2);
+            } else {
+                selectTipoPago('parcial');
+            }
+
+            // Show modal
+            modalPago.classList.remove('hidden');
+            modalPago.classList.add('flex');
+        }
+
+        // Close payment modal
+        function closeModalPago() {
+            modalPago.classList.add('hidden');
+            modalPago.classList.remove('flex');
+        }
+
+        // Select payment type (total or parcial)
+        function selectTipoPago(tipo) {
+            if (tipo === 'total') {
+                tipoPagoSeleccionado = 'PAGO';
+                tipoPagoTotalBtn.classList.add('border-[var(--brand-orange)]', 'bg-[var(--brand-orange)]/10');
+                tipoPagoParcialBtn.classList.remove('border-[var(--brand-orange)]', 'bg-[var(--brand-orange)]/10');
+                pagoMontoInput.value = saldoPendiente.toFixed(2);
+                pagoMontoInput.readOnly = true;
+            } else {
+                tipoPagoSeleccionado = 'ADELANTO';
+                tipoPagoTotalBtn.classList.remove('border-[var(--brand-orange)]', 'bg-[var(--brand-orange)]/10');
+                tipoPagoParcialBtn.classList.add('border-[var(--brand-orange)]', 'bg-[var(--brand-orange)]/10');
+                pagoMontoInput.value = '';
+                pagoMontoInput.readOnly = false;
+                pagoMontoInput.focus();
+            }
+        }
+
+        // Confirm and submit payment
+        async function confirmarPago() {
+            const monto = parseFloat(pagoMontoInput.value);
+            const idMedioPago = pagoMetodoSelect.value;
+            const descripcion = pagoDescripcionInput.value.trim();
+
+            // Validations
+            if (!monto || monto <= 0) {
+                showToast('Ingrese un monto válido', 'error');
+                return;
+            }
+            if (!idMedioPago) {
+                showToast('Seleccione un método de pago', 'error');
+                return;
+            }
+            if (monto > saldoPendiente && tipoPagoSeleccionado === 'PAGO') {
+                showToast('El monto no puede ser mayor al saldo pendiente', 'error');
+                return;
+            }
+
+            try {
+                // Disable button during request
+                const confirmBtn = document.getElementById('modal-pago-confirm');
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Procesando...';
+
+                const result = await registrarMovimiento(
+                    selectedWorkerId,
+                    tipoPagoSeleccionado,
+                    monto,
+                    idMedioPago,
+                    descripcion
+                );
+
+                // Show success message
+                const medioPagoNombre = result.medio_pago || 'Registrado';
+                let msg = `Pago de ${formatCurrency(monto)} registrado correctamente`;
+                if (result.movimiento_caja) {
+                    msg += ' (Registrado en caja)';
+                }
+                showToast(msg, 'success');
+
+                // Close modal and refresh
+                closeModalPago();
+                await updateDashboard();
+
+            } catch (e) {
+                showToast(e.message || 'Error al registrar el pago', 'error');
+            } finally {
+                // Re-enable button
+                const confirmBtn = document.getElementById('modal-pago-confirm');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<span class="material-symbols-outlined">check</span> Confirmar Pago';
+            }
+        }
+
+        // Toast function
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-[var(--brand-orange)]';
+            toast.className = `${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-pulse`;
+            toast.innerHTML = `
+                <span class="material-symbols-outlined">${type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info'}</span>
+                <span class="text-sm font-medium">${message}</span>
+            `;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 4000);
+        }
+
+        // ==========================================
+        // EVENT LISTENERS
+        // ==========================================
+        function setupEventListeners() {
+            // Worker search
+            workerSearch.addEventListener('input', (e) => {
+                renderWorkersList(e.target.value);
+            });
+
+            // Date inputs
+            startDateInput.addEventListener('change', updateDashboard);
+            endDateInput.addEventListener('change', updateDashboard);
+
+            // Filter selects
+            calcModeSelect.addEventListener('change', updateDashboard);
+            itemFilterSelect.addEventListener('change', updateDashboard);
+            orderStatusSelect.addEventListener('change', updateDashboard);
+
+            // Refresh button
+            btnRefresh.addEventListener('click', updateDashboard);
+
+            // Clear dates
+            btnClearDates.addEventListener('click', () => {
+                startDateInput.value = '';
+                endDateInput.value = '';
+                updateDashboard();
+            });
+
+            // Logout
+            document.querySelector('[data-logout]')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                clearSession();
+                redirectToLogin();
+            });
+
+            // Modal - Open from LIQUIDAR PERIODO button
+            const btnLiquidar = document.getElementById('btn-liquidar');
+            if (btnLiquidar) {
+                btnLiquidar.addEventListener('click', () => openModalPago(true));
+            }
+
+            // Modal - Open from Registrar Adelanto/Pago button
+            const btnRegistrarPago = document.getElementById('btn-registrar-pago');
+            if (btnRegistrarPago) {
+                btnRegistrarPago.addEventListener('click', () => openModalPago(false));
+            }
+
+            // Modal - Close buttons
+            document.getElementById('modal-pago-close')?.addEventListener('click', closeModalPago);
+            document.getElementById('modal-pago-cancel')?.addEventListener('click', closeModalPago);
+
+            // Modal - Type selection
+            tipoPagoTotalBtn?.addEventListener('click', () => selectTipoPago('total'));
+            tipoPagoParcialBtn?.addEventListener('click', () => selectTipoPago('parcial'));
+
+            // Modal - Confirm
+            document.getElementById('modal-pago-confirm')?.addEventListener('click', confirmarPago);
+
+            // Modal - Close on backdrop click
+            modalPago?.addEventListener('click', (e) => {
+                if (e.target === modalPago) closeModalPago();
+            });
+        }
+
+        // Initialize
+        async function initApp() {
+            await loadMediosPago(); // Load payment methods at startup
+            init();
+        }
+        initApp();
+    </script>
 </body>
 
 </html>
