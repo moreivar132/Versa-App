@@ -1,7 +1,7 @@
 const SESSION_KEY = 'versa_session_v1';
 
 export function getApiBaseUrl() {
-  return import.meta.env.VITE_API_URL || 'http://localhost:3000';
+  return import.meta.env.VITE_API_URL || '';
 }
 
 const API_BASE_URL = getApiBaseUrl();

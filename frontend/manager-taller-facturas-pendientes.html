@@ -12,177 +12,24 @@
         rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/guard.js"></script>
-    <!-- FontAwesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Material Symbols (Iconos) -->
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
-        rel="stylesheet" />
-
-    <!-- Manager CSS Base -->
     <link rel="stylesheet" href="manager.css">
 
     <style>
-        /* --- SCROLLBAR --- */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-deep);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--brand-orange);
-        }
-
-        /* --- SIDEBAR --- */
-        #sidebar {
-            background: rgba(17, 19, 24, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-right: 1px solid var(--border-subtle);
-        }
-
-        /* --- CARDS --- */
-        .card {
-            background: rgba(26, 26, 30, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
-            padding: 25px;
-            backdrop-filter: blur(8px);
-        }
-
-        /* --- TABLE --- */
-        .table-container {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th {
-            background-color: rgba(30, 30, 35, 0.8);
-            color: #bca39a;
-            font-size: 12px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 14px 16px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        td {
-            padding: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            color: #ffffff;
-        }
-
-        tr:hover {
-            background-color: rgba(255, 101, 43, 0.06);
-        }
-
-        /* --- BADGES --- */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 9999px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .badge-estado {
-            background: rgba(59, 130, 246, 0.15);
-            color: #60a5fa;
-        }
-
-        /* --- BUTTONS --- */
-        .btn {
-            padding: 10px 18px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-dark));
-            color: white;
-            box-shadow: 0 4px 15px rgba(255, 101, 43, 0.3);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(255, 101, 43, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(50, 50, 55, 0.8);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(60, 60, 65, 0.9);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        /* --- FORM INPUTS CON DESTELLO NARANJA --- */
-        .form-input {
-            width: 100%;
-            padding: 12px 14px;
-            border-radius: 12px;
-            background-color: rgba(40, 40, 45, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            color: #FFFFFF;
-            font-family: 'Montserrat', Arial, sans-serif;
-            font-size: 14px;
-            box-sizing: border-box;
-            transition: all 0.25s;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--brand-orange);
-            background-color: rgba(255, 101, 43, 0.05);
-            box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
-        }
-
-        ::placeholder {
-            color: #bca39a;
-            opacity: 0.7;
-        }
-
-        /* --- STAT CARDS CON EFECTO ANTIGRAVITY --- */
         .stat-card {
-            background: linear-gradient(135deg, rgba(26, 26, 30, 0.9) 0%, rgba(35, 35, 40, 0.9) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid var(--border-subtle);
             border-radius: 16px;
-            padding: 20px;
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 24px;
+            transition: all 0.3s ease;
         }
 
         .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow:
-                0 15px 35px rgba(0, 0, 0, 0.6),
-                0 0 15px rgba(255, 101, 43, 0.3);
             border-color: var(--brand-orange);
+            transform: translateY(-2px);
         }
 
-        .stat-card .stat-icon {
+        .icon-box {
             width: 48px;
             height: 48px;
             border-radius: 12px;
@@ -191,112 +38,59 @@
             justify-content: center;
             font-size: 20px;
         }
-
-        /* --- LOADING SPINNER --- */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255, 101, 43, 0.3);
-            border-radius: 50%;
-            border-top-color: var(--brand-orange);
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* --- MODAL --- */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(4px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: rgba(26, 26, 30, 0.98);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            max-width: 450px;
-            width: 90%;
-            padding: 30px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-        }
     </style>
 </head>
 
-<body>
+<body class="bg-[#0b0d11] text-white font-[Montserrat] overflow-hidden">
     <div class="flex h-screen w-full">
-        <!-- SideNavBar -->
+        <!-- Sidebar -->
         <aside id="sidebar"
-            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[#282e39]">
             <div class="flex h-full flex-col justify-between">
                 <div class="flex flex-col gap-4">
-                    <!-- User Profile / Logo Area -->
                     <div class="flex items-center gap-3 p-2 mb-4">
-                        <div class="logo-badge"
-                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
-                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
-                                style="height: 24px; width: auto;">
+                        <div class="logo-badge flex items-center justify-center w-10 h-10 rounded-xl bg-[#282e39]">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
                         </div>
                         <div class="flex flex-col sidebar-text">
-                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
-                                Goversa</h1>
-                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
-                                Gestión</p>
+                            <h1 class="text-white text-base font-medium">Goversa</h1>
+                            <p class="text-[#9da6b9] text-xs">Gestión</p>
                         </div>
                         <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
                             <i class="fas fa-chevron-left"></i>
                         </button>
                     </div>
 
-                    <!-- Navigation Links -->
                     <nav class="flex flex-col gap-2">
                         <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
                             href="manager-taller-inicio.html">
                             <span class="icon-container"><i class="fas fa-home"></i></span>
-                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                            <p class="text-sm font-medium sidebar-text">Inicio</p>
                         </a>
 
-                        <!-- Taller Dropdown -->
                         <div class="nav-group">
                             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                                 onclick="toggleSubmenu('taller-submenu')">
                                 <span class="icon-container"><i class="fas fa-wrench"></i></span>
-                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <p class="text-sm font-medium sidebar-text flex-1">Taller</p>
                                 <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
                                     id="taller-arrow"></i>
                             </a>
                             <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
                                 <a href="manager-taller-citas.html"
                                     class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
-                                <a href="manager-taller-ordenes.html"
+                                <a href="manager-taller-ordenes-lista.html"
                                     class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
                                 <a href="manager-taller-vehiculos.html"
                                     class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
-                                <a href="manager-taller-chat.html"
-                                    class="text-gray-400 hover:text-white text-sm py-1 block">Chat Clientes</a>
                             </div>
                         </div>
 
-                        <!-- Tienda Dropdown -->
                         <div class="nav-group">
                             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                                 onclick="toggleSubmenu('tienda-submenu')">
                                 <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
-                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <p class="text-sm font-medium sidebar-text flex-1">Tienda</p>
                                 <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
                                     id="tienda-arrow"></i>
                             </a>
@@ -308,18 +102,11 @@
                             </div>
                         </div>
 
-                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="#">
-                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
-                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
-                        </a>
-
-                        <!-- Cuentas Dropdown (ACTIVO) -->
                         <div class="nav-group">
                             <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
                                 onclick="toggleSubmenu('cuentas-submenu')">
                                 <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
-                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <p class="text-sm font-medium sidebar-text flex-1">Cuentas</p>
                                 <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
                                     id="cuentas-arrow"></i>
                             </a>
@@ -330,48 +117,16 @@
                                     class="text-white font-semibold text-sm py-1 block">Pendientes Facturar</a>
                                 <a href="manager-taller-config-facturas.html"
                                     class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
-                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
-                            </div>
-                        </div>
-
-                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="manager-taller-inventario.html">
-                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
-                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
-                        </a>
-
-                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="manager-taller-trabajadores.html">
-                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
-                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
-                        </a>
-
-                        <!-- Contactos -->
-                        <div class="nav-group">
-                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
-                                onclick="toggleSubmenu('contactos-submenu')">
-                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
-                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
-                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
-                                    id="contactos-arrow"></i>
-                            </a>
-                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                                <a href="manager-taller-clientes.html"
-                                    class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
-                                <a href="manager-taller-proveedores.html"
-                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
                             </div>
                         </div>
                     </nav>
                 </div>
 
-                <!-- Bottom Actions -->
-                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                <div class="flex flex-col gap-1 border-t border-[#282e39] pt-4">
                     <div class="flex items-center gap-3 px-3 py-2 mb-2">
                         <div id="user-avatar"
                             class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
-                            --
-                        </div>
+                            --</div>
                         <div class="flex flex-col sidebar-text overflow-hidden">
                             <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
                             <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
@@ -380,139 +135,139 @@
                     <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
                         href="#" id="logout-btn">
                         <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
-                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                        <p class="text-sm font-medium sidebar-text">Salir</p>
                     </a>
                 </div>
             </div>
         </aside>
 
-        <!-- Main Content Wrapper -->
-        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
-            <!-- Top Mobile Header -->
-            <header
-                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <header class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[#282e39]">
                 <div class="logo-badge p-2">
                     <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
                 </div>
-                <button id="mobile-menu-btn" class="text-white">
-                    <i class="fas fa-bars"></i>
-                </button>
+                <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
             </header>
 
-            <main class="flex-1 overflow-y-auto p-6">
-                <div class="max-w-7xl mx-auto">
-                    <!-- Header -->
-                    <div class="mb-8">
-                        <h1 class="text-3xl font-bold text-white mb-2">Órdenes Pendientes de Facturar</h1>
-                        <p class="text-gray-400">Órdenes que requieren factura y aún no han sido facturadas</p>
+            <main class="flex-1 overflow-y-auto p-6 bg-[#0b0d11]">
+                <div class="max-w-7xl mx-auto space-y-6">
+
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h1 class="text-3xl font-extrabold text-white">Pendientes de Facturar</h1>
+                            <p class="text-[#9da6b9] mt-1">Órdenes finalizadas listas para ser facturadas</p>
+                        </div>
                     </div>
 
-                    <!-- Stats Cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                        <div class="stat-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-400 mb-1">Pendientes</p>
-                                    <p id="statTotal" class="text-3xl font-bold text-[var(--brand-orange)]">0</p>
-                                </div>
-                                <div class="stat-icon bg-[var(--brand-orange)] bg-opacity-20">
-                                    <i class="fas fa-file-invoice text-[var(--brand-orange)]"></i>
-                                </div>
+                    <!-- KPI Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="stat-card flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Total Pendientes</p>
+                                <h3 id="statTotal" class="text-3xl font-bold text-[var(--brand-orange)]">0</h3>
+                            </div>
+                            <div class="icon-box bg-[var(--brand-orange)]/10 text-[var(--brand-orange)]">
+                                <i class="fas fa-file-invoice"></i>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-400 mb-1">Importe Total</p>
-                                    <p id="statImporte" class="text-3xl font-bold text-green-500">0 €</p>
-                                </div>
-                                <div class="stat-icon bg-green-500 bg-opacity-20">
-                                    <i class="fas fa-euro-sign text-green-500"></i>
-                                </div>
+                        <div class="stat-card flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Importe Total</p>
+                                <h3 id="statImporte" class="text-3xl font-bold text-green-400">0.00 €</h3>
+                            </div>
+                            <div class="icon-box bg-green-500/10 text-green-500">
+                                <i class="fas fa-euro-sign"></i>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-400 mb-1">Promedio</p>
-                                    <p id="statPromedio" class="text-3xl font-bold text-blue-500">0 €</p>
-                                </div>
-                                <div class="stat-icon bg-blue-500 bg-opacity-20">
-                                    <i class="fas fa-chart-line text-blue-500"></i>
-                                </div>
+                        <div class="stat-card flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Ticket Promedio</p>
+                                <h3 id="statPromedio" class="text-3xl font-bold text-blue-400">0.00 €</h3>
+                            </div>
+                            <div class="icon-box bg-blue-500/10 text-blue-500">
+                                <i class="fas fa-chart-line"></i>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Tabla de Órdenes Pendientes -->
-                    <div class="card">
-                        <div class="table-container">
-                            <table>
+                    <!-- Table Panel -->
+                    <div class="manager-panel bg-[#1e242d] border border-[#282e39] rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr>
-                                        <th>Nº Orden</th>
-                                        <th>Fecha</th>
-                                        <th>Cliente</th>
-                                        <th>Vehículo</th>
-                                        <th>Estado</th>
-                                        <th class="text-right">Total</th>
-                                        <th class="text-center">Acciones</th>
+                                    <tr class="bg-[#111318] text-xs uppercase text-[#9da6b9] border-b border-[#282e39]">
+                                        <th class="p-4 font-semibold tracking-wider">Nº Orden</th>
+                                        <th class="p-4 font-semibold tracking-wider">Fecha</th>
+                                        <th class="p-4 font-semibold tracking-wider">Cliente</th>
+                                        <th class="p-4 font-semibold tracking-wider">Vehículo</th>
+                                        <th class="p-4 font-semibold tracking-wider">Estado</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right">Total</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right">Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tablaOrdenes">
-                                    <!-- Las órdenes se cargarán aquí dinámicamente -->
+                                <tbody id="tablaOrdenes" class="text-sm divide-y divide-[#282e39]">
+                                    <!-- Dynamic Content -->
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- Loading State -->
-                        <div id="loadingState" class="p-8 text-center">
-                            <div class="loading-spinner mx-auto"></div>
-                            <p class="mt-3 text-gray-400">Cargando órdenes...</p>
+                        <!-- Loading / Empty States -->
+                        <div id="loadingState" class="p-12 text-center text-[#9da6b9]">
+                            <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-[var(--brand-orange)]"></i>
+                            <p>Cargando órdenes...</p>
                         </div>
-
-                        <!-- Empty State -->
-                        <div id="emptyState" class="p-8 text-center hidden">
-                            <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
-                            <p class="text-white font-semibold mb-1">¡Excelente!</p>
-                            <p class="text-gray-400">No hay órdenes pendientes de facturar</p>
+                        <div id="emptyState" class="hidden p-12 text-center text-[#9da6b9]">
+                            <div
+                                class="w-16 h-16 bg-[#282e39] rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-check text-2xl text-green-500"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white mb-1">Todo al día</h3>
+                            <p>No hay órdenes pendientes de facturación.</p>
                         </div>
                     </div>
+
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Modal de Confirmación -->
-    <div id="modalConfirmacion" class="modal-overlay">
-        <div class="modal-content">
-            <h3 class="text-xl font-bold text-white mb-4">
-                <i class="fas fa-file-invoice text-[var(--brand-orange)] mr-2"></i>Generar Factura
-            </h3>
-            <p class="text-gray-400 mb-6">¿Estás seguro de que deseas generar la factura para esta orden?</p>
+    <!-- Modal Confirmación -->
+    <div id="modalConfirmacion"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div
+            class="bg-[#1e242d] p-8 rounded-2xl max-w-sm w-full border border-[#282e39] shadow-2xl transform scale-95 transition-transform duration-200">
+            <div
+                class="w-16 h-16 bg-[var(--brand-orange)]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-file-invoice text-3xl text-[var(--brand-orange)]"></i>
+            </div>
 
-            <div class="bg-[#222] rounded-lg p-4 mb-6">
-                <p class="text-sm text-gray-400">Orden: <span id="modalOrdenNumero"
-                        class="font-semibold text-white"></span></p>
-                <p class="text-sm text-gray-400">Cliente: <span id="modalCliente"
-                        class="font-semibold text-white"></span></p>
-                <p class="text-sm text-gray-400">Total: <span id="modalTotal" class="font-semibold text-white"></span>
-                </p>
+            <h3 class="text-xl font-bold text-white text-center mb-2">Generar Factura</h3>
+            <p class="text-[#9da6b9] text-center text-sm mb-6">Se generará una factura oficial para la orden
+                seleccionada.</p>
+
+            <div class="bg-[#111318] p-4 rounded-xl mb-6 space-y-2 text-sm border border-[#282e39]">
+                <div class="flex justify-between"><span class="text-[#9da6b9]">Orden:</span> <span id="modalOrdenNumero"
+                        class="text-white font-mono">#000</span></div>
+                <div class="flex justify-between"><span class="text-[#9da6b9]">Cliente:</span> <span id="modalCliente"
+                        class="text-white font-medium">-</span></div>
+                <div class="flex justify-between border-t border-[#282e39] pt-2 mt-1"><span
+                        class="text-[#9da6b9]">Total:</span> <span id="modalTotal"
+                        class="text-[var(--brand-orange)] font-bold">0.00 €</span></div>
             </div>
 
             <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-400 mb-2">Observaciones (opcional)</label>
-                <textarea id="observacionesFactura" rows="3" class="form-input"
-                    placeholder="Añade observaciones a la factura..."></textarea>
+                <label class="block text-xs text-[#9da6b9] mb-1 ml-1">Observaciones (Opcional)</label>
+                <textarea id="observacionesFactura" rows="2"
+                    class="w-full bg-[#111318] border border-[#282e39] rounded-lg p-3 text-white text-sm focus:outline-none focus:border-[var(--brand-orange)]"
+                    placeholder="Notas internas..."></textarea>
             </div>
 
             <div class="flex gap-3">
-                <button onclick="cerrarModal()" class="btn btn-secondary flex-1">
-                    Cancelar
-                </button>
-                <button onclick="confirmarGenerarFactura()" class="btn btn-primary flex-1">
-                    <i class="fas fa-check mr-2"></i>Generar Factura
-                </button>
+                <button onclick="cerrarModal()"
+                    class="flex-1 py-3 bg-[#282e39] text-[#9da6b9] hover:text-white rounded-xl hover:bg-[#343b47] transition-colors">Cancelar</button>
+                <button onclick="confirmarGenerarFactura()"
+                    class="flex-1 py-3 bg-[var(--brand-orange)] text-white font-bold rounded-xl hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">Confirmar</button>
             </div>
         </div>
     </div>
@@ -524,11 +279,10 @@
         let userData = null;
         let ordenSeleccionada = null;
 
-        // --- SIDEBAR LOGIC ---
+        // UI Helpers
         window.toggleSubmenu = function (id) {
             const submenu = document.getElementById(id);
             const arrow = document.getElementById(id.replace('submenu', 'arrow'));
-
             if (submenu.classList.contains('hidden')) {
                 submenu.classList.remove('hidden');
                 submenu.classList.add('flex');
@@ -540,67 +294,26 @@
             }
         }
 
-        const sidebar = document.getElementById('sidebar');
-        const toggleBtn = document.getElementById('toggle-sidebar');
-        const sidebarTexts = document.querySelectorAll('.sidebar-text');
-        let isCollapsed = false;
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('-translate-x-full');
+            sb.classList.toggle('absolute');
+            sb.classList.toggle('z-50');
+            sb.classList.toggle('h-full');
+        });
 
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
-                isCollapsed = !isCollapsed;
-                if (isCollapsed) {
-                    sidebar.classList.remove('w-64');
-                    sidebar.classList.add('w-20');
-                    sidebarTexts.forEach(el => el.classList.add('hidden'));
-                    toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
-                    document.querySelectorAll('[id$="-submenu"]').forEach(el => {
-                        el.classList.add('hidden');
-                        el.classList.remove('flex');
-                    });
-                } else {
-                    sidebar.classList.add('w-64');
-                    sidebar.classList.remove('w-20');
-                    sidebarTexts.forEach(el => el.classList.remove('hidden'));
-                    toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
-                }
-            });
-        }
+        document.getElementById('logout-btn').addEventListener('click', (e) => { e.preventDefault(); clearSession(); redirectToLogin(); });
 
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        if (mobileMenuBtn) {
-            mobileMenuBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('-translate-x-full');
-                sidebar.classList.toggle('absolute');
-                sidebar.classList.toggle('z-50');
-                sidebar.classList.toggle('h-full');
-            });
-        }
-
-        // Cargar datos del usuario
         function cargarDatosUsuario() {
             const session = getSession();
-            if (!session || !session.user) {
-                redirectToLogin();
-                return false;
-            }
+            if (!session || !session.user) { redirectToLogin(); return false; }
             userData = session.user;
-
-            // Actualizar info del usuario en el sidebar
-            const initials = (userData.nombre || 'U').substring(0, 2).toUpperCase();
-            document.getElementById('user-avatar').textContent = initials;
+            document.getElementById('user-avatar').textContent = (userData.nombre || 'U').substring(0, 2).toUpperCase();
             document.getElementById('user-name').textContent = userData.nombre || 'Usuario';
             document.getElementById('user-role').textContent = userData.rol || 'admin';
             return true;
         }
 
-        // Logout
-        document.getElementById('logout-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            clearSession();
-            redirectToLogin();
-        });
-
-        // Cargar órdenes pendientes
         async function cargarOrdenesPendientes() {
             const loadingState = document.getElementById('loadingState');
             const emptyState = document.getElementById('emptyState');
@@ -616,7 +329,6 @@
 
                 const response = await fetchWithAuth(`${API_BASE_URL}/facturas/ordenes/pendientes?${params.toString()}`);
                 const data = await response.json();
-
                 loadingState.classList.add('hidden');
 
                 if (!data.success || data.data.length === 0) {
@@ -624,120 +336,104 @@
                     actualizarEstadisticas([], 0);
                     return;
                 }
-
                 renderizarOrdenes(data.data);
                 actualizarEstadisticas(data.data, data.data.length);
-
             } catch (error) {
-                console.error('Error al cargar órdenes:', error);
+                console.error('Error:', error);
                 loadingState.classList.add('hidden');
                 emptyState.classList.remove('hidden');
             }
         }
 
-        // Actualizar estadísticas
         function actualizarEstadisticas(ordenes, total) {
             document.getElementById('statTotal').textContent = total;
-
-            const importeTotal = ordenes.reduce((sum, orden) => sum + parseFloat(orden.importe_total || 0), 0);
-            document.getElementById('statImporte').textContent = importeTotal.toFixed(2) + ' €';
-
+            const importeTotal = ordenes.reduce((sum, o) => sum + parseFloat(o.importe_total || 0), 0);
+            document.getElementById('statImporte').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(importeTotal);
             const promedio = total > 0 ? importeTotal / total : 0;
-            document.getElementById('statPromedio').textContent = promedio.toFixed(2) + ' €';
+            document.getElementById('statPromedio').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(promedio);
         }
 
-        // Renderizar órdenes en la tabla
         function renderizarOrdenes(ordenes) {
             const tabla = document.getElementById('tablaOrdenes');
             tabla.innerHTML = '';
 
             ordenes.forEach(orden => {
                 const tr = document.createElement('tr');
+                tr.className = 'hover:bg-[#282e39]/50 transition-colors';
 
                 tr.innerHTML = `
-                    <td>
-                        <span class="font-semibold">${orden.numero_orden || `#${orden.id}`}</span>
+                    <td class="p-4 font-mono text-white font-medium">${orden.numero_orden || `#${orden.id}`}</td>
+                    <td class="p-4 text-gray-400">${new Date(orden.fecha_creacion).toLocaleDateString('es-ES')}</td>
+                    <td class="p-4 text-white font-medium">${orden.cliente_nombre}</td>
+                    <td class="p-4">
+                        <div class="text-white text-sm">${orden.vehiculo_matricula || 'N/A'}</div>
+                        <div class="text-xs text-gray-500">${orden.vehiculo_marca || ''}</div>
                     </td>
-                    <td class="text-gray-400">
-                        ${new Date(orden.fecha_creacion).toLocaleDateString('es-ES')}
+                    <td class="p-4">
+                        <span class="px-2 py-1 text-xs font-semibold rounded bg-blue-900/30 text-blue-300 border border-blue-900/50">${orden.estado_nombre || 'Sin estado'}</span>
                     </td>
-                    <td>
-                        <div class="font-medium">${orden.cliente_nombre}</div>
-                    </td>
-                    <td class="text-gray-400">
-                        ${orden.vehiculo_matricula ? `
-                            <div class="font-medium">${orden.vehiculo_matricula}</div>
-                            <div class="text-sm text-gray-500">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''}</div>
-                        ` : 'N/A'}
-                    </td>
-                    <td>
-                        <span class="badge badge-estado">
-                            ${orden.estado_nombre || 'Sin estado'}
-                        </span>
-                    </td>
-                    <td class="text-right font-semibold">
-                        ${parseFloat(orden.importe_total || 0).toFixed(2)} €
-                    </td>
-                    <td class="text-center">
+                    <td class="p-4 text-right font-bold text-white">${parseFloat(orden.importe_total || 0).toFixed(2)} €</td>
+                    <td class="p-4 text-right">
                         <button onclick="mostrarModalConfirmacion(${orden.id}, '${orden.numero_orden || '#' + orden.id}', '${orden.cliente_nombre}', ${orden.importe_total || 0})" 
-                                class="btn btn-primary text-sm">
-                            <i class="fas fa-file-invoice mr-2"></i>Facturar
+                            class="px-4 py-2 text-xs font-bold bg-[var(--brand-orange)] text-white rounded hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">
+                            Facturar
                         </button>
                     </td>
                 `;
-
                 tabla.appendChild(tr);
             });
         }
 
-        // Mostrar modal de confirmación
-        window.mostrarModalConfirmacion = function (idOrden, numeroOrden, cliente, total) {
-            ordenSeleccionada = idOrden;
-            document.getElementById('modalOrdenNumero').textContent = numeroOrden;
+        // Modal Logic
+        window.mostrarModalConfirmacion = function (id, num, cliente, total) {
+            ordenSeleccionada = id;
+            document.getElementById('modalOrdenNumero').textContent = num;
             document.getElementById('modalCliente').textContent = cliente;
             document.getElementById('modalTotal').textContent = parseFloat(total).toFixed(2) + ' €';
             document.getElementById('observacionesFactura').value = '';
-            document.getElementById('modalConfirmacion').classList.add('active');
+
+            const modal = document.getElementById('modalConfirmacion');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.firstElementChild.classList.remove('scale-95'), 10);
         }
 
-        // Cerrar modal
         window.cerrarModal = function () {
-            document.getElementById('modalConfirmacion').classList.remove('active');
-            ordenSeleccionada = null;
+            const modal = document.getElementById('modalConfirmacion');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                ordenSeleccionada = null;
+            }, 200);
         }
 
-        // Confirmar generación de factura
         window.confirmarGenerarFactura = async function () {
             if (!ordenSeleccionada) return;
-
             const observaciones = document.getElementById('observacionesFactura').value.trim();
 
             try {
                 const response = await fetchWithAuth(`${API_BASE_URL}/facturas/ordenes/${ordenSeleccionada}/emitir`, {
                     method: 'POST',
-                    body: JSON.stringify({
-                        id_usuario: userData.id,
-                        observaciones: observaciones || null
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_usuario: userData.id, observaciones: observaciones || null })
                 });
 
                 const data = await response.json();
 
                 if (data.success) {
-                    alert(`✅ ${data.message}\n\nNúmero de factura: ${data.data.factura.numero_factura}`);
+                    alert('Factura generada existosamente'); // Could replace with a prettier toast
                     cerrarModal();
                     cargarOrdenesPendientes();
                 } else {
-                    alert(`❌ Error: ${data.error}`);
+                    alert(`Error: ${data.error}`);
                 }
-
             } catch (error) {
-                console.error('Error al generar factura:', error);
-                alert('Error al generar la factura');
+                console.error('Error:', error);
+                alert('Error de conexión');
             }
         }
 
-        // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
             if (cargarDatosUsuario()) {
                 cargarOrdenesPendientes();
