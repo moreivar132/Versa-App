@@ -243,6 +243,25 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--brand-orange);
         }
+
+        /* === DATETIME INPUT === */
+        input[type="datetime-local"] {
+            color-scheme: dark;
+        }
+
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        /* === FIX OVERFLOW FOR DROPDOWNS === */
+        .overflow-x-auto {
+            overflow: visible !important;
+        }
+
+        .form-section.overflow-visible {
+            overflow: visible !important;
+        }
     </style>
 </head>
 
@@ -385,8 +404,8 @@
                                 <h3 class="form-section-title">Datos de la Venta</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <label class="block text-xs text-[#9da6b9] mb-1">Fecha</label>
-                                        <input type="text" id="fecha-venta" class="form-input bg-[#111318]" readonly />
+                                        <label class="block text-xs text-[#9da6b9] mb-1">Fecha y Hora</label>
+                                        <input type="datetime-local" id="fecha-venta" class="form-input bg-[#111318]" />
                                     </div>
                                     <div>
                                         <label class="block text-xs text-[#9da6b9] mb-1">Sucursal</label>
@@ -415,7 +434,7 @@
                             </div>
 
                             <!-- 2. Items Table -->
-                            <div class="form-section overflow-hidden">
+                            <div class="form-section overflow-visible">
                                 <h3 class="form-section-title flex justify-between items-center">
                                     Carrito de Productos
                                 </h3>

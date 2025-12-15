@@ -415,18 +415,9 @@
             });
         }
 
-        window.verFactura = async function (id) {
-            try {
-                const res = await fetchWithAuth(`${API_BASE_URL}/facturas/${id}/pdf`);
-                if (res.ok) {
-                    const blob = await res.blob();
-                    const url = URL.createObjectURL(blob);
-                    window.open(url, '_blank');
-                } else {
-                    const err = await res.json();
-                    alert(err.error || 'Error PDF');
-                }
-            } catch (e) { console.error(e); alert('Error'); }
+        window.verFactura = function (id) {
+            // Abrir directamente la URL del PDF - esto permite que las URLs relativas funcionen
+            window.open(`${API_BASE_URL}/facturas/${id}/pdf`, '_blank');
         };
 
         async function cargarEstadisticas() {
@@ -446,9 +437,33 @@
             }
         }
 
+        // Inicializar filtros de fecha (primer día del mes hasta hoy)
+        function inicializarFiltrosFecha() {
+            const hoy = new Date();
+            const primerDiaMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+            const formatDate = (d) => d.toISOString().split('T')[0];
+
+            document.getElementById('filtroFechaDesde').value = formatDate(primerDiaMes);
+            document.getElementById('filtroFechaHasta').value = formatDate(hoy);
+        }
+
+        // Agregar event listeners para filtros
+        function configurarEventListenersFiltros() {
+            // Filtrar al cambiar estado
+            document.getElementById('filtroEstado').addEventListener('change', buscarFacturas);
+
+            // Filtrar al presionar Enter en búsqueda
+            document.getElementById('filtroTexto').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') buscarFacturas();
+            });
+        }
+
         // Init
         document.addEventListener('DOMContentLoaded', () => {
             if (cargarDatosUsuario()) {
+                inicializarFiltrosFecha();
+                configurarEventListenersFiltros();
                 buscarFacturas();
                 cargarEstadisticas();
             }

@@ -28,9 +28,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Load Sucursales
     loadSucursales(); // Populates #taller
 
-    // 2. Set Date
+    // 2. Set Date/Time
     const now = new Date();
-    document.getElementById('fecha-venta').value = now.toLocaleString();
+    // Format for datetime-local: YYYY-MM-DDTHH:mm
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('fecha-venta').value = `${year}-${month}-${day}T${hours}:${minutes}`;
 
     // 3. Init Buttons
     document.getElementById('btn-cliente-rapido').addEventListener('click', setClienteMostrador);
@@ -156,10 +162,28 @@ function setupClientSearch() {
                     div.onclick = () => selectClient(c);
                     options.appendChild(div);
                 });
-                options.classList.add('show');
-            } else {
-                options.classList.remove('show');
             }
+
+            // Always add "Create new client" option at the end
+            const divNew = document.createElement('div');
+            divNew.className = 'option';
+            divNew.style.background = '#1a1d24';
+            divNew.style.borderTop = '1px solid #282e39';
+            divNew.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; color: #ff652b;">
+                    <i class="fas fa-plus-circle"></i>
+                    <span style="font-weight: bold;">Crear nuevo cliente</span>
+                </div>
+                <div style="font-size: 12px; color: #9da6b9;">Registrar "${input.value}" como nuevo cliente</div>
+            `;
+            divNew.onclick = () => {
+                // Pre-fill the modal with the searched name
+                document.getElementById('new-client-form').querySelector('[name="nombre"]').value = input.value;
+                document.getElementById('new-client-modal').classList.remove('hidden');
+                options.classList.remove('show');
+            };
+            options.appendChild(divNew);
+            options.classList.add('show');
         }, 300);
     });
 
