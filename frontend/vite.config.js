@@ -27,6 +27,9 @@ export default defineConfig({
                 managerTallerWhatsapp: 'manager-taller-whatsapp.html',
                 citaPrevia: 'cita-previa.html',
                 managerTallerCaja: 'manager-taller-caja.html',
+                managerTallerFacturas: 'manager-taller-facturas.html',
+                managerTallerFacturasPendientes: 'manager-taller-facturas-pendientes.html',
+                managerTallerConfigFacturas: 'manager-taller-config-facturas.html',
             }
         }
     },
