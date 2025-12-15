@@ -18,6 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         /* Estilos Generales (Idénticos a Proveedores) */
         /* Redundant variables removed */
@@ -589,6 +590,19 @@
 
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
                 <div class="">
+
+                    <!-- PAGE HEADER -->
+                    <div class="flex flex-wrap items-center justify-between mb-6 gap-4 border-b border-[#282e39] pb-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-white">Gestión de Vehículos</h1>
+                            <p class="text-[#9da6b9] text-sm mt-1">Administra el registro de vehículos</p>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
 
                     <!-- KPI CARDS -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -1263,6 +1277,20 @@
             resultCard.classList.remove('active');
         });
 
+    </script>
+
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+
+        // Inicializar selector de sucursal
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    // Recargar vehículos cuando cambia la sucursal
+                    if (typeof loadVehicles === 'function') loadVehicles();
+                }
+            });
+        })();
     </script>
 </body>
 

@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
+  <link rel="stylesheet" href="styles/sucursal-selector.css">
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/guard.js"></script>
@@ -738,6 +739,11 @@
       </header>
 
       <main class="flex-1 overflow-y-auto p-6 relative z-10">
+        <!-- Selector de Sucursal Centrado -->
+        <div class="flex justify-center mb-6">
+          <div id="sucursal-selector-container"></div>
+        </div>
+
         <form id="order-form" class="manager-panel">
           <input type="hidden" id="id-tecnico-hidden" name="idMecanico" />
           <input type="hidden" id="id-cliente-hidden" name="idCliente" />
@@ -2184,6 +2190,36 @@
     });
   </script>
   <script src="pagos-logic.js"></script>
+
+  <script type="module">
+    import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+
+    // Inicializar selector de sucursal
+    (async () => {
+      const sucursalId = await initSucursalSelector('sucursal-selector-container', {
+        onchange: (sucursalId) => {
+          // Actualizar el selector de taller en el formulario
+          const tallerSelect = document.getElementById('taller');
+          if (tallerSelect && sucursalId) {
+            tallerSelect.value = sucursalId;
+            tallerSelect.dispatchEvent(new Event('change'));
+          }
+        }
+      });
+
+      // Pre-seleccionar el taller si hay sucursal guardada
+      if (sucursalId) {
+        const tallerSelect = document.getElementById('taller');
+        if (tallerSelect) {
+          // Esperar a que se carguen las opciones
+          setTimeout(() => {
+            tallerSelect.value = sucursalId;
+            tallerSelect.dispatchEvent(new Event('change'));
+          }, 500);
+        }
+      }
+    })();
+  </script>
 </body>
 
 </html>

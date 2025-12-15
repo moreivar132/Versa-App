@@ -13,6 +13,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/sucursal-selector.css">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -111,6 +112,77 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
+    }
+
+    /* Estilos para menú de acciones (3 puntos) */
+    .acciones-dropdown-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .acciones-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 100;
+      min-width: 180px;
+      margin-top: 4px;
+      background-color: #1a1d24;
+      border: 1px solid #282e39;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      animation: fadeInDropdown 0.15s ease-out;
+    }
+
+    @keyframes fadeInDropdown {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .acciones-dropdown.show {
+      display: block;
+    }
+
+    .acciones-option {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.2s, color 0.2s;
+      color: #d1d5db;
+      border-bottom: 1px solid #282e39;
+    }
+
+    .acciones-option:last-child {
+      border-bottom: none;
+    }
+
+    .acciones-option:hover {
+      background-color: #282e39;
+      color: #fff;
+    }
+
+    .acciones-option .material-symbols-outlined {
+      font-size: 18px;
+    }
+
+    .acciones-option.editar:hover {
+      color: #60a5fa;
+    }
+
+    .acciones-option.factura:hover {
+      color: #22c55e;
     }
 
     .toast-notification {
@@ -378,7 +450,7 @@
         <!-- Lista de órdenes -->
         <div class="flex-grow-[2] flex flex-col p-6 overflow-y-auto border-r border-[#282e39]">
 
-          <div class="flex flex-wrap justify-between items-center gap-3 pb-4">
+          <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-[#282e39] mb-4">
             <div>
               <h1 class="text-white text-2xl font-bold leading-tight">Órdenes de Trabajo</h1>
               <p class="text-[#9da6b9] text-sm mt-1">Gestión y seguimiento de reparaciones</p>
@@ -388,6 +460,11 @@
               <span class="material-symbols-outlined mr-2 text-xl">add_circle</span>
               <span>Nueva Orden</span>
             </a>
+          </div>
+
+          <!-- Selector de Sucursal Centrado -->
+          <div class="flex justify-center mb-4">
+            <div id="sucursal-selector-container"></div>
           </div>
 
           <!-- FILTROS PRINCIPALES -->
@@ -803,6 +880,7 @@
     import { getOrdenes, updateEstadoOrden, getEstadosOrden } from './services/ordenes-service.js';
     import { registrarPago } from './services/pagos-service.js';
     import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from './auth.js';
+    import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
 
     (async () => {
       // Security check
@@ -823,6 +901,15 @@
       let ordenSeleccionada = null;
       let filtrosActuales = {};
       let estadosDisponibles = [];
+      let currentSucursalId = null;
+
+      // Inicializar selector de sucursal
+      currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
+        onchange: (sucursalId) => {
+          currentSucursalId = sucursalId;
+          cargarOrdenes(filtrosActuales);
+        }
+      });
 
       // Función toast para notificaciones
       function showToast(message, isError = false) {
@@ -862,10 +949,9 @@
         tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...</td></tr>';
 
         try {
-          // Leer sucursal guardada de localStorage y agregarla a los filtros
-          const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
-          if (savedSucursal) {
-            filtros.sucursal = savedSucursal;
+          // Usar la sucursal del selector (que ya lee de localStorage si no hay selección)
+          if (currentSucursalId) {
+            filtros.sucursal = currentSucursalId;
           }
 
           const response = await getOrdenes(filtros);
@@ -950,9 +1036,12 @@
             </td>
             <td class="px-5 py-4 text-right font-medium text-green-400">${parseFloat(orden.total_neto || 0).toFixed(2)}€</td>
             <td class="px-2 py-4 text-right">
-              <button class="btn-editar-fila text-[#9da6b9] hover:text-white cursor-pointer" data-id="${orden.id}">
-                <span class="material-symbols-outlined">more_vert</span>
-              </button>
+              <div class="acciones-dropdown-container" data-orden-id="${orden.id}" data-estado-pago="${orden.estado_pago}" data-tiene-factura="${orden.id_factura || orden.numero_factura ? 'true' : 'false'}">
+                <button class="btn-acciones text-[#9da6b9] hover:text-white cursor-pointer p-1 rounded hover:bg-[#282e39] transition-colors" data-id="${orden.id}">
+                  <span class="material-symbols-outlined">more_vert</span>
+                </button>
+                <div class="acciones-dropdown" id="acciones-dropdown-${orden.id}"></div>
+              </div>
             </td>
           </tr>
         `;
@@ -961,8 +1050,9 @@
         // Click en filas para seleccionar
         document.querySelectorAll('.order-row').forEach(row => {
           row.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-editar-fila')) return;
-            if (e.target.closest('.estado-dropdown-container')) return; // No seleccionar al click en dropdown
+            if (e.target.closest('.btn-acciones')) return;
+            if (e.target.closest('.acciones-dropdown-container')) return; // No seleccionar al click en dropdown de acciones
+            if (e.target.closest('.estado-dropdown-container')) return; // No seleccionar al click en dropdown de estado
             document.querySelectorAll('.order-row').forEach(r => r.classList.remove('active'));
             row.classList.add('active');
             const id = parseInt(row.dataset.id);
@@ -971,12 +1061,68 @@
           });
         });
 
-        // Botón editar en la fila (3 puntitos)
-        document.querySelectorAll('.btn-editar-fila').forEach(btn => {
+        // Botón de acciones en la fila (3 puntitos) - muestra menú desplegable
+        document.querySelectorAll('.btn-acciones').forEach(btn => {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const id = btn.dataset.id;
-            window.location.href = `manager-taller-ordenes.html?id=${id}`;
+            const container = btn.closest('.acciones-dropdown-container');
+            const ordenId = container.dataset.ordenId;
+            const estadoPago = container.dataset.estadoPago;
+            const tieneFactura = container.dataset.tieneFactura === 'true';
+            const dropdown = document.getElementById(`acciones-dropdown-${ordenId}`);
+
+            // Cerrar otros dropdowns de acciones
+            document.querySelectorAll('.acciones-dropdown.show').forEach(d => {
+              if (d.id !== `acciones-dropdown-${ordenId}`) d.classList.remove('show');
+            });
+            // Cerrar también dropdowns de estado
+            document.querySelectorAll('.estado-dropdown.show').forEach(d => d.classList.remove('show'));
+
+            // Renderizar opciones del menú
+            let opcionesHTML = `
+              <div class="acciones-option editar" data-action="editar" data-orden-id="${ordenId}">
+                <span class="material-symbols-outlined">edit</span>
+                Editar
+              </div>
+            `;
+
+            // Solo mostrar "Generar Factura" si está pagado y no tiene factura
+            if (estadoPago === 'PAGADO' && !tieneFactura) {
+              opcionesHTML += `
+                <div class="acciones-option factura" data-action="factura" data-orden-id="${ordenId}">
+                  <span class="material-symbols-outlined">receipt_long</span>
+                  Generar Factura
+                </div>
+              `;
+            }
+
+            dropdown.innerHTML = opcionesHTML;
+
+            // Event listeners para las opciones
+            dropdown.querySelectorAll('.acciones-option').forEach(option => {
+              option.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const action = option.dataset.action;
+                const ordId = option.dataset.ordenId;
+                dropdown.classList.remove('show');
+
+                if (action === 'editar') {
+                  window.location.href = `manager-taller-ordenes.html?id=${ordId}`;
+                } else if (action === 'factura') {
+                  // Seleccionar la orden primero y luego disparar la generación de factura
+                  const ordenParaFactura = ordenes.find(o => o.id === parseInt(ordId));
+                  if (ordenParaFactura) {
+                    ordenSeleccionada = ordenParaFactura;
+                    actualizarPanel();
+                    // Disparar click en el botón generar factura del panel
+                    const btnFactura = document.getElementById('btn-generar-factura');
+                    if (btnFactura) btnFactura.click();
+                  }
+                }
+              });
+            });
+
+            dropdown.classList.toggle('show');
           });
         });
 
@@ -1067,6 +1213,7 @@
       // Cerrar dropdowns al hacer click fuera
       document.addEventListener('click', () => {
         document.querySelectorAll('.estado-dropdown.show').forEach(d => d.classList.remove('show'));
+        document.querySelectorAll('.acciones-dropdown.show').forEach(d => d.classList.remove('show'));
       });
 
       function actualizarPanel() {

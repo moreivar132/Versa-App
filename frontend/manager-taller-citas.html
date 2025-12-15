@@ -18,6 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -235,6 +236,11 @@
                             </button>
                         </div>
                     </header>
+
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
 
                     <!-- Stats Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -1354,6 +1360,20 @@
             clientModal.classList.remove('flex');
         }
 
+    </script>
+
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+
+        // Inicializar selector de sucursal
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    // Recargar citas cuando cambia la sucursal
+                    if (typeof loadCitas === 'function') loadCitas();
+                }
+            });
+        })();
     </script>
 </body>
 

@@ -20,6 +20,7 @@
 
     <!-- Manager CSS Base -->
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
 
     <style>
         /* --- SCROLLBAR --- */
@@ -563,6 +564,11 @@
 
             <main class="flex-1 overflow-y-auto p-6">
                 <div class="max-w-7xl mx-auto">
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
+
                     <!-- Header -->
                     <div class="mb-8">
                         <h1 class="text-3xl font-bold text-white mb-2">Configuración de Facturas</h1>
@@ -790,10 +796,16 @@
 
     <script type="module">
         import { fetchWithAuth, getSession, clearSession, redirectToLogin } from './auth.js';
+        import { initSucursalSelector } from './services/sucursal-selector.js';
 
         const API_BASE_URL = '/api';
         let userData = null;
         let configActual = null;
+
+        // Inicializar selector de sucursal
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container');
+        })();
 
         // --- SIDEBAR LOGIC ---
         window.toggleSubmenu = function (id) {
