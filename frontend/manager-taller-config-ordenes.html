@@ -20,6 +20,8 @@
 
     <!-- Manager CSS Base -->
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+
 
     <style>
         /* --- SCROLLBAR --- */
@@ -409,10 +411,36 @@
                                     </h3>
 
                                     <div class="mb-4">
-                                        <label class="block text-sm font-medium text-gray-400 mb-2">Logo URL</label>
-                                        <input type="text" id="logoUrl" class="form-input"
-                                            placeholder="https://ejemplo.com/logo.png">
-                                        <p class="mt-1 text-xs text-gray-500">URL pública de tu logo (opcional)</p>
+                                        <label class="block text-sm font-medium text-gray-400 mb-2">Logo</label>
+                                        <div class="flex items-center gap-4">
+                                            <div
+                                                class="w-20 h-20 bg-gray-700/50 rounded-lg flex items-center justify-center border border-gray-600 overflow-hidden relative group">
+                                                <img id="logoPreview" src="" alt="Logo"
+                                                    class="w-full h-full object-contain hidden">
+                                                <span id="logoPlaceholder"
+                                                    class="text-gray-500 text-xs text-center p-2">Sin Logo</span>
+                                                <!-- Overlay para cambiar -->
+                                                <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                                                    onclick="document.getElementById('logoInput').click()">
+                                                    <i class="fas fa-camera text-white"></i>
+                                                </div>
+                                            </div>
+                                            <div class="flex-1">
+                                                <input type="file" id="logoInput" accept="image/*" class="hidden">
+                                                <input type="hidden" id="logoUrl">
+                                                <!-- Campo oculto para la URL final -->
+                                                <button onclick="document.getElementById('logoInput').click()"
+                                                    class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-md mb-2 block transition-colors">
+                                                    Subir Nuevo Logo
+                                                </button>
+                                                <button onclick="eliminarLogo()"
+                                                    class="text-xs text-red-400 hover:text-red-300 transition-colors">
+                                                    Eliminar Logo
+                                                </button>
+                                                <p class="mt-1 text-xs text-gray-500">Recomendado: PNG fondo
+                                                    transparente (max 2MB)</p>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <div class="mb-4">
@@ -682,53 +710,181 @@
             actualizarVistaPrevia();
         });
 
-        // Guardar configuración (localStorage por ahora)
-        window.guardarConfiguracion = function () {
-            const config = {
-                logoUrl: document.getElementById('logoUrl').value.trim(),
-                colorPrimario: document.getElementById('colorPrimarioHex').value,
-                nombreTaller: document.getElementById('nombreTaller').value.trim(),
-                cabeceraHtml: document.getElementById('cabeceraHtml').value.trim(),
-                condicionesHtml: document.getElementById('condicionesHtml').value.trim(),
-                pieHtml: document.getElementById('pieHtml').value.trim(),
-                mostrarLogo: document.getElementById('mostrarLogo').checked,
-                mostrarMatricula: document.getElementById('mostrarMatricula').checked,
-                mostrarKilometraje: document.getElementById('mostrarKilometraje').checked,
-                mostrarTecnico: document.getElementById('mostrarTecnico').checked,
-                mostrarPrecios: document.getElementById('mostrarPrecios').checked,
-                mostrarIva: document.getElementById('mostrarIva').checked,
-                mostrarFirmaCliente: document.getElementById('mostrarFirmaCliente').checked
-            };
+        // Guardar configuración (API)
+        window.guardarConfiguracion = async function () {
+            const saveBtn = document.querySelector('.btn-primary');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
 
-            localStorage.setItem('configOrdenesDiseno', JSON.stringify(config));
-            alert('✅ Configuración guardada correctamente');
+            try {
+                const config = {
+                    logo_url: document.getElementById('logoUrl').value.trim(),
+                    color_primario: document.getElementById('colorPrimarioHex').value,
+                    nombre_taller: document.getElementById('nombreTaller').value.trim(),
+                    cabecera_html: document.getElementById('cabeceraHtml').value.trim(),
+                    condiciones_html: document.getElementById('condicionesHtml').value.trim(),
+                    pie_html: document.getElementById('pieHtml').value.trim(),
+                    mostrar_logo: document.getElementById('mostrarLogo').checked,
+                    mostrar_matricula: document.getElementById('mostrarMatricula').checked,
+                    mostrar_kilometraje: document.getElementById('mostrarKilometraje').checked,
+                    mostrar_tecnico: document.getElementById('mostrarTecnico').checked,
+                    mostrar_precios: document.getElementById('mostrarPrecios').checked,
+                    mostrar_iva: document.getElementById('mostrarIva').checked,
+                    mostrar_firma_cliente: document.getElementById('mostrarFirmaCliente').checked
+                };
+
+                // Enviar al backend
+                const response = await fetch('/api/ordenes/config-tenant', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(config)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('Configuración guardada correctamente');
+                } else {
+                    throw new Error(result.error || 'Error al guardar configuración');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToastError('Error al guardar: ' + error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = originalText;
+            }
         }
 
-        // Cargar configuración desde localStorage
-        function cargarConfiguracion() {
-            const saved = localStorage.getItem('configOrdenesDiseno');
-            if (saved) {
-                const config = JSON.parse(saved);
-                document.getElementById('logoUrl').value = config.logoUrl || '';
-                document.getElementById('colorPrimario').value = config.colorPrimario || '#ff652b';
-                document.getElementById('colorPrimarioHex').value = config.colorPrimario || '#ff652b';
-                document.getElementById('nombreTaller').value = config.nombreTaller || '';
-                document.getElementById('cabeceraHtml').value = config.cabeceraHtml || '';
-                document.getElementById('condicionesHtml').value = config.condicionesHtml || '';
-                document.getElementById('pieHtml').value = config.pieHtml || '';
-                document.getElementById('mostrarLogo').checked = config.mostrarLogo !== false;
-                document.getElementById('mostrarMatricula').checked = config.mostrarMatricula !== false;
-                document.getElementById('mostrarKilometraje').checked = config.mostrarKilometraje !== false;
-                document.getElementById('mostrarTecnico').checked = config.mostrarTecnico !== false;
-                document.getElementById('mostrarPrecios').checked = config.mostrarPrecios !== false;
-                document.getElementById('mostrarIva').checked = config.mostrarIva !== false;
-                document.getElementById('mostrarFirmaCliente').checked = config.mostrarFirmaCliente || false;
+        // Cargar configuración desde API
+        async function cargarConfiguracion() {
+            try {
+                const session = getSession();
+                if (!session || !session.user) return;
+
+                const response = await fetch(`/api/ordenes/config-tenant?tenantId=${session.user.id_tenant}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Error cargando configuración');
+
+                const result = await response.json();
+
+                if (result.success && result.config) {
+                    const config = result.config;
+                    document.getElementById('logoUrl').value = config.logo_url || '';
+                    actualizarLogoPreview(config.logo_url);
+
+                    document.getElementById('colorPrimario').value = config.color_primario || '#ff652b';
+                    document.getElementById('colorPrimarioHex').value = config.color_primario || '#ff652b';
+                    document.getElementById('nombreTaller').value = config.nombre_taller || '';
+                    document.getElementById('cabeceraHtml').value = config.cabecera_html || '';
+                    document.getElementById('condicionesHtml').value = config.condiciones_html || '';
+                    document.getElementById('pieHtml').value = config.pie_html || '';
+
+                    document.getElementById('mostrarLogo').checked = config.mostrar_logo !== false;
+                    document.getElementById('mostrarMatricula').checked = config.mostrar_matricula !== false;
+                    document.getElementById('mostrarKilometraje').checked = config.mostrar_kilometraje !== false;
+                    document.getElementById('mostrarTecnico').checked = config.mostrar_tecnico !== false;
+                    document.getElementById('mostrarPrecios').checked = config.mostrar_precios !== false;
+                    document.getElementById('mostrarIva').checked = config.mostrar_iva !== false;
+                    document.getElementById('mostrarFirmaCliente').checked = config.mostrar_firma_cliente !== false;
+
+                    actualizarVistaPrevia();
+                }
+            } catch (error) {
+                console.error('Error cargando config:', error);
+                // Si falla, usar defaults (los que ya están en el HTML)
+                actualizarVistaPrevia();
             }
+        }
+
+        // Manejo de Logo
+        const logoInput = document.getElementById('logoInput');
+        if (logoInput) {
+            logoInput.addEventListener('change', async function (e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Mostrar loading en preview de logo si se desea
+
+                try {
+                    const response = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                        // No poner Content-Type header manualmente con FormData
+                    });
+
+                    const result = await response.json();
+
+                    if (result.ok) {
+                        const fullUrl = result.url; // Asumiendo que devuelve path relativo o absoluto
+                        document.getElementById('logoUrl').value = fullUrl;
+                        actualizarLogoPreview(fullUrl);
+                        actualizarVistaPrevia();
+                        showToast('Logo subido correctamente');
+                    } else {
+                        showToastError('Error al subir logo: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Error subida:', error);
+                    showToastError('Error de conexión al subir imagen');
+                }
+            });
+        }
+
+        function actualizarLogoPreview(url) {
+            const preview = document.getElementById('logoPreview');
+            const placeholder = document.getElementById('logoPlaceholder');
+
+            if (url) {
+                preview.src = url;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+            } else {
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                preview.src = '';
+            }
+        }
+
+        window.eliminarLogo = function () {
+            document.getElementById('logoUrl').value = '';
+            document.getElementById('logoInput').value = ''; // Reset file input
+            actualizarLogoPreview('');
+            actualizarVistaPrevia();
         }
 
         // Agregar campo personalizado (placeholder)
         window.agregarCampoPersonalizado = function () {
             alert('Funcionalidad de campos personalizados disponible próximamente');
+        }
+
+        function showToast(msg) {
+            // Implementación simple de toast si no existe global
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-5 right-5 bg-green-600 text-white px-6 py-3 rounded shadow-lg z-50 animate-fade-in-up';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function showToastError(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-5 right-5 bg-red-600 text-white px-6 py-3 rounded shadow-lg z-50 animate-fade-in-up';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
         }
 
         // --- VISTA PREVIA EN TIEMPO REAL ---
@@ -757,7 +913,7 @@
                     <!-- Header -->
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 15px; border-bottom: 2px solid ${colorPrimario}; margin-bottom: 15px;">
                         <div>
-                            ${mostrarLogo && logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-height: 40px; max-width: 120px; object-fit: contain; margin-bottom: 8px;" onerror="this.style.display='none'">` : ''}
+                            ${mostrarLogo && logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-height: 40px; max-width: 120px; object-fit: contain; margin-bottom: 8px;" onerror="this.nextElementSibling.style.display='block'; this.style.display='none'">` : ''}
                             <div style="font-weight: bold; font-size: 16px; color: ${colorPrimario};">${nombreTaller}</div>
                             ${cabeceraHtml ? `<div style="color: #666; font-size: 10px; white-space: pre-line;">${cabeceraHtml}</div>` : ''}
                         </div>
@@ -878,13 +1034,22 @@
 
         // Inicialización
         document.addEventListener('DOMContentLoaded', () => {
+            // Verificar autenticación
+            const session = getSession();
+            if (!session || !session.token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
             if (cargarDatosUsuario()) {
                 cargarConfiguracion();
                 conectarEventListenersVistaPrevia();
-                setTimeout(actualizarVistaPrevia, 100);
             }
         });
     </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

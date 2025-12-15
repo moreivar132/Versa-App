@@ -18,28 +18,22 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="/guard.js"></script>
 
+  <!-- Estilos Globales del Manager -->
+  <link rel="stylesheet" href="manager.css">
+
   <style>
-    /* --- Variables de Diseño (Fallback por si falta manager.css) --- */
-    :root {
-      --brand-orange: #ff5f00;
-      --text-primary: #ffffff;
-      --text-secondary: #9da6b9;
-      --surface-bg: #111318;
-      --surface-border: #282e39;
-      --input-bg: #1a1d24;
-      --border-color: #444444;
-      --error-color: #ef4444;
-      --success-color: #10b981;
-      --font-main: 'Montserrat', sans-serif;
-    }
+    /* 
+     * Estilos específicos de manager-taller-ordenes.html
+     * Las variables globales (:root) están centralizadas en manager.css
+     */
 
     body {
       font-family: var(--font-main);
-      background-color: #0b0d11;
-      /* Fondo muy oscuro */
+      background-color: var(--bg-deep);
       color: var(--text-primary);
       margin: 0;
     }
+
 
     /* Estilos Específicos del Formulario */
     .manager-panel {
@@ -2220,6 +2214,9 @@
       }
     })();
   </script>
+
+  <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+  <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

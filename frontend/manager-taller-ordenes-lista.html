@@ -6,29 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lista de Órdenes - Goversa</title>
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+
+  <!-- Google Fonts - Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Sucursal Selector CSS -->
   <link rel="stylesheet" href="styles/sucursal-selector.css">
 
+  <!-- Moment.js (librería específica de esta página) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- Guard.js - Autenticación -->
   <script src="/guard.js"></script>
 
+  <!-- Estilos Globales del Manager -->
+  <link rel="stylesheet" href="manager.css">
+
   <style>
-    :root {
-      --brand-orange: #ff5f00;
-      --surface-border: #282e39;
-    }
+    /* 
+     * Estilos específicos de manager-taller-ordenes-lista.html
+     * Las variables globales (:root) están centralizadas en manager.css
+     */
 
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
       vertical-align: middle;
     }
+
 
     ::-webkit-scrollbar {
       width: 8px;
@@ -378,6 +395,8 @@
                 <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
               </a>
               <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-cuentas-corrientes.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Cuentas Corrientes</a>
                 <a href="manager-taller-facturas.html"
                   class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
                 <a href="manager-taller-facturas-pendientes.html"
@@ -632,9 +651,9 @@
                 title="Editar Orden">
                 <span class="material-symbols-outlined text-xl">edit_document</span>
               </button>
-              <button
-                class="flex items-center justify-center p-2 rounded-lg bg-[#1a1d24] text-[#9da6b9] hover:text-red-500 hover:bg-[#282e39] transition-colors"
-                title="Imprimir">
+              <button id="btn-imprimir-orden"
+                class="flex items-center justify-center p-2 rounded-lg bg-[#1a1d24] text-[#9da6b9] hover:text-[var(--brand-orange)] hover:bg-[#282e39] transition-colors"
+                title="Imprimir Orden de Trabajo">
                 <span class="material-symbols-outlined text-xl">print</span>
               </button>
             </div>
@@ -824,6 +843,17 @@
             Registrar Pago
           </button>
         </form>
+
+        <!-- Separador y botón Cuenta Corriente -->
+        <div id="seccion-cuenta-corriente" class="hidden mt-4 pt-4 border-t border-[#282e39]">
+          <p class="text-xs text-[#9da6b9] mb-3 text-center">¿El cliente no puede pagar ahora?</p>
+          <button type="button" id="btn-pasar-cuenta-corriente"
+            class="w-full py-3 bg-[#1a1d24] hover:bg-[#282e39] border border-[#3e4552] hover:border-yellow-500/50 text-yellow-400 font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">account_balance_wallet</span>
+            Pasar a Cuenta Corriente
+          </button>
+          <p class="text-xs text-gray-500 mt-2 text-center">El saldo pendiente se cargará a la cuenta del cliente</p>
+        </div>
       </div>
     </div>
   </div>
@@ -923,6 +953,40 @@
         document.body.appendChild(toast);
 
         setTimeout(() => toast.remove(), 3000);
+      }
+
+      /**
+       * Genera y muestra el documento de orden de trabajo
+       * @param {number} ordenId - ID de la orden
+       */
+      async function generarDocumentoOrden(ordenId) {
+        try {
+          showToast('Generando documento de orden...');
+
+          // Llamar al endpoint para obtener el HTML
+          const response = await fetchWithAuth(`/api/ordenes/${ordenId}/documento`);
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al generar el documento');
+          }
+
+          const html = await response.text();
+
+          // Abrir en nueva ventana
+          const newWindow = window.open('', '_blank', 'width=900,height=700');
+          if (newWindow) {
+            newWindow.document.write(html);
+            newWindow.document.close();
+            showToast('Documento generado correctamente');
+          } else {
+            showToast('Por favor, permite ventanas emergentes para ver el documento', true);
+          }
+
+        } catch (error) {
+          console.error('Error generando documento de orden:', error);
+          showToast('❌ ' + (error.message || 'Error al generar el documento'), true);
+        }
       }
 
       // Cargar estados disponibles al inicio
@@ -1084,6 +1148,10 @@
                 <span class="material-symbols-outlined">edit</span>
                 Editar
               </div>
+              <div class="acciones-option generar-orden" data-action="generar-orden" data-orden-id="${ordenId}">
+                <span class="material-symbols-outlined">description</span>
+                Generar Orden
+              </div>
             `;
 
             // Solo mostrar "Generar Factura" si está pagado y no tiene factura
@@ -1108,6 +1176,9 @@
 
                 if (action === 'editar') {
                   window.location.href = `manager-taller-ordenes.html?id=${ordId}`;
+                } else if (action === 'generar-orden') {
+                  // Generar documento de orden de trabajo
+                  generarDocumentoOrden(ordId);
                 } else if (action === 'factura') {
                   // Seleccionar la orden primero y luego disparar la generación de factura
                   const ordenParaFactura = ordenes.find(o => o.id === parseInt(ordId));
@@ -1245,6 +1316,13 @@
         }
       });
 
+      // --- IMPRIMIR ORDEN ---
+      document.getElementById('btn-imprimir-orden').addEventListener('click', () => {
+        if (ordenSeleccionada) {
+          generarDocumentoOrden(ordenSeleccionada.id);
+        }
+      });
+
       // --- MODAL PAGOS ---
       function abrirModalPagos() {
         if (!ordenSeleccionada) return;
@@ -1263,6 +1341,17 @@
         document.getElementById('modal-pendiente').textContent = `${pendiente.toFixed(2)}€`;
         document.getElementById('modal-progress').style.width = `${Math.min(100, progreso)}%`;
         document.getElementById('modal-importe').value = pendiente > 0 ? pendiente.toFixed(2) : '';
+
+        // Mostrar sección de cuenta corriente solo si hay pendiente y no está ya en cuenta corriente
+        const seccionCC = document.getElementById('seccion-cuenta-corriente');
+        if (seccionCC) {
+          const yaEnCuentaCorriente = ordenSeleccionada.en_cuenta_corriente || false;
+          if (pendiente > 0 && !yaEnCuentaCorriente) {
+            seccionCC.classList.remove('hidden');
+          } else {
+            seccionCC.classList.add('hidden');
+          }
+        }
       }
 
       function cerrarModalPagos() {
@@ -1286,6 +1375,56 @@
         document.getElementById('modal-importe').value = (Math.max(0, totalNeto - totalPagado) / 2).toFixed(2);
       });
 
+      // --- PASAR A CUENTA CORRIENTE ---
+      document.getElementById('btn-pasar-cuenta-corriente')?.addEventListener('click', async () => {
+        if (!ordenSeleccionada) return;
+
+        const totalNeto = parseFloat(ordenSeleccionada.total_neto || 0);
+        const totalPagado = parseFloat(ordenSeleccionada.total_pagado || 0);
+        const pendiente = Math.max(0, totalNeto - totalPagado);
+
+        if (pendiente <= 0) {
+          showToast('Esta orden no tiene saldo pendiente', true);
+          return;
+        }
+
+        const confirmar = confirm(`¿Cargar ${pendiente.toFixed(2)}€ a la cuenta corriente del cliente?\n\nEl saldo quedará registrado como deuda pendiente de cobro.`);
+        if (!confirmar) return;
+
+        const btn = document.getElementById('btn-pasar-cuenta-corriente');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+        btn.disabled = true;
+
+        try {
+          const session = await getSession();
+          const response = await fetch('/api/cuentas-corrientes/cargar-orden', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.token}`
+            },
+            body: JSON.stringify({ idOrden: ordenSeleccionada.id })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast(`Saldo de ${pendiente.toFixed(2)}€ cargado a cuenta corriente`);
+            cerrarModalPagos();
+            cargarOrdenes(filtrosActuales);
+          } else {
+            showToast(data.error || 'Error al cargar a cuenta corriente', true);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          showToast('Error de conexión', true);
+        } finally {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      });
+
       document.getElementById('form-nuevo-pago').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -1305,11 +1444,11 @@
             referencia: referencia || null
           });
 
-          alert('Pago registrado correctamente');
+          showToast('Pago registrado correctamente');
           cerrarModalPagos();
           cargarOrdenes(filtrosActuales);
         } catch (error) {
-          alert('Error al registrar pago: ' + error.message);
+          showToast('Error al registrar pago: ' + error.message, true);
         }
       });
 
@@ -1618,6 +1757,9 @@
       );
     });
   </script>
+
+  <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+  <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

@@ -54,6 +54,7 @@ app.use('/api/caja', require('./routes/caja'));
 app.use('/api/tecnicos', require('./routes/tecnicos'));
 app.use('/api/trabajadores', require('./routes/trabajadores'));
 app.use('/api/facturas', require('./routes/facturas'));
+app.use('/api/cuentas-corrientes', require('./routes/cuentasCorrientes'));
 
 // Servir archivos estáticos subidos (ahora bajo /api/uploads para consistencia)
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));

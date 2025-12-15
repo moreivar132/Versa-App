@@ -19,6 +19,7 @@
         rel="stylesheet" />
 
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         /* --- SCROLLBAR --- */
         ::-webkit-scrollbar {
@@ -47,19 +48,85 @@
             border-right: 1px solid var(--border-subtle);
         }
 
-        /* --- CONTENEDOR PRINCIPAL --- */
-        .history-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            max-height: calc(100vh - 50px);
+        /* --- FORM CONTENEDOR --- */
+        .form-main-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 30px 0;
+            background: linear-gradient(to right, #fff, #ccc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
         }
 
-        .page-title {
-            font-size: 28px;
-            font-weight: 900;
-            color: white;
-            letter-spacing: -0.033em;
+        .form-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .form-section.single-col {
+            grid-template-columns: 1fr;
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        /* --- INPUTS --- */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            transition: color 0.3s;
+        }
+
+        .form-group:focus-within label {
+            color: var(--brand-orange);
+        }
+
+        .form-input,
+        .form-select,
+        textarea.form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-family: "Montserrat", sans-serif;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:hover,
+        .form-select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        textarea.form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 101, 43, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
         }
 
         /* --- STATS CARDS --- */
@@ -73,44 +140,20 @@
         .stat-card {
             display: flex;
             flex-direction: column;
+            align-items: center;
+            justify-content: center;
             gap: 8px;
             padding: 20px 24px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(45, 30, 25, 0.5);
-            backdrop-filter: blur(8px);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+            background: rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
         }
 
         .stat-card:hover {
-            transform: translateY(-8px);
-            box-shadow:
-                0 15px 35px rgba(0, 0, 0, 0.6),
-                0 0 15px rgba(255, 101, 43, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
             border-color: var(--brand-orange);
-        }
-
-        .stat-card.antigravity-float:hover {
-            animation-play-state: paused;
-        }
-
-        /* --- EFECTO ANTIGRAVEDAD (HOVER) --- */
-        .antigravity-card {
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .antigravity-card:hover {
-            transform: translateY(-8px);
-            box-shadow:
-                0 15px 35px rgba(0, 0, 0, 0.6),
-                0 0 15px rgba(255, 101, 43, 0.3);
-            border-color: var(--brand-orange);
-        }
-
-        .stat-label {
-            color: #bca39a;
-            font-size: 14px;
-            font-weight: 500;
         }
 
         .stat-value {
@@ -128,24 +171,13 @@
             color: #fbbf24;
         }
 
-        /* --- FILTROS SUPERIORES --- */
-        .filters-bar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            align-items: center;
-            margin-bottom: 24px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-subtle);
-        }
-
-        /* Grupo de Fechas */
+        /* --- FILTROS --- */
         .custom-date-group {
             display: flex;
             align-items: center;
             gap: 10px;
-            background: rgba(58, 44, 39, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--input-bg);
+            border: 1px solid var(--border-subtle);
             border-radius: 12px;
             padding: 8px 14px;
         }
@@ -175,51 +207,10 @@
             box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
         }
 
-        .filter-group-select {
-            background: transparent;
-            color: #bca39a;
-            font-size: 13px;
-            font-weight: 600;
-            border: none;
-            outline: none;
-            padding-right: 12px;
-            margin-right: 8px;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            cursor: pointer;
-        }
-
-        .filter-group-select:hover {
-            color: white;
-        }
-
-        .filter-group-select option {
-            background: #1a1a1f;
-            color: white;
-        }
-
-        /* --- BARRA DE BÚSQUEDA --- */
-        .search-bar-row {
-            display: grid;
-            grid-template-columns: 200px 1fr 150px auto;
-            gap: 12px;
-            background: rgba(58, 44, 39, 0.4);
-            padding: 14px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            margin-bottom: 20px;
-            align-items: center;
-        }
-
-        @media (max-width: 900px) {
-            .search-bar-row {
-                grid-template-columns: 1fr;
-            }
-        }
-
         .filter-input,
         .filter-select {
-            background-color: rgba(58, 44, 39, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-subtle);
             color: white;
             padding: 12px 14px;
             border-radius: 12px;
@@ -237,11 +228,11 @@
         }
 
         ::placeholder {
-            color: #bca39a;
+            color: var(--text-secondary);
             opacity: 0.7;
         }
 
-        /* --- BOTÓN NUEVO --- */
+        /* --- BOTONES --- */
         .btn-new {
             background: var(--brand-orange);
             color: white;
@@ -259,21 +250,23 @@
             height: 48px;
             text-decoration: none;
             white-space: nowrap;
+            box-shadow: 0 4px 14px rgba(255, 101, 43, 0.4);
         }
 
         .btn-new:hover {
             background: #e05500;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 101, 43, 0.6);
         }
 
         .btn-filter {
-            background: rgba(58, 44, 39, 0.8);
+            background: var(--input-bg);
             color: white;
             padding: 0 20px;
             border-radius: 12px;
             font-weight: 600;
             font-size: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
             cursor: pointer;
             transition: all 0.2s;
             display: inline-flex;
@@ -284,16 +277,16 @@
         }
 
         .btn-filter:hover {
-            background: rgba(86, 65, 57, 0.9);
-            border-color: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
-        /* --- TABLA MEJORADA --- */
+        /* --- TABLA --- */
         .table-container {
             overflow-x: auto;
-            background: rgba(45, 30, 25, 0.5);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-subtle);
         }
 
         .history-table {
@@ -303,22 +296,22 @@
         }
 
         .history-table thead {
-            background: rgba(58, 44, 39, 0.6);
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .history-table thead th {
             padding: 14px 20px;
             text-align: left;
             font-size: 12px;
-            font-weight: 500;
-            color: #bca39a;
+            font-weight: 600;
+            color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid var(--border-subtle);
         }
 
         .history-table tbody tr {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             transition: background-color 0.2s;
         }
 
@@ -327,7 +320,7 @@
         }
 
         .history-table tbody tr:hover {
-            background: rgba(58, 44, 39, 0.4);
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .history-table td {
@@ -407,7 +400,7 @@
             justify-content: space-between;
             padding: 16px 0;
             margin-top: 16px;
-            color: #bca39a;
+            color: var(--text-secondary);
             font-size: 14px;
         }
 
@@ -420,7 +413,7 @@
         .page-btn {
             padding: 8px 14px;
             border-radius: 8px;
-            color: #bca39a;
+            color: var(--text-secondary);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
@@ -433,7 +426,7 @@
         }
 
         .page-btn:hover:not(:disabled) {
-            background: rgba(58, 44, 39, 0.8);
+            background: rgba(255, 255, 255, 0.1);
             color: white;
         }
 
@@ -506,28 +499,6 @@
 
         .animate-fade-in {
             animation: fadeIn 0.4s ease-out forwards;
-        }
-
-        /* --- ANIMACIÓN FLOTANTE CONTINUA --- */
-        @keyframes float-up-down {
-            0% {
-                transform: translateY(0px);
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            }
-
-            50% {
-                transform: translateY(-10px);
-                box-shadow: 0 25px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 101, 43, 0.2);
-            }
-
-            100% {
-                transform: translateY(0px);
-                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            }
-        }
-
-        .antigravity-float {
-            animation: float-up-down 6s ease-in-out infinite;
         }
     </style>
 </head>
@@ -704,89 +675,96 @@
 
             <main class="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
 
-                <div class="max-w-7xl mx-auto animate-fade-in">
+                <div class="manager-panel">
 
                     <!-- HEADER -->
-                    <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
-                        <h1 class="page-title">Historial de Ventas</h1>
+                    <div class="flex flex-wrap items-center justify-between mb-8 gap-4 border-b border-[#282e39] pb-6">
+                        <div>
+                            <h2 class="form-main-title mb-0">Historial de Ventas</h2>
+                            <p class="text-[#9da6b9] text-sm mt-1">Registro de todas las ventas realizadas</p>
+                        </div>
                         <a href="manager-taller-ventas.html" class="btn-new">
-                            <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
-                            <span>Nueva Venta</span>
+                            <i class="fas fa-plus mr-2"></i> Nueva Venta
                         </a>
                     </div>
 
                     <!-- STATS CARDS -->
-                    <div class="stats-grid">
-                        <div class="stat-card antigravity-float">
-                            <p class="stat-label">Total Ventas (Periodo)</p>
-                            <p class="stat-value income" id="stat-total">0,00 €</p>
+                    <div class="form-section">
+                        <div class="stat-card">
+                            <span class="text-gray-400 text-sm uppercase font-semibold">Total Periodo</span>
+                            <span class="text-2xl font-bold text-white mt-1" id="stat-total">0,00 €</span>
                         </div>
-                        <div class="stat-card antigravity-float" style="animation-delay: 0.5s;">
-                            <p class="stat-label">Ventas Cobradas</p>
-                            <p class="stat-value income" id="stat-paid">0,00 €</p>
+                        <div class="stat-card">
+                            <span class="text-gray-400 text-sm uppercase font-semibold">Cobrado</span>
+                            <span class="text-2xl font-bold text-[#4ade80] mt-1" id="stat-paid">0,00 €</span>
                         </div>
-                        <div class="stat-card antigravity-float" style="animation-delay: 1s;">
-                            <p class="stat-label">Pendiente de Cobro</p>
-                            <p class="stat-value pending" id="stat-pending">0,00 €</p>
+                        <div class="stat-card">
+                            <span class="text-gray-400 text-sm uppercase font-semibold">Pendiente</span>
+                            <span class="text-2xl font-bold text-[var(--brand-orange)] mt-1" id="stat-pending">0,00
+                                €</span>
                         </div>
                     </div>
 
                     <!-- FILTROS -->
-                    <div class="flex flex-wrap items-end gap-4 mb-6">
-                        <div class="flex-grow min-w-[200px]">
-                            <label class="stat-label block mb-1.5" for="filter-date-start">Rango de Fechas</label>
-                            <div class="custom-date-group">
-                                <span class="material-symbols-outlined text-[#bca39a]"
-                                    style="font-size: 20px;">calendar_today</span>
-                                <input type="date" id="filter-date-start" class="custom-date-input">
-                                <span class="text-[#bca39a] text-xs">a</span>
-                                <input type="date" id="filter-date-end" class="custom-date-input">
+                    <h3 class="text-lg font-bold text-white mb-4 pl-2 border-l-4 border-[var(--brand-orange)]">Filtros y
+                        Búsqueda</h3>
+                    <div class="form-section" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                        <div class="form-group grid-span-full md:col-span-1">
+                            <label>Búsqueda</label>
+                            <div class="relative">
+                                <span
+                                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
+                                    style="font-size: 20px;">search</span>
+                                <input type="text" id="search-input" class="form-input pl-12"
+                                    placeholder="Cliente, NIF, Ref...">
                             </div>
                         </div>
-                        <div class="flex-grow min-w-[150px]">
-                            <label class="stat-label block mb-1.5" for="filter-type">Tipo de Venta</label>
-                            <select id="filter-type" class="filter-select">
-                                <option value="all">Todas</option>
-                                <option value="factura">Factura</option>
-                                <option value="ticket">Ticket</option>
-                                <option value="albaran">Albarán</option>
-                            </select>
+                        <div class="form-group">
+                            <label>Desde</label>
+                            <input type="date" id="filter-date-start" class="form-input">
                         </div>
-                        <div class="flex-grow min-w-[150px]">
-                            <label class="stat-label block mb-1.5" for="filter-status">Estado de Cobro</label>
-                            <select id="filter-status" class="filter-select">
+                        <div class="form-group">
+                            <label>Hasta</label>
+                            <input type="date" id="filter-date-end" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label>Estado Cobro</label>
+                            <select id="filter-status" class="form-select">
                                 <option value="all">Todos</option>
                                 <option value="paid">Cobrado</option>
                                 <option value="pending">Pendiente</option>
                             </select>
                         </div>
-                        <button class="btn-filter" id="btn-search-trigger">
-                            <span class="material-symbols-outlined" style="font-size: 20px;">filter_list</span>
-                            <span>Filtrar</span>
-                        </button>
-                    </div>
-
-                    <!-- BÚSQUEDA -->
-                    <div class="mb-6">
-                        <div class="relative">
-                            <span
-                                class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#bca39a]"
-                                style="font-size: 20px;">search</span>
-                            <input type="text" id="search-input" placeholder="Buscar por cliente, NIF, referencia..."
-                                class="filter-input pl-12 w-full">
+                        <div class="form-group">
+                            <label>Tipo Doc.</label>
+                            <select id="filter-type" class="form-select">
+                                <option value="all">Todos</option>
+                                <option value="factura">Factura</option>
+                                <option value="ticket">Ticket</option>
+                                <option value="albaran">Albarán</option>
+                            </select>
+                        </div>
+                        <div class="form-group flex justify-end items-end">
+                            <button id="btn-search-trigger" class="btn-filter w-full">
+                                <i class="fas fa-filter mr-2"></i> Aplicar
+                            </button>
                         </div>
                     </div>
 
+
+
                     <!-- TABLA -->
+                    <h3 class="text-lg font-bold text-white mb-4 pl-2 border-l-4 border-[var(--brand-orange)]">Listado
+                        de Ventas</h3>
                     <div class="table-container">
                         <table class="history-table">
                             <thead>
                                 <tr>
-                                    <th>Nº Factura</th>
+                                    <th>Nº Ref</th>
                                     <th>Cliente</th>
                                     <th>Fecha</th>
                                     <th>Tipo</th>
-                                    <th>Estado Cobro</th>
+                                    <th>Estado</th>
                                     <th class="text-right">Total</th>
                                     <th class="text-center">Acciones</th>
                                 </tr>
@@ -803,7 +781,7 @@
                             <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
                             Anterior
                         </button>
-                        <div id="records-info" class="text-[#bca39a] text-sm">Mostrando 0 registros</div>
+                        <div id="records-info" class="text-[var(--text-secondary)] text-sm">Mostrando 0 registros</div>
                         <div class="pagination-controls" id="pagination-pages">
                             <!-- Page numbers will be inserted here -->
                         </div>
@@ -1168,6 +1146,9 @@
             menu.dataset.selectedId = id;
         }
     </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

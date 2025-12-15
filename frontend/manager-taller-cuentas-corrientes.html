@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cuentas Corrientes - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts - Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Guard.js - Autenticación -->
+    <script src="/guard.js"></script>
+
+    <!-- Estilos Globales del Manager -->
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+
+    <style>
+        /* 
+         * Estilos específicos de manager-taller-cuentas-corrientes.html
+         * Las variables globales (:root) están centralizadas en manager.css
+         */
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--brand-orange);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px -5px rgba(255, 95, 0, 0.2);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-cargo {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .type-abono {
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .currency-input {
+            position: relative;
+        }
+
+        .currency-input::before {
+            content: '€';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9da6b9;
+            font-size: 0.9rem;
+        }
+
+        .currency-input input {
+            padding-left: 28px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111318;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #282e39;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+
+        .metodo-pago-btn {
+            transition: all 0.2s;
+        }
+
+        .metodo-pago-btn.active {
+            border-color: var(--brand-orange) !important;
+            color: white !important;
+            background: rgba(255, 95, 0, 0.1) !important;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background-color: #10b981;
+        }
+
+        .toast.error {
+            background-color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#0b0d11] text-white font-[Montserrat] overflow-hidden">
+    <div class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[#282e39]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge flex items-center justify-center w-10 h-10 rounded-xl bg-[#282e39]">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium">Goversa</h1>
+                            <p class="text-[#9da6b9] text-xs">Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Inicio</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <!-- Sección Activa: Cuentas -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-cuentas-corrientes.html"
+                                    class="text-white font-semibold text-sm py-1 block">Cuentas Corrientes</a>
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Inventario</p>
+                        </a>
+                    </nav>
+                </div>
+
+                <div class="flex flex-col gap-1 border-t border-[#282e39] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --</div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" id="logout-btn">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <header class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[#282e39]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 bg-[#0b0d11]">
+                <div class="max-w-7xl mx-auto space-y-6">
+
+                    <!-- Header Actions -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 class="text-3xl font-extrabold text-white">Cuentas Corrientes</h1>
+                            <p class="text-[#9da6b9] mt-1">Gestión de movimientos y deuda de clientes</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="abrirModalPago()"
+                                class="btn bg-[#282e39] hover:bg-[#343b47] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors border border-[#3e4552]">
+                                <i class="fas fa-plus"></i> Registrar Pago
+                            </button>
+                            <button onclick="exportarExtracto()"
+                                class="btn bg-[var(--brand-orange)] hover:bg-[#e05300] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-orange-900/20">
+                                <i class="fas fa-file-export"></i> Exportar Extracto
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="stat-card">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Deuda Total Clientes</p>
+                            <h3 class="text-2xl font-bold text-red-400" id="stat-deuda-total">0.00 €</h3>
+                            <div class="text-xs text-red-400/60 mt-1"><i class="fas fa-arrow-up"></i> Pendiente de cobro
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Cobrado este Mes</p>
+                            <h3 class="text-2xl font-bold text-green-400" id="stat-cobrado-mes">0.00 €</h3>
+                            <div class="text-xs text-green-400/60 mt-1"><i class="fas fa-check"></i> Ingresos</div>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Movimientos Hoy</p>
+                            <h3 class="text-2xl font-bold text-white" id="stat-movimientos-hoy">0</h3>
+                            <div class="text-xs text-[#9da6b9] mt-1">Operaciones registradas</div>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Clientes con Cuenta</p>
+                            <h3 class="text-2xl font-bold text-white" id="stat-clientes-cuenta">0</h3>
+                            <div class="text-xs text-[#9da6b9] mt-1">Cuentas activas</div>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="manager-panel p-5 bg-[#1e242d] rounded-xl border border-[#282e39]">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-bold text-[#9da6b9] mb-2">BUSCAR CLIENTE</label>
+                                <div class="relative">
+                                    <i
+                                        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                    <input type="text" id="filtroCliente" placeholder="Nombre, DNI, Matrícula..."
+                                        class="w-full bg-[#111318] border border-[#282e39] text-white text-sm rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block pl-9 p-2.5 placeholder-gray-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-[#9da6b9] mb-2">TIPO MOVIMIENTO</label>
+                                <select id="filtroTipo"
+                                    class="w-full bg-[#111318] border border-[#282e39] text-white text-sm rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block p-2.5">
+                                    <option value="">Todos</option>
+                                    <option value="DEUDA">Deuda / Factura</option>
+                                    <option value="PAGO">Pago / Ingreso</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-[#9da6b9] mb-2">PERIODO</label>
+                                <select id="filtroPeriodo"
+                                    class="w-full bg-[#111318] border border-[#282e39] text-white text-sm rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block p-2.5">
+                                    <option value="mes">Este Mes</option>
+                                    <option value="trimestre">Trimestre</option>
+                                    <option value="anio">Este Año</option>
+                                    <option value="todo">Histórico</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div
+                        class="manager-panel overflow-hidden bg-[#1e242d] rounded-xl border border-[#282e39] flex flex-col">
+                        <div class="p-4 border-b border-[#282e39] flex justify-between items-center bg-[#1e242d]">
+                            <h3 class="text-sm font-bold text-white uppercase tracking-wide">Detalle de Movimientos</h3>
+                            <span class="text-xs text-[#9da6b9] italic" id="movimientos-count">Cargando...</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-[#111318] text-xs uppercase text-[#9da6b9] border-b border-[#282e39]">
+                                        <th class="p-4 font-semibold tracking-wider">Fecha</th>
+                                        <th class="p-4 font-semibold tracking-wider">Cliente</th>
+                                        <th class="p-4 font-semibold tracking-wider">Concepto</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right text-red-400">Debe
+                                            (Cargo)</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right text-green-400">Haber
+                                            (Pago)</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right">Saldo</th>
+                                        <th class="p-4 font-semibold tracking-wider text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaMovimientos" class="text-sm divide-y divide-[#282e39]">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Loading / Empty States -->
+                        <div id="loadingState" class="p-12 text-center text-[#9da6b9]">
+                            <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-[var(--brand-orange)]"></i>
+                            <p>Calculando saldos...</p>
+                        </div>
+                        <div id="emptyState" class="hidden p-12 text-center text-[#9da6b9]">
+                            <div
+                                class="w-16 h-16 bg-[#282e39] rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-search-dollar text-2xl text-gray-500"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white mb-1">Sin Movimientos</h3>
+                            <p>No se encontraron operaciones con los filtros actuales.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Registrar Pago -->
+    <div id="modalPago"
+        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-[#1e242d] rounded-2xl border border-[#282e39] w-full max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300"
+            id="modalPagoContent">
+            <div class="p-6 border-b border-[#282e39] flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white">Registrar Pago</h3>
+                <button onclick="cerrarModalPago()" class="text-gray-400 hover:text-white transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-[#9da6b9] mb-2 uppercase">Cliente</label>
+                    <select id="pagoCliente"
+                        class="w-full bg-[#111318] border border-[#282e39] text-white text-sm rounded-lg p-3 focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Seleccionar cliente...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#9da6b9] mb-2 uppercase">Concepto</label>
+                    <input type="text" id="pagoConcepto" value="Pago a cuenta"
+                        class="w-full bg-[#111318] border border-[#282e39] text-white text-sm rounded-lg p-3 focus:border-[var(--brand-orange)] outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-[#9da6b9] mb-2 uppercase">Importe</label>
+                        <div class="relative currency-input">
+                            <input type="number" id="pagoImporte" step="0.01" placeholder="0.00"
+                                class="w-full bg-[#111318] border border-[#282e39] text-white text-sm rounded-lg p-3 focus:border-[var(--brand-orange)] outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-[#9da6b9] mb-2 uppercase">Fecha</label>
+                        <input type="date" id="pagoFecha"
+                            class="w-full bg-[#111318] border border-[#282e39] text-gray-400 text-sm rounded-lg p-3 focus:border-[var(--brand-orange)] outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-[#9da6b9] mb-2 uppercase">Método de Pago</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" data-metodo="3"
+                            class="metodo-pago-btn p-2 border border-[#282e39] rounded bg-[#111318] text-gray-400 hover:text-white hover:border-[var(--brand-orange)] text-xs font-medium transition-all">Efectivo</button>
+                        <button type="button" data-metodo="2"
+                            class="metodo-pago-btn p-2 border border-[#282e39] rounded bg-[#111318] text-gray-400 hover:text-white hover:border-[var(--brand-orange)] text-xs font-medium transition-all">Tarjeta</button>
+                        <button type="button" data-metodo="1"
+                            class="metodo-pago-btn p-2 border border-[#282e39] rounded bg-[#111318] text-gray-400 hover:text-white hover:border-[var(--brand-orange)] text-xs font-medium transition-all">Transferencia</button>
+                    </div>
+                    <input type="hidden" id="pagoMetodo" value="3">
+                </div>
+            </div>
+            <div class="p-6 border-t border-[#282e39] bg-[#111318]/50 rounded-b-2xl flex justify-end gap-3">
+                <button onclick="cerrarModalPago()"
+                    class="px-4 py-2 text-gray-400 hover:text-white text-sm font-medium transition-colors">Cancelar</button>
+                <button onclick="guardarPago()" id="btnGuardarPago"
+                    class="px-6 py-2 bg-[var(--brand-orange)] hover:bg-[#e05300] text-white text-sm font-bold rounded-lg shadow-lg shadow-orange-900/20 transition-all transform hover:scale-105">
+                    Confirmar Pago
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getSession, logout } from './auth.js';
+
+        const API_BASE = '/api';
+        let userData = null;
+        let cuentasConSaldo = []; // Cache de cuentas para el selector
+
+        // --- Inicialización ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = await getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+            userData = session;
+
+            // UI de usuario
+            document.getElementById('user-avatar').textContent = (userData.nombre || 'U').substring(0, 2).toUpperCase();
+            document.getElementById('user-name').textContent = userData.nombre || 'Usuario';
+            document.getElementById('user-role').textContent = userData.rol || 'admin';
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', async (e) => {
+                e.preventDefault();
+                await logout();
+                window.location.href = 'login.html';
+            });
+
+            // Listeners
+            document.getElementById('filtroCliente').addEventListener('keyup', debounce(buscarMovimientos, 300));
+            document.getElementById('filtroTipo').addEventListener('change', buscarMovimientos);
+            document.getElementById('filtroPeriodo').addEventListener('change', buscarMovimientos);
+
+            // Método de pago
+            document.querySelectorAll('.metodo-pago-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.metodo-pago-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.getElementById('pagoMetodo').value = btn.dataset.metodo;
+                });
+            });
+            // Default efectivo
+            document.querySelector('[data-metodo="3"]').classList.add('active');
+
+            // Cargar datos
+            await Promise.all([
+                cargarEstadisticas(),
+                buscarMovimientos(),
+                cargarClientesConCuenta()
+            ]);
+        });
+
+        // --- API Calls ---
+        async function cargarEstadisticas() {
+            try {
+                const response = await fetch(`${API_BASE}/cuentas-corrientes/stats?tenantId=${userData.id_tenant}`, {
+                    headers: { 'Authorization': `Bearer ${userData.token}` }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('stat-deuda-total').textContent = formatCurrency(data.data.deudaTotal);
+                    document.getElementById('stat-cobrado-mes').textContent = formatCurrency(data.data.cobradoMes);
+                    document.getElementById('stat-movimientos-hoy').textContent = data.data.movimientosHoy;
+                    document.getElementById('stat-clientes-cuenta').textContent = data.data.clientesCuenta;
+                }
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        async function buscarMovimientos() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const tabla = document.getElementById('tablaMovimientos');
+
+            loadingState.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            tabla.innerHTML = '';
+
+            try {
+                const params = new URLSearchParams({
+                    tenantId: userData.id_tenant,
+                    busqueda: document.getElementById('filtroCliente').value,
+                    tipo: document.getElementById('filtroTipo').value,
+                    periodo: document.getElementById('filtroPeriodo').value,
+                    limit: 50
+                });
+
+                const response = await fetch(`${API_BASE}/cuentas-corrientes/movimientos?${params}`, {
+                    headers: { 'Authorization': `Bearer ${userData.token}` }
+                });
+                const data = await response.json();
+
+                loadingState.classList.add('hidden');
+
+                if (!data.success || data.data.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    document.getElementById('movimientos-count').textContent = 'Sin resultados';
+                    return;
+                }
+
+                document.getElementById('movimientos-count').textContent = `Mostrando ${data.data.length} movimientos`;
+                renderizarMovimientos(data.data);
+
+            } catch (error) {
+                console.error('Error buscando movimientos:', error);
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
+        }
+
+        async function cargarClientesConCuenta() {
+            try {
+                const response = await fetch(`${API_BASE}/cuentas-corrientes?tenantId=${userData.id_tenant}`, {
+                    headers: { 'Authorization': `Bearer ${userData.token}` }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    cuentasConSaldo = data.data;
+                    const select = document.getElementById('pagoCliente');
+                    select.innerHTML = '<option value="">Seleccionar cliente...</option>';
+
+                    data.data.forEach(cuenta => {
+                        const option = document.createElement('option');
+                        option.value = cuenta.id_cliente;
+                        option.textContent = `${cuenta.cliente_nombre} (Saldo: ${formatCurrency(cuenta.saldo_actual)})`;
+                        option.dataset.idCuenta = cuenta.id;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando clientes:', error);
+            }
+        }
+
+        // --- Render ---
+        function renderizarMovimientos(movimientos) {
+            const tabla = document.getElementById('tablaMovimientos');
+            tabla.innerHTML = '';
+
+            movimientos.forEach(mov => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-[#282e39]/50 transition-colors group border-b border-[#282e39]/50';
+
+                const esCargo = mov.tipo_movimiento === 'CARGO';
+                const fecha = new Date(mov.fecha_movimiento).toLocaleDateString('es-ES');
+
+                tr.innerHTML = `
+                    <td class="p-4 text-gray-400 font-mono text-xs">${fecha}</td>
+                    <td class="p-4">
+                        <div class="text-white font-medium">${mov.cliente_nombre || '-'}</div>
+                        <div class="text-xs text-gray-500">${mov.cliente_telefono || ''}</div>
+                    </td>
+                    <td class="p-4 text-gray-300 text-sm">${mov.concepto}</td>
+                    <td class="p-4 text-right text-red-400/90 font-medium">
+                        ${esCargo ? formatCurrency(mov.importe) : '-'}
+                    </td>
+                    <td class="p-4 text-right text-green-400/90 font-medium">
+                        ${!esCargo ? formatCurrency(mov.importe) : '-'}
+                    </td>
+                    <td class="p-4 text-right font-bold ${mov.saldo_posterior > 0 ? 'text-orange-400' : 'text-gray-500'}">
+                        ${formatCurrency(mov.saldo_posterior)}
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            ${mov.saldo_actual > 0 ? `
+                            <button onclick="abrirModalPago('${mov.cliente_nombre}', ${mov.id_cliente})" 
+                                class="h-8 px-3 rounded bg-[var(--brand-orange)] text-white hover:bg-[#e05300] text-xs font-bold shadow-lg shadow-orange-900/20 flex items-center gap-1" title="Registrar Pago">
+                                <i class="fas fa-coins"></i> Pagar
+                            </button>
+                            ` : ''}
+                            <button onclick="verDetalleCliente(${mov.id_cuenta_corriente})" 
+                                class="w-8 h-8 rounded bg-[#282e39] text-[#9da6b9] hover:text-white hover:bg-[#343b47] flex items-center justify-center transition-colors" title="Ver Extracto">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tabla.appendChild(tr);
+            });
+        }
+
+        // --- Modal Pago ---
+        window.abrirModalPago = function (clienteNombre = '', idCliente = null) {
+            const modal = document.getElementById('modalPago');
+            const content = document.getElementById('modalPagoContent');
+            const selectCliente = document.getElementById('pagoCliente');
+
+            if (idCliente) {
+                selectCliente.value = idCliente;
+            } else {
+                selectCliente.value = '';
+            }
+
+            document.getElementById('pagoFecha').valueAsDate = new Date();
+            document.getElementById('pagoImporte').value = '';
+            document.getElementById('pagoConcepto').value = 'Pago a cuenta';
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        window.cerrarModalPago = function () {
+            const modal = document.getElementById('modalPago');
+            const content = document.getElementById('modalPagoContent');
+
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        window.guardarPago = async function () {
+            const idCliente = document.getElementById('pagoCliente').value;
+            const importe = parseFloat(document.getElementById('pagoImporte').value);
+            const concepto = document.getElementById('pagoConcepto').value;
+            const fecha = document.getElementById('pagoFecha').value;
+            const idMedioPago = document.getElementById('pagoMetodo').value;
+
+            if (!idCliente) {
+                showToast('Selecciona un cliente', 'error');
+                return;
+            }
+            if (!importe || importe <= 0) {
+                showToast('El importe debe ser mayor a 0', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btnGuardarPago');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/cuentas-corrientes/pago`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userData.token}`
+                    },
+                    body: JSON.stringify({
+                        idCliente,
+                        importe,
+                        concepto,
+                        fecha,
+                        idMedioPago
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast(`Pago de ${formatCurrency(importe)} registrado correctamente`, 'success');
+                    cerrarModalPago();
+                    await Promise.all([
+                        cargarEstadisticas(),
+                        buscarMovimientos(),
+                        cargarClientesConCuenta()
+                    ]);
+                } else {
+                    showToast(data.error || 'Error al registrar pago', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error guardando pago:', error);
+                showToast('Error de conexión', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        window.verDetalleCliente = function (idCuenta) {
+            // Por ahora, mostrar alerta. En el futuro, abrir modal de extracto
+            showToast('Función de extracto detallado próximamente', 'success');
+        }
+
+        window.exportarExtracto = function () {
+            showToast('Exportación en desarrollo', 'success');
+        }
+
+        // --- Helpers ---
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('es-ES', {
+                style: 'currency',
+                currency: 'EUR'
+            }).format(amount || 0);
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // --- Sidebar ---
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('-translate-x-full');
+            sb.classList.toggle('absolute');
+            sb.classList.toggle('z-50');
+            sb.classList.toggle('h-full');
+        });
+    </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script src="sidebar-manager.js"></script>
+</body>
+
+</html>

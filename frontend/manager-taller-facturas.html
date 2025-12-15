@@ -13,8 +13,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/guard.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
+    <!-- Estilos Globales del Manager -->
     <link rel="stylesheet" href="manager.css">
     <link rel="stylesheet" href="styles/sucursal-selector.css">
 
@@ -132,6 +134,8 @@
                                     id="cuentas-arrow"></i>
                             </a>
                             <div id="cuentas-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-cuentas-corrientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Cuentas Corrientes</a>
                                 <a href="manager-taller-facturas.html"
                                     class="text-white font-semibold text-sm py-1 block">Facturas</a>
                                 <a href="manager-taller-facturas-pendientes.html"
@@ -175,23 +179,17 @@
                 <div class="max-w-7xl mx-auto space-y-6">
 
                     <!-- Header Actions -->
-                    <div
-                        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#282e39] pb-6 mb-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h1 class="text-3xl font-extrabold text-white">Facturas Emitidas</h1>
                             <p class="text-[#9da6b9] mt-1">Histórico de facturación</p>
                         </div>
-                        <div class="flex items-center gap-4">
+                        <div class="flex gap-3">
                             <a href="manager-taller-facturas-pendientes.html"
                                 class="btn btn-secondary flex items-center gap-2">
                                 <i class="fas fa-clock"></i> Pendientes
                             </a>
                         </div>
-                    </div>
-
-                    <!-- Selector de Sucursal Centrado -->
-                    <div class="flex justify-center mb-6">
-                        <div id="sucursal-selector-container"></div>
                     </div>
 
                     <!-- Stats Grid -->
@@ -295,11 +293,9 @@
 
     <script type="module">
         import { fetchWithAuth, getCurrentUser, getSession, clearSession, redirectToLogin } from './auth.js';
-        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
 
         const API_BASE_URL = '/api';
         let userData = null;
-        let currentSucursalId = null;
 
         // UI Helpers
         window.toggleSubmenu = function (id) {
@@ -471,24 +467,18 @@
         }
 
         // Init
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             if (cargarDatosUsuario()) {
                 inicializarFiltrosFecha();
                 configurarEventListenersFiltros();
-                
-                // Inicializar selector de sucursal
-                currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
-                    onchange: (sucursalId) => {
-                        currentSucursalId = sucursalId;
-                        buscarFacturas();
-                        cargarEstadisticas();
-                    }
-                });
                 buscarFacturas();
                 cargarEstadisticas();
             }
         });
     </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script src="sidebar-manager.js"></script>
 </body>
 
 </html>
