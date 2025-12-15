@@ -53,9 +53,10 @@ app.use('/api/impuestos', require('./routes/impuestos'));
 app.use('/api/caja', require('./routes/caja'));
 app.use('/api/tecnicos', require('./routes/tecnicos'));
 app.use('/api/trabajadores', require('./routes/trabajadores'));
+app.use('/api/facturas', require('./routes/facturas'));
 
-// Servir archivos estáticos subidos
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Servir archivos estáticos subidos (ahora bajo /api/uploads para consistencia)
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Ruta de test para la base de datos
 app.get('/api/db-test', async (req, res) => {

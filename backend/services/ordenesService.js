@@ -29,8 +29,15 @@ class OrdenesService {
         }
 
         // 1. Validaciones básicas de campos obligatorios
-        if (!idSucursal || !idCliente || !idVehiculo || !idMecanico) {
-            throw new Error('Faltan campos obligatorios (Sucursal, Cliente, Vehículo, Mecánico)');
+        // 1. Validaciones básicas de campos obligatorios
+        const esVentaProducto = codigoTipoOrden === 'VENTA_PRODUCTO';
+
+        if (!idSucursal || !idCliente) {
+            throw new Error('Faltan campos obligatorios (Sucursal, Cliente)');
+        }
+
+        if (!esVentaProducto && (!idVehiculo || !idMecanico)) {
+            throw new Error('Faltan campos obligatorios (Vehículo, Mecánico) para órdenes de servicio');
         }
         if (!lineas || lineas.length === 0) {
             throw new Error('La orden debe tener al menos una línea');
@@ -43,17 +50,21 @@ class OrdenesService {
         const clienteValido = await ordenesRepository.checkCliente(idCliente, id_tenant);
         if (!clienteValido) throw new Error('Cliente no válido o no pertenece al tenant');
 
-        const vehiculoValido = await ordenesRepository.checkVehiculo(idVehiculo, id_tenant);
-        if (!vehiculoValido) throw new Error('Vehículo no válido o no pertenece al tenant');
+        const vehiculoValido = esVentaProducto ? true : await ordenesRepository.checkVehiculo(idVehiculo, id_tenant);
+        if (!esVentaProducto && !vehiculoValido) throw new Error('Vehículo no válido o no pertenece al tenant');
 
-        const mecanicoValido = await ordenesRepository.checkMecanico(idMecanico, id_tenant);
-        if (!mecanicoValido) throw new Error('Mecánico no válido o no pertenece al tenant');
+        const mecanicoValido = esVentaProducto ? true : await ordenesRepository.checkMecanico(idMecanico, id_tenant);
+        if (!esVentaProducto && !mecanicoValido) throw new Error('Mecánico no válido o no pertenece al tenant');
 
         // 3. Lookup TipoOrden - Try both codigo and id
-        const tipoOrden = await ordenesRepository.getTipoOrdenByCodigoOrId({
+        let tipoOrden = await ordenesRepository.getTipoOrdenByCodigoOrId({
             codigo: codigoTipoOrden,
             id: idTipoOrden
         });
+
+        if (!tipoOrden && esVentaProducto) {
+            tipoOrden = await ordenesRepository.createTipoOrden('VENTA_PRODUCTO', 'Venta de Producto');
+        }
 
         if (!tipoOrden) {
             throw new Error(`Tipo de orden no encontrado. Código: ${codigoTipoOrden}, ID: ${idTipoOrden}`);

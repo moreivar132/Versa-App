@@ -14,6 +14,7 @@
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script src="/guard.js"></script>
 
@@ -296,6 +297,24 @@
               <span class="icon-container"><i class="fas fa-cash-register"></i></span>
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
+
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('cuentas-submenu')">
+                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
+              </a>
+              <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-facturas.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                <a href="manager-taller-facturas-pendientes.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                <a href="manager-taller-config-facturas.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+              </div>
+            </div>
 
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
               href="manager-taller-inventario.html">
@@ -613,6 +632,24 @@
               <span class="material-symbols-outlined">payments</span>
               Gestionar Pagos
             </button>
+
+            <!-- Botón Generar Factura -->
+            <button
+              class="w-full py-3 bg-[#1a1d24] hover:bg-[#282e39] border border-[#282e39] hover:border-[var(--brand-orange)] rounded-xl text-white font-medium transition-colors flex items-center justify-center gap-2"
+              id="btn-generar-factura" style="display: none;">
+              <span class="material-symbols-outlined">receipt_long</span>
+              Generar Factura
+            </button>
+
+            <!-- Indicador de factura ya emitida -->
+            <div id="factura-emitida-info"
+              class="hidden bg-green-500/10 border border-green-500/30 rounded-xl p-3 text-center">
+              <div class="flex items-center justify-center gap-2 text-green-400">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span class="text-sm font-medium">Factura emitida</span>
+              </div>
+              <span id="numero-factura-emitida" class="text-xs text-green-300 mt-1 block"></span>
+            </div>
           </div>
         </aside>
       </main>
@@ -765,7 +802,7 @@
   <script type="module">
     import { getOrdenes, updateEstadoOrden, getEstadosOrden } from './services/ordenes-service.js';
     import { registrarPago } from './services/pagos-service.js';
-    import { requireAuth, clearSession, redirectToLogin } from './auth.js';
+    import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from './auth.js';
 
     (async () => {
       // Security check
@@ -1180,7 +1217,259 @@
 
       // Cargar al inicio
       cargarEstados().then(() => cargarOrdenes());
+
+      // --- GENERAR FACTURA ---
+      // fetchWithAuth y getSession importados arriba
+
+      document.getElementById('btn-generar-factura').addEventListener('click', async () => {
+        if (!ordenSeleccionada) return;
+
+        // Confirmar
+        const confirmar = confirm(`¿Deseas generar una factura para la Orden #${ordenSeleccionada.id}?\n\nCliente: ${ordenSeleccionada.cliente_nombre}\nTotal: ${parseFloat(ordenSeleccionada.total_neto || 0).toFixed(2)}€`);
+        if (!confirmar) return;
+
+        try {
+          const session = getSession();
+          const response = await fetchWithAuth(`/api/facturas/ordenes/${ordenSeleccionada.id}/emitir`, {
+            method: 'POST',
+            body: JSON.stringify({
+              id_usuario: session?.user?.id,
+              observaciones: null
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast(`✅ Factura ${data.data.factura.numero_factura} generada correctamente`);
+            // Actualizar la orden local para mostrar que ya tiene factura
+            ordenSeleccionada.id_factura = data.data.factura.id;
+            ordenSeleccionada.numero_factura = data.data.factura.numero_factura;
+            actualizarBotonFactura();
+          } else {
+            showToast('❌ ' + (data.error || 'Error al generar la factura'), true);
+          }
+        } catch (error) {
+          console.error('Error generando factura:', error);
+          showToast('❌ Error al generar la factura', true);
+        }
+      });
+
+      // Función para mostrar/ocultar botón de factura según el estado de la orden
+      function actualizarBotonFactura() {
+        const btnFactura = document.getElementById('btn-generar-factura');
+        const infoFactura = document.getElementById('factura-emitida-info');
+        const numFactura = document.getElementById('numero-factura-emitida');
+
+        if (!ordenSeleccionada) {
+          btnFactura.style.display = 'none';
+          infoFactura.classList.add('hidden');
+          return;
+        }
+
+        // Si ya tiene factura
+        if (ordenSeleccionada.id_factura || ordenSeleccionada.numero_factura) {
+          btnFactura.style.display = 'none';
+          infoFactura.classList.remove('hidden');
+          numFactura.textContent = ordenSeleccionada.numero_factura || `Factura #${ordenSeleccionada.id_factura}`;
+        } else {
+          // Mostrar botón solo si la orden está completada o entregada
+          const estadosFacturables = ['COMPLETADA', 'ENTREGADA'];
+          if (estadosFacturables.includes(ordenSeleccionada.estado_codigo)) {
+            btnFactura.style.display = 'flex';
+          } else {
+            btnFactura.style.display = 'none';
+          }
+          infoFactura.classList.add('hidden');
+        }
+      }
+
+      // Extender actualizarPanel original para incluir botón factura
+      const originalActualizarPanel = actualizarPanel;
+      actualizarPanel = function () {
+        originalActualizarPanel();
+        actualizarBotonFactura();
+      };
+
     })();
+  </script>
+  <!-- Confirmation Modal -->
+  <div id="confirmation-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity opacity-0" id="modal-backdrop"></div>
+
+    <!-- Modal Content -->
+    <div
+      class="relative bg-[#1e242d] border border-gray-700 rounded-xl shadow-2xl max-w-md w-full transform scale-95 opacity-0 transition-all duration-300"
+      id="modal-content">
+      <div class="p-6 text-center">
+        <div class="w-16 h-16 bg-[var(--brand-orange)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-file-invoice-dollar text-[var(--brand-orange)] text-2xl"></i>
+        </div>
+
+        <h3 class="text-xl font-bold text-white mb-2">Generar Factura</h3>
+        <p class="text-gray-400 mb-6" id="modal-message">¿Estás seguro de generar la factura?</p>
+
+        <!-- Detalles opcionales -->
+        <div class="bg-[#111318] rounded-lg p-4 mb-6 text-left border border-gray-800">
+          <div class="flex justify-between mb-2">
+            <span class="text-gray-500 text-sm">Cliente</span>
+            <span class="text-white text-sm font-medium truncate ml-2" id="modal-cliente"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500 text-sm">Total</span>
+            <span class="text-[var(--brand-orange)] font-bold" id="modal-total"></span>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button id="btn-cancel-modal"
+            class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium">
+            Cancelar
+          </button>
+          <button id="btn-confirm-modal"
+            class="flex-1 px-4 py-2 bg-[var(--brand-orange)] hover:bg-[#e65a26] text-white rounded-lg transition-colors font-medium shadow-lg shadow-orange-900/20">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Modal Animation Styles */
+    #confirmation-modal:not(.hidden) #modal-backdrop {
+      opacity: 1;
+    }
+
+    #confirmation-modal:not(.hidden) #modal-content {
+      transform: scale(100%);
+      opacity: 1;
+    }
+  </style>
+
+  <script>
+    // Toast Notification helper
+    window.showToast = function (message, isError = false) {
+      // Simple implementation if not exists
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;font-family:inherit;';
+        document.body.appendChild(container);
+      }
+
+      const el = document.createElement('div');
+      el.className = 'toast animate-slideIn';
+      el.style.cssText = `
+            background: linear-gradient(135deg, #1e242d 0%, #282e39 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-left: 4px solid ${isError ? '#ef4444' : '#22c55e'};
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        `;
+      el.innerHTML = `
+            <div style="width:24px;height:24px;border-radius:50%;background:${isError ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'};display:flex;align-items:center;justify-content:center;color:${isError ? '#ef4444' : '#22c55e'}">
+                <i class="fas fa-${isError ? 'times' : 'check'}"></i>
+            </div>
+            <span>${message}</span>
+        `;
+
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.transform = 'translate(100%)';
+        el.style.opacity = '0';
+        el.style.transition = 'all 0.3s';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
+    }
+
+    // Helper function for modal
+    window.showConfirmModal = function (cliente, total, status, onConfirm) {
+      const modal = document.getElementById('confirmation-modal');
+      const backdrop = document.getElementById('modal-backdrop');
+      const content = document.getElementById('modal-content');
+
+      // Set data
+      document.getElementById('modal-cliente').textContent = cliente;
+      document.getElementById('modal-total').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total);
+
+      // Show logic
+      modal.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        backdrop.classList.remove('opacity-0');
+        content.classList.remove('opacity-0', 'scale-95');
+      });
+
+      // Handlers
+      const close = () => {
+        backdrop.classList.add('opacity-0');
+        content.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+      };
+
+      const confirmBtn = document.getElementById('btn-confirm-modal');
+      const cancelBtn = document.getElementById('btn-cancel-modal');
+
+      // Remove old listeners to avoid duplicates if reused poorly (better architecture would handle this differently)
+      const newConfirm = confirmBtn.cloneNode(true);
+      confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+      const newCancel = cancelBtn.cloneNode(true);
+      cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+      newCancel.addEventListener('click', close);
+      newConfirm.addEventListener('click', () => {
+        onConfirm();
+        close();
+      });
+    }
+
+    // Override the button click handler
+    document.getElementById('btn-generar-factura').replaceWith(document.getElementById('btn-generar-factura').cloneNode(true));
+    document.getElementById('btn-generar-factura').addEventListener('click', async () => {
+      if (!ordenSeleccionada) return;
+
+      showConfirmModal(
+        ordenSeleccionada.cliente_nombre,
+        ordenSeleccionada.total_neto || 0,
+        null,
+        async () => {
+          try {
+            const session = getSession();
+            const response = await fetchWithAuth(`${API_BASE_URL}/facturas/ordenes/${ordenSeleccionada.id}/emitir`, {
+              method: 'POST',
+              body: JSON.stringify({
+                id_usuario: session?.user?.id,
+                observaciones: null
+              })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              showToast(`✅ Factura ${data.data.factura.numero_factura} generada correctamente`);
+              ordenSeleccionada.id_factura = data.data.factura.id;
+              ordenSeleccionada.numero_factura = data.data.factura.numero_factura;
+              actualizarBotonFactura();
+            } else {
+              showToast('❌ ' + (data.error || 'Error al generar la factura'), true);
+            }
+          } catch (error) {
+            console.error('Error generando factura:', error);
+            showToast('❌ Error al generar la factura', true);
+          }
+        }
+      );
+    });
   </script>
 </body>
 

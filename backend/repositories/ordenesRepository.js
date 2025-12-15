@@ -297,6 +297,12 @@ class OrdenesRepository {
         const result = await client.query(query, [idSucursal, idUsuario]);
         return result.rows[0];
     }
+
+    async createTipoOrden(codigo, nombre) {
+        const query = 'INSERT INTO tipoorden (codigo, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id, codigo, nombre';
+        const result = await pool.query(query, [codigo, nombre]);
+        return result.rows[0];
+    }
 }
 
 module.exports = new OrdenesRepository();

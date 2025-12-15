@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facturas - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        /* Specific page styles */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--brand-orange);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px -5px rgba(255, 95, 0, 0.2);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-emitida {
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .status-borrador {
+            background: rgba(234, 179, 8, 0.1);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .status-anulada {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-[#0b0d11] text-white font-[Montserrat] overflow-hidden">
+    <div class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[#282e39]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge flex items-center justify-center w-10 h-10 rounded-xl bg-[#282e39]">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium">Goversa</h1>
+                            <p class="text-[#9da6b9] text-xs">Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Inicio</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-white font-semibold text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <div class="flex flex-col gap-1 border-t border-[#282e39] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --</div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" id="logout-btn">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <header class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[#282e39]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 bg-[#0b0d11]">
+                <div class="max-w-7xl mx-auto space-y-6">
+
+                    <!-- Header Actions -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h1 class="text-3xl font-extrabold text-white">Facturas Emitidas</h1>
+                            <p class="text-[#9da6b9] mt-1">Histórico de facturación</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <a href="manager-taller-facturas-pendientes.html"
+                                class="btn btn-secondary flex items-center gap-2">
+                                <i class="fas fa-clock"></i> Pendientes
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="stat-card">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Total Facturado</p>
+                            <h3 class="text-2xl font-bold text-white" id="stat-total-facturado">0.00 €</h3>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Pendiente Facturar</p>
+                            <h3 class="text-2xl font-bold text-orange-400" id="stat-pendiente-facturar">0.00 €</h3>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Órdenes Pendientes</p>
+                            <h3 class="text-2xl font-bold text-white" id="stat-cantidad-pendientes">0</h3>
+                        </div>
+                        <div class="stat-card">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Facturas Mes</p>
+                            <h3 class="text-2xl font-bold text-white" id="stat-facturas-mes">0</h3>
+                        </div>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="manager-panel p-5 bg-[#1e242d] rounded-xl border border-[#282e39]">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label class="block text-xs font-bold text-[#9da6b9] mb-2">BUSCAR</label>
+                                <div class="relative">
+                                    <i
+                                        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                                    <input type="text" id="filtroTexto" placeholder="Nº, Cliente, Matrícula..."
+                                        class="form-input pl-9 text-sm">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-[#9da6b9] mb-2">ESTADO</label>
+                                <select id="filtroEstado" class="form-select text-sm">
+                                    <option value="">Todos</option>
+                                    <option value="EMITIDA">Emitida</option>
+                                    <option value="BORRADOR">Borrador</option>
+                                    <option value="ANULADA">Anulada</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-[#9da6b9] mb-2">DESDE</label>
+                                <input type="date" id="filtroFechaDesde" class="form-input text-sm text-gray-400">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-[#9da6b9] mb-2">HASTA</label>
+                                <div class="flex gap-2">
+                                    <input type="date" id="filtroFechaHasta" class="form-input text-sm text-gray-400">
+                                    <button onclick="buscarFacturas()"
+                                        class="w-10 h-[42px] flex items-center justify-center bg-[var(--brand-orange)] rounded-lg hover:bg-[#e05300] text-white">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="manager-panel overflow-hidden bg-[#1e242d] rounded-xl border border-[#282e39]">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-[#111318] text-xs uppercase text-[#9da6b9] border-b border-[#282e39]">
+                                        <th class="p-4 font-semibold tracking-wider">Nº Factura</th>
+                                        <th class="p-4 font-semibold tracking-wider">Fecha</th>
+                                        <th class="p-4 font-semibold tracking-wider">Cliente / Vehículo</th>
+                                        <th class="p-4 font-semibold tracking-wider">Sucursal</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right">Total</th>
+                                        <th class="p-4 font-semibold tracking-wider text-center">Estado</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaFacturas" class="text-sm divide-y divide-[#282e39]">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Loading / Empty States -->
+                        <div id="loadingState" class="p-12 text-center text-[#9da6b9]">
+                            <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-[var(--brand-orange)]"></i>
+                            <p>Cargando facturas...</p>
+                        </div>
+                        <div id="emptyState" class="hidden p-12 text-center text-[#9da6b9]">
+                            <div
+                                class="w-16 h-16 bg-[#282e39] rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-file-invoice-dollar text-2xl text-gray-500"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white mb-1">Sin Resultados</h3>
+                            <p>No se encontraron facturas con los filtros actuales.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchWithAuth, getCurrentUser, getSession, clearSession, redirectToLogin } from './auth.js';
+
+        const API_BASE_URL = '/api';
+        let userData = null;
+
+        // UI Helpers
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('-translate-x-full');
+            sb.classList.toggle('absolute');
+            sb.classList.toggle('z-50');
+            sb.classList.toggle('h-full');
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            clearSession();
+            redirectToLogin();
+        });
+
+        // App Logic
+        function cargarDatosUsuario() {
+            const session = getSession();
+            if (!session || !session.user) {
+                redirectToLogin();
+                return false;
+            }
+            userData = session.user;
+            document.getElementById('user-avatar').textContent = (userData.nombre || 'U').substring(0, 2).toUpperCase();
+            document.getElementById('user-name').textContent = userData.nombre || 'Usuario';
+            document.getElementById('user-role').textContent = userData.rol || 'admin';
+            return true;
+        }
+
+        window.buscarFacturas = async function () {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const tablaFacturas = document.getElementById('tablaFacturas');
+
+            loadingState.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            tablaFacturas.innerHTML = '';
+
+            try {
+                const params = new URLSearchParams();
+                params.append('tenantId', userData.id_tenant);
+
+                const texto = document.getElementById('filtroTexto').value.trim();
+                if (texto) params.append('texto', texto);
+
+                const estado = document.getElementById('filtroEstado').value;
+                if (estado) params.append('estado', estado);
+
+                const fechaDesde = document.getElementById('filtroFechaDesde').value;
+                if (fechaDesde) params.append('fecha_desde', fechaDesde);
+
+                const fechaHasta = document.getElementById('filtroFechaHasta').value;
+                if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas?${params.toString()}`);
+                const data = await response.json();
+
+                loadingState.classList.add('hidden');
+
+                if (!data.success || data.data.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                renderizarFacturas(data.data);
+
+            } catch (error) {
+                console.error('Error al cargar facturas:', error);
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden'); // Show empty state on error basically or generic error
+            }
+        }
+
+        function renderizarFacturas(facturas) {
+            const tabla = document.getElementById('tablaFacturas');
+            tabla.innerHTML = '';
+
+            facturas.forEach(factura => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-[#282e39]/50 transition-colors';
+
+                const statusClass = {
+                    'EMITIDA': 'status-emitida',
+                    'BORRADOR': 'status-borrador',
+                    'ANULADA': 'status-anulada'
+                }[factura.estado] || 'status-borrador';
+
+                tr.innerHTML = `
+                    <td class="p-4 text-white font-medium">${factura.numero_factura}</td>
+                    <td class="p-4 text-gray-400">${new Date(factura.fecha_emision).toLocaleDateString('es-ES')}</td>
+                    <td class="p-4">
+                        <div class="text-white">${factura.cliente_nombre}</div>
+                        ${factura.vehiculo_matricula ? `<div class="text-xs text-brand-orange mt-0.5">${factura.vehiculo_matricula}</div>` : ''}
+                    </td>
+                    <td class="p-4 text-gray-400 text-xs">${factura.sucursal_nombre || 'N/A'}</td>
+                    <td class="p-4 text-right font-bold text-white">${parseFloat(factura.total).toFixed(2)} €</td>
+                    <td class="p-4 text-center">
+                        <span class="status-badge ${statusClass}">${factura.estado}</span>
+                    </td>
+                    <td class="p-4 text-right">
+                        <div class="flex justify-end gap-2">
+                             <button onclick="verFactura(${factura.id})" class="w-8 h-8 rounded bg-[#282e39] text-[#9da6b9] hover:text-white hover:bg-[#343b47] flex items-center justify-center transition-colors" title="Ver / Descargar">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tabla.appendChild(tr);
+            });
+        }
+
+        window.verFactura = async function (id) {
+            try {
+                const res = await fetchWithAuth(`${API_BASE_URL}/facturas/${id}/pdf`);
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, '_blank');
+                } else {
+                    const err = await res.json();
+                    alert(err.error || 'Error PDF');
+                }
+            } catch (e) { console.error(e); alert('Error'); }
+        };
+
+        async function cargarEstadisticas() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/stats/general?tenantId=${userData.id_tenant}`);
+                if (!response.ok) return;
+                const data = await response.json();
+                if (data.success) {
+                    const stats = data.data;
+                    document.getElementById('stat-total-facturado').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(stats.total_facturado);
+                    document.getElementById('stat-pendiente-facturar').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(stats.total_pendiente);
+                    document.getElementById('stat-cantidad-pendientes').textContent = stats.cantidad_pendientes;
+                    document.getElementById('stat-facturas-mes').textContent = stats.facturas_mes;
+                }
+            } catch (error) {
+                console.error('Error stats:', error);
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            if (cargarDatosUsuario()) {
+                buscarFacturas();
+                cargarEstadisticas();
+            }
+        });
+    </script>
+</body>
+
+</html>

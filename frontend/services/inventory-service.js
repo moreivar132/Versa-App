@@ -32,3 +32,32 @@ export async function searchInventario(query, idSucursal) {
         return [];
     }
 }
+
+export async function createProduct(productData) {
+    const API_URL = `${API_BASE_URL}/api/inventory`;
+
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) throw new Error('No autenticado');
+        const token = JSON.parse(sessionRaw).token;
+
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(productData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Error al crear producto');
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error('Error creando producto:', error);
+        throw error;
+    }
+}
