@@ -21,6 +21,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         /* --- VARIABLES & BASE --- */
         /* Redundant variables removed */
@@ -591,7 +592,7 @@
                         </div>
 
                         <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="#">
+                            href="manager-taller-caja.html">
                             <span class="icon-container"><i class="fas fa-cash-register"></i></span>
                             <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
                         </a>
@@ -687,11 +688,21 @@
                 <div class="manager-panel">
 
                     <!-- HEADER -->
-                    <div class="flex flex-wrap items-center justify-between mb-8 gap-4">
-                        <h2 class="form-main-title mb-0">Historial de Compras</h2>
-                        <a href="manager-taller-compras.html" class="btn">
-                            <i class="fas fa-plus mr-2"></i> Nueva Compra
-                        </a>
+                    <div class="flex flex-wrap items-center justify-between mb-8 gap-4 border-b border-[#282e39] pb-6">
+                        <div>
+                            <h2 class="form-main-title mb-0">Historial de Compras</h2>
+                            <p class="text-[#9da6b9] text-sm mt-1">Registro de todas las compras realizadas</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <a href="manager-taller-compras.html" class="btn">
+                                <i class="fas fa-plus mr-2"></i> Nueva Compra
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
                     </div>
 
                     <!-- STATS -->
@@ -874,10 +885,20 @@
 
     <script type="module">
         import { fetchWithAuth } from './auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
 
         let allPurchases = [];
+        let currentSucursalId = null;
 
-        document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Inicializar selector de sucursal
+            currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    currentSucursalId = sucursalId;
+                    loadPurchases();
+                }
+            });
+
             // Set default dates
             const today = new Date();
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);

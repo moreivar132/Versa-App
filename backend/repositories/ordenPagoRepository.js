@@ -11,6 +11,11 @@ class OrdenPagoRepository {
         return result.rowCount > 0;
     }
 
+    async obtenerDatosOrden(idOrden) {
+        const result = await pool.query('SELECT id, id_sucursal FROM orden WHERE id = $1', [idOrden]);
+        return result.rows[0];
+    }
+
     /**
      * Obtiene un medio de pago por su ID o por su Código.
      * @param {string|number} identificador 
@@ -61,9 +66,10 @@ class OrdenPagoRepository {
                 referencia, 
                 id_caja, 
                 created_by,
-                created_at
+                created_at,
+                updated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, NOW())
+            VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
             RETURNING *
         `;
 

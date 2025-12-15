@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Listado de Productos - Goversa</title>
-    <link rel="icon" type="image/png" href="assets/favicon.png">
+  <link rel="icon" type="image/png" href="assets/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
@@ -14,7 +14,10 @@
   <script src="/guard.js"></script>
   <!-- FontAwesome para iconos -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="manager.css">
+  <link rel="stylesheet" href="styles/sucursal-selector.css">
   <style>
     /* --- VARIABLES & BASE --- */
     /* Redundant variables removed */
@@ -280,7 +283,7 @@
             </div>
 
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="#">
+              href="manager-taller-caja.html">
               <span class="icon-container"><i class="fas fa-cash-register"></i></span>
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
@@ -294,14 +297,14 @@
                 <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
               </a>
               <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
-                                <a href="manager-taller-facturas.html"
-                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
-                                <a href="manager-taller-facturas-pendientes.html"
-                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
-                                <a href="manager-taller-config-facturas.html"
-                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
-                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
-                            </div>
+                <a href="manager-taller-facturas.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                <a href="manager-taller-facturas-pendientes.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                <a href="manager-taller-config-facturas.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+              </div>
             </div>
 
             <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors"
@@ -367,12 +370,13 @@
       <main class="flex-1 overflow-y-auto p-6 md:p-8 relative z-10">
 
         <!-- Encabezado de Página -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div
+          class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-[#282e39] pb-6">
           <div>
             <h2 class="text-2xl font-bold text-white mb-1">Listado de Productos</h2>
             <p class="text-gray-400 text-sm">Gestiona todo el inventario de almacén y taller</p>
           </div>
-          <div class="flex gap-3">
+          <div class="flex items-center gap-4">
             <button id="btn-export"
               class="btn-secondary px-4 py-2 rounded-lg border border-[var(--border-subtle)] hover:bg-white/5 text-gray-300 text-sm font-medium transition-colors">
               <i class="fas fa-file-export mr-2"></i> Exportar
@@ -381,6 +385,11 @@
               <i class="fas fa-plus"></i> Nuevo Producto
             </a>
           </div>
+        </div>
+
+        <!-- Selector de Sucursal Centrado -->
+        <div class="flex justify-center mb-6">
+          <div id="sucursal-selector-container"></div>
         </div>
 
         <!-- Barra de Filtros y Búsqueda -->
@@ -455,8 +464,16 @@
 
   <script type="module">
     import { fetchWithAuth } from './auth.js';
+    import { initSucursalSelector, getCurrentSucursalId, SUCURSAL_STORAGE_KEY } from './services/sucursal-selector.js';
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
+      // Inicializar selector de sucursal
+      await initSucursalSelector('sucursal-selector-container', {
+        onchange: (sucursalId) => {
+          loadInventory();
+        }
+      });
+
       loadFilters();
       loadInventory();
 
@@ -542,6 +559,8 @@
       }
     }
 
+    // Constante para leer la sucursal guardada (ahora usa la del componente)
+
     async function loadInventory() {
       const query = document.getElementById('table-search').value;
       const category = document.getElementById('filter-category').value;
@@ -554,6 +573,12 @@
         let url = `/api/inventory/resumen?q=${encodeURIComponent(query)}`;
         if (category) url += `&category=${encodeURIComponent(category)}`;
         if (provider) url += `&provider=${encodeURIComponent(provider)}`;
+
+        // Agregar filtro de sucursal desde localStorage
+        const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+        if (savedSucursal) {
+          url += `&idSucursal=${savedSucursal}`;
+        }
 
         const response = await fetchWithAuth(url);
         if (!response.ok) {

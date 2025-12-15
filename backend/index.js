@@ -50,6 +50,9 @@ app.use('/api/ordenes', require('./routes/ordenes'));
 app.use('/api/ordenpago', require('./routes/ordenPago'));
 app.use('/api/medio-pago', require('./routes/medioPago'));
 app.use('/api/impuestos', require('./routes/impuestos'));
+app.use('/api/caja', require('./routes/caja'));
+app.use('/api/tecnicos', require('./routes/tecnicos'));
+app.use('/api/trabajadores', require('./routes/trabajadores'));
 app.use('/api/facturas', require('./routes/facturas'));
 
 // Servir archivos estáticos subidos (ahora bajo /api/uploads para consistencia)

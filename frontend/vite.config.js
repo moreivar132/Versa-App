@@ -10,7 +10,6 @@ export default defineConfig({
                 main: 'index.html',
                 login: 'login.html',
                 adminAccesos: 'admin-accesos.html',
-                managerTaller: 'manager-taller.html',
                 managerTallerInicio: 'manager-taller-inicio.html',
                 managerTallerClientes: 'manager-taller-clientes.html',
                 managerTallerInventario: 'manager-taller-inventario.html',
@@ -26,6 +25,10 @@ export default defineConfig({
                 managerTallerChat: 'manager-taller-chat.html',
                 managerTallerWhatsapp: 'manager-taller-whatsapp.html',
                 citaPrevia: 'cita-previa.html',
+                managerTallerCaja: 'manager-taller-caja.html',
+                managerTallerFacturas: 'manager-taller-facturas.html',
+                managerTallerFacturasPendientes: 'manager-taller-facturas-pendientes.html',
+                managerTallerConfigFacturas: 'manager-taller-config-facturas.html',
             }
         }
     },

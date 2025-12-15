@@ -7,6 +7,7 @@ const verifyJWT = require('../middleware/auth');
 router.get('/', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     const isSuperAdmin = req.user.is_super_admin;
+    const { idSucursal } = req.query;
 
     try {
         let query = `
@@ -14,13 +15,23 @@ router.get('/', verifyJWT, async (req, res) => {
             FROM vehiculo v
             LEFT JOIN clientefinal c ON v.id_cliente = c.id
             LEFT JOIN sucursal s ON v.id_sucursal = s.id
+            WHERE 1=1
         `;
         let params = [];
+        let paramIndex = 1;
 
         if (!isSuperAdmin) {
             // Filtrar por tenant a través de la sucursal
-            query += ` WHERE s.id_tenant = $1`;
-            params = [id_tenant];
+            query += ` AND s.id_tenant = $${paramIndex}`;
+            params.push(id_tenant);
+            paramIndex++;
+        }
+
+        // Filtro por sucursal específica
+        if (idSucursal) {
+            query += ` AND v.id_sucursal = $${paramIndex}`;
+            params.push(idSucursal);
+            paramIndex++;
         }
 
         query += ` ORDER BY v.created_at DESC`;

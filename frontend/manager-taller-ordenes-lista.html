@@ -13,9 +13,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles/sucursal-selector.css">
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="/guard.js"></script>
 
   <style>
     :root {
@@ -112,6 +114,77 @@
       border-radius: 50%;
     }
 
+    /* Estilos para menú de acciones (3 puntos) */
+    .acciones-dropdown-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .acciones-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 100;
+      min-width: 180px;
+      margin-top: 4px;
+      background-color: #1a1d24;
+      border: 1px solid #282e39;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      animation: fadeInDropdown 0.15s ease-out;
+    }
+
+    @keyframes fadeInDropdown {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .acciones-dropdown.show {
+      display: block;
+    }
+
+    .acciones-option {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.2s, color 0.2s;
+      color: #d1d5db;
+      border-bottom: 1px solid #282e39;
+    }
+
+    .acciones-option:last-child {
+      border-bottom: none;
+    }
+
+    .acciones-option:hover {
+      background-color: #282e39;
+      color: #fff;
+    }
+
+    .acciones-option .material-symbols-outlined {
+      font-size: 18px;
+    }
+
+    .acciones-option.editar:hover {
+      color: #60a5fa;
+    }
+
+    .acciones-option.factura:hover {
+      color: #22c55e;
+    }
+
     .toast-notification {
       position: fixed;
       bottom: 20px;
@@ -141,6 +214,69 @@
         transform: translateX(0);
         opacity: 1;
       }
+    }
+
+    /* Estilos de Tooltip - Estandarizados */
+    .tooltip-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tooltip-trigger {
+      cursor: help;
+      color: #6b7280;
+      transition: color 0.2s;
+      font-size: inherit;
+    }
+
+    .tooltip-trigger:hover {
+      color: #9da6b9;
+    }
+
+    .tooltip-content {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      transform: translateX(0);
+      background: #1e2028;
+      border: 1px solid #2d3240;
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: max-content;
+      max-width: 260px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: opacity 0.15s, visibility 0.15s;
+    }
+
+    .tooltip-content::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 12px;
+      transform: translateX(0);
+      border: 5px solid transparent;
+      border-top-color: #2d3240;
+    }
+
+    .tooltip-container:hover .tooltip-content {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .tooltip-title {
+      display: none;
+    }
+
+    .tooltip-text {
+      font-size: 11px;
+      font-weight: 400;
+      color: #d1d5db;
+      line-height: 1.4;
+      text-transform: none;
     }
   </style>
 
@@ -229,7 +365,7 @@
             </div>
 
             <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="#">
+              href="manager-taller-caja.html">
               <span class="icon-container"><i class="fas fa-cash-register"></i></span>
               <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
             </a>
@@ -314,7 +450,7 @@
         <!-- Lista de órdenes -->
         <div class="flex-grow-[2] flex flex-col p-6 overflow-y-auto border-r border-[#282e39]">
 
-          <div class="flex flex-wrap justify-between items-center gap-3 pb-4">
+          <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-[#282e39] mb-4">
             <div>
               <h1 class="text-white text-2xl font-bold leading-tight">Órdenes de Trabajo</h1>
               <p class="text-[#9da6b9] text-sm mt-1">Gestión y seguimiento de reparaciones</p>
@@ -324,6 +460,11 @@
               <span class="material-symbols-outlined mr-2 text-xl">add_circle</span>
               <span>Nueva Orden</span>
             </a>
+          </div>
+
+          <!-- Selector de Sucursal Centrado -->
+          <div class="flex justify-center mb-4">
+            <div id="sucursal-selector-container"></div>
           </div>
 
           <!-- FILTROS PRINCIPALES -->
@@ -341,29 +482,42 @@
                 </div>
               </div>
 
-              <div class="flex h-12 items-center rounded-lg bg-[#111318] p-1 border border-[#282e39] shrink-0">
+              <div
+                class="flex h-12 items-center rounded-lg bg-[#111318] p-1 border border-[#282e39] shrink-0 overflow-x-auto">
                 <label
-                  class="cursor-pointer h-full px-4 flex items-center rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-[var(--brand-orange)] has-[:checked]:text-white has-[:checked]:font-semibold">
+                  class="cursor-pointer h-full px-4 flex items-center rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-[var(--brand-orange)] has-[:checked]:text-white has-[:checked]:font-semibold whitespace-nowrap">
                   <span>Todas</span>
                   <input type="radio" name="estado-filter" value="all" class="hidden" checked />
                 </label>
                 <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-yellow-500/20 has-[:checked]:text-yellow-400 has-[:checked]:font-semibold">
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-yellow-500/20 has-[:checked]:text-yellow-400 has-[:checked]:font-semibold whitespace-nowrap">
                   <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
                   <span>Abierta</span>
                   <input type="radio" name="estado-filter" value="ABIERTA" class="hidden" />
                 </label>
                 <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-blue-500/20 has-[:checked]:text-blue-400 has-[:checked]:font-semibold">
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-blue-500/20 has-[:checked]:text-blue-400 has-[:checked]:font-semibold whitespace-nowrap">
                   <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                   <span>En Progreso</span>
                   <input type="radio" name="estado-filter" value="EN_PROGRESO" class="hidden" />
                 </label>
                 <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-green-500/20 has-[:checked]:text-green-400 has-[:checked]:font-semibold">
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-orange-500/20 has-[:checked]:text-orange-400 has-[:checked]:font-semibold whitespace-nowrap">
+                  <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                  <span>Recambio</span>
+                  <input type="radio" name="estado-filter" value="RECAMBIO" class="hidden" />
+                </label>
+                <label
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-green-500/20 has-[:checked]:text-green-400 has-[:checked]:font-semibold whitespace-nowrap">
                   <span class="w-2 h-2 rounded-full bg-green-500"></span>
                   <span>Completadas</span>
                   <input type="radio" name="estado-filter" value="COMPLETADA" class="hidden" />
+                </label>
+                <label
+                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-purple-500/20 has-[:checked]:text-purple-400 has-[:checked]:font-semibold whitespace-nowrap">
+                  <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                  <span>Entregadas</span>
+                  <input type="radio" name="estado-filter" value="ENTREGADA" class="hidden" />
                 </label>
               </div>
             </div>
@@ -392,6 +546,32 @@
                 <i
                   class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[#9da6b9] text-xs pointer-events-none"></i>
               </div>
+
+              <!-- Toggle Solo Activas -->
+              <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
+                <span class="text-xs text-[#9da6b9] whitespace-nowrap flex items-center gap-1">
+                  Solo activas
+                  <span class="tooltip-container">
+                    <span class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                    <span class="tooltip-content">
+                      <span class="tooltip-text">
+                        <strong style="color: #ff5f00;">ON:</strong> Pendientes de entrega/pago<br>
+                        <strong style="color: #6b7280;">OFF:</strong> Todas (incluye historial)
+                      </span>
+                    </span>
+                  </span>
+                </span>
+                <div class="relative">
+                  <input type="checkbox" id="toggle-solo-activas" class="sr-only peer" checked />
+                  <div
+                    class="w-9 h-5 bg-[#282e39] rounded-full peer peer-checked:bg-[var(--brand-orange)] transition-colors">
+                  </div>
+                  <div
+                    class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4">
+                  </div>
+                </div>
+              </label>
+
               <span class="ml-auto text-xs text-[#9da6b9]" id="orders-count">Cargando...</span>
             </div>
           </div>
@@ -700,6 +880,7 @@
     import { getOrdenes, updateEstadoOrden, getEstadosOrden } from './services/ordenes-service.js';
     import { registrarPago } from './services/pagos-service.js';
     import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from './auth.js';
+    import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
 
     (async () => {
       // Security check
@@ -720,6 +901,15 @@
       let ordenSeleccionada = null;
       let filtrosActuales = {};
       let estadosDisponibles = [];
+      let currentSucursalId = null;
+
+      // Inicializar selector de sucursal
+      currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
+        onchange: (sucursalId) => {
+          currentSucursalId = sucursalId;
+          cargarOrdenes(filtrosActuales);
+        }
+      });
 
       // Función toast para notificaciones
       function showToast(message, isError = false) {
@@ -750,14 +940,23 @@
         }
       }
 
+      // Constante para leer la sucursal guardada
+      const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
       // --- CARGAR ÓRDENES ---
       async function cargarOrdenes(filtros = {}) {
         const tbody = document.getElementById('orders-table-body');
         tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...</td></tr>';
 
         try {
+          // Usar la sucursal del selector (que ya lee de localStorage si no hay selección)
+          if (currentSucursalId) {
+            filtros.sucursal = currentSucursalId;
+          }
+
           const response = await getOrdenes(filtros);
-          ordenes = response.ordenes || [];
+          // Excluir presupuestos de la lista de órdenes (se muestran en sección separada)
+          ordenes = (response.ordenes || []).filter(o => o.estado_codigo !== 'PRESUPUESTO');
           document.getElementById('orders-count').textContent = `${ordenes.length} orden(es)`;
           renderOrdenes();
         } catch (error) {
@@ -768,25 +967,49 @@
 
       function renderOrdenes() {
         const tbody = document.getElementById('orders-table-body');
+        const soloActivasToggle = document.getElementById('toggle-solo-activas');
+        const mostrarSoloActivas = soloActivasToggle?.checked ?? true;
 
-        if (ordenes.length === 0) {
+        // Aplicar filtro "solo activas": ocultar órdenes (Entregada + Pagado) y Canceladas
+        let ordenesVisibles = ordenes;
+        if (mostrarSoloActivas) {
+          ordenesVisibles = ordenes.filter(o => {
+            // Ocultar si es (ENTREGADA + PAGADO) o CANCELADA
+            const esEntregadaYPagada = o.estado_codigo === 'ENTREGADA' && o.estado_pago === 'PAGADO';
+            const esCancelada = o.estado_codigo === 'CANCELADA';
+            return !esEntregadaYPagada && !esCancelada;
+          });
+        }
+
+        // Actualizar contador con órdenes visibles
+        document.getElementById('orders-count').textContent = mostrarSoloActivas
+          ? `${ordenesVisibles.length} activa(s) de ${ordenes.length}`
+          : `${ordenes.length} orden(es)`;
+
+        if (ordenesVisibles.length === 0) {
           tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]">No hay órdenes que coincidan con los filtros</td></tr>';
           return;
         }
 
-        tbody.innerHTML = ordenes.map((orden, index) => {
+        tbody.innerHTML = ordenesVisibles.map((orden, index) => {
           const fecha = orden.fecha_ingreso ? new Date(orden.fecha_ingreso).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
           const estadoPagoClass = orden.estado_pago === 'PAGADO' ? 'text-green-500' : orden.estado_pago === 'PARCIAL' ? 'text-yellow-500' : 'text-red-400';
           const estadoPagoLabel = orden.estado_pago === 'PAGADO' ? 'Pagado' : orden.estado_pago === 'PARCIAL' ? 'Parcial' : 'Pendiente';
 
           let estadoClass = 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
           let dotClass = 'bg-yellow-500';
-          if (orden.estado_codigo === 'EN_PROGRESO' || orden.estado_codigo === 'RECAMBIO') {
+          if (orden.estado_codigo === 'EN_PROGRESO') {
             estadoClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
             dotClass = 'bg-blue-400';
-          } else if (orden.estado_codigo === 'COMPLETADA' || orden.estado_codigo === 'ENTREGADA') {
+          } else if (orden.estado_codigo === 'RECAMBIO') {
+            estadoClass = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
+            dotClass = 'bg-orange-400';
+          } else if (orden.estado_codigo === 'COMPLETADA') {
             estadoClass = 'bg-green-500/10 text-green-400 border-green-500/20';
             dotClass = 'bg-green-400';
+          } else if (orden.estado_codigo === 'ENTREGADA') {
+            estadoClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            dotClass = 'bg-purple-400';
           }
 
           return `
@@ -813,9 +1036,12 @@
             </td>
             <td class="px-5 py-4 text-right font-medium text-green-400">${parseFloat(orden.total_neto || 0).toFixed(2)}€</td>
             <td class="px-2 py-4 text-right">
-              <button class="btn-editar-fila text-[#9da6b9] hover:text-white cursor-pointer" data-id="${orden.id}">
-                <span class="material-symbols-outlined">more_vert</span>
-              </button>
+              <div class="acciones-dropdown-container" data-orden-id="${orden.id}" data-estado-pago="${orden.estado_pago}" data-tiene-factura="${orden.id_factura || orden.numero_factura ? 'true' : 'false'}">
+                <button class="btn-acciones text-[#9da6b9] hover:text-white cursor-pointer p-1 rounded hover:bg-[#282e39] transition-colors" data-id="${orden.id}">
+                  <span class="material-symbols-outlined">more_vert</span>
+                </button>
+                <div class="acciones-dropdown" id="acciones-dropdown-${orden.id}"></div>
+              </div>
             </td>
           </tr>
         `;
@@ -824,8 +1050,9 @@
         // Click en filas para seleccionar
         document.querySelectorAll('.order-row').forEach(row => {
           row.addEventListener('click', (e) => {
-            if (e.target.closest('.btn-editar-fila')) return;
-            if (e.target.closest('.estado-dropdown-container')) return; // No seleccionar al click en dropdown
+            if (e.target.closest('.btn-acciones')) return;
+            if (e.target.closest('.acciones-dropdown-container')) return; // No seleccionar al click en dropdown de acciones
+            if (e.target.closest('.estado-dropdown-container')) return; // No seleccionar al click en dropdown de estado
             document.querySelectorAll('.order-row').forEach(r => r.classList.remove('active'));
             row.classList.add('active');
             const id = parseInt(row.dataset.id);
@@ -834,12 +1061,68 @@
           });
         });
 
-        // Botón editar en la fila (3 puntitos)
-        document.querySelectorAll('.btn-editar-fila').forEach(btn => {
+        // Botón de acciones en la fila (3 puntitos) - muestra menú desplegable
+        document.querySelectorAll('.btn-acciones').forEach(btn => {
           btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            const id = btn.dataset.id;
-            window.location.href = `manager-taller-ordenes.html?id=${id}`;
+            const container = btn.closest('.acciones-dropdown-container');
+            const ordenId = container.dataset.ordenId;
+            const estadoPago = container.dataset.estadoPago;
+            const tieneFactura = container.dataset.tieneFactura === 'true';
+            const dropdown = document.getElementById(`acciones-dropdown-${ordenId}`);
+
+            // Cerrar otros dropdowns de acciones
+            document.querySelectorAll('.acciones-dropdown.show').forEach(d => {
+              if (d.id !== `acciones-dropdown-${ordenId}`) d.classList.remove('show');
+            });
+            // Cerrar también dropdowns de estado
+            document.querySelectorAll('.estado-dropdown.show').forEach(d => d.classList.remove('show'));
+
+            // Renderizar opciones del menú
+            let opcionesHTML = `
+              <div class="acciones-option editar" data-action="editar" data-orden-id="${ordenId}">
+                <span class="material-symbols-outlined">edit</span>
+                Editar
+              </div>
+            `;
+
+            // Solo mostrar "Generar Factura" si está pagado y no tiene factura
+            if (estadoPago === 'PAGADO' && !tieneFactura) {
+              opcionesHTML += `
+                <div class="acciones-option factura" data-action="factura" data-orden-id="${ordenId}">
+                  <span class="material-symbols-outlined">receipt_long</span>
+                  Generar Factura
+                </div>
+              `;
+            }
+
+            dropdown.innerHTML = opcionesHTML;
+
+            // Event listeners para las opciones
+            dropdown.querySelectorAll('.acciones-option').forEach(option => {
+              option.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const action = option.dataset.action;
+                const ordId = option.dataset.ordenId;
+                dropdown.classList.remove('show');
+
+                if (action === 'editar') {
+                  window.location.href = `manager-taller-ordenes.html?id=${ordId}`;
+                } else if (action === 'factura') {
+                  // Seleccionar la orden primero y luego disparar la generación de factura
+                  const ordenParaFactura = ordenes.find(o => o.id === parseInt(ordId));
+                  if (ordenParaFactura) {
+                    ordenSeleccionada = ordenParaFactura;
+                    actualizarPanel();
+                    // Disparar click en el botón generar factura del panel
+                    const btnFactura = document.getElementById('btn-generar-factura');
+                    if (btnFactura) btnFactura.click();
+                  }
+                }
+              });
+            });
+
+            dropdown.classList.toggle('show');
           });
         });
 
@@ -857,8 +1140,9 @@
               if (d.id !== `dropdown-${ordenId}`) d.classList.remove('show');
             });
 
-            // Renderizar opciones
-            dropdown.innerHTML = estadosDisponibles.map(estado => {
+            // Renderizar opciones (excluir PRESUPUESTO ya que se usa solo para presupuestos separados)
+            const estadosOrden = estadosDisponibles.filter(e => e.codigo !== 'PRESUPUESTO');
+            dropdown.innerHTML = estadosOrden.map(estado => {
               const dotColor = getEstadoDotColor(estado.codigo);
               const isActive = estado.codigo === estadoActual;
               return `
@@ -892,8 +1176,10 @@
 
       // Obtener color del dot según código de estado
       function getEstadoDotColor(codigo) {
-        if (codigo === 'EN_PROGRESO' || codigo === 'RECAMBIO') return '#60a5fa';
-        if (codigo === 'COMPLETADA' || codigo === 'ENTREGADA') return '#22c55e';
+        if (codigo === 'EN_PROGRESO') return '#60a5fa'; // Azul
+        if (codigo === 'RECAMBIO') return '#f97316'; // Naranja
+        if (codigo === 'COMPLETADA') return '#22c55e'; // Verde
+        if (codigo === 'ENTREGADA') return '#a855f7'; // Púrpura
         return '#eab308'; // Amarillo para ABIERTA y otros
       }
 
@@ -927,6 +1213,7 @@
       // Cerrar dropdowns al hacer click fuera
       document.addEventListener('click', () => {
         document.querySelectorAll('.estado-dropdown.show').forEach(d => d.classList.remove('show'));
+        document.querySelectorAll('.acciones-dropdown.show').forEach(d => d.classList.remove('show'));
       });
 
       function actualizarPanel() {
@@ -1060,6 +1347,11 @@
 
       document.getElementById('filter-fecha').addEventListener('change', aplicarFiltros);
       document.getElementById('filter-pago').addEventListener('change', aplicarFiltros);
+
+      // Toggle "Solo activas": al cambiar, vuelve a renderizar sin recargar datos
+      document.getElementById('toggle-solo-activas').addEventListener('change', () => {
+        renderOrdenes();
+      });
 
       let searchTimeout;
       document.getElementById('search-input').addEventListener('input', (e) => {

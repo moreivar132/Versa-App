@@ -241,28 +241,28 @@ class OrdenesService {
             const totalNeto = totalBruto + totalIva;
 
             // Insertar Pagos y Movimientos de Caja
+            let idCajaActual = null;
+            if (pagosProcesados.length > 0) {
+                const cajaAbierta = await ordenesRepository.getOpenCaja(client, idSucursal);
+                if (cajaAbierta) {
+                    idCajaActual = cajaAbierta.id;
+                } else {
+                    const nuevaCaja = await ordenesRepository.createOpenCaja(client, idSucursal, id_usuario);
+                    idCajaActual = nuevaCaja.id;
+                }
+            }
+
             for (const pago of pagosProcesados) {
+                const idCajaFinal = pago.idCaja || idCajaActual;
+
                 const pagoCreado = await ordenesRepository.createOrdenPago(client, {
                     id_orden: idOrden,
                     id_medio_pago: pago.idMedioPago,
                     importe: pago.importe,
                     referencia: pago.referencia,
-                    id_caja: pago.idCaja,
+                    id_caja: idCajaFinal,
                     created_by: id_usuario
                 });
-
-                // Crear movimiento de caja (INGRESO por pago de orden)
-                if (pago.idCaja) {
-                    await ordenesRepository.createCajaMovimiento(client, {
-                        id_caja: pago.idCaja,
-                        id_usuario: id_usuario,
-                        tipo: 'INGRESO',
-                        monto: pago.importe,
-                        origen_tipo: 'ORDEN',
-                        origen_id: idOrden,
-                        created_by: id_usuario
-                    });
-                }
             }
 
             // Actualizar Totales en Orden
@@ -296,7 +296,7 @@ class OrdenesService {
      */
     async getOrdenes(filtros, userContext) {
         const { id_tenant } = userContext;
-        const { estado, estadoPago, busqueda, fechaDesde, fechaHasta, limit, offset } = filtros;
+        const { estado, estadoPago, busqueda, fechaDesde, fechaHasta, idMecanico, idSucursal, limit, offset } = filtros;
 
         // Query principal con estado de pago calculado
         let query = `
@@ -366,6 +366,20 @@ class OrdenesService {
         if (fechaHasta) {
             query += ` AND o.created_at <= $${paramIndex}`;
             values.push(fechaHasta);
+            paramIndex++;
+        }
+
+        // Filtro por mecánico
+        if (idMecanico) {
+            query += ` AND o.id_mecanico = $${paramIndex}`;
+            values.push(idMecanico);
+            paramIndex++;
+        }
+
+        // Filtro por sucursal
+        if (idSucursal) {
+            query += ` AND o.id_sucursal = $${paramIndex}`;
+            values.push(idSucursal);
             paramIndex++;
         }
 

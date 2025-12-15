@@ -18,6 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -112,7 +113,7 @@
                         </div>
 
                         <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="#">
+                            href="manager-taller-caja.html">
                             <span class="icon-container"><i class="fas fa-cash-register"></i></span>
                             <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
                         </a>
@@ -235,6 +236,11 @@
                             </button>
                         </div>
                     </header>
+
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
 
                     <!-- Stats Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -1075,6 +1081,9 @@
 
         let globalConfig = { sucursales: [], tecnicos: [] };
 
+        // Constante para leer la sucursal guardada
+        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
         async function loadConfig() {
             try {
                 const res = await fetch(`${API_BASE_URL}/api/citas/config`);
@@ -1084,7 +1093,13 @@
                     const sucursalSelect = document.getElementById('cita-sucursal');
                     const mecanicoSelect = document.getElementById('cita-mecanico');
 
-                    sucursalSelect.innerHTML = data.sucursales.map(s => `<option value="${s.id}">${s.nombre}</option>`).join('');
+                    // Leer sucursal guardada
+                    const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+
+                    sucursalSelect.innerHTML = data.sucursales.map(s => {
+                        const selected = savedSucursal && s.id == savedSucursal ? ' selected' : '';
+                        return `<option value="${s.id}"${selected}>${s.nombre}</option>`;
+                    }).join('');
                     mecanicoSelect.innerHTML = '<option value="">Cualquiera</option>' + data.tecnicos.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
                 }
             } catch (e) {
@@ -1174,8 +1189,11 @@
                 document.getElementById('cita-id').value = '';
                 document.getElementById('cita-fecha').value = new Date().toISOString().split('T')[0];
 
-                // Set default sucursal if available
-                if (globalConfig.sucursales.length > 0) {
+                // Set sucursal from localStorage or first available
+                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+                if (savedSucursal && globalConfig.sucursales.some(s => s.id == savedSucursal)) {
+                    document.getElementById('cita-sucursal').value = savedSucursal;
+                } else if (globalConfig.sucursales.length > 0) {
                     document.getElementById('cita-sucursal').value = globalConfig.sucursales[0].id;
                 }
                 checkAvailability();
@@ -1342,6 +1360,20 @@
             clientModal.classList.remove('flex');
         }
 
+    </script>
+
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+
+        // Inicializar selector de sucursal
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    // Recargar citas cuando cambia la sucursal
+                    if (typeof loadCitas === 'function') loadCitas();
+                }
+            });
+        })();
     </script>
 </body>
 

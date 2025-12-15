@@ -21,6 +21,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         /* --- VARIABLES & BASE --- */
         /* Redundant variables removed */
@@ -542,7 +543,7 @@
                         </div>
 
                         <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="#">
+                            href="manager-taller-caja.html">
                             <span class="icon-container"><i class="fas fa-cash-register"></i></span>
                             <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
                         </a>
@@ -634,6 +635,11 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
+
+                <!-- Selector de Sucursal Centrado -->
+                <div class="flex justify-center mb-6">
+                    <div id="sucursal-selector-container"></div>
+                </div>
 
                 <form id="purchase-form" class="manager-panel">
                     <div class="flex items-center justify-between mb-8">
@@ -744,7 +750,9 @@
                                             class="form-input text-right" />
                                     </td>
                                     <td>
-                                        <input type="number" id="item-iva" value="21" class="form-input text-center" />
+                                        <select id="item-iva" class="form-input text-center">
+                                            <option value="">Cargando...</option>
+                                        </select>
                                     </td>
                                     <td class="text-center">
                                         <button type="button" id="add-item-btn" class="btn btn-sm w-full">
@@ -970,9 +978,44 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             fechaEmisionInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 
-            // Cargar Sucursales
+            // Cargar Sucursales e Impuestos
             loadBranches();
+            loadImpuestos();
             setupProviderAutocomplete("proveedor", "proveedor-options");
+
+            // Variable global para impuestos
+            let impuestosData = [];
+
+            // Cargar impuestos desde la API
+            async function loadImpuestos() {
+                const select = document.getElementById('item-iva');
+                try {
+                    const response = await fetchWithAuth('/api/impuestos');
+                    if (response.ok) {
+                        impuestosData = await response.json();
+                        select.innerHTML = '';
+                        impuestosData.forEach(imp => {
+                            const option = document.createElement('option');
+                            option.value = imp.id;
+                            option.textContent = `${imp.nombre} (${imp.porcentaje}%)`;
+                            option.dataset.porcentaje = imp.porcentaje;
+                            // Seleccionar 21% por defecto si existe
+                            if (imp.porcentaje == 21) {
+                                option.selected = true;
+                            }
+                            select.appendChild(option);
+                        });
+                        if (impuestosData.length === 0) {
+                            select.innerHTML = '<option value="">Sin impuestos</option>';
+                        }
+                    } else {
+                        throw new Error('Error al cargar impuestos');
+                    }
+                } catch (error) {
+                    console.error('Error cargando impuestos:', error);
+                    select.innerHTML = '<option value="">Error</option>';
+                }
+            }
 
             // Helper: Debounce
             function debounce(func, wait) {
@@ -1058,6 +1101,12 @@
                         typeInput.value = product.tipo;
                     }
 
+                    // Pre-seleccionar el impuesto del producto si existe
+                    const ivaSelect = document.getElementById('item-iva');
+                    if (product.id_impuesto && ivaSelect) {
+                        ivaSelect.value = product.id_impuesto;
+                    }
+
                     // Visual feedback
                     barcodeInput.style.borderColor = 'var(--brand-green)';
                     setTimeout(() => barcodeInput.style.borderColor = '', 1000);
@@ -1066,6 +1115,9 @@
                     optionsContainer.classList.remove("show");
                 }
             }
+
+            // Constante para leer la sucursal guardada
+            const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
 
             async function loadBranches() {
                 const select = document.getElementById('taller');
@@ -1077,12 +1129,27 @@
                             select.innerHTML = '<option value="">No hay sucursales disponibles</option>';
                         } else {
                             select.innerHTML = '';
+
+                            // Leer la sucursal guardada en localStorage
+                            const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+
                             branches.forEach(branch => {
                                 const option = document.createElement('option');
                                 option.value = branch.id;
                                 option.textContent = branch.nombre;
+
+                                // Pre-seleccionar la sucursal guardada
+                                if (savedSucursal && branch.id == savedSucursal) {
+                                    option.selected = true;
+                                }
+
                                 select.appendChild(option);
                             });
+
+                            // Si no hay sucursal guardada, seleccionar la primera
+                            if (!savedSucursal && branches.length > 0) {
+                                select.value = branches[0].id;
+                            }
                         }
                     } else {
                         throw new Error('Error al cargar sucursales: ' + response.statusText);
@@ -1180,13 +1247,18 @@
                 if (!isValid) return;
 
                 // Agregar al array
+                const selectedOption = ivaInput.options[ivaInput.selectedIndex];
+                const ivaPorcentaje = selectedOption ? parseFloat(selectedOption.dataset.porcentaje) || 0 : 0;
+                const idImpuesto = ivaInput.value ? parseInt(ivaInput.value) : null;
+
                 items.push({
                     barcode: barcodeInput.value,
                     name: nameInput.value,
                     price: price,
                     quantity: parseInt(qtyInput.value) || 1,
                     bonus: parseFloat(bonusInput.value) || 0,
-                    iva: parseFloat(ivaInput.value) || 21,
+                    iva: ivaPorcentaje,              // Porcentaje para cálculos frontend
+                    id_impuesto: idImpuesto,         // ID para enviar al backend
                     type: typeInput.value
                 });
 
@@ -1588,6 +1660,33 @@
 
 
         });
+    </script>
+
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+
+        // Inicializar selector de sucursal
+        (async () => {
+            const sucursalId = await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    // Actualizar el campo de sucursal si existe
+                    const sucursalSelect = document.getElementById('sucursal');
+                    if (sucursalSelect && sucursalId) {
+                        sucursalSelect.value = sucursalId;
+                    }
+                }
+            });
+
+            // Pre-seleccionar la sucursal si hay guaradada
+            if (sucursalId) {
+                const sucursalSelect = document.getElementById('sucursal');
+                if (sucursalSelect) {
+                    setTimeout(() => {
+                        sucursalSelect.value = sucursalId;
+                    }, 300);
+                }
+            }
+        })();
     </script>
 </body>
 

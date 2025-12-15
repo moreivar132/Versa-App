@@ -18,6 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         /* Estilos Generales (Reutilizados para consistencia) */
         /* Redundant variables removed */
@@ -630,7 +631,7 @@
                         </div>
 
                         <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="#">
+                            href="manager-taller-caja.html">
                             <span class="icon-container"><i class="fas fa-cash-register"></i></span>
                             <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
                         </a>
@@ -723,6 +724,19 @@
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
                 <!-- Container adjustments for new layout -->
                 <div class="">
+
+                    <!-- PAGE HEADER -->
+                    <div class="flex flex-wrap items-center justify-between mb-8 gap-4 border-b border-[#282e39] pb-6">
+                        <div>
+                            <h1 class="text-2xl font-bold text-white">Gestión de Proveedores</h1>
+                            <p class="text-[#9da6b9] text-sm mt-1">Administra tus proveedores</p>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
 
                     <!-- KPI CARDS -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -943,6 +957,7 @@
 
         <script type="module">
             import { getToken, getApiBaseUrl, fetchWithAuth } from './auth.js';
+            import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
 
             // --- SIDEBAR LOGIC ---
             window.toggleSubmenu = function (id) {
@@ -992,7 +1007,15 @@
                 sidebar.classList.toggle('h-full');
             });
 
-            document.addEventListener("DOMContentLoaded", () => {
+            document.addEventListener("DOMContentLoaded", async () => {
+
+                // Inicializar selector de sucursal
+                await initSucursalSelector('sucursal-selector-container', {
+                    onchange: (sucursalId) => {
+                        loadRecentProviders();
+                        loadProviderStats();
+                    }
+                });
 
                 const API_URL = `${getApiBaseUrl()}/api/proveedores`;
                 console.log('API URL Configurada:', API_URL);

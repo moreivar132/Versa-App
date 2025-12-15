@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <script src="/guard.js"></script>
 
     <style>
@@ -376,7 +377,11 @@
                     <input type="hidden" id="id-cliente-hidden" name="idCliente" />
                     <input type="hidden" id="id-taller-hidden" name="idSucursal" />
 
-                    <!-- Header Actions -->
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
+
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                         <div>
                             <h2 class="text-3xl font-extrabold text-white form-main-title">Venta en Mostrador</h2>
@@ -659,6 +664,27 @@
     </div>
 
     <script type="module" src="manager-taller-ventas.js"></script>
+    <script type="module">
+        import { initSucursalSelector } from './services/sucursal-selector.js';
+
+        (async () => {
+            const sucursalId = await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    const tallerSelect = document.getElementById('taller');
+                    if (tallerSelect && sucursalId) {
+                        tallerSelect.value = sucursalId;
+                    }
+                }
+            });
+
+            if (sucursalId) {
+                setTimeout(() => {
+                    const tallerSelect = document.getElementById('taller');
+                    if (tallerSelect) tallerSelect.value = sucursalId;
+                }, 500);
+            }
+        })();
+    </script>
 </body>
 
 </html>

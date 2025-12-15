@@ -18,6 +18,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         /* --- VARIABLES & BASE --- */
         /* Redundant variables removed */
@@ -315,7 +316,7 @@
                         </div>
 
                         <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-                            href="#">
+                            href="manager-taller-caja.html">
                             <span class="icon-container"><i class="fas fa-cash-register"></i></span>
                             <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
                         </a>
@@ -407,6 +408,11 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
+
+                <!-- Selector de Sucursal Centrado -->
+                <div class="flex justify-center mb-6">
+                    <div id="sucursal-selector-container"></div>
+                </div>
 
                 <form id="product-form" class="manager-panel">
                     <div class="flex items-center justify-between mb-8">
@@ -580,6 +586,28 @@
 
     <script type="module">
         import { fetchWithAuth } from './auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+
+        // Inicializar selector de sucursal
+        (async () => {
+            const sucursalId = await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    // Actualizar el selector de taller
+                    const tallerSelect = document.getElementById('taller');
+                    if (tallerSelect && sucursalId) {
+                        setTimeout(() => {
+                            // Find the option that matches this sucursal ID
+                            for (let option of tallerSelect.options) {
+                                if (option.value == sucursalId || option.dataset.id == sucursalId) {
+                                    tallerSelect.value = option.value;
+                                    break;
+                                }
+                            }
+                        }, 300);
+                    }
+                }
+            });
+        })();
 
         document.addEventListener("DOMContentLoaded", () => {
             loadBranches();
