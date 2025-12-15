@@ -10,7 +10,6 @@ export default defineConfig({
                 main: 'index.html',
                 login: 'login.html',
                 adminAccesos: 'admin-accesos.html',
-                managerTaller: 'manager-taller.html',
                 managerTallerInicio: 'manager-taller-inicio.html',
                 managerTallerClientes: 'manager-taller-clientes.html',
                 managerTallerInventario: 'manager-taller-inventario.html',
