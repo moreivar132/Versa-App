@@ -21,6 +21,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         /* --- VARIABLES & BASE --- */
         /* Redundant variables removed */
@@ -634,6 +635,11 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
+
+                <!-- Selector de Sucursal Centrado -->
+                <div class="flex justify-center mb-6">
+                    <div id="sucursal-selector-container"></div>
+                </div>
 
                 <form id="purchase-form" class="manager-panel">
                     <div class="flex items-center justify-between mb-8">
@@ -1654,6 +1660,33 @@
 
 
         });
+    </script>
+
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+
+        // Inicializar selector de sucursal
+        (async () => {
+            const sucursalId = await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    // Actualizar el campo de sucursal si existe
+                    const sucursalSelect = document.getElementById('sucursal');
+                    if (sucursalSelect && sucursalId) {
+                        sucursalSelect.value = sucursalId;
+                    }
+                }
+            });
+
+            // Pre-seleccionar la sucursal si hay guaradada
+            if (sucursalId) {
+                const sucursalSelect = document.getElementById('sucursal');
+                if (sucursalSelect) {
+                    setTimeout(() => {
+                        sucursalSelect.value = sucursalId;
+                    }, 300);
+                }
+            }
+        })();
     </script>
 </body>
 

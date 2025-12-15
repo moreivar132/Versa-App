@@ -18,6 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         /* Estilos específicos del chat */
         .chat-layout {
@@ -364,6 +365,11 @@
                         </div>
                     </div>
 
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-4">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
+
                     <div class="chat-layout">
                         <!-- Lista de conversaciones -->
                         <div class="conversations-list" id="conversations-list">
@@ -453,6 +459,13 @@
         document.addEventListener("DOMContentLoaded", () => {
             toggleSubmenu('taller-submenu');
         });
+    </script>
+    <script type="module">
+        import { initSucursalSelector } from './services/sucursal-selector.js';
+
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container');
+        })();
     </script>
 </body>
 
