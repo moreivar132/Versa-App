@@ -88,6 +88,13 @@
                 { label: 'Clientes', href: 'manager-taller-clientes.html' },
                 { label: 'Proveedores', href: 'manager-taller-proveedores.html' }
             ]
+        },
+        {
+            type: 'link',
+            id: 'configuracion',
+            label: 'Configuración',
+            icon: 'fa-cog',
+            href: 'manager-taller-configuracion.html'
         }
     ];
 

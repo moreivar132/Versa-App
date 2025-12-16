@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración General - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-orange);
+        }
+
+        .card {
+            background: rgba(26, 26, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: #9da6b9;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Tabs */
+        .config-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 16px;
+        }
+
+        .config-tab {
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #9da6b9;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-tab:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .config-tab.active {
+            color: #fff;
+            background: var(--brand-orange);
+            border-color: var(--brand-orange);
+        }
+
+        .config-panel {
+            display: none;
+        }
+
+        .config-panel.active {
+            display: block;
+        }
+
+        /* Form Inputs */
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background-color: rgba(40, 40, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            box-shadow: 0 0 0 3px rgba(255, 101, 43, 0.15);
+        }
+
+        /* Estado Item */
+        .estado-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: rgba(30, 30, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+        }
+
+        .estado-item:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .estado-color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .estado-color-picker {
+            width: 36px;
+            height: 28px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: transparent;
+            padding: 0;
+        }
+
+        .estado-input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: rgba(20, 20, 25, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .estado-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+        }
+
+        .estado-orden {
+            width: 40px;
+            text-align: center;
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: rgba(20, 20, 25, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #9da6b9;
+            font-size: 12px;
+        }
+
+        .btn-sm {
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-save {
+            background: #22c55e;
+            color: #fff;
+        }
+
+        .btn-save:hover {
+            background: #16a34a;
+        }
+
+        .btn-delete {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        .btn-add {
+            background: var(--brand-orange);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #e05300;
+            transform: translateY(-1px);
+        }
+
+        /* Campo personalizado item */
+        .campo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            background: rgba(30, 30, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .campo-item:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .campo-nombre {
+            flex: 1;
+        }
+
+        .campo-unidad {
+            width: 100px;
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .toggle-container:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-label {
+            flex: 1;
+        }
+
+        .toggle-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .toggle-description {
+            font-size: 12px;
+            color: #9da6b9;
+            line-height: 1.5;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #3a3a4a;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: var(--brand-orange);
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Quick Links */
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .quick-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(26, 26, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .quick-link:hover {
+            border-color: var(--brand-orange);
+            background: rgba(255, 95, 0, 0.05);
+        }
+
+        .quick-link-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 95, 0, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--brand-orange);
+        }
+
+        .quick-link-text h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .quick-link-text p {
+            font-size: 12px;
+            color: #9da6b9;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #1e242d 0%, #282e39 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            margin-top: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success {
+            border-left: 4px solid #22c55e;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Section Headers */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #9da6b9;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9da6b9;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-caja.html">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-cuentas-corrientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Cuentas Corrientes</a>
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Config. Facturas</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+
+                        <!-- Configuración (ACTIVO) -->
+                        <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors"
+                            href="manager-taller-configuracion.html">
+                            <span class="icon-container"><i class="fas fa-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Configuración</p>
+                        </a>
+                    </nav>
+                </div>
+
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" id="logout-btn">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-6xl mx-auto">
+                    <!-- Header -->
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-white mb-2">Configuración General</h1>
+                        <p class="text-gray-400">Personaliza estados, campos y opciones del sistema</p>
+                    </div>
+
+                    <!-- Quick Links -->
+                    <div class="quick-links">
+                        <a href="manager-taller-config-facturas.html" class="quick-link">
+                            <div class="quick-link-icon">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                            <div class="quick-link-text">
+                                <h4>Facturas</h4>
+                                <p>Logo, colores, series</p>
+                            </div>
+                        </a>
+                        <a href="manager-taller-config-ordenes.html" class="quick-link">
+                            <div class="quick-link-icon">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="quick-link-text">
+                                <h4>Órdenes de Trabajo</h4>
+                                <p>Diseño del documento</p>
+                            </div>
+                        </a>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="config-tabs">
+                        <button class="config-tab active" data-tab="estados">
+                            <i class="fas fa-tags"></i>
+                            Estados de Órdenes
+                        </button>
+                        <button class="config-tab" data-tab="campos-orden">
+                            <i class="fas fa-list-alt"></i>
+                            Campos Órdenes
+                        </button>
+                        <button class="config-tab" data-tab="campos-vehiculo">
+                            <i class="fas fa-car"></i>
+                            Campos Vehículos
+                        </button>
+                        <button class="config-tab" data-tab="pagos">
+                            <i class="fas fa-credit-card"></i>
+                            Control de Pago
+                        </button>
+                    </div>
+
+                    <!-- Panel: Estados de Órdenes -->
+                    <div id="panel-estados" class="config-panel active">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-tags text-[var(--brand-orange)]"></i>
+                                    Estados de Órdenes
+                                </div>
+                                <p class="card-description">
+                                    Define los estados de las órdenes que quieras utilizar. Puedes personalizar el
+                                    nombre y color de cada uno.
+                                </p>
+
+                                <div class="section-header">
+                                    <span class="section-title">Estados Configurados</span>
+                                    <button class="btn-add" onclick="agregarEstado()">
+                                        <i class="fas fa-plus"></i>
+                                        Añadir Estado
+                                    </button>
+                                </div>
+
+                                <div id="estados-lista">
+                                    <!-- Estados se cargan dinámicamente -->
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-info-circle text-blue-400"></i>
+                                    Información
+                                </div>
+                                <p class="card-description" style="margin-bottom: 0;">
+                                    Los estados definen el flujo de trabajo de tus órdenes. El <strong>orden</strong>
+                                    determina la secuencia lógica (de menor a mayor). Los cambios se guardan
+                                    automáticamente al pulsar "Guardar" en cada estado.
+                                </p>
+
+                                <div
+                                    style="margin-top: 20px; padding: 16px; background: rgba(255,95,0,0.08); border-radius: 10px; border: 1px solid rgba(255,95,0,0.2);">
+                                    <p style="font-size: 13px; color: #ff8c4a;">
+                                        <i class="fas fa-lightbulb" style="margin-right: 8px;"></i>
+                                        <strong>Consejo:</strong> Usa colores distintivos para cada estado para
+                                        identificarlos rápidamente en la lista de órdenes.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel: Campos Personalizados de Órdenes -->
+                    <div id="panel-campos-orden" class="config-panel">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-list-alt text-[var(--brand-orange)]"></i>
+                                    Campos Personalizados de Órdenes
+                                </div>
+                                <p class="card-description">
+                                    Configura los campos adicionales que quieras agregar al formulario de tus órdenes.
+                                    Si no quieres que el campo aparezca, déjalo en blanco.
+                                </p>
+
+                                <div class="section-header">
+                                    <span class="section-title">Campos Configurados</span>
+                                    <button class="btn-add" onclick="agregarCampoOrden()">
+                                        <i class="fas fa-plus"></i>
+                                        Añadir Campo
+                                    </button>
+                                </div>
+
+                                <div id="campos-orden-lista">
+                                    <!-- Campos se cargan dinámicamente -->
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-info-circle text-blue-400"></i>
+                                    Uso de Campos
+                                </div>
+                                <p class="card-description" style="margin-bottom: 0;">
+                                    Estos campos aparecerán en el formulario de creación/edición de órdenes. Puedes
+                                    añadir un símbolo o unidad (ej: KM, €, %) que se mostrará junto al valor.
+                                </p>
+
+                                <div
+                                    style="margin-top: 20px; padding: 16px; background: rgba(34,197,94,0.08); border-radius: 10px; border: 1px solid rgba(34,197,94,0.2);">
+                                    <p style="font-size: 13px; color: #4ade80;">
+                                        <i class="fas fa-check-circle" style="margin-right: 8px;"></i>
+                                        <strong>Ejemplos:</strong> Kilometraje (KM), Número Inspector, Franquicia (€),
+                                        Número de Siniestro
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel: Campos Personalizados de Vehículos -->
+                    <div id="panel-campos-vehiculo" class="config-panel">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-car text-[var(--brand-orange)]"></i>
+                                    Campos Personalizados del Vehículo
+                                </div>
+                                <p class="card-description">
+                                    Configura los datos adicionales que quieras almacenar cuando registres un vehículo.
+                                </p>
+
+                                <div class="section-header">
+                                    <span class="section-title">Campos Configurados</span>
+                                    <button class="btn-add" onclick="agregarCampoVehiculo()">
+                                        <i class="fas fa-plus"></i>
+                                        Añadir Campo
+                                    </button>
+                                </div>
+
+                                <div id="campos-vehiculo-lista">
+                                    <!-- Campos se cargan dinámicamente -->
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-info-circle text-blue-400"></i>
+                                    Información
+                                </div>
+                                <p class="card-description" style="margin-bottom: 0;">
+                                    Estos campos se mostrarán en la ficha del vehículo y podrás usarlos para filtrar o
+                                    buscar vehículos.
+                                </p>
+
+                                <div
+                                    style="margin-top: 20px; padding: 16px; background: rgba(59,130,246,0.08); border-radius: 10px; border: 1px solid rgba(59,130,246,0.2);">
+                                    <p style="font-size: 13px; color: #60a5fa;">
+                                        <i class="fas fa-car" style="margin-right: 8px;"></i>
+                                        <strong>Ejemplos:</strong> Año, Nº Chasis, CC (cilindrada), Seguro, Color,
+                                        Combustible
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel: Control de Pago -->
+                    <div id="panel-pagos" class="config-panel">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-credit-card text-[var(--brand-orange)]"></i>
+                                    Control de Pago
+                                </div>
+                                <p class="card-description">
+                                    Configura cómo se gestionan los pagos en las órdenes de trabajo.
+                                </p>
+
+                                <div class="toggle-container">
+                                    <div class="toggle-label">
+                                        <div class="toggle-title">Control de pago activo</div>
+                                        <div class="toggle-description">
+                                            Cuando está activo, impide ingresar una orden si el importe del pago es
+                                            distinto al total. Útil si llevas control de caja.
+                                        </div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="control-pago-activo" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="toggle-container">
+                                    <div class="toggle-label">
+                                        <div class="toggle-title">Permitir pagos parciales</div>
+                                        <div class="toggle-description">
+                                            Permite registrar pagos parciales en las órdenes, creando un historial de
+                                            cobros.
+                                        </div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="permitir-pagos-parciales" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="toggle-container">
+                                    <div class="toggle-label">
+                                        <div class="toggle-title">Usar cuentas corrientes</div>
+                                        <div class="toggle-description">
+                                            Habilita el sistema de cuentas corrientes para clientes con pagos
+                                            diferidos.
+                                        </div>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="usar-cuentas-corrientes" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div style="margin-top: 20px;">
+                                    <button class="btn-add" onclick="guardarConfigPago()"
+                                        style="width: 100%; justify-content: center;">
+                                        <i class="fas fa-save"></i>
+                                        Guardar Configuración
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                                    Importante
+                                </div>
+                                <div class="card-description" style="margin-bottom: 0;">
+                                    <p style="margin-bottom: 12px;">
+                                        <strong style="color: #fff;">Control de pago:</strong> Este control es muy
+                                        importante si llevas el control de caja. Desactivar esta opción es útil si no
+                                        usas cuentas corrientes para pagos parciales.
+                                    </p>
+                                    <p style="margin-bottom: 12px;">
+                                        <strong style="color: #f87171;">NO se recomienda desactivar</strong> esta
+                                        opción si usas el control de caja o si necesitas tener un histórico de pagos
+                                        parciales.
+                                    </p>
+                                    <p>
+                                        Si desactivas esta opción, el pago en la orden no se reflejará en la caja, ni
+                                        la orden se verá afectada por el cierre de caja, hasta que el pago esté
+                                        completo.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Submenu toggle
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isCollapsed = false;
+
+        toggleBtn?.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                sidebarTexts.forEach(el => el.classList.add('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            } else {
+                sidebar.classList.add('w-64');
+                sidebar.classList.remove('w-20');
+                sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            }
+        });
+
+        // Mobile menu
+        document.getElementById('mobile-menu-btn')?.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('absolute');
+            sidebar.classList.toggle('z-50');
+            sidebar.classList.toggle('h-full');
+        });
+
+        // Tab switching
+        document.querySelectorAll('.config-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+
+                tab.classList.add('active');
+                document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+            });
+        });
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle text-green-400' : 'fa-exclamation-circle text-red-400'}"></i>
+                <span style="color: #fff; font-size: 14px;">${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+
+    <script type="module">
+        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from './auth.js';
+
+        // Estado por defecto
+        let estadosOrden = [];
+        let camposOrden = [];
+        let camposVehiculo = [];
+
+        // Cargar datos al inicio
+        document.addEventListener('DOMContentLoaded', async () => {
+            const session = await getSession();
+            if (!session) {
+                redirectToLogin();
+                return;
+            }
+
+            // Actualizar info de usuario
+            const userAvatar = document.getElementById('user-avatar');
+            const userName = document.getElementById('user-name');
+            const userRole = document.getElementById('user-role');
+
+            if (session.nombre) {
+                userName.textContent = session.nombre;
+                userAvatar.textContent = session.nombre.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            }
+            if (session.rol) {
+                userRole.textContent = session.rol;
+            }
+
+            // Logout
+            document.getElementById('logout-btn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                clearSession();
+                redirectToLogin();
+            });
+
+            // Cargar configuraciones
+            await cargarEstados();
+            await cargarCamposOrden();
+            await cargarCamposVehiculo();
+            await cargarConfigPago();
+        });
+
+        // ============ ESTADOS DE ÓRDENES ============
+
+        async function cargarEstados() {
+            try {
+                // Intentar cargar desde localStorage primero (para demo)
+                const stored = localStorage.getItem('config_estados_orden');
+                if (stored) {
+                    estadosOrden = JSON.parse(stored);
+                } else {
+                    // Estados por defecto
+                    estadosOrden = [
+                        { id: 1, codigo: 'ABIERTA', nombre: 'Abierta', color: '#eab308', orden: 1 },
+                        { id: 2, codigo: 'EN_PROGRESO', nombre: 'En Progreso', color: '#3b82f6', orden: 2 },
+                        { id: 3, codigo: 'RECAMBIO', nombre: 'Esperando Recambio', color: '#f97316', orden: 3 },
+                        { id: 4, codigo: 'COMPLETADA', nombre: 'Completada', color: '#22c55e', orden: 4 },
+                        { id: 5, codigo: 'ENTREGADA', nombre: 'Entregada', color: '#a855f7', orden: 5 }
+                    ];
+                }
+                renderEstados();
+            } catch (error) {
+                console.error('Error cargando estados:', error);
+            }
+        }
+
+        function renderEstados() {
+            const container = document.getElementById('estados-lista');
+            if (estadosOrden.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-tags"></i>
+                        <p>No hay estados configurados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = estadosOrden.map((estado, index) => `
+                <div class="estado-item" data-id="${estado.id}">
+                    <input type="color" class="estado-color-picker" value="${estado.color}" 
+                           onchange="actualizarColorEstado(${estado.id}, this.value)">
+                    <input type="text" class="estado-input campo-nombre" value="${estado.nombre}" 
+                           placeholder="Nombre del estado">
+                    <input type="number" class="estado-orden" value="${estado.orden}" 
+                           min="1" placeholder="#" title="Orden">
+                    <button class="btn-sm btn-save" onclick="guardarEstado(${estado.id})">
+                        Guardar
+                    </button>
+                    <button class="btn-sm btn-delete" onclick="eliminarEstado(${estado.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.agregarEstado = function () {
+            const nuevoId = Date.now();
+            estadosOrden.push({
+                id: nuevoId,
+                codigo: `ESTADO_${nuevoId}`,
+                nombre: 'Nuevo Estado',
+                color: '#6b7280',
+                orden: estadosOrden.length + 1
+            });
+            renderEstados();
+        };
+
+        window.actualizarColorEstado = function (id, color) {
+            const estado = estadosOrden.find(e => e.id === id);
+            if (estado) estado.color = color;
+        };
+
+        window.guardarEstado = function (id) {
+            const item = document.querySelector(`.estado-item[data-id="${id}"]`);
+            const estado = estadosOrden.find(e => e.id === id);
+            if (estado && item) {
+                estado.nombre = item.querySelector('.campo-nombre').value;
+                estado.color = item.querySelector('.estado-color-picker').value;
+                estado.orden = parseInt(item.querySelector('.estado-orden').value) || 1;
+
+                localStorage.setItem('config_estados_orden', JSON.stringify(estadosOrden));
+                showToast('Estado guardado correctamente');
+            }
+        };
+
+        window.eliminarEstado = function (id) {
+            if (confirm('¿Eliminar este estado?')) {
+                estadosOrden = estadosOrden.filter(e => e.id !== id);
+                localStorage.setItem('config_estados_orden', JSON.stringify(estadosOrden));
+                renderEstados();
+                showToast('Estado eliminado');
+            }
+        };
+
+        // ============ CAMPOS PERSONALIZADOS DE ÓRDENES ============
+
+        async function cargarCamposOrden() {
+            try {
+                const stored = localStorage.getItem('config_campos_orden');
+                if (stored) {
+                    camposOrden = JSON.parse(stored);
+                } else {
+                    camposOrden = [
+                        { id: 1, nombre: 'Kilometraje', unidad: 'KM' },
+                        { id: 2, nombre: 'Nombre Inspector', unidad: '' },
+                        { id: 3, nombre: 'Número Siniestro', unidad: '' },
+                        { id: 4, nombre: 'Franquicia', unidad: '€' }
+                    ];
+                }
+                renderCamposOrden();
+            } catch (error) {
+                console.error('Error cargando campos orden:', error);
+            }
+        }
+
+        function renderCamposOrden() {
+            const container = document.getElementById('campos-orden-lista');
+            if (camposOrden.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-list-alt"></i>
+                        <p>No hay campos configurados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = camposOrden.map(campo => `
+                <div class="campo-item" data-id="${campo.id}">
+                    <input type="text" class="estado-input campo-nombre" value="${campo.nombre}" 
+                           placeholder="Nombre del campo">
+                    <input type="text" class="estado-input campo-unidad" value="${campo.unidad}" 
+                           placeholder="Unidad" style="width: 80px;">
+                    <button class="btn-sm btn-save" onclick="guardarCampoOrden(${campo.id})">
+                        Guardar
+                    </button>
+                    <button class="btn-sm btn-delete" onclick="eliminarCampoOrden(${campo.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.agregarCampoOrden = function () {
+            const nuevoId = Date.now();
+            camposOrden.push({
+                id: nuevoId,
+                nombre: '',
+                unidad: ''
+            });
+            renderCamposOrden();
+        };
+
+        window.guardarCampoOrden = function (id) {
+            const item = document.querySelector(`#campos-orden-lista .campo-item[data-id="${id}"]`);
+            const campo = camposOrden.find(c => c.id === id);
+            if (campo && item) {
+                campo.nombre = item.querySelector('.campo-nombre').value;
+                campo.unidad = item.querySelector('.campo-unidad').value;
+
+                localStorage.setItem('config_campos_orden', JSON.stringify(camposOrden));
+                showToast('Campo guardado correctamente');
+            }
+        };
+
+        window.eliminarCampoOrden = function (id) {
+            if (confirm('¿Eliminar este campo?')) {
+                camposOrden = camposOrden.filter(c => c.id !== id);
+                localStorage.setItem('config_campos_orden', JSON.stringify(camposOrden));
+                renderCamposOrden();
+                showToast('Campo eliminado');
+            }
+        };
+
+        // ============ CAMPOS PERSONALIZADOS DE VEHÍCULOS ============
+
+        async function cargarCamposVehiculo() {
+            try {
+                const stored = localStorage.getItem('config_campos_vehiculo');
+                if (stored) {
+                    camposVehiculo = JSON.parse(stored);
+                } else {
+                    camposVehiculo = [
+                        { id: 1, nombre: 'Año' },
+                        { id: 2, nombre: 'Nº Chasis' },
+                        { id: 3, nombre: 'CC' },
+                        { id: 4, nombre: 'Seguro' }
+                    ];
+                }
+                renderCamposVehiculo();
+            } catch (error) {
+                console.error('Error cargando campos vehículo:', error);
+            }
+        }
+
+        function renderCamposVehiculo() {
+            const container = document.getElementById('campos-vehiculo-lista');
+            if (camposVehiculo.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-car"></i>
+                        <p>No hay campos configurados</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = camposVehiculo.map(campo => `
+                <div class="campo-item" data-id="${campo.id}">
+                    <input type="text" class="estado-input campo-nombre" value="${campo.nombre}" 
+                           placeholder="Nombre del campo" style="flex: 1;">
+                    <button class="btn-sm btn-save" onclick="guardarCampoVehiculo(${campo.id})">
+                        Guardar
+                    </button>
+                    <button class="btn-sm btn-delete" onclick="eliminarCampoVehiculo(${campo.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        window.agregarCampoVehiculo = function () {
+            const nuevoId = Date.now();
+            camposVehiculo.push({
+                id: nuevoId,
+                nombre: ''
+            });
+            renderCamposVehiculo();
+        };
+
+        window.guardarCampoVehiculo = function (id) {
+            const item = document.querySelector(`#campos-vehiculo-lista .campo-item[data-id="${id}"]`);
+            const campo = camposVehiculo.find(c => c.id === id);
+            if (campo && item) {
+                campo.nombre = item.querySelector('.campo-nombre').value;
+
+                localStorage.setItem('config_campos_vehiculo', JSON.stringify(camposVehiculo));
+                showToast('Campo guardado correctamente');
+            }
+        };
+
+        window.eliminarCampoVehiculo = function (id) {
+            if (confirm('¿Eliminar este campo?')) {
+                camposVehiculo = camposVehiculo.filter(c => c.id !== id);
+                localStorage.setItem('config_campos_vehiculo', JSON.stringify(camposVehiculo));
+                renderCamposVehiculo();
+                showToast('Campo eliminado');
+            }
+        };
+
+        // ============ CONFIGURACIÓN DE PAGOS ============
+
+        async function cargarConfigPago() {
+            try {
+                const stored = localStorage.getItem('config_pagos');
+                if (stored) {
+                    const config = JSON.parse(stored);
+                    document.getElementById('control-pago-activo').checked = config.controlPagoActivo ?? true;
+                    document.getElementById('permitir-pagos-parciales').checked = config.permitirPagosParciales ?? true;
+                    document.getElementById('usar-cuentas-corrientes').checked = config.usarCuentasCorrientes ?? true;
+                }
+            } catch (error) {
+                console.error('Error cargando config pago:', error);
+            }
+        }
+
+        window.guardarConfigPago = function () {
+            const config = {
+                controlPagoActivo: document.getElementById('control-pago-activo').checked,
+                permitirPagosParciales: document.getElementById('permitir-pagos-parciales').checked,
+                usarCuentasCorrientes: document.getElementById('usar-cuentas-corrientes').checked
+            };
+            localStorage.setItem('config_pagos', JSON.stringify(config));
+            showToast('Configuración de pagos guardada');
+        };
+    </script>
+</body>
+
+</html>

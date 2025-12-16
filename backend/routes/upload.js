@@ -53,7 +53,7 @@ router.post('/', upload.single('file'), (req, res) => {
         // OR better yet, a path that can be served via static middleware.
 
         // If we serve 'uploads' at '/uploads', then:
-        const fileUrl = `/uploads/${req.file.filename}`;
+        const fileUrl = `/api/uploads/${req.file.filename}`;
 
         res.json({
             ok: true,
