@@ -246,11 +246,17 @@
                                 <div class="flex items-center gap-3">
                                     <span
                                         class="text-[#9da6b9] text-sm font-medium uppercase tracking-wider">PERIODO:</span>
-                                    <input type="date" id="start-date"
-                                        class="h-10 px-3 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white text-sm focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                                    <div class="versa-datetime-container" style="width: 140px;">
+                                        <input type="text" id="start-date" class="form-input versa-datetime-input"
+                                            placeholder="Desde" readonly>
+                                        <i class="fas fa-calendar-alt versa-datetime-icon"></i>
+                                    </div>
                                     <span class="text-[#9da6b9]">—</span>
-                                    <input type="date" id="end-date"
-                                        class="h-10 px-3 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white text-sm focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                                    <div class="versa-datetime-container" style="width: 140px;">
+                                        <input type="text" id="end-date" class="form-input versa-datetime-input"
+                                            placeholder="Hasta" readonly>
+                                        <i class="fas fa-calendar-alt versa-datetime-icon"></i>
+                                    </div>
                                     <button id="btn-clear-dates"
                                         class="p-2 rounded-lg bg-[#282e39] text-[#9da6b9] hover:text-white hover:bg-[#3d4451] transition-colors"
                                         title="Limpiar fechas">
@@ -271,7 +277,7 @@
                                 <select id="item-filter"
                                     class="h-10 px-3 rounded-lg border border-[#282e39] bg-[#1a1d24] text-white text-sm focus:border-[var(--brand-orange)] cursor-pointer">
                                     <option value="all">Todas las ordenes</option>
-                                    <option value="labor">Filtrar solo mano de obra</option>
+                                    <option value="labor" selected>Filtrar solo mano de obra</option>
                                     <option value="products">Filtrar solo productos</option>
                                 </select>
 
@@ -560,6 +566,7 @@
 
     <script type="module">
         import { requireAuth, clearSession, redirectToLogin, getToken } from '/auth.js';
+        import '/components/datetime-picker.js';
 
         const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -666,8 +673,9 @@
                     id: w.id,
                     name: w.nombre,
                     email: w.email,
-                    role: 'Técnico',
-                    initials: getInitials(w.nombre)
+                    role: w.is_super_admin ? 'Admin / Gerente' : 'Técnico',
+                    initials: getInitials(w.nombre),
+                    percentage: (w.porcentaje_mano_obra !== null && w.porcentaje_mano_obra !== undefined) ? parseFloat(w.porcentaje_mano_obra) : 0.5 // Default 50%
                 }));
 
                 return workersData;
@@ -718,6 +726,9 @@
                 }
                 if (endDate) {
                     url += '&fechaHasta=' + endDate + 'T23:59:59';
+                }
+                if (currentSucursalId) {
+                    url += '&idSucursal=' + currentSucursalId;
                 }
 
                 const response = await fetch(url, {
@@ -804,7 +815,7 @@
         let startDate = '';
         let endDate = '';
         let calcMode = 'no_tax';
-        let itemFilter = 'all';
+        let itemFilter = 'labor';
         let orderStatus = 'all';
 
         // ==========================================
@@ -843,10 +854,17 @@
                 const now = new Date();
                 const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
                 const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                startDateInput.value = firstDay.toISOString().split('T')[0];
-                endDateInput.value = lastDay.toISOString().split('T')[0];
-                startDate = startDateInput.value;
-                endDate = endDateInput.value;
+
+                // Initialize Pickers
+                if (window.VersaDateTimePicker) {
+                    window.VersaDateTimePicker.initDatePicker('start-date');
+                    window.VersaDateTimePicker.initDatePicker('end-date');
+                }
+
+                startDateInput.value = formatDateForDisplay(firstDay.toISOString().split('T')[0]);
+                endDateInput.value = formatDateForDisplay(lastDay.toISOString().split('T')[0]);
+                startDate = convertToISO(startDateInput.value);
+                endDate = convertToISO(endDateInput.value);
 
                 // Load sucursales (dynamic selector)
                 await loadSucursales();
@@ -939,8 +957,8 @@
             document.querySelector('.badge-profession').textContent = (worker.role || 'TÉCNICO').toUpperCase();
 
             // Get filter values
-            startDate = startDateInput.value;
-            endDate = endDateInput.value;
+            startDate = convertToISO(startDateInput.value);
+            endDate = convertToISO(endDateInput.value);
             calcMode = calcModeSelect.value;
             itemFilter = itemFilterSelect.value;
             orderStatus = orderStatusSelect.value;
@@ -970,13 +988,26 @@
             // CALCULATE KPIs
             // ==========================================
             // GENERADO = Total de órdenes asignadas al mecánico (base o con IVA)
+            // Lógica actualizada: Se aplica el porcentaje de comisión del mecánico SOLO a Servicios/Mano de Obra
+            const commissionRate = worker.percentage || 0;
+
             let totalGenerated = filteredOrdenes.reduce((sum, o) => {
-                if (calcMode === 'no_tax') {
-                    return sum + parseFloat(o.total_bruto || 0);
-                } else if (calcMode === 'with_tax') {
-                    return sum + parseFloat(o.total_neto || 0);
+                let amount = 0;
+
+                if (itemFilter === 'products') {
+                    // Mecánicos no ganan comisión sobre productos
+                    amount = 0;
+                } else {
+                    // Para 'labor' o 'all', calculamos la comisión sobre la parte de servicios
+                    // Nota: El usuario especificó "proporcional sobre de mano de obra"
+                    const serviceAmount = calcMode === 'with_tax'
+                        ? parseFloat(o.total_servicios_neto || 0)
+                        : parseFloat(o.total_servicios_bruto || 0);
+
+                    amount = serviceAmount * commissionRate;
                 }
-                return sum + parseFloat(o.total_bruto || 0);
+
+                return sum + amount;
             }, 0);
 
             // PAGADO = Total de pagos/adelantos realizados al mecánico (desde cuentamecanicomovimiento)
@@ -1013,6 +1044,9 @@
             // ==========================================
             // RENDER PRODUCTION TABLE (Orders)
             // ==========================================
+            // ==========================================
+            // RENDER PRODUCTION TABLE (Orders)
+            // ==========================================
             if (filteredOrdenes.length === 0) {
                 productionTableBody.innerHTML = `
                     <tr>
@@ -1024,28 +1058,41 @@
             } else {
                 productionTableBody.innerHTML = filteredOrdenes.map(orden => {
                     const estadoPagoBadge = orden.estado_pago === 'PAGADO'
-                        ? '<span class="text-green-400 text-xs">✓</span>'
+                        ? '<span class="text-green-400 text-xs" title="Pagado">✓</span>'
                         : orden.estado_pago === 'PARCIAL'
-                            ? '<span class="text-yellow-400 text-xs">◐</span>'
-                            : '<span class="text-orange-400 text-xs">⏳</span>';
+                            ? '<span class="text-yellow-400 text-xs" title="Parcial">◐</span>'
+                            : '<span class="text-orange-400 text-xs" title="Pendiente">⏳</span>';
 
-                    const vehiculo = [orden.vehiculo_marca, orden.vehiculo_modelo, orden.vehiculo_matricula]
-                        .filter(Boolean).join(' ');
+                    const vehiculo = [orden.vehiculo_marca, orden.vehiculo_modelo].filter(Boolean).join(' ');
+
+                    // Calc Base (Service/Labor amount)
+                    const baseAmount = calcMode === 'with_tax'
+                        ? parseFloat(orden.total_servicios_neto || 0)
+                        : parseFloat(orden.total_servicios_bruto || 0);
+
+                    // Calc Total (Commission)
+                    const commissionAmount = baseAmount * (commissionRate || 0);
+
+                    // Display percentage (e.g., "50%")
+                    const percentDisplay = (commissionRate * 100).toFixed(0) + '%';
 
                     return `
                         <tr class="hover:bg-[#1a1d24] transition-colors">
-                            <td class="px-4 py-3 text-white">${formatDate(orden.fecha_ingreso)}</td>
+                            <td class="px-4 py-3 text-white text-xs">${formatDate(orden.fecha_ingreso)}</td>
                             <td class="px-4 py-3">
-                                <a href="manager-taller-ordenes.html?id=${orden.id}" class="text-[var(--brand-orange)] hover:underline">#${orden.id}</a>
+                                <a href="manager-taller-ordenes.html?id=${orden.id}" class="text-[var(--brand-orange)] hover:underline text-xs">#${orden.id}</a>
                             </td>
                             <td class="px-4 py-3 text-[#9da6b9]">
-                                <div>${orden.cliente_nombre || 'Sin cliente'}</div>
-                                <div class="text-xs text-gray-500">${vehiculo || 'Sin vehículo'}</div>
+                                <div class="text-xs text-white">${orden.cliente_nombre || 'Sin cliente'}</div>
+                                <div class="text-[10px] text-gray-500">${vehiculo}</div>
                             </td>
-                            <td class="px-4 py-3 text-right text-white">${formatCurrency(orden.total_bruto)}</td>
-                            <td class="px-4 py-3 text-right text-[#9da6b9]">${estadoPagoBadge} ${orden.estado_pago || 'PENDIENTE'}</td>
-                            <td class="px-4 py-3 text-right text-green-400 font-medium">
-                                ${formatCurrency(orden.total_neto)}
+                            <td class="px-4 py-3 text-right text-white font-mono text-xs">${formatCurrency(baseAmount)}</td>
+                            <td class="px-4 py-3 text-center text-[#9da6b9] text-xs">
+                                <div>${percentDisplay}</div>
+                                <div class="flex justify-center">${estadoPagoBadge}</div>
+                            </td>
+                            <td class="px-4 py-3 text-right text-green-400 font-bold font-mono text-xs">
+                                ${formatCurrency(commissionAmount)}
                             </td>
                         </tr>
                     `;
@@ -1339,6 +1386,31 @@
             modalPago?.addEventListener('click', (e) => {
                 if (e.target === modalPago) closeModalPago();
             });
+        }
+
+
+        // ==========================================
+        // HELPERS
+        // ==========================================
+
+
+        function convertToISO(displayDate) {
+            if (!displayDate) return '';
+            if (displayDate.includes('-')) return displayDate; // Already ISO
+            const parts = displayDate.split('/');
+            if (parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return displayDate;
+        }
+
+        function formatDateForDisplay(isoDate) {
+            if (!isoDate) return '';
+            const date = new Date(isoDate);
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return `${d}/${m}/${y}`;
         }
 
         // Initialize

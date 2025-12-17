@@ -475,10 +475,14 @@
             document.getElementById('user-role').textContent = userData.rol || 'admin';
 
             // Logout
-            document.getElementById('logout-btn').addEventListener('click', async (e) => {
-                e.preventDefault();
-                await logout();
-                window.location.href = 'login.html';
+            // Logout
+            document.addEventListener('click', async (e) => {
+                const logoutLink = e.target.closest('#logout-btn') || e.target.closest('[data-logout]');
+                if (logoutLink) {
+                    e.preventDefault();
+                    await logout();
+                    window.location.href = 'login.html';
+                }
             });
 
             // Listeners

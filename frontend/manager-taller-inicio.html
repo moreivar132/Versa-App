@@ -651,10 +651,14 @@
     import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getCurrentUser } from '/auth.js';
 
     // Logout logic
-    document.querySelector('[data-logout]')?.addEventListener('click', (e) => {
-      e.preventDefault();
-      clearSession();
-      redirectToLogin();
+    // Logout logic - Event Delegation
+    document.addEventListener('click', (e) => {
+      const logoutLink = e.target.closest('#logout-btn') || e.target.closest('[data-logout]');
+      if (logoutLink) {
+        e.preventDefault();
+        clearSession();
+        redirectToLogin();
+      }
     });
 
     // --- UTILS FECHAS ---

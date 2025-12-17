@@ -57,7 +57,7 @@ router.get('/', verifyJWT, async (req, res) => {
 router.get('/resumen', verifyJWT, async (req, res) => {
     const limit = parseInt(req.query.limit) || 100;
     const offset = parseInt(req.query.offset) || 0;
-    const { q, category, provider, idSucursal } = req.query;
+    const { q, category, provider, brand, idSucursal, sort } = req.query;
     const id_tenant = req.user.id_tenant;
 
     try {
@@ -85,6 +85,16 @@ router.get('/resumen', verifyJWT, async (req, res) => {
             params.push(provider);
         }
 
+        if (brand && brand !== 'Todas las Marcas') {
+            filterClause += ` AND p.marca = $${params.length + 1}`;
+            params.push(brand);
+        }
+
+        let orderBy = 'ORDER BY p.nombre ASC';
+        if (sort === 'stock_asc') orderBy = 'ORDER BY stock_total ASC';
+        else if (sort === 'stock_desc') orderBy = 'ORDER BY stock_total DESC';
+        else if (sort === 'price_asc') orderBy = 'ORDER BY precio_representativo ASC';
+        else if (sort === 'price_desc') orderBy = 'ORDER BY precio_representativo DESC';
 
         // Query simplificada - sin agrupación porque ya no hay duplicados
         const query = `
@@ -107,7 +117,7 @@ router.get('/resumen', verifyJWT, async (req, res) => {
             LEFT JOIN proveedor pr ON p.id_proveedor = pr.id
             LEFT JOIN sucursal s ON p.id_sucursal = s.id
             ${filterClause}
-            ORDER BY p.nombre ASC
+            ${orderBy}
             LIMIT $${params.length + 1} OFFSET $${params.length + 2}
         `;
 
@@ -118,6 +128,46 @@ router.get('/resumen', verifyJWT, async (req, res) => {
     } catch (error) {
         console.error('Error al obtener resumen de inventario:', error);
         res.status(500).json({ error: 'Error al obtener resumen de inventario' });
+    }
+});
+
+// GET /api/inventory/stats - Inventory global stats
+router.get('/stats', verifyJWT, async (req, res) => {
+    const id_tenant = req.user.id_tenant;
+    const { idSucursal } = req.query;
+
+    try {
+        let whereClause = 'WHERE id_tenant = $1';
+        const params = [id_tenant];
+
+        if (idSucursal) {
+            whereClause += ` AND id_sucursal = $2`;
+            params.push(idSucursal);
+        }
+
+        // Most Stock
+        const mostStockQuery = `SELECT nombre, stock FROM producto ${whereClause} ORDER BY stock DESC LIMIT 1`;
+        const mostStockRes = await pool.query(mostStockQuery, params);
+
+        // Least Stock (Greater than 0 preferably, or just lowest including 0?) 
+        // Usually "Least Stock" implies things we have but are running low on, but technically 0 is least.
+        // Let's get the absolute lowest.
+        const leastStockQuery = `SELECT nombre, stock FROM producto ${whereClause} ORDER BY stock ASC LIMIT 1`;
+        const leastStockRes = await pool.query(leastStockQuery, params);
+
+        // Risk of OOS (Low Stock)
+        const riskQuery = `SELECT COUNT(*) as count FROM producto ${whereClause} AND stock <= stock_minimo`;
+        const riskRes = await pool.query(riskQuery, params);
+
+        res.json({
+            most_stock: mostStockRes.rows[0] || null,
+            least_stock: leastStockRes.rows[0] || null,
+            risk_count: parseInt(riskRes.rows[0].count) || 0
+        });
+
+    } catch (error) {
+        console.error('Error al obtener estadisticas de inventario:', error);
+        res.status(500).json({ error: 'Error al obtener estadisticas' });
     }
 });
 
@@ -148,6 +198,21 @@ router.get('/categories', verifyJWT, async (req, res) => {
     } catch (error) {
         console.error('Error al obtener categorías:', error);
         res.status(500).json({ error: 'Error al obtener categorías' });
+    }
+});
+
+// GET /api/inventory/brands - List distinct brands
+router.get('/brands', verifyJWT, async (req, res) => {
+    const id_tenant = req.user.id_tenant;
+    try {
+        const result = await pool.query(
+            'SELECT DISTINCT marca FROM producto WHERE id_tenant = $1 AND marca IS NOT NULL AND marca != \'\' ORDER BY marca',
+            [id_tenant]
+        );
+        res.json(result.rows.map(r => r.marca));
+    } catch (error) {
+        console.error('Error al obtener marcas:', error);
+        res.status(500).json({ error: 'Error al obtener marcas' });
     }
 });
 
