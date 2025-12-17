@@ -42,6 +42,11 @@ export function redirectToLogin() {
   window.location.replace('login.html');
 }
 
+export function logout() {
+  clearSession();
+  redirectToLogin();
+}
+
 export async function requireAuth() {
   const session = getSession();
   if (!session?.token) {

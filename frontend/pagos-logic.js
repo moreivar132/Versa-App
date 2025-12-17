@@ -15,6 +15,7 @@ function loadMediosPago() {
     <option value="1" data-codigo="TRANSFER">Transferencia</option>
   `;
 }
+window.loadMediosPago = loadMediosPago;
 
 function updatePaymentSummary(totalOrden = null) {
     if (totalOrden === null) {
@@ -39,6 +40,7 @@ function updatePaymentSummary(totalOrden = null) {
         importeInput.value = saldoPendiente.toFixed(2);
     }
 }
+window.updatePaymentSummary = updatePaymentSummary;
 
 function renderPayments() {
     const tbody = document.getElementById('pagos-tbody');
@@ -63,6 +65,7 @@ function renderPayments() {
         });
     }
 }
+window.renderPayments = renderPayments;
 
 // Inicializar eventos de pagos
 document.addEventListener('DOMContentLoaded', () => {
