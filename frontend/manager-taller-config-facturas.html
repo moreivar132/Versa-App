@@ -795,8 +795,8 @@
     </div>
 
     <script type="module">
-        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from './auth.js';
-        import { initSucursalSelector } from './services/sucursal-selector.js';
+        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from '/auth.js';
+        import { initSucursalSelector } from '/services/sucursal-selector.js';
 
         const API_BASE_URL = '/api';
         let userData = null;
@@ -1300,6 +1300,9 @@
             }, 3000);
         }
     </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

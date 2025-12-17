@@ -6,28 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Venta de Productos - Goversa</title>
     <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts - Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Estilos Globales del Manager -->
     <link rel="stylesheet" href="manager.css">
     <link rel="stylesheet" href="styles/sucursal-selector.css">
+
+    <!-- Guard.js - Autenticación -->
     <script src="/guard.js"></script>
 
     <style>
-        /* === VARIABLES === */
-        :root {
-            --brand-orange: #ff652b;
-            --brand-orange-dark: #e05300;
-            --bg-deep: #0b0d11;
-            --bg-card: #111318;
-            --border-subtle: #282e39;
-            --text-primary: #ffffff;
-            --text-secondary: #9da6b9;
-            --input-bg: #1a1d24;
-        }
+        /* 
+         * Estilos específicos de manager-taller-ventas.html
+         * Las variables globales (:root) están centralizadas en manager.css
+         */
+
 
         /* === FORM INPUTS === */
         .form-input,
@@ -244,10 +250,29 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--brand-orange);
         }
+
+        /* === DATETIME INPUT === */
+        input[type="datetime-local"] {
+            color-scheme: dark;
+        }
+
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        /* === FIX OVERFLOW FOR DROPDOWNS === */
+        .overflow-x-auto {
+            overflow: visible !important;
+        }
+
+        .form-section.overflow-visible {
+            overflow: visible !important;
+        }
     </style>
 </head>
 
-<body class="bg-[#0b0d11] text-white font-[Montserrat] overflow-hidden">
+<body>
 
     <div class="flex h-screen w-full">
 
@@ -358,11 +383,7 @@
                     <input type="hidden" id="id-cliente-hidden" name="idCliente" />
                     <input type="hidden" id="id-taller-hidden" name="idSucursal" />
 
-                    <!-- Selector de Sucursal Centrado -->
-                    <div class="flex justify-center mb-6">
-                        <div id="sucursal-selector-container"></div>
-                    </div>
-
+                    <!-- Header Actions -->
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                         <div>
                             <h2 class="text-3xl font-extrabold text-white form-main-title">Venta en Mostrador</h2>
@@ -390,8 +411,13 @@
                                 <h3 class="form-section-title">Datos de la Venta</h3>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <label class="block text-xs text-[#9da6b9] mb-1">Fecha</label>
-                                        <input type="text" id="fecha-venta" class="form-input bg-[#111318]" readonly />
+                                        <label class="block text-xs text-[#9da6b9] mb-1">Fecha y Hora</label>
+                                        <div class="versa-datetime-container">
+                                            <input type="text" id="fecha-venta"
+                                                class="form-input text-white bg-[#111318] versa-datetime-input"
+                                                placeholder="Seleccionar fecha y hora" readonly />
+                                            <i class="fas fa-calendar-alt versa-datetime-icon"></i>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-xs text-[#9da6b9] mb-1">Sucursal</label>
@@ -420,7 +446,7 @@
                             </div>
 
                             <!-- 2. Items Table -->
-                            <div class="form-section overflow-hidden">
+                            <div class="form-section overflow-visible">
                                 <h3 class="form-section-title flex justify-between items-center">
                                     Carrito de Productos
                                 </h3>
@@ -645,27 +671,9 @@
     </div>
 
     <script type="module" src="manager-taller-ventas.js"></script>
-    <script type="module">
-        import { initSucursalSelector } from './services/sucursal-selector.js';
 
-        (async () => {
-            const sucursalId = await initSucursalSelector('sucursal-selector-container', {
-                onchange: (sucursalId) => {
-                    const tallerSelect = document.getElementById('taller');
-                    if (tallerSelect && sucursalId) {
-                        tallerSelect.value = sucursalId;
-                    }
-                }
-            });
-
-            if (sucursalId) {
-                setTimeout(() => {
-                    const tallerSelect = document.getElementById('taller');
-                    if (tallerSelect) tallerSelect.value = sucursalId;
-                }, 500);
-            }
-        })();
-    </script>
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

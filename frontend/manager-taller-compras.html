@@ -653,7 +653,12 @@
                     <div class="form-section">
                         <div class="form-group">
                             <label for="fecha-emision">Fecha Emisión</label>
-                            <input type="datetime-local" id="fecha-emision" name="fecha_emision" class="form-input" />
+                            <div class="versa-datetime-container">
+                                <input type="text" id="fecha-emision" name="fecha_emision"
+                                    class="form-input versa-datetime-input" placeholder="Seleccionar fecha y hora"
+                                    readonly />
+                                <i class="fas fa-calendar-alt versa-datetime-icon"></i>
+                            </div>
                         </div>
 
                         <div class="form-group grid-span-2">
@@ -954,7 +959,8 @@
 
     <!-- JAVASCRIPT LOGIC -->
     <script type="module">
-        import { fetchWithAuth } from './auth.js';
+        import { fetchWithAuth } from '/auth.js';
+        import '/components/datetime-picker.js';
 
         document.addEventListener("DOMContentLoaded", () => {
             // --- ESTADO & VARIABLES ---
@@ -968,15 +974,10 @@
             const successModal = document.getElementById("success-modal");
 
             // --- 1. INICIALIZACIÓN ---
-            // Fecha actual
-            const now = new Date();
-            // Format for datetime-local: YYYY-MM-DDTHH:MM
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            fechaEmisionInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            // Inicializar Date Picker
+            if (window.VersaDateTimePicker) {
+                window.VersaDateTimePicker.initDateTimePicker('fecha-emision');
+            }
 
             // Cargar Sucursales e Impuestos
             loadBranches();
@@ -1663,7 +1664,7 @@
     </script>
 
     <script type="module">
-        import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
         // Inicializar selector de sucursal
         (async () => {
@@ -1688,6 +1689,9 @@
             }
         })();
     </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

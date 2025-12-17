@@ -6,29 +6,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lista de Órdenes - Goversa</title>
 
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+
+  <!-- Google Fonts - Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
     rel="stylesheet" />
+
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Sucursal Selector CSS -->
   <link rel="stylesheet" href="styles/sucursal-selector.css">
 
+  <!-- Moment.js (librería específica de esta página) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- Guard.js - Autenticación -->
   <script src="/guard.js"></script>
 
+  <!-- Estilos Globales del Manager -->
+  <link rel="stylesheet" href="manager.css">
+
   <style>
-    :root {
-      --brand-orange: #ff5f00;
-      --surface-border: #282e39;
-    }
+    /* 
+     * Estilos específicos de manager-taller-ordenes-lista.html
+     * Las variables globales (:root) están centralizadas en manager.css
+     */
 
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
       vertical-align: middle;
     }
+
 
     ::-webkit-scrollbar {
       width: 8px;
@@ -278,6 +295,301 @@
       line-height: 1.4;
       text-transform: none;
     }
+
+    /* ============================================
+       ESTILOS PARA FILTROS RESPONSIVOS
+       ============================================ */
+
+    .filters-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px 0;
+      margin-bottom: 8px;
+    }
+
+    /* Barra de búsqueda */
+    .search-bar-container {
+      width: 100%;
+    }
+
+    .search-bar {
+      display: flex;
+      align-items: center;
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid #282e39;
+      background-color: #1a1d24;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-bar:focus-within {
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 2px rgba(255, 95, 0, 0.15);
+    }
+
+    .search-icon {
+      padding-left: 14px;
+      color: #9da6b9;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: #fff;
+      font-size: 14px;
+      padding: 0 14px;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: #6b7280;
+    }
+
+    /* Contenedor de filtros de estado - Barra horizontal deslizable */
+    .estado-filters-scroll-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #282e39 transparent;
+    }
+
+    .estado-filters-scroll-container::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .estado-filters-scroll-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .estado-filters-scroll-container::-webkit-scrollbar-thumb {
+      background: #282e39;
+      border-radius: 2px;
+    }
+
+    .estado-filters-bar {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 4px;
+      padding: 4px;
+      background: #111318;
+      border-radius: 10px;
+      border: 1px solid #282e39;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    /* Botones de filtro de estado */
+    .estado-filter-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      color: #9da6b9;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .estado-filter-btn:hover {
+      color: #fff;
+      background: #282e39;
+    }
+
+    .estado-filter-btn .estado-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Estados activos para cada tipo */
+    .estado-filter-btn:has(input:checked) {
+      font-weight: 600;
+    }
+
+    .estado-todas:has(input:checked) {
+      background: var(--brand-orange);
+      color: #fff;
+      border-color: var(--brand-orange);
+    }
+
+    .estado-abierta:has(input:checked) {
+      background: rgba(234, 179, 8, 0.15);
+      color: #eab308;
+      border-color: rgba(234, 179, 8, 0.3);
+    }
+
+    .estado-progreso:has(input:checked) {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .estado-recambio:has(input:checked) {
+      background: rgba(249, 115, 22, 0.15);
+      color: #f97316;
+      border-color: rgba(249, 115, 22, 0.3);
+    }
+
+    .estado-completadas:has(input:checked) {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .estado-entregadas:has(input:checked) {
+      background: rgba(168, 85, 247, 0.15);
+      color: #a855f7;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    /* Filtros secundarios */
+    .secondary-filters {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px;
+      background: #111318;
+      border-radius: 10px;
+      border: 1px solid #282e39;
+    }
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .filter-select-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    @media (min-width: 640px) {
+      .filter-select-wrapper {
+        flex: 0 1 auto;
+        min-width: 160px;
+      }
+    }
+
+    .filter-select {
+      width: 100%;
+      appearance: none;
+      background: #1a1d24;
+      border: 1px solid #282e39;
+      border-radius: 8px;
+      padding: 10px 36px 10px 12px;
+      font-size: 13px;
+      color: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 2px rgba(255, 95, 0, 0.15);
+    }
+
+    .filter-select option {
+      background: #1a1d24;
+      color: #fff;
+      padding: 10px;
+    }
+
+    .filter-select-arrow {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9da6b9;
+      font-size: 10px;
+      pointer-events: none;
+    }
+
+    /* Fila inferior de filtros */
+    .filters-row-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #282e39;
+    }
+
+    /* Toggle Solo Activas */
+    .toggle-activas-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-label-text {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #9da6b9;
+      white-space: nowrap;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle-track {
+      width: 100%;
+      height: 100%;
+      background: #282e39;
+      border-radius: 10px;
+      transition: background-color 0.2s;
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
+    }
+
+    /* Contador de órdenes */
+    .orders-counter {
+      font-size: 12px;
+      color: #9da6b9;
+      background: rgba(255, 95, 0, 0.1);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    /* Ajustes para móvil pequeño */
+    @media (max-width: 380px) {
+      .estado-filter-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+    }
   </style>
 
   <script>
@@ -378,6 +690,8 @@
                 <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
               </a>
               <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-cuentas-corrientes.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Cuentas Corrientes</a>
                 <a href="manager-taller-facturas.html"
                   class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
                 <a href="manager-taller-facturas-pendientes.html"
@@ -414,6 +728,12 @@
                   class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
               </div>
             </div>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-configuracion.html">
+              <span class="icon-container"><i class="fas fa-cog"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Configuración</p>
+            </a>
           </nav>
         </div>
 
@@ -468,111 +788,74 @@
           </div>
 
           <!-- FILTROS PRINCIPALES -->
-          <div class="flex flex-col gap-3 py-3 mb-2">
-            <div class="flex flex-col lg:flex-row gap-4">
-              <div class="flex-grow">
-                <div
-                  class="flex w-full items-stretch rounded-lg h-12 border border-[#282e39] bg-[#1a1d24] focus-within:border-[var(--brand-orange)] focus-within:ring-1 focus-within:ring-[var(--brand-orange)] transition-all">
-                  <div class="flex items-center justify-center pl-4 text-[#9da6b9]">
-                    <span class="material-symbols-outlined">search</span>
-                  </div>
-                  <input type="text" id="search-input"
-                    class="flex-1 bg-transparent border-none text-white placeholder-gray-500 focus:ring-0 px-4 text-sm font-medium"
-                    placeholder="Buscar por N° Orden, Cliente, Matrícula..." />
-                </div>
+          <div class="filters-section">
+            <!-- Barra de búsqueda -->
+            <div class="search-bar-container">
+              <div class="search-bar">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input type="text" id="search-input" class="search-input"
+                  placeholder="Buscar por N° Orden, Cliente, Matrícula..." />
               </div>
+            </div>
 
-              <div
-                class="flex h-12 items-center rounded-lg bg-[#111318] p-1 border border-[#282e39] shrink-0 overflow-x-auto">
-                <label
-                  class="cursor-pointer h-full px-4 flex items-center rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-[var(--brand-orange)] has-[:checked]:text-white has-[:checked]:font-semibold whitespace-nowrap">
-                  <span>Todas</span>
+            <!-- Filtros de Estado - Barra horizontal deslizable (generada dinámicamente) -->
+            <div class="estado-filters-scroll-container">
+              <div class="estado-filters-bar" id="estado-filters-bar">
+                <!-- Los botones de filtro se generan dinámicamente desde JavaScript -->
+                <label class="estado-filter-btn estado-todas">
                   <input type="radio" name="estado-filter" value="all" class="hidden" checked />
-                </label>
-                <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-yellow-500/20 has-[:checked]:text-yellow-400 has-[:checked]:font-semibold whitespace-nowrap">
-                  <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                  <span>Abierta</span>
-                  <input type="radio" name="estado-filter" value="ABIERTA" class="hidden" />
-                </label>
-                <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-blue-500/20 has-[:checked]:text-blue-400 has-[:checked]:font-semibold whitespace-nowrap">
-                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                  <span>En Progreso</span>
-                  <input type="radio" name="estado-filter" value="EN_PROGRESO" class="hidden" />
-                </label>
-                <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-orange-500/20 has-[:checked]:text-orange-400 has-[:checked]:font-semibold whitespace-nowrap">
-                  <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-                  <span>Recambio</span>
-                  <input type="radio" name="estado-filter" value="RECAMBIO" class="hidden" />
-                </label>
-                <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-green-500/20 has-[:checked]:text-green-400 has-[:checked]:font-semibold whitespace-nowrap">
-                  <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                  <span>Completadas</span>
-                  <input type="radio" name="estado-filter" value="COMPLETADA" class="hidden" />
-                </label>
-                <label
-                  class="cursor-pointer h-full px-4 flex items-center gap-2 rounded text-sm text-[#9da6b9] hover:text-white transition-colors has-[:checked]:bg-purple-500/20 has-[:checked]:text-purple-400 has-[:checked]:font-semibold whitespace-nowrap">
-                  <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                  <span>Entregadas</span>
-                  <input type="radio" name="estado-filter" value="ENTREGADA" class="hidden" />
+                  <span class="btn-text">Todas</span>
                 </label>
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-3 items-center">
-              <span class="text-xs text-[#9da6b9] uppercase font-bold">Filtros:</span>
-              <div class="relative">
-                <select id="filter-fecha"
-                  class="appearance-none bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2 pr-8 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] cursor-pointer">
-                  <option value="all">📅 Cualquier fecha</option>
-                  <option value="today">Hoy</option>
-                  <option value="week">Esta semana</option>
-                  <option value="month">Este mes</option>
-                </select>
-                <i
-                  class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[#9da6b9] text-xs pointer-events-none"></i>
-              </div>
-              <div class="relative">
-                <select id="filter-pago"
-                  class="appearance-none bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2 pr-8 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] cursor-pointer">
-                  <option value="all">💳 Todos los pagos</option>
-                  <option value="PENDIENTE">🔴 Pendiente</option>
-                  <option value="PARCIAL">🟠 Parcial</option>
-                  <option value="PAGADO">🟢 Pagado</option>
-                </select>
-                <i
-                  class="fas fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-[#9da6b9] text-xs pointer-events-none"></i>
+            <!-- Filtros Secundarios -->
+            <div class="secondary-filters">
+              <div class="filters-row">
+                <div class="filter-select-wrapper">
+                  <select id="filter-fecha" class="filter-select">
+                    <option value="all">Cualquier fecha</option>
+                    <option value="today">Hoy</option>
+                    <option value="week">Esta semana</option>
+                    <option value="month">Este mes</option>
+                  </select>
+                  <i class="fas fa-chevron-down filter-select-arrow"></i>
+                </div>
+                <div class="filter-select-wrapper">
+                  <select id="filter-pago" class="filter-select">
+                    <option value="all">Todos los pagos</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="PARCIAL">Parcial</option>
+                    <option value="PAGADO">Pagado</option>
+                  </select>
+                  <i class="fas fa-chevron-down filter-select-arrow"></i>
+                </div>
               </div>
 
-              <!-- Toggle Solo Activas -->
-              <label class="flex items-center gap-2 cursor-pointer select-none ml-2">
-                <span class="text-xs text-[#9da6b9] whitespace-nowrap flex items-center gap-1">
-                  Solo activas
-                  <span class="tooltip-container">
-                    <span class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
-                    <span class="tooltip-content">
-                      <span class="tooltip-text">
-                        <strong style="color: #ff5f00;">ON:</strong> Pendientes de entrega/pago<br>
-                        <strong style="color: #6b7280;">OFF:</strong> Todas (incluye historial)
+              <div class="filters-row-bottom">
+                <!-- Toggle Solo Activas -->
+                <label class="toggle-activas-label">
+                  <span class="toggle-label-text">
+                    Solo activas
+                    <span class="tooltip-container">
+                      <span class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                      <span class="tooltip-content">
+                        <span class="tooltip-text">
+                          <strong style="color: #ff5f00;">ON:</strong> Pendientes de entrega/pago<br>
+                          <strong style="color: #6b7280;">OFF:</strong> Todas (incluye historial)
+                        </span>
                       </span>
                     </span>
                   </span>
-                </span>
-                <div class="relative">
-                  <input type="checkbox" id="toggle-solo-activas" class="sr-only peer" checked />
-                  <div
-                    class="w-9 h-5 bg-[#282e39] rounded-full peer peer-checked:bg-[var(--brand-orange)] transition-colors">
+                  <div class="toggle-switch">
+                    <input type="checkbox" id="toggle-solo-activas" class="sr-only peer" checked />
+                    <div class="toggle-track peer peer-checked:bg-[var(--brand-orange)]"></div>
+                    <div class="toggle-thumb peer-checked:translate-x-4"></div>
                   </div>
-                  <div
-                    class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4">
-                  </div>
-                </div>
-              </label>
+                </label>
 
-              <span class="ml-auto text-xs text-[#9da6b9]" id="orders-count">Cargando...</span>
+                <span class="orders-counter" id="orders-count">Cargando...</span>
+              </div>
             </div>
           </div>
 
@@ -632,9 +915,9 @@
                 title="Editar Orden">
                 <span class="material-symbols-outlined text-xl">edit_document</span>
               </button>
-              <button
-                class="flex items-center justify-center p-2 rounded-lg bg-[#1a1d24] text-[#9da6b9] hover:text-red-500 hover:bg-[#282e39] transition-colors"
-                title="Imprimir">
+              <button id="btn-imprimir-orden"
+                class="flex items-center justify-center p-2 rounded-lg bg-[#1a1d24] text-[#9da6b9] hover:text-[var(--brand-orange)] hover:bg-[#282e39] transition-colors"
+                title="Imprimir Orden de Trabajo">
                 <span class="material-symbols-outlined text-xl">print</span>
               </button>
             </div>
@@ -824,6 +1107,17 @@
             Registrar Pago
           </button>
         </form>
+
+        <!-- Separador y botón Cuenta Corriente -->
+        <div id="seccion-cuenta-corriente" class="hidden mt-4 pt-4 border-t border-[#282e39]">
+          <p class="text-xs text-[#9da6b9] mb-3 text-center">¿El cliente no puede pagar ahora?</p>
+          <button type="button" id="btn-pasar-cuenta-corriente"
+            class="w-full py-3 bg-[#1a1d24] hover:bg-[#282e39] border border-[#3e4552] hover:border-yellow-500/50 text-yellow-400 font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">account_balance_wallet</span>
+            Pasar a Cuenta Corriente
+          </button>
+          <p class="text-xs text-gray-500 mt-2 text-center">El saldo pendiente se cargará a la cuenta del cliente</p>
+        </div>
       </div>
     </div>
   </div>
@@ -877,10 +1171,10 @@
   </script>
 
   <script type="module">
-    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from './services/ordenes-service.js';
-    import { registrarPago } from './services/pagos-service.js';
-    import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from './auth.js';
-    import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
+    import { registrarPago } from '/services/pagos-service.js';
+    import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from '/auth.js';
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
     (async () => {
       // Security check
@@ -901,7 +1195,88 @@
       let ordenSeleccionada = null;
       let filtrosActuales = {};
       let estadosDisponibles = [];
+      let estadosPersonalizados = {}; // Mapa de código -> {nombre, color}
       let currentSucursalId = null;
+
+      // Cargar configuración de estados personalizados desde la API
+      async function cargarEstadosPersonalizados() {
+        try {
+          // Cargar desde la API
+          const response = await fetchWithAuth('/api/ordenes/estados');
+          const data = await response.json();
+
+          if (data && (data.success !== false)) {
+            const estados = Array.isArray(data) ? data : (data.estados || []);
+            // Crear un mapa para acceso rápido por código
+            estadosPersonalizados = {};
+            estados.forEach(e => {
+              if (e.codigo) {
+                estadosPersonalizados[e.codigo] = {
+                  nombre: e.nombre || e.codigo,
+                  color: e.color || '#eab308'
+                };
+              }
+            });
+            console.log('Estados cargados desde API:', estadosPersonalizados);
+          }
+        } catch (error) {
+          console.error('Error cargando estados desde API:', error);
+          // Fallback: usar valores por defecto
+          estadosPersonalizados = {
+            'ABIERTA': { nombre: 'Abierta', color: '#eab308' },
+            'EN_PROGRESO': { nombre: 'En Progreso', color: '#3b82f6' },
+            'RECAMBIO': { nombre: 'Esperando Recambio', color: '#f97316' },
+            'COMPLETADA': { nombre: 'Completada', color: '#22c55e' },
+            'ENTREGADA': { nombre: 'Entregada', color: '#a855f7' }
+          };
+        }
+
+        // Generar los botones de filtro
+        renderFiltrosEstado();
+      }
+
+      // Renderizar los botones de filtro de estado dinámicamente
+      function renderFiltrosEstado() {
+        const container = document.getElementById('estado-filters-bar');
+        if (!container) return;
+
+        // Estados por defecto (se sobrescriben con personalizados si existen)
+        const estadosDefault = [
+          { codigo: 'ABIERTA', nombre: 'Abierta', color: '#eab308' },
+          { codigo: 'EN_PROGRESO', nombre: 'En Progreso', color: '#3b82f6' },
+          { codigo: 'RECAMBIO', nombre: 'Recambio', color: '#f97316' },
+          { codigo: 'COMPLETADA', nombre: 'Completada', color: '#22c55e' },
+          { codigo: 'ENTREGADA', nombre: 'Entregada', color: '#a855f7' }
+        ];
+
+        // Generar botones de estado (usar personalizados si existen)
+        const estadosHTML = estadosDefault.map(estado => {
+          const nombre = estadosPersonalizados[estado.codigo]?.nombre || estado.nombre;
+          const color = estadosPersonalizados[estado.codigo]?.color || estado.color;
+
+          return `
+            <label class="estado-filter-btn" data-estado="${estado.codigo}">
+              <input type="radio" name="estado-filter" value="${estado.codigo}" class="hidden" />
+              <span class="estado-dot" style="background-color: ${color};"></span>
+              <span class="btn-text">${nombre}</span>
+            </label>
+          `;
+        }).join('');
+
+        // Mantener el botón "Todas" y agregar los demás
+        container.innerHTML = `
+          <label class="estado-filter-btn estado-todas">
+            <input type="radio" name="estado-filter" value="all" class="hidden" checked />
+            <span class="btn-text">Todas</span>
+          </label>
+          ${estadosHTML}
+        `;
+
+        // Re-agregar event listeners para los filtros
+        container.querySelectorAll('input[name="estado-filter"]').forEach(radio => {
+          radio.addEventListener('change', aplicarFiltros);
+        });
+      }
 
       // Inicializar selector de sucursal
       currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
@@ -923,6 +1298,40 @@
         document.body.appendChild(toast);
 
         setTimeout(() => toast.remove(), 3000);
+      }
+
+      /**
+       * Genera y muestra el documento de orden de trabajo
+       * @param {number} ordenId - ID de la orden
+       */
+      async function generarDocumentoOrden(ordenId) {
+        try {
+          showToast('Generando documento de orden...');
+
+          // Llamar al endpoint para obtener el HTML
+          const response = await fetchWithAuth(`/api/ordenes/${ordenId}/documento`);
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al generar el documento');
+          }
+
+          const html = await response.text();
+
+          // Abrir en nueva ventana
+          const newWindow = window.open('', '_blank', 'width=900,height=700');
+          if (newWindow) {
+            newWindow.document.write(html);
+            newWindow.document.close();
+            showToast('Documento generado correctamente');
+          } else {
+            showToast('Por favor, permite ventanas emergentes para ver el documento', true);
+          }
+
+        } catch (error) {
+          console.error('Error generando documento de orden:', error);
+          showToast('❌ ' + (error.message || 'Error al generar el documento'), true);
+        }
       }
 
       // Cargar estados disponibles al inicio
@@ -996,21 +1405,13 @@
           const estadoPagoClass = orden.estado_pago === 'PAGADO' ? 'text-green-500' : orden.estado_pago === 'PARCIAL' ? 'text-yellow-500' : 'text-red-400';
           const estadoPagoLabel = orden.estado_pago === 'PAGADO' ? 'Pagado' : orden.estado_pago === 'PARCIAL' ? 'Parcial' : 'Pendiente';
 
-          let estadoClass = 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-          let dotClass = 'bg-yellow-500';
-          if (orden.estado_codigo === 'EN_PROGRESO') {
-            estadoClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-            dotClass = 'bg-blue-400';
-          } else if (orden.estado_codigo === 'RECAMBIO') {
-            estadoClass = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-            dotClass = 'bg-orange-400';
-          } else if (orden.estado_codigo === 'COMPLETADA') {
-            estadoClass = 'bg-green-500/10 text-green-400 border-green-500/20';
-            dotClass = 'bg-green-400';
-          } else if (orden.estado_codigo === 'ENTREGADA') {
-            estadoClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-            dotClass = 'bg-purple-400';
-          }
+          // Obtener color personalizado del estado
+          const estadoColor = getEstadoDotColor(orden.estado_codigo);
+          const estadoNombre = getEstadoNombre(orden.estado_codigo, orden.estado_nombre);
+
+          // Aplicar estilos inline con el color personalizado
+          const estadoBgStyle = `background-color: ${estadoColor}15; border-color: ${estadoColor}40; color: ${estadoColor};`;
+          const dotStyle = `background-color: ${estadoColor};`;
 
           return `
           <tr class="order-row hover:bg-[#1a1d24] cursor-pointer transition-colors ${index === 0 ? 'active' : ''}" data-id="${orden.id}">
@@ -1023,8 +1424,8 @@
             <td class="px-5 py-4 text-[#9da6b9]">${fecha}</td>
             <td class="px-5 py-4">
               <div class="estado-dropdown-container" data-orden-id="${orden.id}">
-                <div class="estado-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${estadoClass} border" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
-                  <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span> ${orden.estado_nombre || 'Abierta'}
+                <div class="estado-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border" style="${estadoBgStyle}" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
+                  <span class="w-1.5 h-1.5 rounded-full" style="${dotStyle}"></span> ${estadoNombre}
                   <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
                 </div>
                 <div class="estado-dropdown" id="dropdown-${orden.id}"></div>
@@ -1084,6 +1485,10 @@
                 <span class="material-symbols-outlined">edit</span>
                 Editar
               </div>
+              <div class="acciones-option generar-orden" data-action="generar-orden" data-orden-id="${ordenId}">
+                <span class="material-symbols-outlined">description</span>
+                Generar Orden
+              </div>
             `;
 
             // Solo mostrar "Generar Factura" si está pagado y no tiene factura
@@ -1108,6 +1513,9 @@
 
                 if (action === 'editar') {
                   window.location.href = `manager-taller-ordenes.html?id=${ordId}`;
+                } else if (action === 'generar-orden') {
+                  // Generar documento de orden de trabajo
+                  generarDocumentoOrden(ordId);
                 } else if (action === 'factura') {
                   // Seleccionar la orden primero y luego disparar la generación de factura
                   const ordenParaFactura = ordenes.find(o => o.id === parseInt(ordId));
@@ -1174,13 +1582,38 @@
         }
       }
 
-      // Obtener color del dot según código de estado
+      // Obtener color del dot según código de estado (usa colores personalizados si existen)
       function getEstadoDotColor(codigo) {
+        // Primero buscar en la configuración personalizada
+        if (estadosPersonalizados[codigo] && estadosPersonalizados[codigo].color) {
+          return estadosPersonalizados[codigo].color;
+        }
+        // Colores por defecto si no hay personalización
         if (codigo === 'EN_PROGRESO') return '#60a5fa'; // Azul
         if (codigo === 'RECAMBIO') return '#f97316'; // Naranja
         if (codigo === 'COMPLETADA') return '#22c55e'; // Verde
         if (codigo === 'ENTREGADA') return '#a855f7'; // Púrpura
         return '#eab308'; // Amarillo para ABIERTA y otros
+      }
+
+      // Obtener nombre del estado (usa nombres personalizados si existen)
+      function getEstadoNombre(codigo, nombreDefault) {
+        if (estadosPersonalizados[codigo] && estadosPersonalizados[codigo].nombre) {
+          return estadosPersonalizados[codigo].nombre;
+        }
+        return nombreDefault || codigo;
+      }
+
+      // Obtener clases de estilo para el estado según su color personalizado
+      function getEstadoClasses(codigo) {
+        const color = getEstadoDotColor(codigo);
+        // Usar el color personalizado para las clases de estilo
+        return {
+          estadoClass: `border border-[${color}]/30`,
+          dotClass: '',
+          dotStyle: `background-color: ${color}`,
+          textStyle: `color: ${color}`
+        };
       }
 
       // Función para cambiar el estado de una orden
@@ -1245,6 +1678,13 @@
         }
       });
 
+      // --- IMPRIMIR ORDEN ---
+      document.getElementById('btn-imprimir-orden').addEventListener('click', () => {
+        if (ordenSeleccionada) {
+          generarDocumentoOrden(ordenSeleccionada.id);
+        }
+      });
+
       // --- MODAL PAGOS ---
       function abrirModalPagos() {
         if (!ordenSeleccionada) return;
@@ -1263,6 +1703,17 @@
         document.getElementById('modal-pendiente').textContent = `${pendiente.toFixed(2)}€`;
         document.getElementById('modal-progress').style.width = `${Math.min(100, progreso)}%`;
         document.getElementById('modal-importe').value = pendiente > 0 ? pendiente.toFixed(2) : '';
+
+        // Mostrar sección de cuenta corriente solo si hay pendiente y no está ya en cuenta corriente
+        const seccionCC = document.getElementById('seccion-cuenta-corriente');
+        if (seccionCC) {
+          const yaEnCuentaCorriente = ordenSeleccionada.en_cuenta_corriente || false;
+          if (pendiente > 0 && !yaEnCuentaCorriente) {
+            seccionCC.classList.remove('hidden');
+          } else {
+            seccionCC.classList.add('hidden');
+          }
+        }
       }
 
       function cerrarModalPagos() {
@@ -1286,6 +1737,56 @@
         document.getElementById('modal-importe').value = (Math.max(0, totalNeto - totalPagado) / 2).toFixed(2);
       });
 
+      // --- PASAR A CUENTA CORRIENTE ---
+      document.getElementById('btn-pasar-cuenta-corriente')?.addEventListener('click', async () => {
+        if (!ordenSeleccionada) return;
+
+        const totalNeto = parseFloat(ordenSeleccionada.total_neto || 0);
+        const totalPagado = parseFloat(ordenSeleccionada.total_pagado || 0);
+        const pendiente = Math.max(0, totalNeto - totalPagado);
+
+        if (pendiente <= 0) {
+          showToast('Esta orden no tiene saldo pendiente', true);
+          return;
+        }
+
+        const confirmar = confirm(`¿Cargar ${pendiente.toFixed(2)}€ a la cuenta corriente del cliente?\n\nEl saldo quedará registrado como deuda pendiente de cobro.`);
+        if (!confirmar) return;
+
+        const btn = document.getElementById('btn-pasar-cuenta-corriente');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+        btn.disabled = true;
+
+        try {
+          const session = await getSession();
+          const response = await fetch('/api/cuentas-corrientes/cargar-orden', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.token}`
+            },
+            body: JSON.stringify({ idOrden: ordenSeleccionada.id })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast(`Saldo de ${pendiente.toFixed(2)}€ cargado a cuenta corriente`);
+            cerrarModalPagos();
+            cargarOrdenes(filtrosActuales);
+          } else {
+            showToast(data.error || 'Error al cargar a cuenta corriente', true);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          showToast('Error de conexión', true);
+        } finally {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      });
+
       document.getElementById('form-nuevo-pago').addEventListener('submit', async (e) => {
         e.preventDefault();
 
@@ -1305,11 +1806,11 @@
             referencia: referencia || null
           });
 
-          alert('Pago registrado correctamente');
+          showToast('Pago registrado correctamente');
           cerrarModalPagos();
           cargarOrdenes(filtrosActuales);
         } catch (error) {
-          alert('Error al registrar pago: ' + error.message);
+          showToast('Error al registrar pago: ' + error.message, true);
         }
       });
 
@@ -1363,7 +1864,12 @@
       });
 
       // Cargar al inicio
-      cargarEstados().then(() => cargarOrdenes());
+      // Cargar estados personalizados primero, luego estados del backend y órdenes
+      (async () => {
+        await cargarEstadosPersonalizados();
+        await cargarEstados();
+        await cargarOrdenes();
+      })();
 
       // --- GENERAR FACTURA ---
       // fetchWithAuth y getSession importados arriba
@@ -1618,6 +2124,9 @@
       );
     });
   </script>
+
+  <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+  <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

@@ -5,25 +5,42 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Caja - Goversa</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts - Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
+
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Guard.js - Autenticación -->
     <script src="/guard.js"></script>
+
+    <!-- Estilos Globales del Manager -->
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+
     <style>
-        :root {
-            --brand-orange: #ff5f00;
-            --surface-border: #282e39;
-        }
+        /* 
+         * Estilos específicos de manager-taller-caja.html
+         * Las variables globales (:root) están centralizadas en manager.css
+         */
 
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
+
 
         ::-webkit-scrollbar {
             width: 6px;
@@ -749,7 +766,7 @@
     </script>
 
     <script type="module">
-        import { requireAuth, clearSession, redirectToLogin, getToken } from './auth.js';
+        import { requireAuth, clearSession, redirectToLogin, getToken } from '/auth.js';
 
         const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
@@ -1757,6 +1774,9 @@
             loadEstadoCaja();
         })();
     </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script src="sidebar-manager.js"></script>
 </body>
 
 </html>

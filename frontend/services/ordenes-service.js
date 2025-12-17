@@ -204,9 +204,78 @@ export async function getEstadosOrden() {
             throw new Error(data.error || 'Error al obtener estados');
         }
 
-        return data.estados || [];
+        return data.estados || data || [];
     } catch (error) {
         console.error('Error obteniendo estados:', error);
+        throw error;
+    }
+}
+
+/**
+ * Actualiza la configuración de un estado de orden (nombre, color, orden)
+ * @param {number} idEstado - ID del estado a actualizar
+ * @param {Object} config - { nombre, color, orden }
+ * @returns {Promise<Object>} - Estado actualizado
+ */
+export async function updateEstadoConfig(idEstado, config) {
+    const API_URL = `${API_BASE_URL}/api/ordenes/estados/${idEstado}`;
+
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) throw new Error('No autenticado');
+        const token = JSON.parse(sessionRaw).token;
+
+        const response = await fetch(API_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(config)
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.ok === false) {
+            throw new Error(data.error || 'Error al actualizar el estado');
+        }
+
+        return data.data || data;
+    } catch (error) {
+        console.error('Error actualizando configuración de estado:', error);
+        throw error;
+    }
+}
+
+/**
+ * Actualiza múltiples estados a la vez
+ * @param {Array} estados - Array de estados con { id, nombre, color, orden }
+ * @returns {Promise<Array>} - Estados actualizados
+ */
+export async function updateEstadosBatch(estados) {
+    const API_URL = `${API_BASE_URL}/api/ordenes/estados`;
+
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) throw new Error('No autenticado');
+        const token = JSON.parse(sessionRaw).token;
+
+        const response = await fetch(API_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ estados })
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.ok === false) {
+            throw new Error(data.error || 'Error al actualizar estados');
+        }
+
+        return data.data || data;
+    } catch (error) {
+        console.error('Error actualizando estados:', error);
         throw error;
     }
 }

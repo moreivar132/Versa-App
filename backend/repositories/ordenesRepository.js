@@ -95,6 +95,31 @@ class OrdenesRepository {
         return result.rows.length > 0;
     }
 
+    // Métodos para verificar SOLO existencia (sin tenant) - Para Super Admins
+    async checkSucursalExists(id, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM sucursal WHERE id = $1', [id]);
+        return result.rows.length > 0;
+    }
+
+    async checkClienteExists(id, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM clientefinal WHERE id = $1', [id]);
+        return result.rows.length > 0;
+    }
+
+    async checkVehiculoExists(id, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM vehiculo WHERE id = $1', [id]);
+        return result.rows.length > 0;
+    }
+
+    async checkMecanicoExists(id, client) {
+        const executor = getExecutor(client);
+        const result = await executor.query('SELECT id FROM usuario WHERE id = $1', [id]);
+        return result.rows.length > 0;
+    }
+
     async createOrden(client, ordenData) {
         const {
             id_sucursal,

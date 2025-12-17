@@ -2,6 +2,7 @@ import { loadSucursales } from './loadSucursales.js';
 import { searchClientes, createClient } from './services/clientes-service.js';
 import { searchInventario, createProduct } from './services/inventory-service.js';
 import { createOrden } from './services/ordenes-service.js';
+import '/components/datetime-picker.js';
 
 let salesItems = [];
 let clienteMostradorId = null;
@@ -28,9 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Load Sucursales
     loadSucursales(); // Populates #taller
 
-    // 2. Set Date
-    const now = new Date();
-    document.getElementById('fecha-venta').value = now.toLocaleString();
+    // 2. Set Date/Time
+    if (window.VersaDateTimePicker) {
+        window.VersaDateTimePicker.initDateTimePicker('fecha-venta');
+    }
 
     // 3. Init Buttons
     document.getElementById('btn-cliente-rapido').addEventListener('click', setClienteMostrador);
@@ -156,10 +158,28 @@ function setupClientSearch() {
                     div.onclick = () => selectClient(c);
                     options.appendChild(div);
                 });
-                options.classList.add('show');
-            } else {
-                options.classList.remove('show');
             }
+
+            // Always add "Create new client" option at the end
+            const divNew = document.createElement('div');
+            divNew.className = 'option';
+            divNew.style.background = '#1a1d24';
+            divNew.style.borderTop = '1px solid #282e39';
+            divNew.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; color: #ff652b;">
+                    <i class="fas fa-plus-circle"></i>
+                    <span style="font-weight: bold;">Crear nuevo cliente</span>
+                </div>
+                <div style="font-size: 12px; color: #9da6b9;">Registrar "${input.value}" como nuevo cliente</div>
+            `;
+            divNew.onclick = () => {
+                // Pre-fill the modal with the searched name
+                document.getElementById('new-client-form').querySelector('[name="nombre"]').value = input.value;
+                document.getElementById('new-client-modal').classList.remove('hidden');
+                options.classList.remove('show');
+            };
+            options.appendChild(divNew);
+            options.classList.add('show');
         }, 300);
     });
 

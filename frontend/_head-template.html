@@ -1,0 +1,157 @@
+<!--
+============================================
+PLANTILLA UNIFICADA DEL <head> PARA MANAGER
+============================================
+
+INSTRUCCIONES DE USO:
+Copia esta estructura base del <head> a cualquier archivo manager-taller-*.html
+y personaliza solo las secciones marcadas como [PERSONALIZAR].
+
+ESTRUCTURA:
+1. Meta tags básicos (NO MODIFICAR)
+2. Título de la página (PERSONALIZAR)
+3. Recursos externos comunes (NO MODIFICAR)
+4. Guard.js para autenticación (NO MODIFICAR)
+5. Estilos globales (NO MODIFICAR)
+6. Estilos específicos de la página (PERSONALIZAR)
+7. Configuración de Tailwind (OPCIONAL)
+
+ARCHIVOS QUE DEBEN USAR ESTA PLANTILLA:
+- manager-taller-inicio.html
+- manager-taller-ordenes.html
+- manager-taller-ordenes-lista.html
+- manager-taller-citas.html
+- manager-taller-clientes.html
+- manager-taller-vehiculos.html
+- manager-taller-inventario.html
+- manager-taller-inventario-nuevo.html
+- manager-taller-compras.html
+- manager-taller-compras-historial.html
+- manager-taller-proveedores.html
+- manager-taller-trabajadores.html
+- manager-taller-caja.html
+- manager-taller-facturas.html
+- manager-taller-facturas-pendientes.html
+- manager-taller-config-facturas.html
+- manager-taller-config-ordenes.html
+- manager-taller-cuentas-corrientes.html
+- manager-taller-ventas.html
+- manager-taller-ventas-historial.html
+- manager-taller-chat.html
+- manager-taller-whatsapp.html
+- admin-accesos.html
+
+ARCHIVOS QUE NO USAN ESTA PLANTILLA (Páginas públicas):
+- login.html (usa theme.css)
+- cita-previa.html (página pública, diferente)
+- index.html (landing page)
+- success.html, cancel.html (páginas de Stripe)
+============================================
+-->
+
+<head>
+    <!-- ========================================
+       SECCIÓN 1: META TAGS BÁSICOS (NO MODIFICAR)
+       ======================================== -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- ========================================
+       SECCIÓN 2: TÍTULO DE LA PÁGINA [PERSONALIZAR]
+       ======================================== -->
+    <title>[NOMBRE DE LA SECCIÓN] - Goversa Manager</title>
+
+    <!-- ========================================
+       SECCIÓN 3: RECURSOS EXTERNOS COMUNES (NO MODIFICAR)
+       ======================================== -->
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts - Preconnect para mejor rendimiento -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Google Fonts - Montserrat (tipografía principal) -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Google Fonts - Material Symbols (iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Font Awesome (iconos adicionales) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- ========================================
+       SECCIÓN 4: AUTENTICACIÓN (NO MODIFICAR)
+       ======================================== -->
+    <script src="/guard.js"></script>
+
+    <!-- ========================================
+       SECCIÓN 5: ESTILOS GLOBALES (NO MODIFICAR)
+       ======================================== -->
+    <!-- Manager CSS - Variables globales y componentes comunes -->
+    <link rel="stylesheet" href="manager.css">
+
+    <!-- Selector de Sucursal - Estilos del componente -->
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+
+    <!-- ========================================
+       SECCIÓN 6: ESTILOS ESPECÍFICOS [PERSONALIZAR]
+       Añadir aquí los estilos inline específicos de esta página.
+       NO redefinir variables de :root que ya están en manager.css.
+       ======================================== -->
+    <style>
+        /* 
+     * Estilos específicos de esta página.
+     * Ejemplo:
+     * 
+     * .mi-componente-especifico {
+     *   background: var(--surface-bg);
+     *   border: 1px solid var(--surface-border);
+     * }
+     */
+    </style>
+
+    <!-- ========================================
+       SECCIÓN 7: CONFIGURACIÓN TAILWIND [OPCIONAL]
+       Solo si la página necesita extender el config de Tailwind.
+       ======================================== -->
+    <!--
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: "#ff5f00",
+              dark: "#0b0d11",
+              surface: "#111318",
+              border: "#282e39",
+              input: "#1a1d24",
+              text: "#ffffff",
+              muted: "#9da6b9"
+            }
+          },
+          fontFamily: {
+            main: ["Montserrat", "sans-serif"]
+          },
+        },
+      },
+    }
+  </script>
+  -->
+
+    <!-- ========================================
+       SECCIÓN 8: LIBRERÍAS EXTERNAS ADICIONALES [OPCIONAL]
+       Solo si la página necesita librerías específicas.
+       Ejemplos: Quagga.js para código de barras, Chart.js, etc.
+       ======================================== -->
+    <!--
+  <script src="https://unpkg.com/@nicolo/quagga@latest/dist/quagga.min.js"></script>
+  -->
+</head>

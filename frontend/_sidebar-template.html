@@ -1,0 +1,208 @@
+<!--
+===============================================================================
+PLANTILLA DEL SIDEBAR UNIFICADO - MANAGER GOVERSA
+===============================================================================
+
+Esta plantilla contiene la estructura exacta del sidebar que debe usarse
+en TODOS los archivos manager-taller-*.html.
+
+INSTRUCCIONES:
+1. Copiar esta sección <aside id="sidebar"> completa
+2. Modificar SOLO la clase del elemento activo para cada página:
+   - Elemento activo: class="... bg-[var(--brand-orange)] text-white ..."
+   - Elementos inactivos: class="... text-gray-400 hover:text-white hover:bg-[#282e39] ..."
+3. Si el elemento activo está dentro de un submenu, el submenu debe:
+   - Padre con bg-[var(--brand-orange)]
+   - Flecha con fa-chevron-up (rotada)
+   - Submenu con "flex" en lugar de "hidden"
+
+===============================================================================
+-->
+
+<!-- SIDEBAR -->
+<aside id="sidebar"
+    class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+    <div class="flex h-full flex-col justify-between">
+        <div class="flex flex-col gap-4">
+            <!-- Logo Area -->
+            <div class="flex items-center gap-3 p-2 mb-4">
+                <div class="logo-badge"
+                    style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                        style="height: 24px; width: auto;">
+                </div>
+                <div class="flex flex-col sidebar-text">
+                    <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">Goversa</h1>
+                    <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">Gestión</p>
+                </div>
+                <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex flex-col gap-2">
+                <!-- INICIO -->
+                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                    href="manager-taller-inicio.html">
+                    <span class="icon-container"><i class="fas fa-home"></i></span>
+                    <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                </a>
+
+                <!-- TALLER DROPDOWN -->
+                <div class="nav-group">
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                        onclick="toggleSubmenu('taller-submenu')">
+                        <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                        <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="taller-arrow"></i>
+                    </a>
+                    <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                        <a href="manager-taller-citas.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                        <a href="manager-taller-ordenes-lista.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                        <a href="manager-taller-vehiculos.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                        <a href="manager-taller-chat.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                    </div>
+                </div>
+
+                <!-- TIENDA DROPDOWN -->
+                <div class="nav-group">
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                        onclick="toggleSubmenu('tienda-submenu')">
+                        <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                        <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="tienda-arrow"></i>
+                    </a>
+                    <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                        <a href="manager-taller-ventas.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Venta</a>
+                        <a href="manager-taller-ventas-historial.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Historial Ventas</a>
+                        <a href="manager-taller-compras.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                        <a href="manager-taller-compras-historial.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                    </div>
+                </div>
+
+                <!-- CAJA -->
+                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                    href="manager-taller-caja.html">
+                    <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                    <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                </a>
+
+                <!-- CUENTAS DROPDOWN -->
+                <div class="nav-group">
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                        onclick="toggleSubmenu('cuentas-submenu')">
+                        <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                        <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
+                    </a>
+                    <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                        <a href="manager-taller-facturas.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                        <a href="manager-taller-facturas-pendientes.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                        <a href="manager-taller-cuentas-corrientes.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Cuentas Corrientes</a>
+                        <a href="manager-taller-config-facturas.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                    </div>
+                </div>
+
+                <!-- INVENTARIO -->
+                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                    href="manager-taller-inventario.html">
+                    <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                    <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                </a>
+
+                <!-- TRABAJADORES -->
+                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                    href="manager-taller-trabajadores.html">
+                    <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                    <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                </a>
+
+                <!-- CONTACTOS DROPDOWN -->
+                <div class="nav-group">
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                        onclick="toggleSubmenu('contactos-submenu')">
+                        <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                        <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                            id="contactos-arrow"></i>
+                    </a>
+                    <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                        <a href="manager-taller-clientes.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                        <a href="manager-taller-proveedores.html"
+                            class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                    </div>
+                </div>
+
+                <!-- CONFIGURACIÓN -->
+                <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                    href="manager-taller-configuracion.html">
+                    <span class="icon-container"><i class="fas fa-cog"></i></span>
+                    <p class="text-sm font-medium leading-normal sidebar-text">Configuración</p>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Bottom User Section -->
+        <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+            <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                <div class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs"
+                    id="user-avatar">
+                    IM
+                </div>
+                <div class="flex flex-col sidebar-text overflow-hidden">
+                    <span class="text-white text-sm font-medium truncate" id="user-name">Iván Moreno</span>
+                    <span class="text-gray-500 text-xs truncate" id="user-role">admin</span>
+                </div>
+            </div>
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                href="#" data-logout>
+                <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+            </a>
+        </div>
+    </div>
+</aside>
+
+<!--
+===============================================================================
+EJEMPLO: MARCAR INVENTARIO COMO ACTIVO
+===============================================================================
+
+Cambiar el link de Inventario de:
+    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+        href="manager-taller-inventario.html">
+
+A:
+    <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors"
+        href="manager-taller-inventario.html">
+
+===============================================================================
+EJEMPLO: MARCAR ÓRDENES (DENTRO DE TALLER) COMO ACTIVO
+===============================================================================
+
+1. El dropdown padre "Taller" debe tener:
+   bg-[var(--brand-orange)] text-white (en lugar de text-gray-400...)
+   
+2. La flecha debe ser fa-chevron-up (no down)
+
+3. El submenu debe tener class="flex flex-col" (no "hidden flex-col")
+
+4. El item activo en el submenu:
+   class="text-white font-semibold text-sm py-1 block"
+
+===============================================================================
+-->
