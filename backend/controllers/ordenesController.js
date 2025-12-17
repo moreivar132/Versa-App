@@ -5,7 +5,8 @@ class OrdenesController {
         try {
             const userContext = {
                 id_tenant: req.user?.id_tenant,
-                id_usuario: req.user?.id
+                id_usuario: req.user?.id,
+                is_super_admin: req.user?.is_super_admin || false
             };
 
             const result = await ordenesService.createOrden(req.body, userContext);

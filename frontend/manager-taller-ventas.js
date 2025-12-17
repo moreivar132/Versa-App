@@ -2,6 +2,7 @@ import { loadSucursales } from './loadSucursales.js';
 import { searchClientes, createClient } from './services/clientes-service.js';
 import { searchInventario, createProduct } from './services/inventory-service.js';
 import { createOrden } from './services/ordenes-service.js';
+import '/components/datetime-picker.js';
 
 let salesItems = [];
 let clienteMostradorId = null;
@@ -29,14 +30,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadSucursales(); // Populates #taller
 
     // 2. Set Date/Time
-    const now = new Date();
-    // Format for datetime-local: YYYY-MM-DDTHH:mm
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    document.getElementById('fecha-venta').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+    if (window.VersaDateTimePicker) {
+        window.VersaDateTimePicker.initDateTimePicker('fecha-venta');
+    }
 
     // 3. Init Buttons
     document.getElementById('btn-cliente-rapido').addEventListener('click', setClienteMostrador);

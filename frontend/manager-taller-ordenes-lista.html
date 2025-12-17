@@ -798,37 +798,13 @@
               </div>
             </div>
 
-            <!-- Filtros de Estado - Barra horizontal deslizable -->
+            <!-- Filtros de Estado - Barra horizontal deslizable (generada dinámicamente) -->
             <div class="estado-filters-scroll-container">
-              <div class="estado-filters-bar">
+              <div class="estado-filters-bar" id="estado-filters-bar">
+                <!-- Los botones de filtro se generan dinámicamente desde JavaScript -->
                 <label class="estado-filter-btn estado-todas">
                   <input type="radio" name="estado-filter" value="all" class="hidden" checked />
                   <span class="btn-text">Todas</span>
-                </label>
-                <label class="estado-filter-btn estado-abierta">
-                  <input type="radio" name="estado-filter" value="ABIERTA" class="hidden" />
-                  <span class="estado-dot bg-yellow-500"></span>
-                  <span class="btn-text">Abierta</span>
-                </label>
-                <label class="estado-filter-btn estado-progreso">
-                  <input type="radio" name="estado-filter" value="EN_PROGRESO" class="hidden" />
-                  <span class="estado-dot bg-blue-500"></span>
-                  <span class="btn-text">En Progreso</span>
-                </label>
-                <label class="estado-filter-btn estado-recambio">
-                  <input type="radio" name="estado-filter" value="RECAMBIO" class="hidden" />
-                  <span class="estado-dot bg-orange-500"></span>
-                  <span class="btn-text">Recambio</span>
-                </label>
-                <label class="estado-filter-btn estado-completadas">
-                  <input type="radio" name="estado-filter" value="COMPLETADA" class="hidden" />
-                  <span class="estado-dot bg-green-500"></span>
-                  <span class="btn-text">Completadas</span>
-                </label>
-                <label class="estado-filter-btn estado-entregadas">
-                  <input type="radio" name="estado-filter" value="ENTREGADA" class="hidden" />
-                  <span class="estado-dot bg-purple-500"></span>
-                  <span class="btn-text">Entregadas</span>
                 </label>
               </div>
             </div>
@@ -1195,10 +1171,10 @@
   </script>
 
   <script type="module">
-    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from './services/ordenes-service.js';
-    import { registrarPago } from './services/pagos-service.js';
-    import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from './auth.js';
-    import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
+    import { registrarPago } from '/services/pagos-service.js';
+    import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from '/auth.js';
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
     (async () => {
       // Security check
@@ -1219,7 +1195,88 @@
       let ordenSeleccionada = null;
       let filtrosActuales = {};
       let estadosDisponibles = [];
+      let estadosPersonalizados = {}; // Mapa de código -> {nombre, color}
       let currentSucursalId = null;
+
+      // Cargar configuración de estados personalizados desde la API
+      async function cargarEstadosPersonalizados() {
+        try {
+          // Cargar desde la API
+          const response = await fetchWithAuth('/api/ordenes/estados');
+          const data = await response.json();
+
+          if (data && (data.success !== false)) {
+            const estados = Array.isArray(data) ? data : (data.estados || []);
+            // Crear un mapa para acceso rápido por código
+            estadosPersonalizados = {};
+            estados.forEach(e => {
+              if (e.codigo) {
+                estadosPersonalizados[e.codigo] = {
+                  nombre: e.nombre || e.codigo,
+                  color: e.color || '#eab308'
+                };
+              }
+            });
+            console.log('Estados cargados desde API:', estadosPersonalizados);
+          }
+        } catch (error) {
+          console.error('Error cargando estados desde API:', error);
+          // Fallback: usar valores por defecto
+          estadosPersonalizados = {
+            'ABIERTA': { nombre: 'Abierta', color: '#eab308' },
+            'EN_PROGRESO': { nombre: 'En Progreso', color: '#3b82f6' },
+            'RECAMBIO': { nombre: 'Esperando Recambio', color: '#f97316' },
+            'COMPLETADA': { nombre: 'Completada', color: '#22c55e' },
+            'ENTREGADA': { nombre: 'Entregada', color: '#a855f7' }
+          };
+        }
+
+        // Generar los botones de filtro
+        renderFiltrosEstado();
+      }
+
+      // Renderizar los botones de filtro de estado dinámicamente
+      function renderFiltrosEstado() {
+        const container = document.getElementById('estado-filters-bar');
+        if (!container) return;
+
+        // Estados por defecto (se sobrescriben con personalizados si existen)
+        const estadosDefault = [
+          { codigo: 'ABIERTA', nombre: 'Abierta', color: '#eab308' },
+          { codigo: 'EN_PROGRESO', nombre: 'En Progreso', color: '#3b82f6' },
+          { codigo: 'RECAMBIO', nombre: 'Recambio', color: '#f97316' },
+          { codigo: 'COMPLETADA', nombre: 'Completada', color: '#22c55e' },
+          { codigo: 'ENTREGADA', nombre: 'Entregada', color: '#a855f7' }
+        ];
+
+        // Generar botones de estado (usar personalizados si existen)
+        const estadosHTML = estadosDefault.map(estado => {
+          const nombre = estadosPersonalizados[estado.codigo]?.nombre || estado.nombre;
+          const color = estadosPersonalizados[estado.codigo]?.color || estado.color;
+
+          return `
+            <label class="estado-filter-btn" data-estado="${estado.codigo}">
+              <input type="radio" name="estado-filter" value="${estado.codigo}" class="hidden" />
+              <span class="estado-dot" style="background-color: ${color};"></span>
+              <span class="btn-text">${nombre}</span>
+            </label>
+          `;
+        }).join('');
+
+        // Mantener el botón "Todas" y agregar los demás
+        container.innerHTML = `
+          <label class="estado-filter-btn estado-todas">
+            <input type="radio" name="estado-filter" value="all" class="hidden" checked />
+            <span class="btn-text">Todas</span>
+          </label>
+          ${estadosHTML}
+        `;
+
+        // Re-agregar event listeners para los filtros
+        container.querySelectorAll('input[name="estado-filter"]').forEach(radio => {
+          radio.addEventListener('change', aplicarFiltros);
+        });
+      }
 
       // Inicializar selector de sucursal
       currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
@@ -1348,21 +1405,13 @@
           const estadoPagoClass = orden.estado_pago === 'PAGADO' ? 'text-green-500' : orden.estado_pago === 'PARCIAL' ? 'text-yellow-500' : 'text-red-400';
           const estadoPagoLabel = orden.estado_pago === 'PAGADO' ? 'Pagado' : orden.estado_pago === 'PARCIAL' ? 'Parcial' : 'Pendiente';
 
-          let estadoClass = 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-          let dotClass = 'bg-yellow-500';
-          if (orden.estado_codigo === 'EN_PROGRESO') {
-            estadoClass = 'bg-blue-500/10 text-blue-400 border-blue-500/20';
-            dotClass = 'bg-blue-400';
-          } else if (orden.estado_codigo === 'RECAMBIO') {
-            estadoClass = 'bg-orange-500/10 text-orange-400 border-orange-500/20';
-            dotClass = 'bg-orange-400';
-          } else if (orden.estado_codigo === 'COMPLETADA') {
-            estadoClass = 'bg-green-500/10 text-green-400 border-green-500/20';
-            dotClass = 'bg-green-400';
-          } else if (orden.estado_codigo === 'ENTREGADA') {
-            estadoClass = 'bg-purple-500/10 text-purple-400 border-purple-500/20';
-            dotClass = 'bg-purple-400';
-          }
+          // Obtener color personalizado del estado
+          const estadoColor = getEstadoDotColor(orden.estado_codigo);
+          const estadoNombre = getEstadoNombre(orden.estado_codigo, orden.estado_nombre);
+
+          // Aplicar estilos inline con el color personalizado
+          const estadoBgStyle = `background-color: ${estadoColor}15; border-color: ${estadoColor}40; color: ${estadoColor};`;
+          const dotStyle = `background-color: ${estadoColor};`;
 
           return `
           <tr class="order-row hover:bg-[#1a1d24] cursor-pointer transition-colors ${index === 0 ? 'active' : ''}" data-id="${orden.id}">
@@ -1375,8 +1424,8 @@
             <td class="px-5 py-4 text-[#9da6b9]">${fecha}</td>
             <td class="px-5 py-4">
               <div class="estado-dropdown-container" data-orden-id="${orden.id}">
-                <div class="estado-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${estadoClass} border" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
-                  <span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span> ${orden.estado_nombre || 'Abierta'}
+                <div class="estado-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border" style="${estadoBgStyle}" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
+                  <span class="w-1.5 h-1.5 rounded-full" style="${dotStyle}"></span> ${estadoNombre}
                   <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
                 </div>
                 <div class="estado-dropdown" id="dropdown-${orden.id}"></div>
@@ -1533,13 +1582,38 @@
         }
       }
 
-      // Obtener color del dot según código de estado
+      // Obtener color del dot según código de estado (usa colores personalizados si existen)
       function getEstadoDotColor(codigo) {
+        // Primero buscar en la configuración personalizada
+        if (estadosPersonalizados[codigo] && estadosPersonalizados[codigo].color) {
+          return estadosPersonalizados[codigo].color;
+        }
+        // Colores por defecto si no hay personalización
         if (codigo === 'EN_PROGRESO') return '#60a5fa'; // Azul
         if (codigo === 'RECAMBIO') return '#f97316'; // Naranja
         if (codigo === 'COMPLETADA') return '#22c55e'; // Verde
         if (codigo === 'ENTREGADA') return '#a855f7'; // Púrpura
         return '#eab308'; // Amarillo para ABIERTA y otros
+      }
+
+      // Obtener nombre del estado (usa nombres personalizados si existen)
+      function getEstadoNombre(codigo, nombreDefault) {
+        if (estadosPersonalizados[codigo] && estadosPersonalizados[codigo].nombre) {
+          return estadosPersonalizados[codigo].nombre;
+        }
+        return nombreDefault || codigo;
+      }
+
+      // Obtener clases de estilo para el estado según su color personalizado
+      function getEstadoClasses(codigo) {
+        const color = getEstadoDotColor(codigo);
+        // Usar el color personalizado para las clases de estilo
+        return {
+          estadoClass: `border border-[${color}]/30`,
+          dotClass: '',
+          dotStyle: `background-color: ${color}`,
+          textStyle: `color: ${color}`
+        };
       }
 
       // Función para cambiar el estado de una orden
@@ -1790,7 +1864,12 @@
       });
 
       // Cargar al inicio
-      cargarEstados().then(() => cargarOrdenes());
+      // Cargar estados personalizados primero, luego estados del backend y órdenes
+      (async () => {
+        await cargarEstadosPersonalizados();
+        await cargarEstados();
+        await cargarOrdenes();
+      })();
 
       // --- GENERAR FACTURA ---
       // fetchWithAuth y getSession importados arriba

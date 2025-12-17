@@ -29,6 +29,11 @@ export default defineConfig({
                 managerTallerFacturas: 'manager-taller-facturas.html',
                 managerTallerFacturasPendientes: 'manager-taller-facturas-pendientes.html',
                 managerTallerConfigFacturas: 'manager-taller-config-facturas.html',
+                managerTallerConfigOrdenes: 'manager-taller-config-ordenes.html',
+                managerTallerConfiguracion: 'manager-taller-configuracion.html',
+                managerTallerCuentasCorrientes: 'manager-taller-cuentas-corrientes.html',
+                managerTallerVentas: 'manager-taller-ventas.html',
+                managerTallerVentasHistorial: 'manager-taller-ventas-historial.html',
             }
         }
     },

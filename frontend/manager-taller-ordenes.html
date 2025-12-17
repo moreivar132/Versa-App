@@ -584,6 +584,32 @@
       border-top: 1px solid #333;
       padding-top: 20px;
     }
+
+    /* Botón Flotante Subir */
+    .btn-scroll-top {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--brand-orange);
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 15px rgba(255, 95, 0, 0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+      z-index: 1000;
+    }
+
+    .btn-scroll-top:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(255, 95, 0, 0.5);
+    }
   </style>
 </head>
 
@@ -758,11 +784,19 @@
             <div class="form-grid grid-cols-4">
               <div class="form-group">
                 <label for="fecha-ingreso">Fecha Ingreso</label>
-                <input type="text" id="fecha-ingreso" name="fecha_ingreso" class="form-input" readonly />
+                <div class="versa-datetime-container">
+                  <input type="text" id="fecha-ingreso" name="fecha_ingreso" class="form-input versa-datetime-input"
+                    placeholder="Seleccionar fecha y hora" readonly />
+                  <i class="fas fa-calendar-alt versa-datetime-icon"></i>
+                </div>
               </div>
               <div class="form-group">
                 <label for="fecha-egreso">Fecha Egreso</label>
-                <input type="datetime-local" id="fecha-egreso" name="fecha_egreso" class="form-input" />
+                <div class="versa-datetime-container">
+                  <input type="text" id="fecha-egreso" name="fecha_egreso" class="form-input versa-datetime-input"
+                    placeholder="Seleccionar fecha y hora" readonly />
+                  <i class="fas fa-calendar-alt versa-datetime-icon"></i>
+                </div>
               </div>
               <div class="form-group">
                 <label for="tecnico-select">Técnico</label>
@@ -800,18 +834,17 @@
                 <div id="cliente-info" class="info-display"></div>
               </div>
               <div class="form-group" style="grid-column: span 1;">
-                <label for="vehiculo-select">Seleccionar Vehículo</label>
-
-                <div class="input-group">
-                  <select id="vehiculo-select" name="vehiculo_id" class="form-select" disabled>
-                    <option value="" disabled selected>Seleccione un cliente primero</option>
-                  </select>
-
-                  <button type="button" id="add-vehicle-btn" class="btn btn-secondary"
-                    title="Crear nuevo vehículo">+</button>
+                <label for="buscar-vehiculo">Seleccionar Vehículo</label>
+                <div class="custom-select-container">
+                  <div class="input-group">
+                    <input type="text" id="buscar-vehiculo" name="vehiculo_nombre"
+                      class="form-input custom-select-input" placeholder="Seleccione un cliente primero"
+                      autocomplete="off" disabled>
+                    <button type="button" id="add-vehicle-btn" class="btn btn-secondary"
+                      title="Crear nuevo vehículo">+</button>
+                  </div>
+                  <div class="custom-select-options" id="vehiculo-options"></div>
                 </div>
-
-
               </div>
               <div class="form-group" style="grid-column: span 1;">
                 <label>Matrícula</label>
@@ -1042,6 +1075,11 @@
             </div>
           </div>
         </form>
+
+        <!-- Botón Subir al inicio -->
+        <button type="button" id="btn-scroll-top" class="btn-scroll-top" title="Subir al inicio">
+          <i class="fas fa-arrow-up"></i>
+        </button>
       </main>
 
       <div id="toast-notification"></div>
@@ -1224,14 +1262,15 @@
   </div>
 
   <script type="module">
-    import { loadSucursales } from './loadSucursales.js';
-    import { searchTecnicos } from './services/tecnicos-service.js';
-    import { searchClientes } from './services/clientes-service.js';
-    import { searchVehiculos, createVehicle } from './services/vehiculos-service.js';
-    import { createClient } from './services/clientes-service.js';
-    import { searchInventario } from './services/inventory-service.js';
-    import { createOrden, getOrdenById, updateOrden } from './services/ordenes-service.js';
-    import { getImpuestos } from './services/impuestos-service.js';
+    import { loadSucursales } from '/loadSucursales.js';
+    import { searchTecnicos } from '/services/tecnicos-service.js';
+    import { searchClientes } from '/services/clientes-service.js';
+    import { searchVehiculos, createVehicle } from '/services/vehiculos-service.js';
+    import { createClient } from '/services/clientes-service.js';
+    import { searchInventario } from '/services/inventory-service.js';
+    import { createOrden, getOrdenById, updateOrden } from '/services/ordenes-service.js';
+    import { getImpuestos } from '/services/impuestos-service.js';
+    import '/components/datetime-picker.js';
 
     // Variable global para modo edición
     let modoEdicion = false;
@@ -1336,15 +1375,6 @@
         document.getElementById('id-tecnico-hidden').value = tecnicoSelect.value;
       });
 
-      const vehiculoSelect = document.getElementById('vehiculo-select');
-      vehiculoSelect.addEventListener('change', () => {
-        const selectedOption = vehiculoSelect.options[vehiculoSelect.selectedIndex];
-        if (selectedOption) {
-          document.getElementById('id-vehiculo-hidden').value = vehiculoSelect.value;
-          document.getElementById('vehiculo-info').textContent = selectedOption.dataset.matricula || '';
-        }
-      });
-
       // Fecha Inicial
       const fechaIngresoInput = document.getElementById('fecha-ingreso');
       fechaIngresoInput.value = new Date().toLocaleString("es-ES", {
@@ -1354,6 +1384,8 @@
 
       // Variables Globales del Formulario
       let orderItems = [];
+      // Variable para almacenar el ID del cliente seleccionado (para filtrar vehículos)
+      var selectedClientId = null;
       let uploadedFiles = [];
 
       // Variable global para pagos - accesible desde pagos-logic.js
@@ -1364,6 +1396,23 @@
       const closeModalBtn = document.getElementById('close-modal-btn');
       const newOrderBtn = document.getElementById('new-order-btn');
       const orderForm = document.getElementById('order-form');
+
+      // Botón Subir al inicio
+      const btnScrollTop = document.getElementById('btn-scroll-top');
+      if (btnScrollTop) {
+        btnScrollTop.addEventListener('click', () => {
+          document.querySelector('main').scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      }
+
+      // ========================================
+      // DATETIME PICKER (Componente Reutilizable)
+      // ========================================
+      // Inicializar DateTime Pickers para Fecha Ingreso y Egreso
+      if (window.VersaDateTimePicker) {
+        window.VersaDateTimePicker.initDateTimePicker('fecha-ingreso');
+        window.VersaDateTimePicker.initDateTimePicker('fecha-egreso');
+      }
 
       // Mostrar/Ocultar Modal
       function showSuccessModal() { successModal.classList.add('show'); }
@@ -1427,24 +1476,21 @@
             if (clienteHidden) clienteHidden.value = orden.id_cliente;
             const buscarCliente = document.getElementById('buscar-cliente');
             if (buscarCliente) buscarCliente.value = orden.cliente_nombre || '';
+            // Guardar el ID del cliente para filtrar vehículos
+            selectedClientId = orden.id_cliente;
           }
 
-          // Vehículo - usar verificación null-safe
+          // Vehículo - usar el nuevo input de búsqueda
           if (orden.id_vehiculo) {
             const vehiculoHidden = document.getElementById('id-vehiculo-hidden');
             if (vehiculoHidden) vehiculoHidden.value = orden.id_vehiculo;
 
-            const vehiculoSelect = document.getElementById('vehiculo-select');
-            if (vehiculoSelect) {
-              // Habilitar el select y añadir la opción del vehículo
-              vehiculoSelect.disabled = false;
-              const optionText = `${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} - ${orden.vehiculo_matricula || ''}`.trim();
-              const option = document.createElement('option');
-              option.value = orden.id_vehiculo;
-              option.textContent = optionText;
-              option.selected = true;
-              vehiculoSelect.innerHTML = '';
-              vehiculoSelect.appendChild(option);
+            const vehiculoInput = document.getElementById('buscar-vehiculo');
+            if (vehiculoInput) {
+              // Habilitar el input y mostrar el vehículo
+              vehiculoInput.disabled = false;
+              const optionText = `${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} (${orden.vehiculo_matricula || ''})`.trim();
+              vehiculoInput.value = optionText;
             }
 
             const vehiculoInfo = document.getElementById('vehiculo-info');
@@ -1632,13 +1678,31 @@
       ];
 
       // --- LÓGICA DE BÚSQUEDA DINÁMICA ---
-      function setupCustomSelect({ inputId, optionsId, searchUrl, searchFunction, getSearchParams, onSelect, renderOption, mockData = [] }) {
+      function setupCustomSelect({ inputId, optionsId, searchUrl, searchFunction, getSearchParams, onSelect, renderOption, mockData = [], showAllOnFocus = false }) {
         const input = document.getElementById(inputId);
         const optionsContainer = document.getElementById(optionsId);
         let debounceTimeout;
 
-        input.addEventListener("focus", () => {
-          if (inputId === 'buscar-vehiculo') {
+        // Función para ejecutar búsqueda
+        async function executeSearch(query) {
+          if (searchFunction) {
+            try {
+              const params = getSearchParams ? getSearchParams() : {};
+              const results = await searchFunction(query, params);
+              renderResults(results || []);
+            } catch (error) {
+              console.error('Error durante la búsqueda:', error);
+              optionsContainer.innerHTML = `<div class="option" style="color: var(--error-color);">Error de conexión.</div>`;
+              optionsContainer.classList.add('show');
+            }
+          }
+        }
+
+        input.addEventListener("focus", async () => {
+          // Si showAllOnFocus está activado y hay una searchFunction, cargar todos los resultados
+          if (showAllOnFocus && searchFunction) {
+            await executeSearch('');  // Buscar con query vacío = todos los resultados
+          } else if (inputId === 'buscar-vehiculo') {
             const clientId = document.getElementById('id-cliente-hidden').value;
             if (clientId) {
               // Trigger search manually
@@ -1651,7 +1715,8 @@
           clearTimeout(debounceTimeout);
           const query = input.value.toLowerCase();
 
-          if (query.length < 1) {
+          // Si showAllOnFocus está activo, permitir buscar incluso con query vacío
+          if (query.length < 1 && !showAllOnFocus) {
             optionsContainer.innerHTML = '';
             optionsContainer.classList.remove('show');
             return;
@@ -1751,39 +1816,42 @@
         searchFunction: searchClientes,
         renderOption: item => `${item.nombre} <small>(${item.documento || 'Sin Doc'})</small>`,
         onSelect: async (item) => {
+          console.log('Cliente seleccionado:', item); // DEBUG
           document.getElementById('buscar-cliente').value = item.nombre;
           document.getElementById('cliente-info').textContent = `${item.documento || ''} | ${item.telefono || ''}`;
           document.getElementById('id-cliente-hidden').value = item.id;
 
+          // Guardar el ID del cliente para filtrar vehículos
+          selectedClientId = item.id;
+
           // Limpiar vehículo anterior
-          // Reset vehicle select
-          const vehicleSelect = document.getElementById('vehiculo-select');
-          vehicleSelect.innerHTML = '<option value="" disabled selected>Cargando vehículos...</option>';
-          vehicleSelect.disabled = true;
+          const vehicleInput = document.getElementById('buscar-vehiculo');
+          vehicleInput.value = '';
+          vehicleInput.placeholder = 'Haz clic para ver vehículos...';
+          vehicleInput.disabled = false;
           document.getElementById('vehiculo-info').textContent = '';
           document.getElementById('id-vehiculo-hidden').value = '';
-
-          try {
-            const vehicles = await searchVehiculos('', item.id);
-            vehicleSelect.innerHTML = '<option value="" disabled selected>Seleccionar vehículo</option>';
-
-            if (vehicles.length > 0) {
-              vehicles.forEach(v => {
-                const option = document.createElement('option');
-                option.value = v.id;
-                option.textContent = `${v.marca} ${v.modelo} (${v.matricula})`;
-                option.dataset.matricula = v.matricula;
-                vehicleSelect.appendChild(option);
-              });
-              vehicleSelect.disabled = false;
-            } else {
-              vehicleSelect.innerHTML = '<option value="" disabled selected>No hay vehículos registrados</option>';
-            }
-          } catch (e) {
-            console.error("Error loading vehicles", e);
-            vehicleSelect.innerHTML = '<option value="" disabled selected>Error al cargar</option>';
-          }
         }
+      });
+
+      // Buscador de Vehículos - con carga inicial de todos al hacer focus
+      setupCustomSelect({
+        inputId: 'buscar-vehiculo',
+        optionsId: 'vehiculo-options',
+        searchFunction: async (query) => {
+          if (!selectedClientId) {
+            return [];
+          }
+          // Si query está vacío, buscar todos (el backend debería retornar todos para ese cliente)
+          return searchVehiculos(query || '', selectedClientId);
+        },
+        renderOption: item => `${item.marca} ${item.modelo} <small>(${item.matricula})</small>`,
+        onSelect: (item) => {
+          document.getElementById('buscar-vehiculo').value = `${item.marca} ${item.modelo} (${item.matricula})`;
+          document.getElementById('vehiculo-info').textContent = item.matricula;
+          document.getElementById('id-vehiculo-hidden').value = item.id;
+        },
+        showAllOnFocus: true  // Nueva opción para mostrar todos al hacer focus
       });
 
       setupCustomSelect({
@@ -1892,12 +1960,9 @@
             typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${typeLabel}</span>`;
           }
 
-          // Icono de Inventario
-          const isProduct = item.idProducto ? '<span class="text-green-500 mr-1" title="Producto de inventario">📦</span>' : '<span class="text-gray-500 mr-1" title="Item libre">📝</span>';
-
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td>${isProduct} ${item.descripcion}</td>
+            <td>${item.descripcion}</td>
             <td>${item.precio.toFixed(2)}€</td>
             <td>${item.cantidad}</td>
             <td>${typeBadge}</td>
@@ -2150,21 +2215,10 @@
 
             showToast('Vehículo creado exitosamente');
 
-            // Añadir el nuevo vehículo al select y seleccionarlo
-            const vehicleSelect = document.getElementById('vehiculo-select');
-
-            // Si el select estaba deshabilitado o vacío, limpiarlo
-            if (vehicleSelect.disabled || vehicleSelect.options[0].disabled) {
-              vehicleSelect.innerHTML = '';
-              vehicleSelect.disabled = false;
-            }
-
-            const option = document.createElement('option');
-            option.value = newVehicle.id;
-            option.textContent = `${newVehicle.marca} ${newVehicle.modelo} (${newVehicle.matricula})`;
-            option.dataset.matricula = newVehicle.matricula;
-            option.selected = true;
-            vehicleSelect.appendChild(option);
+            // Actualizar el input de búsqueda de vehículo con el nuevo vehículo
+            const vehicleInput = document.getElementById('buscar-vehiculo');
+            vehicleInput.value = `${newVehicle.marca} ${newVehicle.modelo} (${newVehicle.matricula})`;
+            vehicleInput.disabled = false;
 
             // Actualizar info visual
             document.getElementById('vehiculo-info').textContent = newVehicle.matricula;
@@ -2186,7 +2240,7 @@
   <script src="pagos-logic.js"></script>
 
   <script type="module">
-    import { initSucursalSelector, getCurrentSucursalId } from './services/sucursal-selector.js';
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
     // Inicializar selector de sucursal
     (async () => {

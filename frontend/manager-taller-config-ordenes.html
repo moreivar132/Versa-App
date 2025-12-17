@@ -603,7 +603,7 @@
     </div>
 
     <script type="module">
-        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from './auth.js';
+        import { fetchWithAuth, getSession, clearSession, redirectToLogin, getToken } from '/auth.js';
 
         const API_BASE_URL = '/api';
         let userData = null;
@@ -735,12 +735,8 @@
                 };
 
                 // Enviar al backend
-                const response = await fetch('/api/ordenes/config-tenant', {
+                const response = await fetchWithAuth('/api/ordenes/config-tenant', {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
                     body: JSON.stringify(config)
                 });
 
@@ -767,11 +763,7 @@
                 const session = getSession();
                 if (!session || !session.user) return;
 
-                const response = await fetch(`/api/ordenes/config-tenant?tenantId=${session.user.id_tenant}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    }
-                });
+                const response = await fetchWithAuth(`/api/ordenes/config-tenant?tenantId=${session.user.id_tenant}`);
 
                 if (!response.ok) throw new Error('Error cargando configuración');
 
@@ -819,8 +811,12 @@
                 // Mostrar loading en preview de logo si se desea
 
                 try {
+                    const token = getToken();
                     const response = await fetch('/api/upload', {
                         method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
                         body: formData
                         // No poner Content-Type header manualmente con FormData
                     });

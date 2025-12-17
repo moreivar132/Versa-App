@@ -412,7 +412,12 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label class="block text-xs text-[#9da6b9] mb-1">Fecha y Hora</label>
-                                        <input type="datetime-local" id="fecha-venta" class="form-input bg-[#111318]" />
+                                        <div class="versa-datetime-container">
+                                            <input type="text" id="fecha-venta"
+                                                class="form-input text-white bg-[#111318] versa-datetime-input"
+                                                placeholder="Seleccionar fecha y hora" readonly />
+                                            <i class="fas fa-calendar-alt versa-datetime-icon"></i>
+                                        </div>
                                     </div>
                                     <div>
                                         <label class="block text-xs text-[#9da6b9] mb-1">Sucursal</label>

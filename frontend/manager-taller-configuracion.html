@@ -125,17 +125,37 @@
             box-shadow: 0 0 0 3px rgba(255, 101, 43, 0.15);
         }
 
+        /* Info Tip - mensaje informativo pequeño */
+        .info-tip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #93c5fd;
+            margin-bottom: 16px;
+        }
+
+        .info-tip i {
+            color: #60a5fa;
+            font-size: 14px;
+        }
+
         /* Estado Item */
         .estado-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px;
+            gap: 10px;
+            padding: 12px 16px;
             background: rgba(30, 30, 40, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 10px;
             margin-bottom: 10px;
             transition: all 0.2s;
+            overflow: hidden;
         }
 
         .estado-item:hover {
@@ -160,13 +180,14 @@
         }
 
         .estado-input {
-            flex: 1;
-            padding: 8px 12px;
+            flex: 2;
+            min-width: 180px;
+            padding: 10px 14px;
             border-radius: 6px;
             background: rgba(20, 20, 25, 0.8);
             border: 1px solid rgba(255, 255, 255, 0.08);
             color: #fff;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 500;
         }
 
@@ -203,6 +224,16 @@
 
         .btn-save:hover {
             background: #16a34a;
+        }
+
+        .estado-codigo {
+            font-size: 10px;
+            color: #6b7280;
+            padding: 4px 8px;
+            background: rgba(107, 114, 128, 0.15);
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .btn-delete {
@@ -673,49 +704,33 @@
 
                     <!-- Panel: Estados de Órdenes -->
                     <div id="panel-estados" class="config-panel active">
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="card">
-                                <div class="card-title">
-                                    <i class="fas fa-tags text-[var(--brand-orange)]"></i>
-                                    Estados de Órdenes
-                                </div>
-                                <p class="card-description">
-                                    Define los estados de las órdenes que quieras utilizar. Puedes personalizar el
-                                    nombre y color de cada uno.
-                                </p>
+                        <div class="card">
+                            <div class="card-title">
+                                <i class="fas fa-tags text-[var(--brand-orange)]"></i>
+                                Estados de Órdenes
+                            </div>
+                            <p class="card-description">
+                                Define los estados de las órdenes que quieras utilizar. Puedes personalizar el
+                                nombre y color de cada uno.
+                            </p>
 
-                                <div class="section-header">
-                                    <span class="section-title">Estados Configurados</span>
-                                    <button class="btn-add" onclick="agregarEstado()">
-                                        <i class="fas fa-plus"></i>
-                                        Añadir Estado
-                                    </button>
-                                </div>
-
-                                <div id="estados-lista">
-                                    <!-- Estados se cargan dinámicamente -->
-                                </div>
+                            <!-- Tip pequeño -->
+                            <div class="info-tip">
+                                <i class="fas fa-info-circle"></i>
+                                <span>El <strong>orden</strong> determina la secuencia en la lista. Usa colores
+                                    distintivos para identificar los estados rápidamente.</span>
                             </div>
 
-                            <div class="card">
-                                <div class="card-title">
-                                    <i class="fas fa-info-circle text-blue-400"></i>
-                                    Información
-                                </div>
-                                <p class="card-description" style="margin-bottom: 0;">
-                                    Los estados definen el flujo de trabajo de tus órdenes. El <strong>orden</strong>
-                                    determina la secuencia lógica (de menor a mayor). Los cambios se guardan
-                                    automáticamente al pulsar "Guardar" en cada estado.
-                                </p>
+                            <div class="section-header">
+                                <span class="section-title">Estados Configurados</span>
+                                <button class="btn-add" onclick="agregarEstado()">
+                                    <i class="fas fa-plus"></i>
+                                    Añadir Estado
+                                </button>
+                            </div>
 
-                                <div
-                                    style="margin-top: 20px; padding: 16px; background: rgba(255,95,0,0.08); border-radius: 10px; border: 1px solid rgba(255,95,0,0.2);">
-                                    <p style="font-size: 13px; color: #ff8c4a;">
-                                        <i class="fas fa-lightbulb" style="margin-right: 8px;"></i>
-                                        <strong>Consejo:</strong> Usa colores distintivos para cada estado para
-                                        identificarlos rápidamente en la lista de órdenes.
-                                    </p>
-                                </div>
+                            <div id="estados-lista">
+                                <!-- Estados se cargan dinámicamente -->
                             </div>
                         </div>
                     </div>
@@ -979,7 +994,8 @@
     </script>
 
     <script type="module">
-        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from './auth.js';
+        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from '/auth.js';
+        import { getEstadosOrden, updateEstadoConfig } from '/services/ordenes-service.js';
 
         // Estado por defecto
         let estadosOrden = [];
@@ -999,13 +1015,17 @@
             const userName = document.getElementById('user-name');
             const userRole = document.getElementById('user-role');
 
-            if (session.nombre) {
-                userName.textContent = session.nombre;
-                userAvatar.textContent = session.nombre.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+            // Los datos de usuario pueden estar en session directamente o en session.user
+            const userData = session.user || session;
+
+            if (userData.nombre) {
+                userName.textContent = userData.nombre;
+                userAvatar.textContent = userData.nombre.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
             }
-            if (session.rol) {
-                userRole.textContent = session.rol;
-            }
+
+            // El backend devuelve is_super_admin, no rol
+            const roleText = userData.is_super_admin ? 'Administrador' : (userData.rol || 'Usuario');
+            userRole.textContent = roleText;
 
             // Logout
             document.getElementById('logout-btn')?.addEventListener('click', (e) => {
@@ -1025,12 +1045,13 @@
 
         async function cargarEstados() {
             try {
-                // Intentar cargar desde localStorage primero (para demo)
-                const stored = localStorage.getItem('config_estados_orden');
-                if (stored) {
-                    estadosOrden = JSON.parse(stored);
+                // Cargar estados desde la API
+                const estados = await getEstadosOrden();
+
+                if (estados && estados.length > 0) {
+                    estadosOrden = estados;
                 } else {
-                    // Estados por defecto
+                    // Fallback a valores por defecto si la API no devuelve datos
                     estadosOrden = [
                         { id: 1, codigo: 'ABIERTA', nombre: 'Abierta', color: '#eab308', orden: 1 },
                         { id: 2, codigo: 'EN_PROGRESO', nombre: 'En Progreso', color: '#3b82f6', orden: 2 },
@@ -1041,7 +1062,17 @@
                 }
                 renderEstados();
             } catch (error) {
-                console.error('Error cargando estados:', error);
+                console.error('Error cargando estados desde API:', error);
+                // Fallback a valores por defecto en caso de error
+                estadosOrden = [
+                    { id: 1, codigo: 'ABIERTA', nombre: 'Abierta', color: '#eab308', orden: 1 },
+                    { id: 2, codigo: 'EN_PROGRESO', nombre: 'En Progreso', color: '#3b82f6', orden: 2 },
+                    { id: 3, codigo: 'RECAMBIO', nombre: 'Esperando Recambio', color: '#f97316', orden: 3 },
+                    { id: 4, codigo: 'COMPLETADA', nombre: 'Completada', color: '#22c55e', orden: 4 },
+                    { id: 5, codigo: 'ENTREGADA', nombre: 'Entregada', color: '#a855f7', orden: 5 }
+                ];
+                renderEstados();
+                showToast('Error cargando estados, mostrando valores por defecto', true);
             }
         }
 
@@ -1057,22 +1088,27 @@
                 return;
             }
 
-            container.innerHTML = estadosOrden.map((estado, index) => `
+            container.innerHTML = estadosOrden.map((estado, index) => {
+                // Asegurar que los valores existan y escapar comillas
+                const nombre = (estado.nombre || '').replace(/"/g, '&quot;');
+                const color = estado.color || '#6b7280';
+                const orden = estado.orden || (index + 1);
+
+                return `
                 <div class="estado-item" data-id="${estado.id}">
-                    <input type="color" class="estado-color-picker" value="${estado.color}" 
+                    <div class="estado-color-dot" style="background-color: ${color};"></div>
+                    <input type="color" class="estado-color-picker" value="${color}" 
                            onchange="actualizarColorEstado(${estado.id}, this.value)">
-                    <input type="text" class="estado-input campo-nombre" value="${estado.nombre}" 
+                    <input type="text" class="estado-input campo-nombre" value="${nombre}" 
                            placeholder="Nombre del estado">
-                    <input type="number" class="estado-orden" value="${estado.orden}" 
-                           min="1" placeholder="#" title="Orden">
+                    <input type="number" class="estado-orden" value="${orden}" 
+                           min="1" placeholder="#" title="Orden de visualización">
                     <button class="btn-sm btn-save" onclick="guardarEstado(${estado.id})">
                         Guardar
                     </button>
-                    <button class="btn-sm btn-delete" onclick="eliminarEstado(${estado.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         window.agregarEstado = function () {
@@ -1092,26 +1128,34 @@
             if (estado) estado.color = color;
         };
 
-        window.guardarEstado = function (id) {
+        window.guardarEstado = async function (id) {
             const item = document.querySelector(`.estado-item[data-id="${id}"]`);
             const estado = estadosOrden.find(e => e.id === id);
             if (estado && item) {
-                estado.nombre = item.querySelector('.campo-nombre').value;
-                estado.color = item.querySelector('.estado-color-picker').value;
-                estado.orden = parseInt(item.querySelector('.estado-orden').value) || 1;
+                const nombre = item.querySelector('.campo-nombre').value;
+                const color = item.querySelector('.estado-color-picker').value;
+                const orden = parseInt(item.querySelector('.estado-orden').value) || 1;
 
-                localStorage.setItem('config_estados_orden', JSON.stringify(estadosOrden));
-                showToast('Estado guardado correctamente');
+                try {
+                    // Guardar en la base de datos via API
+                    await updateEstadoConfig(id, { nombre, color, orden });
+
+                    // Actualizar estado local
+                    estado.nombre = nombre;
+                    estado.color = color;
+                    estado.orden = orden;
+
+                    showToast('Estado guardado correctamente');
+                } catch (error) {
+                    console.error('Error guardando estado:', error);
+                    showToast('Error al guardar el estado: ' + error.message, true);
+                }
             }
         };
 
         window.eliminarEstado = function (id) {
-            if (confirm('¿Eliminar este estado?')) {
-                estadosOrden = estadosOrden.filter(e => e.id !== id);
-                localStorage.setItem('config_estados_orden', JSON.stringify(estadosOrden));
-                renderEstados();
-                showToast('Estado eliminado');
-            }
+            // Los estados base no se pueden eliminar, solo personalizar
+            showToast('Los estados del sistema no se pueden eliminar, solo personalizar', true);
         };
 
         // ============ CAMPOS PERSONALIZADOS DE ÓRDENES ============

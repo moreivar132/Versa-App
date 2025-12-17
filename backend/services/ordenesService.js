@@ -44,17 +44,48 @@ class OrdenesService {
         }
 
         // 2. Validaciones de Entidades (Existencia y Pertenencia)
-        const sucursalValida = await ordenesRepository.checkSucursal(idSucursal, id_tenant);
-        if (!sucursalValida) throw new Error('Sucursal no válida o no pertenece al tenant');
+        // Super admins pueden saltarse las validaciones de tenant
+        const { is_super_admin } = userContext;
+        console.log('Validando entidades - id_tenant:', id_tenant, 'idSucursal:', idSucursal, 'idCliente:', idCliente, 'is_super_admin:', is_super_admin);
 
-        const clienteValido = await ordenesRepository.checkCliente(idCliente, id_tenant);
-        if (!clienteValido) throw new Error('Cliente no válido o no pertenece al tenant');
+        if (is_super_admin) {
+            // Para super admins, solo validamos existencia, no pertenencia a tenant
+            console.log('Super Admin detectado - saltando validaciones de tenant');
 
-        const vehiculoValido = esVentaProducto ? true : await ordenesRepository.checkVehiculo(idVehiculo, id_tenant);
-        if (!esVentaProducto && !vehiculoValido) throw new Error('Vehículo no válido o no pertenece al tenant');
+            // Verificar solo existencia de sucursal
+            const sucursalExiste = await ordenesRepository.checkSucursalExists(idSucursal);
+            if (!sucursalExiste) throw new Error('Sucursal no existe');
 
-        const mecanicoValido = esVentaProducto ? true : await ordenesRepository.checkMecanico(idMecanico, id_tenant);
-        if (!esVentaProducto && !mecanicoValido) throw new Error('Mecánico no válido o no pertenece al tenant');
+            // Verificar solo existencia de cliente
+            console.log('Verificando existencia de cliente - idCliente:', idCliente);
+            const clienteExiste = await ordenesRepository.checkClienteExists(idCliente);
+            console.log('Resultado checkClienteExists:', clienteExiste);
+            if (!clienteExiste) throw new Error(`Cliente no existe (idCliente: ${idCliente})`);
+
+            // Verificar solo existencia de vehículo y mecánico
+            if (!esVentaProducto) {
+                const vehiculoExiste = await ordenesRepository.checkVehiculoExists(idVehiculo);
+                if (!vehiculoExiste) throw new Error('Vehículo no existe');
+
+                const mecanicoExiste = await ordenesRepository.checkMecanicoExists(idMecanico);
+                if (!mecanicoExiste) throw new Error('Mecánico no existe');
+            }
+        } else {
+            // Para usuarios normales, validamos existencia Y pertenencia al tenant
+            const sucursalValida = await ordenesRepository.checkSucursal(idSucursal, id_tenant);
+            if (!sucursalValida) throw new Error('Sucursal no válida o no pertenece al tenant');
+
+            console.log('Verificando cliente - idCliente:', idCliente, 'id_tenant:', id_tenant);
+            const clienteValido = await ordenesRepository.checkCliente(idCliente, id_tenant);
+            console.log('Resultado checkCliente:', clienteValido);
+            if (!clienteValido) throw new Error(`Cliente no válido o no pertenece al tenant (idCliente: ${idCliente}, id_tenant: ${id_tenant})`);
+
+            const vehiculoValido = esVentaProducto ? true : await ordenesRepository.checkVehiculo(idVehiculo, id_tenant);
+            if (!esVentaProducto && !vehiculoValido) throw new Error('Vehículo no válido o no pertenece al tenant');
+
+            const mecanicoValido = esVentaProducto ? true : await ordenesRepository.checkMecanico(idMecanico, id_tenant);
+            if (!esVentaProducto && !mecanicoValido) throw new Error('Mecánico no válido o no pertenece al tenant');
+        }
 
         // 3. Lookup TipoOrden - Try both codigo and id
         let tipoOrden = await ordenesRepository.getTipoOrdenByCodigoOrId({
@@ -955,9 +986,53 @@ class OrdenesService {
      */
     async getEstadosOrden() {
         const result = await pool.query(
-            'SELECT id, codigo, nombre FROM estadoorden ORDER BY id ASC'
+            'SELECT id, codigo, nombre, color, orden FROM estadoorden ORDER BY COALESCE(orden, id) ASC'
         );
         return result.rows;
+    }
+
+    /**
+     * Actualiza un estado de orden (nombre, color, orden)
+     */
+    async updateEstadoOrdenConfig(idEstado, data) {
+        const { nombre, color, orden } = data;
+
+        const result = await pool.query(`
+            UPDATE estadoorden 
+            SET nombre = COALESCE($1, nombre),
+                color = COALESCE($2, color),
+                orden = COALESCE($3, orden)
+            WHERE id = $4
+            RETURNING id, codigo, nombre, color, orden
+        `, [nombre, color, orden, idEstado]);
+
+        if (result.rows.length === 0) {
+            throw new Error('Estado no encontrado');
+        }
+
+        return result.rows[0];
+    }
+
+    /**
+     * Actualiza múltiples estados de orden a la vez
+     */
+    async updateEstadosOrdenBatch(estados) {
+        const results = [];
+        for (const estado of estados) {
+            const result = await pool.query(`
+                UPDATE estadoorden 
+                SET nombre = COALESCE($1, nombre),
+                    color = COALESCE($2, color),
+                    orden = COALESCE($3, orden)
+                WHERE id = $4
+                RETURNING id, codigo, nombre, color, orden
+            `, [estado.nombre, estado.color, estado.orden, estado.id]);
+
+            if (result.rows.length > 0) {
+                results.push(result.rows[0]);
+            }
+        }
+        return results;
     }
 }
 
