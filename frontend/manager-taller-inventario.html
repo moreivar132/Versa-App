@@ -139,7 +139,6 @@
       border-radius: 10px;
       padding: 10px 16px 10px 40px;
       font-size: 14px;
-      width: 300px;
       transition: all 0.3s;
     }
 
@@ -392,25 +391,86 @@
           <div id="sucursal-selector-container"></div>
         </div>
 
-        <!-- Barra de Filtros y Búsqueda -->
-        <div class="flex flex-col md:flex-row gap-4 mb-6">
-          <div class="relative group">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <i
-                class="fas fa-search text-gray-500 group-focus-within:text-[var(--brand-orange)] transition-colors"></i>
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <!-- Card Más Stock -->
+          <div
+            class="stats-card p-6 rounded-2xl border border-[var(--surface-border)] bg-[#1a1c23] relative overflow-hidden group hover:border-[var(--brand-orange)]/30 transition-all">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <i class="fas fa-boxes text-4xl text-[var(--brand-orange)]"></i>
             </div>
-            <input type="text" id="table-search" class="search-input" placeholder="Buscar por nombre, código o ID...">
+            <h3 class="text-gray-400 text-sm font-medium mb-2 uppercase tracking-wider">Mayor Stock</h3>
+            <div class="flex flex-col">
+              <span class="text-2xl font-bold text-white" id="stat-most-stock-val">0</span>
+              <span class="text-xs text-[var(--brand-orange)] font-medium mt-1 truncate"
+                id="stat-most-stock-name">-</span>
+            </div>
           </div>
 
-          <div class="flex gap-3 overflow-x-auto pb-2 md:pb-0">
-            <select id="filter-category"
-              class="bg-[var(--input-bg)] border border-[var(--border-subtle)] text-gray-300 text-sm rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block p-2.5">
-              <option value="">Todas las Categorías</option>
-            </select>
-            <select id="filter-provider"
-              class="bg-[var(--input-bg)] border border-[var(--border-subtle)] text-gray-300 text-sm rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block p-2.5">
-              <option value="">Todos los Proveedores</option>
-            </select>
+          <!-- Card Menos Stock -->
+          <div
+            class="stats-card p-6 rounded-2xl border border-[var(--surface-border)] bg-[#1a1c23] relative overflow-hidden group hover:border-red-500/30 transition-all">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <i class="fas fa-box-open text-4xl text-red-500"></i>
+            </div>
+            <h3 class="text-gray-400 text-sm font-medium mb-2 uppercase tracking-wider">Menor Stock</h3>
+            <div class="flex flex-col">
+              <span class="text-2xl font-bold text-white" id="stat-least-stock-val">0</span>
+              <span class="text-xs text-red-400 font-medium mt-1 truncate" id="stat-least-stock-name">-</span>
+            </div>
+          </div>
+
+          <!-- Card Riesgo Stock -->
+          <div
+            class="stats-card p-6 rounded-2xl border border-[var(--surface-border)] bg-[#1a1c23] relative overflow-hidden group hover:border-yellow-500/30 transition-all">
+            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <i class="fas fa-exclamation-triangle text-4xl text-yellow-500"></i>
+            </div>
+            <h3 class="text-gray-400 text-sm font-medium mb-2 uppercase tracking-wider">Alerta de Stock</h3>
+            <div class="flex flex-col">
+              <span class="text-2xl font-bold text-white" id="stat-risk-val">0</span>
+              <span class="text-xs text-yellow-500 font-medium mt-1">Productos bajo mínimo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Filtros y Búsqueda -->
+        <div class="flex flex-col gap-4 mb-6">
+          <div class="flex flex-col md:flex-row gap-4 justify-between">
+            <div class="relative group flex-1">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <i
+                  class="fas fa-search text-gray-500 group-focus-within:text-[var(--brand-orange)] transition-colors"></i>
+              </div>
+              <input type="text" id="table-search" class="search-input w-full md:w-96"
+                placeholder="Buscar por nombre, código o ID...">
+            </div>
+
+            <div class="flex gap-2 text-sm overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+              <select id="filter-sort"
+                class="bg-[var(--input-bg)] border border-[var(--border-subtle)] text-gray-300 rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block p-2.5 min-w-[140px]">
+                <option value="">Ordenar por...</option>
+                <option value="stock_asc">Menos Stock</option>
+                <option value="stock_desc">Más Stock</option>
+                <option value="price_asc">Precio: Menor a Mayor</option>
+                <option value="price_desc">Precio: Mayor a Menor</option>
+              </select>
+
+              <select id="filter-brand"
+                class="bg-[var(--input-bg)] border border-[var(--border-subtle)] text-gray-300 rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block p-2.5 min-w-[140px]">
+                <option value="">Todas las Marcas</option>
+              </select>
+
+              <select id="filter-category"
+                class="bg-[var(--input-bg)] border border-[var(--border-subtle)] text-gray-300 rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block p-2.5 min-w-[140px]">
+                <option value="">Todas las Categorías</option>
+              </select>
+
+              <select id="filter-provider"
+                class="bg-[var(--input-bg)] border border-[var(--border-subtle)] text-gray-300 rounded-lg focus:ring-[var(--brand-orange)] focus:border-[var(--brand-orange)] block p-2.5 min-w-[140px]">
+                <option value="">Todos los Proveedores</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -481,6 +541,8 @@
       const searchInput = document.getElementById('table-search');
       const catSelect = document.getElementById('filter-category');
       const provSelect = document.getElementById('filter-provider');
+      const brandSelect = document.getElementById('filter-brand');
+      const sortSelect = document.getElementById('filter-sort');
       const exportBtn = document.getElementById('btn-export');
 
       let debounceTimeout;
@@ -493,6 +555,8 @@
 
       catSelect.addEventListener('change', () => loadInventory());
       provSelect.addEventListener('change', () => loadInventory());
+      brandSelect.addEventListener('change', () => loadInventory());
+      sortSelect.addEventListener('change', () => loadInventory());
 
       exportBtn.addEventListener('click', () => {
         const q = searchInput.value;
@@ -542,6 +606,19 @@
           });
         }
 
+        // Brands (New)
+        const brandRes = await fetchWithAuth('/api/inventory/brands');
+        if (brandRes.ok) {
+          const brands = await brandRes.json();
+          const brandSelect = document.getElementById('filter-brand');
+          brands.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b;
+            opt.textContent = b;
+            brandSelect.appendChild(opt);
+          });
+        }
+
         // Providers
         const provRes = await fetchWithAuth('/api/proveedores?limit=100');
         if (provRes.ok) {
@@ -559,12 +636,51 @@
       }
     }
 
-    // Constante para leer la sucursal guardada (ahora usa la del componente)
+    // --- Stats Loading ---
+    async function loadStats() {
+      try {
+        let url = '/api/inventory/stats';
+        const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+        if (savedSucursal) {
+          url += `?idSucursal=${savedSucursal}`;
+        }
+
+        const response = await fetchWithAuth(url);
+        if (!response.ok) return;
+
+        const stats = await response.json();
+
+        // Update DOM
+        if (stats.most_stock) {
+          document.getElementById('stat-most-stock-val').textContent = stats.most_stock.stock;
+          document.getElementById('stat-most-stock-name').textContent = stats.most_stock.nombre;
+        } else {
+          document.getElementById('stat-most-stock-name').textContent = "Sin datos";
+        }
+
+        if (stats.least_stock) {
+          document.getElementById('stat-least-stock-val').textContent = stats.least_stock.stock;
+          document.getElementById('stat-least-stock-name').textContent = stats.least_stock.nombre;
+        } else {
+          document.getElementById('stat-least-stock-name').textContent = "Sin datos";
+        }
+
+        document.getElementById('stat-risk-val').textContent = stats.risk_count;
+
+      } catch (e) {
+        console.error("Error loading stats", e);
+      }
+    }
 
     async function loadInventory() {
+      // Refresh stats on load (optional but good context)
+      loadStats();
+
       const query = document.getElementById('table-search').value;
       const category = document.getElementById('filter-category').value;
       const provider = document.getElementById('filter-provider').value;
+      const brand = document.getElementById('filter-brand').value;
+      const sort = document.getElementById('filter-sort').value;
 
       const tableBody = document.getElementById('products-table-body');
       tableBody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-gray-500">Cargando...</td></tr>';
@@ -573,6 +689,8 @@
         let url = `/api/inventory/resumen?q=${encodeURIComponent(query)}`;
         if (category) url += `&category=${encodeURIComponent(category)}`;
         if (provider) url += `&provider=${encodeURIComponent(provider)}`;
+        if (brand) url += `&brand=${encodeURIComponent(brand)}`;
+        if (sort) url += `&sort=${encodeURIComponent(sort)}`;
 
         // Agregar filtro de sucursal desde localStorage
         const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);

@@ -320,10 +320,13 @@
             sb.classList.toggle('h-full');
         });
 
-        document.getElementById('logout-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            clearSession();
-            redirectToLogin();
+        document.addEventListener('click', (e) => {
+            const logoutLink = e.target.closest('#logout-btn') || e.target.closest('[data-logout]');
+            if (logoutLink) {
+                e.preventDefault();
+                clearSession();
+                redirectToLogin();
+            }
         });
 
         // App Logic

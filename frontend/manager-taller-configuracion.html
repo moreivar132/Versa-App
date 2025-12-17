@@ -1028,10 +1028,14 @@
             userRole.textContent = roleText;
 
             // Logout
-            document.getElementById('logout-btn')?.addEventListener('click', (e) => {
-                e.preventDefault();
-                clearSession();
-                redirectToLogin();
+            // Logout - Event Delegation for dynamic sidebar
+            document.addEventListener('click', (e) => {
+                const logoutLink = e.target.closest('#logout-btn') || e.target.closest('[data-logout]');
+                if (logoutLink) {
+                    e.preventDefault();
+                    clearSession();
+                    redirectToLogin();
+                }
             });
 
             // Cargar configuraciones

@@ -28,15 +28,16 @@
         }
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const logoutTargets = document.querySelectorAll('[data-logout], #logoutBtn, #btnLogout');
+    // Use event delegation for logout to handle dynamic content (SafeToAutoRun)
+    window.addEventListener('click', (event) => {
+        const logoutLink = event.target.closest('[data-logout]') ||
+            event.target.closest('#logoutBtn') ||
+            event.target.closest('#btnLogout');
 
-        logoutTargets.forEach((el) => {
-            el.addEventListener('click', (event) => {
-                event.preventDefault();
-                localStorage.removeItem(SESSION_KEY);
-                window.location.replace('login.html');
-            });
-        });
+        if (logoutLink) {
+            event.preventDefault();
+            localStorage.removeItem(SESSION_KEY);
+            window.location.replace('login.html');
+        }
     });
 })();

@@ -114,7 +114,18 @@
         if (!sidebarEl) return;
 
         // Obtener info del usuario desde localStorage o usar valores por defecto
-        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        let userInfo = {};
+        try {
+            const session = JSON.parse(localStorage.getItem('versa_session_v1') || 'null');
+            if (session && session.user) {
+                userInfo = session.user;
+            } else {
+                userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            }
+        } catch (e) {
+            console.error('Error parsing user info:', e);
+            userInfo = {};
+        }
         const userName = userInfo.nombre || 'Usuario';
         const userInitials = userName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const userRole = userInfo.tipo || 'admin';

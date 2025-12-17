@@ -14,11 +14,9 @@ router.get('/', verifyJWT, async (req, res) => {
 
         // Solo usuarios que NO son super_admin
         let sql = `
-            SELECT id, nombre, email, porcentaje_mano_obra
+            SELECT id, nombre, email, is_super_admin, porcentaje_mano_obra
             FROM usuario 
-            WHERE id_tenant = $1 
-              AND (is_super_admin IS NULL OR is_super_admin = false)
-        `;
+            WHERE id_tenant = $1`;
         const params = [id_tenant];
 
         if (buscar) {
@@ -44,7 +42,7 @@ router.get('/:id/movimientos', verifyJWT, async (req, res) => {
     try {
         const id_mecanico = parseInt(req.params.id);
         const id_tenant = req.user.id_tenant;
-        const { fechaDesde, fechaHasta, tipo, limit = 100, offset = 0 } = req.query;
+        const { fechaDesde, fechaHasta, tipo, limit = 100, offset = 0, idSucursal } = req.query;
 
         // Verificar que el mecánico pertenece al tenant
         const mecanicoCheck = await pool.query(
@@ -66,9 +64,13 @@ router.get('/:id/movimientos', verifyJWT, async (req, res) => {
                 cmm.id_medio_pago,
                 cmm.created_at,
                 mp.nombre as medio_pago_nombre,
-                mp.codigo as medio_pago_codigo
+                mp.codigo as medio_pago_codigo,
+                COALESCE(o.id_sucursal, c.id_sucursal) as inferred_sucursal
             FROM cuentamecanicomovimiento cmm
             LEFT JOIN mediopago mp ON cmm.id_medio_pago = mp.id
+            LEFT JOIN orden o ON (cmm.origen_tipo = 'ORDEN' AND cmm.origen_id = o.id)
+            LEFT JOIN cajamovimiento cm ON (cmm.origen_tipo = 'MANUAL' AND cm.origen_id = cmm.id AND cm.origen_tipo = 'PAGO_TRABAJADOR')
+            LEFT JOIN caja c ON cm.id_caja = c.id
             WHERE cmm.id_mecanico = $1
         `;
         const params = [id_mecanico];
@@ -89,36 +91,48 @@ router.get('/:id/movimientos', verifyJWT, async (req, res) => {
             params.push(tipo);
             paramIndex++;
         }
+        if (idSucursal) {
+            sql += ` AND COALESCE(o.id_sucursal, c.id_sucursal) = $${paramIndex}`;
+            params.push(parseInt(idSucursal));
+            paramIndex++;
+        }
 
         sql += ` ORDER BY cmm.fecha DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
         params.push(parseInt(limit), parseInt(offset));
 
         const result = await pool.query(sql, params);
 
-        // Calcular totales
-        const totalesSql = `
+        // Calcular totales con los mismos filtros
+        let totalesSql = `
             SELECT 
-                COALESCE(SUM(CASE WHEN tipo IN ('INGRESO', 'COMISION') THEN monto ELSE 0 END), 0) as total_ingresos,
-                COALESCE(SUM(CASE WHEN tipo IN ('PAGO', 'ADELANTO', 'EGRESO') THEN monto ELSE 0 END), 0) as total_egresos
-            FROM cuentamecanicomovimiento
-            WHERE id_mecanico = $1
+                COALESCE(SUM(CASE WHEN cmm.tipo IN ('INGRESO', 'COMISION') THEN cmm.monto ELSE 0 END), 0) as total_ingresos,
+                COALESCE(SUM(CASE WHEN cmm.tipo IN ('PAGO', 'ADELANTO', 'EGRESO') THEN cmm.monto ELSE 0 END), 0) as total_egresos
+            FROM cuentamecanicomovimiento cmm
+            LEFT JOIN orden o ON (cmm.origen_tipo = 'ORDEN' AND cmm.origen_id = o.id)
+            LEFT JOIN cajamovimiento cm ON (cmm.origen_tipo = 'MANUAL' AND cm.origen_id = cmm.id AND cm.origen_tipo = 'PAGO_TRABAJADOR')
+            LEFT JOIN caja c ON cm.id_caja = c.id
+            WHERE cmm.id_mecanico = $1
         `;
         const totalesParams = [id_mecanico];
-
-        let totalesSqlFiltrado = totalesSql;
         let idx = 2;
+
         if (fechaDesde) {
-            totalesSqlFiltrado += ` AND fecha >= $${idx}`;
+            totalesSql += ` AND cmm.fecha >= $${idx}`;
             totalesParams.push(fechaDesde);
             idx++;
         }
         if (fechaHasta) {
-            totalesSqlFiltrado += ` AND fecha <= $${idx}`;
+            totalesSql += ` AND cmm.fecha <= $${idx}`;
             totalesParams.push(fechaHasta);
             idx++;
         }
+        if (idSucursal) {
+            totalesSql += ` AND COALESCE(o.id_sucursal, c.id_sucursal) = $${idx}`;
+            totalesParams.push(parseInt(idSucursal));
+            idx++;
+        }
 
-        const totalesResult = await pool.query(totalesSqlFiltrado, totalesParams);
+        const totalesResult = await pool.query(totalesSql, totalesParams);
         const totales = totalesResult.rows[0];
 
         res.json({
