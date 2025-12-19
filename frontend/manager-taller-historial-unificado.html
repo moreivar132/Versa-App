@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial Unificado - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind & Global Styles -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="manager.css">
+    <script src="/guard.js"></script>
+
+    <style>
+        /* Custom Styles extending Manager.css where needed */
+        .search-container {
+            position: relative;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .search-results-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: #1e2028;
+            border: 1px solid #2d3240;
+            border-radius: 0 0 12px 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 50;
+            display: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .search-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #2d3240;
+            transition: background 0.2s;
+        }
+
+        .search-item:hover {
+            background: #282e39;
+        }
+
+        .search-item:last-child {
+            border-bottom: none;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            color: #9da6b9;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: white;
+        }
+
+        .tab-btn.active {
+            color: var(--brand-orange);
+            border-bottom-color: var(--brand-orange);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 24px;
+            border-left: 2px solid #2d3240;
+            padding-bottom: 24px;
+        }
+
+        .timeline-item:last-child {
+            border-left: 2px solid transparent;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -9px;
+            top: 0;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2d3240;
+            border: 2px solid #111318;
+        }
+
+        .timeline-item.orden .timeline-dot {
+            background: #3b82f6;
+        }
+
+        /* Blue */
+        .timeline-item.venta .timeline-dot {
+            background: #22c55e;
+        }
+
+        /* Green */
+        .timeline-item.presupuesto .timeline-dot {
+            background: #eab308;
+        }
+
+        /* Yellow */
+
+        .card-info {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 16px;
+        }
+    </style>
+</head>
+
+<body class="bg-[#0b0d11] font-[Montserrat] text-white">
+
+    <div class="flex h-screen w-full">
+        <!-- Sidebar container (populated by js) -->
+        <aside id="sidebar" class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 border-r border-[#282e39]">
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+            <!-- Mobile Header -->
+            <header class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[#282e39]">
+                <div class="logo-badge"><img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto"></div>
+                <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+            </header>
+
+            <div class="flex-1 overflow-y-auto p-4 md:p-8">
+
+                <!-- Top Header -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Historial Unificado</h1>
+                        <p class="text-[#9da6b9] text-sm">Consulta todo el historial de clientes y vehículos</p>
+                    </div>
+                </div>
+
+                <!-- Search Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <!-- Search Client -->
+                    <div class="bg-[#111318] p-6 rounded-xl border border-[#282e39] shadow-lg relative">
+                        <label class="text-sm font-semibold text-[#9da6b9] uppercase mb-2 block">Buscar Cliente</label>
+                        <div class="search-container relative">
+                            <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-[#9da6b9]"></i>
+                            <input type="text" id="search-client-input"
+                                class="w-full bg-[#1a1d24] border border-[#2d3240] rounded-xl py-3 pl-12 pr-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-[#545b6b]"
+                                placeholder="Nombre, teléfono, email..." autocomplete="off">
+                            <div id="client-results" class="search-results-dropdown"></div>
+                        </div>
+                    </div>
+
+                    <!-- Search Vehicle -->
+                    <div class="bg-[#111318] p-6 rounded-xl border border-[#282e39] shadow-lg relative">
+                        <label class="text-sm font-semibold text-[#9da6b9] uppercase mb-2 block">Buscar Vehículo</label>
+                        <div class="search-container relative">
+                            <i class="fas fa-car absolute left-4 top-1/2 -translate-y-1/2 text-[#9da6b9]"></i>
+                            <input type="text" id="search-vehicle-input"
+                                class="w-full bg-[#1a1d24] border border-[#2d3240] rounded-xl py-3 pl-12 pr-4 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] outline-none transition-all placeholder-[#545b6b]"
+                                placeholder="Matrícula, VIN, Modelo..." autocomplete="off">
+                            <div id="vehicle-results" class="search-results-dropdown"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section (Hidden initially) -->
+                <div id="results-container" class="hidden animate-fade-in">
+
+                    <!-- Context Header (Client/Vehicle Info) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <!-- Client Info -->
+                        <div class="card-info relative overflow-hidden group">
+                            <div
+                                class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <i class="fas fa-user text-6xl"></i>
+                            </div>
+                            <h3 class="text-[#9da6b9] text-xs font-bold uppercase mb-2">Cliente</h3>
+                            <div id="client-info-display">
+                                <h2 class="text-xl font-bold text-white mb-1" id="client-name">-</h2>
+                                <p class="text-sm text-[#9da6b9] mb-1"><i class="fas fa-phone mr-2"></i> <span
+                                        id="client-phone">-</span></p>
+                                <p class="text-sm text-[#9da6b9]"><i class="fas fa-envelope mr-2"></i> <span
+                                        id="client-email">-</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Info -->
+                        <div class="card-info relative overflow-hidden group">
+                            <div
+                                class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <i class="fas fa-car text-6xl"></i>
+                            </div>
+                            <h3 class="text-[#9da6b9] text-xs font-bold uppercase mb-2">Vehículo Seleccionado</h3>
+                            <div id="vehicle-info-display">
+                                <h2 class="text-xl font-bold text-white mb-1" id="vehicle-plate">-</h2>
+                                <p class="text-sm text-[#9da6b9] mb-1" id="vehicle-model">-</p>
+                                <p class="text-sm text-[#9da6b9]"><i class="fas fa-fingerprint mr-2"></i> <span
+                                        id="vehicle-vin">-</span></p>
+                            </div>
+                            <button id="reset-vehicle-btn" onclick="resetVehicleSelection()"
+                                class="hidden absolute bottom-4 right-4 text-xs bg-[#282e39] hover:bg-[#374151] text-white px-3 py-1 rounded-lg transition-colors border border-[#4b5563]">
+                                Ver Todo (Cliente)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Summary -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#2d3240]">
+                            <p class="text-[#9da6b9] text-xs uppercase font-bold">Total Gastado</p>
+                            <p class="text-xl font-bold text-white mt-1" id="stat-total-spent">€0.00</p>
+                        </div>
+                        <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#2d3240]">
+                            <p class="text-[#9da6b9] text-xs uppercase font-bold">Visitas Taller</p>
+                            <p class="text-xl font-bold text-white mt-1" id="stat-visits">0</p>
+                        </div>
+                        <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#2d3240]">
+                            <p class="text-[#9da6b9] text-xs uppercase font-bold">Repuestos</p>
+                            <p class="text-xl font-bold text-white mt-1" id="stat-parts">0</p>
+                        </div>
+                        <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#2d3240]">
+                            <p class="text-[#9da6b9] text-xs uppercase font-bold">Deuda Actual</p>
+                            <p class="text-xl font-bold text-red-400 mt-1" id="stat-debt">€0.00</p>
+                        </div>
+                    </div>
+
+                    <!-- Controls & Timeline -->
+                    <div class="bg-[#111318] rounded-xl border border-[#282e39] overflow-hidden">
+
+                        <!-- Toolbar -->
+                        <div
+                            class="p-4 border-b border-[#282e39] flex flex-col md:flex-row justify-between items-center gap-4 bg-[#16181d]">
+                            <!-- Tabs -->
+                            <div id="filter-tabs" class="flex overflow-x-auto no-scrollbar gap-2">
+                                <button class="tab-btn active text-sm" data-filter="all">Todo</button>
+                                <button class="tab-btn text-sm" data-filter="orden">Órdenes</button>
+                                <button class="tab-btn text-sm" data-filter="venta">Ventas</button>
+                                <button class="tab-btn text-sm" data-filter="mantenimiento">Mantenimientos</button>
+                            </div>
+
+                            <!-- Date & Print -->
+                            <div class="flex items-center gap-2 w-full md:w-auto">
+                                <input type="date" id="date-from"
+                                    class="bg-[#1a1d24] border border-[#2d3240] text-white text-xs rounded-lg px-2 py-1.5 focus:border-[var(--brand-orange)] outline-none"
+                                    placeholder="Desde">
+                                <span class="text-[#9da6b9] text-xs">-</span>
+                                <input type="date" id="date-to"
+                                    class="bg-[#1a1d24] border border-[#2d3240] text-white text-xs rounded-lg px-2 py-1.5 focus:border-[var(--brand-orange)] outline-none"
+                                    placeholder="Hasta">
+
+                                <button id="print-report-btn"
+                                    class="ml-2 bg-[#282e39] hover:bg-[#374151] text-white p-2 rounded-lg transition-colors"
+                                    title="Imprimir Reporte">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Timeline -->
+                        <div class="p-6">
+                            <div id="history-timeline" class="flex flex-col gap-0">
+                                <!-- Timeline Items -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="sidebar-manager.js"></script>
+    <script type="module">
+        import { fetchWithAuth } from '/auth.js';
+
+        let currentClient = null;
+        let currentVehicle = null;
+        let allHistory = [];
+        let currentFilterType = 'all'; // Track active filter type
+
+        // DOM Elements
+        const clientInput = document.getElementById('search-client-input');
+        const vehicleInput = document.getElementById('search-vehicle-input');
+        const clientResults = document.getElementById('client-results');
+        const vehicleResults = document.getElementById('vehicle-results');
+        const resultsContainer = document.getElementById('results-container');
+
+        const dateFromInput = document.getElementById('date-from');
+        const dateToInput = document.getElementById('date-to');
+
+        // Setup Date Filters
+        dateFromInput.addEventListener('change', applyFilters);
+        dateToInput.addEventListener('change', applyFilters);
+
+        // Setup Filter Tabs - Event Delegation
+        document.getElementById('filter-tabs').addEventListener('click', (e) => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+
+            const filterType = btn.dataset.filter;
+            if (!filterType) return;
+
+            currentFilterType = filterType;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
+        });
+
+        // Setup Print Button
+        document.getElementById('print-report-btn').addEventListener('click', printHistoryReport);
+
+        // Search Handlers
+        setupSearch(clientInput, clientResults, 'cliente');
+        setupSearch(vehicleInput, vehicleResults, 'vehiculo');
+
+        function setupSearch(input, resultsDiv, type) {
+            let timeout;
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                if (query.length < 2) {
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                clearTimeout(timeout);
+                timeout = setTimeout(() => performSearch(query, type, resultsDiv), 300);
+            });
+            input.addEventListener('focus', () => {
+                if (input.value.trim().length >= 2) resultsDiv.style.display = 'block';
+            });
+
+            // Close on click outside
+            document.addEventListener('click', (e) => {
+                if (!input.contains(e.target) && !resultsDiv.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        }
+
+        async function performSearch(query, type, resultsDiv) {
+            try {
+                let items = [];
+                if (type === 'cliente') {
+                    const resp = await fetchWithAuth(`/api/clientes/search?q=${encodeURIComponent(query)}`);
+                    items = resp.ok ? await resp.json() : [];
+                } else {
+                    const resp = await fetchWithAuth(`/api/vehiculos/search?q=${encodeURIComponent(query)}`);
+                    items = resp.ok ? await resp.json() : [];
+                }
+                renderDropdown(items, type, resultsDiv);
+            } catch (error) {
+                console.error("Search error:", error);
+            }
+        }
+
+        function renderDropdown(items, type, container) {
+            container.innerHTML = '';
+            if (items.length === 0) {
+                container.innerHTML = '<div class="p-3 text-[#9da6b9] text-xs text-center">Sin resultados</div>';
+                container.style.display = 'block';
+                return;
+            }
+
+            items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'search-item';
+                if (type === 'cliente') {
+                    // Build extra info string for distinction
+                    const extraInfo = [
+                        item.telefono,
+                        item.documento,
+                        item.email
+                    ].filter(Boolean).join(' · ') || 'Sin datos adicionales';
+
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3">
+                             <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 flex items-center justify-center text-xs"><i class="fas fa-user"></i></div>
+                             <div class="flex-1 min-w-0">
+                                <p class="text-white text-sm font-bold truncate">${item.nombre}</p>
+                                <p class="text-[#9da6b9] text-[10px] truncate">${extraInfo}</p>
+                             </div>
+                        </div>`;
+                    el.onclick = () => selectClient(item);
+                } else {
+                    el.innerHTML = `
+                        <div class="flex items-center gap-2">
+                             <div class="w-6 h-6 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center text-[10px]"><i class="fas fa-car"></i></div>
+                             <div>
+                                <p class="text-white text-xs font-bold">${item.matricula}</p>
+                                <p class="text-[#9da6b9] text-[10px]">${item.marca} ${item.modelo}</p>
+                             </div>
+                        </div>`;
+                    el.onclick = () => selectVehicle(item);
+                }
+                container.appendChild(el);
+            });
+            container.style.display = 'block';
+        }
+
+        window.selectClient = async function (client) {
+            // Clear previous data FIRST
+            allHistory = [];
+            currentFilterType = 'all';
+
+            currentClient = client;
+            currentVehicle = null; // Clear vehicle preference to show all for client
+
+            clientInput.value = client.nombre;
+            clientResults.style.display = 'none';
+            vehicleInput.value = ''; // Clear vehicle search
+
+            // Reset filter tabs UI
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tab-btn[data-filter="all"]')?.classList.add('active');
+
+            // Reset date filters
+            dateFromInput.value = '';
+            dateToInput.value = '';
+
+            updateHeaderInfo();
+            resultsContainer.classList.remove('hidden');
+            await loadHistory();
+        }
+
+        window.selectVehicle = async function (vehicle) {
+            // Clear previous data FIRST
+            allHistory = [];
+            currentFilterType = 'all';
+
+            currentVehicle = vehicle;
+
+            // If vehicle belongs to a client and we don't have one selected or it's different, fetch client
+            if (vehicle.cliente_id) {
+                try {
+                    const cResp = await fetchWithAuth(`/api/clientes/${vehicle.cliente_id}`);
+                    if (cResp.ok) currentClient = await cResp.json();
+                } catch (e) { }
+            }
+
+            vehicleInput.value = vehicle.matricula;
+            vehicleResults.style.display = 'none';
+
+            if (currentClient) clientInput.value = currentClient.nombre;
+
+            // Reset filter tabs UI
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tab-btn[data-filter="all"]')?.classList.add('active');
+
+            // Reset date filters
+            dateFromInput.value = '';
+            dateToInput.value = '';
+
+            updateHeaderInfo();
+            resultsContainer.classList.remove('hidden');
+            await loadHistory();
+        }
+
+        window.resetVehicleSelection = function () {
+            if (currentClient) {
+                selectClient(currentClient);
+            }
+        }
+
+        function updateHeaderInfo() {
+            // Client
+            if (currentClient) {
+                document.getElementById('client-name').textContent = currentClient.nombre;
+                document.getElementById('client-phone').textContent = currentClient.telefono || '-';
+                document.getElementById('client-email').textContent = currentClient.email || '-';
+            } else {
+                document.getElementById('client-name').textContent = 'Desconocido';
+            }
+
+            // Vehicle
+            const btnReset = document.getElementById('reset-vehicle-btn');
+            if (currentVehicle) {
+                document.getElementById('vehicle-plate').textContent = currentVehicle.matricula;
+                document.getElementById('vehicle-model').textContent = `${currentVehicle.marca} ${currentVehicle.modelo}`;
+                document.getElementById('vehicle-vin').textContent = currentVehicle.bastidor || '-';
+                if (currentClient) btnReset.classList.remove('hidden');
+            } else {
+                document.getElementById('vehicle-plate').textContent = "Todos los Vehículos";
+                document.getElementById('vehicle-model').textContent = "Historial completo del cliente";
+                document.getElementById('vehicle-vin').textContent = "-";
+                btnReset.classList.add('hidden');
+            }
+        }
+
+        async function loadHistory() {
+            const timelineContainer = document.getElementById('history-timeline');
+            timelineContainer.innerHTML = '<div class="text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-[var(--brand-orange)]"></i><p class="mt-2 text-[#9da6b9]">Cargando historial...</p></div>';
+
+            try {
+                // Build Parameters
+                let ordersParams = new URLSearchParams({ limit: 100 });
+                let invoicesParams = new URLSearchParams({ limit: 100 });
+
+                if (currentClient) {
+                    ordersParams.set('idCliente', currentClient.id);
+                    invoicesParams.set('cliente_id', currentClient.id);
+                }
+                if (currentVehicle) {
+                    ordersParams.set('idVehiculo', currentVehicle.id);
+                }
+
+                // Fetch - Orders only for now since ventas/facturas might need different params
+                const [ordersRes, invoicesRes] = await Promise.allSettled([
+                    fetchWithAuth(`/api/ordenes?${ordersParams}`),
+                    fetchWithAuth(`/api/facturas?${invoicesParams}`)
+                ]);
+
+                // Process Orders
+                let orders = [];
+                if (ordersRes.status === 'fulfilled' && ordersRes.value.ok) {
+                    const data = await ordersRes.value.json();
+                    orders = data.ordenes || [];
+                }
+
+                // Process Sales/Invoices
+                let sales = [];
+                if (invoicesRes.status === 'fulfilled' && invoicesRes.value.ok) {
+                    try {
+                        const sData = await invoicesRes.value.json();
+                        // Handle both array and object with facturas property
+                        sales = Array.isArray(sData) ? sData : (sData.facturas || []);
+                    } catch (e) { console.error('Error parsing invoices:', e); }
+                }
+
+                // Merge
+                allHistory = [
+                    ...orders.map(o => {
+                        // Fix Date Parsing
+                        let d = new Date(o.fecha_ingreso || o.created_at);
+                        if (isNaN(d.getTime())) d = new Date(); // Fallback
+
+                        return {
+                            type: 'orden',
+                            rawDate: d,
+                            id: o.id,
+                            title: `Orden de Trabajo #${o.id}`,
+                            status: o.estado_nombre || o.estado_codigo || 'PENDIENTE',
+                            total: parseFloat(o.total_neto || 0),
+                            description: o.descripcion || 'Sin descripción',
+                            vehiculo_matricula: o.vehiculo_matricula
+                        };
+                    }),
+                    ...sales.map(s => {
+                        let d = new Date(s.fecha_venta || s.fecha_emision || s.created_at);
+                        if (isNaN(d.getTime())) d = new Date();
+
+                        return {
+                            type: 'venta',
+                            rawDate: d,
+                            id: s.id,
+                            title: `Venta Directa #${s.id}`,
+                            status: s.estado || 'COMPLETADO',
+                            total: parseFloat(s.total || 0),
+                            description: s.tipo ? `Documento: ${s.tipo.toUpperCase()}` : 'Venta de repuestos'
+                        };
+                    })
+                ];
+
+                // Sort
+                allHistory.sort((a, b) => b.rawDate - a.rawDate);
+
+                updateStats(allHistory);
+                applyFilters(); // Apply initial date filters if any
+
+            } catch (error) {
+                console.error("Critical error:", error);
+                timelineContainer.innerHTML = '<div class="text-center py-4 text-red-400">Error al cargar datos</div>';
+            }
+        }
+
+        function updateStats(items) {
+            const total = items.reduce((sum, i) => sum + i.total, 0);
+            const visits = items.filter(i => i.type === 'orden').length;
+            const sales = items.filter(i => i.type === 'venta').length;
+
+            document.getElementById('stat-total-spent').textContent = `€${total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`;
+            document.getElementById('stat-visits').textContent = visits;
+            document.getElementById('stat-parts').textContent = sales;
+            // Deuda is placeholder - would need to be calculated from pending orders
+            document.getElementById('stat-debt').textContent = `€0.00`;
+        }
+
+        function applyFilters() {
+            const dateFrom = dateFromInput.value ? new Date(dateFromInput.value) : null;
+            const dateTo = dateToInput.value ? new Date(dateToInput.value) : null;
+
+            if (dateTo) dateTo.setHours(23, 59, 59); // End of day
+
+            const filtered = allHistory.filter(item => {
+                // Type Filter using currentFilterType
+                if (currentFilterType === 'orden' && item.type !== 'orden') return false;
+                if (currentFilterType === 'venta' && item.type !== 'venta') return false;
+                if (currentFilterType === 'mantenimiento' &&
+                    !(item.type === 'orden' && (item.description.toLowerCase().includes('manten') || item.description.toLowerCase().includes('revis')))) return false;
+
+                // Date Filter
+                if (dateFrom && item.rawDate < dateFrom) return false;
+                if (dateTo && item.rawDate > dateTo) return false;
+
+                return true;
+            });
+
+            renderTimeline(filtered);
+        }
+
+        function renderTimeline(items) {
+            const container = document.getElementById('history-timeline');
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-[#9da6b9]">No hay registros para este periodo.</div>';
+                return;
+            }
+
+            items.forEach(item => {
+                const dateStr = item.rawDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                const isOrden = item.type === 'orden';
+                const badgeColor = isOrden ? 'text-blue-400 border-blue-500/30' : 'text-green-400 border-green-500/30';
+
+                const html = `
+                    <div class="timeline-item ${item.type} pl-6 border-l-2 border-[#2d3240] relative pb-6 last:border-0 last:pb-0">
+                        <div class="timeline-dot absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-[#2d3240] border-2 border-[#111318] ${isOrden ? 'bg-blue-500' : 'bg-green-500'}"></div>
+                        
+                        <div class="flex flex-col md:flex-row justify-between gap-4 group">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-xs font-mono text-[#545b6b]">${dateStr}</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded border bg-opacity-10 ${badgeColor} font-bold uppercase">${item.status}</span>
+                                </div>
+                                <h4 class="text-white font-bold text-lg hover:text-[var(--brand-orange)] transition-colors cursor-pointer" onclick="window.location.href='${isOrden ? 'manager-taller-ordenes-lista.html?id=' + item.id : '#'}'">
+                                    ${item.title}
+                                </h4>
+                                <p class="text-sm text-[#9da6b9] mt-1 line-clamp-2">${item.description}</p>
+                                ${item.vehiculo_matricula ? `<p class="text-xs text-[#545b6b] mt-1"><i class="fas fa-car mr-1"></i>${item.vehiculo_matricula}</p>` : ''}
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-xl font-bold text-white">€${item.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</span>
+                                <button onclick="window.location.href='${isOrden ? 'manager-taller-ordenes-lista.html?id=' + item.id : '#'}'" class="text-xs text-[var(--brand-orange)] hover:underline mt-1">
+                                    Ver Detalle <i class="fas fa-arrow-right ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+        function printHistoryReport() {
+            const clientName = currentClient ? currentClient.nombre : 'Cliente General';
+            const clientPhone = currentClient ? (currentClient.telefono || '-') : '-';
+            const clientEmail = currentClient ? (currentClient.email || '-') : '-';
+            const vehicleInfo = currentVehicle
+                ? `${currentVehicle.matricula} - ${currentVehicle.marca} ${currentVehicle.modelo}`
+                : 'Todos los vehículos';
+
+            // Recalculate filtered items
+            const dateFrom = dateFromInput.value ? new Date(dateFromInput.value) : null;
+            const dateTo = dateToInput.value ? new Date(dateToInput.value) : null;
+            if (dateTo) dateTo.setHours(23, 59, 59);
+
+            const filtered = allHistory.filter(item => {
+                if (currentFilterType === 'orden' && item.type !== 'orden') return false;
+                if (currentFilterType === 'venta' && item.type !== 'venta') return false;
+                if (currentFilterType === 'mantenimiento' &&
+                    !(item.type === 'orden' && (item.description.toLowerCase().includes('manten') || item.description.toLowerCase().includes('revis')))) return false;
+                if (dateFrom && item.rawDate < dateFrom) return false;
+                if (dateTo && item.rawDate > dateTo) return false;
+                return true;
+            });
+
+            // Calculate stats
+            const totalAmount = filtered.reduce((acc, curr) => acc + curr.total, 0);
+            const ordersCount = filtered.filter(i => i.type === 'orden').length;
+            const salesCount = filtered.filter(i => i.type === 'venta').length;
+            const ordersTotal = filtered.filter(i => i.type === 'orden').reduce((a, b) => a + b.total, 0);
+            const salesTotal = filtered.filter(i => i.type === 'venta').reduce((a, b) => a + b.total, 0);
+
+            // Date range text
+            let dateRangeText = 'Todo el historial';
+            if (dateFrom && dateTo) {
+                dateRangeText = `Del ${dateFrom.toLocaleDateString('es-ES')} al ${dateTo.toLocaleDateString('es-ES')}`;
+            } else if (dateFrom) {
+                dateRangeText = `Desde ${dateFrom.toLocaleDateString('es-ES')}`;
+            } else if (dateTo) {
+                dateRangeText = `Hasta ${dateTo.toLocaleDateString('es-ES')}`;
+            }
+
+            const win = window.open('', '', 'height=900,width=1000');
+            win.document.write(`
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Historial - ${clientName}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc; 
+            color: #1e293b;
+            padding: 40px;
+            line-height: 1.5;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); overflow: hidden; }
+        
+        /* Header */
+        .header { 
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: white;
+            padding: 32px 40px;
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .logo { font-size: 28px; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+        .logo-icon { 
+            width: 48px; height: 48px; 
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px;
+        }
+        .report-date { font-size: 12px; color: #94a3b8; text-align: right; }
+        .report-title { font-size: 14px; font-weight: 600; color: #f97316; margin-bottom: 4px; }
+        
+        /* Client Info */
+        .client-section { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+            background: #f8fafc;
+            padding: 24px 40px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-card { }
+        .info-label { font-size: 10px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .info-value { font-size: 16px; font-weight: 600; color: #1e293b; }
+        .info-subvalue { font-size: 13px; color: #64748b; margin-top: 2px; }
+        
+        /* Stats */
+        .stats-section { 
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+            padding: 24px 40px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .stat-box { text-align: center; padding: 16px; background: #f8fafc; border-radius: 12px; }
+        .stat-number { font-size: 24px; font-weight: 700; color: #1e293b; }
+        .stat-number.orange { color: #f97316; }
+        .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; font-weight: 600; margin-top: 4px; }
+        
+        /* Table */
+        .table-section { padding: 24px 40px 40px; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .table-title { font-size: 16px; font-weight: 600; color: #1e293b; }
+        .table-count { font-size: 13px; color: #64748b; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead th { 
+            background: #f1f5f9; 
+            padding: 12px 16px; 
+            text-align: left; 
+            font-weight: 600; 
+            color: #475569;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        thead th:last-child { text-align: right; }
+        tbody tr { border-bottom: 1px solid #f1f5f9; }
+        tbody tr:hover { background: #fafafa; }
+        tbody td { padding: 14px 16px; vertical-align: top; }
+        tbody td:last-child { text-align: right; }
+        
+        .type-badge { 
+            display: inline-block;
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 10px; 
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .type-orden { background: #dbeafe; color: #1d4ed8; }
+        .type-venta { background: #dcfce7; color: #16a34a; }
+        
+        .item-title { font-weight: 600; color: #1e293b; margin-bottom: 2px; }
+        .item-desc { font-size: 12px; color: #64748b; }
+        .item-vehicle { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+        .item-vehicle i { margin-right: 4px; }
+        
+        .item-total { font-weight: 700; font-size: 14px; color: #1e293b; font-family: 'SF Mono', 'Menlo', monospace; }
+        .item-date { font-size: 12px; color: #64748b; font-family: 'SF Mono', 'Menlo', monospace; }
+        .item-status { 
+            font-size: 10px; 
+            color: #64748b; 
+            background: #f1f5f9;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+        
+        /* Footer */
+        .footer { 
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 24px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid #e2e8f0;
+        }
+        .footer-note { font-size: 11px; color: #94a3b8; }
+        .footer-total { text-align: right; }
+        .footer-total-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+        .footer-total-value { font-size: 28px; font-weight: 700; color: #f97316; }
+        
+        /* Print styles */
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border-radius: 0; }
+            .header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .type-badge, .stat-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-top">
+                <div class="logo">
+                    <div class="logo-icon">🔧</div>
+                    <span>GOVERSA</span>
+                </div>
+                <div class="report-date">
+                    <div class="report-title">Reporte de Historial</div>
+                    <div>Generado: ${new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                    <div>${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Client Info -->
+        <div class="client-section">
+            <div class="info-card">
+                <div class="info-label">Cliente</div>
+                <div class="info-value">${clientName}</div>
+                <div class="info-subvalue">📞 ${clientPhone} · ✉️ ${clientEmail}</div>
+            </div>
+            <div class="info-card">
+                <div class="info-label">Vehículo / Periodo</div>
+                <div class="info-value">${vehicleInfo}</div>
+                <div class="info-subvalue">📅 ${dateRangeText}</div>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats-section">
+            <div class="stat-box">
+                <div class="stat-number">${filtered.length}</div>
+                <div class="stat-label">Total Registros</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">${ordersCount}</div>
+                <div class="stat-label">Órdenes (€${ordersTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })})</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number">${salesCount}</div>
+                <div class="stat-label">Ventas (€${salesTotal.toLocaleString('es-ES', { minimumFractionDigits: 2 })})</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-number orange">€${totalAmount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</div>
+                <div class="stat-label">Total General</div>
+            </div>
+        </div>
+        
+        <!-- Table -->
+        <div class="table-section">
+            <div class="table-header">
+                <div class="table-title">Detalle de Movimientos</div>
+                <div class="table-count">${filtered.length} registros encontrados</div>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 100px;">Fecha</th>
+                        <th style="width: 90px;">Tipo</th>
+                        <th>Detalle</th>
+                        <th style="width: 100px;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filtered.length === 0 ? '<tr><td colspan="4" style="text-align: center; padding: 40px; color: #94a3b8;">No hay registros para mostrar</td></tr>' :
+                    filtered.map(item => `
+                        <tr>
+                            <td>
+                                <div class="item-date">${item.rawDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                                <div class="item-status">${item.status}</div>
+                            </td>
+                            <td>
+                                <span class="type-badge type-${item.type}">${item.type === 'orden' ? '🔧 Orden' : '🛒 Venta'}</span>
+                            </td>
+                            <td>
+                                <div class="item-title">${item.title}</div>
+                                <div class="item-desc">${item.description}</div>
+                                ${item.vehiculo_matricula ? `<div class="item-vehicle">🚗 ${item.vehiculo_matricula}</div>` : ''}
+                            </td>
+                            <td>
+                                <div class="item-total">€${item.total.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-note">
+                Documento generado automáticamente por GOVERSA<br>
+                Este reporte es informativo y no constituye documento fiscal
+            </div>
+            <div class="footer-total">
+                <div class="footer-total-label">TOTAL ACUMULADO</div>
+                <div class="footer-total-value">€${totalAmount.toLocaleString('es-ES', { minimumFractionDigits: 2 })}</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+            `);
+            win.document.close();
+
+            // Wait for fonts to load then print
+            setTimeout(() => win.print(), 500);
+        }
+    </script>
+</body>
+
+</html>
