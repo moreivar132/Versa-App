@@ -1,7 +1,7 @@
 import { loadSucursales } from './loadSucursales.js';
 import { searchClientes, createClient } from './services/clientes-service.js';
 import { searchInventario, createProduct } from './services/inventory-service.js';
-import { createOrden } from './services/ordenes-service.js';
+import { createVenta } from './services/ventas-service.js';
 import '/components/datetime-picker.js';
 
 let salesItems = [];
@@ -452,34 +452,33 @@ async function handleSaleSubmit(e) {
     }
 
     const totalDisplay = parseFloat(document.getElementById('display-total').textContent.replace('€', ''));
+    const cajaValue = document.getElementById('caja').value;
 
-    const ordenData = {
+    const ventaData = {
         idSucursal: parseInt(idSucursal),
         idCliente: parseInt(idCliente),
-        codigoTipoOrden: 'VENTA_PRODUCTO',
-        concepto: 'Venta Mostrador',
-        descripcion: document.getElementById('observaciones').value || 'Venta Rápida',
+        idCaja: cajaValue ? parseInt(cajaValue) : null,
+        observaciones: document.getElementById('observaciones').value || 'Venta Rápida',
 
         lineas: salesItems.map(item => ({
             idProducto: item.idProducto,
             cantidad: item.cantidad,
             precio: item.precio,
             descripcion: item.nombre,
-            tipoItem: 'PRODUCTO',
-            iva: 21,
+            iva: item.iva || 21,
             descuento: item.descuento || 0
         })),
 
         pagos: [{
             codigoMedioPago: document.getElementById('medio-pago').value,
             importe: totalDisplay,
-            idCaja: parseInt(document.getElementById('caja').value),
+            idCaja: cajaValue ? parseInt(cajaValue) : null,
             referencia: 'Venta Mostrador'
         }]
     };
 
     try {
-        await createOrden(ordenData);
+        await createVenta(ventaData);
         document.getElementById('success-modal').classList.remove('hidden');
     } catch (error) {
         console.error(error);
