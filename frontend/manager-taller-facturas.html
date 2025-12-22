@@ -217,11 +217,11 @@
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                             <div>
                                 <label class="block text-xs font-bold text-[#9da6b9] mb-2">BUSCAR</label>
-                                <div class="relative">
-                                    <i
-                                        class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                                    <input type="text" id="filtroTexto" placeholder="Nº, Cliente, Matrícula..."
-                                        class="form-input pl-9 text-sm">
+                                <div class="animated-search-form">
+                                    <input type="search" id="filtroTexto" class="search-input"
+                                        placeholder="Nº, Cliente, Matrícula..." required>
+                                    <span class="caret"></span>
+                                    <i class="fas fa-file-invoice search-icon"></i>
                                 </div>
                             </div>
                             <div>

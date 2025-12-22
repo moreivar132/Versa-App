@@ -22,43 +22,7 @@
     <script src="/guard.js"></script>
 
     <style>
-        /* Custom Styles extending Manager.css where needed */
-        .search-container {
-            position: relative;
-            max-width: 600px;
-            width: 100%;
-        }
-
-        .search-results-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            background: #1e2028;
-            border: 1px solid #2d3240;
-            border-radius: 0 0 12px 12px;
-            max-height: 400px;
-            overflow-y: auto;
-            z-index: 50;
-            display: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-
-        .search-item {
-            padding: 12px 16px;
-            cursor: pointer;
-            border-bottom: 1px solid #2d3240;
-            transition: background 0.2s;
-        }
-
-        .search-item:hover {
-            background: #282e39;
-        }
-
-        .search-item:last-child {
-            border-bottom: none;
-        }
-
+        /* Custom Styles específicos de esta página */
         .tab-btn {
             padding: 10px 20px;
             color: #9da6b9;
@@ -102,17 +66,13 @@
             background: #3b82f6;
         }
 
-        /* Blue */
         .timeline-item.venta .timeline-dot {
             background: #22c55e;
         }
 
-        /* Green */
         .timeline-item.presupuesto .timeline-dot {
             background: #eab308;
         }
-
-        /* Yellow */
 
         .card-info {
             background: rgba(255, 255, 255, 0.03);
@@ -152,27 +112,33 @@
                 <!-- Search Section -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <!-- Search Client -->
-                    <div class="bg-[#111318] p-6 rounded-xl border border-[#282e39] shadow-lg relative">
-                        <label class="text-sm font-semibold text-[#9da6b9] uppercase mb-2 block">Buscar Cliente</label>
-                        <div class="search-container relative">
-                            <i class="fas fa-user absolute left-4 top-1/2 -translate-y-1/2 text-[#9da6b9]"></i>
-                            <input type="text" id="search-client-input"
-                                class="w-full bg-[#1a1d24] border border-[#2d3240] rounded-xl py-3 pl-12 pr-4 text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder-[#545b6b]"
-                                placeholder="Nombre, teléfono, email..." autocomplete="off">
-                            <div id="client-results" class="search-results-dropdown"></div>
+                    <div
+                        class="bg-[#111318] p-6 rounded-xl border border-[#282e39] shadow-lg relative overflow-visible">
+                        <label class="animated-search-label">
+                            <i class="fas fa-user mr-2"></i>Buscar Cliente
+                        </label>
+                        <div class="animated-search-form">
+                            <input type="search" id="search-client-input" class="search-input"
+                                placeholder="Nombre, teléfono, email..." autocomplete="off" required>
+                            <span class="caret"></span>
+                            <i class="fas fa-user search-icon"></i>
                         </div>
+                        <div id="client-results" class="search-results-dropdown"></div>
                     </div>
 
                     <!-- Search Vehicle -->
-                    <div class="bg-[#111318] p-6 rounded-xl border border-[#282e39] shadow-lg relative">
-                        <label class="text-sm font-semibold text-[#9da6b9] uppercase mb-2 block">Buscar Vehículo</label>
-                        <div class="search-container relative">
-                            <i class="fas fa-car absolute left-4 top-1/2 -translate-y-1/2 text-[#9da6b9]"></i>
-                            <input type="text" id="search-vehicle-input"
-                                class="w-full bg-[#1a1d24] border border-[#2d3240] rounded-xl py-3 pl-12 pr-4 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] outline-none transition-all placeholder-[#545b6b]"
-                                placeholder="Matrícula, VIN, Modelo..." autocomplete="off">
-                            <div id="vehicle-results" class="search-results-dropdown"></div>
+                    <div
+                        class="bg-[#111318] p-6 rounded-xl border border-[#282e39] shadow-lg relative overflow-visible">
+                        <label class="animated-search-label">
+                            <i class="fas fa-car mr-2"></i>Buscar Vehículo
+                        </label>
+                        <div class="animated-search-form">
+                            <input type="search" id="search-vehicle-input" class="search-input"
+                                placeholder="Matrícula, VIN, Modelo..." autocomplete="off" required>
+                            <span class="caret"></span>
+                            <i class="fas fa-car search-icon"></i>
                         </div>
+                        <div id="vehicle-results" class="search-results-dropdown"></div>
                     </div>
                 </div>
 
@@ -284,7 +250,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="sidebar-manager.js"></script>
+    <script type="module" src="./sidebar-manager.js"></script>
     <script type="module">
         import { fetchWithAuth } from '/auth.js';
 

@@ -643,14 +643,21 @@
 
                     <!-- SECCIÓN BUSCADOR DE VEHÍCULOS -->
                     <section class="manager-panel mb-8">
-                        <h2 class="form-main-title"><i class="fas fa-search"></i> Buscar Vehículo</h2>
-                        <div class="search-box">
-                            <input type="text" id="search-input" class="form-input"
-                                placeholder="Buscar por Matrícula, Marca, Modelo o Cliente..." autocomplete="off">
-                            <button id="search-btn" class="btn"><i class="fas fa-search" style="margin-right: 8px;"></i>
+                        <h2 class="form-main-title"><i class="fas fa-car"></i> Buscar Vehículo</h2>
+                        <div class="search-box" style="display: flex; gap: 12px; align-items: flex-start;">
+                            <div class="animated-search-form" style="flex: 1;">
+                                <input type="search" id="search-input" class="search-input"
+                                    placeholder="Buscar por Matrícula, Marca, Modelo o Cliente..." autocomplete="off"
+                                    required>
+                                <span class="caret"></span>
+                                <i class="fas fa-car search-icon"></i>
+                            </div>
+                            <button id="search-btn" class="btn" style="height: 3em;"><i class="fas fa-search"
+                                    style="margin-right: 8px;"></i>
                                 Buscar</button>
-                            <div id="suggestions-list" class="suggestions-dropdown"></div>
                         </div>
+                        <!-- Dropdown de sugerencias -->
+                        <div id="suggestions-list" class="suggestions-dropdown"></div>
 
                         <!-- FICHA DE RESULTADO (CON TABS) -->
                         <div id="vehicle-result" class="search-result-card">

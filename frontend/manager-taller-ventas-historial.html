@@ -711,12 +711,11 @@
                     <div class="form-section" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
                         <div class="form-group grid-span-full md:col-span-1">
                             <label>Búsqueda</label>
-                            <div class="relative">
-                                <span
-                                    class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
-                                    style="font-size: 20px;">search</span>
-                                <input type="text" id="search-input" class="form-input pl-12"
-                                    placeholder="Cliente, NIF, Ref...">
+                            <div class="animated-search-form">
+                                <input type="search" id="search-input" class="search-input"
+                                    placeholder="Cliente, NIF, Ref..." required>
+                                <span class="caret"></span>
+                                <i class="fas fa-shopping-cart search-icon"></i>
                             </div>
                         </div>
                         <div class="form-group">
