@@ -124,17 +124,99 @@ class VentasService {
                 for (const pago of pagos) {
                     // Buscar medio de pago por código o ID
                     let medioPagoId = pago.idMedioPago;
+                    let medioPagoCodigo = pago.codigoMedioPago;
+
                     if (!medioPagoId && pago.codigoMedioPago) {
                         const mpResult = await client.query(
-                            'SELECT id FROM mediopago WHERE codigo = $1',
+                            'SELECT id, codigo FROM mediopago WHERE codigo = $1',
                             [pago.codigoMedioPago]
                         );
                         medioPagoId = mpResult.rows[0]?.id;
+                        medioPagoCodigo = mpResult.rows[0]?.codigo;
+                    } else if (medioPagoId) {
+                        const mpResult = await client.query(
+                            'SELECT codigo FROM mediopago WHERE id = $1',
+                            [medioPagoId]
+                        );
+                        medioPagoCodigo = mpResult.rows[0]?.codigo;
                     }
 
                     if (!medioPagoId) {
                         throw new Error(`Medio de pago ${pago.codigoMedioPago || pago.idMedioPago} no encontrado`);
                     }
+
+                    // ==========================================
+                    // CASO ESPECIAL: CUENTA CORRIENTE
+                    // ==========================================
+                    if (medioPagoCodigo === 'CUENTA_CORRIENTE') {
+                        // Obtener documento del cliente
+                        const clienteData = await client.query(
+                            'SELECT documento, nombre FROM clientefinal WHERE id = $1',
+                            [idCliente]
+                        );
+
+                        if (clienteData.rows.length === 0) {
+                            throw new Error('Cliente no encontrado');
+                        }
+
+                        const { documento, nombre } = clienteData.rows[0];
+
+                        // VALIDAR: Cliente debe tener documento
+                        if (!documento || documento.trim() === '') {
+                            throw new Error(`El cliente "${nombre}" no tiene documento de identidad. Es obligatorio para usar cuenta corriente.`);
+                        }
+
+                        // Obtener o crear cuenta corriente
+                        let cuenta = await client.query(`
+                            SELECT id, saldo_actual, limite_credito FROM cuentacorriente
+                            WHERE id_cliente = $1 AND id_tenant = $2
+                        `, [idCliente, id_tenant]);
+
+                        let cuentaId, limiteCredito = 100, saldoActual = 0;
+
+                        if (cuenta.rows.length === 0) {
+                            const nuevaCuenta = await client.query(`
+                                INSERT INTO cuentacorriente (id_cliente, id_tenant, limite_credito, saldo_actual, created_by)
+                                VALUES ($1, $2, 100, 0, $3) RETURNING id
+                            `, [idCliente, id_tenant, id_usuario]);
+                            cuentaId = nuevaCuenta.rows[0].id;
+                        } else {
+                            cuentaId = cuenta.rows[0].id;
+                            saldoActual = parseFloat(cuenta.rows[0].saldo_actual);
+                            limiteCredito = parseFloat(cuenta.rows[0].limite_credito);
+                        }
+
+                        // VALIDAR: Límite de crédito
+                        const importePago = parseFloat(pago.importe);
+                        const nuevoSaldo = saldoActual + importePago;
+                        if (nuevoSaldo > limiteCredito) {
+                            throw new Error(`Excede límite de crédito. Saldo: ${saldoActual.toFixed(2)}€, Límite: ${limiteCredito.toFixed(2)}€`);
+                        }
+
+                        // Registrar CARGO en movimientocuenta
+                        await client.query(`
+                            INSERT INTO movimientocuenta 
+                            (id_cuenta_corriente, tipo_movimiento, importe, saldo_anterior, saldo_posterior, concepto, referencia_externa, fecha_movimiento, created_by)
+                            VALUES ($1, 'CARGO', $2, $3, $4, $5, $6, current_date, $7)
+                        `, [cuentaId, importePago, saldoActual, nuevoSaldo, `Venta #${idVenta}`, `VENTA-${idVenta}`, id_usuario]);
+
+                        // Marcar venta como cuenta corriente (si existen las columnas)
+                        try {
+                            await client.query(`
+                                UPDATE venta SET en_cuenta_corriente = true, id_cuenta_corriente = $1
+                                WHERE id = $2
+                            `, [cuentaId, idVenta]);
+                        } catch (e) {
+                            // Columnas pueden no existir aún, ignorar
+                            console.log('Nota: columnas en_cuenta_corriente no existen en venta');
+                        }
+
+                        // NO registrar en ventapago ni cajamovimiento para cuenta corriente
+                        continue;
+                    }
+                    // ==========================================
+                    // FIN CASO CUENTA CORRIENTE
+                    // ==========================================
 
                     await client.query(`
                         INSERT INTO ventapago (

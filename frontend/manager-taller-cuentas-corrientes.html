@@ -273,7 +273,16 @@
                             <h1 class="text-3xl font-extrabold text-white">Cuentas Corrientes</h1>
                             <p class="text-[#9da6b9] mt-1">Gestión de movimientos y deuda de clientes</p>
                         </div>
-                        <div class="flex gap-3">
+                        <div class="flex items-center gap-3">
+                            <!-- Selector de sucursal -->
+                            <div id="sucursal-container"
+                                class="flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]">
+                                <i class="fas fa-store text-[var(--brand-orange)]"></i>
+                                <select id="sucursal-select"
+                                    class="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer">
+                                    <option value="">Cargando...</option>
+                                </select>
+                            </div>
                             <button onclick="abrirModalPago()"
                                 class="btn bg-[#282e39] hover:bg-[#343b47] text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors border border-[#3e4552]">
                                 <i class="fas fa-plus"></i> Registrar Pago
@@ -457,8 +466,47 @@
         import { getSession, logout } from '/auth.js';
 
         const API_BASE = '/api';
+        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
         let userData = null;
         let cuentasConSaldo = []; // Cache de cuentas para el selector
+        let selectedSucursalId = null; // Sucursal seleccionada actualmente
+
+        // Cargar sucursales en el selector
+        async function cargarSucursales() {
+            try {
+                const response = await fetch(`${API_BASE}/caja/sucursales`, {
+                    headers: { 'Authorization': `Bearer ${userData.token}` }
+                });
+                const data = await response.json();
+
+                if (!data.ok) throw new Error(data.error);
+
+                const select = document.getElementById('sucursal-select');
+                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+
+                // Determinar sucursal a seleccionar
+                selectedSucursalId = savedSucursal && data.sucursales.some(s => s.id == savedSucursal)
+                    ? parseInt(savedSucursal)
+                    : data.sucursal_actual;
+
+                // Poblar el select
+                select.innerHTML = data.sucursales.map(s => {
+                    const label = s.tenant_nombre ? `${s.tenant_nombre} - ${s.nombre}` : s.nombre;
+                    return `<option value="${s.id}" ${s.id == selectedSucursalId ? 'selected' : ''}>${label}</option>`;
+                }).join('');
+
+                // Guardar en localStorage
+                localStorage.setItem(SUCURSAL_STORAGE_KEY, selectedSucursalId);
+
+                // Evento de cambio
+                select.addEventListener('change', (e) => {
+                    selectedSucursalId = parseInt(e.target.value);
+                    localStorage.setItem(SUCURSAL_STORAGE_KEY, selectedSucursalId);
+                });
+            } catch (error) {
+                console.error('Error cargando sucursales:', error);
+            }
+        }
 
         // --- Inicialización ---
         document.addEventListener('DOMContentLoaded', async () => {
@@ -502,6 +550,7 @@
             document.querySelector('[data-metodo="3"]').classList.add('active');
 
             // Cargar datos
+            await cargarSucursales();
             await Promise.all([
                 cargarEstadisticas(),
                 buscarMovimientos(),
@@ -709,7 +758,8 @@
                         importe,
                         concepto,
                         fecha,
-                        idMedioPago
+                        idMedioPago,
+                        idSucursal: selectedSucursalId // Usar la sucursal seleccionada del dropdown
                     })
                 });
 

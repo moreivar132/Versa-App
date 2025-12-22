@@ -1069,9 +1069,7 @@
                 class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-3 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
                 required>
                 <option value="">Seleccionar...</option>
-                <option value="3" data-codigo="CASH">Efectivo</option>
-                <option value="2" data-codigo="CARD">Tarjeta</option>
-                <option value="1" data-codigo="TRANSFER">Transferencia</option>
+                <!-- Se cargan dinámicamente desde la API -->
               </select>
             </div>
             <div>
@@ -1084,6 +1082,25 @@
               </div>
             </div>
           </div>
+
+          <!-- Advertencia Cuenta Corriente -->
+          <div id="warning-cuenta-corriente"
+            class="hidden bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-4 mb-4">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined text-yellow-500 text-xl">warning</span>
+              <div class="flex-1">
+                <p class="text-yellow-400 font-medium text-sm">Pago a Cuenta Corriente</p>
+                <p class="text-yellow-300/80 text-xs mt-1">El importe se cargará como deuda a la cuenta del cliente.</p>
+                <div id="info-cuenta-corriente" class="mt-2 text-xs space-y-1">
+                  <p class="text-gray-400">Cargando información de la cuenta...</p>
+                </div>
+                <p id="warning-documento" class="text-red-400 text-xs mt-2 hidden">
+                  ⚠️ El cliente debe tener documento de identidad para usar esta opción.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div>
             <label class="block text-xs text-[#9da6b9] mb-2">Referencia (opcional)</label>
             <input type="text" id="modal-referencia" placeholder="Ej: Nº transacción, últimos 4 dígitos..."
@@ -1107,17 +1124,6 @@
             Registrar Pago
           </button>
         </form>
-
-        <!-- Separador y botón Cuenta Corriente -->
-        <div id="seccion-cuenta-corriente" class="hidden mt-4 pt-4 border-t border-[#282e39]">
-          <p class="text-xs text-[#9da6b9] mb-3 text-center">¿El cliente no puede pagar ahora?</p>
-          <button type="button" id="btn-pasar-cuenta-corriente"
-            class="w-full py-3 bg-[#1a1d24] hover:bg-[#282e39] border border-[#3e4552] hover:border-yellow-500/50 text-yellow-400 font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined">account_balance_wallet</span>
-            Pasar a Cuenta Corriente
-          </button>
-          <p class="text-xs text-gray-500 mt-2 text-center">El saldo pendiente se cargará a la cuenta del cliente</p>
-        </div>
       </div>
     </div>
   </div>
@@ -1686,7 +1692,32 @@
       });
 
       // --- MODAL PAGOS ---
-      function abrirModalPagos() {
+      let mediosPagoCache = []; // Cache de medios de pago
+
+      async function cargarMediosPago() {
+        if (mediosPagoCache.length > 0) return mediosPagoCache;
+
+        try {
+          const session = await getSession();
+          const response = await fetch('/api/medio-pago', {
+            headers: { 'Authorization': `Bearer ${session.token}` }
+          });
+          if (!response.ok) throw new Error('Error cargando medios de pago');
+          const data = await response.json();
+          mediosPagoCache = data.mediosPago || data || [];
+          return mediosPagoCache;
+        } catch (e) {
+          console.error('Error cargando medios de pago:', e);
+          // Fallback a valores por defecto
+          return [
+            { id: 3, codigo: 'CASH', nombre: 'Efectivo' },
+            { id: 2, codigo: 'CARD', nombre: 'Tarjeta' },
+            { id: 1, codigo: 'TRANSFER', nombre: 'Transferencia' }
+          ];
+        }
+      }
+
+      async function abrirModalPagos() {
         if (!ordenSeleccionada) return;
 
         const modal = document.getElementById('modal-pagos');
@@ -1704,17 +1735,85 @@
         document.getElementById('modal-progress').style.width = `${Math.min(100, progreso)}%`;
         document.getElementById('modal-importe').value = pendiente > 0 ? pendiente.toFixed(2) : '';
 
-        // Mostrar sección de cuenta corriente solo si hay pendiente y no está ya en cuenta corriente
-        const seccionCC = document.getElementById('seccion-cuenta-corriente');
-        if (seccionCC) {
-          const yaEnCuentaCorriente = ordenSeleccionada.en_cuenta_corriente || false;
-          if (pendiente > 0 && !yaEnCuentaCorriente) {
-            seccionCC.classList.remove('hidden');
-          } else {
-            seccionCC.classList.add('hidden');
-          }
-        }
+        // Cargar medios de pago dinámicamente
+        const mediosPago = await cargarMediosPago();
+        const selectMedioPago = document.getElementById('modal-medio-pago');
+        selectMedioPago.innerHTML = '<option value="">Seleccionar...</option>';
+
+        mediosPago.forEach(mp => {
+          const option = document.createElement('option');
+          option.value = mp.id;
+          option.dataset.codigo = mp.codigo;
+          option.textContent = mp.nombre;
+          selectMedioPago.appendChild(option);
+        });
+
+        // Ocultar advertencia de cuenta corriente al abrir
+        document.getElementById('warning-cuenta-corriente')?.classList.add('hidden');
       }
+
+      // Listener para mostrar advertencia cuando se selecciona Cuenta Corriente
+      let infoCuentaCliente = null; // Cache info cuenta corriente
+
+      document.getElementById('modal-medio-pago')?.addEventListener('change', async (e) => {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        const codigo = selectedOption?.dataset?.codigo || '';
+        const warningBox = document.getElementById('warning-cuenta-corriente');
+        const warningDocumento = document.getElementById('warning-documento');
+        const infoCuenta = document.getElementById('info-cuenta-corriente');
+
+        if (codigo === 'CUENTA_CORRIENTE') {
+          warningBox?.classList.remove('hidden');
+
+          // Verificar si el cliente tiene documento
+          if (ordenSeleccionada) {
+            const tieneDocumento = ordenSeleccionada.cliente_documento && ordenSeleccionada.cliente_documento.trim() !== '';
+            if (!tieneDocumento) {
+              warningDocumento?.classList.remove('hidden');
+            } else {
+              warningDocumento?.classList.add('hidden');
+            }
+
+            // Consultar información de cuenta corriente del cliente
+            if (infoCuenta) {
+              infoCuenta.innerHTML = '<p class="text-gray-400">Cargando...</p>';
+              try {
+                const session = await getSession();
+                const response = await fetch(`/api/cuentas-corrientes/cliente/${ordenSeleccionada.id_cliente}`, {
+                  headers: { 'Authorization': `Bearer ${session.token}` }
+                });
+                const data = await response.json();
+
+                if (data.success && data.data) {
+                  infoCuentaCliente = data.data;
+                  const limiteCredito = parseFloat(data.data.limite_credito || 100);
+                  const saldoActual = parseFloat(data.data.saldo_actual || 0);
+                  const disponible = limiteCredito - saldoActual;
+
+                  infoCuenta.innerHTML = `
+                    <p class="text-gray-300">💳 Límite de crédito: <strong class="text-white">${limiteCredito.toFixed(2)}€</strong></p>
+                    <p class="text-gray-300">📊 Saldo actual: <strong class="${saldoActual > 0 ? 'text-red-400' : 'text-green-400'}">${saldoActual.toFixed(2)}€</strong></p>
+                    <p class="text-gray-300">✅ Disponible: <strong class="${disponible > 0 ? 'text-green-400' : 'text-red-400'}">${disponible.toFixed(2)}€</strong></p>
+                  `;
+                } else {
+                  // No tiene cuenta, se creará con 100€
+                  infoCuentaCliente = null;
+                  infoCuenta.innerHTML = `
+                    <p class="text-gray-300">ℹ️ Cliente sin cuenta corriente, se creará automáticamente.</p>
+                    <p class="text-gray-300">💳 Límite inicial: <strong class="text-white">100.00€</strong></p>
+                  `;
+                }
+              } catch (e) {
+                console.error('Error consultando cuenta:', e);
+                infoCuenta.innerHTML = '<p class="text-red-400">Error al consultar información</p>';
+              }
+            }
+          }
+        } else {
+          warningBox?.classList.add('hidden');
+          infoCuentaCliente = null;
+        }
+      });
 
       function cerrarModalPagos() {
         document.getElementById('modal-pagos').classList.add('hidden');
@@ -1737,66 +1836,40 @@
         document.getElementById('modal-importe').value = (Math.max(0, totalNeto - totalPagado) / 2).toFixed(2);
       });
 
-      // --- PASAR A CUENTA CORRIENTE ---
-      document.getElementById('btn-pasar-cuenta-corriente')?.addEventListener('click', async () => {
-        if (!ordenSeleccionada) return;
-
-        const totalNeto = parseFloat(ordenSeleccionada.total_neto || 0);
-        const totalPagado = parseFloat(ordenSeleccionada.total_pagado || 0);
-        const pendiente = Math.max(0, totalNeto - totalPagado);
-
-        if (pendiente <= 0) {
-          showToast('Esta orden no tiene saldo pendiente', true);
-          return;
-        }
-
-        const confirmar = confirm(`¿Cargar ${pendiente.toFixed(2)}€ a la cuenta corriente del cliente?\n\nEl saldo quedará registrado como deuda pendiente de cobro.`);
-        if (!confirmar) return;
-
-        const btn = document.getElementById('btn-pasar-cuenta-corriente');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
-        btn.disabled = true;
-
-        try {
-          const session = await getSession();
-          const response = await fetch('/api/cuentas-corrientes/cargar-orden', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.token}`
-            },
-            body: JSON.stringify({ idOrden: ordenSeleccionada.id })
-          });
-
-          const data = await response.json();
-
-          if (data.success) {
-            showToast(`Saldo de ${pendiente.toFixed(2)}€ cargado a cuenta corriente`);
-            cerrarModalPagos();
-            cargarOrdenes(filtrosActuales);
-          } else {
-            showToast(data.error || 'Error al cargar a cuenta corriente', true);
-          }
-        } catch (error) {
-          console.error('Error:', error);
-          showToast('Error de conexión', true);
-        } finally {
-          btn.innerHTML = originalText;
-          btn.disabled = false;
-        }
-      });
-
       document.getElementById('form-nuevo-pago').addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const medioPago = document.getElementById('modal-medio-pago').value;
+        const selectMedioPago = document.getElementById('modal-medio-pago');
+        const selectedOption = selectMedioPago.options[selectMedioPago.selectedIndex];
+        const medioPago = selectMedioPago.value;
+        const medioPagoCodigo = selectedOption?.dataset?.codigo || '';
         const importe = parseFloat(document.getElementById('modal-importe').value);
         const referencia = document.getElementById('modal-referencia').value;
 
         if (!medioPago || !importe || importe <= 0) {
-          alert('Por favor, completa todos los campos');
+          showToast('Por favor, completa todos los campos', true);
           return;
+        }
+
+        // Si es cuenta corriente, pedir confirmación
+        if (medioPagoCodigo === 'CUENTA_CORRIENTE') {
+          const limiteCredito = infoCuentaCliente ? parseFloat(infoCuentaCliente.limite_credito) : 100;
+          const saldoActual = infoCuentaCliente ? parseFloat(infoCuentaCliente.saldo_actual) : 0;
+          const disponible = limiteCredito - saldoActual;
+
+          let mensaje = `⚠️ PAGO A CUENTA CORRIENTE\n\n`;
+          mensaje += `Se cargará ${importe.toFixed(2)}€ como deuda a la cuenta del cliente.\n\n`;
+          mensaje += `💳 Límite de crédito: ${limiteCredito.toFixed(2)}€\n`;
+          mensaje += `📊 Saldo actual: ${saldoActual.toFixed(2)}€\n`;
+          mensaje += `✅ Disponible: ${disponible.toFixed(2)}€\n\n`;
+
+          if (importe > disponible) {
+            mensaje += `⛔ ATENCIÓN: El cargo (${importe.toFixed(2)}€) excede el disponible.\n\n`;
+          }
+
+          mensaje += `¿Continuar?`;
+
+          if (!confirm(mensaje)) return;
         }
 
         try {
@@ -1806,11 +1879,14 @@
             referencia: referencia || null
           });
 
-          showToast('Pago registrado correctamente');
+          const mensaje = medioPagoCodigo === 'CUENTA_CORRIENTE'
+            ? 'Cargo registrado en cuenta corriente'
+            : 'Pago registrado correctamente';
+          showToast(mensaje);
           cerrarModalPagos();
           cargarOrdenes(filtrosActuales);
         } catch (error) {
-          showToast('Error al registrar pago: ' + error.message, true);
+          showToast('Error: ' + error.message, true);
         }
       });
 

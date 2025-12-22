@@ -464,6 +464,7 @@ router.post('/pago', verifyJWT, async (req, res) => {
             importe,
             concepto = 'Pago a cuenta',
             idMedioPago,
+            idSucursal, // Sucursal específica para registrar en caja
             fecha
         } = req.body;
 
@@ -508,7 +509,7 @@ router.post('/pago', verifyJWT, async (req, res) => {
         const saldoPosterior = saldoAnterior - parseFloat(importe);
 
         // Crear movimiento de abono
-        await client.query(`
+        const movResult = await client.query(`
             INSERT INTO movimientocuenta (
                 id_cuenta_corriente,
                 tipo_movimiento,
@@ -519,6 +520,7 @@ router.post('/pago', verifyJWT, async (req, res) => {
                 fecha_movimiento,
                 created_by
             ) VALUES ($1, 'ABONO', $2, $3, $4, $5, $6, $7)
+            RETURNING id
         `, [
             cuentaId,
             importe,
@@ -528,6 +530,51 @@ router.post('/pago', verifyJWT, async (req, res) => {
             fecha || new Date().toISOString().split('T')[0],
             userId
         ]);
+
+        // Registrar movimiento de caja para cualquier medio de pago
+        const medioPagoId = parseInt(idMedioPago);
+        console.log(`[CC Pago] Medio pago ID: ${medioPagoId}, TenantId: ${tenantId}`);
+
+        if (medioPagoId) {
+            // Obtener nombre del medio de pago
+            const medioPagoResult = await client.query(
+                'SELECT nombre FROM mediopago WHERE id = $1',
+                [medioPagoId]
+            );
+            const nombreMedioPago = medioPagoResult.rows[0]?.nombre || 'Cobro';
+            console.log(`[CC Pago] Método: ${nombreMedioPago}`);
+
+            // Obtener caja abierta (de sucursal específica o la primera del tenant)
+            let cajaResult;
+            if (idSucursal) {
+                cajaResult = await client.query(`
+                    SELECT c.id FROM caja c
+                    WHERE c.id_sucursal = $1 AND c.estado = 'ABIERTA'
+                    ORDER BY c.created_at DESC LIMIT 1
+                `, [idSucursal]);
+                console.log(`[CC Pago] Buscando caja en sucursal: ${idSucursal}`);
+            } else {
+                cajaResult = await client.query(`
+                    SELECT c.id FROM caja c
+                    JOIN sucursal s ON c.id_sucursal = s.id
+                    WHERE s.id_tenant = $1 AND c.estado = 'ABIERTA'
+                    ORDER BY c.created_at DESC LIMIT 1
+                `, [tenantId]);
+            }
+
+            console.log(`[CC Pago] Cajas encontradas: ${cajaResult.rows.length}`);
+
+            if (cajaResult.rows.length > 0) {
+                await client.query(`
+                    INSERT INTO cajamovimiento 
+                    (id_caja, id_usuario, tipo, monto, descripcion, fecha, origen_tipo, created_at, created_by)
+                    VALUES ($1, $2, 'INGRESO', $3, $4, NOW(), 'CUENTA_CORRIENTE', NOW(), $5)
+                `, [cajaResult.rows[0].id, userId, importe, `Cobro CC (${nombreMedioPago}): ${concepto}`, userId]);
+                console.log(`[CC Pago] Movimiento de caja registrado OK`);
+            } else {
+                console.log(`[CC Pago] ADVERTENCIA: No hay caja abierta para tenant ${tenantId}`);
+            }
+        }
 
         await client.query('COMMIT');
 
@@ -614,6 +661,11 @@ router.put('/:id', verifyJWT, async (req, res) => {
             campos.push(`limite_credito = $${paramIndex}`);
             valores.push(limite_credito);
             paramIndex++;
+            // Auditoría: registrar quién modificó el límite
+            campos.push(`limite_modificado_por = $${paramIndex}`);
+            valores.push(req.user?.id);
+            paramIndex++;
+            campos.push(`limite_modificado_at = NOW()`);
         }
 
         if (estado !== undefined) {

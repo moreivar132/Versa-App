@@ -5,15 +5,43 @@ if (typeof window.orderPayments === 'undefined') {
     window.orderPayments = [];
 }
 
-// Cargar medios de pago (IDs correctos según BD: Efectivo=3, Tarjeta=2, Transferencia=1)
-function loadMediosPago() {
+// Cargar medios de pago desde la API
+async function loadMediosPago() {
     const select = document.getElementById('nuevo-pago-metodo');
     if (!select) return;
-    select.innerHTML = `
-    <option value="3" data-codigo="CASH">Efectivo</option>
-    <option value="2" data-codigo="CARD">Tarjeta</option>
-    <option value="1" data-codigo="TRANSFER">Transferencia</option>
-  `;
+
+    select.innerHTML = '<option value="" disabled selected>Cargando...</option>';
+
+    try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch('/api/medio-pago', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Error cargando medios de pago');
+
+        const data = await response.json();
+        const mediosPago = data.mediosPago || data || [];
+
+        select.innerHTML = '<option value="" disabled selected>Seleccionar...</option>';
+        mediosPago.forEach(mp => {
+            const option = document.createElement('option');
+            option.value = mp.id;
+            option.dataset.codigo = mp.codigo;
+            option.textContent = mp.nombre;
+            select.appendChild(option);
+        });
+    } catch (e) {
+        console.error('Error cargando medios de pago:', e);
+        // Fallback a valores por defecto
+        select.innerHTML = `
+            <option value="" disabled selected>Seleccionar...</option>
+            <option value="3" data-codigo="CASH">Efectivo</option>
+            <option value="2" data-codigo="CARD">Tarjeta</option>
+            <option value="6" data-codigo="TRANSFERENCIA">Transferencia</option>
+            <option value="7" data-codigo="CUENTA_CORRIENTE">Cuenta Corriente</option>
+        `;
+    }
 }
 window.loadMediosPago = loadMediosPago;
 
