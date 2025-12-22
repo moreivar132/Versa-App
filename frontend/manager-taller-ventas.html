@@ -457,6 +457,7 @@
                                                 <th class="p-2 text-[#9da6b9]">Producto</th>
                                                 <th class="p-2 text-[#9da6b9] w-24">Precio</th>
                                                 <th class="p-2 text-[#9da6b9] w-20">Desc. %</th>
+                                                <th class="p-2 text-[#9da6b9] w-16">IVA %</th>
                                                 <th class="p-2 text-[#9da6b9] w-16">Stock</th>
                                                 <th class="p-2 text-[#9da6b9] w-16">Cant.</th>
                                                 <th class="p-2 text-[#9da6b9] w-24">Total</th>
@@ -466,7 +467,7 @@
                                         <tbody id="sales-items-list" class="text-sm">
                                             <!-- Items renders here -->
                                             <tr id="empty-cart-msg">
-                                                <td colspan="7" class="p-8 text-center text-gray-500 italic">No hay
+                                                <td colspan="8" class="p-8 text-center text-gray-500 italic">No hay
                                                     productos en la venta</td>
                                             </tr>
                                         </tbody>
@@ -497,6 +498,11 @@
                                                 <td class="p-2">
                                                     <input type="number" id="new-item-discount"
                                                         class="form-input text-sm text-center" placeholder="0" min="0"
+                                                        max="100">
+                                                </td>
+                                                <td class="p-2">
+                                                    <input type="number" id="new-item-iva"
+                                                        class="form-input text-sm text-center" value="21" min="0"
                                                         max="100">
                                                 </td>
                                                 <td class="p-2">

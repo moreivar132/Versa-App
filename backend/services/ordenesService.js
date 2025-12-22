@@ -327,7 +327,7 @@ class OrdenesService {
      */
     async getOrdenes(filtros, userContext) {
         const { id_tenant } = userContext;
-        const { estado, estadoPago, busqueda, fechaDesde, fechaHasta, idMecanico, idSucursal, limit, offset } = filtros;
+        const { estado, estadoPago, busqueda, fechaDesde, fechaHasta, idMecanico, idSucursal, idCliente, idVehiculo, limit, offset } = filtros;
 
         // Query principal con estado de pago calculado
         let query = `
@@ -415,6 +415,20 @@ class OrdenesService {
         if (idSucursal) {
             query += ` AND o.id_sucursal = $${paramIndex}`;
             values.push(idSucursal);
+            paramIndex++;
+        }
+
+        // Filtro por Cliente - IMPORTANTE: Validar que sea un número válido
+        if (idCliente !== null && idCliente !== undefined && !isNaN(idCliente) && idCliente > 0) {
+            query += ` AND o.id_cliente = $${paramIndex}`;
+            values.push(parseInt(idCliente));
+            paramIndex++;
+        }
+
+        // Filtro por Vehículo
+        if (idVehiculo) {
+            query += ` AND o.id_vehiculo = $${paramIndex}`;
+            values.push(idVehiculo);
             paramIndex++;
         }
 

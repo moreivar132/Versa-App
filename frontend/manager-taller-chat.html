@@ -153,6 +153,30 @@
             background-color: var(--brand-orange-strong);
         }
 
+        .attach-btn {
+            background-color: #444;
+            color: #aaa;
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .attach-btn:hover:not(:disabled) {
+            background-color: var(--brand-orange);
+            color: white;
+        }
+
+        .attach-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .status-badge {
             font-size: 10px;
             padding: 2px 6px;
@@ -383,15 +407,26 @@
                                 <div id="chat-header-info">
                                     <h3 class="font-bold text-lg">Selecciona una conversación</h3>
                                 </div>
-                                <button id="close-chat-btn"
-                                    class="hidden bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
-                                    Cerrar Conversación
-                                </button>
+                                <div class="flex gap-2">
+                                    <button id="reopen-chat-btn"
+                                        class="hidden bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                                        <i class="fas fa-lock-open mr-1"></i> Reabrir
+                                    </button>
+                                    <button id="close-chat-btn"
+                                        class="hidden bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                                        <i class="fas fa-times mr-1"></i> Cerrar Conversación
+                                    </button>
+                                </div>
                             </div>
                             <div class="chat-area-messages" id="chat-messages">
                                 <!-- Mensajes dinámicos -->
                             </div>
                             <div class="chat-area-input">
+                                <button id="attach-btn" class="attach-btn" disabled title="Adjuntar archivo">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="file" id="file-input" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx"
+                                    style="display: none;">
                                 <input type="text" id="message-input" class="chat-input"
                                     placeholder="Escribe un mensaje..." disabled>
                                 <button id="send-btn" class="send-btn" disabled>

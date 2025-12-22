@@ -900,9 +900,9 @@
             // Event Listeners for Filters
             document.getElementById('search-input').addEventListener('keyup', applyFilters);
             document.getElementById('filter-status').addEventListener('change', applyFilters);
-            document.getElementById('filter-date-start').addEventListener('change', applyFilters);
-            document.getElementById('filter-date-end').addEventListener('change', applyFilters);
-            document.getElementById('btn-search-trigger').addEventListener('click', applyFilters);
+            document.getElementById('filter-date-start').addEventListener('change', loadSales);
+            document.getElementById('filter-date-end').addEventListener('change', loadSales);
+            document.getElementById('btn-search-trigger').addEventListener('click', loadSales);
 
             // Filter type listener
             const filterType = document.getElementById('filter-type');
@@ -921,10 +921,35 @@
             tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-[#bca39a]">Cargando ventas...</td></tr>';
 
             try {
-                // Intenta cargar desde el backend
-                const response = await fetchWithAuth('/api/ventas?limit=200');
+                // Obtener fechas de los filtros
+                const fechaDesde = document.getElementById('filter-date-start').value;
+                const fechaHasta = document.getElementById('filter-date-end').value;
+
+                let url = '/api/ventas?limit=200';
+                if (fechaDesde) url += `&fechaDesde=${fechaDesde}`;
+                if (fechaHasta) url += `&fechaHasta=${fechaHasta}T23:59:59`;
+
+                // Cargar desde el backend
+                const response = await fetchWithAuth(url);
                 if (response.ok) {
-                    allSales = await response.json();
+                    const data = await response.json();
+                    // El backend devuelve { ventas: [...], total, limit, offset }
+                    const ventasRaw = data.ventas || data || [];
+
+                    // Mapear los campos del backend al formato esperado por el frontend
+                    allSales = ventasRaw.map(v => ({
+                        id: v.id,
+                        cliente_nombre: v.cliente_nombre,
+                        fecha_venta: v.fecha,
+                        tipo: 'venta', // Tipo por defecto
+                        estado: parseFloat(v.total_pagado || 0) >= parseFloat(v.total_neto || 0) ? 'pagado' : 'pending',
+                        total: parseFloat(v.total_neto || 0),
+                        total_bruto: parseFloat(v.total_bruto || 0),
+                        total_iva: parseFloat(v.total_iva || 0),
+                        total_pagado: parseFloat(v.total_pagado || 0),
+                        observaciones: v.observaciones,
+                        sucursal_nombre: v.sucursal_nombre
+                    }));
                 } else {
                     // Si no hay API disponible, usa datos de ejemplo
                     console.log('API de ventas no disponible, usando datos de ejemplo');

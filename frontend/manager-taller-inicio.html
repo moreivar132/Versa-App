@@ -152,6 +152,23 @@
 </head>
 
 <body class="bg-[#0b0d11] font-[Montserrat] text-white">
+
+  <!-- PAGE LOADER -->
+  <div id="page-loader" class="page-loader-overlay">
+    <div class="loader-logo">
+      <img src="assets/versa-v-logo.png" alt="Versa Logo">
+    </div>
+    <div class="loader-wrapper">
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="circle"></div>
+      <div class="shadow"></div>
+      <div class="shadow"></div>
+      <div class="shadow"></div>
+    </div>
+    <p class="loader-text">Cargando datos...</p>
+  </div>
+
   <div class="flex h-screen w-full">
 
     <aside id="sidebar"
@@ -648,6 +665,7 @@
 
   <script type="module">
     import { getOrdenes } from '/services/ordenes-service.js';
+    import { getVentas } from '/services/ventas-service.js';
     import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getCurrentUser } from '/auth.js';
 
     // Logout logic
@@ -702,10 +720,29 @@
     }
 
     // Cargar estadísticas del dashboard
+    // Función global para ocultar el loader
+    function hidePageLoader() {
+      const loader = document.getElementById('page-loader');
+      if (loader) {
+        loader.classList.add('hidden');
+      }
+    }
+
+    // Función global para mostrar el loader
+    function showPageLoader() {
+      const loader = document.getElementById('page-loader');
+      if (loader) {
+        loader.classList.remove('hidden');
+      }
+    }
+
     async function cargarDashboard(range = 'month') {
       try {
         const user = await requireAuth();
-        if (!user) return;
+        if (!user) {
+          hidePageLoader();
+          return;
+        }
 
         // Actualizar UI Header
         updateUserHeader(user);
@@ -728,7 +765,19 @@
         });
         const ordenes = ordenesResponse.ordenes || [];
 
-        // 2. Cargar Compras (Filtradas por fecha - usando api genérica y filtro JS si es necesario)
+        // 2. Cargar Ventas (Filtradas por fecha)
+        let ventas = [];
+        try {
+          const ventasResponse = await getVentas({
+            idSucursal: sucursalId,
+            fechaDesde: start.toISOString().split('T')[0],
+            fechaHasta: end.toISOString().split('T')[0] + 'T23:59:59',
+            limit: 500
+          });
+          ventas = ventasResponse.ventas || [];
+        } catch (e) { console.warn("Error loading ventas", e); }
+
+        // 3. Cargar Compras (Filtradas por fecha - usando api genérica y filtro JS si es necesario)
         let compras = [];
         try {
           const comprasResponse = await fetchWithAuth(`/api/compras?limit=500`); // Fetch recent
@@ -744,12 +793,18 @@
 
         // --- CALCULAR METRICAS ---
 
-        // A. Ingresos (Suma de ordenes creadas/cerradas en este periodo? 
-        // User asked for "Egresos, comparaciones con los gastos, beneficios"
-        // Usually "Ingresos" = Facturación. Sum of total_neto of valid orders in period.
-        // Valid orders = Not Cancelled, Not Budget.
+        // A. Ingresos = Órdenes + Ventas
+        // Órdenes: Sum of total_neto of valid orders in period.
+        // Ventas: Sum of total_neto of sales in period.
         const validOrders = ordenes.filter(o => o.estado_codigo !== 'CANCELADA' && o.estado_codigo !== 'PRESUPUESTO');
-        const ingresos = validOrders.reduce((sum, o) => sum + parseFloat(o.total_neto || 0), 0);
+        const ingresosOrdenes = validOrders.reduce((sum, o) => sum + parseFloat(o.total_neto || 0), 0);
+
+        // Ventas: filtrar solo las activas (no anuladas)
+        const validVentas = ventas.filter(v => v.estado !== 'ANULADA');
+        const ingresosVentas = validVentas.reduce((sum, v) => sum + parseFloat(v.total_neto || 0), 0);
+
+        // Total Ingresos = Órdenes + Ventas
+        const ingresos = ingresosOrdenes + ingresosVentas;
 
         // B. Egresos
         const egresos = compras.reduce((sum, c) => sum + parseFloat(c.total || 0), 0);
@@ -786,8 +841,9 @@
           topClienteSub = `${bestClient.count} órdenes · €${bestClient.total.toFixed(0)}`;
         }
 
-        // F. Ticket Medio (de validOrders)
-        const ticketMedio = validOrders.length > 0 ? (ingresos / validOrders.length) : 0;
+        // F. Ticket Medio (de validOrders + validVentas)
+        const totalTransacciones = validOrders.length + validVentas.length;
+        const ticketMedio = totalTransacciones > 0 ? (ingresos / totalTransacciones) : 0;
 
         // G. Listas x Entregar (global status, not date dependent usually, but let's keep it global or filter?)
         // Usually "Listas por entregar" is CURRENT state, regardless of date filter.
@@ -858,8 +914,13 @@
         // The existing chart is "Pagos Reales".
         cargarRendimientoSemanal();
 
+        // ✅ Ocultar el loader cuando todo esté cargado
+        hidePageLoader();
+
       } catch (error) {
         console.error('Error cargando dashboard:', error);
+        // También ocultar el loader en caso de error para que la página sea usable
+        hidePageLoader();
       }
     }
 

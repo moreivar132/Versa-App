@@ -29,6 +29,7 @@
             items: [
                 { label: 'Citas', href: 'manager-taller-citas.html' },
                 { label: 'Órdenes', href: 'manager-taller-ordenes-lista.html' },
+                { label: 'Historial Unificado', href: 'manager-taller-historial-unificado.html' },
                 { label: 'Vehículos', href: 'manager-taller-vehiculos.html' },
                 { label: 'Chat Clientes', href: 'manager-taller-chat.html' },
                 { label: 'Config. Órdenes', href: 'manager-taller-config-ordenes.html' }

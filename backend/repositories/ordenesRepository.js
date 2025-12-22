@@ -324,7 +324,7 @@ class OrdenesRepository {
     }
 
     async createTipoOrden(codigo, nombre) {
-        const query = 'INSERT INTO tipoorden (codigo, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id, codigo, nombre';
+        const query = 'INSERT INTO tipoorden (codigo, nombre) VALUES ($1, $2) RETURNING id, codigo, nombre';
         const result = await pool.query(query, [codigo, nombre]);
         return result.rows[0];
     }

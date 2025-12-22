@@ -21,13 +21,26 @@ const storage = multer.diskStorage({
     }
 });
 
-// File filter
+// File filter - Accept images, videos, and common documents
 const fileFilter = (req, file, cb) => {
-    // Accept images and videos
-    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
+    const allowedMimes = [
+        'image/', 'video/',
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'text/plain'
+    ];
+
+    const isAllowed = allowedMimes.some(mime =>
+        file.mimetype.startsWith(mime) || file.mimetype === mime
+    );
+
+    if (isAllowed) {
         cb(null, true);
     } else {
-        cb(new Error('Formato de archivo no soportado. Solo imágenes y videos.'), false);
+        cb(new Error('Formato de archivo no soportado. Solo imágenes, videos, PDFs y documentos.'), false);
     }
 };
 
@@ -38,6 +51,13 @@ const upload = multer({
     },
     fileFilter: fileFilter
 });
+
+// Helper function to determine file type
+function getFileType(mimetype) {
+    if (mimetype.startsWith('image/')) return 'IMAGEN';
+    if (mimetype.startsWith('video/')) return 'VIDEO';
+    return 'ARCHIVO';
+}
 
 // Upload endpoint
 router.post('/', upload.single('file'), (req, res) => {
@@ -58,7 +78,7 @@ router.post('/', upload.single('file'), (req, res) => {
         res.json({
             ok: true,
             url: fileUrl,
-            type: req.file.mimetype.startsWith('image/') ? 'IMAGEN' : 'VIDEO',
+            type: getFileType(req.file.mimetype),
             originalName: req.file.originalname
         });
 
