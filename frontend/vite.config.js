@@ -34,6 +34,7 @@ export default defineConfig({
                 managerTallerCuentasCorrientes: 'manager-taller-cuentas-corrientes.html',
                 managerTallerVentas: 'manager-taller-ventas.html',
                 managerTallerVentasHistorial: 'manager-taller-ventas-historial.html',
+                managerTallerHistorialUnificado: 'manager-taller-historial-unificado.html',
             }
         }
     },
