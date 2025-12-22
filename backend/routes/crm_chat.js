@@ -201,8 +201,55 @@ router.post('/conversaciones/:id/mensajes', async (req, res) => {
     }
 });
 
-// 2.4. Cerrar conversación
+// 2.4. Cerrar conversación (con mensaje automático al cliente)
 router.patch('/conversaciones/:id/cerrar', async (req, res) => {
+    try {
+        const idTenant = req.user.id_tenant;
+        const idUsuario = req.user.id;
+        const idConversacion = req.params.id;
+
+        // Validar acceso
+        const queryValidar = `SELECT id, estado FROM chat_conversacion WHERE id = $1 AND id_tenant = $2`;
+        const resultValidar = await pool.query(queryValidar, [idConversacion, idTenant]);
+
+        if (resultValidar.rows.length === 0) {
+            return res.status(403).json({ ok: false, error: 'Conversación no encontrada o no autorizada' });
+        }
+
+        // Enviar mensaje automático de cierre al cliente
+        const mensajeCierre = `✅ Gracias por contactarnos. Esperamos haber resuelto tus dudas. Esta conversación ha sido cerrada. Si necesitas ayuda adicional, no dudes en escribirnos nuevamente. ¡Hasta pronto!`;
+
+        await pool.query(`
+            INSERT INTO chat_mensaje (
+                id_conversacion, id_usuario, emisor_tipo, texto, tipo_mensaje, created_at
+            ) VALUES (
+                $1, $2, 'USUARIO', $3, 'TEXTO', NOW()
+            )
+        `, [idConversacion, idUsuario, mensajeCierre]);
+
+        // Actualizar estado a CERRADO
+        const queryUpdate = `
+            UPDATE chat_conversacion
+            SET estado = 'CERRADO', updated_at = NOW(), ultimo_mensaje_at = NOW()
+            WHERE id = $1 AND id_tenant = $2
+            RETURNING id, estado
+        `;
+        const resultUpdate = await pool.query(queryUpdate, [idConversacion, idTenant]);
+
+        res.json({
+            ok: true,
+            conversacion: resultUpdate.rows[0],
+            mensajeCierreEnviado: true
+        });
+
+    } catch (error) {
+        console.error('Error en PATCH /crm/chat/conversaciones/:id/cerrar:', error);
+        res.status(500).json({ ok: false, error: error.message });
+    }
+});
+
+// 2.5. Reabrir conversación cerrada
+router.patch('/conversaciones/:id/reabrir', async (req, res) => {
     try {
         const idTenant = req.user.id_tenant;
         const idConversacion = req.params.id;
@@ -210,7 +257,7 @@ router.patch('/conversaciones/:id/cerrar', async (req, res) => {
         // Validar y actualizar
         const queryUpdate = `
             UPDATE chat_conversacion
-            SET estado = 'CERRADO', updated_at = NOW()
+            SET estado = 'ABIERTO', updated_at = NOW()
             WHERE id = $1 AND id_tenant = $2
             RETURNING id, estado
         `;
@@ -226,7 +273,7 @@ router.patch('/conversaciones/:id/cerrar', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error en PATCH /crm/chat/conversaciones/:id/cerrar:', error);
+        console.error('Error en PATCH /crm/chat/conversaciones/:id/reabrir:', error);
         res.status(500).json({ ok: false, error: error.message });
     }
 });

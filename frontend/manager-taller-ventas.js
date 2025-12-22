@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Pending Item Logic
-    ['new-item-quantity', 'new-item-price', 'new-item-discount'].forEach(id => {
+    ['new-item-quantity', 'new-item-price', 'new-item-discount', 'new-item-iva'].forEach(id => {
         document.getElementById(id).addEventListener('input', updatePendingItemTotal);
     });
 });
@@ -284,10 +284,13 @@ function updatePendingItemTotal() {
     const qty = parseFloat(document.getElementById('new-item-quantity').value) || 0;
     const price = parseFloat(document.getElementById('new-item-price').value) || 0;
     const discount = parseFloat(document.getElementById('new-item-discount').value) || 0;
+    const iva = parseFloat(document.getElementById('new-item-iva').value) || 21;
 
     const baseTotal = qty * price;
     const discountAmount = baseTotal * (discount / 100);
-    const total = baseTotal - discountAmount;
+    const subtotal = baseTotal - discountAmount;
+    const ivaAmount = subtotal * (iva / 100);
+    const total = subtotal + ivaAmount;
 
     document.getElementById('new-item-total').textContent = total.toFixed(2) + '€';
 }
@@ -298,6 +301,7 @@ function addItemToCart() {
     let price = parseFloat(document.getElementById('new-item-price').value) || 0;
     let stock = parseFloat(document.getElementById('new-item-stock').value) || 0;
     let discount = parseFloat(document.getElementById('new-item-discount').value) || 0;
+    let iva = parseFloat(document.getElementById('new-item-iva').value) || 21;
     let idProducto = document.getElementById('new-item-id-hidden').value;
 
     if (!name || qty <= 0 || price < 0) {
@@ -305,17 +309,8 @@ function addItemToCart() {
         return;
     }
 
-    // Allow custom products without ID? User said "Totally Editable".
-    // If no ID (manually typed name), we might need to handle it or require product creation.
-    // For now, let's allow it but warn if no ID. Ideally create product on fly or treat as ad-hoc line.
-    // Given the prompt "also be able to create products", likely they should use the modal for creating persistent products.
-    // But if they just edit the name line... let's stick to requiring ID or creating one.
-    // I will assume for now we use the ID if selected, or null if ad-hoc (backend might fail if strict).
-    // Let's assume strict product selection for "POS" usually.
-
     if (!idProducto && !currentSelectedProduct) {
-        // Just ad-hoc item?
-        // showToast("Producto no seleccionado de la base de datos (se registrará como concepto libre)", false);
+        // Ad-hoc item sin ID
     }
 
     // Check stock only if real product
@@ -324,7 +319,9 @@ function addItemToCart() {
         return;
     }
 
-    const total = (price * qty) * (1 - discount / 100);
+    const subtotal = (price * qty) * (1 - discount / 100);
+    const ivaAmount = subtotal * (iva / 100);
+    const total = subtotal + ivaAmount;
 
     // Add to cart
     salesItems.push({
@@ -334,7 +331,8 @@ function addItemToCart() {
         cantidad: qty,
         stock: stock,
         descuento: discount,
-        iva: 21,
+        iva: iva,
+        subtotal: subtotal,
         total: total
     });
 
@@ -347,6 +345,7 @@ function addItemToCart() {
     document.getElementById('new-item-stock').value = '-';
     document.getElementById('new-item-quantity').value = 1;
     document.getElementById('new-item-discount').value = '';
+    document.getElementById('new-item-iva').value = 21;
     document.getElementById('new-item-total').textContent = '0.00€';
     currentSelectedProduct = null;
     document.getElementById('new-item-name').focus();
@@ -357,7 +356,7 @@ function renderCart() {
     tbody.innerHTML = '';
 
     if (salesItems.length === 0) {
-        tbody.innerHTML = '<tr id="empty-cart-msg"><td colspan="7" class="p-8 text-center text-gray-500 italic">No hay productos en la venta</td></tr>';
+        tbody.innerHTML = '<tr id="empty-cart-msg"><td colspan="8" class="p-8 text-center text-gray-500 italic">No hay productos en la venta</td></tr>';
         updateTotals();
         return;
     }
@@ -366,7 +365,7 @@ function renderCart() {
         const tr = document.createElement('tr');
         tr.className = 'border-b border-[#282e39] hover:bg-[#111318]/50';
 
-        // Editable Inputs
+        // Editable Inputs with IVA column
         tr.innerHTML = `
             <td class="p-2">
                 <input type="text" class="form-input text-sm bg-transparent border-none text-white focus:bg-[#1a1d24]" 
@@ -379,6 +378,10 @@ function renderCart() {
             <td class="p-2 w-20">
                 <input type="number" class="form-input text-sm bg-transparent border-none text-[#9da6b9] focus:bg-[#1a1d24] text-center" 
                     value="${item.descuento}" min="0" max="100" onchange="updateItem(${index}, 'descuento', this.value)">
+            </td>
+            <td class="p-2 w-16">
+                <input type="number" class="form-input text-sm bg-transparent border-none text-[#9da6b9] focus:bg-[#1a1d24] text-center" 
+                    value="${item.iva}" min="0" max="100" onchange="updateItem(${index}, 'iva', this.value)">
             </td>
             <td class="p-2 w-16 text-[#9da6b9] text-center">${item.stock}</td>
             <td class="p-2 w-16">
@@ -405,9 +408,13 @@ window.updateItem = (index, field, value) => {
     if (field === 'precio') item.precio = parseFloat(value) || 0;
     if (field === 'cantidad') item.cantidad = parseFloat(value) || 0;
     if (field === 'descuento') item.descuento = parseFloat(value) || 0;
+    if (field === 'iva') item.iva = parseFloat(value) || 21;
 
-    // Recalculate Total
-    item.total = (item.precio * item.cantidad) * (1 - item.descuento / 100);
+    // Recalculate Total with IVA
+    const subtotal = (item.precio * item.cantidad) * (1 - item.descuento / 100);
+    const ivaAmount = subtotal * (item.iva / 100);
+    item.subtotal = subtotal;
+    item.total = subtotal + ivaAmount;
 
     renderCart(); // Re-render to show updated row totals
 };
@@ -420,17 +427,29 @@ window.removeItem = (index) => {
 function updateTotals() {
     let subtotal = 0;
     let totalIva = 0;
-    let totalDescuento = 0; // Not used globally yet, but good to track
 
     salesItems.forEach(item => {
-        subtotal += item.total;
-        const ivaAmount = item.total * (0.21);
+        const itemSubtotal = item.subtotal || (item.precio * item.cantidad) * (1 - item.descuento / 100);
+        const ivaAmount = itemSubtotal * ((item.iva || 21) / 100);
+        subtotal += itemSubtotal;
         totalIva += ivaAmount;
     });
 
     const total = subtotal + totalIva;
 
+    // Determine average IVA percentage for display
+    const avgIva = salesItems.length > 0
+        ? salesItems.reduce((sum, item) => sum + (item.iva || 21), 0) / salesItems.length
+        : 21;
+
     document.getElementById('summary-subtotal').textContent = subtotal.toFixed(2) + '€';
+
+    // Update IVA label if mixed rates
+    const ivaLabel = document.querySelector('td:has(+ #summary-iva), .summary-table tr:nth-child(2) td:first-child');
+    if (ivaLabel) {
+        ivaLabel.textContent = `IVA (${avgIva.toFixed(0)}%)`;
+    }
+
     document.getElementById('summary-iva').textContent = totalIva.toFixed(2) + '€';
     document.getElementById('display-total').textContent = total.toFixed(2) + '€';
 }
