@@ -22,15 +22,25 @@ app.use(cors());
 app.use('/api/stripe/webhook', require('./routes/stripeWebhook'));
 
 // Ahora sí, aplicar el parser JSON para el resto de rutas
-app.use(express.json());
+// Límite aumentado para permitir subida de imágenes en base64
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Logger Middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-// Rutas de autenticación
+console.log('Customer Portal Routes loading...');
+const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');
+
+// --- RUTAS PRIORITARIAS DEL PORTAL ---
+app.use('/api/portal', require('./routes/portalCitas')); // Portal cliente (Citas/Perfil)
+app.use('/api/portal/notificaciones', require('./routes/portalNotificaciones')); // Notificaciones
+app.use('/api/cliente/auth', require('./routes/customerAuth'));
+app.use('/api/cliente', customerAuth, require('./routes/customerPortal'));
+
+// Rutas de autenticación general
 app.use('/api/auth', authRouter);
 app.use('/api/admin', superAdminRouter);
 app.use('/api/proveedores', proveedoresRouter);
@@ -56,6 +66,18 @@ app.use('/api/trabajadores', require('./routes/trabajadores'));
 app.use('/api/facturas', require('./routes/facturas'));
 app.use('/api/cuentas-corrientes', require('./routes/cuentasCorrientes'));
 app.use('/api/ventas', require('./routes/ventas'));
+
+// Marketplace routes (público y admin)
+app.use('/api/marketplace', require('./routes/marketplace'));
+app.use('/api/marketplace/admin', verifyJWT, require('./routes/marketplaceAdmin'));
+
+// Customer Portal routes (Moved to top)
+// const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');
+// app.use('/api/cliente/auth', require('./routes/customerAuth'));
+// app.use('/api/cliente', customerAuth, require('./routes/customerPortal'));
+
+// Portal Citas - Nuevos endpoints (Moved to top)
+// app.use('/api/portal', require('./routes/portalCitas'));
 
 // Servir archivos estáticos subidos (ahora bajo /api/uploads para consistencia)
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));

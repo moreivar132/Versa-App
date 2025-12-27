@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi Portal - Versa</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #0b0d11;
+            min-height: 100vh;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-[#0b0d11]/95 backdrop-blur-lg border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2">
+                <img src="assets/versa-v-logo.png" alt="Versa" class="h-8">
+                <span class="text-white font-bold text-lg">Versa</span>
+            </a>
+
+            <nav class="flex items-center gap-6">
+                <a href="/marketplace-busqueda.html" class="text-gray-400 hover:text-white text-sm transition-colors">
+                    Marketplace
+                </a>
+                <div class="flex items-center gap-3">
+                    <!-- Notificaciones -->
+                    <div class="relative">
+                        <button id="notificationBtn" onclick="window.citasUI.toggleNotifications()"
+                            class="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span id="notificationBadge"
+                                class="absolute -top-1 -right-1 w-5 h-5 bg-[#ff5f00] text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">
+                                0
+                            </span>
+                        </button>
+                        <!-- Panel de notificaciones -->
+                        <div id="notificationPanel"
+                            class="absolute right-0 top-full mt-2 w-80 bg-[#111318] border border-[#282e39] rounded-xl shadow-2xl hidden z-50">
+                            <div class="flex items-center justify-between p-3 border-b border-[#282e39]">
+                                <h3 class="text-white font-semibold">Notificaciones</h3>
+                                <button onclick="window.citasUI.markAllAsRead()"
+                                    class="text-xs text-[#ff5f00] hover:underline">
+                                    Marcar todas como leídas
+                                </button>
+                            </div>
+                            <div id="notificationsList" class="max-h-80 overflow-y-auto">
+                                <div class="p-4 text-center text-gray-500 text-sm">
+                                    Cargando...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-[#ff5f00] rounded-full flex items-center justify-center text-white font-bold text-sm"
+                        id="userAvatar">
+                        ?
+                    </div>
+                    <span class="text-white text-sm font-medium hidden sm:block" id="userName">Cargando...</span>
+                    <!-- Logout corregido -->
+                    <button onclick="window.citasUI.logout()" class="text-gray-400 hover:text-red-400 transition-colors"
+                        title="Cerrar sesión">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- Welcome Banner -->
+        <div id="welcomeBanner" class="hidden mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-green-400">celebration</span>
+                <p class="text-green-400">¡Bienvenido a tu portal de cliente! Aquí podrás gestionar tus citas y pagos.
+                </p>
+                <button onclick="this.parentElement.parentElement.classList.add('hidden')"
+                    class="ml-auto text-green-400 hover:text-green-300">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-white">Mi Portal</h1>
+            <p class="text-gray-400 mt-1">Gestiona tus citas, pagos y datos personales</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-[#282e39] mb-6">
+            <div class="flex gap-2 overflow-x-auto">
+                <button
+                    class="tab-button active px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer text-white border-[#ff5f00]"
+                    data-tab="citas" onclick="window.citasUI.switchTab('citas')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">event</span>
+                    Mis Citas
+                </button>
+                <button
+                    class="tab-button px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer hover:text-white"
+                    data-tab="pagos" onclick="window.citasUI.switchTab('pagos')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">payments</span>
+                    Pagos
+                </button>
+                <button
+                    class="tab-button px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer hover:text-white"
+                    data-tab="perfil" onclick="window.citasUI.switchTab('perfil')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">person</span>
+                    Mi Perfil
+                </button>
+                <button
+                    class="tab-button px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer hover:text-white"
+                    data-tab="resenas" onclick="window.citasUI.switchTab('resenas')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">star</span>
+                    Mis Reseñas
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content: Citas -->
+        <div id="tab-citas" class="tab-content active">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-white">Mis Citas</h2>
+                <a href="/marketplace-busqueda.html"
+                    class="px-6 py-3 bg-[#ff5f00] text-white font-semibold rounded-lg hover:bg-[#e05300] transition-colors flex items-center gap-2 text-sm">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                    Nueva Cita
+                </a>
+            </div>
+
+            <div id="citasContainer" class="min-h-[200px]">
+                <div class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Pagos -->
+        <div id="tab-pagos" class="tab-content">
+            <h2 class="text-lg font-semibold text-white mb-6">Historial de Pagos</h2>
+            <div id="pagosContainer" class="min-h-[200px]">
+                <div class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Perfil -->
+        <div id="tab-perfil" class="tab-content">
+            <div class="max-w-2xl">
+                <h2 class="text-lg font-semibold text-white mb-6">Mi Perfil</h2>
+                <div class="bg-[#111318] border border-[#282e39] rounded-xl p-6">
+                    <form id="perfilForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Nombre</label>
+                            <input type="text" id="perfilNombre"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-colors"
+                                placeholder="Tu nombre">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Email</label>
+                            <input type="email" id="perfilEmail"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-gray-500"
+                                disabled>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Teléfono</label>
+                            <input type="tel" id="perfilTelefono"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-colors"
+                                placeholder="+34 600 00 00 00">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Dirección</label>
+                            <input type="text" id="perfilDireccion"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-colors"
+                                placeholder="Tu dirección">
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit"
+                                class="px-6 py-3 bg-[#ff5f00] text-white font-semibold rounded-lg hover:bg-[#e05300] transition-colors">
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Mis Reseñas -->
+        <div id="tab-resenas" class="tab-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-white">Mis Reseñas</h2>
+            </div>
+            <div id="resenasContainer" class="min-h-[200px] space-y-4">
+                <div class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
+    <script type="module">
+        import {
+            requireAuth,
+            getProfile,
+            updateProfile,
+            getCitas,
+            getPagos,
+            cancelarCita,
+            reprogramarCita,
+            getDisponibilidadCita,
+            createResena,
+            getResena,
+            updateResena,
+            deleteResena,
+            getMisResenas,
+            logout,
+            getStoredCustomer,
+            getNotificaciones,
+            contarNotificacionesNoLeidas,
+            marcarNotificacionLeida,
+            marcarTodasNotificacionesLeidas
+        } from './services/cliente-service.js';
+
+        import {
+            renderCitasList,
+            renderCancelModal,
+            renderReprogramModal,
+            renderReprogramSlots,
+            renderReviewModal,
+            formatFecha,
+            formatHora
+        } from './components/citas-ui.js';
+
+        // Check auth
+        if (!requireAuth()) {
+            // Will redirect to login
+        }
+
+        // State
+        let citasData = [];
+        let pagosData = [];
+        let profileData = null;
+        let selectedCita = null;
+        let selectedReprogramSlot = null;
+        let notificacionesData = [];
+        let reviewPhotos = [];
+        let existingReview = null;
+        let misResenasData = [];
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check welcome
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('welcome') === '1') {
+                document.getElementById('welcomeBanner').classList.remove('hidden');
+            }
+
+            // Initial load
+            await loadProfile();
+            await loadCitas();
+            await loadNotificaciones();
+
+            // Click outside to close notifications
+            document.addEventListener('click', (e) => {
+                const panel = document.getElementById('notificationPanel');
+                const btn = document.getElementById('notificationBtn');
+                if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                    panel.classList.add('hidden');
+                }
+            });
+        });
+
+        // Loaders
+        async function loadProfile() {
+            try {
+                const result = await getProfile();
+                if (result.ok) {
+                    profileData = result.data;
+                    document.getElementById('userName').textContent = profileData.nombre || 'Usuario';
+                    document.getElementById('userAvatar').textContent = (profileData.nombre || 'U')[0].toUpperCase();
+
+                    // Form
+                    document.getElementById('perfilNombre').value = profileData.nombre || '';
+                    document.getElementById('perfilEmail').value = profileData.email || '';
+                    document.getElementById('perfilTelefono').value = profileData.telefono || '';
+                    document.getElementById('perfilDireccion').value = profileData.direccion || '';
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        async function loadCitas() {
+            try {
+                const result = await getCitas('all');
+                if (result.ok) {
+                    citasData = result.data;
+                    renderCitasList(citasData, 'cliente', 'citasContainer');
+                } else {
+                    document.getElementById('citasContainer').innerHTML = '<p class="text-red-400 text-center py-4">Error cargando citas</p>';
+                }
+            } catch (error) {
+                console.error('Error loading citas:', error);
+                document.getElementById('citasContainer').innerHTML = '<p class="text-red-400 text-center py-4">Error cargando citas</p>';
+            }
+        }
+
+        async function loadPagos() {
+            try {
+                const result = await getPagos();
+                if (result.ok) {
+                    pagosData = result.data;
+                    // Render simple pagos table
+                    const container = document.getElementById('pagosContainer');
+                    if (pagosData.length === 0) {
+                        container.innerHTML = '<p class="text-gray-400 text-center py-8">No hay pagos registrados</p>';
+                    } else {
+                        container.innerHTML = `
+                            <div class="bg-[#111318] border border-[#282e39] rounded-xl overflow-hidden">
+                                <table class="w-full text-left text-sm text-gray-400">
+                                    <thead class="bg-[#1a1d24] text-white">
+                                        <tr><th class="p-3">Fecha</th><th class="p-3">Concepto</th><th class="p-3">Importe</th><th class="p-3">Estado</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-[#282e39]">
+                                        ${pagosData.map(p => `
+                                            <tr>
+                                                <td class="p-3">${new Date(p.fecha).toLocaleDateString()}</td>
+                                                <td class="p-3">${p.concepto}</td>
+                                                <td class="p-3 font-bold text-[#ff5f00]">${p.importe}€</td>
+                                                <td class="p-3">${p.status}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading pagos:', error);
+            }
+        }
+
+        // Load Notificaciones
+        async function loadNotificaciones() {
+            try {
+                // Contar no leídas
+                const countResult = await contarNotificacionesNoLeidas();
+                const badge = document.getElementById('notificationBadge');
+                if (countResult.ok && countResult.count > 0) {
+                    badge.textContent = countResult.count > 9 ? '9+' : countResult.count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+
+                // Cargar lista
+                const result = await getNotificaciones(false, 10);
+                if (result.ok) {
+                    notificacionesData = result.notificaciones;
+                    renderNotificaciones();
+                }
+            } catch (error) {
+                console.error('Error loading notificaciones:', error);
+            }
+        }
+
+        function renderNotificaciones() {
+            const container = document.getElementById('notificationsList');
+
+            if (notificacionesData.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center">
+                        <span class="material-symbols-outlined text-4xl text-gray-600 mb-2">notifications_off</span>
+                        <p class="text-gray-500 text-sm">No tienes notificaciones</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = notificacionesData.map(notif => {
+                const fecha = new Date(notif.created_at);
+                const tiempo = getTimeAgo(fecha);
+                const iconos = {
+                    cita_confirmada: 'check_circle',
+                    cita_en_progreso: 'build',
+                    cita_completada: 'task_alt',
+                    cita_cancelada: 'cancel',
+                    cita_actualizada: 'update'
+                };
+                const icono = iconos[notif.tipo] || 'notifications';
+
+                return `
+                    <div class="p-3 border-b border-[#282e39] hover:bg-white/5 transition-colors cursor-pointer ${notif.leida ? 'opacity-60' : ''}"
+                         onclick="window.citasUI.markAsRead(${notif.id})">
+                        <div class="flex gap-3">
+                            <span class="material-symbols-outlined text-[#ff5f00]" style="font-size: 20px;">${icono}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white text-sm font-medium truncate">${notif.titulo}</p>
+                                <p class="text-gray-400 text-xs mt-1 line-clamp-2">${notif.mensaje}</p>
+                                <p class="text-gray-500 text-xs mt-2">${tiempo}</p>
+                            </div>
+                            ${!notif.leida ? '<span class="w-2 h-2 bg-[#ff5f00] rounded-full flex-shrink-0 mt-1"></span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Ahora';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `Hace ${minutes}m`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `Hace ${hours}h`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `Hace ${days}d`;
+            return date.toLocaleDateString('es-ES');
+        }
+
+        // Formatear fecha legible
+        function formatearFechaCompleta(fecha) {
+            if (!fecha) return '';
+            const d = new Date(fecha);
+            return d.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Load Mis Reseñas
+        async function loadMisResenas() {
+            try {
+                const result = await getMisResenas();
+                if (result.ok) {
+                    misResenasData = result.data || [];
+                    renderMisResenas();
+                }
+            } catch (error) {
+                console.error('Error loading reseñas:', error);
+            }
+        }
+
+        function renderMisResenas() {
+            const container = document.getElementById('resenasContainer');
+
+            if (misResenasData.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-[#111318] border border-[#282e39] rounded-xl p-8 text-center">
+                        <span class="material-symbols-outlined text-4xl text-gray-600 mb-3 block">rate_review</span>
+                        <p class="text-gray-400">Aún no has dejado ninguna reseña</p>
+                        <p class="text-gray-500 text-sm mt-1">Las reseñas aparecerán aquí después de completar tus citas</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = misResenasData.map(resena => {
+                // Parsear fotos
+                let fotos = resena.fotos || [];
+                if (typeof fotos === 'string') {
+                    try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
+                }
+
+                return `
+                    <div class="bg-[#111318] border border-[#282e39] rounded-xl p-5 hover:border-primary/30 transition-colors">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h4 class="font-semibold text-white">${resena.sucursal_nombre || 'Taller'}</h4>
+                                <p class="text-xs text-gray-500">${formatearFechaCompleta(resena.cita_fecha || resena.created_at)}</p>
+                            </div>
+                            <div class="flex items-center gap-1 text-yellow-500">
+                                ${Array(5).fill(0).map((_, i) => `
+                                    <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' ${i < resena.rating ? 1 : 0};">star</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        ${resena.comentario ? `<p class="text-gray-300 text-sm mb-3">${resena.comentario}</p>` : ''}
+                        
+                        ${fotos.length > 0 ? `
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                ${fotos.map(url => `
+                                    <img src="${url}" alt="Foto" class="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80" onclick="window.open('${url}', '_blank')">
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex gap-2 pt-3 border-t border-[#282e39]">
+                            <button onclick="window.citasUI.editarResena(${resena.id_cita})" 
+                                    class="flex-1 px-3 py-2 bg-blue-500/10 text-blue-400 rounded-lg text-sm hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+                                Editar
+                            </button>
+                            <button onclick="window.citasUI.eliminarResena(${resena.id_cita})" 
+                                    class="px-3 py-2 bg-red-500/10 text-red-400 rounded-lg text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Profile Update
+        document.getElementById('perfilForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const result = await updateProfile({
+                    nombre: document.getElementById('perfilNombre').value,
+                    telefono: document.getElementById('perfilTelefono').value,
+                    direccion: document.getElementById('perfilDireccion').value
+                });
+                if (result.ok) {
+                    showToast('Perfil actualizado', 'success');
+                    loadProfile();
+                } else {
+                    showToast('Error actualizando perfil', 'error');
+                }
+            } catch (e) { showToast('Error', 'error'); }
+        });        // ... (skip unchanged lines) ...
+        // Citas UI handlers - exposed globally
+        window.citasUI = {
+            logout: () => {
+                if (confirm('¿Cerrar sesión?')) logout();
+            },
+
+            // Notificaciones
+            toggleNotifications: () => {
+                const panel = document.getElementById('notificationPanel');
+                panel.classList.toggle('hidden');
+            },
+
+            markAsRead: async (notifId) => {
+                try {
+                    await marcarNotificacionLeida(notifId);
+                    await loadNotificaciones();
+                } catch (error) {
+                    console.error('Error marking as read:', error);
+                }
+            },
+
+            markAllAsRead: async () => {
+                try {
+                    await marcarTodasNotificacionesLeidas();
+                    await loadNotificaciones();
+                    showToast('Todas las notificaciones marcadas como leídas', 'success');
+                } catch (error) {
+                    console.error('Error marking all as read:', error);
+                }
+            },
+
+            switchTab: (tabId) => {
+                // Update buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    const isTarget = btn.dataset.tab === tabId;
+                    if (isTarget) {
+                        btn.classList.add('active', 'text-white', 'border-[#ff5f00]');
+                        btn.classList.remove('text-gray-400', 'border-transparent');
+                    } else {
+                        btn.classList.remove('active', 'text-white', 'border-[#ff5f00]');
+                        btn.classList.add('text-gray-400', 'border-transparent');
+                    }
+                });
+
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+
+                // Load data
+                if (tabId === 'pagos' && pagosData.length === 0) {
+                    loadPagos();
+                }
+                if (tabId === 'resenas' && misResenasData.length === 0) {
+                    loadMisResenas();
+                }
+            },
+
+            handleAction: async (action, citaId) => {
+                selectedCita = citasData.find(c => c.id === citaId);
+                if (!selectedCita) return;
+
+                if (action === 'cancelar') {
+                    document.getElementById('modalContainer').innerHTML = renderCancelModal(selectedCita);
+                } else if (action === 'reprogramar') {
+                    document.getElementById('modalContainer').innerHTML = renderReprogramModal(selectedCita);
+                } else if (action === 'resena') {
+                    // Verificar si ya existe una reseña para esta cita
+                    try {
+                        const result = await getResena(citaId);
+                        if (result.ok && result.data) {
+                            existingReview = result.data;
+                            reviewPhotos = result.data.fotos || [];
+                        } else {
+                            existingReview = null;
+                            reviewPhotos = [];
+                        }
+                    } catch (e) {
+                        existingReview = null;
+                        reviewPhotos = [];
+                    }
+                    document.getElementById('modalContainer').innerHTML = renderReviewModal(selectedCita, existingReview);
+                }
+            },
+
+            closeModal: () => {
+                document.getElementById('modalContainer').innerHTML = '';
+                selectedCita = null;
+                selectedReprogramSlot = null;
+                existingReview = null;
+                reviewPhotos = [];
+            },
+
+            setRating: (rating) => {
+                document.getElementById('ratingValue').value = rating;
+                document.querySelectorAll('.review-star').forEach(btn => {
+                    const btnRating = parseInt(btn.dataset.rating);
+                    if (btnRating <= rating) {
+                        btn.classList.add('text-yellow-400', 'scale-110');
+                        btn.classList.remove('text-gray-700');
+                    } else {
+                        btn.classList.remove('text-yellow-400', 'scale-110');
+                        btn.classList.add('text-gray-700');
+                    }
+                });
+
+                const labels = ['Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
+                const labelEl = document.getElementById('ratingLabel');
+                if (labelEl) labelEl.textContent = labels[rating - 1];
+
+                const submitBtn = document.getElementById('submitReviewBtn');
+                if (submitBtn) submitBtn.disabled = false;
+            },
+
+            submitReview: async (citaId, esEdicion = false) => {
+                const puntuacion = parseInt(document.getElementById('ratingValue').value);
+                const comentario = document.getElementById('reviewComment').value.trim();
+                const fotos = reviewPhotos;
+
+                if (!puntuacion) {
+                    showToast('Por favor selecciona una puntuación', 'error');
+                    return;
+                }
+
+                try {
+                    let result;
+                    if (esEdicion) {
+                        result = await updateResena(citaId, { puntuacion, comentario, fotos });
+                    } else {
+                        result = await createResena(citaId, puntuacion, comentario, fotos);
+                    }
+
+                    if (result.ok) {
+                        showToast(esEdicion ? '¡Reseña actualizada!' : '¡Gracias por tu reseña!', 'success');
+                        window.citasUI.closeModal();
+                        loadCitas();
+                    } else {
+                        showToast(result.error || 'Error al guardar reseña', 'error');
+                    }
+                } catch (error) {
+                    showToast(error.message || 'Error al guardar reseña', 'error');
+                }
+            },
+
+            deleteReview: async (citaId) => {
+                if (!confirm('¿Seguro que quieres eliminar esta reseña?')) return;
+
+                try {
+                    const result = await deleteResena(citaId);
+                    if (result.ok) {
+                        showToast('Reseña eliminada', 'success');
+                        window.citasUI.closeModal();
+                        loadCitas();
+                    } else {
+                        showToast(result.error || 'Error al eliminar', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error al eliminar reseña', 'error');
+                }
+            },
+
+            handlePhotoUpload: async (event) => {
+                const files = event.target.files;
+                if (!files || files.length === 0) return;
+
+                const MAX_WIDTH = 1024;
+                const MAX_HEIGHT = 1024;
+                const QUALITY = 0.7;
+
+                // Función helper para comprimir
+                const compressImage = (file) => {
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.src = e.target.result;
+                            img.onload = () => {
+                                let width = img.width;
+                                let height = img.height;
+
+                                if (width > height) {
+                                    if (width > MAX_WIDTH) {
+                                        height *= MAX_WIDTH / width;
+                                        width = MAX_WIDTH;
+                                    }
+                                } else {
+                                    if (height > MAX_HEIGHT) {
+                                        width *= MAX_HEIGHT / height;
+                                        height = MAX_HEIGHT;
+                                    }
+                                }
+
+                                const canvas = document.createElement('canvas');
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+                                
+                                const compressedDataUrl = canvas.toDataURL('image/jpeg', QUALITY);
+                                resolve(compressedDataUrl);
+                            };
+                        };
+                    });
+                };
+
+                const container = document.getElementById('photosPreview');
+                const loadingToast = document.createElement('div');
+                loadingToast.textContent = 'Procesando imágenes...';
+                loadingToast.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow-lg z-50';
+                document.body.appendChild(loadingToast);
+
+                try {
+                    for (const file of files) {
+                        if (reviewPhotos.length >= 5) {
+                            showToast('Máximo 5 fotos permitidas', 'error');
+                            break;
+                        }
+
+                        // Comprimir imagen
+                        const compressedBase64 = await compressImage(file);
+                        reviewPhotos.push(compressedBase64);
+
+                        // Crear preview
+                        const newPhoto = document.createElement('div');
+                        newPhoto.className = 'relative w-20 h-20 rounded-lg overflow-hidden group border border-[#282e39]';
+                        newPhoto.innerHTML = `
+                            <img src="${compressedBase64}" class="w-full h-full object-cover">
+                            <button onclick="window.citasUI.removePhoto(${reviewPhotos.length - 1})" 
+                                    class="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="material-symbols-outlined text-white" style="font-size: 14px;">close</span>
+                            </button>
+                        `;
+                        container.appendChild(newPhoto);
+                    }
+                } catch (err) {
+                    console.error('Error comprimiendo imágenes:', err);
+                    showToast('Error al procesar imágenes', 'error');
+                } finally {
+                    loadingToast.remove();
+                    event.target.value = ''; // Reset input
+                    
+                    // Actualizar input hidden
+                    document.getElementById('reviewPhotos').value = JSON.stringify(reviewPhotos);
+                }
+            },
+
+            removePhoto: (index) => {
+                reviewPhotos.splice(index, 1);
+                // Re-render el modal con las fotos actualizadas
+                if (selectedCita) {
+                    const updatedReview = existingReview ? {
+                        ...existingReview,
+                        fotos: reviewPhotos
+                    } : null;
+                    document.getElementById('modalContainer').innerHTML = renderReviewModal(selectedCita, updatedReview);
+                    // Restaurar valores del formulario
+                    document.getElementById('reviewPhotos').value = JSON.stringify(reviewPhotos);
+                }
+            },
+
+            confirmCancel: async (citaId) => {
+                try {
+                    const result = await cancelarCita(citaId);
+                    if (result.ok) {
+                        showToast('Cita cancelada correctamente', 'success');
+                        window.citasUI.closeModal();
+                        loadCitas();
+                    } else {
+                        showToast(result.error || 'Error al cancelar', 'error');
+                    }
+                } catch (error) {
+                    showToast(error.message || 'Error al cancelar', 'error');
+                }
+            },
+
+            loadSlotsForReprogram: async (citaId, fecha) => {
+                if (!fecha) return;
+
+                try {
+                    const result = await getDisponibilidadCita(citaId, fecha);
+                    if (result.ok) {
+                        renderReprogramSlots(result.data);
+                    }
+                } catch (error) {
+                    console.error('Error loading slots:', error);
+                }
+            },
+
+            selectReprogramSlot: (hora) => {
+                selectedReprogramSlot = hora;
+
+                // Update UI
+                document.querySelectorAll('.reprogram-slot').forEach(btn => {
+                    btn.classList.remove('border-primary', 'bg-primary/20');
+                    if (btn.dataset.hora === hora) {
+                        btn.classList.add('border-primary', 'bg-primary/20');
+                    }
+                });
+
+                document.getElementById('confirmReprogramBtn').disabled = false;
+            },
+
+            confirmReprogram: async (citaId) => {
+                const fecha = document.getElementById('reprogramFecha').value;
+                if (!fecha || !selectedReprogramSlot) {
+                    showToast('Selecciona fecha y hora', 'error');
+                    return;
+                }
+
+                try {
+                    const result = await reprogramarCita(citaId, fecha, selectedReprogramSlot);
+                    if (result.ok) {
+                        showToast('Cita reprogramada correctamente', 'success');
+                        window.citasUI.closeModal();
+                        loadCitas();
+                    } else {
+                        showToast(result.error || 'Error al reprogramar', 'error');
+                    }
+                } catch (error) {
+                    showToast(error.message || 'Error al reprogramar', 'error');
+                }
+            },
+
+            showAllPast: () => {
+                // TODO: Implementar paginación
+                console.log('Show all past citas');
+            },
+
+            // Gestión de reseñas desde historial
+            editarResena: async (citaId) => {
+                try {
+                    const result = await getResena(citaId);
+                    if (result.ok && result.data) {
+                        existingReview = result.data;
+                        reviewPhotos = result.data.fotos || [];
+                        // Crear una cita simulada para el modal
+                        const resena = misResenasData.find(r => r.id_cita === citaId);
+                        selectedCita = {
+                            id: citaId,
+                            fecha_hora: resena?.cita_fecha || new Date().toISOString(),
+                            sucursal: { nombre: resena?.sucursal_nombre || 'Taller' },
+                            servicio: { nombre: 'Servicio' }
+                        };
+                        document.getElementById('modalContainer').innerHTML = renderReviewModal(selectedCita, existingReview);
+                    } else {
+                        showToast('Error al cargar reseña', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error al cargar reseña', 'error');
+                }
+            },
+
+            eliminarResena: async (citaId) => {
+                if (!confirm('¿Seguro que quieres eliminar esta reseña? Esta acción no se puede deshacer.')) return;
+
+                try {
+                    const result = await deleteResena(citaId);
+                    if (result.ok) {
+                        showToast('Reseña eliminada correctamente', 'success');
+                        // Recargar la lista de reseñas
+                        misResenasData = [];
+                        loadMisResenas();
+                    } else {
+                        showToast(result.error || 'Error al eliminar', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error al eliminar reseña', 'error');
+                }
+            }
+        };
+
+        // Logout handler
+        window.handleLogout = () => {
+            if (confirm('¿Seguro que deseas cerrar sesión?')) {
+                logout();
+            }
+        };
+
+        // Toast helper
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Change password modal (placeholder)
+        window.showChangePasswordModal = () => {
+            showToast('Funcionalidad próximamente disponible', 'info');
+        };
+    </script>
+
+</body>
+
+</html>

@@ -97,6 +97,162 @@
       margin-left: 0.5rem;
       margin-top: 2rem;
     }
+
+    /* Login Switch CSS */
+    .flip-switch-container {
+      --card-width: 110px;
+      --card-height: 120px;
+      --switch-bg: rgba(255, 255, 255, 0.1);
+      --switch-border-color: rgba(255, 255, 255, 0.2);
+      --text-color: #111827;
+      /* Dark text for light mode login */
+      --inactive-text-color: rgba(107, 114, 128, 0.8);
+      --icon-shadow-color: rgba(0, 0, 0, 0.1);
+      --card-bg: linear-gradient(135deg, rgba(255, 95, 0, 0.2), rgba(255, 95, 0, 0.1));
+      --highlight-color: #ff5f00;
+
+      display: grid;
+      place-content: center;
+      min-height: auto;
+      margin-bottom: 2rem;
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .flip-switch {
+      display: flex;
+      position: relative;
+      width: calc(var(--card-width) * 2);
+      height: var(--card-height);
+      background: var(--bg);
+      /* Use theme bg if possible or white */
+      background: #f9fafb;
+      border-radius: 20px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      perspective: 1000px;
+    }
+
+    .flip-switch input[type="radio"] {
+      display: none;
+    }
+
+    .flip-switch .switch-button {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      z-index: 2;
+      color: var(--inactive-text-color);
+      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    .flip-switch .switch-button:hover {
+      color: var(--text-color);
+    }
+
+    .flip-switch .switch-button:hover svg {
+      transform: translateY(-3px);
+      filter: drop-shadow(0 4px 6px var(--icon-shadow-color));
+    }
+
+    .flip-switch .switch-button svg {
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      width: 24px;
+      height: 24px;
+    }
+
+    .flip-switch .switch-button span {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .flip-switch #switch-opt-1:checked~[for="switch-opt-1"],
+    .flip-switch #switch-opt-2:checked~[for="switch-opt-2"] {
+      color: var(--text-color);
+      font-weight: 700;
+    }
+
+    .flip-switch .switch-card {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: var(--card-width);
+      height: var(--card-height);
+      z-index: 1;
+      transform-style: preserve-3d;
+    }
+
+    .flip-switch .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      background: white;
+      border: 1px solid #ff5f00;
+      box-shadow: 0 10px 15px -3px rgba(255, 95, 0, 0.1), 0 4px 6px -2px rgba(255, 95, 0, 0.05);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .flip-switch .card-back {
+      transform: rotateY(180deg);
+    }
+
+    .flip-switch #switch-opt-2:checked~.switch-card {
+      animation: flipRight 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+    }
+
+    .flip-switch #switch-opt-1:checked~.switch-card {
+      animation: flipLeft 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+    }
+
+    @keyframes flipRight {
+      0% {
+        transform: translateX(0%) rotateY(0deg);
+      }
+
+      50% {
+        transform: translateX(50%) rotateY(90deg) scale(1.05);
+      }
+
+      100% {
+        transform: translateX(100%) rotateY(180deg) scale(1);
+      }
+    }
+
+    @keyframes flipLeft {
+      0% {
+        transform: translateX(100%) rotateY(180deg);
+      }
+
+      50% {
+        transform: translateX(50%) rotateY(90deg) scale(1.05);
+      }
+
+      100% {
+        transform: translateX(0%) rotateY(0deg) scale(1);
+      }
+    }
+
+    .back-link {
+      display: block;
+      margin-top: 2rem;
+      text-align: center;
+      color: #6b7280;
+      font-size: 0.875rem;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: #111827;
+    }
   </style>
 </head>
 
@@ -116,6 +272,38 @@
 
     <section class="login-card">
       <div class="surface">
+        <!-- Login Type Switch -->
+        <div class="flip-switch-container">
+          <div class="flip-switch">
+            <input type="radio" name="login-type" id="switch-opt-1">
+            <input type="radio" name="login-type" id="switch-opt-2" checked>
+
+            <label for="switch-opt-1" class="switch-button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>Cliente</span>
+            </label>
+
+            <label for="switch-opt-2" class="switch-button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path
+                  d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                </path>
+              </svg>
+              <span>Taller</span>
+            </label>
+
+            <div class="switch-card">
+              <div class="card-face card-front"></div>
+              <div class="card-face card-back"></div>
+            </div>
+          </div>
+        </div>
+
         <h2 class="text-xl font-bold">Iniciar sesión</h2>
         <p class="helper-text">
           Accede con tu email corporativo y la contraseña que te asignó un administrador.
@@ -152,6 +340,10 @@
           </div>
         </a>
 
+        <a href="/" class="back-link">
+          ← Volver al inicio
+        </a>
+
       </div>
     </section>
   </main>
@@ -172,6 +364,15 @@
         tenantId: 1,
         clientId: 1 // Simulado
       });
+    });
+
+    // Switch Logic
+    document.getElementById('switch-opt-1').addEventListener('change', function () {
+      if (this.checked) {
+        setTimeout(() => {
+          window.location.href = '/cliente-login.html';
+        }, 300);
+      }
     });
   </script>
 </body>

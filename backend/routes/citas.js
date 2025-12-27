@@ -146,6 +146,15 @@ router.put('/:id', async (req, res) => {
     const { estado, motivo, notas, fecha_hora, id_mecanico, id_sucursal } = req.body;
 
     try {
+        // Obtener estado anterior para notificación
+        let estadoAnterior = null;
+        if (estado) {
+            const citaActual = await pool.query('SELECT estado FROM citataller WHERE id = $1', [id]);
+            if (citaActual.rows.length > 0) {
+                estadoAnterior = citaActual.rows[0].estado;
+            }
+        }
+
         const result = await pool.query(`
             UPDATE citataller 
             SET estado = COALESCE($1, estado),
@@ -160,6 +169,16 @@ router.put('/:id', async (req, res) => {
 
         if (result.rowCount === 0) {
             return res.status(404).json({ ok: false, error: 'Cita no encontrada' });
+        }
+
+        // Si cambió el estado, notificar al cliente
+        if (estado && estadoAnterior && estado !== estadoAnterior) {
+            try {
+                const notificacionService = require('../services/notificacionService');
+                await notificacionService.notificarCambioEstadoCita(id, estadoAnterior, estado);
+            } catch (notifError) {
+                console.warn('No se pudo crear notificación:', notifError.message);
+            }
         }
 
         res.json({ ok: true, cita: result.rows[0] });

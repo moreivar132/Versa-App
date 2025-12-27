@@ -35,6 +35,13 @@ export default defineConfig({
                 managerTallerVentas: 'manager-taller-ventas.html',
                 managerTallerVentasHistorial: 'manager-taller-ventas-historial.html',
                 managerTallerHistorialUnificado: 'manager-taller-historial-unificado.html',
+                marketplaceBusqueda: 'marketplace-busqueda.html',
+                marketplaceTaller: 'marketplace-taller.html',
+                managerTallerMarketplace: 'manager-taller-marketplace.html',
+                // Portal Cliente (PASO 5)
+                clienteLogin: 'cliente-login.html',
+                clienteRegister: 'cliente-register.html',
+                clienteDashboard: 'cliente-dashboard.html',
             }
         }
     },
