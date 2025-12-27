@@ -428,9 +428,13 @@
                                     <div>
                                         <label class="block text-xs text-[#9da6b9] mb-1">Cliente</label>
                                         <div class="custom-select-container flex gap-2">
-                                            <input type="text" id="buscar-cliente" name="cliente_nombre"
-                                                class="form-input" placeholder="Cliente (o Mostrador)..."
-                                                autocomplete="off">
+                                            <div class="animated-search-form" style="flex: 1;">
+                                                <input type="search" id="buscar-cliente" name="cliente_nombre"
+                                                    class="search-input" placeholder="Cliente (o Mostrador)..."
+                                                    autocomplete="off" required>
+                                                <span class="caret"></span>
+                                                <i class="fas fa-user search-icon"></i>
+                                            </div>
                                             <button type="button" id="btn-cliente-rapido" title="Cliente Mostrador"
                                                 class="px-3 py-2 bg-[#282e39] text-white rounded-lg hover:bg-[#343b47]">
                                                 <i class="fas fa-user-clock"></i>
@@ -476,12 +480,13 @@
                                                 <td class="p-2">
                                                     <input type="hidden" id="new-item-id-hidden" />
                                                     <div class="custom-select-container flex gap-1">
-                                                        <div class="relative w-full">
-                                                            <i
-                                                                class="fas fa-search absolute left-3 top-3 text-gray-500"></i>
-                                                            <input type="text" id="new-item-name"
-                                                                class="form-input text-sm pl-8"
-                                                                placeholder="Buscar producto..." autocomplete="off">
+                                                        <div class="animated-search-form" style="flex: 1;">
+                                                            <input type="search" id="new-item-name"
+                                                                class="search-input text-sm"
+                                                                placeholder="Buscar producto..." autocomplete="off"
+                                                                required>
+                                                            <span class="caret"></span>
+                                                            <i class="fas fa-box search-icon"></i>
                                                         </div>
                                                         <button type="button" id="btn-new-product"
                                                             title="Crear Producto"

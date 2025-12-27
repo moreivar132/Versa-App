@@ -212,11 +212,11 @@
                         <div class="flex w-full items-center gap-4 sm:w-auto">
                             <!-- SearchBar -->
                             <label class="flex-1 sm:w-64">
-                                <div class="relative flex w-full items-center">
-                                    <span class="material-symbols-outlined absolute left-3 text-[#a0a0a0]">search</span>
-                                    <input id="search-input"
-                                        class="h-10 w-full rounded-lg border border-[#2a2a2a] bg-[#1a1a1a] pl-10 text-white placeholder:text-[#a0a0a0] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-all"
-                                        placeholder="Buscar matrícula, cliente..." />
+                                <div class="animated-search-form">
+                                    <input type="search" id="search-input" class="search-input"
+                                        placeholder="Buscar matrícula, cliente..." required>
+                                    <span class="caret"></span>
+                                    <i class="fas fa-calendar-check search-icon"></i>
                                 </div>
                             </label>
 
@@ -315,12 +315,11 @@
 
                                 <div class="flex items-center gap-3">
                                     <!-- Search -->
-                                    <div
-                                        class="flex items-center gap-2 bg-[#2a2a2a] rounded-lg p-1 border border-[#3a3a3a]">
-                                        <span
-                                            class="material-symbols-outlined text-[#a0a0a0] text-sm ml-2">search</span>
-                                        <input type="text" id="search-input" placeholder="Buscar..."
-                                            class="bg-transparent border-none text-sm text-white focus:outline-none w-32 md:w-48 placeholder-[#666]">
+                                    <div class="animated-search-form" style="width: 200px;">
+                                        <input type="search" id="table-search-input" class="search-input"
+                                            placeholder="Buscar..." required>
+                                        <span class="caret"></span>
+                                        <i class="fas fa-search search-icon"></i>
                                     </div>
                                     <!-- Status Filter -->
                                     <div
@@ -816,12 +815,12 @@
             document.getElementById('cita-mecanico').addEventListener('change', checkAvailability);
 
             // Search Listener
-            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('table-search-input').addEventListener('input', applyFilters);
             document.getElementById('status-filter').addEventListener('change', applyFilters);
         });
 
         function applyFilters() {
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const searchTerm = document.getElementById('table-search-input').value.toLowerCase();
             const statusTerm = document.getElementById('status-filter').value.toLowerCase();
 
             const filtered = currentCitas.filter(c => {

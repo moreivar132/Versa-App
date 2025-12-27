@@ -308,43 +308,9 @@
       margin-bottom: 8px;
     }
 
-    /* Barra de búsqueda */
+    /* Barra de búsqueda - usa estilos globales de animated-search-form */
     .search-bar-container {
       width: 100%;
-    }
-
-    .search-bar {
-      display: flex;
-      align-items: center;
-      height: 44px;
-      border-radius: 10px;
-      border: 1px solid #282e39;
-      background-color: #1a1d24;
-      transition: border-color 0.2s, box-shadow 0.2s;
-    }
-
-    .search-bar:focus-within {
-      border-color: var(--brand-orange);
-      box-shadow: 0 0 0 2px rgba(255, 95, 0, 0.15);
-    }
-
-    .search-icon {
-      padding-left: 14px;
-      color: #9da6b9;
-    }
-
-    .search-input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      color: #fff;
-      font-size: 14px;
-      padding: 0 14px;
-      outline: none;
-    }
-
-    .search-input::placeholder {
-      color: #6b7280;
     }
 
     /* Contenedor de filtros de estado - Barra horizontal deslizable */
@@ -791,10 +757,11 @@
           <div class="filters-section">
             <!-- Barra de búsqueda -->
             <div class="search-bar-container">
-              <div class="search-bar">
-                <span class="material-symbols-outlined search-icon">search</span>
-                <input type="text" id="search-input" class="search-input"
-                  placeholder="Buscar por N° Orden, Cliente, Matrícula..." />
+              <div class="animated-search-form">
+                <input type="search" id="search-input" class="search-input"
+                  placeholder="Buscar por N° Orden, Cliente, Matrícula..." required />
+                <span class="caret"></span>
+                <i class="fas fa-file-alt search-icon"></i>
               </div>
             </div>
 

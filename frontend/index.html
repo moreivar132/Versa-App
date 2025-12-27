@@ -91,6 +91,432 @@
     .animate-scale-in {
       animation: scale-in 0.2s ease-out forwards;
     }
+
+    /* ===== RADIAL FLOW STYLES ===== */
+
+    /* Slow pulse animation for background */
+    @keyframes pulse-slow {
+
+      0%,
+      100% {
+        opacity: 0.3;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 8s ease-in-out infinite;
+    }
+
+    /* Slow spin for the glow ring */
+    @keyframes spin-slow {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .animate-spin-slow {
+      animation: spin-slow 20s linear infinite;
+    }
+
+    /* Central dot pulse */
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        r: 6;
+      }
+
+      50% {
+        opacity: 0.7;
+        r: 8;
+      }
+    }
+
+    .animate-pulse-dot {
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    /* Radial flow labels */
+    .radial-label {
+      transform: translateY(-50%);
+      z-index: 15;
+      pointer-events: auto;
+    }
+
+    .radial-label-inner {
+      display: inline-flex;
+      padding: 12px 18px;
+      background: rgba(18, 18, 18, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 95, 0, 0.3);
+      border-radius: 12px;
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .radial-label-inner:hover {
+      background: rgba(255, 95, 0, 0.15);
+      border-color: rgba(255, 95, 0, 0.6);
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 95, 0, 0.25);
+    }
+
+    /* Particle animation along path */
+    @keyframes flow-particle {
+      0% {
+        offset-distance: 0%;
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 1;
+      }
+
+      100% {
+        offset-distance: 100%;
+        opacity: 0;
+      }
+    }
+
+    .radial-particle {
+      position: absolute;
+      width: 16px;
+      height: 10px;
+      background: radial-gradient(ellipse at center, #F0DB4F 0%, rgba(240, 219, 79, 0) 70%);
+      border-radius: 50%;
+      filter: blur(1px);
+      offset-rotate: 0deg;
+      animation: flow-particle 3s ease-in-out infinite;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .radial-label {
+        transform: translateY(-50%) scale(0.85);
+      }
+
+      .radial-label-inner {
+        padding: 8px 12px;
+        font-size: 11px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .radial-label {
+        transform: translateY(-50%) scale(0.75);
+      }
+
+      .radial-label[style*="left: 3%"],
+      .radial-label[style*="left: 5%"] {
+        left: 2% !important;
+      }
+
+      .radial-label[style*="right: 3%"],
+      .radial-label[style*="right: 5%"] {
+        right: 2% !important;
+      }
+    }
+
+    /* ===== TOGGLE VAULT MENU ===== */
+    .vault-trigger {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 90px;
+      height: 36px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 60;
+      transition: all 0.3s ease;
+      background: #121212;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    .vault-trigger:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(255, 68, 0, 0.3);
+      border-color: #ff4400;
+    }
+
+    .vault-trigger.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.8);
+    }
+
+    .vault-panel {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background: #121212;
+      border: 1px solid rgba(255, 68, 0, 0.3);
+      border-radius: 1rem;
+      overflow: hidden;
+      z-index: 55;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      transform-origin: top right;
+      transition: all 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+
+    .vault-panel.closed {
+      transform: scaleX(0.15) scaleY(0.08);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .vault-panel.open {
+      transform: scaleX(1) scaleY(1);
+      opacity: 1;
+    }
+
+    .vault-content {
+      padding: 2rem;
+      opacity: 0;
+      transition: opacity 0.3s ease 0.3s;
+    }
+
+    .vault-panel.open .vault-content {
+      opacity: 1;
+    }
+
+    .vault-panel.closed .vault-content {
+      opacity: 0;
+      transition-delay: 0s;
+    }
+
+    .vault-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 90px;
+      height: 36px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 65;
+      background: white;
+      color: #121212;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      transition: all 0.3s ease;
+    }
+
+    .vault-close:hover {
+      transform: scale(1.05);
+      background: #ff4400;
+      color: white;
+    }
+
+    .vault-nav-link {
+      display: block;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: white;
+      padding: 0.75rem 0;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .vault-nav-link:last-child {
+      border-bottom: none;
+    }
+
+    .vault-nav-link:hover {
+      color: #ff4400;
+      padding-left: 0.5rem;
+    }
+
+    /* ===== FAQ CARDS CSS (Stacked Cards Style) ===== */
+    .faq-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      height: 600px;
+      margin: 0 auto;
+      perspective: 1000px;
+    }
+
+    .faq-card {
+      position: absolute;
+      width: 100%;
+      background: #ff4400;
+      border-radius: 20px;
+      padding: 32px 24px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      min-height: 320px;
+      transform-origin: center bottom;
+    }
+
+    /* Stack positioning - each card slightly offset */
+    .faq-card:nth-child(1) {
+      top: 0;
+      z-index: 6;
+      transform: translateY(0px) rotate(0deg);
+    }
+
+    .faq-card:nth-child(2) {
+      top: 10px;
+      z-index: 5;
+      transform: translateY(0px) rotate(-1deg);
+    }
+
+    .faq-card:nth-child(3) {
+      top: 20px;
+      z-index: 4;
+      transform: translateY(0px) rotate(1deg);
+    }
+
+    .faq-card:nth-child(4) {
+      top: 30px;
+      z-index: 3;
+      transform: translateY(0px) rotate(-0.5deg);
+    }
+
+    .faq-card:nth-child(5) {
+      top: 40px;
+      z-index: 2;
+      transform: translateY(0px) rotate(0.5deg);
+    }
+
+    .faq-card:nth-child(6) {
+      top: 50px;
+      z-index: 1;
+      transform: translateY(0px) rotate(-1deg);
+    }
+
+    /* Hover state - fan out the cards */
+    .faq-container:hover .faq-card:nth-child(1) {
+      transform: translateY(-60px) translateX(-40px) rotate(-8deg);
+      z-index: 6;
+    }
+
+    .faq-container:hover .faq-card:nth-child(2) {
+      transform: translateY(-40px) translateX(-20px) rotate(-5deg);
+      z-index: 5;
+    }
+
+    .faq-container:hover .faq-card:nth-child(3) {
+      transform: translateY(-20px) translateX(0px) rotate(0deg);
+      z-index: 4;
+    }
+
+    .faq-container:hover .faq-card:nth-child(4) {
+      transform: translateY(0px) translateX(0px) rotate(0deg);
+      z-index: 3;
+    }
+
+    .faq-container:hover .faq-card:nth-child(5) {
+      transform: translateY(20px) translateX(20px) rotate(5deg);
+      z-index: 2;
+    }
+
+    .faq-container:hover .faq-card:nth-child(6) {
+      transform: translateY(40px) translateX(40px) rotate(8deg);
+      z-index: 1;
+    }
+
+    /* Individual card hover - bring to front */
+    .faq-card:hover {
+      z-index: 100 !important;
+      transform: scale(1.05) rotate(0deg) !important;
+      box-shadow: 0 25px 50px rgba(255, 68, 0, 0.6);
+    }
+
+    .faq-card .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .faq-card .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      justify-content: center;
+    }
+
+    .faq-card .heading {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.1;
+      color: white;
+    }
+
+    .faq-card .answer {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .faq-card .footer {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 12px;
+      margin-top: auto;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .faq-container {
+        max-width: 340px;
+        height: 550px;
+      }
+
+      .faq-card .heading {
+        font-size: 20px;
+      }
+
+      .faq-card .answer {
+        font-size: 14px;
+      }
+    }
   </style>
   <script id="tailwind-config">
     tailwind.config = {
@@ -131,27 +557,41 @@
           </nav>
           <div class="flex items-center gap-4">
             <a href="/login.html"
-              class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide transition-opacity hover:opacity-90">
+              class="hidden md:flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide transition-opacity hover:opacity-90">
               <span class="truncate">Ingresar</span>
             </a>
-            <button id="mobile-menu-btn" class="md:hidden text-white">
-              <span class="material-symbols-outlined text-3xl">menu</span>
-            </button>
+
+            <!-- Vault Menu Container (Mobile) -->
+            <div id="vault-container" class="md:hidden relative h-[350px] w-[320px]"
+              style="position: fixed; top: 0; right: 0; pointer-events: none;">
+              <!-- Vault Trigger -->
+              <div id="vault-trigger" class="vault-trigger" style="pointer-events: auto;">
+                MENÚ
+              </div>
+
+              <!-- Vault Panel -->
+              <div id="vault-panel" class="vault-panel closed" style="width: 300px; pointer-events: auto;">
+                <!-- Close Button -->
+                <div id="vault-close" class="vault-close">
+                  CERRAR
+                </div>
+
+                <!-- Menu Content -->
+                <div class="vault-content" style="padding-top: 4rem;">
+                  <nav class="flex flex-col">
+                    <a href="#funcionalidades" class="vault-nav-link" onclick="closeVaultMenu()">Funcionalidades</a>
+                    <a href="#pricing" class="vault-nav-link" onclick="closeVaultMenu()">Planes</a>
+                    <a href="#faq" class="vault-nav-link" onclick="closeVaultMenu()">FAQ</a>
+                    <a href="#contacto" class="vault-nav-link" onclick="closeVaultMenu()">Contacto</a>
+                    <a href="/login.html" class="vault-nav-link" style="color: #ff4400;">Ingresar →</a>
+                  </nav>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </header>
-
-    <!-- Mobile Menu -->
-    <div id="mobile-menu"
-      class="hidden md:hidden fixed inset-0 z-40 bg-background-dark/95 backdrop-blur-sm pt-24 px-6 transition-all duration-300">
-      <nav class="flex flex-col gap-6 text-lg font-medium text-[#A0A0A0]">
-        <a class="transition-colors hover:text-white" href="#funcionalidades">Funcionalidades</a>
-        <a class="transition-colors hover:text-white" href="#pricing">Planes</a>
-        <a class="transition-colors hover:text-white" href="#faq">FAQ</a>
-        <a class="transition-colors hover:text-white" href="#contacto">Contacto</a>
-      </nav>
-    </div>
 
     <!-- HeroSection -->
     <main class="flex-grow">
@@ -378,60 +818,183 @@
         </div>
       </section>
 
-      <!-- Value Proposition -->
-      <section class="bg-background-light dark:bg-background-dark py-16 sm:py-24">
-        <div class="layout-container flex h-full grow flex-col">
-          <div class="px-4 sm:px-6 md:px-8 lg:px-16 xl:px-20 2xl:px-40 flex flex-1 justify-center">
-            <div class="layout-content-container flex flex-col max-w-6xl flex-1">
-              <div class="flex flex-col gap-10 lg:gap-16 py-10">
-                <div class="flex flex-col gap-4 text-center">
-                  <h2 class="text-gray-900 dark:text-white tracking-tight text-4xl font-bold leading-tight">
-                    ¿Por qué elegir VERSA Manager?
-                  </h2>
-                  <p class="text-gray-600 dark:text-gray-300 text-lg font-normal leading-relaxed max-w-3xl mx-auto">
-                    La plataforma diseñada para optimizar la rentabilidad de tu taller y simplificar tu vida.
-                  </p>
+      <!-- Value Proposition - Radial Flow Section -->
+      <section class="bg-background-dark py-20 sm:py-32 relative overflow-hidden" id="why-versa">
+        <!-- Animated Background Gradient -->
+        <div class="absolute inset-0 overflow-hidden">
+          <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-r from-primary/20 via-purple-600/10 to-cyan-500/10 blur-3xl animate-pulse-slow">
+          </div>
+          <div
+            class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_transparent_0%,_#121212_70%)]">
+          </div>
+        </div>
+
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <!-- Section Header -->
+          <div class="flex flex-col gap-4 text-center mb-12">
+            <h2 class="text-white tracking-tight text-4xl sm:text-5xl font-black leading-tight">
+              ¿Por qué elegir VERSA Manager?
+            </h2>
+            <p class="text-gray-400 text-lg font-normal leading-relaxed max-w-3xl mx-auto">
+              Gestiona flota, clientes, órdenes y cobros desde un solo lugar. Todo el control, sin complicaciones.
+            </p>
+          </div>
+
+          <!-- Radial Flow Container -->
+          <div id="radial-flow-container" class="relative w-full h-[400px] sm:h-[500px] lg:h-[550px] mx-auto max-w-5xl">
+
+            <!-- SVG Canvas for Lines and Particles -->
+            <svg id="radial-svg" class="absolute inset-0 w-full h-full pointer-events-none"
+              preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <!-- Glow Filter -->
+                <filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+
+                <!-- Gradient for particles -->
+                <linearGradient id="particle-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#F0DB4F;stop-opacity:0" />
+                  <stop offset="50%" style="stop-color:#F0DB4F;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#F0DB4F;stop-opacity:0" />
+                </linearGradient>
+              </defs>
+
+              <!-- Paths will be generated by JS -->
+              <g id="radial-paths"></g>
+
+              <!-- Particles Container -->
+              <g id="radial-particles"></g>
+
+              <!-- Central Dot -->
+              <circle id="central-dot" cx="50%" cy="50%" r="6" fill="#FFFFFF" filter="url(#glow-filter)"
+                class="animate-pulse-dot" />
+            </svg>
+
+            <!-- Central Badge -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+              <div class="relative group">
+                <!-- Outer Glow Ring -->
+                <div
+                  class="absolute inset-0 -m-6 rounded-full bg-primary opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-500">
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  <div
-                    class="flex flex-1 flex-col gap-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-background-light dark:bg-gray-900/50 p-6 text-center transition-all duration-300 ease-in-out hover:shadow-xl hover:border-primary/50 dark:hover:border-primary/40">
-                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                      <span class="material-symbols-outlined text-primary text-4xl">autorenew</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                      <h3 class="text-gray-900 dark:text-white text-xl font-bold leading-tight">Siempre Actualizado</h3>
-                      <p class="text-gray-500 dark:text-gray-400 text-base font-normal leading-relaxed">
-                        Tu software mejora cada mes sin costes extra. Sin instalaciones complejas ni mantenimientos
-                        técnicos.
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="flex flex-1 flex-col gap-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-background-light dark:bg-gray-900/50 p-6 text-center transition-all duration-300 ease-in-out hover:shadow-xl hover:border-primary/50 dark:hover:border-primary/40">
-                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                      <span class="material-symbols-outlined text-primary text-4xl">cloud_sync</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                      <h3 class="text-gray-900 dark:text-white text-xl font-bold leading-tight">100% en la Nube</h3>
-                      <p class="text-gray-500 dark:text-gray-400 text-base font-normal leading-relaxed">
-                        Accede a tu taller desde el móvil, tablet o PC. Gestiona tu negocio desde casa o de viaje.
-                      </p>
-                    </div>
-                  </div>
-                  <div
-                    class="flex flex-1 flex-col gap-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-background-light dark:bg-gray-900/50 p-6 text-center transition-all duration-300 ease-in-out hover:shadow-xl hover:border-primary/50 dark:hover:border-primary/40">
-                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                      <span class="material-symbols-outlined text-primary text-4xl">headset_mic</span>
-                    </div>
-                    <div class="flex flex-col gap-2">
-                      <h3 class="text-gray-900 dark:text-white text-xl font-bold leading-tight">Soporte Experto</h3>
-                      <p class="text-gray-500 dark:text-gray-400 text-base font-normal leading-relaxed">
-                        Te ayudamos a importar tus datos y configurar tu cuenta. Habla con personas reales, no robots.
-                      </p>
-                    </div>
+
+                <!-- Badge - Diseño más limpio -->
+                <div
+                  class="relative px-8 py-4 rounded-2xl bg-[#1a1a1a] border-2 border-primary shadow-2xl shadow-primary/20">
+                  <div class="flex flex-col items-center gap-1">
+                    <span class="text-primary font-black text-lg sm:text-xl tracking-wider">CONTROL TOTAL</span>
+                    <span class="text-gray-400 text-xs font-medium uppercase tracking-widest">Todo en un solo
+                      lugar</span>
                   </div>
                 </div>
               </div>
+            </div>
+
+            <!-- Topic Labels - Left Side (Funcionalidades) -->
+            <div class="radial-label absolute" style="left: 5%; top: 20%;" data-topic="flota">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span>Gestión de flota</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="radial-label absolute" style="left: 3%; top: 45%;" data-topic="ordenes">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span>Órdenes y tareas</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="radial-label absolute" style="left: 5%; top: 70%;" data-topic="clientes">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span>Clientes al día</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Topic Labels - Right Side (Funcionalidades) -->
+            <div class="radial-label absolute" style="right: 5%; top: 20%;" data-topic="mensajes">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <span>Mensajes automáticos</span>
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="radial-label absolute" style="right: 3%; top: 45%;" data-topic="facturacion">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <span>Facturación</span>
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="radial-label absolute" style="right: 5%; top: 70%;" data-topic="cobros">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <span>Cobros y pagos</span>
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features Cards Below -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+            <div
+              class="group p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-primary/50 hover:bg-white/10 transition-all duration-300">
+              <div class="flex items-center gap-4 mb-4">
+                <div
+                  class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-amber-500/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-primary text-2xl">autorenew</span>
+                </div>
+                <h3 class="text-white text-lg font-bold">Siempre Actualizado</h3>
+              </div>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Tu software mejora cada mes sin costes extra. Sin instalaciones complejas ni mantenimientos técnicos.
+              </p>
+            </div>
+
+            <div
+              class="group p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-primary/50 hover:bg-white/10 transition-all duration-300">
+              <div class="flex items-center gap-4 mb-4">
+                <div
+                  class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-cyan-400 text-2xl">cloud_sync</span>
+                </div>
+                <h3 class="text-white text-lg font-bold">100% en la Nube</h3>
+              </div>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Accede a tu taller desde el móvil, tablet o PC. Gestiona tu negocio desde casa o de viaje.
+              </p>
+            </div>
+
+            <div
+              class="group p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-primary/50 hover:bg-white/10 transition-all duration-300">
+              <div class="flex items-center gap-4 mb-4">
+                <div
+                  class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-purple-400 text-2xl">headset_mic</span>
+                </div>
+                <h3 class="text-white text-lg font-bold">Soporte Experto</h3>
+              </div>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Te ayudamos a importar tus datos y configurar tu cuenta. Habla con personas reales, no robots.
+              </p>
             </div>
           </div>
         </div>
@@ -675,115 +1238,112 @@
       </section>
 
       <!-- FAQ Section -->
-      <section id="faq" class="bg-background-light dark:bg-[#181818] py-16 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-3xl mx-auto">
-          <h2 class="text-gray-900 dark:text-white text-3xl font-bold text-center mb-10">Preguntas Frecuentes</h2>
-          <div class="flex flex-col gap-4">
+      <section id="faq" class="bg-background-dark py-16 px-4 sm:px-6 lg:px-8 border-t border-white/5">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center mb-16">
+            <h2 class="text-white text-3xl font-black tracking-tighter sm:text-4xl md:text-5xl mb-4">Preguntas
+              Frecuentes</h2>
+            <p class="text-[#A0A0A0] text-lg mb-4">Todo lo que necesitas saber antes de empezar</p>
+            <p class="text-[#707070] text-sm italic">Pasa el cursor sobre las cartas para verlas todas</p>
+          </div>
 
-            <!-- FAQ Item 1 -->
-            <details
-              class="group bg-white dark:bg-white/5 p-6 rounded-lg border border-gray-200 dark:border-white/10 open:border-primary/50 transition-all cursor-pointer">
-              <summary
-                class="flex justify-between items-center font-bold text-gray-900 dark:text-white text-lg select-none">
-                ¿Es difícil migrar mis datos de otro software o Excel?
-                <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-              </summary>
-              <div class="mt-4 text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                Para nada. VERSA Manager cuenta con herramientas de importación masiva para clientes y productos.
-                Además, nuestro equipo de soporte te guía paso a paso para que no pierdas ni un solo dato de tu
-                historial.
-              </div>
-            </details>
+          <!-- Stacked Cards Container -->
+          <div class="faq-container">
 
-            <!-- FAQ Item 2 -->
-            <details
-              class="group bg-white dark:bg-white/5 p-6 rounded-lg border border-gray-200 dark:border-white/10 open:border-primary/50 transition-all cursor-pointer">
-              <summary
-                class="flex justify-between items-center font-bold text-gray-900 dark:text-white text-lg select-none">
-                ¿Necesito instalar algún programa en mi ordenador?
-                <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-              </summary>
-              <div class="mt-4 text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                No. VERSA Manager funciona 100% en la nube. Solo necesitas un navegador (Chrome, Safari, Firefox) y
-                conexión a internet. Puedes acceder desde tu PC, tablet o móvil en cualquier momento.
+            <!-- Card 1 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Migración</span>
+                <span class="material-symbols-outlined text-white">cloud_upload</span>
               </div>
-            </details>
+              <div class="main-content">
+                <p class="heading">¿Es difícil migrar mis datos?</p>
+                <div class="answer">
+                  Para nada. Importación masiva incluida y soporte paso a paso para que no pierdas nada.
+                </div>
+              </div>
+              <div class="footer">Soporte incluido</div>
+            </div>
 
-            <!-- FAQ Item 3 -->
-            <details
-              class="group bg-white dark:bg-white/5 p-6 rounded-lg border border-gray-200 dark:border-white/10 open:border-primary/50 transition-all cursor-pointer">
-              <summary
-                class="flex justify-between items-center font-bold text-gray-900 dark:text-white text-lg select-none">
-                ¿Sirve para gestionar flotas de renting o delivery?
-                <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-              </summary>
-              <div class="mt-4 text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                Sí, tenemos un módulo específico para empresas de renting y flotas. Puedes controlar mantenimientos
-                preventivos, ubicación de vehículos, contratos de alquiler y facturación recurrente.
+            <!-- Card 2 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Acceso</span>
+                <span class="material-symbols-outlined text-white">download_off</span>
               </div>
-            </details>
+              <div class="main-content">
+                <p class="heading">¿Necesito instalar algo?</p>
+                <div class="answer">
+                  No. 100% en la nube. Accede desde PC, tablet o móvil sin instalaciones.
+                </div>
+              </div>
+              <div class="footer">Chrome, Safari, Firefox</div>
+            </div>
 
-            <!-- FAQ Item 4 -->
-            <details
-              class="group bg-white dark:bg-white/5 p-6 rounded-lg border border-gray-200 dark:border-white/10 open:border-primary/50 transition-all cursor-pointer">
-              <summary
-                class="flex justify-between items-center font-bold text-gray-900 dark:text-white text-lg select-none">
-                ¿Existe algún tipo de permanencia?
-                <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-              </summary>
-              <div class="mt-4 text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                No, no hay ningún tipo de permanencia en los planes mensuales. Puedes cancelar tu suscripción en
-                cualquier momento sin penalizaciones. Si eliges el plan anual para aprovechar el descuento del 16%, el
-                compromiso es por un año.
+            <!-- Card 3 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Módulos</span>
+                <span class="material-symbols-outlined text-white">local_shipping</span>
               </div>
-            </details>
+              <div class="main-content">
+                <p class="heading">¿Sirve para flotas?</p>
+                <div class="answer">
+                  Sí. Controla mantenimientos, ubicación y renting con nuestro módulo especializado.
+                </div>
+              </div>
+              <div class="footer">Renting y Delivery</div>
+            </div>
 
-            <!-- FAQ Item 5 -->
-            <details
-              class="group bg-white dark:bg-white/5 p-6 rounded-lg border border-gray-200 dark:border-white/10 open:border-primary/50 transition-all cursor-pointer">
-              <summary
-                class="flex justify-between items-center font-bold text-gray-900 dark:text-white text-lg select-none">
-                ¿Qué ocurre cuando termina mi prueba gratuita?
-                <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-              </summary>
-              <div class="mt-4 text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                Al finalizar los 15 días de prueba, podrás elegir el plan que mejor se adapte a tus necesidades e
-                introducir tus datos de pago para continuar usando el servicio. No se te cobrará automáticamente.
+            <!-- Card 4 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Contrato</span>
+                <span class="material-symbols-outlined text-white">lock_open</span>
               </div>
-            </details>
+              <div class="main-content">
+                <p class="heading">¿Hay permanencia?</p>
+                <div class="answer">
+                  No en planes mensuales. Cancela cuando quieras. Solo el plan anual tiene compromiso.
+                </div>
+              </div>
+              <div class="footer">Libertad total</div>
+            </div>
 
-            <!-- FAQ Item 6 -->
-            <details
-              class="group bg-white dark:bg-white/5 p-6 rounded-lg border border-gray-200 dark:border-white/10 open:border-primary/50 transition-all cursor-pointer">
-              <summary
-                class="flex justify-between items-center font-bold text-gray-900 dark:text-white text-lg select-none">
-                ¿Puedo cambiar de plan más adelante?
-                <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-              </summary>
-              <div class="mt-4 text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                Sí, puedes cambiar de plan en cualquier momento desde el panel de administración. Si subes de plan, el
-                cambio es inmediato. Si bajas de plan, el cambio se aplicará en el siguiente ciclo de facturación.
+            <!-- Card 5 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Prueba</span>
+                <span class="material-symbols-outlined text-white">timer_off</span>
               </div>
-            </details>
+              <div class="main-content">
+                <p class="heading">¿Y si acaba la prueba?</p>
+                <div class="answer">
+                  Tú decides. Elige un plan y paga. Si no, no se te cobra nada automáticamente.
+                </div>
+              </div>
+              <div class="footer">15 días gratis</div>
+            </div>
 
-            <!-- FAQ Item 7 -->
-            <details
-              class="group bg-white dark:bg-white/5 p-6 rounded-lg border border-gray-200 dark:border-white/10 open:border-primary/50 transition-all cursor-pointer">
-              <summary
-                class="flex justify-between items-center font-bold text-gray-900 dark:text-white text-lg select-none">
-                ¿Cómo funciona el pago anual?
-                <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
-              </summary>
-              <div class="mt-4 text-gray-600 dark:text-gray-300 text-base leading-relaxed">
-                El pago anual te permite ahorrar un 16% en comparación con el pago mensual. Se factura una vez al año y
-                obtienes acceso a todas las funcionalidades del plan elegido durante 12 meses. Es como obtener 2 meses
-                gratis.
+            <!-- Card 6 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Flexibilidad</span>
+                <span class="material-symbols-outlined text-white">currency_exchange</span>
               </div>
-            </details>
+              <div class="main-content">
+                <p class="heading">¿Puedo cambiar de plan?</p>
+                <div class="answer">
+                  Siempre. Sube o baja de plan desde tu panel y prorrateamos la diferencia.
+                </div>
+              </div>
+              <div class="footer">Gestión autónoma</div>
+            </div>
 
           </div>
         </div>
       </section>
+
 
     </main>
   </div>
@@ -1005,22 +1565,75 @@
     window.closeEmailModal = closeEmailModal;
     window.processSubscription = processSubscription;
 
+    // ===== VAULT MENU FUNCTIONS =====
+    function openVaultMenu() {
+      const trigger = document.getElementById('vault-trigger');
+      const panel = document.getElementById('vault-panel');
+      if (trigger) trigger.classList.add('hidden');
+      if (panel) {
+        panel.classList.remove('closed');
+        panel.classList.add('open');
+      }
+    }
+
+    function closeVaultMenu() {
+      const trigger = document.getElementById('vault-trigger');
+      const panel = document.getElementById('vault-panel');
+      if (panel) {
+        panel.classList.remove('open');
+        panel.classList.add('closed');
+      }
+      if (trigger) {
+        setTimeout(() => {
+          trigger.classList.remove('hidden');
+        }, 400);
+      }
+    }
+
+    // Expose to global scope
+    window.openVaultMenu = openVaultMenu;
+    window.closeVaultMenu = closeVaultMenu;
+
     // ====================================
     // INICIALIZACIÓN DEL DOCUMENTO
     // ====================================
 
     document.addEventListener('DOMContentLoaded', function () {
-      // Mobile Menu Logic
-      const menuBtn = document.getElementById('mobile-menu-btn');
-      const mobileMenu = document.getElementById('mobile-menu');
+      // Vault Menu Logic
+      const vaultTrigger = document.getElementById('vault-trigger');
+      const vaultClose = document.getElementById('vault-close');
 
-      if (menuBtn && mobileMenu) {
-        menuBtn.addEventListener('click', () => {
-          mobileMenu.classList.toggle('hidden');
-          const icon = menuBtn.querySelector('.material-symbols-outlined');
-          if (icon) {
-            icon.textContent = mobileMenu.classList.contains('hidden') ? 'menu' : 'close';
-          }
+      if (vaultTrigger) {
+        vaultTrigger.addEventListener('click', openVaultMenu);
+      }
+      if (vaultClose) {
+        vaultClose.addEventListener('click', closeVaultMenu);
+      }
+
+      // FAQ Cards Rotation Logic
+      const faqContainer = document.querySelector('.faq-container');
+      if (faqContainer) {
+        const cards = Array.from(faqContainer.querySelectorAll('.faq-card'));
+
+        // Add click handler to container
+        faqContainer.addEventListener('click', (e) => {
+          // Check if a card was clicked
+          const clickedCard = e.target.closest('.faq-card');
+          if (!clickedCard) return;
+
+          // Get the first card (top of stack)
+          const firstCard = cards[0];
+
+          // Move first card to end of array
+          cards.push(cards.shift());
+
+          // Reorder DOM elements
+          cards.forEach((card, index) => {
+            faqContainer.appendChild(card);
+          });
+
+          // Optional: Add a brief animation class
+          firstCard.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
         });
       }
 
@@ -1183,6 +1796,143 @@
       // Add zoom control listener to re-enable on focus if needed, or keep simple
       map.on('focus', () => { map.scrollWheelZoom.enable(); });
       map.on('blur', () => { map.scrollWheelZoom.disable(); });
+
+      // ===== RADIAL FLOW ANIMATION =====
+      function initRadialFlow() {
+        const container = document.getElementById('radial-flow-container');
+        const svg = document.getElementById('radial-svg');
+        const pathsGroup = document.getElementById('radial-paths');
+        const particlesGroup = document.getElementById('radial-particles');
+
+        if (!container || !svg) return;
+
+        // Topics with their colors - all orange for brand consistency
+        const primaryColor = '#ff4400';
+        const topics = [
+          { id: 'flota', color: primaryColor, delay: 0 },
+          { id: 'ordenes', color: primaryColor, delay: 0.5 },
+          { id: 'clientes', color: primaryColor, delay: 1.0 },
+          { id: 'mensajes', color: primaryColor, delay: 0.25 },
+          { id: 'facturacion', color: primaryColor, delay: 0.75 },
+          { id: 'cobros', color: primaryColor, delay: 1.25 }
+        ];
+
+        function updatePaths() {
+          const rect = container.getBoundingClientRect();
+          const width = rect.width;
+          const height = rect.height;
+          const centerX = width / 2;
+          const centerY = height / 2;
+
+          // Update SVG viewBox
+          svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+          // Update central dot position
+          const centralDot = document.getElementById('central-dot');
+          if (centralDot) {
+            centralDot.setAttribute('cx', centerX);
+            centralDot.setAttribute('cy', centerY);
+          }
+
+          // Clear existing paths and particles
+          pathsGroup.innerHTML = '';
+          particlesGroup.innerHTML = '';
+
+          // Create paths and particles for each topic
+          topics.forEach((topic, index) => {
+            const labelEl = document.querySelector(`[data-topic="${topic.id}"]`);
+            if (!labelEl) return;
+
+            const labelRect = labelEl.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            // Get label center position relative to container
+            const labelX = (labelRect.left - containerRect.left) + (labelRect.width / 2);
+            const labelY = (labelRect.top - containerRect.top) + (labelRect.height / 2);
+
+            // Calculate control point for quadratic bezier curve
+            const isLeft = labelX < centerX;
+            const controlX = isLeft
+              ? labelX + (centerX - labelX) * 0.75
+              : labelX - (labelX - centerX) * 0.75;
+
+            // Create path data
+            const pathD = `M ${labelX} ${labelY} Q ${controlX} ${labelY} ${centerX} ${centerY}`;
+
+            // Create path element
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathD);
+            path.setAttribute('stroke', topic.color);
+            path.setAttribute('stroke-width', '1.5');
+            path.setAttribute('stroke-opacity', '0.3');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('id', `path-${topic.id}`);
+            pathsGroup.appendChild(path);
+
+            // Create animated particle
+            const particle = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+            particle.setAttribute('rx', '8');
+            particle.setAttribute('ry', '5');
+            particle.setAttribute('fill', topic.color);
+            particle.setAttribute('filter', 'url(#glow-filter)');
+
+            // Create animateMotion for particle
+            const animateMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+            animateMotion.setAttribute('dur', '3s');
+            animateMotion.setAttribute('repeatCount', 'indefinite');
+            animateMotion.setAttribute('path', pathD);
+            animateMotion.setAttribute('rotate', 'auto');
+            animateMotion.setAttribute('calcMode', 'spline');
+            animateMotion.setAttribute('keyPoints', '0;1');
+            animateMotion.setAttribute('keyTimes', '0;1');
+            animateMotion.setAttribute('keySplines', '0.42 0 0.58 1');
+            animateMotion.setAttribute('begin', `${topic.delay}s`);
+
+            // Create opacity animation
+            const animateOpacity = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+            animateOpacity.setAttribute('attributeName', 'opacity');
+            animateOpacity.setAttribute('dur', '3s');
+            animateOpacity.setAttribute('repeatCount', 'indefinite');
+            animateOpacity.setAttribute('values', '0;0.9;0.9;0');
+            animateOpacity.setAttribute('keyTimes', '0;0.1;0.9;1');
+            animateOpacity.setAttribute('begin', `${topic.delay}s`);
+
+            // Create scale animation
+            const animateScale = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+            animateScale.setAttribute('attributeName', 'rx');
+            animateScale.setAttribute('dur', '3s');
+            animateScale.setAttribute('repeatCount', 'indefinite');
+            animateScale.setAttribute('values', '6;10;6');
+            animateScale.setAttribute('keyTimes', '0;0.5;1');
+            animateScale.setAttribute('begin', `${topic.delay}s`);
+
+            particle.appendChild(animateMotion);
+            particle.appendChild(animateOpacity);
+            particle.appendChild(animateScale);
+            particlesGroup.appendChild(particle);
+          });
+        }
+
+        // Initial update
+        updatePaths();
+
+        // Update on resize (debounced)
+        let resizeTimeout;
+        const resizeObserver = new ResizeObserver(() => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(updatePaths, 100);
+        });
+        resizeObserver.observe(container);
+
+        // Also handle window resize
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(updatePaths, 100);
+        });
+      }
+
+      // Initialize RadialFlow after a short delay to ensure DOM is ready
+      setTimeout(initRadialFlow, 200);
     });
   </script>
 
