@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>¡Pago Confirmado! - VERSA</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+
+        @keyframes checkmark {
+            0% {
+                stroke-dashoffset: 100;
+            }
+
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes scale-in {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes confetti {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) rotate(720deg);
+            }
+        }
+
+        .animate-checkmark {
+            animation: checkmark 0.8s ease-out forwards;
+        }
+
+        .animate-scale-in {
+            animation: scale-in 0.5s ease-out;
+        }
+
+        .confetti {
+            position: absolute;
+            animation: confetti 2s ease-out forwards;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff4400",
+                        "background-dark": "#121212",
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-dark text-white font-display min-h-screen flex items-center justify-center p-4">
+
+    <!-- Loading state -->
+    <div id="loading-state" class="text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+        <p class="text-gray-400">Verificando tu pago...</p>
+    </div>
+
+    <!-- Success state (hidden initially) -->
+    <div id="success-state" class="max-w-2xl w-full hidden">
+        <div
+            class="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 md:p-12 text-center animate-scale-in relative overflow-hidden">
+
+            <!-- Icono de éxito -->
+            <div class="mx-auto w-24 h-24 rounded-full bg-green-500/10 flex items-center justify-center mb-6">
+                <svg class="w-16 h-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path class="animate-checkmark" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 13l4 4L19 7" style="stroke-dasharray: 100; stroke-dashoffset: 100;"></path>
+                </svg>
+            </div>
+
+            <!-- Título -->
+            <h1 class="text-3xl md:text-4xl font-black text-white mb-4">
+                ¡Pago Confirmado!
+            </h1>
+
+            <!-- Descripción -->
+            <p class="text-lg text-gray-300 mb-8">
+                Tu reserva ha sido confirmada correctamente.
+                <br class="hidden md:block">
+                ¡Te esperamos!
+            </p>
+
+            <!-- Detalles del pago -->
+            <div class="bg-white/5 rounded-lg border border-white/10 p-6 mb-8 text-left">
+                <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">receipt_long</span>
+                    Detalles de tu reserva
+                </h2>
+                <div id="payment-details" class="space-y-3 text-sm">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Estado:</span>
+                        <span class="text-green-500 font-bold">✓ Pagado</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Concepto:</span>
+                        <span class="text-white font-medium" id="payment-concept">Cargando...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Importe:</span>
+                        <span class="text-white font-medium" id="payment-amount">Cargando...</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400">Referencia cita:</span>
+                        <span class="text-white font-medium" id="cita-ref">#---</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Siguiente paso -->
+            <div class="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-8">
+                <p class="text-sm text-gray-300">
+                    <span class="material-symbols-outlined text-primary inline-block align-middle mr-1">info</span>
+                    Recibirás un WhatsApp de confirmación con todos los detalles de tu cita. ¡Nos vemos pronto!
+                </p>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="cliente-dashboard.html"
+                    class="flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-white font-bold py-3 px-6 rounded-lg transition-all">
+                    <span>Ver mis citas</span>
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
+                <a href="index.html"
+                    class="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white font-bold py-3 px-6 rounded-lg transition-all border border-white/10">
+                    <span>Volver al Inicio</span>
+                </a>
+            </div>
+
+            <!-- Soporte -->
+            <p class="text-sm text-gray-400 mt-8">
+                ¿Necesitas ayuda? <a href="#" class="text-primary hover:underline">Contacta con soporte</a>
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Error state (hidden initially) -->
+    <div id="error-state" class="max-w-2xl w-full hidden">
+        <div class="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 p-8 md:p-12 text-center">
+            <div class="mx-auto w-24 h-24 rounded-full bg-red-500/10 flex items-center justify-center mb-6">
+                <span class="material-symbols-outlined text-red-500" style="font-size: 4rem;">error</span>
+            </div>
+            <h1 class="text-3xl font-black text-white mb-4">Error verificando el pago</h1>
+            <p class="text-gray-300 mb-8" id="error-message">Ha ocurrido un error al verificar tu pago.</p>
+            <a href="index.html"
+                class="inline-flex items-center gap-2 bg-primary text-white font-bold py-3 px-6 rounded-lg">
+                Volver al inicio
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Configuración API
+        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+            ? 'http://localhost:3000'
+            : '';
+
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+
+        async function verifyPayment() {
+            if (!sessionId) {
+                showError('No se encontró el ID de sesión de pago');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/stripe/session-status?session_id=${sessionId}`);
+                const data = await response.json();
+
+                if (!response.ok || !data.ok) {
+                    throw new Error(data.error || 'Error al verificar el pago');
+                }
+
+                // Mostrar los detalles
+                document.getElementById('loading-state').classList.add('hidden');
+                document.getElementById('success-state').classList.remove('hidden');
+
+                // Actualizar información
+                const session = data.session;
+                const pago = data.pago;
+
+                if (session) {
+                    document.getElementById('payment-concept').textContent =
+                        pago?.servicio_nombre || `Reserva ${session.metadata?.payment_mode || ''}`;
+                    document.getElementById('payment-amount').textContent =
+                        `${(session.amount_total || pago?.amount || 0).toFixed(2)}€`;
+                }
+
+                if (pago) {
+                    document.getElementById('cita-ref').textContent = `#${pago.id_cita}`;
+                } else if (session?.metadata?.id_cita) {
+                    document.getElementById('cita-ref').textContent = `#${session.metadata.id_cita}`;
+                }
+
+                // Crear efecto confetti simple
+                createConfetti();
+
+            } catch (error) {
+                console.error('Error verificando pago:', error);
+                showError(error.message);
+            }
+        }
+
+        function showError(message) {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+            document.getElementById('error-message').textContent = message;
+        }
+
+        function createConfetti() {
+            const colors = ['#ff4400', '#00ff44', '#4400ff', '#ffff00', '#ff00ff'];
+            const container = document.getElementById('success-state').querySelector('.relative');
+
+            for (let i = 0; i < 20; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '50%';
+                confetti.style.width = '10px';
+                confetti.style.height = '10px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = '50%';
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                container.appendChild(confetti);
+
+                // Eliminar después de la animación
+                setTimeout(() => confetti.remove(), 2500);
+            }
+        }
+
+        // Verificar al cargar
+        verifyPayment();
+    </script>
+
+</body>
+
+</html>

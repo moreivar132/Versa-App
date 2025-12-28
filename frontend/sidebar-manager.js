@@ -92,6 +92,13 @@
         },
         {
             type: 'link',
+            id: 'marketplace',
+            label: 'Marketplace',
+            icon: 'fa-store',
+            href: 'manager-taller-marketplace.html'
+        },
+        {
+            type: 'link',
             id: 'configuracion',
             label: 'Configuración',
             icon: 'fa-cog',
