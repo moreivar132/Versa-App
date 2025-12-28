@@ -768,7 +768,7 @@
     <script type="module">
         import { requireAuth, clearSession, redirectToLogin, getToken } from '/auth.js';
 
-        const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
         // API helper using fetch
         async function apiGet(endpoint) {

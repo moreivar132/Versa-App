@@ -1,12 +1,10 @@
 // frontend/services/marketplace-service.js
 
-// Configuración de la URL base (mismo patrón que index.html)
-// En producción detectará automáticamente railway, en desarrollo usa localhost
-const API_BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000'
-    : 'https://versa-app-production.up.railway.app';
+// Usar rutas relativas para que pasen por el proxy de Vite en desarrollo
+// y funcionen correctamente en producción
+const API_BASE_URL = '';
 
-console.log('🏪 Marketplace API URL:', API_BASE_URL);
+console.log('🏪 Marketplace API initialized (relative URLs)');
 
 /**
  * Buscar talleres en el marketplace

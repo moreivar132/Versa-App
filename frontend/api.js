@@ -3,7 +3,7 @@ import { getToken } from './auth';
 
 // Configuración de la URL base usando variables de entorno de Vite
 // Si VITE_API_URL no está definida, usa localhost como fallback
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 console.log('🔌 Conectando a API:', API_BASE_URL);
 

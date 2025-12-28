@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Constante para leer la sucursal guardada
 const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
