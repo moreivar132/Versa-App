@@ -57,12 +57,19 @@ router.get('/', async (req, res) => {
                 v.modelo as vehiculo_modelo,
                 v.matricula as vehiculo_matricula,
                 s.nombre as sucursal_nombre,
-                u.nombre as mecanico_nombre
+                u.nombre as mecanico_nombre,
+                COALESCE(p.status, 'PENDING') as payment_status,
+                p.payment_mode
             FROM citataller c
             LEFT JOIN clientefinal cli ON c.id_cliente = cli.id
             LEFT JOIN vehiculo v ON c.id_vehiculo = v.id
             LEFT JOIN sucursal s ON c.id_sucursal = s.id
             LEFT JOIN usuario u ON c.id_mecanico = u.id
+            LEFT JOIN (
+                SELECT DISTINCT ON (id_cita) id_cita, status, payment_mode
+                FROM marketplace_reserva_pago
+                ORDER BY id_cita, created_at DESC
+            ) p ON c.id = p.id_cita
         `;
 
         const params = [];
@@ -303,6 +310,64 @@ router.post('/crear', async (req, res) => {
         });
     } finally {
         client.release();
+    }
+});
+
+// POST /api/citas/:id/pago - Registrar pago manual (Manager)
+router.post('/:id/pago', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { method, amount, note } = req.body; // method: 'CASH', 'CARD_TERMINAL', 'OTHER'
+
+        if (!id || !amount) {
+            return res.status(400).json({ ok: false, error: 'Faltan datos requeridos (id, amount)' });
+        }
+
+        // Obtener datos de la cita
+        const citaRes = await pool.query('SELECT * FROM citataller WHERE id = $1', [id]);
+        if (citaRes.rows.length === 0) {
+            return res.status(404).json({ ok: false, error: 'Cita no encontrada' });
+        }
+        const cita = citaRes.rows[0];
+
+        // Verificar si ya existe pago PAID
+        const pagoExistente = await pool.query(
+            `SELECT id FROM marketplace_reserva_pago WHERE id_cita = $1 AND status = 'PAID'`,
+            [id]
+        );
+
+        if (pagoExistente.rows.length > 0) {
+            return res.status(400).json({ ok: false, error: 'Esta cita ya tiene un pago registrado' });
+        }
+
+        // Registrar pago
+        await pool.query(
+            `INSERT INTO marketplace_reserva_pago 
+             (id_tenant, id_sucursal, id_cita, id_cliente, payment_mode, amount, currency, status, metadata_json)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'PAID', $8)`,
+            [
+                cita.id_tenant || 1, // Fallback si no tiene tenant
+                cita.id_sucursal,
+                id,
+                cita.id_cliente,
+                'MANUAL',
+                amount,
+                'eur',
+                JSON.stringify({
+                    manual_payment: true,
+                    method: method,
+                    note: note,
+                    registered_at: new Date().toISOString(),
+                    registered_by: 'manager' // Idealmente obtener del token
+                })
+            ]
+        );
+
+        res.json({ ok: true, message: 'Pago registrado correctamente' });
+
+    } catch (error) {
+        console.error('Error al registrar pago manual:', error);
+        res.status(500).json({ ok: false, error: 'Error al registrar pago' });
     }
 });
 

@@ -196,6 +196,60 @@ export function renderCitaCard(cita, mode = 'cliente', onAction = null) {
                 ` : ''}
             </div>
             
+            <!-- Estado de Pago -->
+            ${(() => {
+            // Si tiene pago PAID, mostrar confirmación
+            if (cita.pago && cita.pago.status === 'PAID') {
+                return `
+                        <div class="mb-4 p-3 bg-green-500/5 border border-green-500/10 rounded-xl flex items-center gap-3">
+                            <span class="material-symbols-outlined text-green-500">check_circle</span>
+                            <span class="text-green-500 text-sm font-bold">Pagado (${cita.pago.amount.toFixed(2)}€)</span>
+                        </div>
+                    `;
+            }
+            // Si tiene pago PENDING con URL, mostrar link directo
+            if (cita.pago && cita.pago.status === 'PENDING' && cita.pago.url) {
+                return `
+                        <div class="mb-4 p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl flex items-center justify-between group-hover:border-yellow-500/40 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-yellow-500 animate-pulse">payments</span>
+                                </div>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Pago pendiente</p>
+                                    <p class="text-yellow-500 text-sm font-black">${cita.pago.amount.toFixed(2)}€</p>
+                                </div>
+                            </div>
+                            <a href="${cita.pago.url}" target="_blank" 
+                               class="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-black text-xs font-bold uppercase tracking-wider rounded-lg hover:shadow-lg hover:shadow-orange-500/20 transition-all transform hover:-translate-y-0.5">
+                                Pagar Ahora
+                            </a>
+                        </div>
+                    `;
+            }
+            // Si no tiene pago y la cita es próxima y no cancelada, mostrar botón para generar pago
+            if (esProxima && !esCancelada && (!cita.pago || cita.pago.status !== 'PAID')) {
+                return `
+                        <div class="mb-4 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 rounded-xl flex items-center justify-between group-hover:border-blue-500/40 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-blue-400">credit_card</span>
+                                </div>
+                                <div>
+                                    <p class="text-white font-bold text-sm">Pagar cita</p>
+                                    <p class="text-gray-400 text-xs">Asegura tu reserva pagando ahora</p>
+                                </div>
+                            </div>
+                            <button onclick="window.citasUI.payCitaAction(${cita.id})"
+                                    class="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-bold uppercase tracking-wider rounded-lg hover:shadow-lg hover:shadow-blue-500/20 transition-all transform hover:-translate-y-0.5">
+                                Pagar
+                            </button>
+                        </div>
+                    `;
+            }
+            return '';
+        })()}
+            
             <!-- Acciones -->
             ${accionesHtml}
         </div>

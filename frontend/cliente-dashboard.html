@@ -174,13 +174,75 @@
 
         <!-- Tab Content: Pagos -->
         <div id="tab-pagos" class="tab-content">
-            <h2 class="text-lg font-semibold text-white mb-6">Historial de Pagos</h2>
-            <div id="pagosContainer" class="min-h-[200px]">
-                <div class="flex items-center justify-center py-12">
-                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff5f00]"></div>
+            <!-- Saldo a favor -->
+            <div id="saldoSection" class="mb-6 hidden">
+                <div
+                    class="bg-green-500/10 border border-green-500/30 rounded-xl p-5 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-green-400"
+                                style="font-size: 28px;">account_balance_wallet</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-green-400">Saldo a Favor</p>
+                            <p class="text-2xl font-bold text-white" id="saldoAmount">0.00€</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-400">Este saldo se aplica automáticamente en tu próxima reserva</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagos Pendientes -->
+            <div id="pendingPaymentsSection" class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[#ff5f00]">pending_actions</span>
+                        Pagos Pendientes
+                    </h2>
+                </div>
+                <div id="pendingPaymentsContainer">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjetas Guardadas -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[#ff5f00]">credit_card</span>
+                        Métodos de Pago
+                    </h2>
+                    <button onclick="window.citasUI.addNewCard()"
+                        class="px-4 py-2 bg-[#ff5f00] text-white text-sm font-medium rounded-lg hover:bg-[#e05300] transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">add_card</span>
+                        Añadir Tarjeta
+                    </button>
+                </div>
+                <div id="paymentMethodsContainer">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial de Pagos -->
+            <div>
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#ff5f00]">receipt_long</span>
+                    Historial de Pagos
+                </h2>
+                <div id="pagosContainer" class="min-h-[100px]">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                    </div>
                 </div>
             </div>
         </div>
+
 
         <!-- Tab Content: Perfil -->
         <div id="tab-perfil" class="tab-content">
@@ -263,7 +325,16 @@
             getNotificaciones,
             contarNotificacionesNoLeidas,
             marcarNotificacionLeida,
-            marcarTodasNotificacionesLeidas
+            marcarTodasNotificacionesLeidas,
+            // Payment Methods (Stripe)
+            getPaymentMethods,
+            createPaymentMethodSetupSession,
+            setDefaultPaymentMethod,
+            deletePaymentMethod,
+            getPendingPayments,
+            regeneratePaymentLink,
+            getClienteSaldo,
+            payCita
         } from './services/cliente-service.js';
 
         import {
@@ -304,6 +375,27 @@
             await loadProfile();
             await loadCitas();
             await loadNotificaciones();
+
+            // Handle tab parameter (e.g., ?tab=pagos)
+            const tabParam = urlParams.get('tab');
+            if (tabParam && ['citas', 'pagos', 'perfil', 'resenas'].includes(tabParam)) {
+                window.citasUI.switchTab(tabParam);
+            }
+
+            // Handle Stripe setup callbacks
+            const setupResult = urlParams.get('setup');
+            if (setupResult === 'success') {
+                setTimeout(() => {
+                    showToast('¡Tarjeta añadida correctamente!', 'success');
+                    // Limpiar la URL
+                    window.history.replaceState({}, '', '/cliente-dashboard.html?tab=pagos');
+                }, 500);
+            } else if (setupResult === 'cancel') {
+                setTimeout(() => {
+                    showToast('Configuración de tarjeta cancelada', 'info');
+                    window.history.replaceState({}, '', '/cliente-dashboard.html?tab=pagos');
+                }, 500);
+            }
 
             // Click outside to close notifications
             document.addEventListener('click', (e) => {
@@ -355,7 +447,6 @@
                 const result = await getPagos();
                 if (result.ok) {
                     pagosData = result.data;
-                    // Render simple pagos table
                     const container = document.getElementById('pagosContainer');
                     if (pagosData.length === 0) {
                         container.innerHTML = '<p class="text-gray-400 text-center py-8">No hay pagos registrados</p>';
@@ -372,7 +463,7 @@
                                                 <td class="p-3">${new Date(p.fecha).toLocaleDateString()}</td>
                                                 <td class="p-3">${p.concepto}</td>
                                                 <td class="p-3 font-bold text-[#ff5f00]">${p.importe}€</td>
-                                                <td class="p-3">${p.status}</td>
+                                                <td class="p-3">${getStatusBadge(p.status)}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -383,6 +474,155 @@
                 }
             } catch (error) {
                 console.error('Error loading pagos:', error);
+            }
+        }
+
+        function getStatusBadge(status) {
+            const styles = {
+                'PAID': 'bg-green-500/20 text-green-400',
+                'PENDING': 'bg-yellow-500/20 text-yellow-400',
+                'EXPIRED': 'bg-red-500/20 text-red-400',
+                'FAILED': 'bg-red-500/20 text-red-400',
+                'CREDITED': 'bg-blue-500/20 text-blue-400'
+            };
+            const labels = {
+                'PAID': 'Pagado',
+                'PENDING': 'Pendiente',
+                'EXPIRED': 'Expirado',
+                'FAILED': 'Fallido',
+                'CREDITED': 'Saldo Acreditado'
+            };
+            const style = styles[status] || 'bg-gray-500/20 text-gray-400';
+            const label = labels[status] || status;
+            return `<span class="px-2 py-1 text-xs rounded-full ${style}">${label}</span>`;
+        }
+
+        // =============================================
+        // PAYMENT METHODS FUNCTIONS
+        // =============================================
+
+        async function loadPaymentMethods() {
+            try {
+                const result = await getPaymentMethods();
+                const container = document.getElementById('paymentMethodsContainer');
+
+                if (!result.ok) {
+                    container.innerHTML = '<p class="text-red-400 text-center py-4">Error cargando métodos de pago</p>';
+                    return;
+                }
+
+                if (!result.has_customer || result.payment_methods.length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-[#111318] border border-[#282e39] rounded-xl p-8 text-center">
+                            <span class="material-symbols-outlined text-4xl text-gray-600 mb-3 block">credit_card_off</span>
+                            <p class="text-gray-400">No tienes tarjetas guardadas</p>
+                            <p class="text-gray-500 text-sm mt-1">Añade una tarjeta para realizar pagos más rápido</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="grid gap-3">
+                        ${result.payment_methods.map(pm => `
+                            <div class="bg-[#111318] border ${pm.is_default ? 'border-[#ff5f00]' : 'border-[#282e39]'} rounded-xl p-4 flex items-center justify-between group hover:border-[#ff5f00]/50 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-8 bg-white/10 rounded flex items-center justify-center">
+                                        <span class="text-white font-bold text-xs uppercase">${pm.brand}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white font-medium">•••• •••• •••• ${pm.last4}</p>
+                                        <p class="text-gray-500 text-xs">Expira ${String(pm.exp_month).padStart(2, '0')}/${pm.exp_year}</p>
+                                    </div>
+                                    ${pm.is_default ? '<span class="px-2 py-0.5 bg-[#ff5f00]/20 text-[#ff5f00] text-xs rounded-full">Predeterminada</span>' : ''}
+                                </div>
+                                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    ${!pm.is_default ? `
+                                        <button onclick="window.citasUI.setDefaultCard('${pm.id}')" 
+                                                class="p-2 text-gray-400 hover:text-white transition-colors" title="Establecer como predeterminada">
+                                            <span class="material-symbols-outlined" style="font-size: 20px;">star</span>
+                                        </button>
+                                    ` : ''}
+                                    <button onclick="window.citasUI.deleteCard('${pm.id}')" 
+                                            class="p-2 text-gray-400 hover:text-red-400 transition-colors" title="Eliminar tarjeta">
+                                        <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading payment methods:', error);
+            }
+        }
+
+        async function loadSaldo() {
+            try {
+                const result = await getClienteSaldo();
+                if (result.ok && result.has_balance) {
+                    document.getElementById('saldoSection').classList.remove('hidden');
+                    document.getElementById('saldoAmount').textContent = `${result.saldo_actual.toFixed(2)}€`;
+                } else {
+                    document.getElementById('saldoSection').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading saldo:', error);
+            }
+        }
+
+        async function loadPendingPayments() {
+            try {
+                const result = await getPendingPayments();
+                const container = document.getElementById('pendingPaymentsContainer');
+
+                if (!result.ok || result.pending_payments.length === 0) {
+                    document.getElementById('pendingPaymentsSection').classList.add('hidden');
+                    return;
+                }
+
+                document.getElementById('pendingPaymentsSection').classList.remove('hidden');
+
+                container.innerHTML = `
+                    <div class="grid gap-3">
+                        ${result.pending_payments.map(p => `
+                            <div class="bg-[#111318] border border-yellow-500/30 rounded-xl p-4 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-yellow-400">schedule</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white font-medium">${p.servicio_nombre || 'Reserva'}</p>
+                                        <p class="text-gray-500 text-xs">${p.sucursal_nombre || ''} · ${new Date(p.fecha_cita).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="text-right">
+                                        <p class="text-lg font-bold text-[#ff5f00]">${p.amount.toFixed(2)}€</p>
+                                        <p class="text-xs ${p.status === 'EXPIRED' ? 'text-red-400' : 'text-yellow-400'}">
+                                            ${p.status === 'EXPIRED' ? 'Link expirado' : 'Pendiente de pago'}
+                                        </p>
+                                    </div>
+                                    ${p.status === 'PENDING' && p.checkout_url ? `
+                                        <a href="${p.checkout_url}" target="_blank"
+                                           class="px-4 py-2 bg-[#ff5f00] text-white text-sm font-medium rounded-lg hover:bg-[#e05300] transition-colors">
+                                            Pagar Ahora
+                                        </a>
+                                    ` : ''}
+                                    ${p.can_regenerate ? `
+                                        <button onclick="window.citasUI.regeneratePayment(${p.id_cita})"
+                                                class="px-4 py-2 bg-white/10 text-white text-sm font-medium rounded-lg hover:bg-white/20 transition-colors">
+                                            Generar Nuevo Link
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading pending payments:', error);
+                document.getElementById('pendingPaymentsSection').classList.add('hidden');
             }
         }
 
@@ -617,8 +857,13 @@
                 document.getElementById(`tab-${tabId}`).classList.add('active');
 
                 // Load data
-                if (tabId === 'pagos' && pagosData.length === 0) {
-                    loadPagos();
+                if (tabId === 'pagos') {
+                    loadPaymentMethods();
+                    loadSaldo();
+                    loadPendingPayments();
+                    if (pagosData.length === 0) {
+                        loadPagos();
+                    }
                 }
                 if (tabId === 'resenas' && misResenasData.length === 0) {
                     loadMisResenas();
@@ -765,7 +1010,7 @@
                                 canvas.height = height;
                                 const ctx = canvas.getContext('2d');
                                 ctx.drawImage(img, 0, 0, width, height);
-                                
+
                                 const compressedDataUrl = canvas.toDataURL('image/jpeg', QUALITY);
                                 resolve(compressedDataUrl);
                             };
@@ -808,7 +1053,7 @@
                 } finally {
                     loadingToast.remove();
                     event.target.value = ''; // Reset input
-                    
+
                     // Actualizar input hidden
                     document.getElementById('reviewPhotos').value = JSON.stringify(reviewPhotos);
                 }
@@ -936,6 +1181,92 @@
                 } catch (error) {
                     showToast('Error al eliminar reseña', 'error');
                 }
+            },
+
+            // =============================================
+            // PAYMENT METHODS HANDLERS
+            // =============================================
+
+            addNewCard: async () => {
+                try {
+                    const result = await createPaymentMethodSetupSession();
+                    if (result.ok && result.checkout_url) {
+                        // Redirigir al checkout de Stripe para añadir tarjeta
+                        window.location.href = result.checkout_url;
+                    } else {
+                        showToast(result.error || 'Error al crear sesión de configuración', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error adding card:', error);
+                    showToast('Error al añadir tarjeta', 'error');
+                }
+            },
+
+            setDefaultCard: async (paymentMethodId) => {
+                try {
+                    const result = await setDefaultPaymentMethod(paymentMethodId);
+                    if (result.ok) {
+                        showToast('Tarjeta establecida como predeterminada', 'success');
+                        loadPaymentMethods();
+                    } else {
+                        showToast(result.error || 'Error al establecer tarjeta', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error setting default card:', error);
+                    showToast('Error al establecer tarjeta predeterminada', 'error');
+                }
+            },
+
+            deleteCard: async (paymentMethodId) => {
+                if (!confirm('¿Eliminar esta tarjeta? Debes mantener al menos una tarjeta guardada.')) return;
+
+                try {
+                    const result = await deletePaymentMethod(paymentMethodId);
+                    if (result.ok) {
+                        showToast('Tarjeta eliminada correctamente', 'success');
+                        loadPaymentMethods();
+                    } else {
+                        showToast(result.error || 'Error al eliminar tarjeta', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error deleting card:', error);
+                    showToast('Error al eliminar tarjeta', 'error');
+                }
+            },
+
+            regeneratePayment: async (citaId) => {
+                try {
+                    const result = await regeneratePaymentLink(citaId);
+                    if (result.ok && result.checkout_url) {
+                        showToast('Nuevo enlace de pago generado', 'success');
+                        // Redirigir al checkout de Stripe
+                        window.open(result.checkout_url, '_blank');
+                        // Recargar pagos pendientes
+                        loadPendingPayments();
+                    } else {
+                        showToast(result.error || 'Error al regenerar enlace', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error regenerating payment:', error);
+                    showToast('Error al regenerar enlace de pago', 'error');
+                }
+            },
+
+            // Pagar cita bajo demanda
+            payCitaAction: async (citaId) => {
+                try {
+                    showToast('Creando sesión de pago...', 'info');
+                    const result = await payCita(citaId);
+                    if (result.ok && result.checkout_url) {
+                        // Redirigir al checkout de Stripe
+                        window.location.href = result.checkout_url;
+                    } else {
+                        showToast(result.error || 'Error al crear pago', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error creating payment:', error);
+                    showToast(error.message || 'Error al crear sesión de pago', 'error');
+                }
             }
         };
 
@@ -965,8 +1296,22 @@
         window.showChangePasswordModal = () => {
             showToast('Funcionalidad próximamente disponible', 'info');
         };
-    </script>
 
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadClienteInfo();
+            // Cargar citas al iniciar para asegurar estado actualizado
+            loadCitas();
+
+            // Verificar si venimos de un pago exitoso y limpiar URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('payment_success') === 'true') {
+                window.history.replaceState({}, document.title, window.location.pathname);
+                console.log('Pago completado, datos recargados');
+            }
+        });
+    </script>
 </body>
 
 </html>

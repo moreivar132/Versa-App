@@ -172,20 +172,27 @@ function applyFilters() {
     renderTable(filtered);
 }
 
+// ... (código previo)
+
 function renderTable(citas) {
     const tbody = document.getElementById('citas-tbody');
     tbody.innerHTML = '';
 
     if (citas.length === 0) {
+        // ... (empty state)
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="px-6 py-8 text-center text-[#a0a0a0] flex flex-col items-center gap-2">
+                <td colspan="6" class="px-6 py-8 text-center text-[#a0a0a0] flex flex-col items-center gap-2"> <!-- colspan 6 ahora -->
                     <span class="material-symbols-outlined text-4xl opacity-20">calendar_today</span>
                     <p>No hay citas para mostrar.</p>
                 </td>
             </tr>`;
         return;
     }
+
+    // Actualizar encabezado de tabla si es necesario (agregar columna Pago)
+    // Asumimos que el HTML ya tiene 5 y añadimos dinámicamente o ajustamos el HTML principal luego.
+    // Para simplificar, insertaremos el estado de pago ANTES de las acciones.
 
     citas.forEach(cita => {
         const tr = document.createElement('tr');
@@ -196,10 +203,28 @@ function renderTable(citas) {
         if (typeStr.includes('moto')) vehiculoIcon = 'two_wheeler';
         else if (typeStr.includes('bici')) vehiculoIcon = 'pedal_bike';
 
-        // USING UNIFIED UI HELPERS HERE
         const statusBadge = renderEstadoBadge(cita.estado);
         const formattedDate = formatFecha(cita.fecha_hora);
         const formattedTime = formatHora(cita.fecha_hora);
+
+        // Lógica de Estado de Pago
+        let paymentBadge = '';
+        if (cita.payment_status === 'PAID') {
+            const method = cita.payment_mode === 'CASH' ? 'Efectivo' :
+                cita.payment_mode === 'CARD_TERMINAL' ? 'Datáfono' :
+                    cita.payment_mode === 'MANUAL' ? 'Manual' : 'Stripe';
+            paymentBadge = `<span class="inline-flex items-center gap-1 rounded bg-green-500/10 px-2 py-1 text-xs font-medium text-green-500 border border-green-500/20" title="Pagado con ${method}">
+                <span class="material-symbols-outlined text-[10px]">check_circle</span> Pagado
+            </span>`;
+        } else if (cita.payment_status === 'DEPOSIT') {
+            paymentBadge = `<span class="inline-flex items-center gap-1 rounded bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-500 border border-blue-500/20">
+                <span class="material-symbols-outlined text-[10px]">payments</span> Depósito
+            </span>`;
+        } else {
+            paymentBadge = `<button onclick="window.openPaymentModal('${cita.id}')" class="inline-flex items-center gap-1 rounded bg-[#2a2a2a] px-2 py-1 text-xs font-medium text-[#a0a0a0] border border-[#3a3a3a] hover:bg-[var(--brand-orange)] hover:text-white hover:border-[var(--brand-orange)] transition-all">
+                <span class="material-symbols-outlined text-[10px]">add_card</span> Registrar Pago
+            </button>`;
+        }
 
         tr.innerHTML = `
             <td class="whitespace-nowrap px-6 py-4">
@@ -223,6 +248,10 @@ function renderTable(citas) {
                     ${statusBadge}
                 </button>
             </td>
+            <!-- Nueva Columna: Pago -->
+            <td class="whitespace-nowrap px-6 py-4 text-center">
+                ${paymentBadge}
+            </td>
             <td class="whitespace-nowrap px-6 py-4 text-right relative">
                  <div class="flex justify-end gap-2">
                     <button onclick="window.editCita('${cita.id}')" class="text-[#a0a0a0] hover:text-white transition-colors" title="Editar">
@@ -237,6 +266,69 @@ function renderTable(citas) {
         tbody.appendChild(tr);
     });
 }
+
+// ... (renderChart, loadConfig, checkAvailability, updateCitaStatus, showToast)
+
+// =============================================
+// LOGICA DE PAGO MANUAL
+// =============================================
+
+window.openPaymentModal = function (citaId) {
+    document.getElementById('payment-modal').classList.remove('hidden');
+    document.getElementById('payment-modal').classList.add('flex');
+    document.getElementById('payment-cita-id').value = citaId;
+    document.getElementById('payment-amount').value = ''; // Reset
+    document.getElementById('payment-note').value = '';
+
+    // Autofocus amount
+    setTimeout(() => document.getElementById('payment-amount').focus(), 100);
+}
+
+window.closePaymentModal = function () {
+    document.getElementById('payment-modal').classList.add('hidden');
+    document.getElementById('payment-modal').classList.remove('flex');
+}
+
+// Inicializar listener de pago
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing init ...
+    const paymentForm = document.getElementById('payment-form');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const citaId = document.getElementById('payment-cita-id').value;
+            const amount = document.getElementById('payment-amount').value;
+            const method = document.getElementById('payment-method').value;
+            const note = document.getElementById('payment-note').value;
+
+            if (!citaId || !amount) {
+                showToast('Importe requerido', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/api/citas/${citaId}/pago`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, method, note })
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    showToast('Pago registrado correctamente', 'success');
+                    window.closePaymentModal();
+                    loadCitas(); // Recargar tabla
+                } else {
+                    showToast(data.error || 'Error al registrar pago', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error de conexión', 'error');
+            }
+        });
+    }
+});
+
 
 function renderChart(citas) {
     const chartContainer = document.getElementById('occupancy-chart');

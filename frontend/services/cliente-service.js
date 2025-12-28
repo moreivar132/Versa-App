@@ -369,3 +369,81 @@ export async function marcarTodasNotificacionesLeidas() {
         method: 'PUT'
     });
 }
+
+// =============================================
+// PAYMENT METHODS API (STRIPE)
+// =============================================
+
+/**
+ * Obtener métodos de pago guardados del cliente
+ * GET /api/cliente/payment-methods
+ */
+export async function getPaymentMethods() {
+    return apiCall('/api/cliente/payment-methods');
+}
+
+/**
+ * Crear sesión de Stripe para guardar nueva tarjeta
+ * POST /api/cliente/payment-methods/setup-session
+ */
+export async function createPaymentMethodSetupSession() {
+    return apiCall('/api/cliente/payment-methods/setup-session', {
+        method: 'POST'
+    });
+}
+
+/**
+ * Establecer tarjeta como predeterminada
+ * POST /api/cliente/payment-methods/:id/default
+ */
+export async function setDefaultPaymentMethod(paymentMethodId) {
+    return apiCall(`/api/cliente/payment-methods/${paymentMethodId}/default`, {
+        method: 'POST'
+    });
+}
+
+/**
+ * Eliminar tarjeta guardada
+ * DELETE /api/cliente/payment-methods/:id
+ */
+export async function deletePaymentMethod(paymentMethodId) {
+    return apiCall(`/api/cliente/payment-methods/${paymentMethodId}`, {
+        method: 'DELETE'
+    });
+}
+
+/**
+ * Obtener pagos pendientes (citas sin pagar)
+ * GET /api/cliente/payment-methods/pending-payments
+ */
+export async function getPendingPayments() {
+    return apiCall('/api/cliente/payment-methods/pending-payments');
+}
+
+/**
+ * Regenerar link de pago para una cita expirada
+ * POST /api/cliente/payment-methods/regenerate/:citaId
+ */
+export async function regeneratePaymentLink(citaId) {
+    return apiCall(`/api/cliente/payment-methods/regenerate/${citaId}`, {
+        method: 'POST'
+    });
+}
+
+/**
+ * Obtener saldo a favor del cliente
+ * GET /api/cliente/payment-methods/saldo
+ */
+export async function getClienteSaldo() {
+    return apiCall('/api/cliente/payment-methods/saldo');
+}
+
+/**
+ * Crear sesión de pago para una cita bajo demanda
+ * POST /api/cliente/payment-methods/pay/:citaId
+ */
+export async function payCita(citaId) {
+    return apiCall(`/api/cliente/payment-methods/pay/${citaId}`, {
+        method: 'POST'
+    });
+}

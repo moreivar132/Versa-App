@@ -208,10 +208,26 @@ class MarketplaceService {
      * Crear una reserva desde el marketplace
      * ARQUITECTURA: tenant → sucursal → citataller
      * 
+     * FLUJO COMPLETO:
+     * 1. Validar sucursal y obtener tenant
+     * 2. Crear/buscar cliente
+     * 3. Crear/buscar vehículo
+     * 4. Obtener servicio y precio
+     * 5. Crear cita
+     * 6. Calcular monto (depósito o total)
+     * 7. Crear Stripe Checkout Session
+     * 8. Guardar registro de pago
+     * 9. Enviar WhatsApp de confirmación
+     * 
      * Campos NOT NULL en citataller: id_sucursal, id_cliente, id_vehiculo
      */
     async createBooking(bookingData) {
         const client = await pool.connect();
+
+        // Variables que necesitamos fuera del try para el WhatsApp
+        let reservaId = null;
+        let tallerNombre = null;
+        let paymentResult = null;
 
         try {
             await client.query('BEGIN');
@@ -227,11 +243,12 @@ class MarketplaceService {
                 tipoVehiculo,
                 matricula,
                 notas,
-                id_cliente // Puede venir del cliente logueado o null
+                id_cliente, // Puede venir del cliente logueado o null
+                payment_mode // 'DEPOSITO' | 'TOTAL' | 'NONE' | null
             } = bookingData;
 
             // =====================================================
-            // 1. VALIDAR SUCURSAL Y OBTENER id_tenant
+            // 1. VALIDAR SUCURSAL Y OBTENER id_tenant + config depósito
             // =====================================================
             const taller = await marketplaceRepo.getSucursalDetail(sucursalId, client);
             if (!taller) {
@@ -245,6 +262,15 @@ class MarketplaceService {
             if (!idTenant) {
                 throw new Error('Error de configuración: Sucursal sin tenant asociado');
             }
+
+            tallerNombre = taller.titulo_publico || taller.sucursal_nombre;
+
+            // Configuración de depósito del listing
+            const depositoConfig = {
+                activo: taller.deposito_activo || false,
+                tipo: taller.deposito_tipo || 'FIJO', // 'FIJO' o 'PORCENTAJE'
+                valor: taller.deposito_valor ? parseFloat(taller.deposito_valor) : 0
+            };
 
             // =====================================================
             // 2. CLIENTE (NOT NULL) - Buscar o crear
@@ -335,14 +361,15 @@ class MarketplaceService {
             }
 
             // =====================================================
-            // 4. OBTENER INFO DEL SERVICIO (para motivo y duración)
+            // 4. OBTENER INFO DEL SERVICIO (nombre, duración Y PRECIO)
             // =====================================================
             let duracionEstimada = 60;
             let motivoServicio = 'Reserva online';
+            let precioServicio = 0;
 
             if (servicioId) {
                 const servicioResult = await client.query(
-                    `SELECT ms.nombre, mss.duracion_min 
+                    `SELECT ms.nombre, mss.duracion_min, mss.precio
                      FROM marketplace_servicio_sucursal mss
                      JOIN marketplace_servicio ms ON ms.id = mss.id_servicio
                      WHERE mss.id_sucursal = $1 AND mss.id_servicio = $2`,
@@ -351,6 +378,7 @@ class MarketplaceService {
                 if (servicioResult.rows.length > 0) {
                     duracionEstimada = servicioResult.rows[0].duracion_min || 60;
                     motivoServicio = servicioResult.rows[0].nombre || 'Reserva online';
+                    precioServicio = parseFloat(servicioResult.rows[0].precio) || 0;
                 }
             }
 
@@ -380,23 +408,116 @@ class MarketplaceService {
                 ]
             );
 
-            const reservaId = citaResult.rows[0].id;
+            reservaId = citaResult.rows[0].id;
+
+            // =====================================================
+            // 6. DETERMINAR payment_mode Y CALCULAR MONTO
+            // =====================================================
+            let finalPaymentMode = payment_mode;
+
+            // Si no viene payment_mode, decidir automáticamente
+            if (!finalPaymentMode || finalPaymentMode === 'NONE') {
+                if (depositoConfig.activo && depositoConfig.valor > 0) {
+                    finalPaymentMode = 'DEPOSITO';
+                } else if (precioServicio > 0) {
+                    finalPaymentMode = 'TOTAL';
+                } else {
+                    finalPaymentMode = 'NONE';
+                }
+            }
+
+            let amount = 0;
+            if (finalPaymentMode === 'TOTAL') {
+                amount = precioServicio;
+            } else if (finalPaymentMode === 'DEPOSITO') {
+                if (depositoConfig.tipo === 'PORCENTAJE') {
+                    amount = (precioServicio * depositoConfig.valor) / 100;
+                } else {
+                    // FIJO
+                    amount = depositoConfig.valor;
+                }
+            }
+
+            // Redondear a 2 decimales
+            amount = Math.round(amount * 100) / 100;
+
+            // =====================================================
+            // 7. CREAR STRIPE CHECKOUT SESSION (si hay pago)
+            // =====================================================
+            if (finalPaymentMode !== 'NONE' && amount > 0) {
+                try {
+                    const stripeService = require('./stripeService');
+
+                    const stripeSession = await stripeService.createCheckoutSessionForBooking({
+                        id_tenant: idTenant,
+                        id_sucursal: sucursalId,
+                        id_cita: reservaId,
+                        id_cliente: clienteId,
+                        payment_mode: finalPaymentMode,
+                        amount: amount,
+                        currency: 'eur',
+                        customer_email: email,
+                        customer_phone: telefono,
+                        service_name: motivoServicio,
+                        sucursal_name: tallerNombre
+                    });
+
+                    // =====================================================
+                    // 8. GUARDAR REGISTRO DE PAGO EN marketplace_reserva_pago
+                    // =====================================================
+                    await client.query(
+                        `INSERT INTO marketplace_reserva_pago 
+                         (id_tenant, id_sucursal, id_cita, id_cliente, payment_mode, amount, currency, status, stripe_checkout_session_id, checkout_url, metadata_json)
+                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+                        [
+                            idTenant,
+                            sucursalId,
+                            reservaId,
+                            clienteId || null,
+                            finalPaymentMode,
+                            amount,
+                            'eur',
+                            'PENDING',
+                            stripeSession.session_id,
+                            stripeSession.checkout_url,
+                            JSON.stringify({
+                                servicio: motivoServicio,
+                                precio_total_servicio: precioServicio,
+                                cliente_nombre: nombre,
+                                cliente_telefono: telefono
+                            })
+                        ]
+                    );
+
+                    paymentResult = {
+                        requires_payment: true,
+                        payment_mode: finalPaymentMode,
+                        amount: amount,
+                        checkout_url: stripeSession.checkout_url,
+                        session_id: stripeSession.session_id
+                    };
+
+                } catch (stripeError) {
+                    console.error('Error creando Stripe session:', stripeError);
+                    // No fallar el booking por error de Stripe, pero registrar
+                    paymentResult = {
+                        requires_payment: true,
+                        payment_mode: finalPaymentMode,
+                        amount: amount,
+                        checkout_url: null,
+                        error: 'No se pudo generar el enlace de pago. Contacta con el taller.'
+                    };
+                }
+            } else {
+                paymentResult = {
+                    requires_payment: false,
+                    payment_mode: 'NONE',
+                    amount: 0
+                };
+            }
 
             await client.query('COMMIT');
 
-            return {
-                success: true,
-                reservaId: reservaId,
-                mensaje: 'Reserva creada exitosamente',
-                detalles: {
-                    sucursal: taller.titulo_publico || taller.sucursal_nombre,
-                    fecha,
-                    hora,
-                    cliente: nombre,
-                    servicio: motivoServicio,
-                    isLoggedIn: !!id_cliente
-                }
-            };
         } catch (error) {
             await client.query('ROLLBACK');
             console.error('Error en createBooking:', error);
@@ -404,6 +525,69 @@ class MarketplaceService {
         } finally {
             client.release();
         }
+
+        // =====================================================
+        // 9. ENVIAR WHATSAPP DE CONFIRMACIÓN (fuera de transacción)
+        // =====================================================
+        // Esto va fuera del try-catch de la transacción para que
+        // un error de WhatsApp no afecte la reserva
+        try {
+            const timelinesService = require('./timelinesService');
+            const { telefono, nombre, fecha, hora } = bookingData;
+
+            // Formatear fecha para mensaje
+            const fechaFormateada = new Date(`${fecha}T${hora}:00`).toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            let mensajeWhatsApp = `¡Hola ${nombre}! 👋\n\n`;
+            mensajeWhatsApp += `Tu reserva en *${tallerNombre}* ha sido registrada:\n\n`;
+            mensajeWhatsApp += `📅 *${fechaFormateada}*\n`;
+            mensajeWhatsApp += `🔧 Servicio: ${bookingData.servicioId ? paymentResult?.service_name || 'Servicio' : 'Por confirmar'}\n`;
+            mensajeWhatsApp += `📍 Referencia: #${reservaId}\n\n`;
+
+            if (paymentResult?.requires_payment && paymentResult.checkout_url) {
+                mensajeWhatsApp += `💳 *Pago pendiente*: ${paymentResult.amount.toFixed(2)}€ (${paymentResult.payment_mode === 'DEPOSITO' ? 'Señal' : 'Total'})\n\n`;
+                mensajeWhatsApp += `👉 Completa tu pago aquí:\n${paymentResult.checkout_url}\n\n`;
+                mensajeWhatsApp += `⏰ El enlace expira en 30 minutos.\n\n`;
+            }
+
+            mensajeWhatsApp += `Si tienes alguna pregunta, responde a este mensaje. ¡Gracias por confiar en nosotros! 🚗`;
+
+            // Enviar mensaje
+            if (telefono && telefono.startsWith('+')) {
+                await timelinesService.sendInitialMessage(telefono, `Reserva confirmada: ${tallerNombre} - ${fechaFormateada}`);
+                console.log(`[WhatsApp] Mensaje de confirmación enviado a ${telefono}`);
+            }
+        } catch (whatsappError) {
+            // No fallar el booking por error de WhatsApp
+            console.warn('[WhatsApp] No se pudo enviar mensaje de confirmación:', whatsappError.message);
+        }
+
+        // =====================================================
+        // 10. RETORNAR RESPUESTA
+        // =====================================================
+        return {
+            success: true,
+            id_cita: reservaId,
+            reservaId: reservaId, // Mantener compatibilidad
+            mensaje: 'Reserva creada exitosamente',
+            detalles: {
+                sucursal: tallerNombre,
+                fecha: bookingData.fecha,
+                hora: bookingData.hora,
+                cliente: bookingData.nombre,
+                servicio: bookingData.servicioId ? 'Servicio confirmado' : 'Reserva online',
+                isLoggedIn: !!bookingData.id_cliente
+            },
+            // Datos de pago
+            ...paymentResult
+        };
     }
 
     // =====================================

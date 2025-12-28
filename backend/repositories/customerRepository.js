@@ -235,7 +235,7 @@ class CustomerRepository {
 
         try {
             const result = await pool.query(
-                `SELECT 
+                `SELECT DISTINCT ON (c.id)
                 c.id,
                 c.fecha_hora,
                 c.estado,
@@ -244,16 +244,23 @@ class CustomerRepository {
                 c.created_at,
                 s.id as id_sucursal,
                 s.nombre as sucursal_nombre,
-                s.direccion as sucursal_direccion
+                s.direccion as sucursal_direccion,
+                mrp.status as pago_status,
+                mrp.checkout_url as pago_url,
+                mrp.amount as pago_amount
              FROM citataller c
              JOIN sucursal s ON s.id = c.id_sucursal
+             LEFT JOIN marketplace_reserva_pago mrp ON mrp.id_cita = c.id AND mrp.status IN ('PENDING', 'PAID')
              WHERE ${whereClause}
-             ORDER BY c.fecha_hora DESC`,
+             ORDER BY c.id, mrp.created_at DESC NULLS LAST`,
                 [idCliente]
             );
 
+            // Ordenar por fecha_hora en JavaScript ya que DISTINCT ON no permite otro ORDER BY
+            const sortedRows = result.rows.sort((a, b) => new Date(b.fecha_hora) - new Date(a.fecha_hora));
+
             // Map result to match expected frontend structure
-            return result.rows.map(row => ({
+            return sortedRows.map(row => ({
                 id: row.id,
                 fecha_hora: row.fecha_hora,
                 estado: row.estado,
@@ -266,7 +273,11 @@ class CustomerRepository {
                     direccion: row.sucursal_direccion,
                     telefono: null
                 },
-                vehiculo: null // Temporarily removed vehicle join
+                vehiculo: null, // Temporarily removed vehicle join
+                // Campos de pago
+                pago_status: row.pago_status,
+                pago_url: row.pago_url,
+                pago_amount: row.pago_amount
             }));
         } catch (err) {
             console.error('Error SQL getClienteCitas:', err);
@@ -329,28 +340,22 @@ class CustomerRepository {
      */
     async getClientePagos(idCliente) {
         try {
-            // Por ahora devolvemos pagos asociados a citas/órdenes
-            // Preparado para integrar con Stripe en Paso 7
-            // Intentamos query segura o devolvemos vacio si falla por tablas faltantes
-            /*
             const result = await pool.query(
                 `SELECT 
-                    'orden' as tipo,
-                    o.id as referencia_id,
-                    o.fecha_recepcion as fecha,
-                    'Orden de trabajo' as concepto,
-                    o.total as importe,
-                    o.estado_pago as status,
-                    o.metodo_pago
-                 FROM orden o
-                 JOIN citataller c ON c.id_sucursal = o.id_sucursal
-                 WHERE c.id_cliente = $1
-                 UNION ALL ...
-                `, [idCliente]
+                    'pago_cita' as tipo,
+                    p.id,
+                    p.created_at as fecha,
+                    COALESCE(c.motivo, 'Reserva de Cita') as concepto,
+                    p.amount as importe,
+                    p.status,
+                    p.payment_mode
+                 FROM marketplace_reserva_pago p
+                 LEFT JOIN citataller c ON c.id = p.id_cita
+                 WHERE p.id_cliente = $1
+                 ORDER BY p.created_at DESC`,
+                [idCliente]
             );
-            return result.rows; 
-            */
-            return []; // Retornar vacio mientras estabilizamos tablas de pagos
+            return result.rows;
         } catch (err) {
             console.error('Error SQL getClientePagos:', err);
             return [];

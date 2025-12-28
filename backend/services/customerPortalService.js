@@ -40,14 +40,25 @@ class CustomerPortalService {
             } : null,
             // Indica si se puede cancelar (cita futura)
             puede_cancelar: new Date(cita.fecha_hora) > new Date(),
-            puede_reprogramar: new Date(cita.fecha_hora) > new Date()
+            puede_reprogramar: new Date(cita.fecha_hora) > new Date(),
+            // Info de pago
+            pago: cita.pago_status ? {
+                status: cita.pago_status,
+                url: cita.pago_url,
+                amount: parseFloat(cita.pago_amount)
+            } : null
         }));
     }
 
     /**
      * Cancelar una cita
+     * 
+     * Si la cita tenía un pago PAID, se crea un crédito a favor del cliente
+     * (NO se hace refund automático de Stripe)
      */
     async cancelarCita(idCliente, idCita) {
+        const pool = require('../db');
+
         // Obtener cita
         const cita = await customerRepo.getClienteCitaById(idCliente, idCita);
 
@@ -73,13 +84,67 @@ class CustomerPortalService {
             };
         }
 
-        // Cancelar
+        // Cancelar la cita
         const citaCancelada = await customerRepo.cancelarCita(idCita, idCliente);
+
+        // =====================================================
+        // PROCESAR SALDO A FAVOR si había pago PAID
+        // =====================================================
+        let saldoAFavor = null;
+
+        try {
+            // Buscar si existe un pago PAID para esta cita
+            const pagoResult = await pool.query(
+                `SELECT * FROM marketplace_reserva_pago 
+                 WHERE id_cita = $1 AND status = 'PAID' 
+                 LIMIT 1`,
+                [idCita]
+            );
+
+            if (pagoResult.rows.length > 0) {
+                const pago = pagoResult.rows[0];
+
+                // 1. Crear movimiento de crédito en el ledger
+                await pool.query(
+                    `INSERT INTO clientefinal_credito_mov 
+                     (id_tenant, id_cliente, id_cita_origen, tipo, concepto, amount, currency)
+                     VALUES ($1, $2, $3, 'CREDITO', $4, $5, $6)`,
+                    [
+                        pago.id_tenant,
+                        idCliente,
+                        idCita,
+                        `Cancelación de reserva #${idCita} - Saldo a favor`,
+                        pago.amount,
+                        pago.currency
+                    ]
+                );
+
+                // 2. Actualizar el pago a CREDITED
+                await pool.query(
+                    `UPDATE marketplace_reserva_pago 
+                     SET status = 'CREDITED', updated_at = NOW()
+                     WHERE id = $1`,
+                    [pago.id]
+                );
+
+                saldoAFavor = {
+                    amount: parseFloat(pago.amount),
+                    currency: pago.currency,
+                    mensaje: `Se ha añadido ${pago.amount}€ a tu saldo a favor`
+                };
+
+                console.log(`[Portal] Creado saldo a favor: ${pago.amount}€ para cliente ${idCliente} (cita ${idCita})`);
+            }
+        } catch (creditError) {
+            // No fallar la cancelación por error en crédito
+            console.error('[Portal] Error procesando saldo a favor:', creditError);
+        }
 
         return {
             id: citaCancelada.id,
             estado: citaCancelada.estado,
-            mensaje: 'Cita cancelada exitosamente'
+            mensaje: 'Cita cancelada exitosamente',
+            saldo_a_favor: saldoAFavor
         };
     }
 

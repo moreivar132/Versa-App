@@ -42,6 +42,11 @@ export default defineConfig({
                 clienteLogin: 'cliente-login.html',
                 clienteRegister: 'cliente-register.html',
                 clienteDashboard: 'cliente-dashboard.html',
+                // Stripe Checkout (FASE 6)
+                success: 'success.html',
+                cancel: 'cancel.html',
+                stripeSuccess: 'stripe-success.html',
+                stripeCancel: 'stripe-cancel.html',
             }
         }
     },

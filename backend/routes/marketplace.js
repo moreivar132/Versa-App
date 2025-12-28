@@ -154,7 +154,8 @@ router.get('/sucursales/:id/availability', async (req, res) => {
 /**
  * POST /api/marketplace/book
  * Crear una reserva (público o cliente logueado)
- * Body: { sucursalId, servicioId, fecha, hora, nombre, telefono, email, tipoVehiculo, matricula, notas }
+ * Body: { sucursalId, servicioId, fecha, hora, nombre, telefono, email, tipoVehiculo, matricula, notas, payment_mode? }
+ * payment_mode: 'DEPOSITO' | 'TOTAL' | 'NONE' (opcional, se decide automáticamente si no viene)
  * Si cliente está logueado (token en header), se vincula automáticamente la cita
  */
 router.post('/book', customerAuthOptional, async (req, res) => {
@@ -169,7 +170,8 @@ router.post('/book', customerAuthOptional, async (req, res) => {
             email,
             tipoVehiculo,
             matricula,
-            notas
+            notas,
+            payment_mode // 'DEPOSITO' | 'TOTAL' | 'NONE' (opcional)
         } = req.body;
 
         // Validaciones básicas
@@ -190,6 +192,14 @@ router.post('/book', customerAuthOptional, async (req, res) => {
             });
         }
 
+        // Validar payment_mode si viene
+        if (payment_mode && !['DEPOSITO', 'TOTAL', 'NONE'].includes(payment_mode)) {
+            return res.status(400).json({
+                ok: false,
+                error: 'payment_mode inválido. Valores permitidos: DEPOSITO, TOTAL, NONE'
+            });
+        }
+
         const bookingData = {
             sucursalId: parseInt(sucursalId),
             servicioId: parseInt(servicioId),
@@ -202,7 +212,9 @@ router.post('/book', customerAuthOptional, async (req, res) => {
             matricula,
             notas,
             // Si el cliente está logueado, usar su id_cliente
-            id_cliente: req.customer?.id_cliente || null
+            id_cliente: req.customer?.id_cliente || null,
+            // Modo de pago (el servicio decidirá el default si no viene)
+            payment_mode: payment_mode || null
         };
 
         const result = await marketplaceService.createBooking(bookingData);

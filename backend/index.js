@@ -39,6 +39,7 @@ app.use('/api/portal', require('./routes/portalCitas')); // Portal cliente (Cita
 app.use('/api/portal/notificaciones', require('./routes/portalNotificaciones')); // Notificaciones
 app.use('/api/cliente/auth', require('./routes/customerAuth'));
 app.use('/api/cliente', customerAuth, require('./routes/customerPortal'));
+app.use('/api/cliente/payment-methods', require('./routes/customerPaymentMethods')); // Payment Methods (Stripe)
 
 // Rutas de autenticación general
 app.use('/api/auth', authRouter);
