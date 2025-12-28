@@ -188,10 +188,8 @@
     </div>
 
     <script>
-        // Configuración API
-        const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-            ? 'http://localhost:3000'
-            : '';
+        // Configuración API - usar rutas relativas (proxy de Vite en dev, mismo origen en prod)
+        const API_BASE = '';
 
         // Obtener parámetros de la URL
         const urlParams = new URLSearchParams(window.location.search);

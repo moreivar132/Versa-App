@@ -1,5 +1,5 @@
 // Get API base URL from environment variable or use localhost as fallback
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export async function searchInventario(query, idSucursal) {
     const API_URL = `${API_BASE_URL}/api/inventory/search`;

@@ -1636,10 +1636,8 @@
     // FUNCIONES GLOBALES (disponibles en todo el documento)
     // ====================================
 
-    // Detectar el puerto correcto del backend
-    const API_BASE_URL = window.location.hostname === 'localhost'
-      ? 'http://localhost:3000'
-      : 'https://versa-app-dev.up.railway.app';
+    // Usar rutas relativas para proxy Vite en desarrollo
+    const API_BASE_URL = '';
 
     // Variables globales para almacenar el plan seleccionado
     let selectedPlan = null;

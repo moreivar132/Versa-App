@@ -94,7 +94,8 @@ class MarketplaceService {
                     cliente: r.cliente_nombre,
                     rating: r.rating,
                     fecha: r.created_at,
-                    comentario: r.comentario
+                    comentario: r.comentario,
+                    fotos: r.fotos_json || []
                 })),
                 configuracion: {
                     reserva_online: taller.reserva_online_activa,
