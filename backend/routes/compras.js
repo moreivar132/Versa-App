@@ -183,6 +183,7 @@ router.post('/', verifyJWT, async (req, res) => {
             }
 
             // Resolver Producto (Buscar o Crear) - Incluye id_sucursal para unicidad
+            // IMPORTANTE: Al crear producto desde compra, incluir proveedor, costo y unidad de medida
             if (!productId && item.barcode) {
                 const prodRes = await client.query(
                     'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2 AND id_sucursal = $3',
@@ -190,11 +191,23 @@ router.post('/', verifyJWT, async (req, res) => {
                 );
                 if (prodRes.rows.length > 0) {
                     productId = prodRes.rows[0].id;
+                    // Actualizar el producto existente con el proveedor si no lo tiene
+                    await client.query(
+                        `UPDATE producto SET 
+                            id_proveedor = COALESCE(id_proveedor, $1),
+                            costo = $2,
+                            unidad_medida = COALESCE(unidad_medida, 'Unidades'),
+                            updated_at = NOW()
+                        WHERE id = $3`,
+                        [finalProveedorId, price, productId]
+                    );
                 } else {
-                    // Crear producto básico vinculado a la sucursal de la compra
+                    // Crear producto básico vinculado a la sucursal de la compra CON PROVEEDOR
                     const createProd = await client.query(
-                        'INSERT INTO producto (id_tenant, codigo_barras, nombre, precio, id_sucursal, tipo, stock, created_at) VALUES ($1, $2, $3, $4, $5, $6, 0, NOW()) RETURNING id',
-                        [id_tenant, item.barcode, item.name, item.price, id_sucursal, item.type || 'Producto']
+                        `INSERT INTO producto 
+                            (id_tenant, codigo_barras, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, NOW()) RETURNING id`,
+                        [id_tenant, item.barcode, item.name, item.price, price, id_sucursal, finalProveedorId, item.type || 'Producto', item.unidad || 'Unidades']
                     );
                     productId = createProd.rows[0].id;
                 }
@@ -206,14 +219,27 @@ router.post('/', verifyJWT, async (req, res) => {
                 );
                 if (prodRes.rows.length > 0) {
                     productId = prodRes.rows[0].id;
+                    // Actualizar el producto existente con el proveedor si no lo tiene
+                    await client.query(
+                        `UPDATE producto SET 
+                            id_proveedor = COALESCE(id_proveedor, $1),
+                            costo = $2,
+                            unidad_medida = COALESCE(unidad_medida, 'Unidades'),
+                            updated_at = NOW()
+                        WHERE id = $3`,
+                        [finalProveedorId, price, productId]
+                    );
                 } else {
                     const createProd = await client.query(
-                        'INSERT INTO producto (id_tenant, nombre, precio, id_sucursal, tipo, stock, created_at) VALUES ($1, $2, $3, $4, $5, 0, NOW()) RETURNING id',
-                        [id_tenant, item.name, item.price, id_sucursal, item.type || 'Producto']
+                        `INSERT INTO producto 
+                            (id_tenant, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, NOW()) RETURNING id`,
+                        [id_tenant, item.name, item.price, price, id_sucursal, finalProveedorId, item.type || 'Producto', item.unidad || 'Unidades']
                     );
                     productId = createProd.rows[0].id;
                 }
             }
+
 
             if (!productId) {
                 throw new Error(`No se pudo resolver el producto para el item: ${item.name}`);

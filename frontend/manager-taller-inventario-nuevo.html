@@ -734,14 +734,78 @@
                 });
             }
 
-            // --- CHECK FOR EDIT MODE ---
+            // --- CHECK FOR EDIT MODE OR PREFILL FROM URL ---
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
 
+            // Prefill from URL parameters (useful when coming from a purchase or quick add)
+            const prefillFromUrl = () => {
+                const prefillFields = {
+                    'codigo_barras_articulo': urlParams.get('barcode') || urlParams.get('codigo_barras'),
+                    'nombre': urlParams.get('nombre') || urlParams.get('name'),
+                    'marca': urlParams.get('marca'),
+                    'modelo': urlParams.get('modelo'),
+                    'costo_compra': urlParams.get('costo') || urlParams.get('price'),
+                    'recargo': urlParams.get('recargo') || urlParams.get('markup'),
+                    'precio_venta_bruto': urlParams.get('precio_venta'),
+                    'stock': urlParams.get('stock') || urlParams.get('cantidad') || urlParams.get('quantity'),
+                    'stock_minimo': urlParams.get('stock_minimo'),
+                    'descripcion': urlParams.get('descripcion'),
+                    'proveedor': urlParams.get('proveedor'),
+                    'id_categoria': urlParams.get('categoria'),
+                    'unidad_medida': urlParams.get('unidad')
+                };
+
+                Object.entries(prefillFields).forEach(([fieldId, value]) => {
+                    if (value) {
+                        const field = document.getElementById(fieldId);
+                        if (field) {
+                            field.value = decodeURIComponent(value);
+                            // Trigger input event to activate calculations
+                            field.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    }
+                });
+
+                // Calculate price if costo was prefilled
+                const costoValue = urlParams.get('costo') || urlParams.get('price');
+                const recargoValue = urlParams.get('recargo') || urlParams.get('markup');
+                if (costoValue) {
+                    const costo = parseFloat(costoValue) || 0;
+                    const recargo = parseFloat(recargoValue) || 0;
+                    const precioCalculado = costo * (1 + recargo / 100);
+                    const precioField = document.getElementById('precio_venta_bruto');
+                    if (precioField && !urlParams.get('precio_venta')) {
+                        precioField.value = precioCalculado.toFixed(2);
+                    }
+                }
+
+                // Prefill taller/sucursal after branches load
+                const tallerParam = urlParams.get('taller') || urlParams.get('sucursal');
+                if (tallerParam) {
+                    setTimeout(() => {
+                        const tallerSelect = document.getElementById('taller');
+                        if (tallerSelect) {
+                            // Try to find by name or ID
+                            for (let option of tallerSelect.options) {
+                                if (option.value === tallerParam || option.textContent === decodeURIComponent(tallerParam)) {
+                                    tallerSelect.value = option.value;
+                                    break;
+                                }
+                            }
+                        }
+                    }, 600);
+                }
+            };
+
+            // Check if we're in edit mode or prefill mode
             if (productId) {
                 document.querySelector('.form-main-title').textContent = 'Editar Producto';
                 document.querySelector('span.bg-\\[rgba\\(255\\,101\\,43\\,0\\.1\\)\\]').textContent = 'EDICIÓN';
                 loadProductData(productId);
+            } else {
+                // Check for prefill parameters
+                prefillFromUrl();
             }
 
             async function loadProductData(id) {
@@ -758,19 +822,13 @@
 
                     // Category
                     const catSelect = document.getElementById('id_categoria');
-                    // Try to match text
                     if (product.categoria) {
-                        // If option exists, select it. If not, maybe add it? 
-                        // For now assume standard categories.
                         catSelect.value = product.categoria;
                     }
 
                     document.getElementById('proveedor').value = product.proveedor_nombre || '';
 
                     // Wait for branches to load then select
-                    // We can use a small timeout or check if loaded. 
-                    // Since loadBranches is async called at start, it might race.
-                    // Better to wait or retry.
                     setTimeout(() => {
                         const tallerSelect = document.getElementById('taller');
                         if (product.sucursal_nombre) tallerSelect.value = product.sucursal_nombre;
@@ -783,7 +841,7 @@
                     document.getElementById('stock_minimo').value = product.stock_minimo || 0;
                     document.getElementById('unidad_medida').value = product.unidad_medida || 'Unidades';
                     document.getElementById('descripcion').value = product.descripcion || '';
-                    document.getElementById('activo').checked = product.activo;
+                    document.getElementById('activo').checked = product.activo !== false;
 
                 } catch (error) {
                     console.error(error);
@@ -791,21 +849,59 @@
                 }
             }
 
-            // --- PRICE CALCULATION ---
+            // --- PRICE CALCULATION WITH RECARGO ---
             function setupPriceCalculation() {
                 const costoInput = document.getElementById('costo_compra');
                 const recargoInput = document.getElementById('recargo');
                 const precioInput = document.getElementById('precio_venta_bruto');
 
+                // Track if user has manually edited the price
+                let userEditedPrice = false;
+                let lastCalculatedPrice = 0;
+
                 function calculatePrice() {
                     const costo = parseFloat(costoInput.value) || 0;
                     const recargo = parseFloat(recargoInput.value) || 0;
                     const precio = costo * (1 + recargo / 100);
+                    lastCalculatedPrice = precio;
+
+                    // Always update price when costo or recargo changes
                     precioInput.value = precio.toFixed(2);
+
+                    // Visual feedback - highlight the price field briefly
+                    precioInput.style.backgroundColor = 'rgba(255, 101, 43, 0.15)';
+                    precioInput.style.borderColor = 'var(--brand-orange)';
+                    setTimeout(() => {
+                        precioInput.style.backgroundColor = '';
+                        precioInput.style.borderColor = '';
+                    }, 500);
                 }
 
-                costoInput.addEventListener('input', calculatePrice);
-                recargoInput.addEventListener('input', calculatePrice);
+                // When user manually changes price, mark it as edited
+                precioInput.addEventListener('focus', () => {
+                    userEditedPrice = true;
+                });
+
+                // Add a "recalculate" button or allow double-click to recalculate
+                precioInput.addEventListener('dblclick', () => {
+                    userEditedPrice = false;
+                    calculatePrice();
+                });
+
+                // When costo or recargo change, always recalculate
+                costoInput.addEventListener('input', () => {
+                    userEditedPrice = false; // Reset manual edit flag when source values change
+                    calculatePrice();
+                });
+
+                recargoInput.addEventListener('input', () => {
+                    userEditedPrice = false; // Reset manual edit flag when source values change
+                    calculatePrice();
+                });
+
+                // Also support the 'change' event for better reliability
+                costoInput.addEventListener('change', calculatePrice);
+                recargoInput.addEventListener('change', calculatePrice);
             }
 
             // --- SCANNER LOGIC ---
