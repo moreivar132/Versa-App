@@ -73,6 +73,9 @@ app.use('/api/income-events', verifyJWT, require('./routes/incomeEvents'));
 app.use('/api/marketplace', require('./routes/marketplace'));
 app.use('/api/marketplace/admin', verifyJWT, require('./routes/marketplaceAdmin'));
 
+// Marketing / Email Automations (admin)
+app.use('/api/marketing/email', verifyJWT, require('./routes/marketingEmail'));
+
 // Customer Portal routes (Moved to top)
 // const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');
 // app.use('/api/cliente/auth', require('./routes/customerAuth'));
