@@ -103,9 +103,9 @@
             transform: translateX(24px);
         }
 
-        /* Photo preview */
+        /* Photo preview - Thumbnails pequeños */
         .photo-preview {
-            @apply relative w-24 h-24 rounded-lg overflow-hidden border border-[#282e39] group;
+            @apply relative w-16 h-16 rounded-lg overflow-hidden border border-[#282e39] group cursor-pointer transition-transform hover:scale-105;
         }
 
         .photo-preview img {
@@ -113,7 +113,30 @@
         }
 
         .photo-preview-remove {
-            @apply absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer;
+            @apply absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs;
+        }
+
+        /* Photo Modal Lightbox */
+        .photo-modal-overlay {
+            @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .photo-modal-overlay img {
+            @apply max-w-full max-h-[90vh] object-contain rounded-lg;
+        }
+
+        /* File upload area */
+        .file-upload-zone {
+            @apply border-2 border-dashed border-[#282e39] rounded-lg p-4 text-center cursor-pointer transition-all;
+        }
+
+        .file-upload-zone:hover {
+            @apply border-[var(--brand-orange)] bg-[var(--brand-orange)]/5;
+        }
+
+        .file-upload-zone.dragover {
+            @apply border-[var(--brand-orange)] bg-[var(--brand-orange)]/10;
         }
 
         /* Loading spinner */
@@ -582,20 +605,55 @@
                                 Fotos del Taller
                             </h3>
 
+                            <!-- Opción 1: Subir desde el ordenador -->
                             <div class="mb-4">
-                                <label class="block text-sm font-medium text-white mb-2">Agregar Foto (URL)</label>
+                                <label class="block text-sm font-medium text-white mb-2">
+                                    <i class="fas fa-upload mr-2 text-[var(--brand-orange)]"></i>Subir desde tu
+                                    ordenador
+                                </label>
+                                <div id="foto-upload-zone" class="file-upload-zone"
+                                    onclick="document.getElementById('foto-file-input').click()">
+                                    <input type="file" id="foto-file-input" accept="image/jpeg,image/png,image/webp"
+                                        multiple class="hidden" onchange="handleFileUpload(event)">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-[#9da6b9] mb-2"></i>
+                                    <p class="text-[#9da6b9] text-sm">Haz clic o arrastra tus imágenes aquí</p>
+                                </div>
+                                <p class="text-xs text-[#9da6b9] mt-2 flex items-center gap-2">
+                                    <i class="fas fa-info-circle text-[var(--brand-orange)]"></i>
+                                    <span>Formatos: JPG, PNG, WebP | Tamaño máximo: <strong>2 MB</strong> por imagen |
+                                        Máximo 6 fotos</span>
+                                </p>
+                            </div>
+
+                            <!-- Separador -->
+                            <div class="flex items-center gap-3 my-4">
+                                <div class="flex-1 border-t border-[#282e39]"></div>
+                                <span class="text-[#9da6b9] text-sm">o</span>
+                                <div class="flex-1 border-t border-[#282e39]"></div>
+                            </div>
+
+                            <!-- Opción 2: URL -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-white mb-2">
+                                    <i class="fas fa-link mr-2 text-[var(--brand-orange)]"></i>Agregar por URL
+                                </label>
                                 <div class="flex gap-2">
                                     <input type="url" id="nueva-foto-url" placeholder="https://ejemplo.com/foto.jpg"
                                         class="flex-1 px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
                                     <button onclick="agregarFoto()"
-                                        class="px-6 py-3 bg-[var(--brand-orange)] text-white rounded-lg font-medium hover:bg-[#e05300] transition-colors">
-                                        <i class="fas fa-plus mr-2"></i>Agregar
+                                        class="px-4 py-3 bg-[var(--brand-orange)] text-white rounded-lg font-medium hover:bg-[#e05300] transition-colors">
+                                        <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
                             </div>
 
-                            <div id="fotos-container" class="flex flex-wrap gap-3">
-                                <!-- Photos will be rendered here -->
+                            <!-- Vista previa de fotos (miniaturas) -->
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-[#9da6b9] mb-2">Fotos cargadas (clic para
+                                    ampliar)</label>
+                                <div id="fotos-container" class="flex flex-wrap gap-2">
+                                    <!-- Photos will be rendered here -->
+                                </div>
                             </div>
                         </div>
 
