@@ -38,6 +38,30 @@
         .tab-content.active {
             display: block;
         }
+
+        @keyframes scan {
+            0% {
+                top: 0%;
+                opacity: 0;
+            }
+
+            5% {
+                opacity: 1;
+            }
+
+            95% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        .animate-scan {
+            animation: scan 2s linear infinite;
+        }
     </style>
 </head>
 
@@ -151,6 +175,13 @@
                         style="font-size: 18px; vertical-align: middle;">star</span>
                     Mis Reseñas
                 </button>
+                <button
+                    class="tab-button px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer hover:text-white"
+                    data-tab="fidelizacion" onclick="window.citasUI.switchTab('fidelizacion')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">loyalty</span>
+                    Fidelización
+                </button>
             </div>
         </div>
 
@@ -209,7 +240,8 @@
                 </div>
             </div>
 
-            <!-- Tarjetas Guardadas -->
+            <!-- Tarjetas Guardadas (Eliminado a petición del usuario) -->
+            <!--
             <div class="mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold text-white flex items-center gap-2">
@@ -228,6 +260,7 @@
                     </div>
                 </div>
             </div>
+            -->
 
             <!-- Historial de Pagos -->
             <div>
@@ -297,6 +330,139 @@
             </div>
         </div>
 
+        <!-- Tab Content: Fidelización -->
+        <div id="tab-fidelizacion" class="tab-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-white">Mi Tarjeta de Fidelización</h2>
+            </div>
+
+            <div id="fidelizacionContainer" class="min-h-[200px] flex items-center justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff5f00]"></div>
+            </div>
+
+            <div id="fidelizacionContent" class="hidden">
+                <div
+                    class="max-w-md mx-auto bg-[#111318] border border-[#282e39] rounded-2xl p-6 shadow-2xl relative overflow-hidden group hover:border-[#ff5f00]/30 transition-all duration-300">
+                    <!-- Background Gradients -->
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#ff5f00]/20 to-transparent rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none">
+                    </div>
+                    <div
+                        class="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-500/10 to-transparent rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none">
+                    </div>
+
+                    <!-- Header: Logo & Brand -->
+                    <div class="relative flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 bg-[#1a1d24] rounded-xl flex items-center justify-center border border-[#282e39] shadow-inner">
+                                <img src="assets/favicon.png" alt="Logo" class="w-6 h-6 object-contain">
+                            </div>
+                            <div>
+                                <h3 class="text-white font-bold text-lg leading-tight tracking-wide"
+                                    id="fidelizacionProgramName">VERSA Puntos</h3>
+                                <p class="text-[#9da6b9] text-xs font-medium uppercase tracking-wider">Fidelización</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs text-[#9da6b9] font-medium mb-1">Tu Saldo</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-3xl font-black text-white tracking-tight"
+                                    id="fidelizacionPuntos">0</span>
+                                <span class="text-xs font-bold text-[#ff5f00] uppercase">Pts</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Active Promo Banner -->
+                    <div id="promoContainer"
+                        class="hidden mx-6 mb-4 p-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-lg backdrop-blur-sm">
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-orange-400 text-xl mt-0.5">local_offer</span>
+                            <div>
+                                <h4 class="text-white text-sm font-bold leading-tight" id="promoTitle">Promo</h4>
+                                <p class="text-[10px] text-gray-300 leading-snug mt-1" id="promoDesc">Descripción</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Body: QR Code -->
+                    <div class="relative bg-white p-4 rounded-xl shadow-lg mx-auto mb-6 transform transition-transform group-hover:scale-[1.02] duration-300"
+                        style="max-width: 200px;">
+                        <img id="fidelizacionQR" src="" alt="QR Code" class="w-full h-auto block opacity-95">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-b from-transparent to-black/5 rounded-xl pointer-events-none">
+                        </div>
+                        <!-- Scan Line Animation -->
+                        <div
+                            class="absolute top-0 left-0 w-full h-1 bg-[#ff5f00]/50 shadow-[0_0_15px_rgba(255,95,0,0.8)] animate-scan pointer-events-none">
+                        </div>
+                    </div>
+
+                    <!-- Member Details -->
+                    <div class="relative text-center mb-6">
+                        <p class="text-white font-semibold text-lg tracking-wide mb-1" id="fidelizacionNombre">Cliente
+                        </p>
+                        <div
+                            class="inline-flex items-center gap-2 px-3 py-1 bg-[#282e39]/50 rounded-full border border-[#282e39]">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            <span class="text-[#9da6b9] text-xs font-mono tracking-widest"
+                                id="fidelizacionMemberCode">V-0000</span>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <a id="fidelizacionWalletLink" href="#" target="_blank"
+                            class="flex flex-col items-center justify-center p-3 bg-[#1a1d24] border border-[#282e39] rounded-xl hover:bg-[#282e39] hover:border-[#ff5f00]/50 transition-all group/btn">
+                            <span
+                                class="material-symbols-outlined text-[#ff5f00] text-2xl mb-1 group-hover/btn:scale-110 transition-transform">confirmation_number</span>
+                            <span class="text-[10px] text-[#9da6b9] font-medium uppercase tracking-wider">Ver
+                                Tarjeta</span>
+                        </a>
+                        <div
+                            class="flex flex-col items-center justify-center p-3 bg-[#1a1d24] border border-[#282e39] rounded-xl">
+                            <span class="material-symbols-outlined text-green-500 text-2xl mb-1">check_circle</span>
+                            <span class="text-[10px] text-[#9da6b9] font-medium uppercase tracking-wider">Estado
+                                Activo</span>
+                        </div>
+                    </div>
+
+                    <!-- Decoration Circles -->
+                    <div class="absolute top-1/2 left-0 w-3 h-6 bg-[#0b0d11] rounded-r-full -mt-3"></div>
+                    <div class="absolute top-1/2 right-0 w-3 h-6 bg-[#0b0d11] rounded-l-full -mt-3"></div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="max-w-md mx-auto mt-6 text-center">
+                    <p class="text-[#9da6b9] text-sm leading-relaxed">
+                        Presenta este código QR en el taller al pagar para acumular puntos y acceder a descuentos
+                        exclusivos.
+                    </p>
+                </div>
+
+                <!-- All Active Promos Section (Always visible) -->
+                <div id="allPromosSection" class="mt-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[#ff5f00]">local_offer</span>
+                            Promociones Activas
+                        </h3>
+                        <span id="promosCount" class="text-xs text-[#9da6b9] bg-[#1a1d24] px-2 py-1 rounded-full">
+                            Cargando...
+                        </span>
+                    </div>
+                    <div id="allPromosGrid" class="grid gap-4 md:grid-cols-2">
+                        <!-- Loading state -->
+                        <div class="bg-[#1a1d24] border border-[#282e39] rounded-xl p-6 text-center col-span-full">
+                            <span
+                                class="material-symbols-outlined text-4xl text-[#9da6b9] animate-pulse">hourglass_empty</span>
+                            <p class="text-[#9da6b9] text-sm mt-2">Cargando promociones...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Modal Container -->
@@ -334,7 +500,8 @@
             getPendingPayments,
             regeneratePaymentLink,
             getClienteSaldo,
-            payCita
+            payCita,
+            getFidelizacion
         } from './services/cliente-service.js';
 
         import {
@@ -506,6 +673,9 @@
                 const result = await getPaymentMethods();
                 const container = document.getElementById('paymentMethodsContainer');
 
+                // Contenedor eliminado de la UI, salimos silenciosamente
+                if (!container) return;
+
                 if (!result.ok) {
                     container.innerHTML = '<p class="text-red-400 text-center py-4">Error cargando métodos de pago</p>';
                     return;
@@ -671,7 +841,9 @@
                     cita_en_progreso: 'build',
                     cita_completada: 'task_alt',
                     cita_cancelada: 'cancel',
-                    cita_actualizada: 'update'
+                    cita_actualizada: 'update',
+                    points_earned: 'stars',
+                    promo_created: 'redeem'
                 };
                 const icono = iconos[notif.tipo] || 'notifications';
 
@@ -864,6 +1036,9 @@
                     if (pagosData.length === 0) {
                         loadPagos();
                     }
+                }
+                if (tabId === 'fidelizacion') {
+                    loadFidelizacion();
                 }
                 if (tabId === 'resenas' && misResenasData.length === 0) {
                     loadMisResenas();
@@ -1186,69 +1361,64 @@
             // =============================================
             // PAYMENT METHODS HANDLERS
             // =============================================
-
+            // Handle Payment Methods actions
             addNewCard: async () => {
                 try {
                     const result = await createPaymentMethodSetupSession();
-                    if (result.ok && result.checkout_url) {
-                        // Redirigir al checkout de Stripe para añadir tarjeta
-                        window.location.href = result.checkout_url;
+                    if (result.ok && result.url) {
+                        window.location.href = result.url;
                     } else {
-                        showToast(result.error || 'Error al crear sesión de configuración', 'error');
+                        showToast('Error al iniciar configuración de tarjeta', 'error');
                     }
                 } catch (error) {
-                    console.error('Error adding card:', error);
-                    showToast('Error al añadir tarjeta', 'error');
+                    showToast('Error de conexión', 'error');
                 }
             },
 
-            setDefaultCard: async (paymentMethodId) => {
+            setDefaultCard: async (pmId) => {
                 try {
-                    const result = await setDefaultPaymentMethod(paymentMethodId);
+                    const result = await setDefaultPaymentMethod(pmId);
                     if (result.ok) {
-                        showToast('Tarjeta establecida como predeterminada', 'success');
+                        showToast('Tarjeta predeterminada actualizada', 'success');
                         loadPaymentMethods();
                     } else {
-                        showToast(result.error || 'Error al establecer tarjeta', 'error');
+                        showToast(result.error || 'Error al actualizar', 'error');
                     }
                 } catch (error) {
-                    console.error('Error setting default card:', error);
-                    showToast('Error al establecer tarjeta predeterminada', 'error');
+                    showToast('Error de conexión', 'error');
                 }
             },
 
-            deleteCard: async (paymentMethodId) => {
-                if (!confirm('¿Eliminar esta tarjeta? Debes mantener al menos una tarjeta guardada.')) return;
-
+            deleteCard: async (pmId) => {
+                if (!confirm('¿Seguro que quieres eliminar esta tarjeta?')) return;
                 try {
-                    const result = await deletePaymentMethod(paymentMethodId);
+                    const result = await deletePaymentMethod(pmId);
                     if (result.ok) {
-                        showToast('Tarjeta eliminada correctamente', 'success');
+                        showToast('Tarjeta eliminada', 'success');
                         loadPaymentMethods();
                     } else {
-                        showToast(result.error || 'Error al eliminar tarjeta', 'error');
+                        showToast(result.error || 'Error al eliminar', 'error');
                     }
                 } catch (error) {
-                    console.error('Error deleting card:', error);
-                    showToast('Error al eliminar tarjeta', 'error');
+                    showToast('Error de conexión', 'error');
                 }
             },
 
             regeneratePayment: async (citaId) => {
                 try {
                     const result = await regeneratePaymentLink(citaId);
-                    if (result.ok && result.checkout_url) {
-                        showToast('Nuevo enlace de pago generado', 'success');
+                    if (result.ok) {
+                        showToast('Link de pago regenerado', 'success');
                         // Redirigir al checkout de Stripe
                         window.open(result.checkout_url, '_blank');
                         // Recargar pagos pendientes
                         loadPendingPayments();
                     } else {
-                        showToast(result.error || 'Error al regenerar enlace', 'error');
+                        showToast(result.error || 'Error al regenerar link', 'error');
                     }
                 } catch (error) {
                     console.error('Error regenerating payment:', error);
-                    showToast('Error al regenerar enlace de pago', 'error');
+                    showToast('link no regenerado', 'error');
                 }
             },
 
@@ -1269,6 +1439,113 @@
                 }
             }
         };
+
+        // Load Fidelización Data
+        async function loadFidelizacion() {
+            const container = document.getElementById('fidelizacionContainer');
+            const content = document.getElementById('fidelizacionContent');
+
+            try {
+                const result = await getFidelizacion();
+
+                if (result.ok && result.data) {
+                    const data = result.data;
+
+                    // Actualizar UI
+                    document.getElementById('fidelizacionProgramName').textContent = data.program_name || 'VERSA Puntos';
+                    document.getElementById('fidelizacionPuntos').textContent = data.points_balance || '0';
+                    document.getElementById('fidelizacionNombre').textContent = data.display_name || 'Cliente';
+                    document.getElementById('fidelizacionMemberCode').textContent = data.member_code || 'V-0000';
+
+                    // QR Code
+                    if (data.token) {
+                        const walletUrl = data.publicUrl || `https://goversa.app/card.html?token=${data.token}`;
+                        document.getElementById('fidelizacionQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(walletUrl)}`;
+                        document.getElementById('fidelizacionWalletLink').href = walletUrl;
+                    }
+
+                    // Promo Activa (Banner dentro de la tarjeta)
+                    const promoContainer = document.getElementById('promoContainer');
+                    if (data.promo_activa) {
+                        document.getElementById('promoTitle').textContent = data.promo_activa.titulo;
+                        document.getElementById('promoDesc').textContent = data.promo_activa.descripcion || '';
+                        promoContainer.classList.remove('hidden');
+                    } else {
+                        promoContainer.classList.add('hidden');
+                    }
+
+                    // Cargar TODAS las promos activas en la sección dedicada
+                    await loadAllActivePromos();
+
+                    // Mostrar contenido
+                    container.classList.remove('hidden'); // Ensure container is visible
+                    content.classList.remove('hidden');
+                } else {
+                    container.innerHTML = '<p class="text-red-400">Error al cargar tarjeta</p>';
+                }
+            } catch (error) {
+                console.error('Error loading fidelizacion:', error);
+                container.innerHTML = '<p class="text-red-400">Error de conexión</p>';
+            }
+        }
+
+        // Cargar todas las promociones activas
+        async function loadAllActivePromos() {
+            const grid = document.getElementById('allPromosGrid');
+            const countBadge = document.getElementById('promosCount');
+
+            try {
+                const token = localStorage.getItem('versa_customer_token');
+                const res = await fetch('/api/cliente/fidelizacion/promos', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+
+                if (result.ok && result.data && result.data.length > 0) {
+                    countBadge.textContent = `${result.data.length} disponible${result.data.length > 1 ? 's' : ''}`;
+                    countBadge.classList.remove('bg-[#1a1d24]');
+                    countBadge.classList.add('bg-[#ff5f00]/20', 'text-[#ff5f00]');
+
+                    grid.innerHTML = result.data.map(promo => `
+                        <div class="bg-gradient-to-br from-[#1a1d24] to-[#111318] border border-[#282e39] rounded-xl p-4 hover:border-[#ff5f00]/50 hover:shadow-lg hover:shadow-[#ff5f00]/5 transition-all cursor-pointer group">
+                            <div class="flex items-start gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ff5f00] to-[#ff8800] flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                                    <span class="material-symbols-outlined text-white text-2xl">redeem</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-white font-bold text-sm truncate group-hover:text-[#ff5f00] transition-colors">${promo.titulo}</h4>
+                                    <p class="text-[#9da6b9] text-xs mt-1 line-clamp-2">${promo.descripcion || 'Promoción especial para miembros'}</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span class="material-symbols-outlined text-xs text-[#ff5f00]">schedule</span>
+                                        <span class="text-[#ff5f00] text-xs font-medium">
+                                            Válido hasta: ${new Date(promo.ends_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    countBadge.textContent = '0 disponibles';
+                    grid.innerHTML = `
+                        <div class="bg-[#1a1d24] border border-[#282e39] rounded-xl p-8 text-center col-span-full">
+                            <span class="material-symbols-outlined text-5xl text-[#282e39]">loyalty</span>
+                            <p class="text-[#9da6b9] text-sm mt-3">No hay promociones activas en este momento</p>
+                            <p class="text-[#666] text-xs mt-1">¡Sigue acumulando puntos para futuros beneficios!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading promos:', error);
+                countBadge.textContent = 'Error';
+                grid.innerHTML = `
+                    <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center col-span-full">
+                        <span class="material-symbols-outlined text-4xl text-red-400">error</span>
+                        <p class="text-red-400 text-sm mt-2">Error al cargar promociones</p>
+                    </div>
+                `;
+            }
+        }
 
         // Logout handler
         window.handleLogout = () => {
@@ -1296,21 +1573,6 @@
         window.showChangePasswordModal = () => {
             showToast('Funcionalidad próximamente disponible', 'info');
         };
-
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
-            loadClienteInfo();
-            // Cargar citas al iniciar para asegurar estado actualizado
-            loadCitas();
-
-            // Verificar si venimos de un pago exitoso y limpiar URL
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('payment_success') === 'true') {
-                window.history.replaceState({}, document.title, window.location.pathname);
-                console.log('Pago completado, datos recargados');
-            }
-        });
     </script>
 </body>
 

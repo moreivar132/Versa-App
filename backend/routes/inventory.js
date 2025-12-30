@@ -499,22 +499,20 @@ router.put('/:id', verifyJWT, async (req, res) => {
         modelo,
         descripcion,
         marca,
-        id_categoria, // Frontend might send category name as 'categoria' or ID? Schema has 'categoria' (text) and 'id_categoria' (int)? 
-        // Schema check said 'categoria' (text) exists. 'id_categoria' was not in the list in Step 80.
-        // Step 80 output: 'categoria' (text). No 'id_categoria'.
-        // So we should use 'categoria' field.
-        categoria,    // Use this.
+        categoria,
         proveedor,    // Name
         taller,       // Name
         costo_compra,
         recargo,
         precio_venta_bruto,
+        stock,        // Add stock to destructuring to avoid reference error
         stock_minimo,
         unidad_medida,
         activo
     } = req.body;
 
     const id_tenant = req.user.id_tenant;
+
 
     const client = await pool.connect();
 

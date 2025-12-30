@@ -395,4 +395,106 @@ router.get('/resenas', async (req, res) => {
     }
 });
 
+/**
+ * GET /api/cliente/fidelizacion/promos
+ * Obtener todas las promociones activas
+ */
+router.get('/fidelizacion/promos', async (req, res) => {
+    try {
+        const idTenant = req.customer.id_tenant || 1;
+        const pool = require('../db');
+
+        const result = await pool.query(`
+            SELECT id, titulo, descripcion, starts_at, ends_at
+            FROM fidelizacion_promo 
+            WHERE id_tenant = $1 
+              AND activo = true 
+              AND starts_at <= CURRENT_TIMESTAMP 
+              AND ends_at >= CURRENT_TIMESTAMP
+            ORDER BY created_at DESC
+        `, [idTenant]);
+
+        res.json({
+            ok: true,
+            data: result.rows
+        });
+    } catch (error) {
+        console.error('Error obteniendo promos:', error);
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener promociones'
+        });
+    }
+});
+
+/**
+ * GET /api/cliente/fidelizacion
+ * Obtener datos de fidelización (Tarjeta)
+ */
+router.get('/fidelizacion', async (req, res) => {
+    try {
+        // Asumimos tenant 1 por defecto si no está en el request
+        const idTenant = req.customer.id_tenant || 1;
+
+        // Usamos enrollMember para asegurar que existe y obtener los datos
+        // Si ya existe, nos devuelve los datos actuales
+        const result = await require('../services/fidelizacionService').enrollMember(
+            req.customer.id_cliente,
+            idTenant
+        );
+
+        // Obtener detalle completo para tener el balance actualizado
+        // enrollMember devuelve member basico, queremos el saldo
+        const detail = await require('../services/fidelizacionService').getCardData(result.token);
+
+        res.json({
+            ok: true,
+            data: {
+                ...detail,
+                token: result.token, // Necesario para generar el QR si no viene en detail
+                publicUrl: result.publicUrl
+            }
+        });
+
+    } catch (error) {
+        console.error('Error obteniendo datos de fidelización:', error);
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener tarjeta de fidelización'
+        });
+    }
+});
+
+// ... (existing code)
+
+/**
+ * GET /api/cliente/notificaciones
+ */
+router.get('/notificaciones', async (req, res) => {
+    try {
+        const idTenant = req.customer.id_tenant || 1;
+        // Require dinámico para evitar require cycles si fuera necesario, o movemos al top
+        const notificationService = require('../services/notificationService');
+        const notificaciones = await notificationService.getClientNotifications(idTenant, req.customer.id_cliente);
+
+        res.json({ ok: true, data: notificaciones });
+    } catch (error) {
+        console.error('Error notificaciones:', error);
+        res.status(500).json({ ok: false, error: 'Error al obtener notificaciones' });
+    }
+});
+
+/**
+ * POST /api/cliente/notificaciones/:id/leido
+ */
+router.post('/notificaciones/:id/leido', async (req, res) => {
+    try {
+        const notificationService = require('../services/notificationService');
+        await notificationService.markAsRead(req.params.id, req.customer.id_cliente);
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(500).json({ ok: false });
+    }
+});
+
 module.exports = router;
