@@ -8,8 +8,7 @@ const crypto = require('crypto');
 const customerRepo = require('../repositories/customerRepository');
 const { generateCustomerToken } = require('../middleware/customerAuth');
 const emailAutomationService = require('./emailAutomationService');
-
-const APP_PUBLIC_BASE_URL = process.env.APP_PUBLIC_BASE_URL || 'http://localhost:5173';
+const { APP_URL } = require('../config/urls');
 
 class CustomerAuthService {
 
@@ -115,7 +114,7 @@ class CustomerAuthService {
                 to_email: email,
                 variables: {
                     nombre: nombre || 'Cliente',
-                    portal_url: `${APP_PUBLIC_BASE_URL}/cliente-dashboard.html`,
+                    portal_url: `${APP_URL}/cliente-dashboard.html`,
                     soporte_email: 'soporte@goversa.es',
                     whatsapp: '+34 XXX XXX XXX'
                 }
@@ -202,7 +201,7 @@ class CustomerAuthService {
      */
     async sendPasswordResetEmail(id_cliente, nombre, email, resetToken, id_tenant) {
         try {
-            const reset_url = `${APP_PUBLIC_BASE_URL}/cliente-reset.html?token=${resetToken}`;
+            const reset_url = `${APP_URL}/cliente-reset.html?token=${resetToken}`;
 
             await emailAutomationService.triggerEvent({
                 id_tenant: id_tenant || 1,

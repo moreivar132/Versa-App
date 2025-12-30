@@ -8,8 +8,7 @@
 
 const pool = require('../db');
 const makeEmailProvider = require('./makeEmailProvider');
-
-const APP_PUBLIC_BASE_URL = process.env.APP_PUBLIC_BASE_URL || 'http://localhost:5173';
+const { APP_URL } = require('../config/urls');
 
 class EmailAutomationService {
 

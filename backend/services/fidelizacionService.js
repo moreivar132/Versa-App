@@ -12,7 +12,7 @@ const notificacionService = require('./notificacionService');
 // Configuración desde variables de entorno
 const PEPPER = process.env.LOYALTY_PUBLIC_TOKEN_PEPPER || 'default_pepper_change_in_production';
 const QR_TTL_SECONDS = parseInt(process.env.LOYALTY_QR_TTL_SECONDS || '300');
-const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'http://localhost:5173';
+const { APP_URL } = require('../config/urls');
 
 /**
  * Genera un token aleatorio seguro (32 bytes, base64url)
@@ -131,7 +131,7 @@ async function enrollMember(idCliente, idTenant) {
         await client.query('COMMIT');
 
         // Construir URL pública
-        const publicUrl = `${PUBLIC_BASE_URL}/card.html?token=${token}`;
+        const publicUrl = `${APP_URL}/card.html?token=${token}`;
 
         return {
             miembro,
@@ -168,7 +168,7 @@ async function regenerateToken(idMiembro, idTenant) {
         throw new Error('Link no encontrado');
     }
 
-    const publicUrl = `${PUBLIC_BASE_URL}/card.html?token=${token}`;
+    const publicUrl = `${APP_URL}/card.html?token=${token}`;
     return { publicUrl, token };
 }
 
@@ -651,75 +651,86 @@ async function createPromo(idTenant, data, userId) {
 
     const promo = result.rows[0];
 
-    // --- NOTIFICAR A TODOS LOS MIEMBROS (Asíncrono) ---
-    // Lo hacemos en segundo plano para no bloquear la respuesta
-    (async () => {
-        try {
-            // 1. Obtener todos los miembros inscritos de este tenant
-            const membersResult = await pool.query(
-                `SELECT m.id_cliente, c.nombre, c.email 
-                 FROM fidelizacion_miembro m 
-                 JOIN clientefinal c ON c.id = m.id_cliente 
-                 WHERE m.id_tenant = $1 AND m.estado = 'active'`,
-                [idTenant]
-            );
+    // --- CREAR CAMPAÑA EN BORRADOR (en vez de enviar automáticamente) ---
+    try {
+        const emailCampaignService = require('./emailCampaignService');
 
-            const members = membersResult.rows;
-            if (members.length === 0) return;
+        // Obtener la plantilla de promociones
+        const templateResult = await pool.query(`
+            SELECT html_body, subject FROM email_template 
+            WHERE code = 'LOYALTY_PROMO_CREATED' 
+            AND (id_tenant IS NULL OR id_tenant = $1)
+            ORDER BY id_tenant DESC NULLS LAST
+            LIMIT 1
+        `, [idTenant]);
 
-            // 2. Asegurar que la plantilla para promos existe
-            await pool.query(`
-                INSERT INTO email_template (id_tenant, code, name, subject, html_body, variables_json)
-                VALUES (NULL, 'LOYALTY_PROMO_CREATED', 'Nueva Promoción Fidelización', '🎁 Nueva Promoción: {{promo_titulo}}', $1, $2)
-                ON CONFLICT (id_tenant, code) DO NOTHING
-            `, [
-                `
+        const template = templateResult.rows[0] || {
+            subject: '🎁 Nueva Promoción: {{promo_titulo}}',
+            html_body: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #111318; color: white; padding: 20px; border-radius: 16px;">
                     <h2 style="color: #ff5f00;">¡Hola {{nombre}}! 🎁</h2>
-                    <p>Tenemos una nueva promoción especial para ti en nuestro programa de fidelización.</p>
+                    <p>Tenemos una nueva promoción especial para ti.</p>
                     <div style="background-color: #1a1d24; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #282e39;">
                         <h3 style="margin: 0; color: #ff5f00;">{{promo_titulo}}</h3>
                         <p style="color: #9da6b9; margin: 10px 0 0 0;">{{promo_descripcion}}</p>
                     </div>
-                    <p>Aprovecha esta promoción visitando tu portal cliente.</p>
                     <div style="text-align: center; margin-top: 30px;">
-                        <a href="{{portal_url}}" style="background: linear-gradient(135deg, #ff4400 0%, #ff6622 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Ver mi Tarjeta y Promos</a>
+                        <a href="{{portal_url}}" style="background: linear-gradient(135deg, #ff4400 0%, #ff6622 100%); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Ver mi Tarjeta</a>
                     </div>
-                </div>`,
-                JSON.stringify(['nombre', 'promo_titulo', 'promo_descripcion', 'portal_url'])
-            ]);
+                </div>`
+        };
 
-            // 3. Notificar a cada miembro
-            for (const member of members) {
-                // Notificación Dashboard
-                await notificacionService.crearNotificacion(
-                    member.id_cliente,
-                    'promo_created',
-                    `🎁 Nueva Promo: ${titulo}`,
-                    descripcion || 'Tenemos una nueva promoción para ti. ¡Haz clic para verla!',
-                    { id_promo: promo.id }
-                );
+        // Reemplazar variables de la promo en la plantilla
+        let htmlBody = template.html_body
+            .replace(/\{\{\s*promo_titulo\s*\}\}/g, titulo)
+            .replace(/\{\{\s*promo_descripcion\s*\}\}/g, descripcion || '');
 
-                // Notificación Email (Solo si tiene email)
-                if (member.email) {
-                    emailAutomationService.triggerEvent({
-                        id_tenant: idTenant,
-                        event_code: 'LOYALTY_PROMO_CREATED',
-                        id_cliente: member.id_cliente,
-                        to_email: member.email,
-                        variables: {
-                            nombre: member.nombre,
-                            promo_titulo: titulo,
-                            promo_descripcion: descripcion || '',
-                            portal_url: 'https://goversa.app/portal'
-                        }
-                    }).catch(err => console.error('Error enviando email promo:', err));
-                }
-            }
-        } catch (err) {
-            console.error('Error procesando notificaciones masivas de promo:', err);
+        let subject = template.subject
+            .replace(/\{\{\s*promo_titulo\s*\}\}/g, titulo);
+
+        // Crear la campaña en borrador
+        const campaign = await emailCampaignService.createCampaign(idTenant, {
+            nombre: `Promo: ${titulo}`,
+            tipo: 'promo',
+            id_promo: promo.id,
+            template_code: 'LOYALTY_PROMO_CREATED',
+            subject: subject,
+            html_body: htmlBody,
+            preview_text: descripcion || '',
+            recipient_filter: { type: 'active_members' },
+            created_by: userId
+        });
+
+        // Devolver promo con info de la campaña
+        promo.campaign_id = campaign.id;
+        promo.campaign_status = campaign.status;
+        promo.campaign_recipients = campaign.total_recipients;
+
+    } catch (err) {
+        console.error('Error creando campaña para promo:', err);
+        // No fallar la creación de promo si falla la campaña
+    }
+
+    // --- NOTIFICACIÓN EN DASHBOARD (esto sí es inmediato) ---
+    try {
+        const membersResult = await pool.query(`
+            SELECT m.id_cliente FROM fidelizacion_miembro m 
+            WHERE m.id_tenant = $1 AND m.estado = 'active'`,
+            [idTenant]
+        );
+
+        for (const member of membersResult.rows) {
+            await notificacionService.crearNotificacion(
+                member.id_cliente,
+                'promo_created',
+                `🎁 Nueva Promo: ${titulo}`,
+                descripcion || 'Tenemos una nueva promoción para ti.',
+                { id_promo: promo.id }
+            );
         }
-    })();
+    } catch (err) {
+        console.error('Error creando notificaciones dashboard:', err);
+    }
 
     return promo;
 }

@@ -692,6 +692,10 @@
                             <i class="fas fa-robot"></i>
                             Automatizaciones
                         </button>
+                        <button class="config-tab" data-tab="campaigns">
+                            <i class="fas fa-paper-plane"></i>
+                            Campañas
+                        </button>
                         <button class="config-tab" data-tab="logs">
                             <i class="fas fa-history"></i>
                             Historial
@@ -944,6 +948,39 @@
                         </div>
                     </div>
 
+                    <!-- Panel: Campañas -->
+                    <div id="panel-campaigns" class="config-panel">
+                        <div class="card">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="card-title" style="margin-bottom: 0;">
+                                    <i class="fas fa-paper-plane text-[var(--brand-orange)]"></i>
+                                    Campañas de Email
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="btn-secondary" onclick="loadCampaigns()">
+                                        <i class="fas fa-sync-alt"></i> Actualizar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p class="card-description">
+                                Gestiona las campañas de email creadas desde promociones. Puedes previsualizarlas,
+                                editarlas y enviarlas cuando quieras.
+                            </p>
+
+                            <div id="campaigns-list" class="space-y-3 mt-4">
+                                <!-- Campaigns loaded dynamically -->
+                            </div>
+
+                            <div id="campaigns-empty" class="empty-state hidden">
+                                <i class="fas fa-inbox"></i>
+                                <p>No hay campañas pendientes</p>
+                                <p class="text-sm opacity-60">Las campañas se crean automáticamente al publicar
+                                    promociones de fidelización</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Panel: Historial -->
                     <div id="panel-logs" class="config-panel">
                         <div class="card">
@@ -1017,6 +1054,7 @@
                 // Load data for tab
                 if (tab.dataset.tab === 'logs') loadLogs();
                 if (tab.dataset.tab === 'automations') loadAutomations();
+                if (tab.dataset.tab === 'campaigns') loadCampaigns();
                 if (tab.dataset.tab === 'config') loadConfig();
             });
         });
@@ -1383,6 +1421,168 @@
                 showToast('Error actualizando automatización', 'error');
                 loadAutomations(); // Reload to reset toggle state
             }
+        }
+
+        // =====================================================
+        // CAMPAIGNS
+        // =====================================================
+        async function loadCampaigns() {
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/campaigns`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                const list = document.getElementById('campaigns-list');
+                const empty = document.getElementById('campaigns-empty');
+
+                if (data.ok && data.campaigns.length > 0) {
+                    empty.classList.add('hidden');
+                    list.innerHTML = data.campaigns.map(c => renderCampaignCard(c)).join('');
+                } else {
+                    list.innerHTML = '';
+                    empty.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading campaigns:', error);
+            }
+        }
+
+        function renderCampaignCard(campaign) {
+            const statusColors = {
+                'draft': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+                'scheduled': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                'sending': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                'sent': 'bg-green-500/20 text-green-400 border-green-500/30',
+                'cancelled': 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+            };
+
+            const statusLabels = {
+                'draft': 'Borrador',
+                'scheduled': 'Programada',
+                'sending': 'Enviando...',
+                'sent': 'Enviada',
+                'cancelled': 'Cancelada'
+            };
+
+            const isDraft = campaign.status === 'draft';
+            const isScheduled = campaign.status === 'scheduled';
+            const isSent = campaign.status === 'sent';
+
+            return `
+                <div class="toggle-container" style="flex-direction: column; align-items: stretch;">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="toggle-title">${campaign.nombre}</div>
+                                <span class="px-2 py-0.5 text-xs rounded-full border ${statusColors[campaign.status] || statusColors.draft}">
+                                    ${statusLabels[campaign.status] || campaign.status}
+                                </span>
+                            </div>
+                            <div class="toggle-description">${campaign.subject}</div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                ${campaign.total_recipients} destinatarios • 
+                                Creada: ${new Date(campaign.created_at).toLocaleDateString('es-ES')}
+                                ${campaign.sent_at ? ' • Enviada: ' + new Date(campaign.sent_at).toLocaleDateString('es-ES') : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="previewCampaign(${campaign.id})" class="btn-secondary" title="Previsualizar">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${isDraft ? `
+                                <button onclick="openCampaignEditor(${campaign.id})" class="btn-secondary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="sendCampaign(${campaign.id})" class="btn-primary" title="Enviar ahora">
+                                    <i class="fas fa-paper-plane"></i> Enviar
+                                </button>
+                            ` : ''}
+                            ${isScheduled ? `
+                                <button onclick="cancelCampaign(${campaign.id})" class="btn-secondary" title="Cancelar">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </button>
+                            ` : ''}
+                            ${isSent ? `
+                                <span class="text-xs text-green-400">
+                                    <i class="fas fa-check-circle"></i> ${campaign.sent_count} enviados
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function previewCampaign(id) {
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/campaigns/${id}/preview`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    const modal = document.getElementById('previewModal');
+                    const iframe = document.getElementById('previewIframe');
+                    document.getElementById('previewSubject').textContent = data.subject;
+                    iframe.srcdoc = data.html;
+                    modal.classList.remove('hidden');
+                }
+            } catch (error) {
+                showToast('Error cargando preview', 'error');
+            }
+        }
+
+        async function sendCampaign(id) {
+            if (!confirm('¿Estás seguro de enviar esta campaña a todos los destinatarios?')) return;
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/campaigns/${id}/send`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    showToast(`Campaña enviada: ${data.sent} emails exitosos`, 'success');
+                    loadCampaigns();
+                    loadLogs(); // Refresh logs too
+                } else {
+                    showToast(data.error || 'Error enviando campaña', 'error');
+                }
+            } catch (error) {
+                showToast('Error enviando campaña', 'error');
+            }
+        }
+
+        async function cancelCampaign(id) {
+            if (!confirm('¿Cancelar esta campaña programada?')) return;
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/campaigns/${id}/cancel`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    showToast('Campaña cancelada', 'success');
+                    loadCampaigns();
+                } else {
+                    showToast(data.error || 'Error cancelando', 'error');
+                }
+            } catch (error) {
+                showToast('Error cancelando campaña', 'error');
+            }
+        }
+
+        function openCampaignEditor(id) {
+            // For now, redirect to a simple alert - full editor can be added later
+            alert('El editor de campañas está en desarrollo. Por ahora puedes previsualizar y enviar directamente.');
         }
 
         // =====================================================
