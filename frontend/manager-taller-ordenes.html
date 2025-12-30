@@ -1103,6 +1103,23 @@
     </div>
   </div>
 
+  <!-- Modal de Éxito -->
+  <div id="success-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h3>¡Orden Enviada!</h3>
+      <p>La orden de reparación ha sido procesada.</p>
+      <div class="modal-actions">
+        <button type="button" id="close-modal-btn" class="btn btn-secondary">Cerrar</button>
+        <button type="button" id="new-order-btn" class="btn">Crear Nueva</button>
+      </div>
+    </div>
+  </div>
+
   <div id="new-client-modal" class="modal-overlay">
     <div class="modal-content modal-content-large">
       <h2 class="modal-header-title">Registro de Nuevo Cliente</h2>
@@ -1418,6 +1435,20 @@
       function showSuccessModal() { successModal.classList.add('show'); }
       function hideSuccessModal() { successModal.classList.remove('show'); }
 
+      // Event listeners para botones del modal de éxito
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+          hideSuccessModal();
+        });
+      }
+
+      if (newOrderBtn) {
+        newOrderBtn.addEventListener('click', () => {
+          window.location.href = 'manager-taller-ordenes.html'; // Sin ID = nueva orden
+        });
+      }
+
+
       // --- DETECCIÓN MODO EDICIÓN ---
       const urlParams = new URLSearchParams(window.location.search);
       const ordenIdParam = urlParams.get('id');
@@ -1577,12 +1608,6 @@
         }
       }
 
-      // Resetear formulario completo al crear nueva orden
-      if (newOrderBtn) {
-        newOrderBtn.addEventListener('click', () => {
-          window.location.href = 'manager-taller-ordenes.html'; // Sin ID = nueva orden
-        });
-      }
 
       // --- LÓGICA MODAL NUEVO CLIENTE ---
       const newClientModal = document.getElementById('new-client-modal');
