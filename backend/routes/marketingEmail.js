@@ -172,19 +172,22 @@ router.delete('/templates/:code', async (req, res) => {
 
 /**
  * GET /api/marketing/email/events
- * Listar eventos disponibles para triggers
+ * Listar eventos disponibles para triggers (desde notificationEvents.js)
  */
 router.get('/events', async (req, res) => {
-    const events = [
-        { code: 'CLIENT_REGISTERED', name: 'Cliente registrado', description: 'Cuando un cliente se registra en el portal', variables: ['nombre', 'email'] },
-        { code: 'PASSWORD_RESET_REQUESTED', name: 'Reset de contraseña', description: 'Cuando solicita recuperar contraseña', variables: ['nombre', 'reset_url'] },
-        { code: 'APPOINTMENT_CREATED', name: 'Cita creada', description: 'Cuando se crea una nueva cita', variables: ['nombre', 'fecha_cita', 'hora_cita', 'servicio'] },
-        { code: 'APPOINTMENT_REMINDER', name: 'Recordatorio de cita', description: 'Recordatorio antes de la cita', variables: ['nombre', 'fecha_cita', 'hora_cita'] },
-        { code: 'ORDER_COMPLETED', name: 'Orden completada', description: 'Cuando una orden de trabajo se completa', variables: ['nombre', 'numero_orden', 'total'] },
-        { code: 'MANUAL', name: 'Envío manual', description: 'Envío manual desde el panel', variables: ['nombre', 'email', 'custom'] }
-    ];
-
+    const { getAllEvents } = require('../config/notificationEvents');
+    const events = getAllEvents();
     res.json({ ok: true, events });
+});
+
+/**
+ * GET /api/marketing/email/event-types
+ * Obtener todos los tipos de evento registrados
+ */
+router.get('/event-types', async (req, res) => {
+    const { getAllEvents } = require('../config/notificationEvents');
+    const events = getAllEvents();
+    res.json({ ok: true, eventTypes: events });
 });
 
 /**

@@ -207,6 +207,10 @@ class EmailAutomationService {
                 }
                 return `RESET:${id_cliente}:${today}:${Date.now()}`;
 
+            case 'LOYALTY_POINTS_EARNED':
+                // Permitir varios al día (por ejemplo uno cada hora o por timestamp para evitar duplicados accidentales pero permitir flujo normal)
+                return `LOYALTY:${id_cliente}:${Date.now()}`;
+
             default:
                 return `${event_code}:${id_cliente}:${today}:${Date.now()}`;
         }
@@ -458,6 +462,38 @@ class EmailAutomationService {
                 last_test_error = $3
             WHERE id_tenant = $1
         `, [id_tenant, success ? 'SUCCESS' : 'FAILED', error]);
+    }
+    async sendPointsEarnedEmail(idTenant, email, nombre, puntosGanados, balanceTotal, motivo) {
+        if (!email) return false;
+
+        const subject = `¡Has ganado ${puntosGanados} puntos en VERSA!`;
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #ff5f00;">¡Felicidades, ${nombre}!</h2>
+                <p>Acabas de sumar puntos en tu tarjeta de fidelización.</p>
+                
+                <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="font-size: 24px; font-weight: bold; margin: 0;">+${puntosGanados} Puntos</p>
+                    <p style="color: #666; margin: 5px 0 0 0;">Motivo: ${motivo}</p>
+                </div>
+
+                <p>Tu saldo actual es de: <strong>${balanceTotal} puntos</strong></p>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <a href="https://goversa.app/portal" style="background-color: #ff5f00; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Ver mi Tarjeta</a>
+                </div>
+            </div>
+        `;
+
+        return makeEmailProvider.sendEmail({
+            to: email,
+            subject,
+            html,
+            meta: {
+                type: 'POINTS_EARNED',
+                id_tenant: idTenant
+            }
+        });
     }
 }
 

@@ -38,10 +38,16 @@ export default defineConfig({
                 marketplaceBusqueda: 'marketplace-busqueda.html',
                 marketplaceTaller: 'marketplace-taller.html',
                 managerTallerMarketplace: 'manager-taller-marketplace.html',
+                // Fidelización
+                managerTallerFidelizacion: 'manager-taller-fidelizacion.html',
+                card: 'card.html',
+                // Marketing
+                managerMarketingEmail: 'manager-marketing-email.html',
                 // Portal Cliente (PASO 5)
                 clienteLogin: 'cliente-login.html',
                 clienteRegister: 'cliente-register.html',
                 clienteDashboard: 'cliente-dashboard.html',
+                clienteReset: 'cliente-reset.html',
                 // Stripe Checkout (FASE 6)
                 success: 'success.html',
                 cancel: 'cancel.html',

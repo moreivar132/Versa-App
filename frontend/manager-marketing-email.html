@@ -1288,9 +1288,37 @@
         // =====================================================
         // AUTOMATIONS
         // =====================================================
+        let cachedEventTypes = null;
+
+        async function loadEventTypes() {
+            if (cachedEventTypes) return cachedEventTypes;
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/event-types`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    cachedEventTypes = {};
+                    for (const evt of data.eventTypes) {
+                        cachedEventTypes[evt.code] = {
+                            icon: evt.icon,
+                            label: evt.name,
+                            description: evt.description
+                        };
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading event types:', e);
+                cachedEventTypes = {};
+            }
+            return cachedEventTypes;
+        }
+
         async function loadAutomations() {
             try {
                 const token = getToken();
+                await loadEventTypes(); // Ensure event types are loaded
                 const res = await fetch(`${API_BASE}/api/marketing/email/automations`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -1306,10 +1334,7 @@
 
         function renderAutomations(automations) {
             const list = document.getElementById('automations-list');
-            const eventLabels = {
-                'CLIENT_REGISTERED': { icon: 'fa-user-plus', label: 'Cliente Registrado', description: 'Se envía cuando un cliente se registra en el portal' },
-                'PASSWORD_RESET_REQUESTED': { icon: 'fa-key', label: 'Reset de Contraseña', description: 'Se envía cuando un cliente solicita recuperar su contraseña' }
-            };
+            const eventLabels = cachedEventTypes || {};
 
             list.innerHTML = automations.map(a => {
                 const info = eventLabels[a.event_code] || { icon: 'fa-bolt', label: a.event_code, description: '' };
@@ -1400,16 +1425,13 @@
                 const statusClass = log.status === 'SENT' ? 'status-sent' :
                     log.status === 'FAILED' ? 'status-failed' : 'status-queued';
 
-                const eventLabels = {
-                    'CLIENT_REGISTERED': 'Bienvenida',
-                    'PASSWORD_RESET_REQUESTED': 'Reset Password'
-                };
+                const eventLabels = cachedEventTypes || {};
 
                 return `
                     <tr>
                         <td class="text-gray-400">${formattedDate}</td>
                         <td>${log.to_email}</td>
-                        <td><span class="text-[var(--brand-orange)]">${eventLabels[log.event_code] || log.event_code}</span></td>
+                        <td><span class="text-[var(--brand-orange)]">${eventLabels[log.event_code]?.label || log.event_code}</span></td>
                         <td class="truncate max-w-[200px]" title="${log.subject_snapshot}">${log.subject_snapshot}</td>
                         <td>
                             <span class="status-badge ${statusClass}">

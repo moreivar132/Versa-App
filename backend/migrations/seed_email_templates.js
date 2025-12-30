@@ -185,6 +185,104 @@ Si no solicitaste restablecer tu contraseña, puedes ignorar este email.
 
 - Equipo VERSA
 `
+    },
+    {
+        code: 'LOYALTY_POINTS_EARNED',
+        name: 'Puntos Fidelización Recibidos',
+        subject: '¡Has ganado {{puntos_ganados}} puntos!',
+        variables_json: ['nombre', 'puntos_ganados', 'balance_total', 'motivo', 'portal_url'],
+        html_body: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puntos Ganados</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b0d11;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #111318; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.4);">
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #ff4400 0%, #ff6622 100%); padding: 40px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 800; letter-spacing: -1px;">VERSA</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 style="margin: 0 0 20px 0; color: #ffffff; font-size: 24px; font-weight: 600;">¡Felicidades, {{nombre}}! 👋</h2>
+                            <p style="margin: 0 0 20px 0; color: #9da6b9; font-size: 16px; line-height: 1.6;">Acabas de sumar puntos en tu tarjeta de fidelización.</p>
+                            
+                            <div style="background-color: #1a1d24; padding: 25px; border-radius: 12px; margin: 20px 0; border: 1px solid #282e39; text-align: center;">
+                                <p style="font-size: 32px; font-weight: 800; margin: 0; color: #ff4400;">+{{puntos_ganados}} Puntos</p>
+                                <p style="color: #666; margin: 5px 0 0 0; font-size: 14px;">Motivo: {{motivo}}</p>
+                            </div>
+
+                            <p style="color: #9da6b9; font-size: 16px; text-align: center;">Tu nuevo saldo es de: <strong>{{balance_total}} puntos</strong></p>
+                            
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-top: 30px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{portal_url}}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #ff4400 0%, #ff6622 100%); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 12px;">Ver mi Tarjeta</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
+    },
+    {
+        code: 'LOYALTY_PROMO_CREATED',
+        name: 'Nueva Promoción Fidelización',
+        subject: '🎁 Nueva Promoción: {{promo_titulo}}',
+        variables_json: ['nombre', 'promo_titulo', 'promo_descripcion', 'portal_url'],
+        html_body: `
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nueva Promoción</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0b0d11;">
+    <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+            <td align="center" style="padding: 40px 0;">
+                <table role="presentation" style="width: 100%; max-width: 600px; border-collapse: collapse; background-color: #111318; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.4);">
+                    <td style="background: linear-gradient(135deg, #ff4400 0%, #ff6622 100%); padding: 40px 30px; text-align: center;">
+                        <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 800; letter-spacing: -1px;">VERSA</h1>
+                    </td>
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 style="margin: 0 0 20px 0; color: #ffffff; font-size: 24px; font-weight: 600;">¡Hola {{nombre}}! 🎁</h2>
+                            <p style="margin: 0 0 20px 0; color: #9da6b9; font-size: 16px; line-height: 1.6;">Tenemos una nueva promoción especial para ti.</p>
+                            
+                            <div style="background-color: #1a1d24; padding: 25px; border-radius: 12px; margin: 20px 0; border: 1px solid #282e39;">
+                                <h3 style="margin: 0; color: #ff4400; font-size: 20px;">{{promo_titulo}}</h3>
+                                <p style="color: #9da6b9; margin: 10px 0 0 0; font-size: 14px; line-height: 1.6;">{{promo_descripcion}}</p>
+                            </div>
+
+                            <table role="presentation" style="width: 100%; border-collapse: collapse; margin-top: 30px;">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{{portal_url}}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #ff4400 0%, #ff6622 100%); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; border-radius: 12px;">Ver Promoción</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>`
     }
 ];
 
@@ -202,6 +300,18 @@ const AUTOMATIONS = [
     {
         event_code: 'PASSWORD_RESET_REQUESTED',
         template_code: 'PASSWORD_RESET',
+        enabled: true,
+        delay_seconds: 0
+    },
+    {
+        event_code: 'LOYALTY_POINTS_EARNED',
+        template_code: 'LOYALTY_POINTS_EARNED',
+        enabled: true,
+        delay_seconds: 0
+    },
+    {
+        event_code: 'LOYALTY_PROMO_CREATED',
+        template_code: 'LOYALTY_PROMO_CREATED',
         enabled: true,
         delay_seconds: 0
     }

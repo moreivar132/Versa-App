@@ -76,6 +76,12 @@ app.use('/api/marketplace/admin', verifyJWT, require('./routes/marketplaceAdmin'
 // Marketing / Email Automations (admin)
 app.use('/api/marketing/email', verifyJWT, require('./routes/marketingEmail'));
 
+// Fidelización - Public (tarjeta wallet, sin auth)
+app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
+
+// Fidelización - Admin (gestión miembros/puntos/promos, con JWT)
+app.use('/api/admin/fidelizacion', verifyJWT, require('./routes/fidelizacionAdmin'));
+
 // Customer Portal routes (Moved to top)
 // const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');
 // app.use('/api/cliente/auth', require('./routes/customerAuth'));

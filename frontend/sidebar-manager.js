@@ -92,6 +92,13 @@
         },
         {
             type: 'link',
+            id: 'fidelizacion',
+            label: 'Fidelización',
+            icon: 'fa-gift',
+            href: 'manager-taller-fidelizacion.html'
+        },
+        {
+            type: 'link',
             id: 'marketplace',
             label: 'Marketplace',
             icon: 'fa-store',
