@@ -75,6 +75,7 @@ app.use('/api/marketplace/admin', verifyJWT, require('./routes/marketplaceAdmin'
 
 // Marketing / Email Automations (admin)
 app.use('/api/marketing/email', verifyJWT, require('./routes/marketingEmail'));
+app.use('/api/marketing/campaigns', verifyJWT, require('./routes/emailCampaign'));
 
 // Fidelización - Public (tarjeta wallet, sin auth)
 app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));

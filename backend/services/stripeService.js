@@ -18,7 +18,7 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 // CONFIGURACIÓN DE URLs
 // ============================================================
 
-const FRONTEND_BASE_URL = process.env.FRONTEND_BASE_URL || 'http://localhost:5173';
+const { APP_URL } = require('../config/urls');
 const STRIPE_SUCCESS_PATH = process.env.STRIPE_SUCCESS_PATH || '/stripe-success.html';
 const STRIPE_CANCEL_PATH = process.env.STRIPE_CANCEL_PATH || '/stripe-cancel.html';
 
@@ -100,8 +100,8 @@ async function ensureStripeCustomer({ id_cliente, email, phone, name }) {
  */
 async function createSetupCheckoutSession({ stripe_customer_id, id_cliente, id_tenant = null }) {
     try {
-        const successUrl = `${FRONTEND_BASE_URL}/cliente-dashboard.html?tab=pagos&setup=success&session_id={CHECKOUT_SESSION_ID}`;
-        const cancelUrl = `${FRONTEND_BASE_URL}/cliente-dashboard.html?tab=pagos&setup=cancel`;
+        const successUrl = `${APP_URL}/cliente-dashboard.html?tab=pagos&setup=success&session_id={CHECKOUT_SESSION_ID}`;
+        const cancelUrl = `${APP_URL}/cliente-dashboard.html?tab=pagos&setup=cancel`;
 
         const session = await stripe.checkout.sessions.create({
             mode: 'setup',
@@ -289,8 +289,8 @@ async function createCheckoutSessionForBooking({
             : 'Reserva de servicio';
 
         // URLs de éxito y cancelación
-        const successUrl = `${FRONTEND_BASE_URL}${STRIPE_SUCCESS_PATH}?session_id={CHECKOUT_SESSION_ID}`;
-        const cancelUrl = `${FRONTEND_BASE_URL}${STRIPE_CANCEL_PATH}?cita_id=${id_cita}`;
+        const successUrl = `${APP_URL}${STRIPE_SUCCESS_PATH}?session_id={CHECKOUT_SESSION_ID}`;
+        const cancelUrl = `${APP_URL}${STRIPE_CANCEL_PATH}?cita_id=${id_cita}`;
 
         // Configurar parámetros de la sesión
         const sessionParams = {
