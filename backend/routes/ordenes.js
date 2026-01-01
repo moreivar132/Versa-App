@@ -264,4 +264,179 @@ router.get('/:id/documento/download', verifyJWT, async (req, res) => {
     }
 });
 
+/**
+ * DELETE /api/ordenes/:id
+ * Elimina una orden COMPLETAMENTE, revirtiendo todos sus efectos en el sistema:
+ * - Devuelve el stock de productos usados
+ * - Elimina movimientos de cuenta corriente y actualiza saldo
+ * - Elimina pagos de la orden
+ * - Elimina líneas de la orden
+ * - Elimina cualquier referencia relacionada
+ */
+router.delete('/:id', verifyJWT, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const ordenId = parseInt(req.params.id);
+        const tenantId = req.user?.id_tenant;
+
+        if (!ordenId || isNaN(ordenId)) {
+            return res.status(400).json({ success: false, error: 'ID de orden inválido' });
+        }
+
+        await client.query('BEGIN');
+
+        // Verificar que la orden existe y pertenece al tenant
+        const ordenCheck = await client.query(`
+            SELECT o.id, o.id_sucursal, o.id_cuenta_corriente, o.en_cuenta_corriente, s.id_tenant
+            FROM orden o
+            JOIN sucursal s ON o.id_sucursal = s.id
+            WHERE o.id = $1
+        `, [ordenId]);
+
+        if (ordenCheck.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, error: 'Orden no encontrada' });
+        }
+
+        if (ordenCheck.rows[0].id_tenant !== tenantId) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ success: false, error: 'No tienes permisos para eliminar esta orden' });
+        }
+
+        const orden = ordenCheck.rows[0];
+
+        // =====================================================
+        // 1. REVERTIR INVENTARIO - Devolver stock de productos
+        // =====================================================
+        // La tabla movimientoinventario usa: tipo, origen_tipo, origen_id
+        // El stock se guarda en producto.stock
+        // Hay que buscar tanto ORDEN como ORDEN_EDICION
+        const movimientosInventario = await client.query(`
+            SELECT mi.id, mi.id_producto, mi.cantidad, mi.tipo
+            FROM movimientoinventario mi
+            WHERE mi.origen_tipo IN ('ORDEN', 'ORDEN_EDICION') AND mi.origen_id = $1
+        `, [ordenId]);
+
+        // Revertir cada movimiento: SALIDA -> devolver stock, ENTRADA -> quitar stock
+        for (const mov of movimientosInventario.rows) {
+            if (mov.tipo === 'SALIDA') {
+                // La orden sacó productos, hay que devolverlos al stock
+                await client.query(`
+                    UPDATE producto 
+                    SET stock = COALESCE(stock, 0) + $1
+                    WHERE id = $2
+                `, [mov.cantidad, mov.id_producto]);
+            } else if (mov.tipo === 'ENTRADA') {
+                // La orden metió productos (devolución?), hay que quitarlos del stock
+                await client.query(`
+                    UPDATE producto 
+                    SET stock = COALESCE(stock, 0) - $1
+                    WHERE id = $2
+                `, [mov.cantidad, mov.id_producto]);
+            }
+        }
+
+        // Eliminar los movimientos de inventario (ambos tipos)
+        await client.query(`DELETE FROM movimientoinventario WHERE origen_tipo IN ('ORDEN', 'ORDEN_EDICION') AND origen_id = $1`, [ordenId]);
+
+        // =====================================================
+        // 2. REVERTIR CUENTA CORRIENTE
+        // =====================================================
+        // Buscar movimientos en cuenta corriente relacionados con esta orden
+        // (puede haber aunque la orden no tenga id_cuenta_corriente asignado)
+        const movimientosCC = await client.query(`
+            SELECT mc.id, mc.importe, mc.tipo_movimiento, mc.id_cuenta_corriente
+            FROM movimientocuenta mc
+            WHERE mc.id_orden = $1
+        `, [ordenId]);
+
+        // Revertir el saldo de cada cuenta corriente afectada
+        for (const mov of movimientosCC.rows) {
+            if (mov.tipo_movimiento === 'CARGO') {
+                await client.query(`
+                    UPDATE cuentacorriente 
+                    SET saldo_actual = saldo_actual - $1, updated_at = NOW()
+                    WHERE id = $2
+                `, [mov.importe, mov.id_cuenta_corriente]);
+            } else if (mov.tipo_movimiento === 'ABONO') {
+                await client.query(`
+                    UPDATE cuentacorriente 
+                    SET saldo_actual = saldo_actual + $1, updated_at = NOW()
+                    WHERE id = $2
+                `, [mov.importe, mov.id_cuenta_corriente]);
+            }
+        }
+
+        // Eliminar movimientos de cuenta corriente
+        await client.query(`DELETE FROM movimientocuenta WHERE id_orden = $1`, [ordenId]);
+
+        // =====================================================
+        // 3. ELIMINAR PAGOS DE LA ORDEN
+        // =====================================================
+        // Los pagos en ordenpago afectan la caja, al eliminarlos se revierte
+        await client.query(`DELETE FROM ordenpago WHERE id_orden = $1`, [ordenId]);
+
+        // =====================================================
+        // 4. ELIMINAR LÍNEAS DE LA ORDEN
+        // =====================================================
+        await client.query(`DELETE FROM ordenlinea WHERE id_orden = $1`, [ordenId]);
+
+        // =====================================================
+        // 5. LIMPIAR REFERENCIAS EN FACTURAS (si existe)
+        // =====================================================
+        // Quitar la referencia de la orden en facturas (no eliminar la factura)
+        // Usamos SAVEPOINT porque si la tabla/columna no existe, no queremos abortar toda la transacción
+        await client.query('SAVEPOINT before_factura');
+        try {
+            await client.query(`
+                UPDATE factura SET id_orden = NULL WHERE id_orden = $1
+            `, [ordenId]);
+        } catch (e) {
+            await client.query('ROLLBACK TO SAVEPOINT before_factura');
+        }
+
+        // Limpiar facturacabecera
+        await client.query('SAVEPOINT before_facturacabecera');
+        try {
+            await client.query(`
+                UPDATE facturacabecera SET id_orden = NULL WHERE id_orden = $1
+            `, [ordenId]);
+        } catch (e) {
+            await client.query('ROLLBACK TO SAVEPOINT before_facturacabecera');
+        }
+
+        // =====================================================
+        // 6. LIMPIAR MARKETPLACE REVIEWS (si existe)
+        // =====================================================
+        await client.query('SAVEPOINT before_marketplace');
+        try {
+            await client.query(`
+                DELETE FROM marketplace_review WHERE id_orden = $1
+            `, [ordenId]);
+        } catch (e) {
+            await client.query('ROLLBACK TO SAVEPOINT before_marketplace');
+        }
+
+        // =====================================================
+        // 7. ELIMINAR LA ORDEN
+        // =====================================================
+        await client.query(`DELETE FROM orden WHERE id = $1`, [ordenId]);
+
+        await client.query('COMMIT');
+
+        res.json({
+            success: true,
+            message: `Orden #${ordenId} eliminada correctamente. Todos los efectos han sido revertidos.`
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error eliminando orden:', error);
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        client.release();
+    }
+});
+
 module.exports = router;

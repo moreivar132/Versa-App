@@ -490,7 +490,6 @@ router.get('/:id', verifyJWT, async (req, res) => {
     }
 });
 
-// PUT /api/inventory/:id - Update product
 router.put('/:id', verifyJWT, async (req, res) => {
     const { id } = req.params;
     const {
@@ -509,6 +508,7 @@ router.put('/:id', verifyJWT, async (req, res) => {
         costo_compra,
         recargo,
         precio_venta_bruto,
+        stock,        // Stock actual del producto
         stock_minimo,
         unidad_medida,
         activo

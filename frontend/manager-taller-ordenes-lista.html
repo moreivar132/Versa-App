@@ -1301,6 +1301,38 @@
         }
       }
 
+      /**
+       * Elimina una orden y todos sus efectos asociados
+       * @param {number} ordenId - ID de la orden a eliminar
+       */
+      async function eliminarOrden(ordenId) {
+        try {
+          showToast('Eliminando orden...');
+
+          const response = await fetchWithAuth(`/api/ordenes/${ordenId}`, {
+            method: 'DELETE'
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            showToast(`✅ ${data.message || 'Orden eliminada correctamente'}`);
+            // Recargar la lista de órdenes
+            cargarOrdenes(filtrosActuales);
+            // Limpiar selección si era esta orden
+            if (ordenSeleccionada && ordenSeleccionada.id === parseInt(ordenId)) {
+              ordenSeleccionada = null;
+              actualizarPanel();
+            }
+          } else {
+            showToast('❌ ' + (data.error || 'Error al eliminar la orden'), true);
+          }
+        } catch (error) {
+          console.error('Error eliminando orden:', error);
+          showToast('❌ Error de conexión al eliminar la orden', true);
+        }
+      }
+
       // Cargar estados disponibles al inicio
       async function cargarEstados() {
         try {
@@ -1350,8 +1382,9 @@
         let ordenesVisibles = ordenes;
         if (mostrarSoloActivas) {
           ordenesVisibles = ordenes.filter(o => {
-            // Ocultar si es (ENTREGADA + PAGADO) o CANCELADA
-            const esEntregadaYPagada = o.estado_codigo === 'ENTREGADA' && o.estado_pago === 'PAGADO';
+            // Ocultar si es (ENTREGADA + PAGADO/CTA_CORRIENTE) o CANCELADA
+            const estaPagado = o.en_cuenta_corriente || o.estado_pago === 'PAGADO';
+            const esEntregadaYPagada = o.estado_codigo === 'ENTREGADA' && estaPagado;
             const esCancelada = o.estado_codigo === 'CANCELADA';
             return !esEntregadaYPagada && !esCancelada;
           });
@@ -1369,8 +1402,10 @@
 
         tbody.innerHTML = ordenesVisibles.map((orden, index) => {
           const fecha = orden.fecha_ingreso ? new Date(orden.fecha_ingreso).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
-          const estadoPagoClass = orden.estado_pago === 'PAGADO' ? 'text-green-500' : orden.estado_pago === 'PARCIAL' ? 'text-yellow-500' : 'text-red-400';
-          const estadoPagoLabel = orden.estado_pago === 'PAGADO' ? 'Pagado' : orden.estado_pago === 'PARCIAL' ? 'Parcial' : 'Pendiente';
+          // Cuenta corriente = pagado a nivel operativo
+          const estaPagado = orden.en_cuenta_corriente || orden.estado_pago === 'PAGADO';
+          const estadoPagoClass = estaPagado ? 'text-green-500' : orden.estado_pago === 'PARCIAL' ? 'text-yellow-500' : 'text-red-400';
+          const estadoPagoLabel = estaPagado ? 'Pagado' : orden.estado_pago === 'PARCIAL' ? 'Parcial' : 'Pendiente';
 
           // Obtener color personalizado del estado
           const estadoColor = getEstadoDotColor(orden.estado_codigo);
@@ -1468,6 +1503,14 @@
               `;
             }
 
+            // Opción de eliminar siempre visible (al final, con estilo de alerta)
+            opcionesHTML += `
+              <div class="acciones-option eliminar" data-action="eliminar" data-orden-id="${ordenId}" style="color: #ef4444; border-top: 1px solid #333; margin-top: 4px; padding-top: 8px;">
+                <span class="material-symbols-outlined">delete</span>
+                Eliminar
+              </div>
+            `;
+
             dropdown.innerHTML = opcionesHTML;
 
             // Event listeners para las opciones
@@ -1492,6 +1535,13 @@
                     // Disparar click en el botón generar factura del panel
                     const btnFactura = document.getElementById('btn-generar-factura');
                     if (btnFactura) btnFactura.click();
+                  }
+                } else if (action === 'eliminar') {
+                  // Eliminar orden con confirmación
+                  const ordenAEliminar = ordenes.find(o => o.id === parseInt(ordId));
+                  const confirmMsg = `¿Estás seguro de eliminar la Orden #${ordId}?\n\nCliente: ${ordenAEliminar?.cliente_nombre || 'N/A'}\n\nEsta acción eliminará:\n- La orden y sus líneas\n- Los pagos asociados\n- Los movimientos de caja\n- Los cargos en cuenta corriente\n\n¡Esta acción NO se puede deshacer!`;
+                  if (confirm(confirmMsg)) {
+                    eliminarOrden(ordId);
                   }
                 }
               });

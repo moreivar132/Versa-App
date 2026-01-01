@@ -332,11 +332,13 @@ router.post('/cargar-orden', verifyJWT, async (req, res) => {
     const client = await pool.connect();
 
     try {
+        console.log('[DEBUG cargar-orden] Body recibido:', req.body);
         const { idOrden } = req.body;
         const tenantId = req.user?.id_tenant;
         const userId = req.user?.id;
 
         if (!idOrden) {
+            console.log('[DEBUG cargar-orden] ERROR: idOrden no encontrado en body');
             return res.status(400).json({ success: false, error: 'ID de orden requerido' });
         }
 
@@ -346,7 +348,6 @@ router.post('/cargar-orden', verifyJWT, async (req, res) => {
         const ordenResult = await client.query(`
             SELECT 
                 o.id,
-                o.numero_orden,
                 o.id_cliente,
                 o.total_neto,
                 o.en_cuenta_corriente,
@@ -416,15 +417,18 @@ router.post('/cargar-orden', verifyJWT, async (req, res) => {
             pendiente,
             saldoAnterior,
             saldoPosterior,
-            `Orden #${orden.numero_orden} - Saldo pendiente`,
+            `Orden #${orden.id} - Saldo pendiente`,
             idOrden,
             userId
         ]);
 
         // 4. Marcar orden como cargada a cuenta corriente
+        // Solo actualizamos en_cuenta_corriente e id_cuenta_corriente
+        // (la columna estado_pago no existe en la tabla)
         await client.query(`
             UPDATE orden 
-            SET en_cuenta_corriente = true, id_cuenta_corriente = $1
+            SET en_cuenta_corriente = true, 
+                id_cuenta_corriente = $1
             WHERE id = $2
         `, [idCuenta, idOrden]);
 
@@ -464,11 +468,14 @@ router.post('/pago', verifyJWT, async (req, res) => {
             importe,
             concepto = 'Pago a cuenta',
             idMedioPago,
-            fecha
+            fecha,
+            idSucursal // Opcional: sucursal donde se registra el pago
         } = req.body;
 
         const tenantId = req.user?.id_tenant;
         const userId = req.user?.id;
+        // Usar la sucursal enviada, o la del usuario, o buscar una del tenant
+        const sucursalDelUsuario = req.user?.id_sucursal;
 
         if (!importe || importe <= 0) {
             return res.status(400).json({ success: false, error: 'Importe inválido' });
@@ -528,6 +535,78 @@ router.post('/pago', verifyJWT, async (req, res) => {
             fecha || new Date().toISOString().split('T')[0],
             userId
         ]);
+
+        // Actualizar saldo de la cuenta corriente
+        await client.query(`
+            UPDATE cuentacorriente SET saldo_actual = $1 WHERE id = $2
+        `, [saldoPosterior, cuentaId]);
+
+        // Si el medio de pago implica movimiento de caja, crearlo
+        if (idMedioPago) {
+            // Verificar si el medio de pago requiere movimiento de caja (EFECTIVO, TARJETA, etc.)
+            const medioPagoResult = await client.query(`
+                SELECT codigo, nombre FROM mediopago WHERE id = $1
+            `, [idMedioPago]);
+
+            if (medioPagoResult.rows.length > 0) {
+                const codigoMedio = (medioPagoResult.rows[0].codigo || '').toUpperCase();
+                console.log(`[CC Pago] Medio de pago ID ${idMedioPago}: código "${codigoMedio}"`);
+                // Cualquier pago real genera movimiento de caja (excepto CUENTA_CORRIENTE que es aplazamiento)
+                const mediosSinCaja = ['CUENTA_CORRIENTE'];
+                const generaCaja = !mediosSinCaja.includes(codigoMedio);
+
+                if (generaCaja) {
+                    console.log(`[CC Pago] Medio ${codigoMedio} requiere movimiento de caja`);
+                    // Obtener la sucursal del cliente desde la cuenta corriente
+                    const cuentaInfo = await client.query(`
+                        SELECT cc.id_tenant, cf.id
+                        FROM cuentacorriente cc
+                        JOIN clientefinal cf ON cc.id_cliente = cf.id
+                        WHERE cc.id = $1
+                    `, [cuentaId]);
+
+                    if (cuentaInfo.rows.length > 0) {
+                        const tenantIdPago = cuentaInfo.rows[0].id_tenant;
+
+                        // Determinar sucursal: usar la enviada, la del usuario, o buscar una del tenant
+                        let sucursalParaCaja = idSucursal || sucursalDelUsuario;
+
+                        if (!sucursalParaCaja) {
+                            const sucursalResult = await client.query(`
+                                SELECT id FROM sucursal WHERE id_tenant = $1 LIMIT 1
+                            `, [tenantIdPago]);
+                            sucursalParaCaja = sucursalResult.rows[0]?.id;
+                        }
+
+                        if (sucursalParaCaja) {
+                            console.log(`[CC Pago] Buscando caja abierta en sucursal ${sucursalParaCaja}`);
+
+                            // Buscar caja abierta
+                            const cajaResult = await client.query(`
+                                SELECT id FROM caja 
+                                WHERE id_sucursal = $1 AND estado = 'ABIERTA' 
+                                ORDER BY created_at DESC LIMIT 1
+                            `, [sucursalParaCaja]);
+
+                            if (cajaResult.rows.length > 0) {
+                                const idCaja = cajaResult.rows[0].id;
+
+                                // Crear movimiento de caja (INGRESO)
+                                await client.query(`
+                                    INSERT INTO cajamovimiento 
+                                    (id_caja, id_usuario, tipo, monto, concepto, origen_tipo, origen_id, fecha, created_at, created_by)
+                                    VALUES ($1, $2, 'INGRESO', $3, $4, 'CUENTA_CORRIENTE', $5, NOW(), NOW(), $2)
+                                `, [idCaja, userId, importe, `Pago cuenta corriente - ${concepto}`, cuentaId]);
+
+                                console.log(`Movimiento de caja creado: ${importe}€ en caja ${idCaja}`);
+                            } else {
+                                console.warn('No hay caja abierta para registrar el movimiento de efectivo');
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         await client.query('COMMIT');
 
