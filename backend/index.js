@@ -44,6 +44,7 @@ app.use('/api/cliente/payment-methods', require('./routes/customerPaymentMethods
 // Rutas de autenticación general
 app.use('/api/auth', authRouter);
 app.use('/api/admin', superAdminRouter);
+app.use('/api/access', require('./routes/accessRoutes')); // RBAC Access Management
 app.use('/api/proveedores', proveedoresRouter);
 app.use('/api/clientes', clientesRouter);
 app.use('/api/vehiculos', vehiculosRouter);
