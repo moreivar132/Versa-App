@@ -212,6 +212,32 @@
                     0 0 25px var(--highlight-color);
             }
         }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            background: #1a1d24 !important;
+            border: 1px solid #282e39;
+            border-radius: 12px;
+            color: white !important;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        /* Prevent background change on autofill */
+        .input-field:-webkit-autofill,
+        .input-field:-webkit-autofill:hover,
+        .input-field:-webkit-autofill:focus {
+            -webkit-text-fill-color: white !important;
+            -webkit-box-shadow: 0 0 0px 1000px #1a1d24 inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #ff5f00;
+            box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.15);
+        }
     </style>
 
     <script>
@@ -360,7 +386,10 @@
                     <input type="email" id="forgotEmail" required class="input-field" placeholder="tu@email.com">
                 </div>
                 <div class="flex gap-3">
-                    <button type="submit" class="btn-primary">Enviar</button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-3 bg-[#ff5f00] text-white rounded-lg hover:bg-[#ff4500] transition-colors font-bold">
+                        Enviar
+                    </button>
                     <button type="button" onclick="closeForgotModal()"
                         class="flex-1 px-4 py-3 bg-[#282e39] text-white rounded-lg hover:bg-[#3a4150] transition-colors">
                         Cancelar

@@ -65,11 +65,25 @@ export async function getSucursalDetail(id) {
         const data = result.data || result;
 
         // Normalize field names for compatibility
+        // Parse fotos from fotos_json if needed
+        let fotos = [];
+        if (data.fotos_json) {
+            try {
+                fotos = typeof data.fotos_json === 'string' ? JSON.parse(data.fotos_json) : data.fotos_json;
+            } catch (e) {
+                console.error('Error parsing fotos_json:', e);
+                fotos = [];
+            }
+        } else if (Array.isArray(data.fotos)) {
+            fotos = data.fotos;
+        }
+
         return {
             ...data,
             nombre: data.nombre || data.titulo_publico || data.sucursal_nombre,
             telefono: data.telefono || data.telefono_publico,
             descripcion: data.descripcion || data.descripcion_publica,
+            fotos: fotos,
             servicios_completos: data.servicios_completos || data.servicios_destacados || [],
             ofertas: data.ofertas || [],
             resenas: data.resenas || []

@@ -614,12 +614,18 @@
             if (fotos.length > 0) {
                 document.getElementById('fotosSection').classList.remove('hidden');
                 const fotosContainer = document.getElementById('fotosContainer');
+
+                // Guardar fotos en global para acceso seguro (evita problemas con base64)
+                window._galeriaFotos = fotos;
+
                 fotosContainer.innerHTML = fotos.map((foto, index) => `
-          <div class="aspect-video rounded-xl overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
-               onclick="openPhotoModal('${foto}')">
+          <div class="aspect-video rounded-xl overflow-hidden cursor-pointer hover:opacity-80 hover:scale-[1.02] transition-all border border-white/10"
+               onclick="window.openGaleriaFoto(${index})">
             <img src="${foto}" alt="Foto ${index + 1}" class="w-full h-full object-cover">
           </div>
         `).join('');
+
+                console.log(`[DEBUG] Galería renderizada con ${fotos.length} fotos`);
             }
 
             // Render ofertas
@@ -1047,6 +1053,80 @@
               </button>
             `;
             document.body.appendChild(modal);
+        };
+
+        // Open Gallery Photo (uses global array for base64 support)
+        window.openGaleriaFoto = function (index) {
+            const fotos = window._galeriaFotos || [];
+            if (!fotos.length || index < 0 || index >= fotos.length) return;
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4';
+            modal.id = 'galeria-lightbox';
+
+            const renderLightbox = (currentIdx) => {
+                const foto = fotos[currentIdx];
+                return `
+                    <img src="${foto}" alt="Foto ${currentIdx + 1}" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl">
+                    
+                    <!-- Close button -->
+                    <button class="absolute top-4 right-4 text-white hover:text-primary transition-colors bg-black/50 rounded-full p-2" 
+                            onclick="document.getElementById('galeria-lightbox').remove(); event.stopPropagation();">
+                        <span class="material-symbols-outlined" style="font-size: 32px;">close</span>
+                    </button>
+                    
+                    ${fotos.length > 1 ? `
+                        <!-- Navigation arrows -->
+                        <button class="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-primary transition-colors bg-black/50 rounded-full p-2"
+                                onclick="event.stopPropagation(); window.navigateGaleria(${currentIdx - 1});">
+                            <span class="material-symbols-outlined" style="font-size: 32px;">chevron_left</span>
+                        </button>
+                        <button class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-primary transition-colors bg-black/50 rounded-full p-2"
+                                onclick="event.stopPropagation(); window.navigateGaleria(${currentIdx + 1});">
+                            <span class="material-symbols-outlined" style="font-size: 32px;">chevron_right</span>
+                        </button>
+                        
+                        <!-- Dots indicator -->
+                        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                            ${fotos.map((_, i) => `
+                                <button class="w-2.5 h-2.5 rounded-full ${i === currentIdx ? 'bg-primary' : 'bg-white/50'} transition-colors"
+                                        onclick="event.stopPropagation(); window.navigateGaleria(${i});"></button>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Counter -->
+                        <div class="absolute top-4 left-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
+                            ${currentIdx + 1} / ${fotos.length}
+                        </div>
+                    ` : ''}
+                `;
+            };
+
+            modal.innerHTML = renderLightbox(index);
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+
+            document.body.appendChild(modal);
+
+            // Store current index for navigation
+            window._currentGaleriaIdx = index;
+        };
+
+        // Navigate gallery
+        window.navigateGaleria = function (newIdx) {
+            const fotos = window._galeriaFotos || [];
+            if (!fotos.length) return;
+
+            // Wrap around
+            if (newIdx < 0) newIdx = fotos.length - 1;
+            if (newIdx >= fotos.length) newIdx = 0;
+
+            // Remove old and open new
+            const oldModal = document.getElementById('galeria-lightbox');
+            if (oldModal) oldModal.remove();
+
+            window.openGaleriaFoto(newIdx);
         };
 
         // Alias for showFotoModal

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="VERSA Puntos">
+    <title>VERSA Puntos</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/public/manifest-card.json">
+    <link rel="apple-touch-icon" href="https://i.imgur.com/Mjw4or5.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- QR Code Library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --bg: #1a1a1a;
+            --surface: #232323;
+            --surface-2: #2a2a2a;
+            --primary: #ff4400;
+            --primary-soft: rgba(255, 68, 0, 0.15);
+            --text: #ffffff;
+            --text-soft: #b3b3b3;
+            --text-muted: #666666;
+            --success: #4ade80;
+            --radius: 1.25rem;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            max-width: 420px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header__logo {
+            width: 48px;
+            height: 48px;
+            padding: 10px;
+            background: linear-gradient(135deg, var(--primary-soft), rgba(255, 68, 0, 0.05));
+            border-radius: 14px;
+            border: 1px solid rgba(255, 68, 0, 0.3);
+        }
+
+        .header__logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .header__text {
+            flex: 1;
+        }
+
+        .header__name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.15rem;
+        }
+
+        .header__code {
+            font-size: 0.75rem;
+            color: var(--text-soft);
+            letter-spacing: 0.05em;
+        }
+
+        /* Points Card */
+        .points-card {
+            background: linear-gradient(145deg, var(--surface), var(--surface-2));
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .points-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 68, 0, 0.12), transparent 60%);
+            pointer-events: none;
+        }
+
+        .points-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--text-soft);
+            margin-bottom: 0.5rem;
+        }
+
+        .points-value {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--text), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .points-unit {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-soft);
+            margin-top: 0.5rem;
+        }
+
+        /* Promo Card */
+        .promo-card {
+            background: linear-gradient(135deg, var(--primary-soft), rgba(255, 68, 0, 0.05));
+            border: 1px solid rgba(255, 68, 0, 0.35);
+            border-radius: var(--radius);
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            display: none;
+        }
+
+        .promo-card.visible {
+            display: block;
+        }
+
+        .promo-card__badge {
+            display: inline-block;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            background: var(--primary);
+            color: #000;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+        }
+
+        .promo-card__title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .promo-card__desc {
+            font-size: 0.85rem;
+            color: var(--text-soft);
+            line-height: 1.4;
+        }
+
+        /* QR Section */
+        .qr-section {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .qr-section__header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .qr-section__title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-soft);
+        }
+
+        .qr-section__countdown {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--primary);
+            background: var(--primary-soft);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .qr-canvas-wrapper {
+            background: #fff;
+            border-radius: 12px;
+            padding: 1rem;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        #qr-canvas {
+            display: block;
+            width: 180px;
+            height: 180px;
+        }
+
+        .qr-section__hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Add to Home Button */
+        .add-home-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), #ff6a33);
+            border: none;
+            border-radius: var(--radius);
+            color: #000;
+            font-family: inherit;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .add-home-btn:active {
+            transform: scale(0.98);
+        }
+
+        .add-home-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            z-index: 100;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            max-width: 360px;
+            width: 100%;
+        }
+
+        .modal__title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .modal__steps {
+            margin-bottom: 1.25rem;
+        }
+
+        .modal__step {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .modal__step-num {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            color: #000;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal__step-text {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: var(--text-soft);
+        }
+
+        .modal__close {
+            width: 100%;
+            padding: 0.85rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Loading State */
+        .loading {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .loading__spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--surface-2);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Error State */
+        .error-state {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .error-state__icon {
+            font-size: 3rem;
+        }
+
+        .error-state__title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .error-state__message {
+            color: var(--text-soft);
+            font-size: 0.9rem;
+        }
+
+        /* PWA Standalone Mode */
+        @media (display-mode: standalone) {
+            .add-home-btn {
+                display: none;
+            }
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading State -->
+    <div id="loading-state" class="loading">
+        <div class="loading__spinner"></div>
+        <span style="color: var(--text-soft); font-size: 0.9rem;">Cargando tu tarjeta...</span>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="error-state hidden">
+        <div class="error-state__icon">😕</div>
+        <div class="error-state__title">Tarjeta no encontrada</div>
+        <div class="error-state__message">El enlace no es válido o ha expirado.</div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="container hidden">
+        <!-- Header -->
+        <header class="header">
+            <div class="header__logo">
+                <img src="https://i.imgur.com/Mjw4or5.png" alt="VERSA">
+            </div>
+            <div class="header__text">
+                <div class="header__name" id="display-name">-</div>
+                <div class="header__code" id="member-code">-</div>
+            </div>
+        </header>
+
+        <!-- Points Card -->
+        <div class="points-card">
+            <div class="points-label" id="points-label">Puntos</div>
+            <div class="points-value" id="points-value">0</div>
+            <div class="points-unit" id="points-unit">puntos</div>
+        </div>
+
+        <!-- Promo Card -->
+        <div class="promo-card" id="promo-card">
+            <div class="promo-card__badge">Promo Activa</div>
+            <div class="promo-card__title" id="promo-title"></div>
+            <div class="promo-card__desc" id="promo-desc"></div>
+        </div>
+
+        <!-- QR Section -->
+        <div class="qr-section">
+            <div class="qr-section__header">
+                <span class="qr-section__title">Muestra este QR</span>
+                <span class="qr-section__countdown" id="qr-countdown">5:00</span>
+            </div>
+            <div class="qr-canvas-wrapper">
+                <canvas id="qr-canvas"></canvas>
+            </div>
+            <div class="qr-section__hint">
+                Presenta este código para sumar puntos.<br>Se renueva automáticamente.
+            </div>
+        </div>
+
+        <!-- Add to Home Button -->
+        <button class="add-home-btn" id="add-home-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M12 5v14M5 12l7-7 7 7" />
+            </svg>
+            Guardar en el móvil
+        </button>
+    </div>
+
+    <!-- Add to Home Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+            <div class="modal__title">Guardar en pantalla de inicio</div>
+            <div class="modal__steps" id="modal-steps"></div>
+            <button class="modal__close" id="modal-close">Entendido</button>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let cardData = null;
+        let qrExpiresAt = null;
+        let qrRefreshInterval = null;
+        let countdownInterval = null;
+
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        // API Base URL
+        const API_BASE = window.location.hostname === 'localhost'
+            ? 'http://localhost:3000'
+            : '';
+
+        // DOM Elements
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+        const mainContent = document.getElementById('main-content');
+        const displayName = document.getElementById('display-name');
+        const memberCode = document.getElementById('member-code');
+        const pointsLabel = document.getElementById('points-label');
+        const pointsValue = document.getElementById('points-value');
+        const pointsUnit = document.getElementById('points-unit');
+        const promoCard = document.getElementById('promo-card');
+        const promoTitle = document.getElementById('promo-title');
+        const promoDesc = document.getElementById('promo-desc');
+        const qrCanvas = document.getElementById('qr-canvas');
+        const qrCountdown = document.getElementById('qr-countdown');
+        const addHomeBtn = document.getElementById('add-home-btn');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalSteps = document.getElementById('modal-steps');
+        const modalClose = document.getElementById('modal-close');
+
+        // Initialize
+        async function init() {
+            if (!token) {
+                showError();
+                return;
+            }
+
+            try {
+                // Fetch card data
+                const response = await fetch(`${API_BASE}/api/public/fidelizacion/card?token=${encodeURIComponent(token)}`);
+                const result = await response.json();
+
+                if (!result.ok) {
+                    showError();
+                    return;
+                }
+
+                cardData = result.data;
+
+                // Update UI
+                displayName.textContent = cardData.display_name;
+                memberCode.textContent = `#${cardData.member_code}`;
+                pointsLabel.textContent = cardData.points_label || 'Puntos';
+                pointsValue.textContent = cardData.points_balance.toLocaleString();
+                pointsUnit.textContent = cardData.points_label?.toLowerCase() || 'puntos';
+
+                // Promo
+                if (cardData.promo_activa) {
+                    promoTitle.textContent = cardData.promo_activa.titulo;
+                    promoDesc.textContent = cardData.promo_activa.descripcion || '';
+                    promoCard.classList.add('visible');
+                }
+
+                // Show content
+                loadingState.classList.add('hidden');
+                mainContent.classList.remove('hidden');
+
+                // Generate initial QR
+                await generateQR();
+
+                // Start auto-refresh
+                startQRAutoRefresh();
+
+            } catch (error) {
+                console.error('Error loading card:', error);
+                showError();
+            }
+        }
+
+        function showError() {
+            loadingState.classList.add('hidden');
+            errorState.classList.remove('hidden');
+        }
+
+        async function generateQR() {
+            try {
+                const response = await fetch(`${API_BASE}/api/public/fidelizacion/qr?token=${encodeURIComponent(token)}`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (!result.ok) {
+                    console.error('Error generating QR:', result.error);
+                    return;
+                }
+
+                const qrData = result.data;
+                qrExpiresAt = new Date(qrData.expires_at);
+
+                // Generate QR code
+                await QRCode.toCanvas(qrCanvas, qrData.qr_payload, {
+                    width: 180,
+                    margin: 0,
+                    color: {
+                        dark: '#000000',
+                        light: '#ffffff'
+                    }
+                });
+
+                // Start countdown
+                startCountdown();
+
+            } catch (error) {
+                console.error('Error generating QR:', error);
+            }
+        }
+
+        function startQRAutoRefresh() {
+            const refreshSeconds = cardData?.qr_refresh_seconds || 30;
+
+            // Clear existing interval
+            if (qrRefreshInterval) {
+                clearInterval(qrRefreshInterval);
+            }
+
+            // Refresh QR periodically
+            qrRefreshInterval = setInterval(() => {
+                generateQR();
+            }, refreshSeconds * 1000);
+        }
+
+        function startCountdown() {
+            // Clear existing interval
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            function updateCountdown() {
+                if (!qrExpiresAt) return;
+
+                const now = new Date();
+                const diff = Math.max(0, Math.floor((qrExpiresAt - now) / 1000));
+
+                const minutes = Math.floor(diff / 60);
+                const seconds = diff % 60;
+
+                qrCountdown.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+                if (diff <= 0) {
+                    generateQR();
+                }
+            }
+
+            updateCountdown();
+            countdownInterval = setInterval(updateCountdown, 1000);
+        }
+
+        // Detect device for instructions
+        function getDeviceInstructions() {
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua);
+            const isAndroid = /Android/.test(ua);
+            const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua);
+            const isChrome = /Chrome/.test(ua);
+
+            if (isIOS && isSafari) {
+                return [
+                    'Toca el botón <strong>Compartir</strong> (el cuadrado con flecha) en la barra inferior',
+                    'Desliza hacia arriba y toca <strong>"Añadir a pantalla de inicio"</strong>',
+                    'Toca <strong>"Añadir"</strong> en la esquina superior derecha'
+                ];
+            } else if (isIOS && isChrome) {
+                return [
+                    'Abre esta página en <strong>Safari</strong> (Chrome no permite añadir a inicio)',
+                    'Toca el botón <strong>Compartir</strong> en Safari',
+                    'Desliza y toca <strong>"Añadir a pantalla de inicio"</strong>'
+                ];
+            } else if (isAndroid && isChrome) {
+                return [
+                    'Toca el menú <strong>⋮</strong> (tres puntos) en la esquina superior',
+                    'Selecciona <strong>"Añadir a pantalla de inicio"</strong> o "Instalar app"',
+                    'Confirma tocando <strong>"Añadir"</strong>'
+                ];
+            } else {
+                return [
+                    'Busca la opción de <strong>Compartir</strong> o <strong>Menú</strong> de tu navegador',
+                    'Selecciona <strong>"Añadir a pantalla de inicio"</strong>',
+                    'Confirma para guardar la tarjeta'
+                ];
+            }
+        }
+
+        // Add to home screen button
+        addHomeBtn.addEventListener('click', () => {
+            const steps = getDeviceInstructions();
+            modalSteps.innerHTML = steps.map((step, i) => `
+                <div class="modal__step">
+                    <div class="modal__step-num">${i + 1}</div>
+                    <div class="modal__step-text">${step}</div>
+                </div>
+            `).join('');
+            modalOverlay.classList.add('visible');
+        });
+
+        modalClose.addEventListener('click', () => {
+            modalOverlay.classList.remove('visible');
+        });
+
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.classList.remove('visible');
+            }
+        });
+
+        // Cleanup on page hide
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                if (qrRefreshInterval) clearInterval(qrRefreshInterval);
+                if (countdownInterval) clearInterval(countdownInterval);
+            } else {
+                // Regenerate QR when page becomes visible again
+                generateQR();
+                startQRAutoRefresh();
+            }
+        });
+
+        // Start
+        init();
+    </script>
+</body>
+
+</html>

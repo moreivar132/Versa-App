@@ -1,4 +1,5 @@
 const pool = require('../db');
+const incomeService = require('./incomeService');
 
 class VentasService {
     /**
@@ -153,6 +154,27 @@ class VentasService {
                             (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, origen_id, created_at, created_by)
                             VALUES ($1, $2, 'INGRESO', $3, NOW(), 'VENTA', $4, NOW(), $5)
                         `, [cajaId, id_usuario, pago.importe, idVenta, id_usuario]);
+                    }
+
+                    // Emitir income_event para el ledger central (CRM)
+                    try {
+                        await incomeService.createIncomeEvent({
+                            idTenant: id_tenant,
+                            idSucursal: idSucursal,
+                            origen: 'crm',
+                            originType: 'venta',
+                            originId: idVenta,
+                            idCliente: idCliente,
+                            amount: pago.importe,
+                            currency: 'EUR',
+                            status: 'paid',
+                            provider: pago.codigoMedioPago === 'CASH' ? 'cash' : 'card',
+                            reference: `venta:${idVenta}:pago:${Date.now()}`,
+                            description: `Pago venta #${idVenta}`,
+                            metadata: { medio_pago: pago.codigoMedioPago }
+                        });
+                    } catch (incomeError) {
+                        console.error('[VentasService] Error creando income_event:', incomeError.message);
                     }
                 }
             }
