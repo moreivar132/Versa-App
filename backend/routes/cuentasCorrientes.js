@@ -325,6 +325,101 @@ router.get('/cliente/:idCliente', verifyJWT, async (req, res) => {
 });
 
 /**
+ * POST /api/cuentas-corrientes/cargar
+ * Carga un importe genérico a la cuenta corriente de un cliente
+ * Body: { idCliente, importe, concepto, idSucursal }
+ */
+router.post('/cargar', verifyJWT, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const { idCliente, importe, concepto, idSucursal } = req.body;
+        const tenantId = req.user?.id_tenant;
+        const userId = req.user?.id;
+
+        if (!idCliente || !importe) {
+            return res.status(400).json({ success: false, error: 'Cliente e importe son obligatorios' });
+        }
+
+        if (importe <= 0) {
+            return res.status(400).json({ success: false, error: 'El importe debe ser mayor a 0' });
+        }
+
+        await client.query('BEGIN');
+
+        // 1. Obtener o crear cuenta corriente del cliente
+        let cuentaResult = await client.query(`
+            SELECT id, saldo FROM cuentacorriente 
+            WHERE id_cliente = $1 AND id_tenant = $2
+        `, [idCliente, tenantId]);
+
+        let idCuenta;
+        let saldoAnterior;
+
+        if (cuentaResult.rows.length === 0) {
+            // Crear cuenta corriente
+            const nuevaCuenta = await client.query(`
+                INSERT INTO cuentacorriente (id_cliente, id_tenant, saldo, estado, created_by)
+                VALUES ($1, $2, 0, 'ACTIVA', $3)
+                RETURNING id
+            `, [idCliente, tenantId, userId]);
+            idCuenta = nuevaCuenta.rows[0].id;
+            saldoAnterior = 0;
+        } else {
+            idCuenta = cuentaResult.rows[0].id;
+            saldoAnterior = parseFloat(cuentaResult.rows[0].saldo) || 0;
+        }
+
+        // 2. Crear movimiento de cargo
+        const saldoPosterior = saldoAnterior + parseFloat(importe);
+
+        await client.query(`
+            INSERT INTO movimientocuenta (
+                id_cuenta_corriente,
+                tipo_movimiento,
+                importe,
+                saldo_anterior,
+                saldo_posterior,
+                concepto,
+                created_by
+            ) VALUES ($1, 'CARGO', $2, $3, $4, $5, $6)
+        `, [
+            idCuenta,
+            importe,
+            saldoAnterior,
+            saldoPosterior,
+            concepto || 'Cargo a cuenta corriente',
+            userId
+        ]);
+
+        // 3. Actualizar saldo de la cuenta
+        await client.query(`
+            UPDATE cuentacorriente SET saldo = $1 WHERE id = $2
+        `, [saldoPosterior, idCuenta]);
+
+        await client.query('COMMIT');
+
+        res.json({
+            success: true,
+            message: `${parseFloat(importe).toFixed(2)}€ cargados a cuenta corriente`,
+            data: {
+                idCuenta,
+                saldoAnterior,
+                saldoPosterior,
+                importe: parseFloat(importe)
+            }
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error al cargar a cuenta corriente:', error);
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        client.release();
+    }
+});
+
+/**
  * POST /api/cuentas-corrientes/cargar-orden
  * Carga el saldo pendiente de una orden a cuenta corriente
  */
@@ -591,12 +686,12 @@ router.post('/pago', verifyJWT, async (req, res) => {
                             if (cajaResult.rows.length > 0) {
                                 const idCaja = cajaResult.rows[0].id;
 
-                                // Crear movimiento de caja (INGRESO)
+                                // Crear movimiento de caja (INGRESO) con el medio de pago
                                 await client.query(`
                                     INSERT INTO cajamovimiento 
-                                    (id_caja, id_usuario, tipo, monto, concepto, origen_tipo, origen_id, fecha, created_at, created_by)
-                                    VALUES ($1, $2, 'INGRESO', $3, $4, 'CUENTA_CORRIENTE', $5, NOW(), NOW(), $2)
-                                `, [idCaja, userId, importe, `Pago cuenta corriente - ${concepto}`, cuentaId]);
+                                    (id_caja, id_usuario, tipo, monto, concepto, origen_tipo, origen_id, id_medio_pago, fecha, created_at, created_by)
+                                    VALUES ($1, $2, 'INGRESO', $3, $4, 'CUENTA_CORRIENTE', $5, $6, NOW(), NOW(), $2)
+                                `, [idCaja, userId, importe, `Pago cuenta corriente - ${concepto}`, cuentaId, idMedioPago]);
 
                                 console.log(`Movimiento de caja creado: ${importe}€ en caja ${idCaja}`);
                             } else {

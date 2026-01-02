@@ -363,6 +363,8 @@ router.post('/', verifyJWT, async (req, res) => {
         return res.status(400).json({ error: 'Nombre y Código de Barras son obligatorios.' });
     }
 
+    const codigoFinal = codigo_barras_articulo;
+
     const client = await pool.connect();
 
     try {
@@ -406,7 +408,7 @@ router.post('/', verifyJWT, async (req, res) => {
             SELECT id, stock, id_sucursal FROM producto 
             WHERE codigo_barras = $1 AND id_tenant = $2
         `;
-        const checkRes = await client.query(checkQuery, [codigo_barras_articulo, id_tenant]);
+        const checkRes = await client.query(checkQuery, [codigoFinal, id_tenant]);
 
         let result;
         if (checkRes.rows.length > 0) {
