@@ -128,6 +128,35 @@
       box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.2);
     }
 
+    /* Selector de IVA compacto y estético */
+    .iva-select {
+      width: 70px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      padding-right: 24px;
+    }
+
+    .iva-select:hover {
+      border-color: var(--brand-orange);
+    }
+
+    .iva-select:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 2px rgba(255, 95, 0, 0.2);
+    }
+
     .input-group {
       display: flex;
     }
@@ -929,7 +958,7 @@
                   <td><input type="number" id="new-item-bonus" class="form-input" value="0"></td>
                   <td id="new-item-subtotal">0.00€</td>
                   <td>
-                    <select id="new-item-iva" class="form-select">
+                    <select id="new-item-iva" class="iva-select">
                       <option value="0">0%</option>
                       <option value="10">10%</option>
                       <option value="21" selected>21%</option>
@@ -1099,6 +1128,23 @@
             <button id="new-order-btn" type="button" class="btn">Crear Nueva</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Éxito -->
+  <div id="success-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h3>¡Orden Enviada!</h3>
+      <p>La orden de reparación ha sido procesada.</p>
+      <div class="modal-actions">
+        <button type="button" id="close-modal-btn" class="btn btn-secondary">Cerrar</button>
+        <button type="button" id="new-order-btn" class="btn">Crear Nueva</button>
       </div>
     </div>
   </div>
@@ -1343,6 +1389,9 @@
 
       loadSucursales();
       loadTecnicosSelect();
+      // Variable global para almacenar los impuestos cargados del backend
+      let impuestosDisponibles = [];
+
       // Función para cargar impuestos en el select de IVA
       async function loadImpuestos() {
         const ivaSelect = document.getElementById('new-item-iva');
@@ -1350,16 +1399,48 @@
 
         try {
           const impuestos = await getImpuestos();
-          ivaSelect.innerHTML = '<option value="">Seleccionar IVA</option>';
-          impuestos.forEach(imp => {
+          impuestosDisponibles = impuestos; // Guardar globalmente para renderizar líneas
+
+          // Poblar el selector con porcentaje como value
+          ivaSelect.innerHTML = '';
+          impuestos.forEach((imp, index) => {
             const option = document.createElement('option');
-            option.value = imp.id;
-            option.textContent = `${imp.nombre} (${imp.porcentaje}%)`;
-            option.dataset.percentage = imp.porcentaje;
+            option.value = imp.porcentaje; // El value es el porcentaje
+            option.dataset.id = imp.id; // Guardar id por si se necesita
+            option.textContent = `${imp.porcentaje}%`;
+            // Seleccionar el primer impuesto con porcentaje > 0 como default, o el primero
+            if (index === 0 || (imp.porcentaje > 0 && !ivaSelect.querySelector('option[selected]'))) {
+              option.selected = true;
+            }
             ivaSelect.appendChild(option);
           });
+
+          // Si no hay impuestos en BD, poner valores por defecto
+          if (impuestos.length === 0) {
+            impuestosDisponibles = [
+              { id: null, porcentaje: 0, nombre: '0%' },
+              { id: null, porcentaje: 10, nombre: '10%' },
+              { id: null, porcentaje: 21, nombre: '21%' }
+            ];
+            ivaSelect.innerHTML = `
+              <option value="0">0%</option>
+              <option value="10">10%</option>
+              <option value="21" selected>21%</option>
+            `;
+          }
         } catch (error) {
           console.error('Error cargando impuestos:', error);
+          // Fallback: opciones por defecto
+          impuestosDisponibles = [
+            { id: null, porcentaje: 0, nombre: '0%' },
+            { id: null, porcentaje: 10, nombre: '10%' },
+            { id: null, porcentaje: 21, nombre: '21%' }
+          ];
+          ivaSelect.innerHTML = `
+            <option value="0">0%</option>
+            <option value="10">10%</option>
+            <option value="21" selected>21%</option>
+          `;
         }
       }
 
@@ -1417,6 +1498,20 @@
       // Mostrar/Ocultar Modal
       function showSuccessModal() { successModal.classList.add('show'); }
       function hideSuccessModal() { successModal.classList.remove('show'); }
+
+      // Event listeners para botones del modal de éxito
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+          hideSuccessModal();
+        });
+      }
+
+      if (newOrderBtn) {
+        newOrderBtn.addEventListener('click', () => {
+          window.location.href = 'manager-taller-ordenes.html'; // Sin ID = nueva orden
+        });
+      }
+
 
       // --- DETECCIÓN MODO EDICIÓN ---
       const urlParams = new URLSearchParams(window.location.search);
@@ -1539,7 +1634,7 @@
           lineas.forEach(linea => {
             orderItems.push({
               id: linea.id, // ID de la línea para actualizaciones
-              idProducto: linea.id_producto || null,
+              idProducto: linea.id_producto ? parseInt(linea.id_producto) : null,
               idImpuesto: linea.id_impuesto || null,
               descripcion: linea.descripcion || linea.producto_nombre || 'Item',
               precio: parseFloat(linea.precio) || 0,
@@ -1577,12 +1672,6 @@
         }
       }
 
-      // Resetear formulario completo al crear nueva orden
-      if (newOrderBtn) {
-        newOrderBtn.addEventListener('click', () => {
-          window.location.href = 'manager-taller-ordenes.html'; // Sin ID = nueva orden
-        });
-      }
 
       // --- LÓGICA MODAL NUEVO CLIENTE ---
       const newClientModal = document.getElementById('new-client-modal');
@@ -1869,8 +1958,17 @@
         renderOption: item => {
           const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
           const price = parseFloat(rawPrice);
-          const stock = parseInt(item.stock) || 0;
-          return `${item.nombre} <small>(${price.toFixed(2)}€ - Stock: ${stock})</small>`;
+          const stockReal = parseInt(item.stock) || 0;
+
+          // Calcular stock ya usado en esta orden para este producto
+          const usadoEnOrden = orderItems
+            .filter(lineItem => lineItem.idProducto === item.id)
+            .reduce((sum, lineItem) => sum + (lineItem.cantidad || 0), 0);
+
+          const stockDisponible = stockReal - usadoEnOrden;
+          const stockClass = stockDisponible <= 0 ? 'color: #ff6b6b;' : (stockDisponible <= 3 ? 'color: #ffd93d;' : '');
+
+          return `${item.nombre} <small>(${price.toFixed(2)}€ - <span style="${stockClass}">Stock: ${stockDisponible}</span>)</small>`;
         },
         onSelect: item => {
           const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
@@ -1907,9 +2005,8 @@
         const bonus = parseFloat(document.getElementById('new-item-bonus').value) || 0;
         const id = document.getElementById('new-item-id-hidden').value;
         const ivaSelect = document.getElementById('new-item-iva');
-        const selectedOption = ivaSelect.options[ivaSelect.selectedIndex];
-        const ivaPercentage = parseFloat(selectedOption?.dataset.percentage) || 0;
-        const ivaId = selectedOption?.value || null;
+        const ivaPercentage = parseFloat(ivaSelect.value) || 0;
+        const ivaId = null; // Ya no usamos id de impuesto, solo porcentaje
 
         if (!name || price < 0) {
           showToast("Selecciona un item y precio válido.", true);
@@ -1920,7 +2017,7 @@
         const displayType = normalizedType === 'SERVICIO' ? 'Servicio' : 'Repuesto';
 
         orderItems.push({
-          idProducto: id || null,
+          idProducto: id ? parseInt(id) : null,
           idImpuesto: ivaId,
           descripcion: name,
           precio: price,
@@ -1960,6 +2057,24 @@
             typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${typeLabel}</span>`;
           }
 
+          // Generar opciones de IVA dinámicamente
+          const itemIva = parseFloat(item.iva) || 0;
+          let ivaOptionsHtml = '';
+          if (impuestosDisponibles.length > 0) {
+            ivaOptionsHtml = impuestosDisponibles.map(imp => {
+              const impPct = parseFloat(imp.porcentaje);
+              const isSelected = Math.abs(itemIva - impPct) < 0.01; // Comparación con tolerancia
+              return `<option value="${impPct}" ${isSelected ? 'selected' : ''}>${impPct}%</option>`;
+            }).join('');
+          } else {
+            // Fallback si no hay impuestos cargados
+            ivaOptionsHtml = `
+              <option value="0" ${itemIva === 0 ? 'selected' : ''}>0%</option>
+              <option value="10" ${Math.abs(itemIva - 10) < 0.01 ? 'selected' : ''}>10%</option>
+              <option value="21" ${Math.abs(itemIva - 21) < 0.01 ? 'selected' : ''}>21%</option>
+            `;
+          }
+
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.descripcion}</td>
@@ -1968,7 +2083,11 @@
             <td>${typeBadge}</td>
             <td>${(item.descuento || 0).toFixed(2)}€</td>
             <td>${subtotal.toFixed(2)}€</td>
-            <td>${item.iva}%</td>
+            <td>
+              <select class="iva-select edit-iva-select" data-index="${index}">
+                ${ivaOptionsHtml}
+              </select>
+            </td>
             <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold" data-index="${index}">&times;</button></td>
           `;
           tbody.appendChild(tr);
@@ -1981,6 +2100,18 @@
           orderItems.splice(btn.dataset.index, 1);
           renderItems();
           calculateNetTotals();
+        }
+      });
+
+      // Event listener para cambiar el IVA de líneas ya agregadas
+      document.getElementById('order-items-list').addEventListener('change', (e) => {
+        if (e.target.classList.contains('edit-iva-select')) {
+          const index = parseInt(e.target.dataset.index);
+          const newIva = parseFloat(e.target.value) || 0;
+          if (orderItems[index]) {
+            orderItems[index].iva = newIva;
+            calculateNetTotals();
+          }
         }
       });
 

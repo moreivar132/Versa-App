@@ -252,9 +252,42 @@ router.get('/estado-actual', async (req, res) => {
             });
         }
 
-        // Agregar movimientos manuales
-        const ingresosManual = movimientosCajaDetalle.rows.find(r => r.tipo === 'INGRESO');
-        const egresosManual = movimientosCajaDetalle.rows.find(r => r.tipo === 'EGRESO');
+        // Cobros de Cuentas Corrientes - movimientos con origen_tipo = 'CUENTA_CORRIENTE'
+        const cuentasCorrientesResult = await pool.query(`
+            SELECT 
+                COALESCE(SUM(CASE WHEN tipo = 'INGRESO' THEN monto ELSE 0 END), 0) as ingresos,
+                COALESCE(SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END), 0) as egresos
+            FROM cajamovimiento 
+            WHERE id_caja = $1 AND origen_tipo = 'CUENTA_CORRIENTE'
+        `, [caja.id]);
+        const ccData = cuentasCorrientesResult.rows[0] || { ingresos: 0, egresos: 0 };
+        const ccIngresos = parseFloat(ccData.ingresos) || 0;
+        const ccEgresos = parseFloat(ccData.egresos) || 0;
+        const ccTotal = ccIngresos - ccEgresos;
+
+        if (ccIngresos > 0 || ccEgresos > 0) {
+            detalleOperaciones.push({
+                operacion: 'Cuentas Corrientes',
+                efectivo: formatCurrency(ccTotal),
+                tarjeta: '-',
+                total: formatCurrency(ccTotal),
+                es_gasto: ccTotal < 0
+            });
+        }
+
+        // Agregar movimientos manuales (excluyendo CC, Pago Trabajadores y otros orígenes especiales)
+        const movimientosManualesResult = await pool.query(`
+            SELECT 
+                tipo,
+                COALESCE(SUM(monto), 0) as total
+            FROM cajamovimiento 
+            WHERE id_caja = $1 
+              AND (origen_tipo IS NULL OR origen_tipo IN ('MANUAL'))
+            GROUP BY tipo
+        `, [caja.id]);
+
+        const ingresosManual = movimientosManualesResult.rows.find(r => r.tipo === 'INGRESO');
+        const egresosManual = movimientosManualesResult.rows.find(r => r.tipo === 'EGRESO');
 
         if (ingresosManual && parseFloat(ingresosManual.total) > 0) {
             detalleOperaciones.push({
@@ -275,16 +308,6 @@ router.get('/estado-actual', async (req, res) => {
                 es_gasto: true
             });
         }
-
-        // PLACEHOLDERS para módulos futuros:
-        // TODO: Cobros de cuentas corrientes - Cuando se implemente el módulo de cuentas corrientes
-        // detalleOperaciones.push({
-        //     operacion: 'Cobros de cuentas corrientes',
-        //     efectivo: formatCurrency(0),
-        //     tarjeta: formatCurrency(0),
-        //     total: formatCurrency(0),
-        //     es_gasto: false
-        // });
 
         // Pagos a trabajadores - Obtener desde cajamovimiento con origen_tipo = 'PAGO_TRABAJADOR'
         const pagosTrabajadoresResult = await pool.query(`

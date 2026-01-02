@@ -361,7 +361,8 @@ class OrdenesService {
                 (SELECT mp.nombre FROM ordenpago op2 
                  JOIN mediopago mp ON op2.id_medio_pago = mp.id 
                  WHERE op2.id_orden = o.id 
-                 ORDER BY op2.created_at DESC LIMIT 1) as ultimo_medio_pago
+                 ORDER BY op2.created_at DESC LIMIT 1) as ultimo_medio_pago,
+                o.en_cuenta_corriente
             FROM orden o
             JOIN clientefinal c ON o.id_cliente = c.id
             JOIN vehiculo v ON o.id_vehiculo = v.id

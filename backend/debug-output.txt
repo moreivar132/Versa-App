@@ -1,0 +1,17 @@
+=== CAJAS CON SUS PAGOS ===
+  Caja 1: Sucursal 2, Estado CERRADA, Total pagos: 1750
+  Caja 2: Sucursal 1, Estado CERRADA, Total pagos: 1485.08
+  Caja 3: Sucursal 1, Estado CERRADA, Total pagos: 167.41
+  Caja 4: Sucursal 1, Estado CERRADA, Total pagos: 748.83
+  Caja 5: Sucursal 1, Estado CERRADA, Total pagos: 527.05
+  Caja 6: Sucursal 2, Estado ABIERTA, Total pagos: 153.67
+  Caja 7: Sucursal 1, Estado ABIERTA, Total pagos: 77.41
+
+=== BUSCANDO 153.67 ===
+  Caja 1: Total CASH = 1586
+  Caja 2: Total CASH = 824.67
+  Caja 3: Total CASH = 167.41
+  Caja 4: Total CASH = 88.33
+  Caja 5: Total CASH = 127.05
+  Caja 6: Total CASH = 153.67
+  Caja 7: Total CASH = 77.41

@@ -490,7 +490,6 @@ router.get('/:id', verifyJWT, async (req, res) => {
     }
 });
 
-// PUT /api/inventory/:id - Update product
 router.put('/:id', verifyJWT, async (req, res) => {
     const { id } = req.params;
     const {
