@@ -246,6 +246,7 @@
               <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
             </a>
 
+            <!-- Contactos (Submenu) -->
             <div class="nav-group">
               <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
                 onclick="toggleSubmenu('contactos-submenu')">
@@ -258,6 +259,32 @@
                   class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
                 <a href="manager-taller-proveedores.html"
                   class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+              </div>
+            </div>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-marketplace.html">
+              <span class="icon-container"><i class="fas fa-store"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Marketplace</p>
+            </a>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-fidelizacion.html">
+              <span class="icon-container"><i class="fas fa-gift"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Fidelización</p>
+            </a>
+
+            <!-- Marketing Automations -->
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('marketing-submenu')">
+                <span class="icon-container"><i class="fas fa-bullhorn"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Marketing</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="marketing-arrow"></i>
+              </a>
+              <div id="marketing-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-marketing-email.html" class="text-gray-400 hover:text-white text-sm py-1 block">Email
+                  Automations</a>
               </div>
             </div>
 
@@ -307,8 +334,8 @@
             </div>
           </div>
           <div class="flex w-full items-center gap-4 sm:w-auto">
-            <!-- Selector de Rango de Tiempo -->
-            <div class="relative">
+            <!-- Selector de Rango de Tiempo con Quick Picks + Calendario -->
+            <div class="flex items-center gap-2">
               <select id="time-range-select" onchange="cambiarRangoTiempo(this.value)"
                 class="appearance-none h-10 rounded-lg border border-[#282e39] bg-[#1a1d24] pl-4 pr-10 text-white text-sm focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] cursor-pointer hover:bg-[#282e39] transition-colors">
                 <option value="today">Hoy</option>
@@ -316,22 +343,59 @@
                 <option value="month" selected>Este Mes</option>
                 <option value="quarter">Este Trimestre</option>
                 <option value="year">Este Año</option>
+                <option value="custom">Personalizado</option>
               </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#9da6b9]">
+              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-[#9da6b9]"
+                style="position: relative;">
                 <i class="fas fa-calendar-alt text-xs"></i>
               </div>
             </div>
 
-            <div class="flex items-center gap-2">
-              <button
+            <!-- Selector de Rango Personalizado (Oculto por defecto) -->
+            <div id="custom-date-range"
+              class="hidden flex items-center gap-2 bg-[#1a1d24] border border-[#282e39] rounded-lg px-3 py-1.5">
+              <input type="date" id="date-from"
+                class="bg-transparent border-none text-white text-sm focus:outline-none w-28 cursor-pointer"
+                onchange="aplicarRangoPersonalizado()">
+              <span class="text-[#9da6b9]">→</span>
+              <input type="date" id="date-to"
+                class="bg-transparent border-none text-white text-sm focus:outline-none w-28 cursor-pointer"
+                onchange="aplicarRangoPersonalizado()">
+            </div>
+
+            <!-- Botón de Notificaciones con Panel Desplegable -->
+            <div class="relative" id="notifications-container">
+              <button id="notifications-btn"
                 class="relative rounded-lg p-2 text-[#9da6b9] hover:bg-[#282e39] hover:text-white transition-colors">
                 <span class="material-symbols-outlined">notifications</span>
-                <span class="absolute right-1.5 top-1.5 flex h-2.5 w-2.5 items-center justify-center">
+                <span id="notification-badge"
+                  class="absolute right-1.5 top-1.5 flex h-2.5 w-2.5 items-center justify-center hidden">
                   <span
                     class="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--brand-orange)] opacity-75"></span>
                   <span class="relative inline-flex h-2 w-2 rounded-full bg-[var(--brand-orange)]"></span>
                 </span>
               </button>
+
+              <!-- Panel de Notificaciones -->
+              <div id="notifications-panel"
+                class="hidden absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto bg-[#111318] border border-[#282e39] rounded-xl shadow-2xl z-50">
+                <div class="p-4 border-b border-[#282e39] flex items-center justify-between">
+                  <h3 class="text-white font-bold text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[var(--brand-orange)] text-lg">notifications</span>
+                    Notificaciones
+                  </h3>
+                  <button onclick="marcarTodasLeidas()"
+                    class="text-xs text-[#9da6b9] hover:text-white transition-colors">
+                    Marcar todas leídas
+                  </button>
+                </div>
+                <div id="notifications-list" class="divide-y divide-[#282e39]">
+                  <div class="p-4 text-center text-[#9da6b9] text-sm">
+                    <i class="far fa-bell-slash mr-2"></i>
+                    No hay notificaciones nuevas
+                  </div>
+                </div>
+              </div>
             </div>
             <a href="manager-taller-ordenes.html"
               class="flex h-10 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg bg-[var(--brand-orange)] px-4 text-sm font-bold text-white shadow-lg shadow-orange-900/20 hover:bg-[#e05300] transition-colors">
@@ -409,6 +473,95 @@
             <div class="flex items-baseline gap-2 mt-2">
               <p id="stat-margen"
                 class="text-3xl font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">0%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- INGRESOS POR ORIGEN (Marketplace vs CRM) -->
+        <div id="income-ledger-section" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+
+          <!-- INGRESOS MARKETPLACE -->
+          <div id="card-marketplace"
+            class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-cyan-500 transition-colors group relative overflow-hidden cursor-pointer"
+            onclick="window.location='manager-taller-marketplace.html'">
+            <div class="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-cyan-500 to-teal-500 opacity-40"></div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-[#9da6b9] uppercase tracking-wider">Marketplace</p>
+                <span class="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded-full font-medium">Online</span>
+              </div>
+              <span class="material-symbols-outlined text-cyan-500 bg-cyan-500/10 p-2 rounded-lg">storefront</span>
+            </div>
+            <div class="flex items-baseline gap-2 mt-2">
+              <p id="stat-ingresos-marketplace"
+                class="text-3xl font-bold tracking-tight text-white group-hover:text-cyan-400 transition-colors">€0.00
+              </p>
+            </div>
+            <p id="stat-marketplace-eventos" class="text-xs text-[#9da6b9] mt-1">
+              <span class="text-cyan-400">0</span> reservas pagadas
+            </p>
+          </div>
+
+          <!-- INGRESOS CRM -->
+          <div id="card-crm"
+            class="flex flex-col gap-2 rounded-xl border border-[#282e39] bg-[#111318] p-6 hover:border-amber-500 transition-colors group relative overflow-hidden cursor-pointer"
+            onclick="window.location='manager-taller-caja.html'">
+            <div class="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-amber-500 to-orange-500 opacity-40">
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-[#9da6b9] uppercase tracking-wider">CRM Taller</p>
+                <span
+                  class="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-medium">Presencial</span>
+              </div>
+              <span class="material-symbols-outlined text-amber-500 bg-amber-500/10 p-2 rounded-lg">point_of_sale</span>
+            </div>
+            <div class="flex items-baseline gap-2 mt-2">
+              <p id="stat-ingresos-crm"
+                class="text-3xl font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors">€0.00
+              </p>
+            </div>
+            <p id="stat-crm-eventos" class="text-xs text-[#9da6b9] mt-1">
+              <span class="text-amber-400">0</span> ventas/órdenes procesadas
+            </p>
+          </div>
+
+          <!-- TOTAL LEDGER -->
+          <div
+            class="flex flex-col gap-2 rounded-xl border border-dashed border-[#282e39] bg-[#0f1116] p-6 hover:border-green-500/50 transition-colors group relative overflow-hidden">
+            <div class="absolute right-0 top-0 h-full w-1 bg-gradient-to-b from-green-500 to-emerald-500 opacity-20">
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <p class="text-sm font-medium text-[#9da6b9] uppercase tracking-wider">Total Ledger</p>
+                <span class="tooltip-container">
+                  <span class="material-symbols-outlined text-[14px] tooltip-trigger cursor-help">info</span>
+                  <span class="tooltip-content">
+                    <span class="tooltip-text">
+                      Suma de ingresos confirmados desde el <strong>ledger centralizado</strong>.<br><br>
+                      <span class="text-cyan-400">Marketplace</span> = Pagos online vía Stripe<br>
+                      <span class="text-amber-400">CRM</span> = Ventas y órdenes del taller
+                    </span>
+                  </span>
+                </span>
+              </div>
+              <span
+                class="material-symbols-outlined text-green-500 bg-green-500/10 p-2 rounded-lg">account_balance</span>
+            </div>
+            <div class="flex items-baseline gap-2 mt-2">
+              <p id="stat-ingresos-ledger-total"
+                class="text-3xl font-bold tracking-tight text-white group-hover:text-green-400 transition-colors">€0.00
+              </p>
+            </div>
+            <div class="flex items-center gap-4 mt-2 text-xs">
+              <span class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                <span id="pct-marketplace" class="text-[#9da6b9]">0%</span>
+              </span>
+              <span class="flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                <span id="pct-crm" class="text-[#9da6b9]">0%</span>
+              </span>
             </div>
           </div>
         </div>
@@ -710,14 +863,193 @@
           start.setMonth(0);
           start.setDate(1);
           break;
+        case 'custom':
+          // Usar las fechas personalizadas si existen
+          if (customDateFrom && customDateTo) {
+            start = new Date(customDateFrom);
+            end = new Date(customDateTo);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
+          }
+          break;
       }
       return { start, end };
     }
 
     // --- CARGA DE DATOS ---
+    // Variables globales para rango personalizado
+    let customDateFrom = null;
+    let customDateTo = null;
+
     window.cambiarRangoTiempo = function (range) {
-      cargarDashboard(range);
+      const customRangeEl = document.getElementById('custom-date-range');
+
+      if (range === 'custom') {
+        // Mostrar selector de fechas personalizado
+        customRangeEl.classList.remove('hidden');
+        customRangeEl.classList.add('flex');
+
+        // Establecer valores por defecto (último mes)
+        const now = new Date();
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+        const dateFromEl = document.getElementById('date-from');
+        const dateToEl = document.getElementById('date-to');
+
+        if (!dateFromEl.value) dateFromEl.value = monthAgo.toISOString().split('T')[0];
+        if (!dateToEl.value) dateToEl.value = now.toISOString().split('T')[0];
+
+        // Cargar con las fechas personalizadas
+        aplicarRangoPersonalizado();
+      } else {
+        // Ocultar selector personalizado
+        customRangeEl.classList.add('hidden');
+        customRangeEl.classList.remove('flex');
+        cargarDashboard(range);
+      }
     }
+
+    window.aplicarRangoPersonalizado = function () {
+      const dateFromEl = document.getElementById('date-from');
+      const dateToEl = document.getElementById('date-to');
+
+      if (dateFromEl.value && dateToEl.value) {
+        customDateFrom = new Date(dateFromEl.value);
+        customDateTo = new Date(dateToEl.value);
+        customDateTo.setHours(23, 59, 59, 999);
+
+        cargarDashboard('custom');
+      }
+    }
+
+    // --- NOTIFICACIONES ---
+    window.notificaciones = [];
+
+    async function cargarNotificaciones() {
+      try {
+        const notificationsList = [];
+
+        // 1. Stock bajo
+        const invResponse = await fetchWithAuth('/api/inventory/resumen');
+        if (invResponse.ok) {
+          const productos = await invResponse.json();
+          const stockBajo = productos.filter(p =>
+            p.stock_minimo && Number(p.stock_total || 0) <= Number(p.stock_minimo)
+          );
+          if (stockBajo.length > 0) {
+            notificationsList.push({
+              type: 'warning',
+              icon: 'warning',
+              title: 'Stock Bajo',
+              message: `${stockBajo.length} producto(s) con stock bajo mínimo`,
+              link: 'manager-taller-inventario.html?stock_bajo=1',
+              time: 'Ahora'
+            });
+          }
+        }
+
+        // 2. Órdenes pendientes de entregar
+        const { getOrdenes } = await import('/services/ordenes-service.js');
+        const listasResponse = await getOrdenes({ estado: 'COMPLETADA' });
+        const listasCount = listasResponse.ordenes ? listasResponse.ordenes.length : 0;
+        if (listasCount > 0) {
+          notificationsList.push({
+            type: 'info',
+            icon: 'local_shipping',
+            title: 'Órdenes Listas',
+            message: `${listasCount} orden(es) lista(s) para entregar`,
+            link: 'manager-taller-ordenes-lista.html?estado=COMPLETADA',
+            time: 'Ahora'
+          });
+        }
+
+        // 3. Citas pendientes hoy
+        const citasResponse = await fetchWithAuth('/api/citas?fecha=' + new Date().toISOString().split('T')[0]);
+        if (citasResponse.ok) {
+          const citas = await citasResponse.json();
+          const citasPendientes = citas.filter(c => c.estado === 'pendiente' || c.estado === 'confirmada');
+          if (citasPendientes.length > 0) {
+            notificationsList.push({
+              type: 'info',
+              icon: 'event',
+              title: 'Citas Hoy',
+              message: `${citasPendientes.length} cita(s) programada(s) para hoy`,
+              link: 'manager-taller-citas.html',
+              time: 'Hoy'
+            });
+          }
+        }
+
+        window.notificaciones = notificationsList;
+        renderNotificaciones();
+
+      } catch (error) {
+        console.warn('Error cargando notificaciones:', error);
+      }
+    }
+
+    function renderNotificaciones() {
+      const listEl = document.getElementById('notifications-list');
+      const badgeEl = document.getElementById('notification-badge');
+
+      if (window.notificaciones.length === 0) {
+        listEl.innerHTML = `
+          <div class="p-4 text-center text-[#9da6b9] text-sm">
+            <i class="far fa-bell-slash mr-2"></i>
+            No hay notificaciones nuevas
+          </div>
+        `;
+        badgeEl.classList.add('hidden');
+        return;
+      }
+
+      badgeEl.classList.remove('hidden');
+
+      listEl.innerHTML = window.notificaciones.map((n, idx) => {
+        const iconColor = n.type === 'warning' ? 'text-yellow-500' :
+          n.type === 'error' ? 'text-red-500' : 'text-cyan-500';
+        const bgColor = n.type === 'warning' ? 'bg-yellow-500/10' :
+          n.type === 'error' ? 'bg-red-500/10' : 'bg-cyan-500/10';
+
+        return `
+          <a href="${n.link}" class="block p-4 hover:bg-[#1a1d24] transition-colors cursor-pointer">
+            <div class="flex items-start gap-3">
+              <span class="material-symbols-outlined ${iconColor} ${bgColor} p-2 rounded-lg text-lg">${n.icon}</span>
+              <div class="flex-1">
+                <p class="text-white text-sm font-medium">${n.title}</p>
+                <p class="text-[#9da6b9] text-xs mt-0.5">${n.message}</p>
+                <p class="text-[#6b7280] text-xs mt-1">${n.time}</p>
+              </div>
+            </div>
+          </a>
+        `;
+      }).join('');
+    }
+
+    window.marcarTodasLeidas = function () {
+      window.notificaciones = [];
+      renderNotificaciones();
+    }
+
+    // Toggle panel de notificaciones
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('notifications-btn');
+      const panel = document.getElementById('notifications-panel');
+
+      if (btn && panel) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          panel.classList.toggle('hidden');
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!panel.contains(e.target) && !btn.contains(e.target)) {
+            panel.classList.add('hidden');
+          }
+        });
+      }
+    });
 
     // Cargar estadísticas del dashboard
     // Función global para ocultar el loader
@@ -777,16 +1109,18 @@
           ventas = ventasResponse.ventas || [];
         } catch (e) { console.warn("Error loading ventas", e); }
 
-        // 3. Cargar Compras (Filtradas por fecha - usando api genérica y filtro JS si es necesario)
+        // 3. Cargar Compras (Egresos) - Filtradas por fecha
         let compras = [];
         try {
-          const comprasResponse = await fetchWithAuth(`/api/compras?limit=500`); // Fetch recent
+          const comprasResponse = await fetchWithAuth(`/api/compras?limit=500`);
           if (comprasResponse.ok) {
             const allCompras = await comprasResponse.json();
             compras = allCompras.filter(c => {
               const d = new Date(c.fecha_emision);
-              return d >= start && d <= end && (!sucursalId || c.sucursal_id == sucursalId);
+              // Corregido: usar id_sucursal en lugar de sucursal_id
+              return d >= start && d <= end && (!sucursalId || c.id_sucursal == sucursalId);
             });
+            console.log(`📊 Egresos: ${compras.length} compras encontradas en el período`);
           }
         } catch (e) { console.warn("Error loading compras", e); }
 
@@ -914,6 +1248,9 @@
         // The existing chart is "Pagos Reales".
         cargarRendimientoSemanal();
 
+        // Cargar Income Ledger (Marketplace vs CRM)
+        cargarIncomeLedger(range);
+
         // ✅ Ocultar el loader cuando todo esté cargado
         hidePageLoader();
 
@@ -955,8 +1292,91 @@
       } catch (e) { console.warn('No se pudo cargar stock bajo'); }
     }
 
+    // Cargar datos del Income Ledger (Marketplace vs CRM)
+    async function cargarIncomeLedger(range = 'month') {
+      try {
+        // Mapear range a period del API
+        const periodMap = {
+          'today': 'today',
+          'week': 'week',
+          'month': 'month',
+          'quarter': 'month', // API no tiene quarter, usar month
+          'year': 'year'
+        };
+        const period = periodMap[range] || 'month';
+
+        // Obtener ID de la sucursal seleccionada
+        const sucursalSelect = document.getElementById('sucursal-select');
+        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+
+        // Llamar al API de income-events
+        const url = `/api/income-events/summary?period=${period}${sucursalId ? `&idSucursal=${sucursalId}` : ''}`;
+        const response = await fetchWithAuth(url);
+
+        if (!response.ok) {
+          // Si el usuario no tiene acceso (plan sin marketplace), ocultar la sección
+          if (response.status === 403) {
+            const section = document.getElementById('income-ledger-section');
+            if (section) section.style.display = 'none';
+            return;
+          }
+          throw new Error('Error fetching income ledger');
+        }
+
+        const data = await response.json();
+        const totals = data.totals || {};
+        const porOrigen = totals.por_origen || {};
+
+        // Calcular valores
+        const ingresoMarketplace = porOrigen.marketplace || 0;
+        const ingresoCRM = porOrigen.crm || 0;
+        const totalLedger = totals.total_general || 0;
+
+        // Calcular eventos por tipo (de breakdown si existe)
+        const breakdown = data.breakdown || [];
+        const marketplaceBreakdown = breakdown.find(b => b.origen === 'marketplace');
+        const crmBreakdown = breakdown.find(b => b.origen === 'crm');
+
+        const eventosMarketplace = marketplaceBreakdown ? parseInt(marketplaceBreakdown.num_eventos) : 0;
+        const eventosCRM = crmBreakdown ? parseInt(crmBreakdown.num_eventos) : 0;
+
+        // Calcular porcentajes
+        const pctMarketplace = totalLedger > 0 ? ((ingresoMarketplace / totalLedger) * 100).toFixed(0) : 0;
+        const pctCRM = totalLedger > 0 ? ((ingresoCRM / totalLedger) * 100).toFixed(0) : 0;
+
+        // Actualizar el DOM
+        safeText('stat-ingresos-marketplace', formatCurrency(ingresoMarketplace));
+        safeText('stat-ingresos-crm', formatCurrency(ingresoCRM));
+        safeText('stat-ingresos-ledger-total', formatCurrency(totalLedger));
+        safeText('pct-marketplace', `${pctMarketplace}%`);
+        safeText('pct-crm', `${pctCRM}%`);
+
+        // Actualizar textos de eventos
+        const marketplaceEventosEl = document.getElementById('stat-marketplace-eventos');
+        if (marketplaceEventosEl) {
+          marketplaceEventosEl.innerHTML = `<span class="text-cyan-400">${eventosMarketplace}</span> reservas pagadas`;
+        }
+
+        const crmEventosEl = document.getElementById('stat-crm-eventos');
+        if (crmEventosEl) {
+          crmEventosEl.innerHTML = `<span class="text-amber-400">${eventosCRM}</span> ventas/órdenes procesadas`;
+        }
+
+        // Mostrar la sección si estaba oculta
+        const section = document.getElementById('income-ledger-section');
+        if (section) section.style.display = '';
+
+        console.log('📊 Income Ledger cargado:', { marketplace: ingresoMarketplace, crm: ingresoCRM, total: totalLedger });
+
+      } catch (error) {
+        console.warn('Error cargando income ledger:', error.message);
+        // No ocultar la sección, solo mostrar valores por defecto
+      }
+    }
+
     // Initialize
     cargarDashboard('month'); // Load default
+    cargarNotificaciones(); // Load notifications
 
 
     // Cargar estados personalizados desde localStorage

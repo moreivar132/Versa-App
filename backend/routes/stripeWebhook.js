@@ -13,6 +13,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const stripeService = require('../services/stripeService');
+const incomeService = require('../services/incomeService');
 
 /**
  * POST /api/stripe/webhook
@@ -112,7 +113,7 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
 async function handleBookingCheckoutCompleted(session) {
     console.log('[Stripe] Procesando checkout.session.completed (booking):', session.id);
 
-    const { id_cita, id_cliente, payment_mode } = session.metadata || {};
+    const { id_cita, id_cliente, payment_mode, id_tenant, id_sucursal } = session.metadata || {};
     const paymentIntentId = session.payment_intent;
 
     if (!id_cita) {
@@ -147,6 +148,42 @@ async function handleBookingCheckoutCompleted(session) {
 
         const pago = updateResult.rows[0];
         console.log(`[Stripe] Pago marcado como PAID para cita ${id_cita}`);
+
+        // =====================================================
+        // CREAR INCOME EVENT EN EL LEDGER
+        // =====================================================
+        try {
+            const tenantId = parseInt(id_tenant) || pago.id_tenant;
+            const sucursalId = parseInt(id_sucursal) || pago.id_sucursal;
+            const clienteId = parseInt(id_cliente) || pago.id_cliente;
+            const amount = session.amount_total / 100; // Stripe usa centavos
+
+            await incomeService.createIncomeEvent({
+                idTenant: tenantId,
+                idSucursal: sucursalId,
+                origen: 'marketplace',
+                originType: 'cita',
+                originId: parseInt(id_cita),
+                idCliente: clienteId || null,
+                amount: amount,
+                currency: (session.currency || 'EUR').toUpperCase(),
+                status: 'paid',
+                provider: 'stripe',
+                reference: `stripe:${session.id}`,
+                description: `Pago ${payment_mode === 'DEPOSITO' ? 'señal' : 'reserva'} marketplace`,
+                metadata: {
+                    stripe_session_id: session.id,
+                    stripe_payment_intent_id: paymentIntentId,
+                    payment_mode: payment_mode,
+                    cita_id: id_cita
+                }
+            });
+
+            console.log(`[Stripe] ✅ Income event creado para marketplace: ${amount}€`);
+        } catch (incomeError) {
+            // No fallar el webhook por error en income_event (idempotencia lo manejará)
+            console.error('[Stripe] Error creando income_event:', incomeError.message);
+        }
 
         // Enviar WhatsApp de confirmación de pago (opcional)
         try {

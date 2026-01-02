@@ -447,3 +447,11 @@ export async function payCita(citaId) {
         method: 'POST'
     });
 }
+
+/**
+ * Obtener datos de fidelización
+ * GET /api/cliente/fidelizacion
+ */
+export async function getFidelizacion() {
+    return apiCall('/api/cliente/fidelizacion');
+}

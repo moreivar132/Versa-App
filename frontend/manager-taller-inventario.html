@@ -732,7 +732,7 @@
                 <td class="text-sm text-gray-400">${p.proveedor_nombre || '-'}</td>
                 <td>
                     <div class="stock-container">
-                        <span class="stock-val ${p.stock_minimo && Number(p.stock_total || 0) <= Number(p.stock_minimo) ? 'text-red-400' : 'text-white'}">${Number(p.stock_total || 0)} ${p.unidad_medida || 'Uds'}</span>
+                        <span class="stock-val ${p.stock_minimo && Number(p.stock_total || 0) <= Number(p.stock_minimo) ? 'text-red-400' : 'text-white'}">${Number(p.stock_total || 0)} ${(p.unidad_medida || 'UNIDAD').toUpperCase()}</span>
                         <span class="stock-unit">Stock mínimo: ${Number(p.stock_minimo || 0)}</span>
                     </div>
                 </td>

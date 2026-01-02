@@ -113,6 +113,9 @@ async function loadSucursalSelector() {
         // Load initial data
         await loadMarketplaceData();
 
+        // Setup drag & drop for photos
+        setupDragAndDrop();
+
     } catch (error) {
         console.error('Error loading sucursal selector:', error);
 
@@ -199,18 +202,121 @@ function renderFotos() {
     const container = document.getElementById('fotos-container');
 
     if (fotosArray.length === 0) {
-        container.innerHTML = '<p class="text-[#9da6b9] text-sm">No hay fotos agregadas</p>';
+        container.innerHTML = '<p class="text-[#9da6b9] text-sm italic">No hay fotos agregadas todavía</p>';
         return;
     }
 
+    // Guardar fotos en window para acceso desde onclick
+    window._fotosArray = fotosArray;
+
     container.innerHTML = fotosArray.map((url, index) => `
-    <div class="photo-preview">
+    <div class="photo-preview" onclick="window.ampliarFoto(${index})" title="Clic para ampliar">
       <img src="${url}" alt="Foto ${index + 1}" onerror="this.src='https://via.placeholder.com/100?text=Error'">
-      <button class="photo-preview-remove" onclick="eliminarFoto(${index})">
+      <button class="photo-preview-remove" onclick="event.stopPropagation(); eliminarFoto(${index})" title="Eliminar foto">
         <i class="fas fa-times"></i>
       </button>
     </div>
   `).join('');
+}
+
+// Ampliar foto en modal lightbox
+window.ampliarFoto = function (index) {
+    const url = window._fotosArray[index];
+    if (!url) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'photo-modal-overlay animate-fade-in';
+    modal.onclick = () => modal.remove();
+    modal.innerHTML = `
+        <img src="${url}" alt="Foto ampliada">
+        <button class="absolute top-4 right-4 text-white hover:text-[var(--brand-orange)] transition-colors p-2 bg-black/50 rounded-full" onclick="this.parentElement.remove(); event.stopPropagation();">
+            <span class="material-symbols-outlined" style="font-size: 32px;">close</span>
+        </button>
+        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            ${window._fotosArray.map((_, i) => `
+                <button class="w-2 h-2 rounded-full ${i === index ? 'bg-[var(--brand-orange)]' : 'bg-white/50'} transition-colors"
+                        onclick="event.stopPropagation(); this.closest('.photo-modal-overlay').remove(); window.ampliarFoto(${i});"></button>
+            `).join('')}
+        </div>
+    `;
+    document.body.appendChild(modal);
+};
+
+// Manejar subida de archivos desde ordenador
+window.handleFileUpload = async function (event) {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
+    const MAX_FOTOS = 6;
+
+    if (fotosArray.length + files.length > MAX_FOTOS) {
+        showToast(`Máximo ${MAX_FOTOS} fotos permitidas`, 'error');
+        return;
+    }
+
+    for (const file of files) {
+        // Validar tipo
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            showToast(`${file.name}: Formato no soportado`, 'error');
+            continue;
+        }
+
+        // Validar tamaño
+        if (file.size > MAX_SIZE) {
+            showToast(`${file.name}: Excede 2 MB`, 'error');
+            continue;
+        }
+
+        // Convertir a base64
+        try {
+            const base64 = await fileToBase64(file);
+            fotosArray.push(base64);
+            showToast(`${file.name} agregada`, 'success');
+        } catch (err) {
+            console.error('Error converting file:', err);
+            showToast(`Error procesando ${file.name}`, 'error');
+        }
+    }
+
+    renderFotos();
+    event.target.value = ''; // Reset input
+};
+
+// Convertir archivo a base64
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
+
+// Drag & drop handlers
+function setupDragAndDrop() {
+    const zone = document.getElementById('foto-upload-zone');
+    if (!zone) return;
+
+    zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('dragover');
+    });
+
+    zone.addEventListener('dragleave', () => {
+        zone.classList.remove('dragover');
+    });
+
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('dragover');
+
+        const input = document.getElementById('foto-file-input');
+        if (input && e.dataTransfer.files.length > 0) {
+            input.files = e.dataTransfer.files;
+            handleFileUpload({ target: input });
+        }
+    });
 }
 
 window.agregarFoto = function () {
@@ -227,6 +333,12 @@ window.agregarFoto = function () {
         new URL(url);
     } catch (e) {
         showToast('URL inválida', 'error');
+        return;
+    }
+
+    // Check max fotos
+    if (fotosArray.length >= 6) {
+        showToast('Máximo 6 fotos permitidas', 'error');
         return;
     }
 

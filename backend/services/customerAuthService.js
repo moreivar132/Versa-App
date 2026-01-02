@@ -7,6 +7,8 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const customerRepo = require('../repositories/customerRepository');
 const { generateCustomerToken } = require('../middleware/customerAuth');
+const emailAutomationService = require('./emailAutomationService');
+const { APP_URL } = require('../config/urls');
 
 class CustomerAuthService {
 
@@ -86,6 +88,9 @@ class CustomerAuthService {
         // Generar token
         const token = generateCustomerToken(customer);
 
+        // Disparar email de bienvenida (async, no bloquea)
+        this.sendWelcomeEmail(customer.id_cliente, customer.nombre, data.email, 1);
+
         return {
             token,
             customer: {
@@ -95,6 +100,29 @@ class CustomerAuthService {
                 telefono: data.telefono || null
             }
         };
+    }
+
+    /**
+     * Enviar email de bienvenida (no bloquea registro)
+     */
+    async sendWelcomeEmail(id_cliente, nombre, email, id_tenant) {
+        try {
+            await emailAutomationService.triggerEvent({
+                id_tenant: id_tenant || 1,
+                event_code: 'CLIENT_REGISTERED',
+                id_cliente,
+                to_email: email,
+                variables: {
+                    nombre: nombre || 'Cliente',
+                    portal_url: `${APP_URL}/cliente-dashboard.html`,
+                    soporte_email: 'soporte@goversa.es',
+                    whatsapp: '+34 XXX XXX XXX'
+                }
+            });
+        } catch (error) {
+            // Log error pero no fallar el registro
+            console.error('[CustomerAuth] Error enviando welcome email:', error);
+        }
     }
 
     /**
@@ -156,7 +184,9 @@ class CustomerAuthService {
 
         await customerRepo.saveResetToken(auth.id, resetToken, expiresAt);
 
-        // TODO: Enviar email con el link de reset (integrar con servicio de email en Paso 7)
+        // Disparar email de reset (async, no bloquea)
+        this.sendPasswordResetEmail(auth.id_cliente, auth.nombre, email, resetToken, 1);
+
         console.log(`[DEV] Reset token for ${email}: ${resetToken}`);
 
         return {
@@ -164,6 +194,31 @@ class CustomerAuthService {
             // Solo para desarrollo:
             dev_token: process.env.NODE_ENV !== 'production' ? resetToken : undefined
         };
+    }
+
+    /**
+     * Enviar email de reset de password (no bloquea)
+     */
+    async sendPasswordResetEmail(id_cliente, nombre, email, resetToken, id_tenant) {
+        try {
+            const reset_url = `${APP_URL}/cliente-reset.html?token=${resetToken}`;
+
+            await emailAutomationService.triggerEvent({
+                id_tenant: id_tenant || 1,
+                event_code: 'PASSWORD_RESET_REQUESTED',
+                id_cliente,
+                to_email: email,
+                variables: {
+                    nombre: nombre || 'Cliente',
+                    reset_url,
+                    exp_minutes: '60',
+                    reset_token: resetToken  // Para idempotencia
+                }
+            });
+        } catch (error) {
+            // Log error pero no fallar el proceso
+            console.error('[CustomerAuth] Error enviando reset email:', error);
+        }
     }
 
     /**

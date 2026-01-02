@@ -92,10 +92,26 @@
         },
         {
             type: 'link',
+            id: 'fidelizacion',
+            label: 'Fidelización',
+            icon: 'fa-gift',
+            href: 'manager-taller-fidelizacion.html'
+        },
+        {
+            type: 'link',
             id: 'marketplace',
             label: 'Marketplace',
             icon: 'fa-store',
             href: 'manager-taller-marketplace.html'
+        },
+        {
+            type: 'dropdown',
+            id: 'marketing',
+            label: 'Marketing',
+            icon: 'fa-bullhorn',
+            items: [
+                { label: 'Email Automations', href: 'manager-marketing-email.html' }
+            ]
         },
         {
             type: 'link',

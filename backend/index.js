@@ -67,10 +67,21 @@ app.use('/api/trabajadores', require('./routes/trabajadores'));
 app.use('/api/facturas', require('./routes/facturas'));
 app.use('/api/cuentas-corrientes', require('./routes/cuentasCorrientes'));
 app.use('/api/ventas', require('./routes/ventas'));
+app.use('/api/income-events', verifyJWT, require('./routes/incomeEvents'));
 
 // Marketplace routes (público y admin)
 app.use('/api/marketplace', require('./routes/marketplace'));
 app.use('/api/marketplace/admin', verifyJWT, require('./routes/marketplaceAdmin'));
+
+// Marketing / Email Automations (admin)
+app.use('/api/marketing/email', verifyJWT, require('./routes/marketingEmail'));
+app.use('/api/marketing/campaigns', verifyJWT, require('./routes/emailCampaign'));
+
+// Fidelización - Public (tarjeta wallet, sin auth)
+app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
+
+// Fidelización - Admin (gestión miembros/puntos/promos, con JWT)
+app.use('/api/admin/fidelizacion', verifyJWT, require('./routes/fidelizacionAdmin'));
 
 // Customer Portal routes (Moved to top)
 // const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');
