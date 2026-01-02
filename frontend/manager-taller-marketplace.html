@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marketplace - Goversa Taller Manager</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Guard.js - Autenticación -->
+    <script src="/guard.js"></script>
+
+    <!-- Estilos Globales del Manager -->
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        /* Tabs */
+        .tab-button {
+            @apply px-4 py-2 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer;
+        }
+
+        .tab-button.active {
+            @apply text-white border-[var(--brand-orange)];
+        }
+
+        .tab-button:hover:not(.active) {
+            @apply text-white;
+        }
+
+        .tab-content {
+            @apply hidden;
+        }
+
+        .tab-content.active {
+            @apply block;
+        }
+
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #282e39;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: var(--brand-orange);
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Photo preview - Thumbnails pequeños */
+        .photo-preview {
+            @apply relative w-16 h-16 rounded-lg overflow-hidden border border-[#282e39] group cursor-pointer transition-transform hover:scale-105;
+        }
+
+        .photo-preview img {
+            @apply w-full h-full object-cover;
+        }
+
+        .photo-preview-remove {
+            @apply absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-xs;
+        }
+
+        /* Photo Modal Lightbox */
+        .photo-modal-overlay {
+            @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .photo-modal-overlay img {
+            @apply max-w-full max-h-[90vh] object-contain rounded-lg;
+        }
+
+        /* File upload area */
+        .file-upload-zone {
+            @apply border-2 border-dashed border-[#282e39] rounded-lg p-4 text-center cursor-pointer transition-all;
+        }
+
+        .file-upload-zone:hover {
+            @apply border-[var(--brand-orange)] bg-[var(--brand-orange)]/5;
+        }
+
+        .file-upload-zone.dragover {
+            @apply border-[var(--brand-orange)] bg-[var(--brand-orange)]/10;
+        }
+
+        /* Loading spinner */
+        .spinner-border {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: text-bottom;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Toast notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        .toast.success {
+            background-color: #10b981;
+        }
+
+        .toast.error {
+            background-color: #ef4444;
+        }
+
+        .toast.info {
+            background-color: #3b82f6;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111318;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #282e39;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff5f00;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: "#ff5f00",
+                            dark: "#0b0d11",
+                            surface: "#111318",
+                            border: "#282e39",
+                            input: "#1a1d24",
+                            text: "#ffffff",
+                            muted: "#9da6b9"
+                        }
+                    },
+                    fontFamily: {
+                        main: ["Montserrat", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-[#0b0d11] font-[Montserrat] text-white">
+
+    <!-- PAGE LOADER -->
+    <div id="page-loader" class="page-loader-overlay">
+        <div class="loader-logo">
+            <img src="assets/versa-v-logo.png" alt="Versa Logo">
+        </div>
+        <div class="loader-wrapper">
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="shadow"></div>
+            <div class="shadow"></div>
+            <div class="shadow"></div>
+        </div>
+        <p class="loader-text">Cargando marketplace...</p>
+    </div>
+
+    <div class="flex h-screen w-full">
+
+        <!-- SIDEBAR (Copiado del template) -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">Goversa
+                            </h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Chat
+                                    Clientes</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-ventas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva
+                                    Venta</a>
+                                <a href="manager-taller-ventas-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Ventas</a>
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva
+                                    Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-caja.html">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-cuentas-corrientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Cuentas Corrientes</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+
+                        <!-- MARKETPLACE - ACTIVE -->
+                        <a class="flex items-center gap-3 px-3 py-2 bg-[#282e39] text-white rounded-lg transition-colors border-l-2 border-[var(--brand-orange)]"
+                            href="manager-taller-marketplace.html">
+                            <span class="icon-container"><i class="fas fa-store text-[var(--brand-orange)]"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Marketplace</p>
+                        </a>
+
+                        <!-- Marketing Automations -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('marketing-submenu')">
+                                <span class="icon-container"><i class="fas fa-bullhorn"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Marketing</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="marketing-arrow"></i>
+                            </a>
+                            <div id="marketing-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-marketing-email.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Email Automations</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-configuracion.html">
+                            <span class="icon-container"><i class="fas fa-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Configuración</p>
+                        </a>
+                    </nav>
+                </div>
+
+                <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs"
+                            id="user-avatar">
+                            IM
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate" id="user-name">Usuario</span>
+                            <span class="text-gray-500 text-xs truncate" id="user-role">admin</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
+            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+
+                <!-- Header -->
+                <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex flex-col gap-1">
+                            <h1 class="text-2xl font-bold tracking-tight text-white">Marketplace</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal">Configura tu perfil público, servicios,
+                                ofertas y reglas de
+                                reserva</p>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Sucursal Selector -->
+                <div class="flex justify-center mb-6">
+                    <div id="sucursal-container"
+                        class="flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]">
+                        <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
+                        <span class="text-white font-medium text-sm">Cargando...</span>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="border-b border-[#282e39] mb-6">
+                    <div class="flex gap-4 overflow-x-auto">
+                        <button class="tab-button active" data-tab="perfil">
+                            <i class="fas fa-building mr-2"></i>Perfil Público
+                        </button>
+                        <button class="tab-button" data-tab="servicios">
+                            <i class="fas fa-wrench mr-2"></i>Servicios
+                        </button>
+                        <button class="tab-button" data-tab="ofertas">
+                            <i class="fas fa-tags mr-2"></i>Ofertas
+                        </button>
+                        <button class="tab-button" data-tab="reglas">
+                            <i class="fas fa-cog mr-2"></i>Reglas
+                        </button>
+                        <button class="tab-button" data-tab="resenas">
+                            <i class="fas fa-star mr-2"></i>Reseñas
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB 1: PERFIL PÚBLICO -->
+                <div id="tab-perfil" class="tab-content active">
+                    <div class="grid grid-cols-1 gap-6">
+
+                        <!-- Card: Estado y Visibilidad -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">visibility</span>
+                                Estado y Visibilidad
+                            </h3>
+
+                            <div class="flex items-center justify-between p-4 bg-[#1a1d24] rounded-lg">
+                                <div>
+                                    <p class="text-white font-medium">Marketplace Activo</p>
+                                    <p class="text-sm text-[#9da6b9]">Aparecer en búsquedas públicas</p>
+                                </div>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="marketplace-activo">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Card: Información Básica -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">info</span>
+                                Información Básica
+                            </h3>
+
+                            <div class="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">Título Público
+                                        (opcional)</label>
+                                    <input type="text" id="titulo-publico"
+                                        placeholder="Ej: Taller MotoExpress - Centro Madrid"
+                                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">Descripción Pública</label>
+                                    <textarea id="descripcion-publica" rows="4"
+                                        placeholder="Describe tu taller, especialidades, años de experiencia..."
+                                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors resize-none"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card: Datos de Contacto -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">contact_phone</span>
+                                Datos de Contacto Público
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">Teléfono</label>
+                                    <input type="tel" id="telefono-publico" placeholder="+34 91 123 45 67"
+                                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">WhatsApp</label>
+                                    <input type="tel" id="whatsapp-publico" placeholder="+34 600 00 00 00"
+                                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-white mb-2">Email</label>
+                                    <input type="email" id="email-publico" placeholder="contacto@taller.com"
+                                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card: Ubicación GPS -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">location_on</span>
+                                Ubicación GPS
+                            </h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">Latitud</label>
+                                    <input type="number" step="0.000001" id="lat" placeholder="40.416775"
+                                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-white mb-2">Longitud</label>
+                                    <input type="number" step="0.000001" id="lng" placeholder="-3.703790"
+                                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-[#9da6b9] mt-2">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Las coordenadas GPS permiten que los clientes encuentren tu taller en el mapa
+                            </p>
+                        </div>
+
+                        <!-- Card: Fotos -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">photo_library</span>
+                                Fotos del Taller
+                            </h3>
+
+                            <!-- Opción 1: Subir desde el ordenador -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-white mb-2">
+                                    <i class="fas fa-upload mr-2 text-[var(--brand-orange)]"></i>Subir desde tu
+                                    ordenador
+                                </label>
+                                <div id="foto-upload-zone" class="file-upload-zone"
+                                    onclick="document.getElementById('foto-file-input').click()">
+                                    <input type="file" id="foto-file-input" accept="image/jpeg,image/png,image/webp"
+                                        multiple class="hidden" onchange="handleFileUpload(event)">
+                                    <i class="fas fa-cloud-upload-alt text-3xl text-[#9da6b9] mb-2"></i>
+                                    <p class="text-[#9da6b9] text-sm">Haz clic o arrastra tus imágenes aquí</p>
+                                </div>
+                                <p class="text-xs text-[#9da6b9] mt-2 flex items-center gap-2">
+                                    <i class="fas fa-info-circle text-[var(--brand-orange)]"></i>
+                                    <span>Formatos: JPG, PNG, WebP | Tamaño máximo: <strong>2 MB</strong> por imagen |
+                                        Máximo 6 fotos</span>
+                                </p>
+                            </div>
+
+                            <!-- Separador -->
+                            <div class="flex items-center gap-3 my-4">
+                                <div class="flex-1 border-t border-[#282e39]"></div>
+                                <span class="text-[#9da6b9] text-sm">o</span>
+                                <div class="flex-1 border-t border-[#282e39]"></div>
+                            </div>
+
+                            <!-- Opción 2: URL -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-white mb-2">
+                                    <i class="fas fa-link mr-2 text-[var(--brand-orange)]"></i>Agregar por URL
+                                </label>
+                                <div class="flex gap-2">
+                                    <input type="url" id="nueva-foto-url" placeholder="https://ejemplo.com/foto.jpg"
+                                        class="flex-1 px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                    <button onclick="agregarFoto()"
+                                        class="px-4 py-3 bg-[var(--brand-orange)] text-white rounded-lg font-medium hover:bg-[#e05300] transition-colors">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Vista previa de fotos (miniaturas) -->
+                            <div class="mt-4">
+                                <label class="block text-sm font-medium text-[#9da6b9] mb-2">Fotos cargadas (clic para
+                                    ampliar)</label>
+                                <div id="fotos-container" class="flex flex-wrap gap-2">
+                                    <!-- Photos will be rendered here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de Acción -->
+                        <div class="flex gap-4 flex-wrap">
+                            <button onclick="guardarPerfil()"
+                                class="flex-1 min-w-[200px] px-6 py-4 bg-[var(--brand-orange)] text-white rounded-lg font-bold hover:bg-[#e05300] transition-colors flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">save</span>
+                                Guardar Perfil
+                            </button>
+
+                            <button onclick="verComoCliente()"
+                                class="px-6 py-4 bg-[#282e39] text-white rounded-lg font-medium hover:bg-[#3a4150] transition-colors flex items-center gap-2">
+                                <span class="material-symbols-outlined">visibility</span>
+                                Ver como Cliente
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 2: SERVICIOS -->
+                <div id="tab-servicios" class="tab-content">
+                    <div class="grid grid-cols-1 gap-6">
+
+                        <!-- Card: Mis Servicios -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[var(--brand-orange)]">build</span>
+                                    Servicios Activos
+                                </h3>
+                                <button onclick="abrirModalNuevoServicio()"
+                                    class="px-4 py-2 bg-[var(--brand-orange)] text-white rounded-lg font-medium hover:bg-[#e05300] transition-colors flex items-center gap-2">
+                                    <i class="fas fa-plus"></i>
+                                    Agregar Servicio
+                                </button>
+                            </div>
+
+                            <div id="servicios-lista" class="space-y-3">
+                                <div class="flex items-center justify-center py-12 text-[#9da6b9]">
+                                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                                    Cargando servicios...
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 3: OFERTAS -->
+                <div id="tab-ofertas" class="tab-content">
+                    <div class="grid grid-cols-1 gap-6">
+
+                        <!-- Card: Promociones Activas -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                                    <span
+                                        class="material-symbols-outlined text-[var(--brand-orange)]">local_offer</span>
+                                    Promociones Activas
+                                </h3>
+                                <button onclick="abrirModalNuevoPromo()"
+                                    class="px-4 py-2 bg-[var(--brand-orange)] text-white rounded-lg font-medium hover:bg-[#e05300] transition-colors flex items-center gap-2">
+                                    <i class="fas fa-plus"></i>
+                                    Nueva Promoción
+                                </button>
+                            </div>
+
+                            <div id="promociones-lista" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="col-span-full flex items-center justify-center py-12 text-[#9da6b9]">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    No hay promociones activas
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 4: REGLAS -->
+                <div id="tab-reglas" class="tab-content">
+                    <div class="grid grid-cols-1 gap-6">
+
+                        <!-- Card: Configuración de Reservas -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span
+                                    class="material-symbols-outlined text-[var(--brand-orange)]">event_available</span>
+                                Configuración de Reservas
+                            </h3>
+
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between p-4 bg-[#1a1d24] rounded-lg">
+                                    <div>
+                                        <p class="text-white font-medium">Reservas Online</p>
+                                        <p class="text-sm text-[#9da6b9]">Permitir que clientes reserven desde el
+                                            marketplace</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="reserva-online-activa" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-white mb-2">Anticipación Mínima
+                                            (horas)</label>
+                                        <input type="number" id="min-horas-anticipacion" value="2" min="0"
+                                            class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                        <p class="text-xs text-[#9da6b9] mt-1">Horas antes de la cita para permitir
+                                            reserva</p>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-white mb-2">Límite de Cancelación
+                                            (horas)</label>
+                                        <input type="number" id="cancelacion-horas-limite" value="24" min="0"
+                                            class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                                        <p class="text-xs text-[#9da6b9] mt-1">Horas antes de la cita para poder
+                                            cancelar</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card: Política de Cancelación -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">description</span>
+                                Política de Cancelación
+                            </h3>
+
+                            <textarea id="politica-cancelacion" rows="4"
+                                placeholder="Describe tu política de cancelación..."
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors resize-none"></textarea>
+                        </div>
+
+                        <!-- Card: Horarios de Atención -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">schedule</span>
+                                Horarios de Atención
+                            </h3>
+                            <p class="text-sm text-[#9da6b9] mb-4">Define los horarios en que aceptas reservas online
+                            </p>
+
+                            <div class="space-y-3" id="horarios-container">
+                                <!-- Lunes -->
+                                <div class="flex items-center gap-4 p-3 bg-[#1a1d24] rounded-lg">
+                                    <input type="checkbox" id="horario-lunes-activo" checked
+                                        class="w-4 h-4 text-[var(--brand-orange)] bg-[#1a1d24] border-[#282e39] rounded">
+                                    <span class="w-24 text-white font-medium">Lunes</span>
+                                    <input type="time" id="horario-lunes-inicio" value="09:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                    <span class="text-[#9da6b9]">a</span>
+                                    <input type="time" id="horario-lunes-fin" value="19:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                </div>
+
+                                <!-- Martes -->
+                                <div class="flex items-center gap-4 p-3 bg-[#1a1d24] rounded-lg">
+                                    <input type="checkbox" id="horario-martes-activo" checked
+                                        class="w-4 h-4 text-[var(--brand-orange)] bg-[#1a1d24] border-[#282e39] rounded">
+                                    <span class="w-24 text-white font-medium">Martes</span>
+                                    <input type="time" id="horario-martes-inicio" value="09:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                    <span class="text-[#9da6b9]">a</span>
+                                    <input type="time" id="horario-martes-fin" value="19:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                </div>
+
+                                <!-- Miércoles -->
+                                <div class="flex items-center gap-4 p-3 bg-[#1a1d24] rounded-lg">
+                                    <input type="checkbox" id="horario-miercoles-activo" checked
+                                        class="w-4 h-4 text-[var(--brand-orange)] bg-[#1a1d24] border-[#282e39] rounded">
+                                    <span class="w-24 text-white font-medium">Miércoles</span>
+                                    <input type="time" id="horario-miercoles-inicio" value="09:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                    <span class="text-[#9da6b9]">a</span>
+                                    <input type="time" id="horario-miercoles-fin" value="19:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                </div>
+
+                                <!-- Jueves -->
+                                <div class="flex items-center gap-4 p-3 bg-[#1a1d24] rounded-lg">
+                                    <input type="checkbox" id="horario-jueves-activo" checked
+                                        class="w-4 h-4 text-[var(--brand-orange)] bg-[#1a1d24] border-[#282e39] rounded">
+                                    <span class="w-24 text-white font-medium">Jueves</span>
+                                    <input type="time" id="horario-jueves-inicio" value="09:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                    <span class="text-[#9da6b9]">a</span>
+                                    <input type="time" id="horario-jueves-fin" value="19:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                </div>
+
+                                <!-- Viernes -->
+                                <div class="flex items-center gap-4 p-3 bg-[#1a1d24] rounded-lg">
+                                    <input type="checkbox" id="horario-viernes-activo" checked
+                                        class="w-4 h-4 text-[var(--brand-orange)] bg-[#1a1d24] border-[#282e39] rounded">
+                                    <span class="w-24 text-white font-medium">Viernes</span>
+                                    <input type="time" id="horario-viernes-inicio" value="09:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                    <span class="text-[#9da6b9]">a</span>
+                                    <input type="time" id="horario-viernes-fin" value="19:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                </div>
+
+                                <!-- Sábado -->
+                                <div class="flex items-center gap-4 p-3 bg-[#1a1d24] rounded-lg">
+                                    <input type="checkbox" id="horario-sabado-activo"
+                                        class="w-4 h-4 text-[var(--brand-orange)] bg-[#1a1d24] border-[#282e39] rounded">
+                                    <span class="w-24 text-white font-medium">Sábado</span>
+                                    <input type="time" id="horario-sabado-inicio" value="09:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                    <span class="text-[#9da6b9]">a</span>
+                                    <input type="time" id="horario-sabado-fin" value="14:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                </div>
+
+                                <!-- Domingo -->
+                                <div class="flex items-center gap-4 p-3 bg-[#1a1d24] rounded-lg">
+                                    <input type="checkbox" id="horario-domingo-activo"
+                                        class="w-4 h-4 text-[var(--brand-orange)] bg-[#1a1d24] border-[#282e39] rounded">
+                                    <span class="w-24 text-white font-medium">Domingo</span>
+                                    <input type="time" id="horario-domingo-inicio" value="10:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                    <span class="text-[#9da6b9]">a</span>
+                                    <input type="time" id="horario-domingo-fin" value="14:00"
+                                        class="px-3 py-2 bg-[#282e39] border border-[#282e39] rounded text-white text-sm focus:border-[var(--brand-orange)]">
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-[#9da6b9] mt-3">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Desmarca un día para indicar que está cerrado
+                            </p>
+                        </div>
+
+                        <!-- Card: Texto de Horario Público -->
+                        <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">edit_note</span>
+                                Horario Público (texto)
+                            </h3>
+                            <p class="text-sm text-[#9da6b9] mb-3">Este texto se mostrará en tu perfil público</p>
+
+                            <input type="text" id="horario-texto-publico"
+                                placeholder="Ej: L-V: 09:00-19:00, S: 09:00-14:00"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                        </div>
+
+                        <!-- Botón Guardar -->
+                        <button onclick="guardarReglas()"
+                            class="w-full px-6 py-4 bg-[var(--brand-orange)] text-white rounded-lg font-bold hover:bg-[#e05300] transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">save</span>
+                            Guardar Configuración
+                        </button>
+
+                    </div>
+                </div>
+
+                <!-- TAB 5: RESEÑAS -->
+                <div id="tab-resenas" class="tab-content">
+                    <div class="rounded-xl border border-[#282e39] bg-[#111318] p-6">
+                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[var(--brand-orange)]">reviews</span>
+                            Reseñas de Clientes
+                        </h3>
+
+                        <div id="resenas-container" class="space-y-4">
+                            <div class="flex items-center justify-center py-12 text-[#9da6b9]">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                No hay reseñas aún
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal: Nuevo Servicio -->
+    <div id="modal-nuevo-servicio" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+        style="background: rgba(0,0,0,0.8);">
+        <div class="bg-[#111318] rounded-2xl border border-[#282e39] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-6 border-b border-[#282e39]">
+                <h2 class="text-xl font-bold text-white">Agregar Servicio</h2>
+                <button onclick="cerrarModalServicio()" class="text-[#9da6b9] hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-white mb-2">Selecciona un Servicio</label>
+                    <select id="servicio-catalogo-select"
+                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Precio (€)</label>
+                        <input type="number" step="0.01" id="servicio-precio" placeholder="45.00"
+                            class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Duración (min)</label>
+                        <input type="number" id="servicio-duracion" placeholder="30"
+                            class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="servicio-precio-desde"
+                        class="w-4 h-4 text-[var(--brand-orange)] bg-[#1a1d24] border-[#282e39] rounded focus:ring-[var(--brand-orange)]">
+                    <label class="text-sm text-white">Precio "desde" (variable)</label>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button onclick="guardarNuevoServicio()"
+                        class="flex-1 px-6 py-3 bg-[var(--brand-orange)] text-white rounded-lg font-bold hover:bg-[#e05300] transition-colors">
+                        Guardar
+                    </button>
+                    <button onclick="cerrarModalServicio()"
+                        class="px-6 py-3 bg-[#282e39] text-white rounded-lg font-medium hover:bg-[#3a4150] transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Nueva Promoción -->
+    <div id="modal-nueva-promo" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+        style="background: rgba(0,0,0,0.8);">
+        <div class="bg-[#111318] rounded-2xl border border-[#282e39] w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between p-6 border-b border-[#282e39]">
+                <h2 class="text-xl font-bold text-white">Nueva Promoción</h2>
+                <button onclick="cerrarModalPromo()" class="text-[#9da6b9] hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-white mb-2">Título</label>
+                    <input type="text" id="promo-titulo" placeholder="20% descuento en cambio de aceite"
+                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-white mb-2">Descripción</label>
+                    <textarea id="promo-descripcion" rows="3" placeholder="Válido de lunes a viernes hasta fin de mes"
+                        class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-[#9da6b9] focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Tipo de Descuento</label>
+                        <select id="promo-tipo"
+                            class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                            <option value="PORCENTAJE">Porcentaje (%)</option>
+                            <option value="FIJO">Fijo (€)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Valor</label>
+                        <input type="number" step="0.01" id="promo-valor" placeholder="20"
+                            class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Fecha Inicio</label>
+                        <input type="date" id="promo-inicio"
+                            class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Fecha Fin</label>
+                        <input type="date" id="promo-fin"
+                            class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)] transition-colors">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button onclick="guardarNuevaPromo()"
+                        class="flex-1 px-6 py-3 bg-[var(--brand-orange)] text-white rounded-lg font-bold hover:bg-[#e05300] transition-colors">
+                        Crear Promoción
+                    </button>
+                    <button onclick="cerrarModalPromo()"
+                        class="px-6 py-3 bg-[#282e39] text-white rounded-lg font-medium hover:bg-[#3a4150] transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Sidebar toggle
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isCollapsed = false;
+
+        toggleBtn.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                sidebarTexts.forEach(el => el.classList.add('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                });
+            } else {
+                sidebar.classList.add('w-64');
+                sidebar.classList.remove('w-20');
+                sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            }
+        });
+
+        // Tabs
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+
+                //Remove active from all
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                // Add active to clicked
+                button.classList.add('active');
+                document.getElementById(`tab-${targetTab}`).classList.add('active');
+            });
+        });
+
+        // Logout
+        document.addEventListener('click', (e) => {
+            const logoutLink = e.target.closest('[data-logout]');
+            if (logoutLink) {
+                e.preventDefault();
+                if (typeof clearSession === 'function') clearSession();
+                window.location.href = '/login.html';
+            }
+        });
+    </script>
+
+    <script type="module" src="/manager-taller-marketplace.js"></script>
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

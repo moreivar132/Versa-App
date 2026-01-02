@@ -262,7 +262,9 @@ router.get('/search', verifyJWT, async (req, res) => {
             params = [id_tenant, searchTerm];
         }
 
+        console.log(`Search request - Term: "${q}", Tenant: ${id_tenant}, SuperAdmin: ${isSuperAdmin}`);
         const result = await pool.query(query, params);
+        console.log(`Search results count: ${result.rows.length}`);
         res.json(result.rows);
     } catch (error) {
         console.error('Error en búsqueda de clientes:', error);

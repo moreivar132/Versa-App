@@ -1,0 +1,1868 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing - Email Automations | Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-deep);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-orange);
+        }
+
+        .card {
+            background: rgba(26, 26, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: #9da6b9;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Tabs */
+        .config-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 16px;
+        }
+
+        .config-tab {
+            padding: 10px 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #9da6b9;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .config-tab:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .config-tab.active {
+            color: #fff;
+            background: var(--brand-orange);
+            border-color: var(--brand-orange);
+        }
+
+        .config-panel {
+            display: none;
+        }
+
+        .config-panel.active {
+            display: block;
+        }
+
+        /* Form Inputs */
+        .form-input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background-color: rgba(40, 40, 45, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            box-shadow: 0 0 0 3px rgba(255, 101, 43, 0.15);
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(30, 30, 40, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-label {
+            flex: 1;
+        }
+
+        .toggle-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .toggle-description {
+            font-size: 12px;
+            color: #9da6b9;
+            line-height: 1.5;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #3a3a4a;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked+.toggle-slider {
+            background-color: var(--brand-orange);
+        }
+
+        input:checked+.toggle-slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Template Editor */
+        .template-editor {
+            font-family: 'Consolas', 'Monaco', monospace;
+            min-height: 300px;
+            resize: vertical;
+        }
+
+        /* Logs Table */
+        .logs-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logs-table th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #9da6b9;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .logs-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            color: #fff;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        .logs-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-sent {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .status-failed {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
+        .status-queued {
+            background: rgba(234, 179, 8, 0.15);
+            color: #fbbf24;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #1e242d 0%, #282e39 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            margin-top: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success {
+            border-left: 4px solid #22c55e;
+        }
+
+        .toast.error {
+            border-left: 4px solid #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .btn-primary {
+            background: var(--brand-orange);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #e05300;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9da6b9;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .info-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .info-banner i {
+            color: #60a5fa;
+            font-size: 18px;
+            margin-top: 2px;
+        }
+
+        .info-banner-text {
+            flex: 1;
+        }
+
+        .info-banner-text h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #93c5fd;
+            margin-bottom: 4px;
+        }
+
+        .info-banner-text p {
+            font-size: 12px;
+            color: #93c5fd;
+            opacity: 0.8;
+            line-height: 1.5;
+        }
+
+        /* Preview Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: #111318;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow: auto;
+            padding: 0;
+        }
+
+        .modal-body iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            background: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Preview Modal -->
+    <div id="previewModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="text-lg font-semibold text-white">Vista Previa del Email</h3>
+                <button onclick="closePreviewModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <iframe id="previewFrame"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Template Modal -->
+    <div id="newTemplateModal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="text-lg font-semibold text-white">
+                    <i class="fas fa-plus-circle text-[var(--brand-orange)] mr-2"></i>
+                    Nueva Plantilla
+                </h3>
+                <button onclick="closeNewTemplateModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 24px; max-height: 70vh; overflow-y: auto;">
+                <div class="space-y-4">
+                    <!-- Código -->
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">
+                            Código <span class="text-red-500">*</span>
+                            <span class="text-xs text-gray-400">(MAYÚSCULAS_CON_GUIONES)</span>
+                        </label>
+                        <input type="text" id="new-template-code" class="form-input" placeholder="PROMO_NAVIDAD"
+                            style="text-transform: uppercase;">
+                    </div>
+
+                    <!-- Nombre -->
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">
+                            Nombre <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="new-template-name" class="form-input" placeholder="Promoción de Navidad">
+                    </div>
+
+                    <!-- Categoría -->
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Categoría</label>
+                        <select id="new-template-category" class="form-input">
+                            <option value="marketing">📣 Marketing</option>
+                            <option value="reminder">🔔 Recordatorio</option>
+                            <option value="transactional">📧 Transaccional</option>
+                        </select>
+                    </div>
+
+                    <!-- Asunto -->
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">
+                            Asunto del Email <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="new-template-subject" class="form-input"
+                            placeholder="🎁 ¡Descuentos especiales para ti, {{nombre}}!">
+                    </div>
+
+                    <!-- Variables disponibles -->
+                    <div class="bg-[rgba(255,95,0,0.08)] p-3 rounded-lg border border-[rgba(255,95,0,0.2)]">
+                        <p class="text-sm text-gray-300 mb-2">
+                            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                            Variables disponibles:
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <code class="bg-gray-800 px-2 py-1 rounded text-xs text-orange-400">{{nombre}}</code>
+                            <code class="bg-gray-800 px-2 py-1 rounded text-xs text-orange-400">{{email}}</code>
+                            <code class="bg-gray-800 px-2 py-1 rounded text-xs text-orange-400">{{telefono}}</code>
+                            <code class="bg-gray-800 px-2 py-1 rounded text-xs text-orange-400">{{fecha}}</code>
+                            <code class="bg-gray-800 px-2 py-1 rounded text-xs text-orange-400">{{taller_nombre}}</code>
+                        </div>
+                    </div>
+
+                    <!-- Cuerpo HTML -->
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">
+                            Cuerpo HTML <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="new-template-html" class="form-input" rows="8"
+                            placeholder="<h1>¡Hola {{nombre}}!</h1>\n<p>Tenemos ofertas especiales para ti...</p>"></textarea>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div>
+                        <label class="block text-sm font-medium text-white mb-2">Descripción (opcional)</label>
+                        <input type="text" id="new-template-description" class="form-input"
+                            placeholder="Plantilla para promociones navideñas">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-6">
+                    <button onclick="closeNewTemplateModal()" class="btn-secondary flex-1">
+                        Cancelar
+                    </button>
+                    <button onclick="createNewTemplate()" class="btn-primary flex-1">
+                        <i class="fas fa-plus"></i> Crear Plantilla
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-marketplace.html">
+                            <span class="icon-container"><i class="fas fa-store"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Marketplace</p>
+                        </a>
+
+                        <!-- Marketing Automations (ACTIVO) -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('marketing-submenu')">
+                                <span class="icon-container"><i class="fas fa-bullhorn"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Marketing</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="marketing-arrow"></i>
+                            </a>
+                            <div id="marketing-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-marketing-email.html"
+                                    class="text-white font-semibold text-sm py-1 block">Email Automations</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-configuracion.html">
+                            <span class="icon-container"><i class="fas fa-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Configuración</p>
+                        </a>
+                    </nav>
+                </div>
+
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" id="logout-btn">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-6xl mx-auto">
+                    <!-- Header -->
+                    <div class="mb-8">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div
+                                class="w-10 h-10 rounded-lg bg-gradient-to-br from-[#ff5f00] to-[#ff8844] flex items-center justify-center">
+                                <i class="fas fa-envelope text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-3xl font-bold text-white">Email Automations</h1>
+                                <p class="text-gray-400">Configura emails automáticos para tus clientes</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="config-tabs">
+                        <button class="config-tab" data-tab="config">
+                            <i class="fas fa-cog"></i>
+                            Configuración
+                        </button>
+                        <button class="config-tab active" data-tab="templates">
+                            <i class="fas fa-file-alt"></i>
+                            Plantillas
+                        </button>
+                        <button class="config-tab" data-tab="automations">
+                            <i class="fas fa-robot"></i>
+                            Automatizaciones
+                        </button>
+                        <button class="config-tab" data-tab="campaigns">
+                            <i class="fas fa-paper-plane"></i>
+                            Campañas
+                        </button>
+                        <button class="config-tab" data-tab="logs">
+                            <i class="fas fa-history"></i>
+                            Historial
+                        </button>
+                    </div>
+
+                    <!-- Panel: Configuración -->
+                    <div id="panel-config" class="config-panel">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Setup Guide -->
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-book text-[var(--brand-orange)]"></i>
+                                    Guía de Configuración
+                                </div>
+                                <p class="card-description">
+                                    Sigue estos pasos para configurar el envío de emails automáticos.
+                                </p>
+
+                                <div class="space-y-4">
+                                    <div
+                                        class="flex gap-3 p-4 bg-[rgba(255,95,0,0.08)] rounded-lg border border-[rgba(255,95,0,0.2)]">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                            1</div>
+                                        <div>
+                                            <p class="text-white font-medium">Crea una cuenta en Make.com</p>
+                                            <p class="text-gray-400 text-sm">Ve a <a href="https://www.make.com"
+                                                    target="_blank"
+                                                    class="text-[var(--brand-orange)] underline">make.com</a> y crea una
+                                                cuenta gratuita.</p>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="flex gap-3 p-4 bg-[rgba(255,95,0,0.08)] rounded-lg border border-[rgba(255,95,0,0.2)]">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                            2</div>
+                                        <div>
+                                            <p class="text-white font-medium">Crea un nuevo Scenario</p>
+                                            <p class="text-gray-400 text-sm">Añade el módulo <code
+                                                    class="bg-gray-800 px-1 rounded">Webhooks → Custom Webhook</code> y
+                                                copia la URL generada.</p>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="flex gap-3 p-4 bg-[rgba(255,95,0,0.08)] rounded-lg border border-[rgba(255,95,0,0.2)]">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                            3</div>
+                                        <div>
+                                            <p class="text-white font-medium">Añade el módulo de Email</p>
+                                            <p class="text-gray-400 text-sm">Añade <code
+                                                    class="bg-gray-800 px-1 rounded">Email → Send an Email</code> o
+                                                <code class="bg-gray-800 px-1 rounded">Gmail → Send an Email</code>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="flex gap-3 p-4 bg-[rgba(255,95,0,0.08)] rounded-lg border border-[rgba(255,95,0,0.2)]">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                            4</div>
+                                        <div>
+                                            <p class="text-white font-medium">Configura los campos</p>
+                                            <p class="text-gray-400 text-sm">
+                                                <strong>To:</strong> <code
+                                                    class="bg-gray-800 px-1 rounded">{{1.to}}</code><br>
+                                                <strong>Subject:</strong> <code
+                                                    class="bg-gray-800 px-1 rounded">{{1.subject}}</code><br>
+                                                <strong>HTML:</strong> <code
+                                                    class="bg-gray-800 px-1 rounded">{{1.html}}</code>
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="flex gap-3 p-4 bg-[rgba(255,95,0,0.08)] rounded-lg border border-[rgba(255,95,0,0.2)]">
+                                        <div
+                                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                                            5</div>
+                                        <div>
+                                            <p class="text-white font-medium">Guarda y activa el Scenario</p>
+                                            <p class="text-gray-400 text-sm">Actívalo con el toggle y pega la URL del
+                                                webhook aquí abajo.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Webhook Config Form -->
+                            <div class="card">
+                                <div class="card-title">
+                                    <i class="fas fa-link text-[var(--brand-orange)]"></i>
+                                    Configuración del Webhook
+                                </div>
+                                <p class="card-description">
+                                    Introduce la URL del webhook de Make.com y los datos del remitente.
+                                </p>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-white mb-2">
+                                            <i class="fas fa-globe mr-2 text-[var(--brand-orange)]"></i>URL del Webhook
+                                            (Make.com) *
+                                        </label>
+                                        <input type="url" id="config-webhook-url" class="form-input"
+                                            placeholder="https://hook.eu1.make.com/...">
+                                        <p class="text-xs text-gray-500 mt-1">La URL que te proporciona Make.com al
+                                            crear un Custom Webhook</p>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-white mb-2">
+                                                <i class="fas fa-user mr-2 text-[var(--brand-orange)]"></i>Nombre del
+                                                Remitente
+                                            </label>
+                                            <input type="text" id="config-sender-name" class="form-input"
+                                                placeholder="VERSA Taller">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-white mb-2">
+                                                <i class="fas fa-at mr-2 text-[var(--brand-orange)]"></i>Email del
+                                                Remitente
+                                            </label>
+                                            <input type="email" id="config-sender-email" class="form-input"
+                                                placeholder="noreply@tudominio.com">
+                                        </div>
+                                    </div>
+
+                                    <!-- Status Indicator -->
+                                    <div id="config-status" class="hidden p-4 rounded-lg">
+                                        <div class="flex items-center gap-3">
+                                            <i id="config-status-icon" class="fas text-xl"></i>
+                                            <div>
+                                                <p id="config-status-text" class="font-medium"></p>
+                                                <p id="config-status-date" class="text-sm text-gray-400"></p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex gap-3 pt-4">
+                                        <button onclick="saveConfig()" class="btn-primary flex-1">
+                                            <i class="fas fa-save"></i> Guardar Configuración
+                                        </button>
+                                        <button onclick="testEmail()" class="btn-secondary">
+                                            <i class="fas fa-paper-plane"></i> Enviar Prueba
+                                        </button>
+                                    </div>
+
+                                    <p class="text-xs text-center text-gray-500">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        El email de prueba se enviará a tu dirección de correo actual
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel: Plantillas -->
+                    <div id="panel-templates" class="config-panel active">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- Template List -->
+                            <div class="card">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="card-title" style="margin-bottom: 0;">
+                                        <i class="fas fa-list text-[var(--brand-orange)]"></i>
+                                        Plantillas
+                                    </div>
+                                    <button onclick="openNewTemplateModal()" class="btn-secondary text-xs px-3 py-1">
+                                        <i class="fas fa-plus"></i> Nueva
+                                    </button>
+                                </div>
+                                <p class="card-description">
+                                    Plantillas del sistema <span class="text-[var(--brand-orange)]">🔒</span> y
+                                    personalizadas.
+                                </p>
+
+                                <div id="templates-list" class="space-y-2">
+                                    <!-- Templates loaded dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Template Editor -->
+                            <div class="lg:col-span-2 card">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="card-title" style="margin-bottom: 0;">
+                                        <i class="fas fa-edit text-[var(--brand-orange)]"></i>
+                                        <span id="editor-title">Editor de Plantilla</span>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button class="btn-secondary" onclick="previewTemplate()">
+                                            <i class="fas fa-eye"></i> Vista Previa
+                                        </button>
+                                        <button class="btn-primary" id="saveTemplateBtn" onclick="saveTemplate()">
+                                            <i class="fas fa-save"></i> Guardar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="editor-empty" class="empty-state">
+                                    <i class="fas fa-file-alt"></i>
+                                    <p>Selecciona una plantilla para editarla</p>
+                                </div>
+
+                                <div id="editor-form" class="hidden space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-2">Asunto</label>
+                                        <input type="text" id="template-subject" class="form-input"
+                                            placeholder="Ej: ¡Bienvenido a VERSA, {{nombre}}!">
+                                    </div>
+
+                                    <div class="info-banner">
+                                        <i class="fas fa-code"></i>
+                                        <div class="info-banner-text">
+                                            <h4>Variables disponibles</h4>
+                                            <p id="variables-list">{{nombre}}, {{portal_url}}, {{reset_url}}</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-300 mb-2">Contenido
+                                            HTML</label>
+                                        <textarea id="template-html" class="form-input template-editor"
+                                            placeholder="<html>...</html>"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel: Automatizaciones -->
+                    <div id="panel-automations" class="config-panel">
+                        <div class="card">
+                            <div class="card-title">
+                                <i class="fas fa-robot text-[var(--brand-orange)]"></i>
+                                Automatizaciones de Email
+                            </div>
+                            <p class="card-description">
+                                Activa o desactiva el envío automático de emails según eventos del sistema.
+                            </p>
+
+                            <div id="automations-list">
+                                <!-- Automations loaded dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel: Campañas -->
+                    <div id="panel-campaigns" class="config-panel">
+                        <div class="card">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="card-title" style="margin-bottom: 0;">
+                                    <i class="fas fa-paper-plane text-[var(--brand-orange)]"></i>
+                                    Campañas de Email
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="btn-secondary" onclick="loadCampaigns()">
+                                        <i class="fas fa-sync-alt"></i> Actualizar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p class="card-description">
+                                Gestiona las campañas de email creadas desde promociones. Puedes previsualizarlas,
+                                editarlas y enviarlas cuando quieras.
+                            </p>
+
+                            <div id="campaigns-list" class="space-y-3 mt-4">
+                                <!-- Campaigns loaded dynamically -->
+                            </div>
+
+                            <div id="campaigns-empty" class="empty-state hidden">
+                                <i class="fas fa-inbox"></i>
+                                <p>No hay campañas pendientes</p>
+                                <p class="text-sm opacity-60">Las campañas se crean automáticamente al publicar
+                                    promociones de fidelización</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel: Historial -->
+                    <div id="panel-logs" class="config-panel">
+                        <div class="card">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="card-title" style="margin-bottom: 0;">
+                                    <i class="fas fa-history text-[var(--brand-orange)]"></i>
+                                    Historial de Emails
+                                </div>
+                                <button class="btn-secondary" onclick="loadLogs()">
+                                    <i class="fas fa-sync-alt"></i> Actualizar
+                                </button>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="logs-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Destinatario</th>
+                                            <th>Tipo</th>
+                                            <th>Asunto</th>
+                                            <th>Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="logs-tbody">
+                                        <!-- Logs loaded dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div id="logs-empty" class="empty-state hidden">
+                                <i class="fas fa-inbox"></i>
+                                <p>No hay emails enviados aún</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let currentTemplateCode = null;
+        let templates = [];
+
+        // =====================================================
+        // TOKEN HELPER - reads from versa_session_v1
+        // =====================================================
+        function getToken() {
+            try {
+                const sessionRaw = localStorage.getItem('versa_session_v1');
+                if (!sessionRaw) return null;
+                const session = JSON.parse(sessionRaw);
+                return session?.token || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // =====================================================
+        // TAB NAVIGATION
+        // =====================================================
+        document.querySelectorAll('.config-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.config-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.config-panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+
+                // Load data for tab
+                if (tab.dataset.tab === 'logs') loadLogs();
+                if (tab.dataset.tab === 'automations') loadAutomations();
+                if (tab.dataset.tab === 'campaigns') loadCampaigns();
+                if (tab.dataset.tab === 'config') loadConfig();
+            });
+        });
+
+        // =====================================================
+        // TEMPLATES
+        // =====================================================
+        async function loadTemplates() {
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/templates`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    templates = data.templates;
+                    renderTemplatesList();
+                }
+            } catch (error) {
+                console.error('Error loading templates:', error);
+                showToast('Error cargando plantillas', 'error');
+            }
+        }
+
+        function renderTemplatesList() {
+            const list = document.getElementById('templates-list');
+            const templateLabels = {
+                'WELCOME': { icon: 'fa-hand-wave', label: 'Bienvenida', description: 'Email al registrarse' },
+                'PASSWORD_RESET': { icon: 'fa-key', label: 'Reset Password', description: 'Recuperación de contraseña' }
+            };
+
+            list.innerHTML = templates.map(t => {
+                const info = templateLabels[t.code] || {
+                    icon: 'fa-envelope',
+                    label: t.name || t.code,
+                    description: t.description || 'Plantilla personalizada'
+                };
+                const isActive = t.code === currentTemplateCode;
+                const isSystem = t.is_system === true;
+                const categoryIcons = {
+                    'marketing': '📣',
+                    'reminder': '🔔',
+                    'transactional': '📧'
+                };
+                const categoryIcon = categoryIcons[t.category] || '📧';
+
+                return `
+                    <div class="toggle-container cursor-pointer ${isActive ? 'border-[var(--brand-orange)]' : ''}" 
+                         style="${isActive ? 'border-color: var(--brand-orange);' : ''}">
+                        <div class="flex items-center gap-3 flex-1" onclick="selectTemplate('${t.code}')">
+                            <div class="w-10 h-10 rounded-lg bg-[rgba(255,95,0,0.1)] flex items-center justify-center">
+                                <i class="fas ${info.icon} text-[var(--brand-orange)]"></i>
+                            </div>
+                            <div class="toggle-label">
+                                <div class="toggle-title flex items-center gap-2">
+                                    ${info.label}
+                                    ${isSystem ? '<span class="text-xs text-orange-400" title="Plantilla del sistema">🔒</span>' : `<span class="text-xs text-gray-500">${categoryIcon}</span>`}
+                                </div>
+                                <div class="toggle-description">${info.description}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${!isSystem ? `
+                                <button onclick="event.stopPropagation(); deleteTemplate('${t.code}')" 
+                                        class="text-red-400 hover:text-red-300 p-1" title="Eliminar">
+                                    <i class="fas fa-trash text-xs"></i>
+                                </button>
+                            ` : ''}
+                            <i class="fas fa-chevron-right text-gray-600"></i>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectTemplate(code) {
+            currentTemplateCode = code;
+            const template = templates.find(t => t.code === code);
+
+            if (!template) return;
+
+            document.getElementById('editor-empty').classList.add('hidden');
+            document.getElementById('editor-form').classList.remove('hidden');
+            document.getElementById('editor-title').textContent = `Editando: ${code}`;
+            document.getElementById('template-subject').value = template.subject;
+            document.getElementById('template-html').value = template.html_body;
+
+            // Show variables
+            const vars = template.variables_json ? JSON.parse(template.variables_json) : [];
+            document.getElementById('variables-list').textContent = vars.map(v => `{{${v}}}`).join(', ') || 'Sin variables';
+
+            renderTemplatesList();
+        }
+
+        async function saveTemplate() {
+            if (!currentTemplateCode) return;
+
+            const subject = document.getElementById('template-subject').value;
+            const html_body = document.getElementById('template-html').value;
+
+            if (!subject || !html_body) {
+                showToast('Completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/templates/${currentTemplateCode}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ subject, html_body })
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Plantilla guardada correctamente', 'success');
+                    loadTemplates();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Error saving template:', error);
+                showToast('Error guardando plantilla', 'error');
+            }
+        }
+
+        function previewTemplate() {
+            const html = document.getElementById('template-html').value;
+            if (!html) {
+                showToast('No hay contenido para previsualizar', 'error');
+                return;
+            }
+
+            // Replace variables with sample values
+            let previewHtml = html
+                .replace(/\{\{nombre\}\}/g, 'Juan García')
+                .replace(/\{\{portal_url\}\}/g, 'https://goversa.es/cliente-dashboard.html')
+                .replace(/\{\{reset_url\}\}/g, 'https://goversa.es/cliente-reset.html?token=abc123')
+                .replace(/\{\{exp_minutes\}\}/g, '60')
+                .replace(/\{\{soporte_email\}\}/g, 'soporte@goversa.es')
+                .replace(/\{\{whatsapp\}\}/g, '+34 666 777 888');
+
+            const frame = document.getElementById('previewFrame');
+            frame.srcdoc = previewHtml;
+            document.getElementById('previewModal').classList.remove('hidden');
+        }
+
+        function closePreviewModal() {
+            document.getElementById('previewModal').classList.add('hidden');
+        }
+
+        // =====================================================
+        // NEW TEMPLATE MODAL
+        // =====================================================
+        function openNewTemplateModal() {
+            // Reset form
+            document.getElementById('new-template-code').value = '';
+            document.getElementById('new-template-name').value = '';
+            document.getElementById('new-template-category').value = 'marketing';
+            document.getElementById('new-template-subject').value = '';
+            document.getElementById('new-template-html').value = '';
+            document.getElementById('new-template-description').value = '';
+
+            document.getElementById('newTemplateModal').classList.remove('hidden');
+        }
+
+        function closeNewTemplateModal() {
+            document.getElementById('newTemplateModal').classList.add('hidden');
+        }
+
+        async function createNewTemplate() {
+            const code = document.getElementById('new-template-code').value.trim().toUpperCase();
+            const name = document.getElementById('new-template-name').value.trim();
+            const category = document.getElementById('new-template-category').value;
+            const subject = document.getElementById('new-template-subject').value.trim();
+            const html_body = document.getElementById('new-template-html').value.trim();
+            const description = document.getElementById('new-template-description').value.trim();
+
+            // Validations
+            if (!code || !name || !subject || !html_body) {
+                showToast('Completa todos los campos obligatorios', 'error');
+                return;
+            }
+
+            if (!/^[A-Z][A-Z0-9_]*$/.test(code)) {
+                showToast('El código debe ser MAYÚSCULAS con guiones bajos (ej: PROMO_NAVIDAD)', 'error');
+                return;
+            }
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/templates`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code,
+                        name,
+                        category,
+                        subject,
+                        html_body,
+                        description,
+                        variables_json: JSON.stringify(['nombre', 'email', 'telefono', 'fecha', 'taller_nombre'])
+                    })
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('✅ Plantilla creada correctamente', 'success');
+                    closeNewTemplateModal();
+                    loadTemplates();
+                } else {
+                    showToast(data.error || 'Error creando plantilla', 'error');
+                }
+            } catch (error) {
+                console.error('Error creating template:', error);
+                showToast('Error al crear plantilla', 'error');
+            }
+        }
+
+        async function deleteTemplate(code) {
+            if (!confirm(`¿Eliminar la plantilla "${code}"? Esta acción no se puede deshacer.`)) {
+                return;
+            }
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/templates/${code}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showToast('Plantilla eliminada', 'success');
+                    if (currentTemplateCode === code) {
+                        currentTemplateCode = null;
+                        document.getElementById('editor-empty').classList.remove('hidden');
+                        document.getElementById('editor-form').classList.add('hidden');
+                    }
+                    loadTemplates();
+                } else {
+                    showToast(data.error || 'Error eliminando plantilla', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting template:', error);
+                showToast('Error al eliminar plantilla', 'error');
+            }
+        }
+
+        // Close new template modal on ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeNewTemplateModal();
+            }
+        });
+
+        // Close new template modal on backdrop click
+        document.getElementById('newTemplateModal').addEventListener('click', (e) => {
+            if (e.target.id === 'newTemplateModal') closeNewTemplateModal();
+        });
+
+        // =====================================================
+        // AUTOMATIONS
+        // =====================================================
+        let cachedEventTypes = null;
+
+        async function loadEventTypes() {
+            if (cachedEventTypes) return cachedEventTypes;
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/event-types`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    cachedEventTypes = {};
+                    for (const evt of data.eventTypes) {
+                        cachedEventTypes[evt.code] = {
+                            icon: evt.icon,
+                            label: evt.name,
+                            description: evt.description
+                        };
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading event types:', e);
+                cachedEventTypes = {};
+            }
+            return cachedEventTypes;
+        }
+
+        async function loadAutomations() {
+            try {
+                const token = getToken();
+                await loadEventTypes(); // Ensure event types are loaded
+                const res = await fetch(`${API_BASE}/api/marketing/email/automations`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    renderAutomations(data.automations);
+                }
+            } catch (error) {
+                console.error('Error loading automations:', error);
+            }
+        }
+
+        function renderAutomations(automations) {
+            const list = document.getElementById('automations-list');
+            const eventLabels = cachedEventTypes || {};
+
+            list.innerHTML = automations.map(a => {
+                const info = eventLabels[a.event_code] || { icon: 'fa-bolt', label: a.event_code, description: '' };
+                return `
+                    <div class="toggle-container">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-[rgba(255,95,0,0.1)] flex items-center justify-center">
+                                <i class="fas ${info.icon} text-[var(--brand-orange)]"></i>
+                            </div>
+                            <div class="toggle-label">
+                                <div class="toggle-title">${info.label}</div>
+                                <div class="toggle-description">${info.description}</div>
+                                <div class="text-xs text-gray-500 mt-1">Plantilla: <span class="text-[var(--brand-orange)]">${a.template_code}</span></div>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" ${a.enabled ? 'checked' : ''} 
+                                   onchange="toggleAutomation('${a.event_code}', this.checked)">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function toggleAutomation(eventCode, enabled) {
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/automations/${eventCode}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ enabled })
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`Automatización ${enabled ? 'activada' : 'desactivada'}`, 'success');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Error toggling automation:', error);
+                showToast('Error actualizando automatización', 'error');
+                loadAutomations(); // Reload to reset toggle state
+            }
+        }
+
+        // =====================================================
+        // CAMPAIGNS
+        // =====================================================
+        async function loadCampaigns() {
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/campaigns`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                const list = document.getElementById('campaigns-list');
+                const empty = document.getElementById('campaigns-empty');
+
+                if (data.ok && data.campaigns.length > 0) {
+                    empty.classList.add('hidden');
+                    list.innerHTML = data.campaigns.map(c => renderCampaignCard(c)).join('');
+                } else {
+                    list.innerHTML = '';
+                    empty.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading campaigns:', error);
+            }
+        }
+
+        function renderCampaignCard(campaign) {
+            const statusColors = {
+                'draft': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+                'scheduled': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                'sending': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                'sent': 'bg-green-500/20 text-green-400 border-green-500/30',
+                'cancelled': 'bg-gray-500/20 text-gray-400 border-gray-500/30'
+            };
+
+            const statusLabels = {
+                'draft': 'Borrador',
+                'scheduled': 'Programada',
+                'sending': 'Enviando...',
+                'sent': 'Enviada',
+                'cancelled': 'Cancelada'
+            };
+
+            const isDraft = campaign.status === 'draft';
+            const isScheduled = campaign.status === 'scheduled';
+            const isSent = campaign.status === 'sent';
+
+            return `
+                <div class="toggle-container" style="flex-direction: column; align-items: stretch;">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="toggle-title">${campaign.nombre}</div>
+                                <span class="px-2 py-0.5 text-xs rounded-full border ${statusColors[campaign.status] || statusColors.draft}">
+                                    ${statusLabels[campaign.status] || campaign.status}
+                                </span>
+                            </div>
+                            <div class="toggle-description">${campaign.subject}</div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                ${campaign.total_recipients} destinatarios • 
+                                Creada: ${new Date(campaign.created_at).toLocaleDateString('es-ES')}
+                                ${campaign.sent_at ? ' • Enviada: ' + new Date(campaign.sent_at).toLocaleDateString('es-ES') : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="previewCampaign(${campaign.id})" class="btn-secondary" title="Previsualizar">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${isDraft ? `
+                                <button onclick="openCampaignEditor(${campaign.id})" class="btn-secondary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="sendCampaign(${campaign.id})" class="btn-primary" title="Enviar ahora">
+                                    <i class="fas fa-paper-plane"></i> Enviar
+                                </button>
+                            ` : ''}
+                            ${isScheduled ? `
+                                <button onclick="cancelCampaign(${campaign.id})" class="btn-secondary" title="Cancelar">
+                                    <i class="fas fa-times"></i> Cancelar
+                                </button>
+                            ` : ''}
+                            ${isSent ? `
+                                <span class="text-xs text-green-400">
+                                    <i class="fas fa-check-circle"></i> ${campaign.sent_count} enviados
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function previewCampaign(id) {
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/campaigns/${id}/preview`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    const modal = document.getElementById('previewModal');
+                    const iframe = document.getElementById('previewIframe');
+                    document.getElementById('previewSubject').textContent = data.subject;
+                    iframe.srcdoc = data.html;
+                    modal.classList.remove('hidden');
+                }
+            } catch (error) {
+                showToast('Error cargando preview', 'error');
+            }
+        }
+
+        async function sendCampaign(id) {
+            if (!confirm('¿Estás seguro de enviar esta campaña a todos los destinatarios?')) return;
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/campaigns/${id}/send`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    showToast(`Campaña enviada: ${data.sent} emails exitosos`, 'success');
+                    loadCampaigns();
+                    loadLogs(); // Refresh logs too
+                } else {
+                    showToast(data.error || 'Error enviando campaña', 'error');
+                }
+            } catch (error) {
+                showToast('Error enviando campaña', 'error');
+            }
+        }
+
+        async function cancelCampaign(id) {
+            if (!confirm('¿Cancelar esta campaña programada?')) return;
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/campaigns/${id}/cancel`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    showToast('Campaña cancelada', 'success');
+                    loadCampaigns();
+                } else {
+                    showToast(data.error || 'Error cancelando', 'error');
+                }
+            } catch (error) {
+                showToast('Error cancelando campaña', 'error');
+            }
+        }
+
+        function openCampaignEditor(id) {
+            // For now, redirect to a simple alert - full editor can be added later
+            alert('El editor de campañas está en desarrollo. Por ahora puedes previsualizar y enviar directamente.');
+        }
+
+        // =====================================================
+        // LOGS
+        // =====================================================
+        async function loadLogs() {
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/logs?limit=50`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok) {
+                    renderLogs(data.logs);
+                }
+            } catch (error) {
+                console.error('Error loading logs:', error);
+            }
+        }
+
+        function renderLogs(logs) {
+            const tbody = document.getElementById('logs-tbody');
+            const empty = document.getElementById('logs-empty');
+
+            if (logs.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+
+            tbody.innerHTML = logs.map(log => {
+                const date = new Date(log.created_at);
+                const formattedDate = date.toLocaleDateString('es-ES', {
+                    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
+                });
+
+                const statusClass = log.status === 'SENT' ? 'status-sent' :
+                    log.status === 'FAILED' ? 'status-failed' : 'status-queued';
+
+                const eventLabels = cachedEventTypes || {};
+
+                return `
+                    <tr>
+                        <td class="text-gray-400">${formattedDate}</td>
+                        <td>${log.to_email}</td>
+                        <td><span class="text-[var(--brand-orange)]">${eventLabels[log.event_code]?.label || log.event_code}</span></td>
+                        <td class="truncate max-w-[200px]" title="${log.subject_snapshot}">${log.subject_snapshot}</td>
+                        <td>
+                            <span class="status-badge ${statusClass}">
+                                <i class="fas ${log.status === 'SENT' ? 'fa-check' : log.status === 'FAILED' ? 'fa-times' : 'fa-clock'}"></i>
+                                ${log.status}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // =====================================================
+        // UTILS
+        // =====================================================
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle text-green-500' : 'fa-exclamation-circle text-red-500'}"></i>
+                <span class="text-white text-sm">${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        // =====================================================
+        // CONFIG
+        // =====================================================
+        let currentConfig = null;
+        let userEmail = null;
+
+        async function loadConfig() {
+            try {
+                const token = getToken();
+
+                // Get user email from token
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    userEmail = payload.email;
+                } catch (e) { }
+
+                const res = await fetch(`${API_BASE}/api/marketing/email/config`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data.ok && data.config) {
+                    currentConfig = data.config;
+                    document.getElementById('config-webhook-url').value = data.config.webhook_url || '';
+                    document.getElementById('config-sender-name').value = data.config.sender_name || '';
+                    document.getElementById('config-sender-email').value = data.config.sender_email || '';
+
+                    // Show status if there was a test
+                    if (data.config.last_test_at) {
+                        updateConfigStatus(data.config.last_test_status, data.config.last_test_at, data.config.last_test_error);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        function updateConfigStatus(status, dateStr, error) {
+            const container = document.getElementById('config-status');
+            const icon = document.getElementById('config-status-icon');
+            const text = document.getElementById('config-status-text');
+            const date = document.getElementById('config-status-date');
+
+            container.classList.remove('hidden');
+
+            if (status === 'SUCCESS') {
+                container.className = 'p-4 rounded-lg bg-green-900/20 border border-green-500/30';
+                icon.className = 'fas fa-check-circle text-xl text-green-500';
+                text.textContent = '✅ Configuración verificada - Emails funcionando';
+                text.className = 'font-medium text-green-400';
+            } else {
+                container.className = 'p-4 rounded-lg bg-red-900/20 border border-red-500/30';
+                icon.className = 'fas fa-times-circle text-xl text-red-500';
+                text.textContent = '❌ Error en última prueba: ' + (error || 'Error desconocido');
+                text.className = 'font-medium text-red-400';
+            }
+
+            if (dateStr) {
+                const d = new Date(dateStr);
+                date.textContent = 'Última prueba: ' + d.toLocaleDateString('es-ES', {
+                    day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+            }
+        }
+
+        async function saveConfig() {
+            const webhookUrl = document.getElementById('config-webhook-url').value.trim();
+            const senderName = document.getElementById('config-sender-name').value.trim();
+            const senderEmail = document.getElementById('config-sender-email').value.trim();
+
+            if (!webhookUrl) {
+                showToast('La URL del webhook es requerida', 'error');
+                return;
+            }
+
+            try {
+                new URL(webhookUrl);
+            } catch (e) {
+                showToast('URL de webhook inválida', 'error');
+                return;
+            }
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/config`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        webhook_url: webhookUrl,
+                        sender_name: senderName || 'VERSA',
+                        sender_email: senderEmail || 'noreply@versa.app'
+                    })
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    currentConfig = data.config;
+                    showToast('Configuración guardada correctamente', 'success');
+                } else {
+                    showToast(data.error || 'Error guardando configuración', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving config:', error);
+                showToast('Error al guardar configuración', 'error');
+            }
+        }
+
+        async function testEmail() {
+            const webhookUrl = document.getElementById('config-webhook-url').value.trim();
+
+            if (!webhookUrl) {
+                showToast('Primero guarda la URL del webhook', 'error');
+                return;
+            }
+
+            // First save the config
+            await saveConfig();
+
+            // Get user email
+            let toEmail = userEmail;
+            if (!toEmail) {
+                toEmail = prompt('Introduce tu email para recibir la prueba:', '');
+                if (!toEmail) return;
+            }
+
+            showToast('Enviando email de prueba...', 'success');
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/api/marketing/email/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ to_email: toEmail })
+                });
+
+                const data = await res.json();
+                if (data.ok) {
+                    showToast(`✅ Email de prueba enviado a ${toEmail}`, 'success');
+                    updateConfigStatus('SUCCESS', new Date().toISOString(), null);
+                } else {
+                    showToast(data.error || 'Error enviando email', 'error');
+                    updateConfigStatus('FAILED', new Date().toISOString(), data.error);
+                }
+
+                // Reload config to get updated test status
+                await loadConfig();
+            } catch (error) {
+                console.error('Error sending test:', error);
+                showToast('Error al enviar email de prueba', 'error');
+            }
+        }
+
+        function toggleSubmenu(id) {
+            const submenu = document.getElementById(id);
+            submenu.classList.toggle('hidden');
+            submenu.classList.toggle('flex');
+        }
+
+        // Close modal on ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closePreviewModal();
+        });
+
+        // Close modal on backdrop click
+        document.getElementById('previewModal').addEventListener('click', (e) => {
+            if (e.target.id === 'previewModal') closePreviewModal();
+        });
+
+        // =====================================================
+        // INIT
+        // =====================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTemplates();
+            loadAutomations();
+
+            // Sidebar user info
+            try {
+                const token = getToken();
+                if (token) {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    document.getElementById('user-name').textContent = payload.nombre || 'Usuario';
+                    document.getElementById('user-role').textContent = payload.rol || 'staff';
+                    document.getElementById('user-avatar').textContent = (payload.nombre || 'U').substring(0, 2).toUpperCase();
+                }
+            } catch (e) { }
+        });
+
+        // Logout handler
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('[id="logout-btn"]') || e.target.closest('[data-logout]')) {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                window.location.href = '/login.html';
+            }
+        });
+    </script>
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

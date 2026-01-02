@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Venta de Productos - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts - Preconnect -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Estilos Globales del Manager -->
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+
+    <!-- Guard.js - Autenticación -->
+    <script src="/guard.js"></script>
+
+    <style>
+        /* 
+         * Estilos específicos de manager-taller-ventas.html
+         * Las variables globales (:root) están centralizadas en manager.css
+         */
+
+
+        /* === FORM INPUTS === */
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-family: "Montserrat", sans-serif;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.6;
+        }
+
+        .form-input:hover,
+        .form-select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 101, 43, 0.05);
+            box-shadow: 0 0 0 3px rgba(255, 101, 43, 0.15);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%239da6b9' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+            padding-right: 40px;
+        }
+
+        .form-select option {
+            background: #1a1d24;
+            color: white;
+        }
+
+        /* === FORM SECTIONS === */
+        .form-section {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .form-section-title {
+            color: var(--brand-orange);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* === CUSTOM SELECT AUTOCOMPLETE === */
+        .custom-select-container {
+            position: relative;
+        }
+
+        .custom-select-options {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1e242d;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin-top: 5px;
+        }
+
+        .custom-select-options.show {
+            display: block;
+        }
+
+        .custom-select-options .option {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .custom-select-options .option:last-child {
+            border-bottom: none;
+        }
+
+        .custom-select-options .option:hover {
+            background: var(--brand-orange);
+            color: white;
+        }
+
+        /* === ITEMS TABLE === */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        .items-table thead {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .items-table th {
+            padding: 12px 10px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+            color: var(--text-primary);
+        }
+
+        .items-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .items-table tfoot {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .items-table tfoot td {
+            padding: 12px 10px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .items-table .form-input {
+            padding: 8px 10px;
+            font-size: 13px;
+            background: rgba(0, 0, 0, 0.3);
+            height: 38px;
+            /* Fixed height for alignment */
+        }
+
+        /* Ensure search input has space for icon */
+        .items-table .form-input.pl-8 {
+            padding-left: 32px !important;
+        }
+
+        /* Adjust icon position */
+        .fa-search.absolute {
+            top: 50%;
+            transform: translateY(-50%);
+            left: 10px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* === SUMMARY TABLE === */
+        .summary-table td {
+            padding: 10px 0;
+            color: var(--text-primary);
+        }
+
+        .summary-table tr td:first-child {
+            color: var(--text-secondary);
+        }
+
+        .summary-table tr td:last-child {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .summary-table .total-row td {
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 15px;
+            font-size: 24px;
+            color: var(--brand-orange);
+            font-weight: 800;
+        }
+
+        /* === SCROLLBAR === */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-orange);
+        }
+
+        /* === DATETIME INPUT === */
+        input[type="datetime-local"] {
+            color-scheme: dark;
+        }
+
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        /* === FIX OVERFLOW FOR DROPDOWNS === */
+        .overflow-x-auto {
+            overflow: visible !important;
+        }
+
+        .form-section.overflow-visible {
+            overflow: visible !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex h-screen w-full">
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[#282e39]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge flex items-center justify-center w-10 h-10 rounded-xl bg-[#282e39]">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium">Goversa</h1>
+                            <p class="text-[#9da6b9] text-xs">Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Inicio</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-ventas.html"
+                                    class="text-white font-semibold text-sm py-1 block">Nueva Venta</a>
+                                <a href="manager-taller-ventas-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Ventas</a>
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Configuración</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <div class="flex flex-col gap-1 border-t border-[#282e39] pt-4">
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <header class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[#282e39]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 bg-[#0b0d11]">
+                <form id="sales-form" class="max-w-6xl mx-auto">
+                    <input type="hidden" id="id-cliente-hidden" name="idCliente" />
+                    <input type="hidden" id="id-taller-hidden" name="idSucursal" />
+
+                    <!-- Header Actions -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-3xl font-extrabold text-white form-main-title">Venta en Mostrador</h2>
+                            <p class="text-[#9da6b9]">Registro de ventas de productos</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="button" id="btn-limpiar"
+                                class="px-4 py-2 rounded-lg border border-[#282e39] text-[#9da6b9] hover:text-white hover:bg-[#282e39] transition-colors">
+                                <i class="fas fa-broom mr-2"></i> Limpiar
+                            </button>
+                            <button type="submit"
+                                class="px-6 py-2 rounded-lg bg-[var(--brand-orange)] text-white font-bold hover:bg-[#e05300] shadow-lg shadow-orange-900/20 transition-all transform hover:-translate-y-0.5">
+                                <i class="fas fa-check mr-2"></i> Registrar Venta
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                        <!-- Columna Izquierda (Datos y Productos) -->
+                        <div class="lg:col-span-2 space-y-6">
+
+                            <!-- 1. Datos Generales -->
+                            <div class="form-section">
+                                <h3 class="form-section-title">Datos de la Venta</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs text-[#9da6b9] mb-1">Fecha y Hora</label>
+                                        <div class="versa-datetime-container">
+                                            <input type="text" id="fecha-venta"
+                                                class="form-input text-white bg-[#111318] versa-datetime-input"
+                                                placeholder="Seleccionar fecha y hora" readonly />
+                                            <i class="fas fa-calendar-alt versa-datetime-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-[#9da6b9] mb-1">Sucursal</label>
+                                        <select id="taller" name="taller" class="form-select" required>
+                                            <option value="" disabled selected>Cargando...</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-[#9da6b9] mb-1">Cliente</label>
+                                        <div class="custom-select-container flex gap-2">
+                                            <div class="animated-search-form" style="flex: 1;">
+                                                <input type="search" id="buscar-cliente" name="cliente_nombre"
+                                                    class="search-input" placeholder="Cliente (o Mostrador)..."
+                                                    autocomplete="off" required>
+                                                <span class="caret"></span>
+                                                <i class="fas fa-user search-icon"></i>
+                                            </div>
+                                            <button type="button" id="btn-cliente-rapido" title="Cliente Mostrador"
+                                                class="px-3 py-2 bg-[#282e39] text-white rounded-lg hover:bg-[#343b47]">
+                                                <i class="fas fa-user-clock"></i>
+                                            </button>
+                                            <button type="button" id="btn-new-client" title="Nuevo Cliente"
+                                                class="px-3 py-2 bg-[#282e39] text-white rounded-lg hover:bg-[#343b47]">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                            <div class="custom-select-options" id="cliente-options"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 2. Items Table -->
+                            <div class="form-section overflow-visible">
+                                <h3 class="form-section-title flex justify-between items-center">
+                                    Carrito de Productos
+                                </h3>
+                                <div class="overflow-x-auto">
+                                    <table class="items-table w-full text-left">
+                                        <thead>
+                                            <tr>
+                                                <th class="p-2 text-[#9da6b9]">Producto</th>
+                                                <th class="p-2 text-[#9da6b9] w-24">Precio</th>
+                                                <th class="p-2 text-[#9da6b9] w-20">Desc. %</th>
+                                                <th class="p-2 text-[#9da6b9] w-16">IVA %</th>
+                                                <th class="p-2 text-[#9da6b9] w-16">Stock</th>
+                                                <th class="p-2 text-[#9da6b9] w-16">Cant.</th>
+                                                <th class="p-2 text-[#9da6b9] w-24">Total</th>
+                                                <th class="p-2 text-[#9da6b9] w-10"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="sales-items-list" class="text-sm">
+                                            <!-- Items renders here -->
+                                            <tr id="empty-cart-msg">
+                                                <td colspan="8" class="p-8 text-center text-gray-500 italic">No hay
+                                                    productos en la venta</td>
+                                            </tr>
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="bg-[#111318]/50">
+                                                <td class="p-2">
+                                                    <input type="hidden" id="new-item-id-hidden" />
+                                                    <div class="custom-select-container flex gap-1">
+                                                        <div class="animated-search-form" style="flex: 1;">
+                                                            <input type="search" id="new-item-name"
+                                                                class="search-input text-sm"
+                                                                placeholder="Buscar producto..." autocomplete="off"
+                                                                required>
+                                                            <span class="caret"></span>
+                                                            <i class="fas fa-box search-icon"></i>
+                                                        </div>
+                                                        <button type="button" id="btn-new-product"
+                                                            title="Crear Producto"
+                                                            class="px-3 bg-[#282e39] text-white rounded-lg hover:bg-[#343b47]">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                        <div class="custom-select-options" id="product-options"></div>
+                                                    </div>
+                                                </td>
+                                                <td class="p-2">
+                                                    <input type="number" id="new-item-price"
+                                                        class="form-input text-sm text-right" placeholder="0.00">
+                                                </td>
+                                                <td class="p-2">
+                                                    <input type="number" id="new-item-discount"
+                                                        class="form-input text-sm text-center" placeholder="0" min="0"
+                                                        max="100">
+                                                </td>
+                                                <td class="p-2">
+                                                    <input type="number" id="new-item-iva"
+                                                        class="form-input text-sm text-center" value="21" min="0"
+                                                        max="100">
+                                                </td>
+                                                <td class="p-2">
+                                                    <input type="text" id="new-item-stock"
+                                                        class="form-input text-sm text-center bg-transparent border-none"
+                                                        value="-" readonly>
+                                                </td>
+                                                <td class="p-2">
+                                                    <input type="number" id="new-item-quantity"
+                                                        class="form-input text-sm text-center" value="1" min="1">
+                                                </td>
+                                                <td class="p-2 text-right font-bold text-white pt-4"
+                                                    id="new-item-total">0.00€</td>
+                                                <td class="p-2 text-center">
+                                                    <button type="button" id="add-item-btn"
+                                                        class="w-8 h-8 rounded bg-[var(--brand-orange)] text-white hover:bg-[#e05300] flex items-center justify-center">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Columna Derecha (Totales y Pago) -->
+                        <div class="space-y-6">
+
+                            <div class="form-section sticky top-4">
+                                <h3 class="form-section-title">Pago</h3>
+
+                                <div class="bg-[#111318] p-4 rounded-xl border border-[#282e39] mb-6">
+                                    <label class="block text-xs text-[#9da6b9] mb-2 uppercase font-bold">Total a
+                                        Pagar</label>
+                                    <div class="text-4xl font-extrabold text-[var(--brand-orange)] text-right"
+                                        id="display-total">0.00€</div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs text-[#9da6b9] mb-1">Medio de Pago</label>
+                                        <select id="medio-pago" class="form-select">
+                                            <option value="EFECTIVO">Efectivo</option>
+                                            <option value="TARJETA">Tarjeta</option>
+                                            <option value="TRANSFERENCIA">Transferencia</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-[#9da6b9] mb-1">Caja</label>
+                                        <select id="caja" class="form-select">
+                                            <option value="1">Caja Principal</option>
+                                            <!-- Future: Load dynamic boxes -->
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs text-[#9da6b9] mb-1">Notas</label>
+                                        <textarea id="observaciones" class="form-input text-sm" rows="2"
+                                            placeholder="Opcional..."></textarea>
+                                    </div>
+                                </div>
+
+                                <table class="summary-table w-full text-sm mt-6 pt-6 border-t border-[#282e39]">
+                                    <tr>
+                                        <td>Subtotal</td>
+                                        <td id="summary-subtotal">0.00€</td>
+                                    </tr>
+                                    <tr>
+                                        <td>IVA (21%)</td>
+                                        <td id="summary-iva">0.00€</td>
+                                    </tr>
+                                    <tr class="text-green-500" id="row-descuento-global" style="display:none;">
+                                        <td>Descuento Global</td>
+                                        <td id="summary-descuento">-0.00€</td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-[#1e242d] p-8 rounded-2xl max-w-sm w-full text-center border border-[#282e39] shadow-2xl">
+            <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-check text-4xl text-green-500"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">¡Venta Registrada!</h3>
+            <p class="text-[#9da6b9] mb-8">El stock ha sido actualizado correctamente.</p>
+            <button id="close-modal-btn"
+                class="w-full py-3 bg-[var(--brand-orange)] text-white rounded-xl hover:bg-[#e05300] font-bold">Nueva
+                Venta</button>
+        </div>
+    </div>
+
+    <!-- New Client Modal -->
+    <div id="new-client-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-[#1e242d] p-6 rounded-2xl w-full max-w-md border border-[#282e39] shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4">Nuevo Cliente</h3>
+            <form id="new-client-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-[#9da6b9] mb-1">Nombre Completo</label>
+                    <input type="text" name="nombre" class="form-input" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-[#9da6b9] mb-1">DNI/CIF</label>
+                        <input type="text" name="documento" class="form-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#9da6b9] mb-1">Teléfono</label>
+                        <input type="text" name="telefono" class="form-input">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-[#9da6b9] mb-1">Email</label>
+                    <input type="email" name="email" class="form-input">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="document.getElementById('new-client-modal').classList.add('hidden')"
+                        class="px-4 py-2 rounded-lg border border-[#282e39] text-[#9da6b9] hover:bg-[#282e39]">Cancelar</button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-lg bg-[var(--brand-orange)] text-white font-bold hover:bg-[#e05300]">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Product Modal -->
+    <div id="new-product-modal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-[#1e242d] p-6 rounded-2xl w-full max-w-md border border-[#282e39] shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4">Nuevo Producto</h3>
+            <form id="new-product-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-[#9da6b9] mb-1">Nombre del Producto</label>
+                    <input type="text" name="nombre" class="form-input" required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-[#9da6b9] mb-1">Precio Venta</label>
+                        <input type="number" name="precio" class="form-input" step="0.01" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-[#9da6b9] mb-1">Stock Inicial</label>
+                        <input type="number" name="stock" class="form-input" value="0">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-[#9da6b9] mb-1">Código (Opcional)</label>
+                    <input type="text" name="codigo" class="form-input">
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="document.getElementById('new-product-modal').classList.add('hidden')"
+                        class="px-4 py-2 rounded-lg border border-[#282e39] text-[#9da6b9] hover:bg-[#282e39]">Cancelar</button>
+                    <button type="submit"
+                        class="px-4 py-2 rounded-lg bg-[var(--brand-orange)] text-white font-bold hover:bg-[#e05300]">Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-notification"
+        class="fixed bottom-5 right-5 z-[100] bg-[#1e242d] text-white px-6 py-4 rounded-xl shadow-2xl border border-[#282e39] flex items-center gap-3 transform translate-y-20 opacity-0 transition-all duration-300">
+        <span id="toast-message">Notificación</span>
+    </div>
+
+    <script type="module" src="manager-taller-ventas.js"></script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

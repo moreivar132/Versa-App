@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nuevo Producto - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Librería Quagga para escáner -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+    <style>
+        /* --- VARIABLES & BASE --- */
+        /* Redundant variables removed */
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            background: rgba(17, 19, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        /* --- FORM CONTENEDOR --- */
+        .inventory-form-container {
+            background: var(--bg-panel);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-subtle);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .inventory-form-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--brand-orange), transparent);
+            opacity: 0.8;
+        }
+
+        .form-main-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 30px 0;
+            background: linear-gradient(to right, #fff, #ccc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .form-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        /* --- INPUTS --- */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            transition: color 0.3s;
+        }
+
+        .form-group:focus-within label {
+            color: var(--brand-orange);
+        }
+
+        .form-input,
+        .form-select,
+        textarea.form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-family: "Montserrat", sans-serif;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        textarea.form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 101, 43, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
+        }
+
+        /* --- BOTONES --- */
+        .btn {
+            background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-dark) 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+            padding: 12px 24px;
+            box-shadow: 0 4px 14px rgba(255, 101, 43, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 101, 43, 0.6);
+            background: linear-gradient(135deg, #ff7a45 0%, #e05300 100%);
+        }
+
+        .btn-secondary {
+            --surface-border: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle) !important;
+            box-shadow: none;
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* --- AUTOCOMPLETE --- */
+        .custom-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-options {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background-color: #1e1e24;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-select-options.show {
+            display: block;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .custom-select-options .option {
+            padding: 12px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #ccc;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .custom-select-options .option:hover {
+            background-color: rgba(255, 101, 43, 0.15);
+            color: var(--brand-orange);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- MODAL --- */
+        #success-modal {
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #1a1a1f;
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            color: white;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex h-screen w-full">
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                    órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-caja.html">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            IM
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                            <span class="text-gray-500 text-xs truncate">admin</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+            <!-- Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--border-subtle)] z-30">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white p-2">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 relative z-10">
+
+                <!-- Selector de Sucursal Centrado -->
+                <div class="flex justify-center mb-6">
+                    <div id="sucursal-selector-container"></div>
+                </div>
+
+                <form id="product-form" class="manager-panel">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <a href="manager-taller-inventario.html"
+                                class="text-gray-400 hover:text-white text-sm mb-2 inline-block"><i
+                                    class="fas fa-arrow-left mr-1"></i> Volver al listado</a>
+                            <h2 class="form-main-title mb-0">Nuevo Producto</h2>
+                        </div>
+                        <span
+                            class="bg-[rgba(255,101,43,0.1)] text-[var(--brand-orange)] px-3 py-1 rounded-full text-xs font-bold border border-[rgba(255,101,43,0.2)]">ALTA</span>
+                    </div>
+
+                    <!-- SECCIÓN 1: Identificación -->
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="codigo_barras_articulo">Código de Barras *</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="codigo_barras_articulo" name="codigo_barras_articulo"
+                                    class="form-input flex-1" placeholder="Escanear o escribir..." required />
+                                <button type="button" id="scan-barcode-btn"
+                                    class="btn-secondary px-3 rounded-lg border border-[var(--border-subtle)] hover:bg-white/5 text-gray-300 transition-colors">
+                                    <i class="fas fa-barcode"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="nombre">Nombre del Producto *</label>
+                            <input type="text" id="nombre" name="nombre" class="form-input"
+                                placeholder="Ej. Aceite 10W40" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="marca">Marca</label>
+                            <input type="text" id="marca" name="marca" class="form-input" placeholder="Ej. Castrol" />
+                        </div>
+                        <div class="form-group">
+                            <label for="modelo">Modelo / Referencia</label>
+                            <input type="text" id="modelo" name="modelo" class="form-input" placeholder="Ej. Power 1" />
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 2: Clasificación y Proveedor -->
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="id_categoria">Categoría</label>
+                            <select id="id_categoria" name="categoria" class="form-select">
+                                <option value="">Seleccionar...</option>
+                                <option value="Repuestos">Repuestos</option>
+                                <option value="Lubricantes">Lubricantes</option>
+                                <option value="Neumáticos">Neumáticos</option>
+                                <option value="Accesorios">Accesorios</option>
+                                <option value="Herramientas">Herramientas</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="proveedor">Proveedor Principal</label>
+                            <div class="custom-select-container">
+                                <input type="text" id="proveedor" name="proveedor"
+                                    class="form-input custom-select-input" placeholder="Buscar proveedor..." />
+                                <div class="custom-select-options" id="provider-options"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="taller">Ubicación / Taller</label>
+                            <select id="taller" name="taller" class="form-select">
+                                <!-- Populated by JS -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 3: Económico y Stock -->
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label for="costo_compra">Costo Compra (€)</label>
+                            <input type="number" id="costo_compra" name="costo_compra" step="0.01" class="form-input"
+                                placeholder="0.00" />
+                        </div>
+                        <div class="form-group">
+                            <label for="recargo">Recargo (%)</label>
+                            <input type="number" id="recargo" name="recargo" step="0.01" class="form-input"
+                                placeholder="0.00" value="0" />
+                        </div>
+                        <div class="form-group">
+                            <label for="precio_venta_bruto">Precio Venta (€)</label>
+                            <input type="number" id="precio_venta_bruto" name="precio_venta_bruto" step="0.01"
+                                class="form-input" placeholder="0.00" />
+                        </div>
+                        <div class="form-group">
+                            <label for="stock">Stock real</label>
+                            <input type="number" id="stock" name="stock" class="form-input" value="0" />
+                        </div>
+                        <div class="form-group">
+                            <label for="stock_minimo">Stock Mínimo</label>
+                            <input type="number" id="stock_minimo" name="stock_minimo" class="form-input" value="0" />
+                        </div>
+                        <div class="form-group">
+                            <label for="unidad_medida">Unidad de Medida</label>
+                            <select id="unidad_medida" name="unidad_medida" class="form-select">
+                                <option value="Unidades">Unidades</option>
+                                <option value="Litros">Litros</option>
+                                <option value="Metros">Metros</option>
+                                <option value="Kilos">Kilos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN 4: Detalles Adicionales -->
+                    <div class="form-section single-col">
+                        <div class="form-group">
+                            <label for="descripcion">Descripción</label>
+                            <textarea id="descripcion" name="descripcion" rows="3" class="form-input"
+                                placeholder="Detalles adicionales..."></textarea>
+                        </div>
+                        <div class="form-group flex-row items-center gap-3 mt-2">
+                            <input type="checkbox" id="activo" name="activo"
+                                class="w-5 h-5 accent-[var(--brand-orange)]" checked />
+                            <label for="activo" class="mb-0 cursor-pointer">Producto Activo</label>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-[var(--border-subtle)] flex justify-end gap-4">
+                        <a href="manager-taller-inventario.html" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn shadow-xl shadow-orange-500/20">
+                            <i class="fas fa-save mr-2"></i> Guardar Producto
+                        </button>
+                    </div>
+
+                </form>
+
+                <footer class="mt-10 text-center text-gray-600 text-xs pb-4">
+                    <p>&copy; 2025 Goversa System. Todos los derechos reservados.</p>
+                </footer>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL ÉXITO -->
+    <div id="success-modal" class="fixed inset-0 hidden items-center justify-center z-50">
+        <div class="modal-content">
+            <div
+                class="w-20 h-20 mx-auto rounded-full bg-green-500/10 flex items-center justify-center mb-6 ring-1 ring-green-500/30">
+                <i class="fas fa-check text-3xl text-green-500"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-2">¡Producto Guardado!</h3>
+            <p class="text-gray-400 mb-8">El producto se ha registrado correctamente en el inventario.</p>
+            <div class="flex gap-3 justify-center">
+                <a href="manager-taller-inventario.html" class="btn btn-secondary">Ir al Listado</a>
+                <button onclick="location.reload()" class="btn">Crear Otro</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ESCÁNER -->
+    <div id="scanner-modal" class="fixed inset-0 hidden items-center justify-center z-50 bg-black/90 backdrop-blur-sm">
+        <div class="bg-[#1a1a1f] p-6 rounded-xl border border-[var(--border-subtle)] w-full max-w-lg relative">
+            <button id="close-scanner" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+            <h3 class="text-xl font-bold text-white mb-4 text-center">Escanear Código de Barras</h3>
+            <div id="scanner-video" class="w-full h-64 bg-black rounded-lg overflow-hidden relative">
+                <!-- Quagga video will be injected here -->
+                <div class="absolute inset-0 border-2 border-[var(--brand-orange)] opacity-50 pointer-events-none"
+                    style="top: 10%; bottom: 10%; left: 10%; right: 10%;"></div>
+            </div>
+            <p class="text-center text-gray-400 text-sm mt-4">Apunta la cámara al código de barras</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchWithAuth } from '/auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        // Inicializar selector de sucursal
+        (async () => {
+            const sucursalId = await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    // Actualizar el selector de taller
+                    const tallerSelect = document.getElementById('taller');
+                    if (tallerSelect && sucursalId) {
+                        setTimeout(() => {
+                            // Find the option that matches this sucursal ID
+                            for (let option of tallerSelect.options) {
+                                if (option.value == sucursalId || option.dataset.id == sucursalId) {
+                                    tallerSelect.value = option.value;
+                                    break;
+                                }
+                            }
+                        }, 300);
+                    }
+                }
+            });
+        })();
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadBranches();
+            setupProviderAutocomplete();
+            setupPriceCalculation();
+            setupScanner();
+
+            // --- SIDEBAR TOGGLE ---
+            window.toggleSubmenu = function (id) {
+                const submenu = document.getElementById(id);
+                const arrowId = id.replace('submenu', 'arrow');
+                const arrow = document.getElementById(arrowId);
+                if (submenu.classList.contains('hidden')) {
+                    submenu.classList.remove('hidden');
+                    submenu.classList.add('flex');
+                    if (arrow) arrow.style.transform = 'rotate(180deg)';
+                } else {
+                    submenu.classList.add('hidden');
+                    submenu.classList.remove('flex');
+                    if (arrow) arrow.style.transform = 'rotate(0deg)';
+                }
+            }
+
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('toggle-sidebar');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+            let isCollapsed = false;
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    isCollapsed = !isCollapsed;
+                    if (isCollapsed) {
+                        sidebar.classList.remove('w-64');
+                        sidebar.classList.add('w-20');
+                        sidebarTexts.forEach(el => el.classList.add('hidden'));
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                        document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                            el.classList.add('hidden');
+                            el.classList.remove('flex');
+                        });
+                    } else {
+                        sidebar.classList.add('w-64');
+                        sidebar.classList.remove('w-20');
+                        sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+                    }
+                });
+            }
+
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            if (mobileMenuBtn) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    sidebar.classList.toggle('-translate-x-full');
+                    sidebar.classList.toggle('absolute');
+                    sidebar.classList.toggle('z-50');
+                    sidebar.classList.toggle('h-full');
+                });
+            }
+
+            // --- LOAD BRANCHES ---
+            async function loadBranches() {
+                const select = document.getElementById('taller');
+                try {
+                    const response = await fetchWithAuth('/api/sucursales');
+                    if (response.ok) {
+                        const branches = await response.json();
+                        select.innerHTML = '<option value="">Seleccionar...</option>';
+                        branches.forEach(branch => {
+                            const option = document.createElement('option');
+                            option.value = branch.nombre; // Backend expects name for now based on inventory.js logic
+                            option.textContent = branch.nombre;
+                            select.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error cargando sucursales:', error);
+                }
+            }
+
+            // --- PROVIDER AUTOCOMPLETE ---
+            function setupProviderAutocomplete() {
+                const input = document.getElementById("proveedor");
+                const optionsContainer = document.getElementById("provider-options");
+                let debounceTimeout;
+
+                input.addEventListener("input", () => {
+                    const query = input.value.trim();
+                    clearTimeout(debounceTimeout);
+                    optionsContainer.innerHTML = "";
+
+                    if (query.length < 1) {
+                        optionsContainer.classList.remove("show");
+                        return;
+                    }
+
+                    debounceTimeout = setTimeout(async () => {
+                        try {
+                            const response = await fetchWithAuth(`/api/proveedores/search?q=${encodeURIComponent(query)}`);
+                            if (!response.ok) return;
+                            const providers = await response.json();
+
+                            optionsContainer.innerHTML = "";
+                            providers.forEach(provider => {
+                                const div = document.createElement("div");
+                                div.className = "option";
+                                div.textContent = provider.nombre;
+                                div.addEventListener("click", () => {
+                                    input.value = provider.nombre;
+                                    optionsContainer.classList.remove("show");
+                                });
+                                optionsContainer.appendChild(div);
+                            });
+                            optionsContainer.classList.add("show");
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }, 300);
+                });
+
+                document.addEventListener("click", (e) => {
+                    if (!input.contains(e.target) && !optionsContainer.contains(e.target)) {
+                        optionsContainer.classList.remove("show");
+                    }
+                });
+            }
+
+            // --- CHECK FOR EDIT MODE OR PREFILL FROM URL ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get('id');
+
+            // Prefill from URL parameters (useful when coming from a purchase or quick add)
+            const prefillFromUrl = () => {
+                const prefillFields = {
+                    'codigo_barras_articulo': urlParams.get('barcode') || urlParams.get('codigo_barras'),
+                    'nombre': urlParams.get('nombre') || urlParams.get('name'),
+                    'marca': urlParams.get('marca'),
+                    'modelo': urlParams.get('modelo'),
+                    'costo_compra': urlParams.get('costo') || urlParams.get('price'),
+                    'recargo': urlParams.get('recargo') || urlParams.get('markup'),
+                    'precio_venta_bruto': urlParams.get('precio_venta'),
+                    'stock': urlParams.get('stock') || urlParams.get('cantidad') || urlParams.get('quantity'),
+                    'stock_minimo': urlParams.get('stock_minimo'),
+                    'descripcion': urlParams.get('descripcion'),
+                    'proveedor': urlParams.get('proveedor'),
+                    'id_categoria': urlParams.get('categoria'),
+                    'unidad_medida': urlParams.get('unidad')
+                };
+
+                Object.entries(prefillFields).forEach(([fieldId, value]) => {
+                    if (value) {
+                        const field = document.getElementById(fieldId);
+                        if (field) {
+                            field.value = decodeURIComponent(value);
+                            // Trigger input event to activate calculations
+                            field.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    }
+                });
+
+                // Calculate price if costo was prefilled
+                const costoValue = urlParams.get('costo') || urlParams.get('price');
+                const recargoValue = urlParams.get('recargo') || urlParams.get('markup');
+                if (costoValue) {
+                    const costo = parseFloat(costoValue) || 0;
+                    const recargo = parseFloat(recargoValue) || 0;
+                    const precioCalculado = costo * (1 + recargo / 100);
+                    const precioField = document.getElementById('precio_venta_bruto');
+                    if (precioField && !urlParams.get('precio_venta')) {
+                        precioField.value = precioCalculado.toFixed(2);
+                    }
+                }
+
+                // Prefill taller/sucursal after branches load
+                const tallerParam = urlParams.get('taller') || urlParams.get('sucursal');
+                if (tallerParam) {
+                    setTimeout(() => {
+                        const tallerSelect = document.getElementById('taller');
+                        if (tallerSelect) {
+                            // Try to find by name or ID
+                            for (let option of tallerSelect.options) {
+                                if (option.value === tallerParam || option.textContent === decodeURIComponent(tallerParam)) {
+                                    tallerSelect.value = option.value;
+                                    break;
+                                }
+                            }
+                        }
+                    }, 600);
+                }
+            };
+
+            // Check if we're in edit mode or prefill mode
+            if (productId) {
+                document.querySelector('.form-main-title').textContent = 'Editar Producto';
+                document.querySelector('span.bg-\\[rgba\\(255\\,101\\,43\\,0\\.1\\)\\]').textContent = 'EDICIÓN';
+                loadProductData(productId);
+            } else {
+                // Check for prefill parameters
+                prefillFromUrl();
+            }
+
+            async function loadProductData(id) {
+                try {
+                    const response = await fetchWithAuth(`/api/inventory/${id}`);
+                    if (!response.ok) throw new Error('Error cargando producto');
+                    const product = await response.json();
+
+                    // Populate fields
+                    document.getElementById('codigo_barras_articulo').value = product.codigo_barras || '';
+                    document.getElementById('nombre').value = product.nombre || '';
+                    document.getElementById('marca').value = product.marca || '';
+                    document.getElementById('modelo').value = product.modelo || '';
+
+                    // Category
+                    const catSelect = document.getElementById('id_categoria');
+                    if (product.categoria) {
+                        catSelect.value = product.categoria;
+                    }
+
+                    document.getElementById('proveedor').value = product.proveedor_nombre || '';
+
+                    // Wait for branches to load then select
+                    setTimeout(() => {
+                        const tallerSelect = document.getElementById('taller');
+                        if (product.sucursal_nombre) tallerSelect.value = product.sucursal_nombre;
+                    }, 500);
+
+                    document.getElementById('costo_compra').value = product.costo || '';
+                    document.getElementById('recargo').value = product.recargo || 0;
+                    document.getElementById('precio_venta_bruto').value = product.precio || '';
+                    document.getElementById('stock').value = product.stock ?? 0;
+                    document.getElementById('stock_minimo').value = product.stock_minimo || 0;
+                    document.getElementById('unidad_medida').value = product.unidad_medida || 'Unidades';
+                    document.getElementById('descripcion').value = product.descripcion || '';
+                    document.getElementById('activo').checked = product.activo !== false;
+
+                } catch (error) {
+                    console.error(error);
+                    alert('Error al cargar datos del producto');
+                }
+            }
+
+            // --- PRICE CALCULATION WITH RECARGO ---
+            function setupPriceCalculation() {
+                const costoInput = document.getElementById('costo_compra');
+                const recargoInput = document.getElementById('recargo');
+                const precioInput = document.getElementById('precio_venta_bruto');
+
+                // Track if user has manually edited the price
+                let userEditedPrice = false;
+                let lastCalculatedPrice = 0;
+
+                function calculatePrice() {
+                    const costo = parseFloat(costoInput.value) || 0;
+                    const recargo = parseFloat(recargoInput.value) || 0;
+                    const precio = costo * (1 + recargo / 100);
+                    lastCalculatedPrice = precio;
+
+                    // Always update price when costo or recargo changes
+                    precioInput.value = precio.toFixed(2);
+
+                    // Visual feedback - highlight the price field briefly
+                    precioInput.style.backgroundColor = 'rgba(255, 101, 43, 0.15)';
+                    precioInput.style.borderColor = 'var(--brand-orange)';
+                    setTimeout(() => {
+                        precioInput.style.backgroundColor = '';
+                        precioInput.style.borderColor = '';
+                    }, 500);
+                }
+
+                // When user manually changes price, mark it as edited
+                precioInput.addEventListener('focus', () => {
+                    userEditedPrice = true;
+                });
+
+                // Add a "recalculate" button or allow double-click to recalculate
+                precioInput.addEventListener('dblclick', () => {
+                    userEditedPrice = false;
+                    calculatePrice();
+                });
+
+                // When costo or recargo change, always recalculate
+                costoInput.addEventListener('input', () => {
+                    userEditedPrice = false; // Reset manual edit flag when source values change
+                    calculatePrice();
+                });
+
+                recargoInput.addEventListener('input', () => {
+                    userEditedPrice = false; // Reset manual edit flag when source values change
+                    calculatePrice();
+                });
+
+                // Also support the 'change' event for better reliability
+                costoInput.addEventListener('change', calculatePrice);
+                recargoInput.addEventListener('change', calculatePrice);
+            }
+
+            // --- SCANNER LOGIC ---
+            function setupScanner() {
+                const scannerModal = document.getElementById("scanner-modal");
+                const closeScanner = document.getElementById("close-scanner");
+                const scanBtn = document.getElementById("scan-barcode-btn");
+
+                if (scanBtn) {
+                    scanBtn.addEventListener("click", () => {
+                        scannerModal.classList.remove("hidden");
+                        scannerModal.classList.add("flex");
+
+                        Quagga.init({
+                            inputStream: { name: "Live", type: "LiveStream", target: document.querySelector("#scanner-video"), constraints: { facingMode: "environment" } },
+                            decoder: { readers: ["ean_reader", "code_128_reader", "code_39_reader"] },
+                        }, (err) => {
+                            if (err) { console.error(err); return; }
+                            Quagga.start();
+                        });
+                    });
+                }
+
+                Quagga.onDetected((data) => {
+                    document.getElementById("codigo_barras_articulo").value = data.codeResult.code;
+                    stopScanner();
+                    // Optional: Play beep sound
+                });
+
+                function stopScanner() {
+                    Quagga.stop();
+                    scannerModal.classList.add("hidden");
+                    scannerModal.classList.remove("flex");
+                }
+
+                if (closeScanner) closeScanner.addEventListener("click", stopScanner);
+            }
+
+            // --- FORM SUBMIT ---
+            document.getElementById('product-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+
+                // Convert checkbox to boolean
+                data.activo = document.getElementById('activo').checked;
+
+                // Ensure numeric values
+                data.costo_compra = parseFloat(data.costo_compra) || 0;
+                data.recargo = parseFloat(data.recargo) || 0;
+                data.precio_venta_bruto = parseFloat(data.precio_venta_bruto) || 0;
+                data.stock = parseFloat(data.stock) || 0;
+                data.stock_minimo = parseInt(data.stock_minimo) || 0;
+
+                try {
+                    const url = productId ? `/api/inventory/${productId}` : '/api/inventory';
+                    const method = productId ? 'PUT' : 'POST';
+
+                    const response = await fetchWithAuth(url, {
+                        method: method,
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) { // Check response.ok instead of result.ok for PUT usually, but backend returns {ok: true}
+                        document.getElementById('success-modal').classList.remove('hidden');
+                        document.getElementById('success-modal').classList.add('flex');
+                        document.querySelector('#success-modal h3').textContent = productId ? '¡Producto Actualizado!' : '¡Producto Guardado!';
+                    } else {
+                        alert('Error: ' + (result.error || 'No se pudo guardar el producto'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Error de conexión al guardar el producto');
+                }
+            });
+        });
+    </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

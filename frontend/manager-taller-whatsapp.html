@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Manager - VERSA</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet">
+
+    <!-- Estilos Globales del Manager -->
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .chat-message-sent {
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-message-received {
+            background: #f0f0f0;
+            color: #333;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        whatsapp: '#25D366',
+                        whatsappDark: '#128C7E',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar - Lista de Chats -->
+        <div class="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+            <div class="p-4 bg-gradient-to-r from-whatsapp to-whatsappDark text-white">
+                <h1 class="text-xl font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined">chat</span>
+                    WhatsApp Manager
+                </h1>
+            </div>
+
+            <div class="p-4 border-b border-gray-200">
+                <input type="text" id="search-chats" placeholder="Buscar conversaciones..."
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp">
+            </div>
+
+            <div id="chats-list" class="flex-1 overflow-y-auto">
+                <!-- Los chats se cargarán aquí -->
+                <div class="flex items-center justify-center h-full text-gray-400">
+                    <div class="text-center">
+                        <span class="material-symbols-outlined text-6xl mb-2">chat_bubble</span>
+                        <p>Cargando conversaciones...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de Chat -->
+        <div class="flex-1 flex flex-col bg-gray-50">
+            <!-- Header del Chat -->
+            <div id="chat-header" class="bg-white p-4 border-b border-gray-200 shadow-sm hidden">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-12 h-12 rounded-full bg-gradient-to-br from-whatsapp to-whatsappDark flex items-center justify-center text-white font-bold text-lg">
+                        <span id="chat-header-initial">?</span>
+                    </div>
+                    <div class="flex-1">
+                        <h2 class="font-bold text-gray-900" id="chat-header-name">Selecciona un chat</h2>
+                        <p class="text-sm text-gray-500" id="chat-header-phone"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mensajes -->
+            <div id="messages-container" class="flex-1 overflow-y-auto p-6 space-y-3">
+                <div class="flex items-center justify-center h-full text-gray-400">
+                    <div class="text-center">
+                        <span class="material-symbols-outlined text-6xl mb-2">question_answer</span>
+                        <p>Selecciona una conversación para empezar</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input de Mensaje -->
+            <div id="message-input-container" class="bg-white p-4 border-t border-gray-200 hidden">
+                <form id="send-message-form" class="flex gap-3">
+                    <input type="text" id="message-input" placeholder="Escribe un mensaje..."
+                        class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-whatsapp"
+                        required>
+                    <button type="submit"
+                        class="px-6 py-3 bg-gradient-to-r from-whatsapp to-whatsappDark text-white rounded-lg font-semibold hover:opacity-90 transition-opacity flex items-center gap-2">
+                        <span class="material-symbols-outlined">send</span>
+                        Enviar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/whatsapp';
+        let currentChatId = null;
+        let chats = [];
+        let messagesPollingInterval = null;
+
+        // Cargar chats al iniciar
+        async function loadChats() {
+            try {
+                const response = await fetch(`${API_BASE}/chats`);
+                const data = await response.json();
+
+                if (data.ok) {
+                    chats = data.chats;
+                    renderChats(chats);
+                }
+            } catch (error) {
+                console.error('Error cargando chats:', error);
+            }
+        }
+
+        // Renderizar lista de chats
+        function renderChats(chatsList) {
+            const container = document.getElementById('chats-list');
+
+            if (chatsList.length === 0) {
+                container.innerHTML = `
+                    <div class="flex items-center justify-center h-full text-gray-400">
+                        <div class="text-center p-6">
+                            <span class="material-symbols-outlined text-6xl mb-2">inbox</span>
+                            <p>No hay conversaciones aún</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = chatsList.map(chat => {
+                const initial = (chat.nombre || chat.phone).charAt(0).toUpperCase();
+                const name = chat.nombre || 'Cliente';
+                const phone = chat.phone;
+                const time = new Date(chat.updated_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <div 
+                        class="chat-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${currentChatId === chat.chat_id ? 'bg-blue-50' : ''}"
+                        data-chat-id="${chat.chat_id}"
+                        onclick="selectChat('${chat.chat_id}')"
+                    >
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-whatsapp to-whatsappDark flex items-center justify-center text-white font-bold">
+                                ${initial}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-baseline">
+                                    <h3 class="font-semibold text-gray-900 truncate">${name}</h3>
+                                    <span class="text-xs text-gray-500">${time}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 truncate">${phone}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Seleccionar chat
+        async function selectChat(chatId) {
+            currentChatId = chatId;
+            const chat = chats.find(c => c.chat_id === chatId);
+
+            if (!chat) return;
+
+            // Actualizar header
+            document.getElementById('chat-header').classList.remove('hidden');
+            document.getElementById('chat-header-initial').textContent = (chat.nombre || chat.phone).charAt(0).toUpperCase();
+            document.getElementById('chat-header-name').textContent = chat.nombre || 'Cliente';
+            document.getElementById('chat-header-phone').textContent = chat.phone;
+
+            // Mostrar input de mensaje
+            document.getElementById('message-input-container').classList.remove('hidden');
+
+            // Cargar mensajes
+            await loadMessages(chatId);
+
+            // Iniciar polling de mensajes
+            if (messagesPollingInterval) {
+                clearInterval(messagesPollingInterval);
+            }
+            messagesPollingInterval = setInterval(() => loadMessages(chatId), 5000);
+        }
+
+        // Cargar mensajes de un chat
+        async function loadMessages(chatId) {
+            try {
+                const response = await fetch(`${API_BASE}/messages/${chatId}`);
+                const data = await response.json();
+
+                if (data.ok) {
+                    renderMessages(data.messages);
+                }
+            } catch (error) {
+                console.error('Error cargando mensajes:', error);
+            }
+        }
+
+        // Renderizar mensajes
+        function renderMessages(messages) {
+            const container = document.getElementById('messages-container');
+
+            if (messages.length === 0) {
+                container.innerHTML = `
+                    <div class="flex items-center justify-center h-full text-gray-400">
+                        <p>No hay mensajes en esta conversación</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = messages.map(msg => {
+                const isSent = msg.sender_type === 'operator';
+                const time = new Date(msg.created_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <div class="flex ${isSent ? 'justify-end' : 'justify-start'}">
+                        <div class="max-w-[70%]">
+                            <div class="chat-message-${isSent ? 'sent' : 'received'} rounded-2xl px-4 py-2 shadow-sm">
+                                ${!isSent ? `<p class="text-xs font-semibold mb-1 opacity-70">${msg.sender_name || 'Cliente'}</p>` : ''}
+                                <p class="text-sm">${msg.message_text}</p>
+                                <p class="text-xs mt-1 opacity-70">${time}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Scroll al final
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Enviar mensaje
+        document.getElementById('send-message-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+
+            if (!message || !currentChatId) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/send`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        chat_id: currentChatId,
+                        message: message,
+                        sender_name: 'Operador VERSA',
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (data.ok) {
+                    input.value = '';
+                    await loadMessages(currentChatId);
+                } else {
+                    alert('Error al enviar el mensaje: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error enviando mensaje:', error);
+                alert('Error al enviar el mensaje');
+            }
+        });
+
+        // Búsqueda de chats
+        document.getElementById('search-chats').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filteredChats = chats.filter(chat =>
+                (chat.nombre && chat.nombre.toLowerCase().includes(query)) ||
+                chat.phone.includes(query)
+            );
+            renderChats(filteredChats);
+        });
+
+        // Iniciar
+        loadChats();
+
+        // Recargar chats cada 10 segundos
+        setInterval(loadChats, 10000);
+    </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

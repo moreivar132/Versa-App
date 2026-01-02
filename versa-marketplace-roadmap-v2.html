@@ -1,0 +1,1085 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VERSA — Roadmap Marketplace (tipo Treatwell)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b0b0b;
+      --surface:#121212;
+      --surface2:#1a1a1a;
+      --border:rgba(255,255,255,.10);
+      --text:#eaeaea;
+      --muted:rgba(255,255,255,.70);
+      --muted2:rgba(255,255,255,.55);
+      --primary:#ff4400;
+      --primary2:#ff5f00;
+      --ok:#35d07f;
+      --warn:#f7b500;
+      --bad:#ff3b30;
+      --shadow: 0 16px 44px rgba(0,0,0,.45);
+      --radius: 18px;
+      --radius2: 14px;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:Montserrat,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(800px 400px at 20% 10%, rgba(255,68,0,.22), transparent 55%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(255,95,0,.16), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{ color:inherit; text-decoration:none; }
+    .wrap{ max-width:1180px; margin:0 auto; padding:24px 16px 56px; }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      padding:14px 16px; border:1px solid var(--border); border-radius: var(--radius);
+      background: rgba(18,18,18,.75); backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      position: sticky; top: 14px; z-index: 5;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px; min-width: 240px;
+    }
+    .logo{
+      width:36px; height:36px; border-radius:12px;
+      background: linear-gradient(135deg, var(--primary), var(--primary2));
+      box-shadow: 0 10px 24px rgba(255,68,0,.25);
+    }
+    .brand h1{ font-size:14px; margin:0; letter-spacing:.2px; }
+    .brand p{ font-size:12px; margin:2px 0 0; color:var(--muted); }
+    .actions{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .btn{
+      border:1px solid var(--border);
+      background: rgba(26,26,26,.8);
+      color:var(--text);
+      border-radius: 14px;
+      padding:10px 12px;
+      font-weight:700;
+      font-size:12px;
+      cursor:pointer;
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    .btn.primary{
+      border-color: rgba(255,68,0,.45);
+      background: linear-gradient(135deg, rgba(255,68,0,.95), rgba(255,95,0,.9));
+      color: #0b0b0b;
+      box-shadow: 0 14px 30px rgba(255,68,0,.2);
+    }
+    .btn:hover{ transform: translateY(-1px); }
+    .grid{
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:16px;
+      margin-top: 16px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .brand{ min-width: unset; }
+      .topbar{ position: relative; top:0; }
+    }
+    .panel{
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(18,18,18,.72);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel h2{
+      margin:0;
+      padding:14px 16px;
+      font-size:13px;
+      letter-spacing:.2px;
+      border-bottom: 1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .panel .content{ padding:14px 16px; }
+    .muted{ color:var(--muted); }
+    .muted2{ color:var(--muted2); }
+    .tag{
+      font-size:11px; font-weight:800; letter-spacing:.3px;
+      padding:6px 9px; border-radius: 999px;
+      border:1px solid var(--border); color: var(--muted);
+      background: rgba(0,0,0,.18);
+    }
+    .tag.ok{ border-color: rgba(53,208,127,.35); color: rgba(53,208,127,.95); }
+    .tag.todo{ border-color: rgba(255,68,0,.35); color: rgba(255,68,0,.95); }
+    .tag.warn{ border-color: rgba(247,181,0,.35); color: rgba(247,181,0,.95); }
+    .nav a{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:12px 12px;
+      border-radius: 14px;
+      border:1px solid transparent;
+      color:var(--muted);
+    }
+    .nav a:hover{ border-color: var(--border); color: var(--text); background: rgba(0,0,0,.18); }
+    .nav .small{ font-size:11px; color:var(--muted2); }
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top: 12px;
+    }
+    .kpi .box{
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding:10px 12px;
+      background: rgba(0,0,0,.18);
+    }
+    .kpi .box .n{ font-weight:900; font-size:16px; }
+    .kpi .box .l{ font-size:11px; color:var(--muted2); margin-top:2px; }
+    .phase{
+      padding:16px;
+      border-top: 1px solid var(--border);
+      scroll-margin-top: 96px;
+    }
+    .phase:first-child{ border-top: 0; }
+    .phase h3{ margin:0; font-size:16px; display:flex; align-items:center; gap:10px; }
+    .phase p{ margin:10px 0 0; color:var(--muted); line-height:1.45; font-size:13px; }
+    .cards{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 780px){
+      .cards{ grid-template-columns: 1fr; }
+    }
+    .card{
+      border:1px solid var(--border);
+      border-radius: var(--radius2);
+      background: rgba(0,0,0,.16);
+      padding:12px;
+    }
+    .card h4{ margin:0; font-size:13px; }
+    .card ul{ margin:10px 0 0; padding-left: 18px; color:var(--muted); font-size:12.5px; line-height:1.5; }
+    .card code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:11.5px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      padding:2px 6px;
+      border-radius: 10px;
+      color: rgba(255,255,255,.92);
+    }
+    .checklist{
+      margin-top:12px;
+      display:grid;
+      gap:10px;
+    }
+    .item{
+      display:flex; gap:10px; align-items:flex-start;
+      padding:10px 10px;
+      border-radius: 14px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.14);
+    }
+    .item input{ margin-top:3px; }
+    .item .t{ font-weight:800; font-size:12.5px; }
+    .item .d{ font-size:12px; color:var(--muted); margin-top:4px; line-height:1.45; }
+    .item details{
+      margin-top: 8px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      background: rgba(255,255,255,.04);
+      overflow: hidden;
+    }
+    .item summary{
+      cursor: pointer;
+      user-select: none;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      color: rgba(255,255,255,.82);
+      list-style: none;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .item summary::-webkit-details-marker{ display:none; }
+    .item .tests{
+      margin: 0;
+      padding: 0 14px 10px 28px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .item .tests li{ margin: 6px 0; }
+    .item .chip{
+      font-size: 11px;
+      border:1px solid rgba(255,68,0,.35);
+      color: rgba(255,68,0,.95);
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255,68,0,.08);
+    }
+    .split{
+      display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top: 12px;
+    }
+    @media (max-width: 780px){ .split{ grid-template-columns: 1fr; } }
+    .flow{
+      margin-top: 10px;
+      border:1px solid var(--border);
+      border-radius: var(--radius2);
+      padding:12px;
+      background: rgba(0,0,0,.14);
+      overflow:auto;
+    }
+    .flow svg{ width: 980px; max-width: 100%; height: auto; display:block; }
+    .hint{ font-size:11px; color:var(--muted2); margin-top: 10px; }
+    .footer{
+      margin-top: 18px;
+      padding: 14px 16px;
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(18,18,18,.7);
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+      color: rgba(255,255,255,.85);
+      display:inline-block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>VERSA — Roadmap Marketplace (tipo Treatwell)</h1>
+          <p>Checklist + pruebas para dar check con confianza (UI + API + BBDD)</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn" id="btnExport">Exportar checklist + tests (TXT)</button>
+        <button class="btn" id="btnReset">Reset checks</button>
+        <a class="btn primary" href="#fase2">Empezar por Fase 2</a>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: NAV -->
+      <div class="panel">
+        <h2>
+          Navegación rápida
+          <span class="tag todo" id="progressTag">0% listo</span>
+        </h2>
+        <div class="content">
+          <div class="nav">
+            <a href="#vision">
+              <div>
+                <div><strong>Visión y alcance</strong></div>
+                <div class="small">Qué estamos replicando (sin copiar marca)</div>
+              </div>
+              <span class="tag">Mapa</span>
+            </a>
+
+            <a href="#fase2">
+              <div>
+                <div><strong>Fase 2 — UI Marketplace</strong></div>
+                <div class="small">Pages + mocks + integración preparada</div>
+              </div>
+              <span class="tag todo">UI</span>
+            </a>
+
+            <a href="#fase3">
+              <div>
+                <div><strong>Fase 3 — BBDD Marketplace</strong></div>
+                <div class="small">Tablas: listing, servicios, promos, reviews</div>
+              </div>
+              <span class="tag todo">DB</span>
+            </a>
+
+            <a href="#fase4">
+              <div>
+                <div><strong>Fase 4 — API Backend</strong></div>
+                <div class="small">Endpoints search/detail/availability/book</div>
+              </div>
+              <span class="tag todo">API</span>
+            </a>
+
+            <a href="#fase5">
+              <div>
+                <div><strong>Fase 5 — Panel Manager</strong></div>
+                <div class="small">“Configurar como Treatwell”</div>
+              </div>
+              <span class="tag todo">Manager</span>
+            </a>
+
+            <a href="#fase6">
+              <div>
+                <div><strong>Fase 6 — Stripe + WhatsApp</strong></div>
+                <div class="small">Señal / confirmaciones / recordatorios</div>
+              </div>
+              <span class="tag warn">Ops</span>
+            </a>
+
+            <a href="#fase7">
+              <div>
+                <div><strong>Fase 7 — QA + Deploy</strong></div>
+                <div class="small">Checklist final para no romper producción</div>
+              </div>
+              <span class="tag warn">QA</span>
+            </a>
+          </div>
+
+          <div class="kpi" aria-label="resumen">
+            <div class="box">
+              <div class="n" id="kpiDone">0</div>
+              <div class="l">tareas completadas</div>
+            </div>
+            <div class="box">
+              <div class="n" id="kpiTotal">0</div>
+              <div class="l">tareas totales</div>
+            </div>
+          </div>
+
+          <div class="hint">
+            Tip: abre los “Tests” dentro de cada item. Atajos útiles:
+            <span class="kbd">⌘F</span> buscar,
+            <span class="kbd">⌘R</span> recargar.
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: CONTENT -->
+      <div class="panel">
+        <h2>
+          Roadmap paso a paso
+          <span class="tag ok">VERSA</span>
+        </h2>
+
+        <div class="phase" id="vision">
+          <h3>Visión y alcance <span class="tag">Treatwell-like</span></h3>
+          <p>
+            Construimos un <strong>Marketplace público</strong> para clientes finales (buscar → ver ficha → reservar),
+            conectado al <strong>Manager multi-tenant</strong> (taller configura su perfil, servicios, horarios, ofertas).
+            La reserva crea una <code>citataller</code> (y opcionalmente genera <code>orden</code> al check-in).
+          </p>
+
+          <div class="flow" aria-label="flujo visual">
+            <svg viewBox="0 0 980 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Diagrama de flujo">
+              <defs>
+                <linearGradient id="g" x1="0" x2="1">
+                  <stop offset="0" stop-color="#ff4400" stop-opacity=".95"/>
+                  <stop offset="1" stop-color="#ff5f00" stop-opacity=".9"/>
+                </linearGradient>
+              </defs>
+
+              <rect x="20" y="24" width="210" height="64" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)"/>
+              <text x="35" y="54" fill="#eaeaea" font-size="14" font-weight="800">Cliente</text>
+              <text x="35" y="74" fill="rgba(255,255,255,.70)" font-size="12">Busca taller/servicio</text>
+
+              <rect x="260" y="24" width="240" height="64" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)"/>
+              <text x="275" y="54" fill="#eaeaea" font-size="14" font-weight="800">Marketplace</text>
+              <text x="275" y="74" fill="rgba(255,255,255,.70)" font-size="12">Listado + ficha + reserva</text>
+
+              <rect x="530" y="24" width="210" height="64" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)"/>
+              <text x="545" y="54" fill="#eaeaea" font-size="14" font-weight="800">Backend API</text>
+              <text x="545" y="74" fill="rgba(255,255,255,.70)" font-size="12">search/detail/book</text>
+
+              <rect x="770" y="24" width="190" height="64" rx="16" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)"/>
+              <text x="785" y="54" fill="#eaeaea" font-size="14" font-weight="800">Neon (DB)</text>
+              <text x="785" y="74" fill="rgba(255,255,255,.70)" font-size="12">tenant/sucursal/citataller</text>
+
+              <path d="M230 56 L260 56" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+              <path d="M500 56 L530 56" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+              <path d="M740 56 L770 56" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+
+              <rect x="260" y="130" width="700" height="64" rx="16" fill="rgba(0,0,0,.20)" stroke="rgba(255,68,0,.35)"/>
+              <text x="275" y="160" fill="#eaeaea" font-size="14" font-weight="800">Manager (Panel del taller)</text>
+              <text x="275" y="180" fill="rgba(255,255,255,.70)" font-size="12">Configura perfil público, servicios, precios, ofertas, reglas de reserva</text>
+
+              <path d="M380 88 L380 130" stroke="url(#g)" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="380" cy="88" r="5" fill="#ff4400"/>
+              <circle cx="380" cy="130" r="5" fill="#ff4400"/>
+            </svg>
+          </div>
+
+          <div class="split">
+            <div class="card">
+              <h4>Entregables clave</h4>
+              <ul>
+                <li><strong>UI pública</strong>: buscador + ficha + reserva.</li>
+                <li><strong>Panel Manager</strong>: “Configurar como Treatwell”.</li>
+                <li><strong>Datos</strong>: servicios por sucursal + promos + reviews verificadas.</li>
+                <li><strong>Integraciones</strong>: Stripe (señal) + WhatsApp (confirmación).</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Convenciones (VERSA)</h4>
+              <ul>
+                <li>Tema oscuro, Montserrat, primary <code>#ff4400</code>.</li>
+                <li>Sin dependencias nuevas en front.</li>
+                <li>Reusar patrón de <code>API_BASE_URL</code> y estilos existentes.</li>
+                <li>Feature flag: activar marketplace por <code>sucursal</code>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- FASE 2 -->
+        <div class="phase" id="fase2">
+          <h3>Fase 2 — UI Marketplace (sin tocar BBDD aún) <span class="tag todo">UI</span></h3>
+          <p>
+            Creamos páginas públicas con el mismo estilo de la landing, usando <strong>mock</strong> como fallback.
+            Para marcar un item como “done”, pasa las pruebas del desplegable <span class="chip">Tests</span>.
+          </p>
+
+          <div class="cards">
+            <div class="card">
+              <h4>Páginas a crear</h4>
+              <ul>
+                <li><code>frontend/marketplace-busqueda.html</code> (filtros + cards + tabla + mapa)</li>
+                <li><code>frontend/marketplace-taller.html</code> (ficha + servicios + disponibilidad + reserva)</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Landing actual</h4>
+              <ul>
+                <li>Agregar link “Marketplace” en navbar y menú móvil.</li>
+                <li>CTA “Buscar talleres cerca de mí”.</li>
+                <li>Reusar estilo, WhatsApp widget, y map si aplica.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="checklist" data-phase="2">
+            <div class="item">
+              <input type="checkbox" data-id="p2-1">
+              <div>
+                <div class="t">Agregar “Marketplace” al navbar y menú móvil</div>
+                <div class="d">Editar <code>frontend/index.html</code>: link a <code>/marketplace-busqueda.html</code>.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>En desktop: el link “Marketplace” abre la página correctamente (sin 404).</li>
+                    <li>En mobile: el menú “vault” muestra “Marketplace”, al click navega y el menú se cierra.</li>
+                    <li>No hay errores en consola al cargar <code>index.html</code>.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p2-2">
+              <div>
+                <div class="t">Crear marketplace-busqueda (filtros + cards + tabla)</div>
+                <div class="d">Cards con: nombre, zona, rating, 2–3 servicios (duración+precio), próxima cita.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Los filtros cambian resultados (aunque sea con mock). Probar: servicio, distancia, “solo ofertas”.</li>
+                    <li>Estado “sin resultados”: muestra mensaje claro (no queda en blanco).</li>
+                    <li>Cards y tabla muestran el mismo número de resultados.</li>
+                    <li>En recarga (<code>⌘R</code>) la página carga sin romper (sin errores JS).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p2-3">
+              <div>
+                <div class="t">Mapa Leaflet en búsqueda</div>
+                <div class="d">Markers por taller; click card centra el mapa y resalta el marcador.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>El mapa carga y se ve (tiles + zoom) sin depender del backend.</li>
+                    <li>El número de markers coincide con resultados visibles (o con los que tengan lat/lng).</li>
+                    <li>Click en una card: centra el mapa y abre popup/tooltip del marcador.</li>
+                    <li>Click en un marker: resalta la card asociada (scroll a card si estás abajo).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p2-4">
+              <div>
+                <div class="t">Crear marketplace-taller (ficha) + tabla de servicios</div>
+                <div class="d">Tabla: Servicio | Duración | Precio | Reservar. Sección reseñas + ofertas (mock).</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Entrando con <code>?id_sucursal=XX</code> se renderiza la ficha (datos reales o mock).</li>
+                    <li>Si falta <code>id_sucursal</code>: mostrar error amable + botón “volver al buscador”.</li>
+                    <li>Tabla de servicios renderiza al menos 5 filas (mock) y cada fila tiene CTA “Reservar”.</li>
+                    <li>Back/Volver funciona y regresa a búsqueda sin perder totalmente el estado (ideal: query params).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p2-5">
+              <div>
+                <div class="t">Modal de reserva (UI) + POST preparado</div>
+                <div class="d">Si falla backend, simular éxito y mostrar ID mock. Evitar doble submit.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Modal abre/cierra (X, overlay click, <code>Esc</code>) y no rompe scroll del body.</li>
+                    <li>Validación mínima: nombre + teléfono/email + fecha/hora (no permite enviar vacío).</li>
+                    <li>Al enviar: muestra loading, deshabilita botón y no duplica reservas al doble click.</li>
+                    <li>Si backend falla: cae a mock con mensaje “Reserva creada (mock)” y un ID.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p2-6">
+              <div>
+                <div class="t">Ajustar Vite multi-page inputs</div>
+                <div class="d">Actualizar <code>frontend/vite.config.js</code> para incluir nuevos HTML en build.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li><code>npm run build</code> genera <code>dist</code> con <code>marketplace-busqueda.html</code> y <code>marketplace-taller.html</code>.</li>
+                    <li><code>npm run preview</code> sirve las 3 páginas sin 404.</li>
+                    <li>En Netlify/Railway (si aplica): navegar directo a la URL del HTML no devuelve 404.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <div class="hint">Resultado: puedes enseñar el marketplace funcionando sin depender aún del backend.</div>
+        </div>
+
+        <!-- FASE 3 -->
+        <div class="phase" id="fase3">
+          <h3>Fase 3 — BBDD Marketplace (Neon) <span class="tag todo">DB</span></h3>
+          <p>
+            Creamos tablas para el escaparate: perfil público, servicios por sucursal, ofertas y reseñas verificadas.
+            Todo enlazado a tus tablas reales (<code>tenant</code>, <code>sucursal</code>, <code>clientefinal</code>, <code>citataller</code>).
+          </p>
+
+          <div class="cards">
+            <div class="card">
+              <h4>Tablas nuevas (mínimas)</h4>
+              <ul>
+                <li><code>marketplace_listing</code> (perfil público por sucursal)</li>
+                <li><code>marketplace_servicio</code> (catálogo base)</li>
+                <li><code>marketplace_servicio_sucursal</code> (precio/duración/rank)</li>
+                <li><code>marketplace_promo</code> (Express Offers)</li>
+                <li><code>marketplace_review</code> (verificado con cita/orden)</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Reglas</h4>
+              <ul>
+                <li>Review solo si existe cita/orden completada.</li>
+                <li>Servicios “destacados” salen de rank + activos.</li>
+                <li>Activación marketplace por sucursal (feature flag).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="checklist" data-phase="3">
+            <div class="item">
+              <input type="checkbox" data-id="p3-1">
+              <div>
+                <div class="t">Definir tabla marketplace_listing (FK sucursal/tenant)</div>
+                <div class="d">Campos: activo, descripción, fotos, lat/lng, whatsapp público, etc.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Ejecutar migración: la tabla existe en Neon y tiene FK a <code>sucursal</code>/<code>tenant</code>.</li>
+                    <li>Insert de prueba: crear listing para 1 sucursal (activo=true) y luego SELECT lo devuelve.</li>
+                    <li>Índices básicos: consultar por (id_sucursal, activo) es rápido (EXPLAIN opcional).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p3-2">
+              <div>
+                <div class="t">Definir catálogo de servicios y servicios por sucursal</div>
+                <div class="d">Precio, duración, “desde”, rank, activo, permite_reserva_online.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>UNIQUE <code>(id_sucursal, id_servicio)</code> evita duplicados.</li>
+                    <li>Crear 5 servicios y asignarlos a 2 sucursales: cada sucursal devuelve su lista correcta.</li>
+                    <li>Rank funciona: ORDER BY rank muestra 2–3 servicios “destacados” primero.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p3-3">
+              <div>
+                <div class="t">Promos (ventanas horarias/cupos)</div>
+                <div class="d">Descuento %, fechas, días/horas aplicables, cupo.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Crear promo activa (hoy→+7 días). Query devuelve promo para esa sucursal.</li>
+                    <li>Fuera de rango fecha/hora: la promo no aparece (si aplicas lógica).</li>
+                    <li>Cupo baja cuando se reserva (si se implementa en booking).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p3-4">
+              <div>
+                <div class="t">Reviews verificadas</div>
+                <div class="d">FK a <code>clientefinal</code> + <code>citataller</code> o <code>orden</code>.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Intentar crear review sin cita/orden completada: debe fallar (en API o constraint).</li>
+                    <li>Crear cita completada y luego review: debe guardar y sumar en promedio.</li>
+                    <li>Consulta de rating: avg + count por sucursal coincide con datos insertados.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p3-5">
+              <div>
+                <div class="t">Crear migraciones en backend/migrations</div>
+                <div class="d">SQL + script runner (similar a facturación). Documentar rollback si aplica.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Runner ejecuta migración en local y en Railway (misma DB_URL), sin errores.</li>
+                    <li>Migración es idempotente (si se re-ejecuta no rompe) o está versionada correctamente.</li>
+                    <li>Se registra en log/tabla de migraciones (si existe) o queda documentado.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FASE 4 -->
+        <div class="phase" id="fase4">
+          <h3>Fase 4 — API Backend <span class="tag todo">API</span></h3>
+          <p>
+            Conectar la UI a endpoints reales. Reusar patrón de capas (routes → services → repositories).
+          </p>
+
+          <div class="cards">
+            <div class="card">
+              <h4>Endpoints públicos</h4>
+              <ul>
+                <li><code>GET /api/marketplace/search</code></li>
+                <li><code>GET /api/marketplace/sucursales/:id</code></li>
+                <li><code>GET /api/marketplace/sucursales/:id/availability</code></li>
+                <li><code>POST /api/marketplace/book</code></li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Endpoints admin (tenant)</h4>
+              <ul>
+                <li><code>GET/PUT /api/marketplace/admin/listing</code></li>
+                <li><code>CRUD /api/marketplace/admin/servicios</code></li>
+                <li><code>CRUD /api/marketplace/admin/promos</code></li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="checklist" data-phase="4">
+            <div class="item">
+              <input type="checkbox" data-id="p4-1">
+              <div>
+                <div class="t">Crear route marketplace.js y mount en backend/index.js</div>
+                <div class="d">Ruta base: <code>/api/marketplace</code>. No romper rutas existentes.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Backend arranca sin errores y el logger muestra requests a <code>/api/marketplace</code>.</li>
+                    <li><code>GET /api/marketplace/health</code> (si lo agregas) responde 200.</li>
+                    <li>No se afecta Stripe webhook (sigue antes de <code>express.json()</code>).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p4-2">
+              <div>
+                <div class="t">Search con filtros (lat/lng, km, servicio, precio, rating)</div>
+                <div class="d">Responder cards paginadas + stats (total, filtros aplicados).</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Sin filtros: devuelve solo sucursales con marketplace activo.</li>
+                    <li>Con servicio: devuelve solo sucursales que lo ofrecen.</li>
+                    <li>Paginación: page/limit no repite registros y total es consistente.</li>
+                    <li>Inputs inválidos (km negativo, lat/lng vacío): responde 400 con mensaje claro.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p4-3">
+              <div>
+                <div class="t">Detalle sucursal (listing + servicios + promos + rating)</div>
+                <div class="d">Join con tablas marketplace + <code>sucursal</code>. Incluye 2–3 destacados.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Si la sucursal no está activa en marketplace: 404 (o 403) consistente.</li>
+                    <li>Devuelve servicios ordenados por rank y promos activas por fecha.</li>
+                    <li>Rating promedio y count coincide con reviews en DB.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p4-4">
+              <div>
+                <div class="t">Availability usando citataller</div>
+                <div class="d">Slots libres por fecha y servicio (duración). Evitar overlaps.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Para fecha con citas existentes: no ofrece horas ocupadas (ni solapadas).</li>
+                    <li>Para fecha sin citas: ofrece slots completos dentro de horario del taller.</li>
+                    <li>Duración del servicio bloquea correctamente (servicio 90min ocupa 2 slots de 45, etc.).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p4-5">
+              <div>
+                <div class="t">Book: crear citataller + clientefinal/vehiculo si faltan</div>
+                <div class="d">Validar sucursal activa; transaccional si se crean varios registros.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Reserva crea <code>citataller</code> y devuelve ID + resumen.</li>
+                    <li>Si cliente no existe: crea <code>clientefinal</code> (o lo asocia) sin duplicar por email/teléfono.</li>
+                    <li>Si vehiculo viene vacío: se permite, o se crea “sin matrícula” según regla.</li>
+                    <li>Intentar reservar slot ya ocupado: responde 409 (conflict) con mensaje claro.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FASE 5 -->
+        <div class="phase" id="fase5">
+          <h3>Fase 5 — Panel Manager (config “como Treatwell”) <span class="tag todo">Manager</span></h3>
+          <p>
+            Añadir una pantalla interna para que cada taller configure su perfil público, servicios, precios, ofertas y reglas.
+          </p>
+
+          <div class="cards">
+            <div class="card">
+              <h4>Página sugerida</h4>
+              <ul>
+                <li><code>frontend/manager-taller-marketplace.html</code></li>
+                <li>Tabs: Perfil / Servicios / Ofertas / Reglas / Reseñas</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h4>Integración</h4>
+              <ul>
+                <li>Usar auth JWT existente.</li>
+                <li>Operar solo sobre sucursales del tenant (seguridad).</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="checklist" data-phase="5">
+            <div class="item">
+              <input type="checkbox" data-id="p5-1">
+              <div>
+                <div class="t">Agregar link “Marketplace” en sidebar Manager</div>
+                <div class="d">Reusar <code>sidebar-manager.js</code> / templates. Mantener consistencia visual.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Sidebar muestra el nuevo link solo para roles permitidos (si aplica permisos).</li>
+                    <li>Click en link abre la pantalla sin romper otras rutas del Manager.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p5-2">
+              <div>
+                <div class="t">Crear pantalla con tabs</div>
+                <div class="d">Perfil público + tabla servicios + CRUD promos + reglas + reseñas.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Carga inicial hace GET y rellena campos sin “parpadeo” grande.</li>
+                    <li>Guardar cambios muestra toast/feedback y persiste al recargar.</li>
+                    <li>CRUD servicios/promos: crear/editar/desactivar y se refleja en la UI.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p5-3">
+              <div>
+                <div class="t">Guardar y previsualizar ficha pública</div>
+                <div class="d">Botón “Ver como cliente” abre <code>marketplace-taller.html</code> con esa sucursal.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Tras guardar, el botón abre la ficha pública y se ven los cambios (descripción/fotos/servicios).</li>
+                    <li>Si marketplace está “off”, la preview avisa que no es pública pero permite ver (modo preview).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FASE 6 -->
+        <div class="phase" id="fase6">
+          <h3>Fase 6 — Stripe + WhatsApp <span class="tag warn">Ops</span></h3>
+          <p>
+            Opcional pero potente: señal/depósito con Stripe y notificaciones WhatsApp para confirmar y recordar citas.
+          </p>
+
+          <div class="checklist" data-phase="6">
+            <div class="item">
+              <input type="checkbox" data-id="p6-1">
+              <div>
+                <div class="t">Señal Stripe (opcional)</div>
+                <div class="d">Crear intent/session al reservar; vincular a citataller y estado pago.</div>
+                <details>
+                  <summary>Tests <span class="chip">recomendado</span></summary>
+                  <ul class="tests">
+                    <li>Reserva con señal crea Checkout Session y redirige a Stripe sin errores.</li>
+                    <li>Webhook Stripe actualiza estado pago y lo vincula a la cita.</li>
+                    <li>Cancelación/expiración de pago deja la cita en estado “pendiente” o la libera (según regla).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p6-2">
+              <div>
+                <div class="t">Confirmación WhatsApp</div>
+                <div class="d">Mensaje al cliente: confirmación + link + política cancelación.</div>
+                <details>
+                  <summary>Tests <span class="chip">recomendado</span></summary>
+                  <ul class="tests">
+                    <li>Al reservar, se envía 1 mensaje (no duplicado) con datos correctos.</li>
+                    <li>Si falla WhatsApp, no rompe la reserva (solo log + reintento).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p6-3">
+              <div>
+                <div class="t">Recordatorio automático</div>
+                <div class="d">24h/2h antes. (Make/Timelines si ya lo usan.)</div>
+                <details>
+                  <summary>Tests <span class="chip">recomendado</span></summary>
+                  <ul class="tests">
+                    <li>Programación respeta zona horaria (Madrid) y no manda fuera de horario razonable.</li>
+                    <li>No envía recordatorios a citas canceladas.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FASE 7 -->
+        <div class="phase" id="fase7">
+          <h3>Fase 7 — QA + Deploy <span class="tag warn">QA</span></h3>
+          <p>
+            Checklist final para no romper producción y asegurar que el marketplace funciona end-to-end.
+          </p>
+
+          <div class="checklist" data-phase="7">
+            <div class="item">
+              <input type="checkbox" data-id="p7-1">
+              <div>
+                <div class="t">Smoke test UI (búsqueda → ficha → reserva)</div>
+                <div class="d">Validar responsive y accesibilidad básica.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Mobile: filtros colapsables, cards legibles, modal usable con teclado.</li>
+                    <li>Desktop: layout 2 columnas, tabla visible, mapa usable.</li>
+                    <li>Accesibilidad: focus visible, labels en inputs, <code>Esc</code> cierra modal.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p7-2">
+              <div>
+                <div class="t">Smoke test API (search/detail/book)</div>
+                <div class="d">Validar errores y paginación; logs limpios.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Postman/curl: 10 requests seguidos sin memory leaks ni errores 500.</li>
+                    <li>Errores esperados devuelven 4xx con JSON consistente.</li>
+                    <li>Logs no contienen datos sensibles (tokens/PII en claro).</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p7-3">
+              <div>
+                <div class="t">Seguridad: endpoints admin con JWT</div>
+                <div class="d">Verificar que un tenant no toca sucursales de otro.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li>Sin token: admin endpoints devuelven 401.</li>
+                    <li>Con token de otro tenant: 403 o 404 (según estrategia) y no revela datos.</li>
+                    <li>Validar rate-limits básicos (si existe) o protección anti abuso.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+
+            <div class="item">
+              <input type="checkbox" data-id="p7-4">
+              <div>
+                <div class="t">Deploy sin leaks</div>
+                <div class="d">Asegurar .env fuera del repo, uploads/logs ignorados, variables en Railway.</div>
+                <details>
+                  <summary>Tests <span class="chip">obligatorio</span></summary>
+                  <ul class="tests">
+                    <li><code>backend/.env</code> no está commiteado y variables viven en Railway/Netlify.</li>
+                    <li><code>backend/uploads</code> y logs están en <code>.gitignore</code> (no suben al repo).</li>
+                    <li>Build/prod: navegar directo a marketplace URLs funciona.</li>
+                  </ul>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="footer">
+      <strong>Cómo usar este documento:</strong> marca checks conforme avances. Para dar “done” a un item, pasa los tests del desplegable.
+      Exporta el checklist + tests para pasarlo a tu equipo o a Antigravity.
+    </div>
+  </div>
+
+  <script>
+    // --- persistence ---
+    const LS_KEY = "versa_marketplace_roadmap_checks_v2";
+
+    function loadState(){
+      try{ return JSON.parse(localStorage.getItem(LS_KEY) || "{}"); }
+      catch(e){ return {}; }
+    }
+    function saveState(state){
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+    }
+    function updateProgress(){
+      const inputs = Array.from(document.querySelectorAll('input[type="checkbox"][data-id]'));
+      const total = inputs.length;
+      const done = inputs.filter(i => i.checked).length;
+
+      document.getElementById('kpiDone').textContent = done;
+      document.getElementById('kpiTotal').textContent = total;
+
+      const pct = total ? Math.round((done/total)*100) : 0;
+      const tag = document.getElementById('progressTag');
+      tag.textContent = pct + "% listo";
+      tag.classList.remove("ok","todo","warn");
+      tag.classList.add(pct >= 80 ? "ok" : (pct >= 40 ? "warn" : "todo"));
+    }
+
+    const state = loadState();
+    const inputs = Array.from(document.querySelectorAll('input[type="checkbox"][data-id]'));
+    inputs.forEach(i => {
+      const id = i.getAttribute('data-id');
+      if(state[id] === true) i.checked = true;
+      i.addEventListener('change', () => {
+        state[id] = i.checked;
+        saveState(state);
+        updateProgress();
+      });
+    });
+    updateProgress();
+
+    function collectTests(row){
+      const lis = Array.from(row.querySelectorAll('ul.tests li'));
+      return lis.map(li => li.textContent.trim()).filter(Boolean);
+    }
+
+    // Export
+    document.getElementById('btnExport').addEventListener('click', () => {
+      const items = inputs.map(i => {
+        const id = i.getAttribute('data-id');
+        const row = i.closest('.item');
+        const title = row.querySelector('.t')?.textContent?.trim() || id;
+        const desc = row.querySelector('.d')?.textContent?.trim() || "";
+        const tests = collectTests(row);
+
+        const mark = i.checked ? "[x]" : "[ ]";
+        const testLines = tests.length
+          ? tests.map(t => `      - ${t}`).join("\n")
+          : "      - (sin tests)";
+
+        return `${mark} ${title}\n    - ${desc}\n    - Tests:\n${testLines}\n`;
+      }).join("\n");
+
+      const text = `VERSA — Roadmap Marketplace (tipo Treatwell)\nChecklist + pruebas\n\n${items}`;
+      const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "versa-marketplace-roadmap-checklist-tests.txt";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // Reset
+    document.getElementById('btnReset').addEventListener('click', () => {
+      if(!confirm("¿Resetear todos los checks?")) return;
+      inputs.forEach(i => i.checked = false);
+      Object.keys(state).forEach(k => delete state[k]);
+      saveState(state);
+      updateProgress();
+    });
+  </script>
+</body>
+</html>

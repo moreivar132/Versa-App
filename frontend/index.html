@@ -4,251 +4,2183 @@
 <head>
   <meta charset="utf-8" />
   <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <title>Versa Finanzas - Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
-  <script>
+  <title>VERSA Manager - Software para Talleres y Flotas</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+
+  <!-- Leaflet CSS for the Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+  <!-- WhatsApp Widget Styles -->
+  <link rel="stylesheet" href="/whatsapp-widget.css" />
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* Custom detail summary marker style */
+    details>summary {
+      list-style: none;
+    }
+
+    details>summary::-webkit-details-marker {
+      display: none;
+    }
+
+    /* Styles for the new image-based marker */
+    .versa-marker-image {
+      width: 32px;
+      height: 32px;
+      display: block;
+      position: relative;
+      z-index: 2;
+      /* Ensure image is above the pulse */
+    }
+
+    /* Pulsing effect for the marker, adjusted for a circular icon */
+    .marker-pulse {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 68, 0, 0.5);
+      border-radius: 50%;
+      /* Round pulse for round icon */
+      z-index: 1;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1.8);
+        opacity: 0;
+      }
+    }
+
+    /* Animación para el modal */
+    @keyframes scale-in {
+      0% {
+        transform: scale(0.95);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .animate-scale-in {
+      animation: scale-in 0.2s ease-out forwards;
+    }
+
+    /* ===== RADIAL FLOW STYLES ===== */
+
+    /* Slow pulse animation for background */
+    @keyframes pulse-slow {
+
+      0%,
+      100% {
+        opacity: 0.3;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+    }
+
+    .animate-pulse-slow {
+      animation: pulse-slow 8s ease-in-out infinite;
+    }
+
+    /* Slow spin for the glow ring */
+    @keyframes spin-slow {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .animate-spin-slow {
+      animation: spin-slow 20s linear infinite;
+    }
+
+    /* Central dot pulse */
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        r: 6;
+      }
+
+      50% {
+        opacity: 0.7;
+        r: 8;
+      }
+    }
+
+    .animate-pulse-dot {
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    /* Radial flow labels */
+    .radial-label {
+      transform: translateY(-50%);
+      z-index: 15;
+      pointer-events: auto;
+    }
+
+    .radial-label-inner {
+      display: inline-flex;
+      padding: 12px 18px;
+      background: rgba(18, 18, 18, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 95, 0, 0.3);
+      border-radius: 12px;
+      color: #FFFFFF;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .radial-label-inner:hover {
+      background: rgba(255, 95, 0, 0.15);
+      border-color: rgba(255, 95, 0, 0.6);
+      transform: scale(1.05);
+      box-shadow: 0 0 30px rgba(255, 95, 0, 0.25);
+    }
+
+    /* Particle animation along path */
+    @keyframes flow-particle {
+      0% {
+        offset-distance: 0%;
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 1;
+      }
+
+      100% {
+        offset-distance: 100%;
+        opacity: 0;
+      }
+    }
+
+    .radial-particle {
+      position: absolute;
+      width: 16px;
+      height: 10px;
+      background: radial-gradient(ellipse at center, #F0DB4F 0%, rgba(240, 219, 79, 0) 70%);
+      border-radius: 50%;
+      filter: blur(1px);
+      offset-rotate: 0deg;
+      animation: flow-particle 3s ease-in-out infinite;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .radial-label {
+        transform: translateY(-50%) scale(0.85);
+      }
+
+      .radial-label-inner {
+        padding: 8px 12px;
+        font-size: 11px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .radial-label {
+        transform: translateY(-50%) scale(0.75);
+      }
+
+      .radial-label[style*="left: 3%"],
+      .radial-label[style*="left: 5%"] {
+        left: 2% !important;
+      }
+
+      .radial-label[style*="right: 3%"],
+      .radial-label[style*="right: 5%"] {
+        right: 2% !important;
+      }
+    }
+
+    /* ===== TOGGLE VAULT MENU ===== */
+    .vault-trigger {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 90px;
+      height: 36px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 60;
+      transition: all 0.3s ease;
+      background: #121212;
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    .vault-trigger:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 20px rgba(255, 68, 0, 0.3);
+      border-color: #ff4400;
+    }
+
+    .vault-trigger.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.8);
+    }
+
+    .vault-panel {
+      position: absolute;
+      top: 0.6rem;
+      right: 0.6rem;
+      background: #121212;
+      border: 1px solid rgba(255, 68, 0, 0.3);
+      border-radius: 1rem;
+      overflow: hidden;
+      z-index: 55;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      transform-origin: top right;
+      transition: all 0.5s cubic-bezier(0.2, 0.9, 0.3, 1);
+    }
+
+    .vault-panel.closed {
+      transform: scaleX(0.15) scaleY(0.08);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .vault-panel.open {
+      transform: scaleX(1) scaleY(1);
+      opacity: 1;
+    }
+
+    .vault-content {
+      padding: 2rem;
+      opacity: 0;
+      transition: opacity 0.3s ease 0.3s;
+    }
+
+    .vault-panel.open .vault-content {
+      opacity: 1;
+    }
+
+    .vault-panel.closed .vault-content {
+      opacity: 0;
+      transition-delay: 0s;
+    }
+
+    .vault-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 90px;
+      height: 36px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 65;
+      background: white;
+      color: #121212;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      transition: all 0.3s ease;
+    }
+
+    .vault-close:hover {
+      transform: scale(1.05);
+      background: #ff4400;
+      color: white;
+    }
+
+    .vault-nav-link {
+      display: block;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: white;
+      padding: 0.75rem 0;
+      transition: all 0.2s ease;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .vault-nav-link:last-child {
+      border-bottom: none;
+    }
+
+    .vault-nav-link:hover {
+      color: #ff4400;
+      padding-left: 0.5rem;
+    }
+
+    /* ===== FAQ CARDS CSS (Stacked Cards Style) ===== */
+    .faq-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      height: 600px;
+      margin: 0 auto;
+      perspective: 1000px;
+    }
+
+    .faq-card {
+      position: absolute;
+      width: 100%;
+      background: #ff4400;
+      border-radius: 20px;
+      padding: 32px 24px;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      min-height: 320px;
+      transform-origin: center bottom;
+    }
+
+    /* Stack positioning - each card slightly offset */
+    .faq-card:nth-child(1) {
+      top: 0;
+      z-index: 6;
+      transform: translateY(0px) rotate(0deg);
+    }
+
+    .faq-card:nth-child(2) {
+      top: 10px;
+      z-index: 5;
+      transform: translateY(0px) rotate(-1deg);
+    }
+
+    .faq-card:nth-child(3) {
+      top: 20px;
+      z-index: 4;
+      transform: translateY(0px) rotate(1deg);
+    }
+
+    .faq-card:nth-child(4) {
+      top: 30px;
+      z-index: 3;
+      transform: translateY(0px) rotate(-0.5deg);
+    }
+
+    .faq-card:nth-child(5) {
+      top: 40px;
+      z-index: 2;
+      transform: translateY(0px) rotate(0.5deg);
+    }
+
+    .faq-card:nth-child(6) {
+      top: 50px;
+      z-index: 1;
+      transform: translateY(0px) rotate(-1deg);
+    }
+
+    /* Hover state - fan out the cards */
+    .faq-container:hover .faq-card:nth-child(1) {
+      transform: translateY(-60px) translateX(-40px) rotate(-8deg);
+      z-index: 6;
+    }
+
+    .faq-container:hover .faq-card:nth-child(2) {
+      transform: translateY(-40px) translateX(-20px) rotate(-5deg);
+      z-index: 5;
+    }
+
+    .faq-container:hover .faq-card:nth-child(3) {
+      transform: translateY(-20px) translateX(0px) rotate(0deg);
+      z-index: 4;
+    }
+
+    .faq-container:hover .faq-card:nth-child(4) {
+      transform: translateY(0px) translateX(0px) rotate(0deg);
+      z-index: 3;
+    }
+
+    .faq-container:hover .faq-card:nth-child(5) {
+      transform: translateY(20px) translateX(20px) rotate(5deg);
+      z-index: 2;
+    }
+
+    .faq-container:hover .faq-card:nth-child(6) {
+      transform: translateY(40px) translateX(40px) rotate(8deg);
+      z-index: 1;
+    }
+
+    /* Individual card hover - bring to front */
+    .faq-card:hover {
+      z-index: 100 !important;
+      transform: scale(1.05) rotate(0deg) !important;
+      box-shadow: 0 25px 50px rgba(255, 68, 0, 0.6);
+    }
+
+    .faq-card .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.7);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .faq-card .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      justify-content: center;
+    }
+
+    .faq-card .heading {
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.1;
+      color: white;
+    }
+
+    .faq-card .answer {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 1.6;
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .faq-card .footer {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.5);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: 12px;
+      margin-top: auto;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .faq-container {
+        max-width: 340px;
+        height: 550px;
+      }
+
+      .faq-card .heading {
+        font-size: 20px;
+      }
+
+      .faq-card .answer {
+        font-size: 14px;
+      }
+    }
+
+    /* ===== FLIP SWITCH FOR LOGIN ===== */
+    .flip-switch-container {
+      --card-width: 110px;
+      --card-height: 120px;
+      --switch-bg: rgba(255, 255, 255, 0.1);
+      --switch-border-color: rgba(255, 255, 255, 0.2);
+      --text-color: #ffffff;
+      --inactive-text-color: rgba(255, 255, 255, 0.6);
+      --icon-shadow-color: rgba(0, 0, 0, 0.3);
+      --card-bg: linear-gradient(135deg, rgba(255, 68, 0, 0.5), rgba(255, 68, 0, 0.2));
+      --highlight-color: #ff4400;
+
+      display: grid;
+      place-content: center;
+      min-height: auto;
+      font-family: "Montserrat", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .flip-switch {
+      display: flex;
+      position: relative;
+      width: calc(var(--card-width) * 2);
+      height: var(--card-height);
+      background: var(--switch-bg);
+      border-radius: 20px;
+      border: 1px solid var(--switch-border-color);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37), inset 0 4px 8px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      perspective: 1000px;
+    }
+
+    .flip-switch input[type="radio"] {
+      display: none;
+    }
+
+    .flip-switch .switch-button {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      z-index: 2;
+      color: var(--inactive-text-color);
+      transition: all 0.3s ease;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    .flip-switch .switch-button:hover {
+      color: var(--text-color);
+    }
+
+    .flip-switch .switch-button:hover svg {
+      transform: translateY(-3px);
+      filter: drop-shadow(0 4px 6px var(--icon-shadow-color)) brightness(1.2);
+    }
+
+    .flip-switch .switch-button svg {
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      filter: drop-shadow(0 2px 3px var(--icon-shadow-color));
+      width: 24px;
+      height: 24px;
+    }
+
+    .flip-switch .switch-button span {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    .flip-switch #switch-opt-1:checked~[for="switch-opt-1"],
+    .flip-switch #switch-opt-2:checked~[for="switch-opt-2"] {
+      color: var(--text-color);
+      text-shadow: 0 0 8px rgba(255, 68, 0, 0.5);
+    }
+
+    .flip-switch #switch-opt-1:checked~[for="switch-opt-2"],
+    .flip-switch #switch-opt-2:checked~[for="switch-opt-1"] {
+      color: var(--inactive-text-color);
+    }
+
+    .flip-switch .switch-card {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: var(--card-width);
+      height: var(--card-height);
+      z-index: 1;
+      transform-style: preserve-3d;
+    }
+
+    .flip-switch .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 20px;
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .flip-switch .card-back {
+      transform: rotateY(180deg);
+    }
+
+    .flip-switch #switch-opt-2:checked~.switch-card {
+      animation: flipSwitchRight 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+    }
+
+    .flip-switch #switch-opt-1:checked~.switch-card {
+      animation: flipSwitchLeft 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+    }
+
+    @keyframes flipSwitchRight {
+      0% {
+        transform: translateX(0%) rotateY(0deg);
+      }
+
+      50% {
+        transform: translateX(50%) rotateY(90deg) scale(1.05);
+      }
+
+      100% {
+        transform: translateX(100%) rotateY(180deg) scale(1);
+      }
+    }
+
+    @keyframes flipSwitchLeft {
+      0% {
+        transform: translateX(100%) rotateY(180deg);
+      }
+
+      50% {
+        transform: translateX(50%) rotateY(90deg) scale(1.05);
+      }
+
+      100% {
+        transform: translateX(0%) rotateY(0deg) scale(1);
+      }
+    }
+
+    .flip-switch #switch-opt-1:checked~[for="switch-opt-1"]::after,
+    .flip-switch #switch-opt-2:checked~[for="switch-opt-2"]::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      width: 30px;
+      height: 3px;
+      background: var(--highlight-color);
+      border-radius: 2px;
+      animation: glowSwitch 1.5s infinite alternate;
+    }
+
+    @keyframes glowSwitch {
+      from {
+        box-shadow: 0 0 5px var(--highlight-color);
+      }
+
+      to {
+        box-shadow: 0 0 15px var(--highlight-color), 0 0 25px var(--highlight-color);
+      }
+    }
+  </style>
+  <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
       theme: {
         extend: {
           colors: {
-            primary: "#ea580c", // A vibrant orange from the Tailwind palette
-            "background-light": "#f1f5f9", // slate-100
-            "background-dark": "#0f172a", // slate-900
-            "surface-light": "#ffffff", // white
-            "surface-dark": "#1e293b", // slate-800
-            "muted-light": "#64748b", // slate-500
-            "muted-dark": "#94a3b8", // slate-400
+            "primary": "#ff4400",
+            "background-light": "#f8f6f5",
+            "background-dark": "#121212",
           },
           fontFamily: {
-            display: ["Inter", "sans-serif"],
+            "display": ["Montserrat", "sans-serif"]
           },
-          borderRadius: {
-            DEFAULT: "0.75rem", // 12px
-          },
+          borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
         },
       },
-    };
-  </script>
-  <style>
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
-  </style>
+  </script>
 </head>
 
-<body class="font-display bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 overflow-hidden">
-  <div class="flex h-screen relative">
-    <!-- Mobile Overlay -->
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden transition-opacity opacity-0">
-    </div>
+<body class="bg-background-dark text-[#E0E0E0] font-display">
+  <div class="relative flex min-h-screen w-full flex-col">
 
-    <!-- Sidebar -->
-    <aside id="sidebar"
-      class="fixed inset-y-0 left-0 z-50 w-72 bg-dark-800 p-6 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 md:relative md:translate-x-0 border-r border-dark-700">
-      <div>
-        <div class="flex items-center justify-between mb-10">
-          <span class="text-xl font-bold uppercase text-gray-400 tracking-widest">Panel</span>
-          <button id="close-sidebar" class="md:hidden text-gray-400 hover:text-white">
-            <span class="material-symbols-outlined">close</span>
-          </button>
-        </div>
-        <nav class="space-y-3">
-          <!-- Collapsible Main Menu -->
-          <div>
-            <button onclick="toggleSubmenu('main-menu', 'main-menu-arrow')"
-              class="w-full flex items-center justify-between p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors group">
-              <div class="flex items-center">
-                <span class="material-symbols-outlined mr-4 group-hover:text-primary transition-colors">menu</span>
-                <span class="font-medium">Menú Principal</span>
+    <!-- TopNavBar -->
+    <header class="sticky top-0 z-50 bg-background-dark/95 backdrop-blur-sm border-b border-white/10">
+      <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex h-20 items-center justify-between">
+          <div class="flex items-center gap-4">
+            <img src="https://imgur.com/iBrjKwv.png" alt="GOMANAGER Logo" class="h-6 w-auto">
+            <h2 class="text-xl font-bold tracking-tight text-white">GOMANAGER</h2>
+          </div>
+          <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-[#A0A0A0]">
+            <a class="transition-colors hover:text-white" href="#funcionalidades">Funcionalidades</a>
+            <a class="transition-colors hover:text-primary" href="/marketplace-busqueda.html">Marketplace</a>
+            <a class="transition-colors hover:text-white" href="#pricing">Planes</a>
+            <a class="transition-colors hover:text-white" href="#faq">FAQ</a>
+            <a class="transition-colors hover:text-white" href="#contacto">Contacto</a>
+          </nav>
+          <div class="flex items-center gap-3">
+            <!-- Vault Menu Container (Mobile) -->
+            <div id="vault-container" class="md:hidden relative h-[350px] w-[320px]"
+              style="position: fixed; top: 0; right: 0; pointer-events: none;">
+              <!-- Vault Trigger -->
+              <div id="vault-trigger" class="vault-trigger" style="pointer-events: auto;">
+                MENÚ
               </div>
-              <span id="main-menu-arrow"
-                class="material-symbols-outlined text-sm transition-transform duration-200">expand_more</span>
-            </button>
-            <div id="main-menu" class="hidden pl-2 space-y-1 mt-1 border-l-2 border-dark-700 ml-6">
-              <a class="flex items-center p-3 rounded-lg text-white bg-primary shadow-lg transition-transform hover:scale-[1.02]"
-                href="index.html">
-                <span class="material-symbols-outlined mr-4">bar_chart</span>
-                <span class="font-semibold">Dashboard ejecutivo</span>
-              </a>
-              <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
-                href="admin-accesos.html">
-                <span class="material-symbols-outlined mr-4">shield</span>
-                <span class="font-medium">Administración de accesos</span>
-              </a>
-              <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
-                href="#">
-                <span class="material-symbols-outlined mr-4">receipt_long</span>
-                <span class="font-medium">Gestión de facturas</span>
-              </a>
+
+              <!-- Vault Panel -->
+              <div id="vault-panel" class="vault-panel closed" style="width: 300px; pointer-events: auto;">
+                <!-- Close Button -->
+                <div id="vault-close" class="vault-close">
+                  CERRAR
+                </div>
+
+                <!-- Menu Content -->
+                <div class="vault-content" style="padding-top: 4rem;">
+                  <nav class="flex flex-col">
+                    <a href="#funcionalidades" class="vault-nav-link" onclick="closeVaultMenu()">Funcionalidades</a>
+                    <a href="/marketplace-busqueda.html" class="vault-nav-link"
+                      onclick="closeVaultMenu()">Marketplace</a>
+                    <a href="#pricing" class="vault-nav-link" onclick="closeVaultMenu()">Planes</a>
+                    <a href="#faq" class="vault-nav-link" onclick="closeVaultMenu()">FAQ</a>
+                    <a href="#contacto" class="vault-nav-link" onclick="closeVaultMenu()">Contacto</a>
+                    <div class="h-px bg-white/10 my-4"></div>
+                    <a href="/cliente-login.html" class="vault-nav-link" style="color: #ff8844;">→ Soy Cliente</a>
+                    <a href="/login.html" class="vault-nav-link" style="color: #ff4400;">→ Soy Taller</a>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- HeroSection -->
+    <main class="flex-grow">
+      <section class="relative py-20 sm:py-32 lg:py-40">
+        <div class="absolute inset-0 z-0">
+          <div class="absolute inset-0 bg-background-dark" data-alt="Dark charcoal background"></div>
+          <div class="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
+            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDjtT_B4xDuI5S9NhSsuYse4FI_gn1w1VB5yGZAGqRx_JUzjPPkBVNOBKwBNHW_LqJ6ljObkfpvgEYoio59DWDs_WHk57SElgHakR8BiYVLqEDBB8jeH9833TOmHZkcYjGbvZ6caWeo8tBMlU12K8TJKxdchmRpEK6qjD4ULpZmffxudsq13T7i69rWg4-rKN71LT4chyVGGbRSRXn046zL-5yBhfGBGE0niWMafttXspL8A2AqOzbvNhZsA96Rx7oEthYCF3DdlA");'>
+          </div>
+        </div>
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div class="mx-auto max-w-4xl text-center">
+            <div class="flex flex-col items-center gap-6">
+              <h1 class="text-4xl font-black leading-tight tracking-tighter text-white sm:text-5xl md:text-6xl">
+                VERSA Manager: Software para talleres y flotas
+              </h1>
+              <p class="max-w-2xl text-lg font-normal text-[#A0A0A0] sm:text-xl">
+                Gestiona órdenes, citas, facturación, inventario y clientes de tu taller de motos, bicis o renting desde
+                una única plataforma en la nube.
+              </p>
+              <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+                <button
+                  class="flex w-full sm:w-auto min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold tracking-wide transition-opacity hover:opacity-90">
+                  <span class="truncate">Probar VERSA Manager 30 días gratis</span>
+                </button>
+                <a class="group flex items-center gap-2 text-base font-medium text-[#A0A0A0] transition-colors hover:text-white"
+                  href="#">
+                  <span>Hablar con un asesor de VERSA</span>
+                  <span
+                    class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+                </a>
+              </div>
+              <!-- Marketplace CTA -->
+              <div class="mt-4">
+                <a href="/marketplace-busqueda.html"
+                  class="group inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-white">
+                  <span class="material-symbols-outlined" style="font-size: 20px;">search</span>
+                  <span>Buscar talleres cerca de mí</span>
+                  <span class="material-symbols-outlined transition-transform group-hover:translate-x-1"
+                    style="font-size: 20px;">arrow_forward</span>
+                </a>
+              </div>
+
+              <!-- Login Type Switch -->
+              <div class="mt-8">
+                <p class="text-sm text-[#A0A0A0] mb-4">¿Ya tienes cuenta? Accede aquí:</p>
+                <div class="flip-switch-container">
+                  <div class="flip-switch" id="hero-flip-switch">
+                    <input type="radio" name="hero-login-type" id="switch-opt-1">
+                    <input type="radio" name="hero-login-type" id="switch-opt-2">
+
+                    <label for="switch-opt-1" class="switch-button">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                      <span>Cliente</span>
+                    </label>
+
+                    <label for="switch-opt-2" class="switch-button">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path
+                          d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                        </path>
+                      </svg>
+                      <span>Taller</span>
+                    </label>
+
+                    <div class="switch-card">
+                      <div class="card-face card-front"></div>
+                      <div class="card-face card-back"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features Section -->
+      <section id="funcionalidades" class="bg-background-dark py-16 px-4 sm:px-6 lg:px-8 border-t border-white/5">
+        <div class="flex w-full max-w-5xl mx-auto flex-col">
+          <div class="flex flex-col gap-12 py-10">
+            <div class="flex flex-col items-center text-center gap-6">
+              <div class="flex flex-col gap-4">
+                <h2 class="text-white text-3xl font-black tracking-tighter sm:text-4xl md:text-5xl">
+                  Todo lo que tu taller necesita
+                </h2>
+                <p class="text-[#EAEAEA]/80 text-base font-normal leading-normal max-w-3xl mx-auto">
+                  Centraliza la operativa diaria y elimina el caos de papeles y hojas de cálculo. VERSA Manager te da el
+                  control total de tu negocio.
+                </p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <!-- Card 1 -->
+              <div
+                class="flex flex-1 flex-col gap-4 rounded-lg border border-white/10 bg-[#1E1E1E] p-6 transition-all hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
+                <span class="material-symbols-outlined text-primary" style="font-size: 32px;">build_circle</span>
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-white text-lg font-bold leading-tight">Órdenes de trabajo</h3>
+                  <p class="text-[#EAEAEA]/70 text-sm font-normal leading-normal">
+                    Crea órdenes digitales, asigna mecánicos y notifica el estado del vehículo al cliente por email o
+                    WhatsApp.
+                  </p>
+                </div>
+              </div>
+              <!-- Card 2 -->
+              <div
+                class="flex flex-1 flex-col gap-4 rounded-lg border border-white/10 bg-[#1E1E1E] p-6 transition-all hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
+                <span class="material-symbols-outlined text-primary" style="font-size: 32px;">calendar_month</span>
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-white text-lg font-bold leading-tight">Calendario y citas</h3>
+                  <p class="text-[#EAEAEA]/70 text-sm font-normal leading-normal">
+                    Visualiza la carga de trabajo, gestiona citas previas y organiza la disponibilidad de tus
+                    elevadores.
+                  </p>
+                </div>
+              </div>
+              <!-- Card 3 -->
+              <div
+                class="flex flex-1 flex-col gap-4 rounded-lg border border-white/10 bg-[#1E1E1E] p-6 transition-all hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
+                <span class="material-symbols-outlined text-primary" style="font-size: 32px;">point_of_sale</span>
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-white text-lg font-bold leading-tight">Caja y Facturación</h3>
+                  <p class="text-[#EAEAEA]/70 text-sm font-normal leading-normal">
+                    Control total de ingresos, compras, cierre de caja diario y múltiples métodos de pago.
+                  </p>
+                </div>
+              </div>
+              <!-- Card 4 -->
+              <div
+                class="flex flex-1 flex-col gap-4 rounded-lg border border-white/10 bg-[#1E1E1E] p-6 transition-all hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
+                <span class="material-symbols-outlined text-primary" style="font-size: 32px;">request_quote</span>
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-white text-lg font-bold leading-tight">Presupuestos rápidos</h3>
+                  <p class="text-[#EAEAEA]/70 text-sm font-normal leading-normal">
+                    Genera presupuestos profesionales que se convierten en órdenes de trabajo con un solo clic.
+                  </p>
+                </div>
+              </div>
+              <!-- Card 5 -->
+              <div
+                class="flex flex-1 flex-col gap-4 rounded-lg border border-white/10 bg-[#1E1E1E] p-6 transition-all hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10 sm:col-start-2 lg:col-start-auto">
+                <span class="material-symbols-outlined text-primary" style="font-size: 32px;">inventory_2</span>
+                <div class="flex flex-col gap-1">
+                  <h3 class="text-white text-lg font-bold leading-tight">Inventario y Stock</h3>
+                  <p class="text-[#EAEAEA]/70 text-sm font-normal leading-normal">
+                    Control en tiempo real de repuestos, neumáticos y consumibles con alertas de stock bajo.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sectores / Target Section -->
+      <section class="bg-background-light dark:bg-[#181818] py-16 px-4 sm:px-8 md:px-16 lg:py-24">
+        <div class="flex w-full max-w-6xl mx-auto flex-col">
+          <div class="flex flex-col gap-10 py-10 @container">
+            <div class="flex flex-col gap-6 items-center text-center">
+              <div class="flex flex-col gap-4">
+                <h2
+                  class="font-display text-gray-900 dark:text-white tracking-tight text-[32px] font-bold leading-tight @[480px]:text-4xl @[480px]:font-black">
+                  Una solución, múltiples modelos de negocio
+                </h2>
+                <p
+                  class="font-display text-gray-600 dark:text-gray-300 text-base font-normal leading-normal max-w-[720px]">
+                  VERSA Manager se adapta a tu flujo de trabajo, ya seas un taller de barrio especializado, una flota de
+                  reparto o una empresa de renting.
+                </p>
+              </div>
+              <button
+                class="flex w-fit min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 @[480px]:h-12 @[480px]:px-5 bg-primary text-white text-sm font-bold leading-normal tracking-[0.015em]">
+                <span class="truncate">Ver planes para empresas</span>
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Sector 1 -->
+              <div
+                class="flex flex-1 flex-col gap-3 rounded-xl border border-gray-200/50 dark:border-white/10 bg-white/50 dark:bg-black/20 p-4">
+                <div class="text-primary">
+                  <span class="material-symbols-outlined text-3xl">directions_car</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <h3 class="font-display text-gray-900 dark:text-white text-base font-bold leading-tight">Taller
+                    Multimarca</h3>
+                  <p class="font-display text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
+                    Gestión integral para talleres de motos y mecánica general.
+                  </p>
+                </div>
+              </div>
+              <!-- Sector 2 -->
+              <div
+                class="flex flex-1 flex-col gap-3 rounded-xl border border-gray-200/50 dark:border-white/10 bg-white/50 dark:bg-black/20 p-4">
+                <div class="text-primary">
+                  <span class="material-symbols-outlined text-3xl">ev_station</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <h3 class="font-display text-gray-900 dark:text-white text-base font-bold leading-tight">Especialistas
+                    Eléctricos</h3>
+                  <p class="font-display text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
+                    Módulo específico para gestión de baterías y componentes EV.
+                  </p>
+                </div>
+              </div>
+              <!-- Sector 3 -->
+              <div
+                class="flex flex-1 flex-col gap-3 rounded-xl border border-gray-200/50 dark:border-white/10 bg-white/50 dark:bg-black/20 p-4">
+                <div class="text-primary">
+                  <span class="material-symbols-outlined text-3xl">local_gas_station</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <h3 class="font-display text-gray-900 dark:text-white text-base font-bold leading-tight">Flotas y
+                    Delivery</h3>
+                  <p class="font-display text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
+                    Control de mantenimientos preventivos para alta rotación.
+                  </p>
+                </div>
+              </div>
+              <!-- Sector 4 -->
+              <div
+                class="flex flex-1 flex-col gap-3 rounded-xl border border-gray-200/50 dark:border-white/10 bg-white/50 dark:bg-black/20 p-4">
+                <div class="text-primary">
+                  <span class="material-symbols-outlined text-3xl">format_paint</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <h3 class="font-display text-gray-900 dark:text-white text-base font-bold leading-tight">Estética y
+                    Custom</h3>
+                  <p class="font-display text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
+                    Seguimiento detallado de proyectos de personalización.
+                  </p>
+                </div>
+              </div>
+              <!-- Sector 5 -->
+              <div
+                class="flex flex-1 flex-col gap-3 rounded-xl border border-gray-200/50 dark:border-white/10 bg-white/50 dark:bg-black/20 p-4">
+                <div class="text-primary">
+                  <span class="material-symbols-outlined text-3xl">memory</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <h3 class="font-display text-gray-900 dark:text-white text-base font-bold leading-tight">E-Bikes y
+                    Patinetes</h3>
+                  <p class="font-display text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
+                    Trazabilidad de electrónica y reparaciones de micromovilidad.
+                  </p>
+                </div>
+              </div>
+              <!-- Sector 6 -->
+              <div
+                class="flex flex-1 flex-col gap-3 rounded-xl border border-gray-200/50 dark:border-white/10 bg-white/50 dark:bg-black/20 p-4">
+                <div class="text-primary">
+                  <span class="material-symbols-outlined text-3xl">anchor</span>
+                </div>
+                <div class="flex flex-col gap-1">
+                  <h3 class="font-display text-gray-900 dark:text-white text-base font-bold leading-tight">Custodia e
+                    Invernaje</h3>
+                  <p class="font-display text-gray-500 dark:text-gray-400 text-sm font-normal leading-normal">
+                    Gestión de contratos de larga estancia y servicios asociados.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Value Proposition - Radial Flow Section -->
+      <section class="bg-background-dark py-20 sm:py-32 relative overflow-hidden" id="why-versa">
+        <!-- Animated Background Gradient -->
+        <div class="absolute inset-0 overflow-hidden">
+          <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-r from-primary/20 via-purple-600/10 to-cyan-500/10 blur-3xl animate-pulse-slow">
+          </div>
+          <div
+            class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_transparent_0%,_#121212_70%)]">
+          </div>
+        </div>
+
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <!-- Section Header -->
+          <div class="flex flex-col gap-4 text-center mb-12">
+            <h2 class="text-white tracking-tight text-4xl sm:text-5xl font-black leading-tight">
+              ¿Por qué elegir VERSA Manager?
+            </h2>
+            <p class="text-gray-400 text-lg font-normal leading-relaxed max-w-3xl mx-auto">
+              Gestiona flota, clientes, órdenes y cobros desde un solo lugar. Todo el control, sin complicaciones.
+            </p>
+          </div>
+
+          <!-- Radial Flow Container -->
+          <div id="radial-flow-container" class="relative w-full h-[400px] sm:h-[500px] lg:h-[550px] mx-auto max-w-5xl">
+
+            <!-- SVG Canvas for Lines and Particles -->
+            <svg id="radial-svg" class="absolute inset-0 w-full h-full pointer-events-none"
+              preserveAspectRatio="xMidYMid meet">
+              <defs>
+                <!-- Glow Filter -->
+                <filter id="glow-filter" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+
+                <!-- Gradient for particles -->
+                <linearGradient id="particle-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" style="stop-color:#F0DB4F;stop-opacity:0" />
+                  <stop offset="50%" style="stop-color:#F0DB4F;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#F0DB4F;stop-opacity:0" />
+                </linearGradient>
+              </defs>
+
+              <!-- Paths will be generated by JS -->
+              <g id="radial-paths"></g>
+
+              <!-- Particles Container -->
+              <g id="radial-particles"></g>
+
+              <!-- Central Dot -->
+              <circle id="central-dot" cx="50%" cy="50%" r="6" fill="#FFFFFF" filter="url(#glow-filter)"
+                class="animate-pulse-dot" />
+            </svg>
+
+            <!-- Central Badge -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+              <div class="relative group">
+                <!-- Outer Glow Ring -->
+                <div
+                  class="absolute inset-0 -m-6 rounded-full bg-primary opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-500">
+                </div>
+
+                <!-- Badge - Diseño más limpio -->
+                <div
+                  class="relative px-8 py-4 rounded-2xl bg-[#1a1a1a] border-2 border-primary shadow-2xl shadow-primary/20">
+                  <div class="flex flex-col items-center gap-1">
+                    <span class="text-primary font-black text-lg sm:text-xl tracking-wider">CONTROL TOTAL</span>
+                    <span class="text-gray-400 text-xs font-medium uppercase tracking-widest">Todo en un solo
+                      lugar</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Topic Labels - Left Side (Funcionalidades) -->
+            <div class="radial-label absolute" style="left: 5%; top: 20%;" data-topic="flota">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span>Gestión de flota</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="radial-label absolute" style="left: 3%; top: 45%;" data-topic="ordenes">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span>Órdenes y tareas</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="radial-label absolute" style="left: 5%; top: 70%;" data-topic="clientes">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                  <span>Clientes al día</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Topic Labels - Right Side (Funcionalidades) -->
+            <div class="radial-label absolute" style="right: 5%; top: 20%;" data-topic="mensajes">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <span>Mensajes automáticos</span>
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="radial-label absolute" style="right: 3%; top: 45%;" data-topic="facturacion">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <span>Facturación</span>
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="radial-label absolute" style="right: 5%; top: 70%;" data-topic="cobros">
+              <div class="radial-label-inner group">
+                <div class="flex items-center gap-3">
+                  <span>Cobros y pagos</span>
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- Manager Taller Link -->
-          <a class="flex items-center p-3 rounded-lg text-gray-400 hover:bg-dark-700 hover:text-white transition-colors"
-            href="manager-taller-ordenes.html">
-            <span class="material-symbols-outlined mr-4">build</span>
-            <span class="font-medium">Manager Taller</span>
-          </a>
-        </nav>
-      </div>
-      <div class="flex items-center justify-between pt-6 border-t border-dark-700">
-        <div class="flex items-center">
-          <div
-            class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm mr-3 shadow-md">
-            <span>IM</span>
-          </div>
-          <div>
-            <p class="font-semibold text-sm text-white">Iván Moreno</p>
-            <p class="text-xs text-gray-400">Administrador</p>
-          </div>
-        </div>
-        <a class="text-gray-400 hover:text-primary transition-colors" href="login.html">
-          <span class="material-symbols-outlined">logout</span>
-        </a>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="flex-1 p-8 overflow-y-auto w-full">
-      <header class="flex items-center justify-between mb-8">
-        <div class="flex items-center">
-          <button id="mobile-menu-btn"
-            class="mr-4 text-muted-light dark:text-muted-dark md:hidden hover:text-primary transition-colors">
-            <span class="material-symbols-outlined">menu</span>
-          </button>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard General</h1>
-        </div>
-        <button class="text-muted-light dark:text-muted-dark hover:text-primary transition-colors">
-          <span class="material-symbols-outlined">account_circle</span>
-        </button>
-      </header>
-
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center text-primary mb-2">
-            <span class="material-symbols-outlined mr-2">payments</span>
-            <h3 class="font-medium text-sm text-muted-light dark:text-muted-dark">Ingresos (Mes)</h3>
-          </div>
-          <p class="text-4xl font-bold text-gray-900 dark:text-white">€ 24,500</p>
-        </div>
-        <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center text-primary mb-2">
-            <span class="material-symbols-outlined mr-2">build_circle</span>
-            <h3 class="font-medium text-sm text-muted-light dark:text-muted-dark">Órdenes Activas</h3>
-          </div>
-          <p class="text-4xl font-bold text-gray-900 dark:text-white">12</p>
-        </div>
-        <div class="bg-surface-light dark:bg-surface-dark p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center text-primary mb-2">
-            <span class="material-symbols-outlined mr-2">group_add</span>
-            <h3 class="font-medium text-sm text-muted-light dark:text-muted-dark">Clientes Nuevos</h3>
-          </div>
-          <p class="text-4xl font-bold text-gray-900 dark:text-white">8</p>
-        </div>
-      </div>
-
-      <!-- Search -->
-      <div class="relative mb-8">
-        <span
-          class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-muted-light dark:text-muted-dark">search</span>
-        <input
-          class="w-full bg-surface-light dark:bg-surface-dark border-none rounded-lg pl-12 pr-4 py-3 text-gray-800 dark:text-gray-200 placeholder-muted-light dark:placeholder-muted-dark focus:ring-2 focus:ring-primary shadow-sm"
-          placeholder="Buscar órdenes, clientes o facturas..." type="text" />
-      </div>
-
-      <!-- Recent Activity -->
-      <div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Actividad Reciente</h2>
-        <div class="space-y-4">
-          <div
-            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg flex items-center justify-between shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-            <div class="flex items-center">
-              <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center mr-4">
-                <span class="material-symbols-outlined text-primary">directions_car</span>
+          <!-- Features Cards Below -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+            <div
+              class="group p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-primary/50 hover:bg-white/10 transition-all duration-300">
+              <div class="flex items-center gap-4 mb-4">
+                <div
+                  class="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-amber-500/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-primary text-2xl">autorenew</span>
+                </div>
+                <h3 class="text-white text-lg font-bold">Siempre Actualizado</h3>
               </div>
-              <div>
-                <p class="font-semibold text-gray-900 dark:text-white">Orden #1024 - BMW X5</p>
-                <p class="text-sm text-muted-light dark:text-muted-dark">Estado: En reparación</p>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Tu software mejora cada mes sin costes extra. Sin instalaciones complejas ni mantenimientos técnicos.
+              </p>
+            </div>
+
+            <div
+              class="group p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-primary/50 hover:bg-white/10 transition-all duration-300">
+              <div class="flex items-center gap-4 mb-4">
+                <div
+                  class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-cyan-400 text-2xl">cloud_sync</span>
+                </div>
+                <h3 class="text-white text-lg font-bold">100% en la Nube</h3>
+              </div>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Accede a tu taller desde el móvil, tablet o PC. Gestiona tu negocio desde casa o de viaje.
+              </p>
+            </div>
+
+            <div
+              class="group p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm hover:border-primary/50 hover:bg-white/10 transition-all duration-300">
+              <div class="flex items-center gap-4 mb-4">
+                <div
+                  class="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                  <span class="material-symbols-outlined text-purple-400 text-2xl">headset_mic</span>
+                </div>
+                <h3 class="text-white text-lg font-bold">Soporte Experto</h3>
+              </div>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Te ayudamos a importar tus datos y configurar tu cuenta. Habla con personas reales, no robots.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pricing Section -->
+      <section id="pricing" class="bg-background-dark py-16 sm:py-24 border-t border-white/5">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="max-w-7xl mx-auto">
+
+            <!-- Page Heading -->
+            <div class="flex flex-col items-center text-center gap-4 mb-8">
+              <h2 class="text-white text-4xl sm:text-5xl font-black leading-tight tracking-tight">
+                Planes de Precios
+              </h2>
+              <p class="text-[#A0A0A0] text-base sm:text-lg font-normal leading-normal max-w-2xl">
+                Planes flexibles sin permanencia, elige la opción que mejor se adapte a tu taller.
+              </p>
+            </div>
+
+            <!-- Segmented Buttons (Monthly/Annual) -->
+            <div class="flex justify-center mb-10">
+              <div
+                class="flex h-12 w-full max-w-md items-center justify-center rounded-lg bg-white/5 backdrop-blur-sm border border-white/10 p-1">
+                <label
+                  class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-4 has-[:checked]:bg-primary has-[:checked]:shadow-lg has-[:checked]:text-white text-[#A0A0A0] text-sm font-medium leading-normal transition-all duration-200">
+                  <span class="truncate">Pago Mensual</span>
+                  <input checked class="invisible w-0" name="pricing-toggle" type="radio" value="monthly"
+                    id="monthly-plan" />
+                </label>
+                <label
+                  class="flex cursor-pointer h-full grow items-center justify-center overflow-hidden rounded-lg px-4 has-[:checked]:bg-primary has-[:checked]:shadow-lg has-[:checked]:text-white text-[#A0A0A0] text-sm font-medium leading-normal transition-all duration-200">
+                  <span class="truncate">Pago Anual (Ahorra 16%)</span>
+                  <input class="invisible w-0" name="pricing-toggle" type="radio" value="annual" id="annual-plan" />
+                </label>
               </div>
             </div>
-            <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">chevron_right</span>
-          </div>
-          <div
-            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg flex items-center justify-between shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-            <div class="flex items-center">
-              <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center mr-4">
-                <span class="material-symbols-outlined text-primary">person_add</span>
-              </div>
-              <div>
-                <p class="font-semibold text-gray-900 dark:text-white">Nuevo Cliente: María García</p>
-                <p class="text-sm text-muted-light dark:text-muted-dark">Registrado hace 2 horas</p>
-              </div>
-            </div>
-            <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">chevron_right</span>
-          </div>
-          <div
-            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg flex items-center justify-between shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-            <div class="flex items-center">
-              <div class="w-10 h-10 rounded-lg bg-primary/10 dark:bg-primary/20 flex items-center justify-center mr-4">
-                <span class="material-symbols-outlined text-primary">receipt</span>
-              </div>
-              <div>
-                <p class="font-semibold text-gray-900 dark:text-white">Factura F-2023-005</p>
-                <p class="text-sm text-muted-light dark:text-muted-dark">Pendiente de pago</p>
+
+            <!-- Action Panel (Free Trial) -->
+            <div class="mb-12">
+              <div
+                class="flex flex-col md:flex-row items-center justify-between gap-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-6">
+                <div class="flex flex-col gap-2">
+                  <p class="text-white text-lg font-bold leading-tight">Prueba VERSA Manager gratis por 15 días</p>
+                  <p class="text-[#A0A0A0] text-base font-normal leading-normal">Sin compromisos, no se requiere tarjeta
+                    de crédito.</p>
+                </div>
+                <button id="btn-start-trial"
+                  class="flex min-w-[200px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 bg-primary text-white text-base font-bold leading-normal hover:opacity-90 transition-opacity whitespace-nowrap">
+                  <span class="truncate">Comenzar Prueba Gratuita</span>
+                </button>
               </div>
             </div>
-            <span class="material-symbols-outlined text-muted-light dark:text-muted-dark">chevron_right</span>
+
+            <!-- Pricing Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+
+              <!-- Plan Básico -->
+              <div
+                class="flex flex-col gap-6 rounded-xl border border-white/10 bg-[#1E1E1E] p-6 transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
+                <div class="flex flex-col gap-3">
+                  <h3 class="text-white text-2xl font-bold leading-tight">Plan Taller Básico</h3>
+                  <p class="text-[#A0A0A0] text-sm">Ideal para talleres pequeños y autónomos.</p>
+                  <div class="flex items-baseline gap-2 pt-2">
+                    <span class="text-white text-5xl font-black leading-tight monthly-price">30€</span>
+                    <span class="text-white text-xl font-bold leading-tight annual-price hidden">25€</span>
+                    <span class="text-[#A0A0A0] text-base font-bold leading-tight">/mes</span>
+                  </div>
+                </div>
+                <button data-plan="basic"
+                  class="btn-subscribe
+                  flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-white/10 hover:bg-white/20 text-white text-sm font-bold leading-normal transition-all border border-white/10">
+                  <span class="truncate">Empezar</span>
+                </button>
+                <div class="flex flex-col gap-3">
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Hasta 2 usuarios</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Gestión de clientes y vehículos</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Órdenes de trabajo básicas</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Calendario y citas simples</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Facturación y caja básica</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Inventario sencillo</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Soporte estándar por email</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Plan Pro (Most Popular) -->
+              <div
+                class="flex flex-col gap-6 rounded-xl border-2 border-primary bg-[#1E1E1E] p-6 relative transform lg:scale-105 shadow-2xl shadow-primary/20">
+                <div
+                  class="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-white text-xs font-bold leading-normal px-4 py-1.5 rounded-full uppercase tracking-wide">
+                  Más Popular
+                </div>
+                <div class="flex flex-col gap-3 mt-2">
+                  <h3 class="text-white text-2xl font-bold leading-tight">Plan Taller Pro</h3>
+                  <p class="text-[#A0A0A0] text-sm">Perfecto para talleres en crecimiento.</p>
+                  <div class="flex items-baseline gap-2 pt-2">
+                    <span class="text-white text-5xl font-black leading-tight monthly-price">59€</span>
+                    <span class="text-white text-xl font-bold leading-tight annual-price hidden">49€</span>
+                    <span class="text-[#A0A0A0] text-base font-bold leading-tight">/mes</span>
+                  </div>
+                </div>
+                <button data-plan="pro"
+                  class="btn-subscribe
+                  flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-primary hover:opacity-90 text-white text-sm font-bold leading-normal transition-all">
+                  <span class="truncate">Elegir Plan Pro</span>
+                </button>
+                <div class="flex flex-col gap-3">
+                  <div class="text-sm font-bold leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Todo en Básico</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Hasta 6 usuarios</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Hasta 3 sucursales</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Calendario avanzado multi-mecánico</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Presupuestos rápidos</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Control de stock avanzado</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Informes y estadísticas</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Soporte prioritario</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Plan Flotas & Renting -->
+              <div
+                class="flex flex-col gap-6 rounded-xl border border-white/10 bg-[#1E1E1E] p-6 transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10">
+                <div class="flex flex-col gap-3">
+                  <h3 class="text-white text-2xl font-bold leading-tight">Plan Flotas & Renting</h3>
+                  <p class="text-[#A0A0A0] text-sm">Gestión de flotas y empresas de renting.</p>
+                  <div class="flex items-baseline gap-2 pt-2">
+                    <span class="text-white text-5xl font-black leading-tight monthly-price">99€</span>
+                    <span class="text-white text-xl font-bold leading-tight annual-price hidden">83€</span>
+                    <span class="text-[#A0A0A0] text-base font-bold leading-tight">/mes</span>
+                  </div>
+                </div>
+                <button data-plan="fleet"
+                  class="btn-subscribe
+                  flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-4 bg-white/10 hover:bg-white/20 text-white text-sm font-bold leading-normal transition-all border border-white/10">
+                  <span class="truncate">Contactar</span>
+                </button>
+                <div class="flex flex-col gap-3">
+                  <div class="text-sm font-bold leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Todo en Pro</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Usuarios ilimitados</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Gestión de flotas completa</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Contratos de renting</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Mantenimientos programados</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Hasta 150-200 vehículos</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>API para integraciones</span>
+                  </div>
+                  <div class="text-sm font-normal leading-normal flex items-center gap-3 text-white">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">check_circle</span>
+                    <span>Soporte prioritario + onboarding</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- FAB -->
-      <button
-        class="fixed bottom-8 right-8 w-14 h-14 bg-primary rounded-full flex items-center justify-center text-white shadow-lg hover:bg-orange-600 transition-transform hover:scale-110 focus:outline-none focus:ring-4 focus:ring-primary/50">
-        <span class="material-symbols-outlined text-3xl">add</span>
-      </button>
+      <!-- Social Proof (MAP Section) -->
+      <section class="border-t border-white/5 bg-background-dark py-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+
+        <div class="flex w-full max-w-7xl mx-auto flex-col items-center gap-12 relative z-10">
+          <div class="text-center max-w-3xl">
+            <h2 class="text-white text-2xl font-bold tracking-tight sm:text-3xl mb-4">
+              Talleres en Europa y LATAM ya confían en VERSA
+            </h2>
+            <p class="text-[#A0A0A0] text-base mb-6">
+              Desde talleres locales en Madrid hasta flotas de renting en Buenos Aires. Únete a la red que está
+              digitalizando el sector.
+            </p>
+          </div>
+
+          <!-- MAPA INTERACTIVO -->
+          <div id="map" class="w-full h-[500px] rounded-xl z-10 relative shadow-2xl border border-white/10"></div>
+
+          <!-- Marketplace CTA debajo del mapa -->
+          <div class="mt-8 text-center">
+            <a href="/marketplace-busqueda.html"
+              class="inline-flex items-center justify-center gap-3 px-8 py-4 bg-primary text-white text-base font-bold rounded-lg transition-all hover:opacity-90 hover:shadow-lg hover:shadow-primary/30">
+              <span class="material-symbols-outlined" style="font-size: 24px;">store</span>
+              <span>Explorar talleres en el Marketplace</span>
+              <span class="material-symbols-outlined" style="font-size: 24px;">arrow_forward</span>
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- FAQ Section -->
+      <section id="faq" class="bg-background-dark py-16 px-4 sm:px-6 lg:px-8 border-t border-white/5">
+        <div class="max-w-7xl mx-auto">
+          <div class="text-center mb-16">
+            <h2 class="text-white text-3xl font-black tracking-tighter sm:text-4xl md:text-5xl mb-4">Preguntas
+              Frecuentes</h2>
+            <p class="text-[#A0A0A0] text-lg mb-4">Todo lo que necesitas saber antes de empezar</p>
+            <p class="text-[#707070] text-sm italic">Pasa el cursor sobre las cartas para verlas todas</p>
+          </div>
+
+          <!-- Stacked Cards Container -->
+          <div class="faq-container">
+
+            <!-- Card 1 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Migración</span>
+                <span class="material-symbols-outlined text-white">cloud_upload</span>
+              </div>
+              <div class="main-content">
+                <p class="heading">¿Es difícil migrar mis datos?</p>
+                <div class="answer">
+                  Para nada. Importación masiva incluida y soporte paso a paso para que no pierdas nada.
+                </div>
+              </div>
+              <div class="footer">Soporte incluido</div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Acceso</span>
+                <span class="material-symbols-outlined text-white">download_off</span>
+              </div>
+              <div class="main-content">
+                <p class="heading">¿Necesito instalar algo?</p>
+                <div class="answer">
+                  No. 100% en la nube. Accede desde PC, tablet o móvil sin instalaciones.
+                </div>
+              </div>
+              <div class="footer">Chrome, Safari, Firefox</div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Módulos</span>
+                <span class="material-symbols-outlined text-white">local_shipping</span>
+              </div>
+              <div class="main-content">
+                <p class="heading">¿Sirve para flotas?</p>
+                <div class="answer">
+                  Sí. Controla mantenimientos, ubicación y renting con nuestro módulo especializado.
+                </div>
+              </div>
+              <div class="footer">Renting y Delivery</div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Contrato</span>
+                <span class="material-symbols-outlined text-white">lock_open</span>
+              </div>
+              <div class="main-content">
+                <p class="heading">¿Hay permanencia?</p>
+                <div class="answer">
+                  No en planes mensuales. Cancela cuando quieras. Solo el plan anual tiene compromiso.
+                </div>
+              </div>
+              <div class="footer">Libertad total</div>
+            </div>
+
+            <!-- Card 5 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Prueba</span>
+                <span class="material-symbols-outlined text-white">timer_off</span>
+              </div>
+              <div class="main-content">
+                <p class="heading">¿Y si acaba la prueba?</p>
+                <div class="answer">
+                  Tú decides. Elige un plan y paga. Si no, no se te cobra nada automáticamente.
+                </div>
+              </div>
+              <div class="footer">15 días gratis</div>
+            </div>
+
+            <!-- Card 6 -->
+            <div class="faq-card group" tabindex="0">
+              <div class="header">
+                <span>Flexibilidad</span>
+                <span class="material-symbols-outlined text-white">currency_exchange</span>
+              </div>
+              <div class="main-content">
+                <p class="heading">¿Puedo cambiar de plan?</p>
+                <div class="answer">
+                  Siempre. Sube o baja de plan desde tu panel y prorrateamos la diferencia.
+                </div>
+              </div>
+              <div class="footer">Gestión autónoma</div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
     </main>
   </div>
 
+  <!-- Modal de Email para Suscripción -->
+  <div id="email-modal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div
+      class="bg-[#1E1E1E] rounded-2xl border border-white/10 max-w-md w-full p-8 shadow-2xl transform transition-all animate-scale-in">
+
+      <!-- Icono -->
+      <div class="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+        <span class="material-symbols-outlined text-primary text-4xl">email</span>
+      </div>
+
+      <!-- Título -->
+      <h3 class="text-2xl font-black text-white text-center mb-2">
+        ¡Casi listo!
+      </h3>
+      <p class="text-gray-400 text-center mb-6">
+        Ingresa tu email para continuar con la suscripción
+      </p>
+
+      <!-- Input de Email -->
+      <div class="mb-4">
+        <label for="email-input" class="block text-sm font-medium text-gray-300 mb-2">
+          Email
+        </label>
+        <input type="email" id="email-input" placeholder="tu@email.com"
+          class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
+
+        <!-- Mensaje de error -->
+        <p id="email-error" class="hidden text-red-500 text-sm mt-2 flex items-center gap-1">
+          <span class="material-symbols-outlined text-sm">error</span>
+          <span></span>
+        </p>
+      </div>
+
+      <!-- Nota de privacidad -->
+      <p class="text-xs text-gray-500 mb-6 text-center">
+        <span class="material-symbols-outlined text-sm inline-block align-middle">lock</span>
+        Tu email está seguro. No compartimos tus datos.
+      </p>
+
+      <!-- Botones -->
+      <div class="flex gap-3">
+        <button id="cancel-email-btn"
+          class="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium rounded-lg transition-all">
+          Cancelar
+        </button>
+        <button id="submit-email-btn"
+          class="flex-1 px-4 py-3 bg-primary hover:opacity-90 text-white font-bold rounded-lg transition-all flex items-center justify-center gap-2">
+          <span>Continuar</span>
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Leaflet Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script>
-    const sidebar = document.getElementById('sidebar');
-    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-    const closeSidebarBtn = document.getElementById('close-sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
+    // ====================================
+    // FUNCIONES GLOBALES (disponibles en todo el documento)
+    // ====================================
 
-    function openSidebar() {
-      sidebar.classList.remove('-translate-x-full');
-      overlay.classList.remove('hidden');
-      setTimeout(() => overlay.classList.remove('opacity-0'), 10); // Fade in
-    }
+    // Usar rutas relativas para proxy Vite en desarrollo
+    const API_BASE_URL = '';
 
-    function closeSidebar() {
-      sidebar.classList.add('-translate-x-full');
-      overlay.classList.add('opacity-0');
-      setTimeout(() => overlay.classList.add('hidden'), 300); // Wait for fade out
-    }
+    // Variables globales para almacenar el plan seleccionado
+    let selectedPlan = null;
+    let selectedBillingInterval = null;
+    let currentButton = null;
 
-    mobileMenuBtn.addEventListener('click', openSidebar);
-    closeSidebarBtn.addEventListener('click', closeSidebar);
-    overlay.addEventListener('click', closeSidebar);
+    /**
+     * Muestra el modal de email
+     */
+    function showEmailModal(plan, billingInterval, button) {
+      selectedPlan = plan;
+      selectedBillingInterval = billingInterval;
+      currentButton = button;
 
-    function toggleSubmenu(submenuId, arrowId) {
-      const submenu = document.getElementById(submenuId);
-      const arrow = document.getElementById(arrowId);
+      const modal = document.getElementById('email-modal');
+      const emailInput = document.getElementById('email-input');
 
-      if (submenu.classList.contains('hidden')) {
-        submenu.classList.remove('hidden');
-        if (arrow) arrow.style.transform = 'rotate(180deg)';
-      } else {
-        submenu.classList.add('hidden');
-        if (arrow) arrow.style.transform = 'rotate(0deg)';
+      if (modal && emailInput) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Focus en el input después de la animación
+        setTimeout(() => emailInput.focus(), 100);
       }
     }
+
+    /**
+     * Cierra el modal de email
+     */
+    function closeEmailModal() {
+      const modal = document.getElementById('email-modal');
+      const emailInput = document.getElementById('email-input');
+      const errorMsg = document.getElementById('email-error');
+
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      if (emailInput) {
+        emailInput.value = '';
+        emailInput.classList.remove('border-red-500');
+      }
+
+      if (errorMsg) {
+        errorMsg.classList.add('hidden');
+      }
+
+      // Restaurar botón si existe
+      if (currentButton) {
+        currentButton.disabled = false;
+        currentButton.innerHTML = currentButton.dataset.originalText || currentButton.innerHTML;
+      }
+    }
+
+    /**
+     * Valida el email
+     */
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    /**
+     * Procesa la suscripción
+     */
+    async function processSubscription() {
+      const emailInput = document.getElementById('email-input');
+      const errorMsg = document.getElementById('email-error');
+      const submitBtn = document.getElementById('submit-email-btn');
+
+      if (!emailInput || !errorMsg || !submitBtn) {
+        console.error('Elementos del modal no encontrados');
+        return;
+      }
+
+      const email = emailInput.value.trim();
+
+      // Validar email
+      if (!email) {
+        errorMsg.textContent = 'Por favor, ingresa tu email';
+        errorMsg.classList.remove('hidden');
+        emailInput.classList.add('border-red-500');
+        return;
+      }
+
+      if (!isValidEmail(email)) {
+        errorMsg.textContent = 'Por favor, ingresa un email válido';
+        errorMsg.classList.remove('hidden');
+        emailInput.classList.add('border-red-500');
+        return;
+      }
+
+      // Ocultar error
+      errorMsg.classList.add('hidden');
+      emailInput.classList.remove('border-red-500');
+
+      // Mostrar loading
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="ml-2">Procesando...</span>
+      `;
+
+      try {
+        // Llamar al backend para crear la checkout session
+        const response = await fetch(`${API_BASE_URL}/api/stripe/create-checkout-session`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tenantId: 1, // TEMPORAL: En producción, esto vendría del registro/login
+            plan: selectedPlan,
+            billingInterval: selectedBillingInterval,
+            email: email,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.ok && data.url) {
+          // Éxito - Redirigir a Stripe Checkout
+          window.location.href = data.url;
+        } else {
+          // Error del servidor
+          throw new Error(data.error || 'Error al crear la sesión de pago');
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+
+        // Mostrar error en el modal
+        errorMsg.textContent = error.message || 'Error al conectar con el servidor. Por favor, intenta de nuevo.';
+        errorMsg.classList.remove('hidden');
+
+        // Restaurar botón
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+    }
+
+    // Exponer funciones al scope global (para onclick)
+    window.showEmailModal = showEmailModal;
+    window.closeEmailModal = closeEmailModal;
+    window.processSubscription = processSubscription;
+
+    // ===== VAULT MENU FUNCTIONS =====
+    function openVaultMenu() {
+      const trigger = document.getElementById('vault-trigger');
+      const panel = document.getElementById('vault-panel');
+      if (trigger) trigger.classList.add('hidden');
+      if (panel) {
+        panel.classList.remove('closed');
+        panel.classList.add('open');
+      }
+    }
+
+    function closeVaultMenu() {
+      const trigger = document.getElementById('vault-trigger');
+      const panel = document.getElementById('vault-panel');
+      if (panel) {
+        panel.classList.remove('open');
+        panel.classList.add('closed');
+      }
+      if (trigger) {
+        setTimeout(() => {
+          trigger.classList.remove('hidden');
+        }, 400);
+      }
+    }
+
+    // Expose to global scope
+    window.openVaultMenu = openVaultMenu;
+    window.closeVaultMenu = closeVaultMenu;
+
+    // ====================================
+    // INICIALIZACIÓN DEL DOCUMENTO
+    // ====================================
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Vault Menu Logic
+      const vaultTrigger = document.getElementById('vault-trigger');
+      const vaultClose = document.getElementById('vault-close');
+
+      if (vaultTrigger) {
+        vaultTrigger.addEventListener('click', openVaultMenu);
+      }
+      if (vaultClose) {
+        vaultClose.addEventListener('click', closeVaultMenu);
+      }
+
+      // FAQ Cards Rotation Logic
+      const faqContainer = document.querySelector('.faq-container');
+      if (faqContainer) {
+        const cards = Array.from(faqContainer.querySelectorAll('.faq-card'));
+
+        // Add click handler to container
+        faqContainer.addEventListener('click', (e) => {
+          // Check if a card was clicked
+          const clickedCard = e.target.closest('.faq-card');
+          if (!clickedCard) return;
+
+          // Get the first card (top of stack)
+          const firstCard = cards[0];
+
+          // Move first card to end of array
+          cards.push(cards.shift());
+
+          // Reorder DOM elements
+          cards.forEach((card, index) => {
+            faqContainer.appendChild(card);
+          });
+
+          // Optional: Add a brief animation class
+          firstCard.style.transition = 'all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        });
+      }
+
+      // Pricing Toggle Logic
+      const monthlyPlanRadio = document.getElementById('monthly-plan');
+      const annualPlanRadio = document.getElementById('annual-plan');
+
+      if (monthlyPlanRadio && annualPlanRadio) {
+        const togglePricing = () => {
+          const isAnnual = annualPlanRadio.checked;
+          const monthlyPrices = document.querySelectorAll('.monthly-price');
+          const annualPrices = document.querySelectorAll('.annual-price');
+
+          if (isAnnual) {
+            monthlyPrices.forEach(el => el.classList.add('hidden'));
+            annualPrices.forEach(el => el.classList.remove('hidden'));
+          } else {
+            monthlyPrices.forEach(el => el.classList.remove('hidden'));
+            annualPrices.forEach(el => el.classList.add('hidden'));
+          }
+        };
+
+        monthlyPlanRadio.addEventListener('change', togglePricing);
+        annualPlanRadio.addEventListener('change', togglePricing);
+      }
+
+      // --- INTEGRACIÓN CON STRIPE ---
+
+      // Agregar event listeners a todos los botones de suscripción
+      document.querySelectorAll('.btn-subscribe').forEach(button => {
+        button.addEventListener('click', (event) => {
+          event.preventDefault();
+          const plan = button.dataset.plan; // 'basic', 'pro', o 'fleet'
+
+          // Determinar si es mensual o anual según el toggle
+          const isAnnual = annualPlanRadio && annualPlanRadio.checked;
+          const billingInterval = isAnnual ? 'yearly' : 'monthly';
+
+          // Guardar el texto original para restaurarlo en caso de error
+          button.dataset.originalText = button.innerHTML;
+
+          // Mostrar modal
+          showEmailModal(plan, billingInterval, button);
+        });
+      });
+
+      // Botón de "Comenzar Prueba Gratuita"
+      const btnStartTrial = document.getElementById('btn-start-trial');
+      if (btnStartTrial) {
+        btnStartTrial.addEventListener('click', (event) => {
+          event.preventDefault();
+          const button = event.target.closest('button');
+          button.dataset.originalText = button.innerHTML;
+
+          // Por defecto, la prueba gratuita será con el plan PRO y mensual
+          showEmailModal('pro', 'monthly', button);
+        });
+      }
+
+      // Cerrar modal al hacer clic fuera
+      document.addEventListener('click', (e) => {
+        const modal = document.getElementById('email-modal');
+        if (e.target === modal) {
+          closeEmailModal();
+        }
+      });
+
+      // Cerrar modal con ESC
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeEmailModal();
+        }
+      });
+
+      // Submit al presionar Enter en el input
+      const emailInput = document.getElementById('email-input');
+      if (emailInput) {
+        emailInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            processSubscription();
+          }
+        });
+      }
+
+      // Event listeners para botones del modal
+      const cancelEmailBtn = document.getElementById('cancel-email-btn');
+      const submitEmailBtn = document.getElementById('submit-email-btn');
+
+      if (cancelEmailBtn) {
+        cancelEmailBtn.addEventListener('click', () => {
+          closeEmailModal();
+        });
+      }
+
+      if (submitEmailBtn) {
+        submitEmailBtn.addEventListener('click', () => {
+          processSubscription();
+        });
+      }
+
+      // --- FIN INTEGRACIÓN STRIPE ---
+
+      // Initialize map centered on Spain/Portugal to show density, but zoomed out enough to see context
+      var map = L.map('map').setView([40.4168, -3.7038], 5);
+
+      // Add CartoDB Dark Matter Tiles (The "Dark Mode" look)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+      }).addTo(map);
+
+      // Custom "V" Marker Icon definition using the new image
+      var VersaIcon = L.divIcon({
+        className: 'custom-div-icon',
+        html: "<div style='position: relative; width: 32px; height: 32px;'><img src='https://imgur.com/iBrjKwv.png' class='versa-marker-image'><div class='marker-pulse'></div></div>",
+        iconSize: [32, 32],
+        iconAnchor: [16, 16], // Center of the icon
+        popupAnchor: [0, -16]
+      });
+
+      // Locations Data (Based on your list)
+      var locations = [
+        // MADRID
+        { lat: 40.435, lng: -3.655, title: "Bicicletas Chapinal (Madrid)" },
+        { lat: 40.425, lng: -3.665, title: "Mammoth Berro (Madrid)" },
+        { lat: 40.545, lng: -3.630, title: "REPARA BICICLETAS (Madrid)" },
+        { lat: 40.350, lng: -3.690, title: "RRBIKE (Madrid)" },
+        { lat: 40.480, lng: -3.700, title: "Factory Bike (Madrid)" },
+        // NUEVAS DIRECCIONES EN MADRID
+        { lat: 40.4233, lng: -3.7065, title: "Taller Centro (C. del Tesoro, 26)" },
+        { lat: 40.4358, lng: -3.6480, title: "Taller C. Madres Pl. de Mayo, 8, Cdad. Lineal, 28017 Madrid" },
+        // BARCELONA
+        { lat: 41.400, lng: 2.150, title: "BCN Bikes (Barcelona)" },
+        { lat: 41.405, lng: 2.190, title: "TBBS Taller (Barcelona)" },
+        // SEVILLA
+        { lat: 37.390, lng: -5.970, title: "Reaction Bikes (Sevilla)" },
+        // ALICANTE
+        { lat: 38.400, lng: -0.430, title: "Bici San Juan (Alicante)" },
+        // PORTUGAL
+        { lat: 38.750, lng: -9.130, title: "Armazéns Airaf (Lisboa)" },
+        { lat: 38.690, lng: -9.210, title: "Biclas Belém (Lisboa)" },
+        // LATAM (Added, will be visible on zoom out)
+        { lat: 19.390, lng: -99.150, title: "Universum Bike (CDMX)" },
+        { lat: 4.740, lng: -74.100, title: "Rodar Bogotá (Colombia)" },
+        { lat: -33.420, lng: -70.610, title: "5Norte (Santiago de Chile)" }
+      ];
+
+      // Add markers to map
+      locations.forEach(function (loc) {
+        L.marker([loc.lat, loc.lng], { icon: VersaIcon })
+          .addTo(map)
+          .bindPopup('<strong style="color:black;">' + loc.title + '</strong>');
+      });
+
+      // Disable scroll zoom to prevent annoying page scroll behavior
+      map.scrollWheelZoom.disable();
+
+      // Add zoom control listener to re-enable on focus if needed, or keep simple
+      map.on('focus', () => { map.scrollWheelZoom.enable(); });
+      map.on('blur', () => { map.scrollWheelZoom.disable(); });
+
+      // ===== RADIAL FLOW ANIMATION =====
+      function initRadialFlow() {
+        const container = document.getElementById('radial-flow-container');
+        const svg = document.getElementById('radial-svg');
+        const pathsGroup = document.getElementById('radial-paths');
+        const particlesGroup = document.getElementById('radial-particles');
+
+        if (!container || !svg) return;
+
+        // Topics with their colors - all orange for brand consistency
+        const primaryColor = '#ff4400';
+        const topics = [
+          { id: 'flota', color: primaryColor, delay: 0 },
+          { id: 'ordenes', color: primaryColor, delay: 0.5 },
+          { id: 'clientes', color: primaryColor, delay: 1.0 },
+          { id: 'mensajes', color: primaryColor, delay: 0.25 },
+          { id: 'facturacion', color: primaryColor, delay: 0.75 },
+          { id: 'cobros', color: primaryColor, delay: 1.25 }
+        ];
+
+        function updatePaths() {
+          const rect = container.getBoundingClientRect();
+          const width = rect.width;
+          const height = rect.height;
+          const centerX = width / 2;
+          const centerY = height / 2;
+
+          // Update SVG viewBox
+          svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+          // Update central dot position
+          const centralDot = document.getElementById('central-dot');
+          if (centralDot) {
+            centralDot.setAttribute('cx', centerX);
+            centralDot.setAttribute('cy', centerY);
+          }
+
+          // Clear existing paths and particles
+          pathsGroup.innerHTML = '';
+          particlesGroup.innerHTML = '';
+
+          // Create paths and particles for each topic
+          topics.forEach((topic, index) => {
+            const labelEl = document.querySelector(`[data-topic="${topic.id}"]`);
+            if (!labelEl) return;
+
+            const labelRect = labelEl.getBoundingClientRect();
+            const containerRect = container.getBoundingClientRect();
+
+            // Get label center position relative to container
+            const labelX = (labelRect.left - containerRect.left) + (labelRect.width / 2);
+            const labelY = (labelRect.top - containerRect.top) + (labelRect.height / 2);
+
+            // Calculate control point for quadratic bezier curve
+            const isLeft = labelX < centerX;
+            const controlX = isLeft
+              ? labelX + (centerX - labelX) * 0.75
+              : labelX - (labelX - centerX) * 0.75;
+
+            // Create path data
+            const pathD = `M ${labelX} ${labelY} Q ${controlX} ${labelY} ${centerX} ${centerY}`;
+
+            // Create path element
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', pathD);
+            path.setAttribute('stroke', topic.color);
+            path.setAttribute('stroke-width', '1.5');
+            path.setAttribute('stroke-opacity', '0.3');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('id', `path-${topic.id}`);
+            pathsGroup.appendChild(path);
+
+            // Create animated particle
+            const particle = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+            particle.setAttribute('rx', '8');
+            particle.setAttribute('ry', '5');
+            particle.setAttribute('fill', topic.color);
+            particle.setAttribute('filter', 'url(#glow-filter)');
+
+            // Create animateMotion for particle
+            const animateMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+            animateMotion.setAttribute('dur', '3s');
+            animateMotion.setAttribute('repeatCount', 'indefinite');
+            animateMotion.setAttribute('path', pathD);
+            animateMotion.setAttribute('rotate', 'auto');
+            animateMotion.setAttribute('calcMode', 'spline');
+            animateMotion.setAttribute('keyPoints', '0;1');
+            animateMotion.setAttribute('keyTimes', '0;1');
+            animateMotion.setAttribute('keySplines', '0.42 0 0.58 1');
+            animateMotion.setAttribute('begin', `${topic.delay}s`);
+
+            // Create opacity animation
+            const animateOpacity = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+            animateOpacity.setAttribute('attributeName', 'opacity');
+            animateOpacity.setAttribute('dur', '3s');
+            animateOpacity.setAttribute('repeatCount', 'indefinite');
+            animateOpacity.setAttribute('values', '0;0.9;0.9;0');
+            animateOpacity.setAttribute('keyTimes', '0;0.1;0.9;1');
+            animateOpacity.setAttribute('begin', `${topic.delay}s`);
+
+            // Create scale animation
+            const animateScale = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+            animateScale.setAttribute('attributeName', 'rx');
+            animateScale.setAttribute('dur', '3s');
+            animateScale.setAttribute('repeatCount', 'indefinite');
+            animateScale.setAttribute('values', '6;10;6');
+            animateScale.setAttribute('keyTimes', '0;0.5;1');
+            animateScale.setAttribute('begin', `${topic.delay}s`);
+
+            particle.appendChild(animateMotion);
+            particle.appendChild(animateOpacity);
+            particle.appendChild(animateScale);
+            particlesGroup.appendChild(particle);
+          });
+        }
+
+        // Initial update
+        updatePaths();
+
+        // Update on resize (debounced)
+        let resizeTimeout;
+        const resizeObserver = new ResizeObserver(() => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(updatePaths, 100);
+        });
+        resizeObserver.observe(container);
+
+        // Also handle window resize
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(updatePaths, 100);
+        });
+      }
+
+      // Initialize RadialFlow after a short delay to ensure DOM is ready
+      setTimeout(initRadialFlow, 200);
+    });
   </script>
+
+  <!-- Flip Switch Navigation Logic -->
+  <script>
+    // Handle login type switch
+    document.getElementById('switch-opt-1').addEventListener('change', function () {
+      if (this.checked) {
+        setTimeout(() => {
+          window.location.href = '/cliente-login.html';
+        }, 400);
+      }
+    });
+
+    document.getElementById('switch-opt-2').addEventListener('change', function () {
+      if (this.checked) {
+        setTimeout(() => {
+          window.location.href = '/login.html';
+        }, 400);
+      }
+    });
+  </script>
+
+  <!-- WhatsApp Widget Script -->
+  <script src="/whatsapp-widget.js"></script>
 </body>
 
 </html>

@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lista de Órdenes - Goversa</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+
+  <!-- Google Fonts - Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Sucursal Selector CSS -->
+  <link rel="stylesheet" href="styles/sucursal-selector.css">
+
+  <!-- Moment.js (librería específica de esta página) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- Guard.js - Autenticación -->
+  <script src="/guard.js"></script>
+
+  <!-- Estilos Globales del Manager -->
+  <link rel="stylesheet" href="manager.css">
+
+  <style>
+    /* 
+     * Estilos específicos de manager-taller-ordenes-lista.html
+     * Las variables globales (:root) están centralizadas en manager.css
+     */
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #111318;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #282e39;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff5f00;
+    }
+
+    .order-row.active {
+      background-color: rgba(255, 95, 0, 0.1) !important;
+      border-left: 3px solid #ff5f00;
+    }
+
+    /* Estilos para dropdown de cambio de estado */
+    .estado-dropdown-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .estado-badge {
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .estado-badge:hover {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .estado-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 100;
+      min-width: 160px;
+      margin-top: 4px;
+      background-color: #1a1d24;
+      border: 1px solid #282e39;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+    }
+
+    .estado-dropdown.show {
+      display: block;
+    }
+
+    .estado-option {
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.2s;
+      color: #fff;
+    }
+
+    .estado-option:hover {
+      background-color: #282e39;
+    }
+
+    .estado-option.active {
+      background-color: rgba(255, 95, 0, 0.15);
+      color: #ff5f00;
+    }
+
+    .estado-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    /* Estilos para menú de acciones (3 puntos) */
+    .acciones-dropdown-container {
+      position: relative;
+      display: inline-block;
+    }
+
+    .acciones-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      z-index: 100;
+      min-width: 180px;
+      margin-top: 4px;
+      background-color: #1a1d24;
+      border: 1px solid #282e39;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      animation: fadeInDropdown 0.15s ease-out;
+    }
+
+    @keyframes fadeInDropdown {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .acciones-dropdown.show {
+      display: block;
+    }
+
+    .acciones-option {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background-color 0.2s, color 0.2s;
+      color: #d1d5db;
+      border-bottom: 1px solid #282e39;
+    }
+
+    .acciones-option:last-child {
+      border-bottom: none;
+    }
+
+    .acciones-option:hover {
+      background-color: #282e39;
+      color: #fff;
+    }
+
+    .acciones-option .material-symbols-outlined {
+      font-size: 18px;
+    }
+
+    .acciones-option.editar:hover {
+      color: #60a5fa;
+    }
+
+    .acciones-option.factura:hover {
+      color: #22c55e;
+    }
+
+    .toast-notification {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #10b981;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      z-index: 1000;
+      font-size: 14px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast-notification.error {
+      background-color: #ef4444;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Estilos de Tooltip - Estandarizados */
+    .tooltip-container {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .tooltip-trigger {
+      cursor: help;
+      color: #6b7280;
+      transition: color 0.2s;
+      font-size: inherit;
+    }
+
+    .tooltip-trigger:hover {
+      color: #9da6b9;
+    }
+
+    .tooltip-content {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      transform: translateX(0);
+      background: #1e2028;
+      border: 1px solid #2d3240;
+      border-radius: 8px;
+      padding: 10px 12px;
+      width: max-content;
+      max-width: 260px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      transition: opacity 0.15s, visibility 0.15s;
+    }
+
+    .tooltip-content::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 12px;
+      transform: translateX(0);
+      border: 5px solid transparent;
+      border-top-color: #2d3240;
+    }
+
+    .tooltip-container:hover .tooltip-content {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .tooltip-title {
+      display: none;
+    }
+
+    .tooltip-text {
+      font-size: 11px;
+      font-weight: 400;
+      color: #d1d5db;
+      line-height: 1.4;
+      text-transform: none;
+    }
+
+    /* ============================================
+       ESTILOS PARA FILTROS RESPONSIVOS
+       ============================================ */
+
+    .filters-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px 0;
+      margin-bottom: 8px;
+    }
+
+    /* Barra de búsqueda - usa estilos globales de animated-search-form */
+    .search-bar-container {
+      width: 100%;
+    }
+
+    /* Contenedor de filtros de estado - Barra horizontal deslizable */
+    .estado-filters-scroll-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #282e39 transparent;
+    }
+
+    .estado-filters-scroll-container::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .estado-filters-scroll-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .estado-filters-scroll-container::-webkit-scrollbar-thumb {
+      background: #282e39;
+      border-radius: 2px;
+    }
+
+    .estado-filters-bar {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 4px;
+      padding: 4px;
+      background: #111318;
+      border-radius: 10px;
+      border: 1px solid #282e39;
+      width: max-content;
+      min-width: 100%;
+    }
+
+    /* Botones de filtro de estado */
+    .estado-filter-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background: transparent;
+      border: none;
+      color: #9da6b9;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .estado-filter-btn:hover {
+      color: #fff;
+      background: #282e39;
+    }
+
+    .estado-filter-btn .estado-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Estados activos para cada tipo */
+    .estado-filter-btn:has(input:checked) {
+      font-weight: 600;
+    }
+
+    .estado-todas:has(input:checked) {
+      background: var(--brand-orange);
+      color: #fff;
+      border-color: var(--brand-orange);
+    }
+
+    .estado-abierta:has(input:checked) {
+      background: rgba(234, 179, 8, 0.15);
+      color: #eab308;
+      border-color: rgba(234, 179, 8, 0.3);
+    }
+
+    .estado-progreso:has(input:checked) {
+      background: rgba(59, 130, 246, 0.15);
+      color: #3b82f6;
+      border-color: rgba(59, 130, 246, 0.3);
+    }
+
+    .estado-recambio:has(input:checked) {
+      background: rgba(249, 115, 22, 0.15);
+      color: #f97316;
+      border-color: rgba(249, 115, 22, 0.3);
+    }
+
+    .estado-completadas:has(input:checked) {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    .estado-entregadas:has(input:checked) {
+      background: rgba(168, 85, 247, 0.15);
+      color: #a855f7;
+      border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    /* Filtros secundarios */
+    .secondary-filters {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 12px;
+      background: #111318;
+      border-radius: 10px;
+      border: 1px solid #282e39;
+    }
+
+    .filters-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .filter-select-wrapper {
+      position: relative;
+      flex: 1;
+      min-width: 140px;
+    }
+
+    @media (min-width: 640px) {
+      .filter-select-wrapper {
+        flex: 0 1 auto;
+        min-width: 160px;
+      }
+    }
+
+    .filter-select {
+      width: 100%;
+      appearance: none;
+      background: #1a1d24;
+      border: 1px solid #282e39;
+      border-radius: 8px;
+      padding: 10px 36px 10px 12px;
+      font-size: 13px;
+      color: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 2px rgba(255, 95, 0, 0.15);
+    }
+
+    .filter-select option {
+      background: #1a1d24;
+      color: #fff;
+      padding: 10px;
+    }
+
+    .filter-select-arrow {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9da6b9;
+      font-size: 10px;
+      pointer-events: none;
+    }
+
+    /* Fila inferior de filtros */
+    .filters-row-bottom {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #282e39;
+    }
+
+    /* Toggle Solo Activas */
+    .toggle-activas-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-label-text {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: #9da6b9;
+      white-space: nowrap;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+    }
+
+    .toggle-track {
+      width: 100%;
+      height: 100%;
+      background: #282e39;
+      border-radius: 10px;
+      transition: background-color 0.2s;
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
+    }
+
+    /* Contador de órdenes */
+    .orders-counter {
+      font-size: 12px;
+      color: #9da6b9;
+      background: rgba(255, 95, 0, 0.1);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    /* Ajustes para móvil pequeño */
+    @media (max-width: 380px) {
+      .estado-filter-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+      }
+    }
+  </style>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              orange: "#ff5f00",
+              dark: "#0b0d11",
+              surface: "#111318",
+              border: "#282e39",
+              input: "#1a1d24",
+              text: "#ffffff",
+              muted: "#9da6b9"
+            }
+          },
+          fontFamily: { main: ["Montserrat", "sans-serif"] },
+        },
+      },
+    }
+  </script>
+</head>
+
+<body class="bg-[#0b0d11] font-[Montserrat] text-white">
+  <div class="flex h-screen w-full">
+    <!-- SIDEBAR -->
+    <aside id="sidebar"
+      class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+      <div class="flex h-full flex-col justify-between">
+        <div class="flex flex-col gap-4">
+          <div class="flex items-center gap-3 p-2 mb-4">
+            <div class="logo-badge"
+              style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+              <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img" style="height: 24px; width: auto;">
+            </div>
+            <div class="flex flex-col sidebar-text">
+              <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">Goversa</h1>
+              <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">Gestión</p>
+            </div>
+            <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+          </div>
+
+          <nav class="flex flex-col gap-2">
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-inicio.html">
+              <span class="icon-container"><i class="fas fa-home"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+            </a>
+
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('taller-submenu')">
+                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform" id="taller-arrow"></i>
+              </a>
+              <div id="taller-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-citas.html" class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                <a href="manager-taller-ordenes-lista.html"
+                  class="text-white font-semibold text-sm py-1 block">Órdenes</a>
+                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar órdenes</a>
+                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                <a href="manager-taller-vehiculos.html"
+                  class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+              </div>
+            </div>
+
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('tienda-submenu')">
+                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="tienda-arrow"></i>
+              </a>
+              <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-compras.html" class="text-gray-500 hover:text-white text-sm py-1 block">Nueva
+                  Compra</a>
+                <a href="manager-taller-compras-historial.html"
+                  class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+              </div>
+            </div>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-caja.html">
+              <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+            </a>
+
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('cuentas-submenu')">
+                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="cuentas-arrow"></i>
+              </a>
+              <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-cuentas-corrientes.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Cuentas Corrientes</a>
+                <a href="manager-taller-facturas.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                <a href="manager-taller-facturas-pendientes.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                <a href="manager-taller-config-facturas.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+              </div>
+            </div>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-inventario.html">
+              <span class="icon-container"><i class="fas fa-boxes"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+            </a>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-trabajadores.html">
+              <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+            </a>
+
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('contactos-submenu')">
+                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="contactos-arrow"></i>
+              </a>
+              <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-clientes.html"
+                  class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                <a href="manager-taller-proveedores.html"
+                  class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+              </div>
+            </div>
+
+            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+              href="manager-taller-configuracion.html">
+              <span class="icon-container"><i class="fas fa-cog"></i></span>
+              <p class="text-sm font-medium leading-normal sidebar-text">Configuración</p>
+            </a>
+          </nav>
+        </div>
+
+        <div class="flex flex-col gap-1 border-t border-[var(--brand-orange)] pt-4">
+          <div class="flex items-center gap-3 px-3 py-2 mb-2">
+            <div
+              class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+              IM</div>
+            <div class="flex flex-col sidebar-text overflow-hidden">
+              <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+              <span class="text-gray-500 text-xs truncate">admin</span>
+            </div>
+          </div>
+          <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+            href="#" data-logout>
+            <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+            <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <header
+        class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+        <div class="logo-badge p-2">
+          <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+        </div>
+        <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+      </header>
+
+      <main class="flex flex-1 overflow-hidden">
+        <!-- Lista de órdenes -->
+        <div class="flex-grow-[2] flex flex-col p-6 overflow-y-auto border-r border-[#282e39]">
+
+          <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-[#282e39] mb-4">
+            <div>
+              <h1 class="text-white text-2xl font-bold leading-tight">Órdenes de Trabajo</h1>
+              <p class="text-[#9da6b9] text-sm mt-1">Gestión y seguimiento de reparaciones</p>
+            </div>
+            <a href="manager-taller-ordenes.html"
+              class="flex items-center justify-center rounded-lg h-10 px-5 bg-[var(--brand-orange)] text-white text-sm font-bold hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">
+              <span class="material-symbols-outlined mr-2 text-xl">add_circle</span>
+              <span>Nueva Orden</span>
+            </a>
+          </div>
+
+          <!-- Selector de Sucursal Centrado -->
+          <div class="flex justify-center mb-4">
+            <div id="sucursal-selector-container"></div>
+          </div>
+
+          <!-- FILTROS PRINCIPALES -->
+          <div class="filters-section">
+            <!-- Barra de búsqueda -->
+            <div class="search-bar-container">
+              <div class="animated-search-form">
+                <input type="search" id="search-input" class="search-input"
+                  placeholder="Buscar por N° Orden, Cliente, Matrícula..." required />
+                <span class="caret"></span>
+                <i class="fas fa-file-alt search-icon"></i>
+              </div>
+            </div>
+
+            <!-- Filtros de Estado - Barra horizontal deslizable (generada dinámicamente) -->
+            <div class="estado-filters-scroll-container">
+              <div class="estado-filters-bar" id="estado-filters-bar">
+                <!-- Los botones de filtro se generan dinámicamente desde JavaScript -->
+                <label class="estado-filter-btn estado-todas">
+                  <input type="radio" name="estado-filter" value="all" class="hidden" checked />
+                  <span class="btn-text">Todas</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Filtros Secundarios -->
+            <div class="secondary-filters">
+              <div class="filters-row">
+                <div class="filter-select-wrapper">
+                  <select id="filter-fecha" class="filter-select">
+                    <option value="all">Cualquier fecha</option>
+                    <option value="today">Hoy</option>
+                    <option value="week">Esta semana</option>
+                    <option value="month">Este mes</option>
+                  </select>
+                  <i class="fas fa-chevron-down filter-select-arrow"></i>
+                </div>
+                <div class="filter-select-wrapper">
+                  <select id="filter-pago" class="filter-select">
+                    <option value="all">Todos los pagos</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="PARCIAL">Parcial</option>
+                    <option value="PAGADO">Pagado</option>
+                  </select>
+                  <i class="fas fa-chevron-down filter-select-arrow"></i>
+                </div>
+              </div>
+
+              <div class="filters-row-bottom">
+                <!-- Toggle Solo Activas -->
+                <label class="toggle-activas-label">
+                  <span class="toggle-label-text">
+                    Solo activas
+                    <span class="tooltip-container">
+                      <span class="material-symbols-outlined text-[12px] tooltip-trigger">info</span>
+                      <span class="tooltip-content">
+                        <span class="tooltip-text">
+                          <strong style="color: #ff5f00;">ON:</strong> Pendientes de entrega/pago<br>
+                          <strong style="color: #6b7280;">OFF:</strong> Todas (incluye historial)
+                        </span>
+                      </span>
+                    </span>
+                  </span>
+                  <div class="toggle-switch">
+                    <input type="checkbox" id="toggle-solo-activas" class="sr-only peer" checked />
+                    <div class="toggle-track peer peer-checked:bg-[var(--brand-orange)]"></div>
+                    <div class="toggle-thumb peer-checked:translate-x-4"></div>
+                  </div>
+                </label>
+
+                <span class="orders-counter" id="orders-count">Cargando...</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABLA -->
+          <div class="py-2 flex-1 overflow-hidden">
+            <div class="overflow-x-auto rounded-xl border border-[#282e39] bg-[#111318] h-full">
+              <table class="w-full text-left border-collapse">
+                <thead class="bg-[#1c1f27] sticky top-0 z-10">
+                  <tr>
+                    <th
+                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      N° Orden</th>
+                    <th
+                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      Cliente</th>
+                    <th
+                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      Vehículo</th>
+                    <th
+                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      Entrada</th>
+                    <th
+                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      Estado</th>
+                    <th
+                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      Pago</th>
+                    <th
+                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39] text-right">
+                      Total</th>
+                    <th class="px-2 py-4 border-b border-[#282e39]"></th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table-body" class="divide-y divide-[#282e39] text-sm">
+                  <tr id="loading-row">
+                    <td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]">
+                      <i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel de detalle -->
+        <aside
+          class="flex-grow-[1] max-w-md w-full flex flex-col h-full bg-[#111318] border-l border-[#282e39] p-6 overflow-y-auto z-10 shadow-2xl">
+          <div class="flex justify-between items-center pb-6 border-b border-[#282e39]">
+            <div>
+              <h2 class="text-2xl font-bold text-white" id="detail-order-id">Selecciona una orden</h2>
+              <span class="text-xs text-[#9da6b9]" id="detail-order-date"></span>
+            </div>
+            <div class="flex gap-2" id="detail-actions" style="display: none;">
+              <button id="btn-editar-orden"
+                class="flex items-center justify-center p-2 rounded-lg bg-[#1a1d24] text-[#9da6b9] hover:text-white hover:bg-[#282e39] transition-colors"
+                title="Editar Orden">
+                <span class="material-symbols-outlined text-xl">edit_document</span>
+              </button>
+              <button id="btn-imprimir-orden"
+                class="flex items-center justify-center p-2 rounded-lg bg-[#1a1d24] text-[#9da6b9] hover:text-[var(--brand-orange)] hover:bg-[#282e39] transition-colors"
+                title="Imprimir Orden de Trabajo">
+                <span class="material-symbols-outlined text-xl">print</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-6 mt-6" id="detail-content">
+            <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#282e39]">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs text-[#9da6b9] uppercase font-bold">Estado Actual</span>
+                <span class="material-symbols-outlined text-blue-400" id="detail-status-icon">handyman</span>
+              </div>
+              <div class="text-lg font-bold text-blue-400" id="detail-status">-</div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-[#9da6b9] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[var(--brand-orange)] text-lg">person</span> Cliente
+              </h3>
+              <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#282e39] space-y-3">
+                <span class="text-white font-bold" id="detail-client">-</span>
+                <div class="flex items-center gap-2 text-sm text-[#9da6b9]" id="detail-client-phone">
+                  <span class="material-symbols-outlined text-base">call</span> -
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-[#9da6b9] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[var(--brand-orange)] text-lg">directions_car</span>
+                Vehículo
+              </h3>
+              <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#282e39] space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-[#9da6b9] text-sm">Modelo:</span>
+                  <span class="text-white font-medium text-sm" id="detail-vehicle">-</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[#9da6b9] text-sm">Matrícula:</span>
+                  <span class="text-white font-medium text-sm font-mono bg-black/30 px-2 rounded"
+                    id="detail-matricula">-</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[#9da6b9] text-sm">Kilometraje:</span>
+                  <span class="text-white font-medium text-sm" id="detail-km">- km</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-[#9da6b9] uppercase tracking-wider mb-3 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[var(--brand-orange)] text-lg">payments</span> Pago
+              </h3>
+              <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#282e39] space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-[#9da6b9] text-sm">Total Orden:</span>
+                  <span class="text-white font-bold text-sm" id="detail-total">-</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[#9da6b9] text-sm">Pagado:</span>
+                  <span class="text-green-400 font-medium text-sm" id="detail-pagado">-</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-[#9da6b9] text-sm">Pendiente:</span>
+                  <span class="text-red-400 font-medium text-sm" id="detail-pendiente">-</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              class="w-full py-3 bg-[var(--brand-orange)] hover:bg-[#e05300] border border-[var(--brand-orange)] rounded-xl text-white font-medium transition-colors flex items-center justify-center gap-2"
+              id="btn-gestionar-pagos">
+              <span class="material-symbols-outlined">payments</span>
+              Gestionar Pagos
+            </button>
+
+            <!-- Botón Generar Factura -->
+            <button
+              class="w-full py-3 bg-[#1a1d24] hover:bg-[#282e39] border border-[#282e39] hover:border-[var(--brand-orange)] rounded-xl text-white font-medium transition-colors flex items-center justify-center gap-2"
+              id="btn-generar-factura" style="display: none;">
+              <span class="material-symbols-outlined">receipt_long</span>
+              Generar Factura
+            </button>
+
+            <!-- Indicador de factura ya emitida -->
+            <div id="factura-emitida-info"
+              class="hidden bg-green-500/10 border border-green-500/30 rounded-xl p-3 text-center">
+              <div class="flex items-center justify-center gap-2 text-green-400">
+                <span class="material-symbols-outlined">check_circle</span>
+                <span class="text-sm font-medium">Factura emitida</span>
+              </div>
+              <span id="numero-factura-emitida" class="text-xs text-green-300 mt-1 block"></span>
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODAL GESTIÓN DE PAGOS -->
+  <div id="modal-pagos" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" id="modal-overlay"></div>
+    <div
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-[#111318] rounded-2xl border border-[#282e39] shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between p-6 border-b border-[#282e39]">
+        <div>
+          <h3 class="text-xl font-bold text-white">Gestionar Pagos</h3>
+          <p class="text-sm text-[#9da6b9]" id="modal-orden-info">Orden #-</p>
+        </div>
+        <button id="btn-cerrar-modal" class="text-[#9da6b9] hover:text-white transition-colors">
+          <span class="material-symbols-outlined text-2xl">close</span>
+        </button>
+      </div>
+
+      <div class="p-6 border-b border-[#282e39] bg-[#0b0d11]/50">
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p class="text-xs text-[#9da6b9] uppercase mb-1">Total Orden</p>
+            <p class="text-xl font-bold text-white" id="modal-total">0.00€</p>
+          </div>
+          <div>
+            <p class="text-xs text-[#9da6b9] uppercase mb-1">Pagado</p>
+            <p class="text-xl font-bold text-green-400" id="modal-pagado">0.00€</p>
+          </div>
+          <div>
+            <p class="text-xs text-[#9da6b9] uppercase mb-1">Pendiente</p>
+            <p class="text-xl font-bold text-red-400" id="modal-pendiente">0.00€</p>
+          </div>
+        </div>
+        <div class="w-full bg-[#282e39] h-2 rounded-full mt-4 overflow-hidden">
+          <div class="bg-gradient-to-r from-green-500 to-green-400 h-2 rounded-full transition-all" id="modal-progress"
+            style="width: 0%"></div>
+        </div>
+      </div>
+
+      <div class="p-6 border-b border-[#282e39] max-h-48 overflow-y-auto">
+        <h4 class="text-sm font-bold text-[#9da6b9] uppercase mb-3">Pagos Registrados</h4>
+        <div id="modal-lista-pagos" class="space-y-2">
+          <p class="text-sm text-[#9da6b9] italic">No hay pagos registrados</p>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <h4 class="text-sm font-bold text-[#9da6b9] uppercase mb-4">Registrar Nuevo Pago</h4>
+        <form id="form-nuevo-pago" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-[#9da6b9] mb-2">Método de Pago</label>
+              <select id="modal-medio-pago"
+                class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-3 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
+                required>
+                <option value="">Seleccionar...</option>
+                <option value="3" data-codigo="CASH">Efectivo</option>
+                <option value="2" data-codigo="CARD">Tarjeta</option>
+                <option value="1" data-codigo="TRANSFER">Transferencia</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs text-[#9da6b9] mb-2">Importe</label>
+              <div class="relative">
+                <input type="number" id="modal-importe" step="0.01" min="0.01" placeholder="0.00"
+                  class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-3 pr-8 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
+                  required />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[#9da6b9]">€</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-[#9da6b9] mb-2">Referencia (opcional)</label>
+            <input type="text" id="modal-referencia" placeholder="Ej: Nº transacción, últimos 4 dígitos..."
+              class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-3 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]" />
+          </div>
+
+          <div class="flex gap-2">
+            <button type="button" id="btn-pagar-todo"
+              class="flex-1 py-2 px-3 bg-[#282e39] hover:bg-[#1a1d24] text-white text-sm rounded-lg transition-colors">
+              Pagar Todo
+            </button>
+            <button type="button" id="btn-pagar-mitad"
+              class="flex-1 py-2 px-3 bg-[#282e39] hover:bg-[#1a1d24] text-white text-sm rounded-lg transition-colors">
+              50%
+            </button>
+          </div>
+
+          <button type="submit"
+            class="w-full py-3 bg-[var(--brand-orange)] hover:bg-[#e05300] text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">add_card</span>
+            Registrar Pago
+          </button>
+        </form>
+
+        <!-- Separador y botón Cuenta Corriente -->
+        <div id="seccion-cuenta-corriente" class="hidden mt-4 pt-4 border-t border-[#282e39]">
+          <p class="text-xs text-[#9da6b9] mb-3 text-center">¿El cliente no puede pagar ahora?</p>
+          <button type="button" id="btn-pasar-cuenta-corriente"
+            class="w-full py-3 bg-[#1a1d24] hover:bg-[#282e39] border border-[#3e4552] hover:border-yellow-500/50 text-yellow-400 font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined">account_balance_wallet</span>
+            Pasar a Cuenta Corriente
+          </button>
+          <p class="text-xs text-gray-500 mt-2 text-center">El saldo pendiente se cargará a la cuenta del cliente</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- SIDEBAR ---
+    window.toggleSubmenu = function (id) {
+      const submenu = document.getElementById(id);
+      const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+      if (submenu.classList.contains('hidden')) {
+        submenu.classList.remove('hidden');
+        submenu.classList.add('flex');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      } else {
+        submenu.classList.add('hidden');
+        submenu.classList.remove('flex');
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    const sidebar = document.getElementById('sidebar');
+    const toggleBtn = document.getElementById('toggle-sidebar');
+    const sidebarTexts = document.querySelectorAll('.sidebar-text');
+    let isCollapsed = false;
+
+    toggleBtn.addEventListener('click', () => {
+      isCollapsed = !isCollapsed;
+      if (isCollapsed) {
+        sidebar.classList.remove('w-64');
+        sidebar.classList.add('w-20');
+        sidebarTexts.forEach(el => el.classList.add('hidden'));
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+          el.classList.add('hidden');
+          el.classList.remove('flex');
+        });
+      } else {
+        sidebar.classList.add('w-64');
+        sidebar.classList.remove('w-20');
+        sidebarTexts.forEach(el => el.classList.remove('hidden'));
+        toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+      }
+    });
+
+    document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+      sidebar.classList.toggle('-translate-x-full');
+      sidebar.classList.toggle('absolute');
+      sidebar.classList.toggle('z-50');
+      sidebar.classList.toggle('h-full');
+    });
+  </script>
+
+  <script type="module">
+    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
+    import { registrarPago } from '/services/pagos-service.js';
+    import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from '/auth.js';
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+    (async () => {
+      // Security check
+      const user = await requireAuth();
+      if (!user) {
+        // requireAuth handles redirection
+        return;
+      }
+
+      // Logout logic
+      document.querySelector('[data-logout]')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        clearSession();
+        redirectToLogin();
+      });
+
+      let ordenes = [];
+      let ordenSeleccionada = null;
+      let filtrosActuales = {};
+      let estadosDisponibles = [];
+      let estadosPersonalizados = {}; // Mapa de código -> {nombre, color}
+      let currentSucursalId = null;
+
+      // Cargar configuración de estados personalizados desde la API
+      async function cargarEstadosPersonalizados() {
+        try {
+          // Cargar desde la API
+          const response = await fetchWithAuth('/api/ordenes/estados');
+          const data = await response.json();
+
+          if (data && (data.success !== false)) {
+            const estados = Array.isArray(data) ? data : (data.estados || []);
+            // Crear un mapa para acceso rápido por código
+            estadosPersonalizados = {};
+            estados.forEach(e => {
+              if (e.codigo) {
+                estadosPersonalizados[e.codigo] = {
+                  nombre: e.nombre || e.codigo,
+                  color: e.color || '#eab308'
+                };
+              }
+            });
+            console.log('Estados cargados desde API:', estadosPersonalizados);
+          }
+        } catch (error) {
+          console.error('Error cargando estados desde API:', error);
+          // Fallback: usar valores por defecto
+          estadosPersonalizados = {
+            'ABIERTA': { nombre: 'Abierta', color: '#eab308' },
+            'EN_PROGRESO': { nombre: 'En Progreso', color: '#3b82f6' },
+            'RECAMBIO': { nombre: 'Esperando Recambio', color: '#f97316' },
+            'COMPLETADA': { nombre: 'Completada', color: '#22c55e' },
+            'ENTREGADA': { nombre: 'Entregada', color: '#a855f7' }
+          };
+        }
+
+        // Generar los botones de filtro
+        renderFiltrosEstado();
+      }
+
+      // Renderizar los botones de filtro de estado dinámicamente
+      function renderFiltrosEstado() {
+        const container = document.getElementById('estado-filters-bar');
+        if (!container) return;
+
+        // Estados por defecto (se sobrescriben con personalizados si existen)
+        const estadosDefault = [
+          { codigo: 'ABIERTA', nombre: 'Abierta', color: '#eab308' },
+          { codigo: 'EN_PROGRESO', nombre: 'En Progreso', color: '#3b82f6' },
+          { codigo: 'RECAMBIO', nombre: 'Recambio', color: '#f97316' },
+          { codigo: 'COMPLETADA', nombre: 'Completada', color: '#22c55e' },
+          { codigo: 'ENTREGADA', nombre: 'Entregada', color: '#a855f7' }
+        ];
+
+        // Generar botones de estado (usar personalizados si existen)
+        const estadosHTML = estadosDefault.map(estado => {
+          const nombre = estadosPersonalizados[estado.codigo]?.nombre || estado.nombre;
+          const color = estadosPersonalizados[estado.codigo]?.color || estado.color;
+
+          return `
+            <label class="estado-filter-btn" data-estado="${estado.codigo}">
+              <input type="radio" name="estado-filter" value="${estado.codigo}" class="hidden" />
+              <span class="estado-dot" style="background-color: ${color};"></span>
+              <span class="btn-text">${nombre}</span>
+            </label>
+          `;
+        }).join('');
+
+        // Mantener el botón "Todas" y agregar los demás
+        container.innerHTML = `
+          <label class="estado-filter-btn estado-todas">
+            <input type="radio" name="estado-filter" value="all" class="hidden" checked />
+            <span class="btn-text">Todas</span>
+          </label>
+          ${estadosHTML}
+        `;
+
+        // Re-agregar event listeners para los filtros
+        container.querySelectorAll('input[name="estado-filter"]').forEach(radio => {
+          radio.addEventListener('change', aplicarFiltros);
+        });
+      }
+
+      // Inicializar selector de sucursal
+      currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
+        onchange: (sucursalId) => {
+          currentSucursalId = sucursalId;
+          cargarOrdenes(filtrosActuales);
+        }
+      });
+
+      // Función toast para notificaciones
+      function showToast(message, isError = false) {
+        // Eliminar toast anterior si existe
+        const existingToast = document.querySelector('.toast-notification');
+        if (existingToast) existingToast.remove();
+
+        const toast = document.createElement('div');
+        toast.className = `toast-notification ${isError ? 'error' : ''}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+
+        setTimeout(() => toast.remove(), 3000);
+      }
+
+      /**
+       * Genera y muestra el documento de orden de trabajo
+       * @param {number} ordenId - ID de la orden
+       */
+      async function generarDocumentoOrden(ordenId) {
+        try {
+          showToast('Generando documento de orden...');
+
+          // Llamar al endpoint para obtener el HTML
+          const response = await fetchWithAuth(`/api/ordenes/${ordenId}/documento`);
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error al generar el documento');
+          }
+
+          const html = await response.text();
+
+          // Abrir en nueva ventana
+          const newWindow = window.open('', '_blank', 'width=900,height=700');
+          if (newWindow) {
+            newWindow.document.write(html);
+            newWindow.document.close();
+            showToast('Documento generado correctamente');
+          } else {
+            showToast('Por favor, permite ventanas emergentes para ver el documento', true);
+          }
+
+        } catch (error) {
+          console.error('Error generando documento de orden:', error);
+          showToast('❌ ' + (error.message || 'Error al generar el documento'), true);
+        }
+      }
+
+      /**
+       * Elimina una orden y todos sus efectos asociados
+       * @param {number} ordenId - ID de la orden a eliminar
+       */
+      async function eliminarOrden(ordenId) {
+        try {
+          showToast('Eliminando orden...');
+
+          const response = await fetchWithAuth(`/api/ordenes/${ordenId}`, {
+            method: 'DELETE'
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            showToast(`✅ ${data.message || 'Orden eliminada correctamente'}`);
+            // Recargar la lista de órdenes
+            cargarOrdenes(filtrosActuales);
+            // Limpiar selección si era esta orden
+            if (ordenSeleccionada && ordenSeleccionada.id === parseInt(ordenId)) {
+              ordenSeleccionada = null;
+              actualizarPanel();
+            }
+          } else {
+            showToast('❌ ' + (data.error || 'Error al eliminar la orden'), true);
+          }
+        } catch (error) {
+          console.error('Error eliminando orden:', error);
+          showToast('❌ Error de conexión al eliminar la orden', true);
+        }
+      }
+
+      // Cargar estados disponibles al inicio
+      async function cargarEstados() {
+        try {
+          estadosDisponibles = await getEstadosOrden();
+        } catch (error) {
+          console.error('Error cargando estados:', error);
+          // Estados por defecto si falla la carga
+          estadosDisponibles = [
+            { id: 1, codigo: 'ABIERTA', nombre: 'Abierta' },
+            { id: 2, codigo: 'EN_PROGRESO', nombre: 'En Progreso' },
+            { id: 3, codigo: 'COMPLETADA', nombre: 'Completada' }
+          ];
+        }
+      }
+
+      // Constante para leer la sucursal guardada
+      const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+
+      // --- CARGAR ÓRDENES ---
+      async function cargarOrdenes(filtros = {}) {
+        const tbody = document.getElementById('orders-table-body');
+        tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...</td></tr>';
+
+        try {
+          // Usar la sucursal del selector (que ya lee de localStorage si no hay selección)
+          if (currentSucursalId) {
+            filtros.sucursal = currentSucursalId;
+          }
+
+          const response = await getOrdenes(filtros);
+          // Excluir presupuestos de la lista de órdenes (se muestran en sección separada)
+          ordenes = (response.ordenes || []).filter(o => o.estado_codigo !== 'PRESUPUESTO');
+          document.getElementById('orders-count').textContent = `${ordenes.length} orden(es)`;
+          renderOrdenes();
+        } catch (error) {
+          console.error('Error cargando órdenes:', error);
+          tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-red-400"><i class="fas fa-exclamation-circle mr-2"></i> Error: ${error.message}</td></tr>`;
+        }
+      }
+
+      function renderOrdenes() {
+        const tbody = document.getElementById('orders-table-body');
+        const soloActivasToggle = document.getElementById('toggle-solo-activas');
+        const mostrarSoloActivas = soloActivasToggle?.checked ?? true;
+
+        // Aplicar filtro "solo activas": ocultar órdenes (Entregada + Pagado) y Canceladas
+        let ordenesVisibles = ordenes;
+        if (mostrarSoloActivas) {
+          ordenesVisibles = ordenes.filter(o => {
+            // Ocultar si es (ENTREGADA + PAGADO/CTA_CORRIENTE) o CANCELADA
+            const estaPagado = o.en_cuenta_corriente || o.estado_pago === 'PAGADO';
+            const esEntregadaYPagada = o.estado_codigo === 'ENTREGADA' && estaPagado;
+            const esCancelada = o.estado_codigo === 'CANCELADA';
+            return !esEntregadaYPagada && !esCancelada;
+          });
+        }
+
+        // Actualizar contador con órdenes visibles
+        document.getElementById('orders-count').textContent = mostrarSoloActivas
+          ? `${ordenesVisibles.length} activa(s) de ${ordenes.length}`
+          : `${ordenes.length} orden(es)`;
+
+        if (ordenesVisibles.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]">No hay órdenes que coincidan con los filtros</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = ordenesVisibles.map((orden, index) => {
+          const fecha = orden.fecha_ingreso ? new Date(orden.fecha_ingreso).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '-';
+          // Cuenta corriente = pagado a nivel operativo
+          const estaPagado = orden.en_cuenta_corriente || orden.estado_pago === 'PAGADO';
+          const estadoPagoClass = estaPagado ? 'text-green-500' : orden.estado_pago === 'PARCIAL' ? 'text-yellow-500' : 'text-red-400';
+          const estadoPagoLabel = estaPagado ? 'Pagado' : orden.estado_pago === 'PARCIAL' ? 'Parcial' : 'Pendiente';
+
+          // Obtener color personalizado del estado
+          const estadoColor = getEstadoDotColor(orden.estado_codigo);
+          const estadoNombre = getEstadoNombre(orden.estado_codigo, orden.estado_nombre);
+
+          // Aplicar estilos inline con el color personalizado
+          const estadoBgStyle = `background-color: ${estadoColor}15; border-color: ${estadoColor}40; color: ${estadoColor};`;
+          const dotStyle = `background-color: ${estadoColor};`;
+
+          return `
+          <tr class="order-row hover:bg-[#1a1d24] cursor-pointer transition-colors ${index === 0 ? 'active' : ''}" data-id="${orden.id}">
+            <td class="px-5 py-4 text-[var(--brand-orange)] font-bold">#${orden.id}</td>
+            <td class="px-5 py-4 text-white font-medium">
+              <div>${orden.cliente_nombre || '-'}</div>
+              <div class="text-xs text-[#9da6b9]">${orden.cliente_telefono || ''}</div>
+            </td>
+            <td class="px-5 py-4 text-[#9da6b9]">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} <span class="text-xs border border-[#282e39] px-1 rounded ml-1">${orden.vehiculo_matricula || ''}</span></td>
+            <td class="px-5 py-4 text-[#9da6b9]">${fecha}</td>
+            <td class="px-5 py-4">
+              <div class="estado-dropdown-container" data-orden-id="${orden.id}">
+                <div class="estado-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border" style="${estadoBgStyle}" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
+                  <span class="w-1.5 h-1.5 rounded-full" style="${dotStyle}"></span> ${estadoNombre}
+                  <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
+                </div>
+                <div class="estado-dropdown" id="dropdown-${orden.id}"></div>
+              </div>
+            </td>
+            <td class="px-5 py-4">
+              <div class="${estadoPagoClass} font-medium">${estadoPagoLabel}</div>
+              <div class="text-xs text-[#9da6b9]">${orden.ultimo_medio_pago || 'Sin pagos'}</div>
+            </td>
+            <td class="px-5 py-4 text-right font-medium text-green-400">${parseFloat(orden.total_neto || 0).toFixed(2)}€</td>
+            <td class="px-2 py-4 text-right">
+              <div class="acciones-dropdown-container" data-orden-id="${orden.id}" data-estado-pago="${orden.estado_pago}" data-tiene-factura="${orden.id_factura || orden.numero_factura ? 'true' : 'false'}">
+                <button class="btn-acciones text-[#9da6b9] hover:text-white cursor-pointer p-1 rounded hover:bg-[#282e39] transition-colors" data-id="${orden.id}">
+                  <span class="material-symbols-outlined">more_vert</span>
+                </button>
+                <div class="acciones-dropdown" id="acciones-dropdown-${orden.id}"></div>
+              </div>
+            </td>
+          </tr>
+        `;
+        }).join('');
+
+        // Click en filas para seleccionar
+        document.querySelectorAll('.order-row').forEach(row => {
+          row.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-acciones')) return;
+            if (e.target.closest('.acciones-dropdown-container')) return; // No seleccionar al click en dropdown de acciones
+            if (e.target.closest('.estado-dropdown-container')) return; // No seleccionar al click en dropdown de estado
+            document.querySelectorAll('.order-row').forEach(r => r.classList.remove('active'));
+            row.classList.add('active');
+            const id = parseInt(row.dataset.id);
+            ordenSeleccionada = ordenes.find(o => o.id === id);
+            actualizarPanel();
+          });
+        });
+
+        // Botón de acciones en la fila (3 puntitos) - muestra menú desplegable
+        document.querySelectorAll('.btn-acciones').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const container = btn.closest('.acciones-dropdown-container');
+            const ordenId = container.dataset.ordenId;
+            const estadoPago = container.dataset.estadoPago;
+            const tieneFactura = container.dataset.tieneFactura === 'true';
+            const dropdown = document.getElementById(`acciones-dropdown-${ordenId}`);
+
+            // Cerrar otros dropdowns de acciones
+            document.querySelectorAll('.acciones-dropdown.show').forEach(d => {
+              if (d.id !== `acciones-dropdown-${ordenId}`) d.classList.remove('show');
+            });
+            // Cerrar también dropdowns de estado
+            document.querySelectorAll('.estado-dropdown.show').forEach(d => d.classList.remove('show'));
+
+            // Renderizar opciones del menú
+            let opcionesHTML = `
+              <div class="acciones-option editar" data-action="editar" data-orden-id="${ordenId}">
+                <span class="material-symbols-outlined">edit</span>
+                Editar
+              </div>
+              <div class="acciones-option generar-orden" data-action="generar-orden" data-orden-id="${ordenId}">
+                <span class="material-symbols-outlined">description</span>
+                Generar Orden
+              </div>
+            `;
+
+            // Solo mostrar "Generar Factura" si está pagado y no tiene factura
+            if (estadoPago === 'PAGADO' && !tieneFactura) {
+              opcionesHTML += `
+                <div class="acciones-option factura" data-action="factura" data-orden-id="${ordenId}">
+                  <span class="material-symbols-outlined">receipt_long</span>
+                  Generar Factura
+                </div>
+              `;
+            }
+
+            // Opción de eliminar siempre visible (al final, con estilo de alerta)
+            opcionesHTML += `
+              <div class="acciones-option eliminar" data-action="eliminar" data-orden-id="${ordenId}" style="color: #ef4444; border-top: 1px solid #333; margin-top: 4px; padding-top: 8px;">
+                <span class="material-symbols-outlined">delete</span>
+                Eliminar
+              </div>
+            `;
+
+            dropdown.innerHTML = opcionesHTML;
+
+            // Event listeners para las opciones
+            dropdown.querySelectorAll('.acciones-option').forEach(option => {
+              option.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const action = option.dataset.action;
+                const ordId = option.dataset.ordenId;
+                dropdown.classList.remove('show');
+
+                if (action === 'editar') {
+                  window.location.href = `manager-taller-ordenes.html?id=${ordId}`;
+                } else if (action === 'generar-orden') {
+                  // Generar documento de orden de trabajo
+                  generarDocumentoOrden(ordId);
+                } else if (action === 'factura') {
+                  // Seleccionar la orden primero y luego disparar la generación de factura
+                  const ordenParaFactura = ordenes.find(o => o.id === parseInt(ordId));
+                  if (ordenParaFactura) {
+                    ordenSeleccionada = ordenParaFactura;
+                    actualizarPanel();
+                    // Disparar click en el botón generar factura del panel
+                    const btnFactura = document.getElementById('btn-generar-factura');
+                    if (btnFactura) btnFactura.click();
+                  }
+                } else if (action === 'eliminar') {
+                  // Eliminar orden con confirmación
+                  const ordenAEliminar = ordenes.find(o => o.id === parseInt(ordId));
+                  const confirmMsg = `¿Estás seguro de eliminar la Orden #${ordId}?\n\nCliente: ${ordenAEliminar?.cliente_nombre || 'N/A'}\n\nEsta acción eliminará:\n- La orden y sus líneas\n- Los pagos asociados\n- Los movimientos de caja\n- Los cargos en cuenta corriente\n\n¡Esta acción NO se puede deshacer!`;
+                  if (confirm(confirmMsg)) {
+                    eliminarOrden(ordId);
+                  }
+                }
+              });
+            });
+
+            dropdown.classList.toggle('show');
+          });
+        });
+
+        // Click en badge de estado para mostrar dropdown
+        document.querySelectorAll('.estado-badge').forEach(badge => {
+          badge.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const container = badge.closest('.estado-dropdown-container');
+            const ordenId = container.dataset.ordenId;
+            const dropdown = document.getElementById(`dropdown-${ordenId}`);
+            const estadoActual = badge.dataset.estadoCodigo;
+
+            // Cerrar otros dropdowns
+            document.querySelectorAll('.estado-dropdown.show').forEach(d => {
+              if (d.id !== `dropdown-${ordenId}`) d.classList.remove('show');
+            });
+
+            // Renderizar opciones (excluir PRESUPUESTO ya que se usa solo para presupuestos separados)
+            const estadosOrden = estadosDisponibles.filter(e => e.codigo !== 'PRESUPUESTO');
+            dropdown.innerHTML = estadosOrden.map(estado => {
+              const dotColor = getEstadoDotColor(estado.codigo);
+              const isActive = estado.codigo === estadoActual;
+              return `
+              <div class="estado-option ${isActive ? 'active' : ''}" data-codigo="${estado.codigo}" data-id="${estado.id}">
+                <span class="estado-dot" style="background-color: ${dotColor}"></span>
+                ${estado.nombre}
+              </div>
+            `;
+            }).join('');
+
+            // Event listeners para opciones
+            dropdown.querySelectorAll('.estado-option').forEach(option => {
+              option.addEventListener('click', async (ev) => {
+                ev.stopPropagation();
+                const estadoId = parseInt(option.dataset.id);
+                const estadoCodigo = option.dataset.codigo;
+                await cambiarEstadoOrden(parseInt(ordenId), estadoId, estadoCodigo);
+                dropdown.classList.remove('show');
+              });
+            });
+
+            dropdown.classList.toggle('show');
+          });
+        });
+
+        if (ordenes.length > 0) {
+          ordenSeleccionada = ordenes[0];
+          actualizarPanel();
+        }
+      }
+
+      // Obtener color del dot según código de estado (usa colores personalizados si existen)
+      function getEstadoDotColor(codigo) {
+        // Primero buscar en la configuración personalizada
+        if (estadosPersonalizados[codigo] && estadosPersonalizados[codigo].color) {
+          return estadosPersonalizados[codigo].color;
+        }
+        // Colores por defecto si no hay personalización
+        if (codigo === 'EN_PROGRESO') return '#60a5fa'; // Azul
+        if (codigo === 'RECAMBIO') return '#f97316'; // Naranja
+        if (codigo === 'COMPLETADA') return '#22c55e'; // Verde
+        if (codigo === 'ENTREGADA') return '#a855f7'; // Púrpura
+        return '#eab308'; // Amarillo para ABIERTA y otros
+      }
+
+      // Obtener nombre del estado (usa nombres personalizados si existen)
+      function getEstadoNombre(codigo, nombreDefault) {
+        if (estadosPersonalizados[codigo] && estadosPersonalizados[codigo].nombre) {
+          return estadosPersonalizados[codigo].nombre;
+        }
+        return nombreDefault || codigo;
+      }
+
+      // Obtener clases de estilo para el estado según su color personalizado
+      function getEstadoClasses(codigo) {
+        const color = getEstadoDotColor(codigo);
+        // Usar el color personalizado para las clases de estilo
+        return {
+          estadoClass: `border border-[${color}]/30`,
+          dotClass: '',
+          dotStyle: `background-color: ${color}`,
+          textStyle: `color: ${color}`
+        };
+      }
+
+      // Función para cambiar el estado de una orden
+      async function cambiarEstadoOrden(ordenId, estadoId, estadoCodigo) {
+        try {
+          const result = await updateEstadoOrden(ordenId, { idEstadoOrden: estadoId });
+
+          // Actualizar la orden en el array local
+          const ordenIndex = ordenes.findIndex(o => o.id === ordenId);
+          if (ordenIndex !== -1) {
+            ordenes[ordenIndex].estado_codigo = result.estado.codigo;
+            ordenes[ordenIndex].estado_nombre = result.estado.nombre;
+
+            // Si es la orden seleccionada, actualizar el panel
+            if (ordenSeleccionada && ordenSeleccionada.id === ordenId) {
+              ordenSeleccionada = ordenes[ordenIndex];
+              actualizarPanel();
+            }
+          }
+
+          // Re-renderizar la tabla para reflejar el cambio
+          renderOrdenes();
+          showToast(`Estado actualizado a "${result.estado.nombre}"`);
+        } catch (error) {
+          console.error('Error cambiando estado:', error);
+          showToast(error.message || 'Error al cambiar el estado', true);
+        }
+      }
+
+      // Cerrar dropdowns al hacer click fuera
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.estado-dropdown.show').forEach(d => d.classList.remove('show'));
+        document.querySelectorAll('.acciones-dropdown.show').forEach(d => d.classList.remove('show'));
+      });
+
+      function actualizarPanel() {
+        if (!ordenSeleccionada) return;
+
+        document.getElementById('detail-actions').style.display = 'flex';
+        document.getElementById('detail-order-id').textContent = `Orden #${ordenSeleccionada.id}`;
+        document.getElementById('detail-order-date').textContent = ordenSeleccionada.fecha_ingreso ? `Ingreso: ${new Date(ordenSeleccionada.fecha_ingreso).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}` : '';
+        document.getElementById('detail-client').textContent = ordenSeleccionada.cliente_nombre || '-';
+        document.getElementById('detail-client-phone').innerHTML = `<span class="material-symbols-outlined text-base">call</span> ${ordenSeleccionada.cliente_telefono || '-'}`;
+        document.getElementById('detail-vehicle').textContent = `${ordenSeleccionada.vehiculo_marca || ''} ${ordenSeleccionada.vehiculo_modelo || ''}`;
+        document.getElementById('detail-matricula').textContent = ordenSeleccionada.vehiculo_matricula || '-';
+        document.getElementById('detail-km').textContent = `${ordenSeleccionada.km || 0} km`;
+        document.getElementById('detail-status').textContent = ordenSeleccionada.estado_nombre || 'Abierta';
+
+        const totalNeto = parseFloat(ordenSeleccionada.total_neto || 0);
+        const totalPagado = parseFloat(ordenSeleccionada.total_pagado || 0);
+        const pendiente = Math.max(0, totalNeto - totalPagado);
+
+        document.getElementById('detail-total').textContent = `${totalNeto.toFixed(2)}€`;
+        document.getElementById('detail-pagado').textContent = `${totalPagado.toFixed(2)}€`;
+        document.getElementById('detail-pendiente').textContent = `${pendiente.toFixed(2)}€`;
+      }
+
+      // --- EDITAR ORDEN ---
+      document.getElementById('btn-editar-orden').addEventListener('click', () => {
+        if (ordenSeleccionada) {
+          window.location.href = `manager-taller-ordenes.html?id=${ordenSeleccionada.id}`;
+        }
+      });
+
+      // --- IMPRIMIR ORDEN ---
+      document.getElementById('btn-imprimir-orden').addEventListener('click', () => {
+        if (ordenSeleccionada) {
+          generarDocumentoOrden(ordenSeleccionada.id);
+        }
+      });
+
+      // --- MODAL PAGOS ---
+      function abrirModalPagos() {
+        if (!ordenSeleccionada) return;
+
+        const modal = document.getElementById('modal-pagos');
+        modal.classList.remove('hidden');
+
+        const totalNeto = parseFloat(ordenSeleccionada.total_neto || 0);
+        const totalPagado = parseFloat(ordenSeleccionada.total_pagado || 0);
+        const pendiente = Math.max(0, totalNeto - totalPagado);
+        const progreso = totalNeto > 0 ? (totalPagado / totalNeto) * 100 : 0;
+
+        document.getElementById('modal-orden-info').textContent = `Orden #${ordenSeleccionada.id}`;
+        document.getElementById('modal-total').textContent = `${totalNeto.toFixed(2)}€`;
+        document.getElementById('modal-pagado').textContent = `${totalPagado.toFixed(2)}€`;
+        document.getElementById('modal-pendiente').textContent = `${pendiente.toFixed(2)}€`;
+        document.getElementById('modal-progress').style.width = `${Math.min(100, progreso)}%`;
+        document.getElementById('modal-importe').value = pendiente > 0 ? pendiente.toFixed(2) : '';
+
+        // Mostrar sección de cuenta corriente solo si hay pendiente y no está ya en cuenta corriente
+        const seccionCC = document.getElementById('seccion-cuenta-corriente');
+        if (seccionCC) {
+          const yaEnCuentaCorriente = ordenSeleccionada.en_cuenta_corriente || false;
+          if (pendiente > 0 && !yaEnCuentaCorriente) {
+            seccionCC.classList.remove('hidden');
+          } else {
+            seccionCC.classList.add('hidden');
+          }
+        }
+      }
+
+      function cerrarModalPagos() {
+        document.getElementById('modal-pagos').classList.add('hidden');
+        document.getElementById('form-nuevo-pago').reset();
+      }
+
+      document.getElementById('btn-gestionar-pagos').addEventListener('click', abrirModalPagos);
+      document.getElementById('btn-cerrar-modal').addEventListener('click', cerrarModalPagos);
+      document.getElementById('modal-overlay').addEventListener('click', cerrarModalPagos);
+
+      document.getElementById('btn-pagar-todo').addEventListener('click', () => {
+        const totalNeto = parseFloat(ordenSeleccionada.total_neto || 0);
+        const totalPagado = parseFloat(ordenSeleccionada.total_pagado || 0);
+        document.getElementById('modal-importe').value = Math.max(0, totalNeto - totalPagado).toFixed(2);
+      });
+
+      document.getElementById('btn-pagar-mitad').addEventListener('click', () => {
+        const totalNeto = parseFloat(ordenSeleccionada.total_neto || 0);
+        const totalPagado = parseFloat(ordenSeleccionada.total_pagado || 0);
+        document.getElementById('modal-importe').value = (Math.max(0, totalNeto - totalPagado) / 2).toFixed(2);
+      });
+
+      // --- PASAR A CUENTA CORRIENTE ---
+      document.getElementById('btn-pasar-cuenta-corriente')?.addEventListener('click', async () => {
+        if (!ordenSeleccionada) return;
+
+        const totalNeto = parseFloat(ordenSeleccionada.total_neto || 0);
+        const totalPagado = parseFloat(ordenSeleccionada.total_pagado || 0);
+        const pendiente = Math.max(0, totalNeto - totalPagado);
+
+        if (pendiente <= 0) {
+          showToast('Esta orden no tiene saldo pendiente', true);
+          return;
+        }
+
+        const confirmar = confirm(`¿Cargar ${pendiente.toFixed(2)}€ a la cuenta corriente del cliente?\n\nEl saldo quedará registrado como deuda pendiente de cobro.`);
+        if (!confirmar) return;
+
+        const btn = document.getElementById('btn-pasar-cuenta-corriente');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+        btn.disabled = true;
+
+        try {
+          const session = await getSession();
+          const response = await fetch('/api/cuentas-corrientes/cargar-orden', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.token}`
+            },
+            body: JSON.stringify({ idOrden: ordenSeleccionada.id })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast(`Saldo de ${pendiente.toFixed(2)}€ cargado a cuenta corriente`);
+            cerrarModalPagos();
+            cargarOrdenes(filtrosActuales);
+          } else {
+            showToast(data.error || 'Error al cargar a cuenta corriente', true);
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          showToast('Error de conexión', true);
+        } finally {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        }
+      });
+
+      document.getElementById('form-nuevo-pago').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const medioPago = document.getElementById('modal-medio-pago').value;
+        const importe = parseFloat(document.getElementById('modal-importe').value);
+        const referencia = document.getElementById('modal-referencia').value;
+
+        if (!medioPago || !importe || importe <= 0) {
+          alert('Por favor, completa todos los campos');
+          return;
+        }
+
+        try {
+          await registrarPago(ordenSeleccionada.id, {
+            idMedioPago: parseInt(medioPago),
+            importe: importe,
+            referencia: referencia || null
+          });
+
+          showToast('Pago registrado correctamente');
+          cerrarModalPagos();
+          cargarOrdenes(filtrosActuales);
+        } catch (error) {
+          showToast('Error al registrar pago: ' + error.message, true);
+        }
+      });
+
+      // --- FILTROS ---
+      function aplicarFiltros() {
+        const estado = document.querySelector('input[name="estado-filter"]:checked')?.value;
+        const fecha = document.getElementById('filter-fecha').value;
+        const pago = document.getElementById('filter-pago').value;
+
+        filtrosActuales = {};
+        if (estado && estado !== 'all') filtrosActuales.estado = estado;
+        if (pago && pago !== 'all') filtrosActuales.estadoPago = pago;
+
+        if (fecha && fecha !== 'all') {
+          const hoy = new Date();
+          hoy.setHours(0, 0, 0, 0);
+          if (fecha === 'today') {
+            filtrosActuales.fechaDesde = hoy.toISOString();
+          } else if (fecha === 'week') {
+            const inicioSemana = new Date(hoy);
+            inicioSemana.setDate(hoy.getDate() - hoy.getDay());
+            filtrosActuales.fechaDesde = inicioSemana.toISOString();
+          } else if (fecha === 'month') {
+            const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+            filtrosActuales.fechaDesde = inicioMes.toISOString();
+          }
+        }
+
+        cargarOrdenes(filtrosActuales);
+      }
+
+      document.querySelectorAll('input[name="estado-filter"]').forEach(radio => {
+        radio.addEventListener('change', aplicarFiltros);
+      });
+
+      document.getElementById('filter-fecha').addEventListener('change', aplicarFiltros);
+      document.getElementById('filter-pago').addEventListener('change', aplicarFiltros);
+
+      // Toggle "Solo activas": al cambiar, vuelve a renderizar sin recargar datos
+      document.getElementById('toggle-solo-activas').addEventListener('change', () => {
+        renderOrdenes();
+      });
+
+      let searchTimeout;
+      document.getElementById('search-input').addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          filtrosActuales.busqueda = e.target.value;
+          cargarOrdenes(filtrosActuales);
+        }, 300);
+      });
+
+      // Cargar al inicio
+      // Cargar estados personalizados primero, luego estados del backend y órdenes
+      (async () => {
+        await cargarEstadosPersonalizados();
+        await cargarEstados();
+        await cargarOrdenes();
+      })();
+
+      // --- GENERAR FACTURA ---
+      // fetchWithAuth y getSession importados arriba
+
+      document.getElementById('btn-generar-factura').addEventListener('click', async () => {
+        if (!ordenSeleccionada) return;
+
+        // Confirmar
+        const confirmar = confirm(`¿Deseas generar una factura para la Orden #${ordenSeleccionada.id}?\n\nCliente: ${ordenSeleccionada.cliente_nombre}\nTotal: ${parseFloat(ordenSeleccionada.total_neto || 0).toFixed(2)}€`);
+        if (!confirmar) return;
+
+        try {
+          const session = getSession();
+          const response = await fetchWithAuth(`/api/facturas/ordenes/${ordenSeleccionada.id}/emitir`, {
+            method: 'POST',
+            body: JSON.stringify({
+              id_usuario: session?.user?.id,
+              observaciones: null
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            showToast(`✅ Factura ${data.data.factura.numero_factura} generada correctamente`);
+            // Actualizar la orden local para mostrar que ya tiene factura
+            ordenSeleccionada.id_factura = data.data.factura.id;
+            ordenSeleccionada.numero_factura = data.data.factura.numero_factura;
+            actualizarBotonFactura();
+          } else {
+            showToast('❌ ' + (data.error || 'Error al generar la factura'), true);
+          }
+        } catch (error) {
+          console.error('Error generando factura:', error);
+          showToast('❌ Error al generar la factura', true);
+        }
+      });
+
+      // Función para mostrar/ocultar botón de factura según el estado de la orden
+      function actualizarBotonFactura() {
+        const btnFactura = document.getElementById('btn-generar-factura');
+        const infoFactura = document.getElementById('factura-emitida-info');
+        const numFactura = document.getElementById('numero-factura-emitida');
+
+        if (!ordenSeleccionada) {
+          btnFactura.style.display = 'none';
+          infoFactura.classList.add('hidden');
+          return;
+        }
+
+        // Si ya tiene factura
+        if (ordenSeleccionada.id_factura || ordenSeleccionada.numero_factura) {
+          btnFactura.style.display = 'none';
+          infoFactura.classList.remove('hidden');
+          numFactura.textContent = ordenSeleccionada.numero_factura || `Factura #${ordenSeleccionada.id_factura}`;
+        } else {
+          // Mostrar botón solo si la orden está completada o entregada
+          const estadosFacturables = ['COMPLETADA', 'ENTREGADA'];
+          if (estadosFacturables.includes(ordenSeleccionada.estado_codigo)) {
+            btnFactura.style.display = 'flex';
+          } else {
+            btnFactura.style.display = 'none';
+          }
+          infoFactura.classList.add('hidden');
+        }
+      }
+
+      // Extender actualizarPanel original para incluir botón factura
+      const originalActualizarPanel = actualizarPanel;
+      actualizarPanel = function () {
+        originalActualizarPanel();
+        actualizarBotonFactura();
+      };
+
+    })();
+  </script>
+  <!-- Confirmation Modal -->
+  <div id="confirmation-modal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity opacity-0" id="modal-backdrop"></div>
+
+    <!-- Modal Content -->
+    <div
+      class="relative bg-[#1e242d] border border-gray-700 rounded-xl shadow-2xl max-w-md w-full transform scale-95 opacity-0 transition-all duration-300"
+      id="modal-content">
+      <div class="p-6 text-center">
+        <div class="w-16 h-16 bg-[var(--brand-orange)]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <i class="fas fa-file-invoice-dollar text-[var(--brand-orange)] text-2xl"></i>
+        </div>
+
+        <h3 class="text-xl font-bold text-white mb-2">Generar Factura</h3>
+        <p class="text-gray-400 mb-6" id="modal-message">¿Estás seguro de generar la factura?</p>
+
+        <!-- Detalles opcionales -->
+        <div class="bg-[#111318] rounded-lg p-4 mb-6 text-left border border-gray-800">
+          <div class="flex justify-between mb-2">
+            <span class="text-gray-500 text-sm">Cliente</span>
+            <span class="text-white text-sm font-medium truncate ml-2" id="modal-cliente"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500 text-sm">Total</span>
+            <span class="text-[var(--brand-orange)] font-bold" id="modal-total"></span>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button id="btn-cancel-modal"
+            class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors font-medium">
+            Cancelar
+          </button>
+          <button id="btn-confirm-modal"
+            class="flex-1 px-4 py-2 bg-[var(--brand-orange)] hover:bg-[#e65a26] text-white rounded-lg transition-colors font-medium shadow-lg shadow-orange-900/20">
+            Confirmar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Modal Animation Styles */
+    #confirmation-modal:not(.hidden) #modal-backdrop {
+      opacity: 1;
+    }
+
+    #confirmation-modal:not(.hidden) #modal-content {
+      transform: scale(100%);
+      opacity: 1;
+    }
+  </style>
+
+  <script>
+    // Toast Notification helper
+    window.showToast = function (message, isError = false) {
+      // Simple implementation if not exists
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;font-family:inherit;';
+        document.body.appendChild(container);
+      }
+
+      const el = document.createElement('div');
+      el.className = 'toast animate-slideIn';
+      el.style.cssText = `
+            background: linear-gradient(135deg, #1e242d 0%, #282e39 100%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-left: 4px solid ${isError ? '#ef4444' : '#22c55e'};
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        `;
+      el.innerHTML = `
+            <div style="width:24px;height:24px;border-radius:50%;background:${isError ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'};display:flex;align-items:center;justify-content:center;color:${isError ? '#ef4444' : '#22c55e'}">
+                <i class="fas fa-${isError ? 'times' : 'check'}"></i>
+            </div>
+            <span>${message}</span>
+        `;
+
+      container.appendChild(el);
+      setTimeout(() => {
+        el.style.transform = 'translate(100%)';
+        el.style.opacity = '0';
+        el.style.transition = 'all 0.3s';
+        setTimeout(() => el.remove(), 300);
+      }, 3000);
+    }
+
+    // Helper function for modal
+    window.showConfirmModal = function (cliente, total, status, onConfirm) {
+      const modal = document.getElementById('confirmation-modal');
+      const backdrop = document.getElementById('modal-backdrop');
+      const content = document.getElementById('modal-content');
+
+      // Set data
+      document.getElementById('modal-cliente').textContent = cliente;
+      document.getElementById('modal-total').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(total);
+
+      // Show logic
+      modal.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        backdrop.classList.remove('opacity-0');
+        content.classList.remove('opacity-0', 'scale-95');
+      });
+
+      // Handlers
+      const close = () => {
+        backdrop.classList.add('opacity-0');
+        content.classList.add('opacity-0', 'scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+      };
+
+      const confirmBtn = document.getElementById('btn-confirm-modal');
+      const cancelBtn = document.getElementById('btn-cancel-modal');
+
+      // Remove old listeners to avoid duplicates if reused poorly (better architecture would handle this differently)
+      const newConfirm = confirmBtn.cloneNode(true);
+      confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+      const newCancel = cancelBtn.cloneNode(true);
+      cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+      newCancel.addEventListener('click', close);
+      newConfirm.addEventListener('click', () => {
+        onConfirm();
+        close();
+      });
+    }
+
+    // Override the button click handler
+    document.getElementById('btn-generar-factura').replaceWith(document.getElementById('btn-generar-factura').cloneNode(true));
+    document.getElementById('btn-generar-factura').addEventListener('click', async () => {
+      if (!ordenSeleccionada) return;
+
+      showConfirmModal(
+        ordenSeleccionada.cliente_nombre,
+        ordenSeleccionada.total_neto || 0,
+        null,
+        async () => {
+          try {
+            const session = getSession();
+            const response = await fetchWithAuth(`${API_BASE_URL}/facturas/ordenes/${ordenSeleccionada.id}/emitir`, {
+              method: 'POST',
+              body: JSON.stringify({
+                id_usuario: session?.user?.id,
+                observaciones: null
+              })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+              showToast(`✅ Factura ${data.data.factura.numero_factura} generada correctamente`);
+              ordenSeleccionada.id_factura = data.data.factura.id;
+              ordenSeleccionada.numero_factura = data.data.factura.numero_factura;
+              actualizarBotonFactura();
+            } else {
+              showToast('❌ ' + (data.error || 'Error al generar la factura'), true);
+            }
+          } catch (error) {
+            console.error('Error generando factura:', error);
+            showToast('❌ Error al generar la factura', true);
+          }
+        }
+      );
+    });
+  </script>
+
+  <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+  <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

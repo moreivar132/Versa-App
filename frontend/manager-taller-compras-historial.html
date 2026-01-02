@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Compras - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <!-- Librería Quagga para escáner -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+    <style>
+        /* --- VARIABLES & BASE --- */
+        /* Redundant variables removed */
+
+        /* --- SCROLLBAR --- */
+        /* Redundant scrollbar styles removed */
+
+
+        /* --- SIDEBAR --- */
+        #sidebar {
+            background: rgba(17, 19, 24, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        /* --- FORM CONTENEDOR --- */
+        /* --- FORM CONTENEDOR --- */
+
+
+
+        .form-main-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 30px 0;
+            background: linear-gradient(to right, #fff, #ccc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .form-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .form-section.single-col {
+            grid-template-columns: 1fr;
+        }
+
+        .form-section:last-of-type {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        /* --- INPUTS --- */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            transition: color 0.3s;
+        }
+
+        .form-group:focus-within label {
+            color: var(--brand-orange);
+        }
+
+        .form-input,
+        .form-select,
+        textarea.form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-primary);
+            font-family: "Montserrat", sans-serif;
+            font-size: 15px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        /* Input readonly style */
+        .form-input[readonly] {
+            --surface-border: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            border-color: transparent;
+            cursor: not-allowed;
+        }
+
+        .form-input:hover,
+        .form-select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        textarea.form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+            background-color: rgba(255, 101, 43, 0.05);
+            box-shadow: 0 0 0 4px rgba(255, 101, 43, 0.15);
+        }
+
+        /* --- BOTONES --- */
+        .btn {
+            background: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-dark) 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 10px;
+            padding: 12px 24px;
+            box-shadow: 0 4px 14px rgba(255, 101, 43, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 101, 43, 0.6);
+            background: linear-gradient(135deg, #ff7a45 0%, #e05300 100%);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-subtle) !important;
+            box-shadow: none;
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+
+        .btn-icon-only {
+            width: 40px;
+            padding: 0;
+        }
+
+        /* --- INPUT GROUP --- */
+        .input-group {
+            display: flex;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group .form-input {
+            border-radius: 10px 0 0 10px;
+            border-right: none;
+        }
+
+        .input-group .btn {
+            border-radius: 0 10px 10px 0;
+            padding: 0 20px;
+            margin: 0;
+            border: 1px solid var(--border-subtle);
+            border-left: none;
+        }
+
+        /* --- AUTOCOMPLETE --- */
+        .custom-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .custom-select-options {
+            display: none;
+            position: absolute;
+            top: calc(100% + 5px);
+            left: 0;
+            right: 0;
+            background-color: #1e1e24;
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-select-options.show {
+            display: block;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .custom-select-options .option,
+        .custom-select-options .create-option {
+            padding: 12px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #ccc;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .custom-select-options .option:hover,
+        .custom-select-options .create-option:hover {
+            background-color: rgba(255, 101, 43, 0.15);
+            color: var(--brand-orange);
+        }
+
+        .custom-select-options .create-option {
+            font-weight: bold;
+            color: var(--brand-orange);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        /* --- TABLA DE ITEMS --- */
+        .items-table-container {
+            overflow-x: auto;
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            margin-bottom: 25px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+            /* Para asegurar que no se rompa en móvil */
+        }
+
+        .items-table th {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .items-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            vertical-align: middle;
+            color: var(--text-primary);
+        }
+
+        .items-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Inputs dentro de la tabla */
+        .items-table .form-input {
+            padding: 8px 10px;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Footer de la tabla (fila de agregar) */
+        .items-table tfoot td {
+            background: rgba(var(--brand-orange), 0.05);
+            border-top: 1px solid var(--border-subtle);
+            padding: 15px;
+        }
+
+        /* --- SUBIDA DE IMÁGENES --- */
+        .multi-image-upload-box {
+            border: 2px dashed var(--border-subtle);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--text-secondary);
+        }
+
+        .multi-image-upload-box:hover,
+        .multi-image-upload-box.dragover {
+            border-color: var(--brand-orange);
+            background: rgba(255, 101, 43, 0.05);
+            color: var(--text-primary);
+        }
+
+        #previews-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .img-preview-wrapper {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-subtle);
+            aspect-ratio: 1;
+        }
+
+        .img-preview-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-img-btn {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .remove-img-btn:hover {
+            background: var(--error-color);
+        }
+
+        /* --- RESUMEN Y TOTALES --- */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 40px;
+        }
+
+        .summary-payment-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-subtle);
+        }
+
+        .summary-payment-table {
+            width: 100%;
+        }
+
+        .summary-payment-table td {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .summary-payment-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .total-row td {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--brand-orange);
+            padding-top: 15px;
+        }
+
+        /* --- MODALES --- */
+        #scanner-modal,
+        #success-modal,
+        #provider-modal {
+            background-color: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: #1a1a1f;
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            position: relative;
+            color: white;
+        }
+
+        /* Grid helpers */
+        .grid-span-2 {
+            grid-column: span 2;
+        }
+
+        .grid-span-full {
+            grid-column: 1 / -1;
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .grid-span-2 {
+                grid-column: span 1;
+            }
+        }
+
+        /* --- VISUALLY HIDDEN --- */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Stats specific for history */
+        .stat-value.pending {
+            color: #fbbf24;
+        }
+
+        /* Action Menu for Table */
+        .action-menu {
+            position: fixed;
+            background: rgba(26, 26, 31, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 6px;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            display: none;
+            min-width: 150px;
+        }
+
+        .action-menu.active {
+            display: block;
+        }
+
+        .action-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            background: transparent;
+        }
+
+        .action-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .action-item.danger:hover {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex h-screen w-full">
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                    órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown (Active) -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-white font-semibold text-sm py-1 block">Historial Compras</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-caja.html">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            IM
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                            <span class="text-gray-500 text-xs truncate">admin</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+
+            <!-- Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--border-subtle)] z-30">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white p-2">
+                    <i class="fas fa-bars fa-lg"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 relative z-10">
+
+                <div class="manager-panel">
+
+                    <!-- HEADER -->
+                    <div class="flex flex-wrap items-center justify-between mb-8 gap-4 border-b border-[#282e39] pb-6">
+                        <div>
+                            <h2 class="form-main-title mb-0">Historial de Compras</h2>
+                            <p class="text-[#9da6b9] text-sm mt-1">Registro de todas las compras realizadas</p>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <a href="manager-taller-compras.html" class="btn">
+                                <i class="fas fa-plus mr-2"></i> Nueva Compra
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
+
+                    <!-- STATS -->
+                    <div class="form-section">
+                        <div class="summary-payment-box flex flex-col items-center justify-center p-4">
+                            <span class="text-gray-400 text-sm uppercase font-semibold">Total Periodo</span>
+                            <span class="text-2xl font-bold text-white mt-1" id="stat-total">0,00 €</span>
+                        </div>
+                        <div class="summary-payment-box flex flex-col items-center justify-center p-4">
+                            <span class="text-gray-400 text-sm uppercase font-semibold">Pagado</span>
+                            <span class="text-2xl font-bold text-[#4ade80] mt-1" id="stat-paid">0,00 €</span>
+                        </div>
+                        <div class="summary-payment-box flex flex-col items-center justify-center p-4">
+                            <span class="text-gray-400 text-sm uppercase font-semibold">Pendiente</span>
+                            <span class="text-2xl font-bold text-[var(--brand-orange)] mt-1" id="stat-pending">0,00
+                                €</span>
+                        </div>
+                    </div>
+
+                    <!-- FILTERS -->
+                    <h3 class="text-lg font-bold text-white mb-4 pl-2 border-l-4 border-[var(--brand-orange)]">Filtros y
+                        Búsqueda</h3>
+                    <div class="form-section" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+
+                        <div class="form-group grid-span-full md:col-span-1">
+                            <label>Búsqueda</label>
+                            <div class="animated-search-form">
+                                <input type="search" id="search-input" class="search-input"
+                                    placeholder="Proveedor, NIF, Ref..." required>
+                                <span class="caret"></span>
+                                <i class="fas fa-shopping-bag search-icon"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Desde</label>
+                            <input type="date" id="filter-date-start" class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Hasta</label>
+                            <input type="date" id="filter-date-end" class="form-input">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Estado Pago</label>
+                            <select id="filter-status" class="form-select">
+                                <option value="all">Todos</option>
+                                <option value="paid">Pagado</option>
+                                <option value="pending">Pendiente</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Tipo Doc.</label>
+                            <select id="filter-type" class="form-select">
+                                <option value="all">Todos</option>
+                                <option value="factura">Factura</option>
+                                <option value="albaran">Albarán</option>
+                                <option value="ticket">Ticket</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group flex justify-end items-end">
+                            <button id="btn-search-trigger" class="btn btn-secondary w-full">
+                                <i class="fas fa-filter mr-2"></i> Aplicar
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <!-- TABLE -->
+                    <h3 class="text-lg font-bold text-white mb-4 pl-2 border-l-4 border-[var(--brand-orange)]">Listado
+                        de Compras</h3>
+                    <div class="items-table-container">
+                        <table class="items-table">
+                            <thead>
+                                <tr>
+                                    <th>Nº Ref</th>
+                                    <th>Proveedor</th>
+                                    <th>Fecha</th>
+                                    <th>Tipo</th>
+                                    <th>Estado</th>
+                                    <th class="text-right">Total</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- Data Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- PAGINATION -->
+                    <div class="flex flex-wrap items-center justify-between mt-4 text-gray-400 text-sm gap-4">
+                        <button id="btn-prev" class="btn btn-secondary btn-sm" disabled>
+                            <i class="fas fa-chevron-left mr-1"></i> Anterior
+                        </button>
+
+                        <div id="records-info">Mostrando 0 registros</div>
+
+                        <button id="btn-next" class="btn btn-secondary btn-sm">
+                            Siguiente <i class="fas fa-chevron-right ml-1"></i>
+                        </button>
+                        <div id="pagination-pages" class="hidden"></div>
+                    </div>
+
+                </div>
+
+            </main>
+        </div>
+
+    </div>
+
+    <!-- Action Menu Template -->
+    <div id="action-menu" class="action-menu">
+        <button class="action-item" onclick="viewDetails()">
+            <span class="material-symbols-outlined" style="font-size: 18px;">visibility</span>
+            Ver Detalles
+        </button>
+        <button class="action-item" onclick="editPurchase()">
+            <span class="material-symbols-outlined" style="font-size: 18px;">edit</span>
+            Editar
+        </button>
+        <button class="action-item danger" onclick="deletePurchase()">
+            <span class="material-symbols-outlined" style="font-size: 18px;">delete</span>
+            Eliminar
+        </button>
+    </div>
+
+    <script>
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrowId = id.replace('submenu', 'arrow');
+            const arrow = document.getElementById(arrowId);
+
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('toggle-sidebar');
+        const sidebarTexts = document.querySelectorAll('.sidebar-text');
+        let isCollapsed = false;
+
+        toggleBtn.addEventListener('click', () => {
+            isCollapsed = !isCollapsed;
+            if (isCollapsed) {
+                sidebar.classList.remove('w-64');
+                sidebar.classList.add('w-20');
+                sidebarTexts.forEach(el => el.classList.add('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+                document.querySelectorAll('[id$="-submenu"]').forEach(el => {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                });
+            } else {
+                sidebar.classList.add('w-64');
+                sidebar.classList.remove('w-20');
+                sidebarTexts.forEach(el => el.classList.remove('hidden'));
+                toggleBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            }
+        });
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('absolute');
+            sidebar.classList.toggle('z-50');
+            sidebar.classList.toggle('h-full');
+        });
+    </script>
+
+    <script type="module">
+        import { fetchWithAuth } from '/auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        let allPurchases = [];
+        let currentSucursalId = null;
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Inicializar selector de sucursal
+            currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
+                onchange: (sucursalId) => {
+                    currentSucursalId = sucursalId;
+                    loadPurchases();
+                }
+            });
+
+            // Set default dates
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            // Format dates as YYYY-MM-DD for input values
+            const formatDate = (d) => d.toISOString().split('T')[0];
+
+            document.getElementById('filter-date-start').value = formatDate(firstDay);
+            document.getElementById('filter-date-end').value = formatDate(today);
+
+            loadPurchases();
+
+            // Event Listeners for Filters
+            document.getElementById('search-input').addEventListener('keyup', applyFilters);
+            document.getElementById('filter-status').addEventListener('change', applyFilters);
+            document.getElementById('filter-date-start').addEventListener('change', applyFilters);
+            document.getElementById('filter-date-end').addEventListener('change', applyFilters);
+            document.getElementById('btn-search-trigger').addEventListener('click', applyFilters);
+
+            // Filter type listener (new)
+            const filterType = document.getElementById('filter-type');
+            if (filterType) filterType.addEventListener('change', applyFilters);
+
+            // Close action menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.action-btn') && !e.target.closest('.action-menu')) {
+                    document.getElementById('action-menu').classList.remove('active');
+                }
+            });
+        });
+
+        async function loadPurchases() {
+            const tableBody = document.getElementById('history-table-body');
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-[#bca39a]">Cargando compras...</td></tr>';
+
+            try {
+                // Fetch more items to allow for better client-side filtering
+                const response = await fetchWithAuth('/api/compras?limit=200');
+                if (!response.ok) throw new Error('Error al cargar compras');
+
+                allPurchases = await response.json();
+                applyFilters();
+
+            } catch (error) {
+                console.error(error);
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Error al cargar el historial.</td></tr>';
+            }
+        }
+
+        window.applyFilters = function () {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            const status = document.getElementById('filter-status').value;
+            const startDateStr = document.getElementById('filter-date-start').value;
+            const endDateStr = document.getElementById('filter-date-end').value;
+            const filterType = document.getElementById('filter-type');
+            const type = filterType ? filterType.value : 'all';
+
+            const startDate = startDateStr ? new Date(startDateStr) : null;
+            const endDate = endDateStr ? new Date(endDateStr) : null;
+            // Adjust end date to include the full day
+            if (endDate) endDate.setHours(23, 59, 59, 999);
+
+            let filtered = allPurchases.filter(p => {
+                // 1. Search Text
+                const searchText = `${p.proveedor_nombre || ''} ${p.sucursal_nombre || ''} ${p.id} ${p.total}`.toLowerCase();
+                if (search && !searchText.includes(search)) return false;
+
+                // 2. Date Range
+                const pDate = new Date(p.fecha_emision);
+                if (startDate && pDate < startDate) return false;
+                if (endDate && pDate > endDate) return false;
+
+                // 3. Status filter
+                if (status === 'pending') return false; // Currently no pending state in DB
+                if (status === 'paid' && p.estado !== 'pagado') return false;
+
+                // 4. Type filter
+                if (type !== 'all') {
+                    const pType = (p.tipo || 'factura').toLowerCase();
+                    if (pType !== type) return false;
+                }
+
+                return true;
+            });
+
+            // Sort by date (newest first by default)
+            filtered.sort((a, b) => new Date(b.fecha_emision) - new Date(a.fecha_emision));
+
+            // Update stats
+            updateStats(filtered);
+            renderTable(filtered);
+        }
+
+        function updateStats(purchases) {
+            const total = purchases.reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
+            const paid = purchases.filter(p => p.estado !== 'pending').reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
+            const pending = total - paid;
+
+            const formatCurrency = (val) => val.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+
+            const statTotal = document.getElementById('stat-total');
+            const statPaid = document.getElementById('stat-paid');
+            const statPending = document.getElementById('stat-pending');
+
+            if (statTotal) statTotal.textContent = formatCurrency(total);
+            if (statPaid) statPaid.textContent = formatCurrency(paid);
+            if (statPending) statPending.textContent = formatCurrency(pending);
+        }
+
+        function renderTable(purchases) {
+            const tableBody = document.getElementById('history-table-body');
+            const infoDiv = document.getElementById('records-info');
+
+            tableBody.innerHTML = '';
+            infoDiv.textContent = `Mostrando ${purchases.length} de ${allPurchases.length} registros`;
+
+            if (purchases.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-[#bca39a]">No se encontraron resultados.</td></tr>';
+                return;
+            }
+
+            purchases.forEach(p => {
+                const date = new Date(p.fecha_emision);
+                const formattedDate = date.toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' });
+                const isPaid = p.estado !== 'pending';
+                const tipo = (p.tipo || 'Factura').charAt(0).toUpperCase() + (p.tipo || 'factura').slice(1).toLowerCase();
+                const refNum = `${tipo.substring(0, 3).toUpperCase()}-${new Date(p.fecha_emision).getFullYear()}-${p.id.toString().padStart(4, '0')}`;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="font-medium whitespace-nowrap">${refNum}</td>
+                    <td>${p.proveedor_nombre || 'Desconocido'}</td>
+                    <td>${formattedDate}</td>
+                    <td>${tipo}</td>
+                    <td>
+                         <span class="px-2 py-1 rounded text-xs font-bold ${isPaid ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-500'}">
+                            ${isPaid ? 'Pagado' : 'Pendiente'}
+                        </span>
+                    </td>
+                    <td class="text-right font-bold whitespace-nowrap text-white">${parseFloat(p.total).toLocaleString('es-ES', { minimumFractionDigits: 2 })} €</td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button class="btn btn-secondary btn-sm p-2" onclick="viewDetails(${p.id})" title="Ver detalles">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-secondary btn-sm p-2" onclick="editPurchase(${p.id})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-secondary btn-sm p-2 text-red-400 hover:text-red-300" onclick="deletePurchase(${p.id})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Action functions (exposed globally)
+        window.viewDetails = async function (id) {
+            console.log('viewDetails llamado con id:', id);
+            try {
+                // Fetch el HTML del PDF con autenticación
+                console.log('Fetching /api/compras/' + id + '/pdf');
+                const response = await fetchWithAuth(`/api/compras/${id}/pdf`);
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    alert('Error al cargar el documento: ' + response.status);
+                    return;
+                }
+
+                const htmlContent = await response.text();
+                console.log('HTML content length:', htmlContent.length);
+
+                if (!htmlContent || htmlContent.length < 100) {
+                    console.error('Contenido vacío o muy corto');
+                    alert('El documento está vacío');
+                    return;
+                }
+
+                // Abrir en nueva ventana y escribir el contenido
+                const pdfWindow = window.open('about:blank', '_blank');
+                if (pdfWindow) {
+                    pdfWindow.document.open();
+                    pdfWindow.document.write(htmlContent);
+                    pdfWindow.document.close();
+                    console.log('Documento escrito en ventana');
+                } else {
+                    alert('Por favor, permite las ventanas emergentes para ver el documento');
+                }
+            } catch (error) {
+                console.error('Error al cargar documento:', error);
+                alert('Error al cargar el documento: ' + error.message);
+            }
+        }
+
+        window.editPurchase = function (id) {
+            // Redirigir a la página de compras para editar
+            window.location.href = `manager-taller-compras.html?id=${id}&mode=edit`;
+        }
+
+        window.deletePurchase = function (id) {
+            if (confirm(`¿Estás seguro de eliminar la compra #${id}?`)) {
+                // Llamar al API para eliminar
+                fetchWithAuth(`/api/compras/${id}`, { method: 'DELETE' })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Compra eliminada correctamente');
+                            loadPurchases(); // Recargar la tabla
+                        } else {
+                            alert('Error al eliminar la compra');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Error al eliminar la compra');
+                    });
+            }
+        }
+
+        window.toggleActionMenu = function (event, id) {
+            event.stopPropagation();
+            const menu = document.getElementById('action-menu');
+            const btn = event.currentTarget;
+            const rect = btn.getBoundingClientRect();
+
+            // Position menu near the button
+            menu.style.top = (rect.bottom + window.scrollY + 5) + 'px';
+            menu.style.left = (rect.left + window.scrollX - 100) + 'px';
+
+            menu.classList.toggle('active');
+
+            // Store ID on menu for actions
+            menu.dataset.selectedId = id;
+        }
+    </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

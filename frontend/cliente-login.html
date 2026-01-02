@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión - Portal Cliente | Versa</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #0b0d11 0%, #1a1d24 100%);
+            min-height: 100vh;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111318;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #282e39;
+            border-radius: 4px;
+        }
+
+        /* Login Switch CSS */
+        .flip-switch-container {
+            --card-width: 110px;
+            --card-height: 120px;
+            --switch-bg: rgba(255, 255, 255, 0.1);
+            --switch-border-color: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --inactive-text-color: rgba(255, 255, 255, 0.6);
+            --icon-shadow-color: rgba(0, 0, 0, 0.3);
+            --card-bg: linear-gradient(135deg, rgba(255, 95, 0, 0.5), rgba(255, 95, 0, 0.2));
+            --highlight-color: #ff5f00;
+
+            display: grid;
+            place-content: center;
+            min-height: auto;
+            margin-bottom: 2rem;
+            font-family: "Poppins", sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .flip-switch {
+            display: flex;
+            position: relative;
+            width: calc(var(--card-width) * 2);
+            height: var(--card-height);
+            background: var(--switch-bg);
+            border-radius: 20px;
+            border: 1px solid var(--switch-border-color);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37), inset 0 4px 8px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            perspective: 1000px;
+        }
+
+        .flip-switch input[type="radio"] {
+            display: none;
+        }
+
+        .flip-switch .switch-button {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            z-index: 2;
+            color: var(--inactive-text-color);
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+        }
+
+        .flip-switch .switch-button:hover {
+            color: var(--text-color);
+        }
+
+        .flip-switch .switch-button:hover svg {
+            transform: translateY(-3px);
+            filter: drop-shadow(0 4px 6px var(--icon-shadow-color)) brightness(1.2);
+        }
+
+        .flip-switch .switch-button svg {
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            filter: drop-shadow(0 2px 3px var(--icon-shadow-color));
+            width: 24px;
+            height: 24px;
+        }
+
+        .flip-switch .switch-button span {
+            font-size: 14px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .flip-switch #switch-opt-1:checked~[for="switch-opt-1"],
+        .flip-switch #switch-opt-2:checked~[for="switch-opt-2"] {
+            color: var(--text-color);
+            text-shadow: 0 0 8px rgba(255, 95, 0, 0.5);
+        }
+
+        .flip-switch #switch-opt-1:checked~[for="switch-opt-2"],
+        .flip-switch #switch-opt-2:checked~[for="switch-opt-1"] {
+            color: var(--inactive-text-color);
+        }
+
+        .flip-switch .switch-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: var(--card-width);
+            height: var(--card-height);
+            z-index: 1;
+            transform-style: preserve-3d;
+        }
+
+        .flip-switch .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+
+        .flip-switch .card-back {
+            transform: rotateY(180deg);
+        }
+
+        .flip-switch #switch-opt-2:checked~.switch-card {
+            animation: flipRight 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+        }
+
+        .flip-switch #switch-opt-1:checked~.switch-card {
+            animation: flipLeft 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+        }
+
+        @keyframes flipRight {
+            0% {
+                transform: translateX(0%) rotateY(0deg);
+            }
+
+            50% {
+                transform: translateX(50%) rotateY(90deg) scale(1.05);
+            }
+
+            100% {
+                transform: translateX(100%) rotateY(180deg) scale(1);
+            }
+        }
+
+        @keyframes flipLeft {
+            0% {
+                transform: translateX(100%) rotateY(180deg);
+            }
+
+            50% {
+                transform: translateX(50%) rotateY(90deg) scale(1.05);
+            }
+
+            100% {
+                transform: translateX(0%) rotateY(0deg) scale(1);
+            }
+        }
+
+        .flip-switch #switch-opt-1:checked~[for="switch-opt-1"]::after,
+        .flip-switch #switch-opt-2:checked~[for="switch-opt-2"]::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            width: 30px;
+            height: 3px;
+            background: var(--highlight-color);
+            border-radius: 2px;
+            animation: glow 1.5s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px var(--highlight-color);
+            }
+
+            to {
+                box-shadow: 0 0 15px var(--highlight-color),
+                    0 0 25px var(--highlight-color);
+            }
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            background: #1a1d24 !important;
+            border: 1px solid #282e39;
+            border-radius: 12px;
+            color: white !important;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        /* Prevent background change on autofill */
+        .input-field:-webkit-autofill,
+        .input-field:-webkit-autofill:hover,
+        .input-field:-webkit-autofill:focus {
+            -webkit-text-fill-color: white !important;
+            -webkit-box-shadow: 0 0 0px 1000px #1a1d24 inset !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #ff5f00;
+            box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.15);
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#ff5f00",
+                    },
+                    fontFamily: {
+                        main: ["Montserrat", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body>
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div
+            class="bg-[#111318] border border-[#282e39] w-full max-w-md p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+
+            <!-- Logo -->
+            <div class="flex justify-center mb-8">
+                <!-- Fallback to text if image fails, but ideally use assets/versa-v-logo.png if exists, or simple text -->
+                <div class="flex items-center gap-2">
+                    <span class="text-3xl font-black text-white tracking-tighter">VERSA</span>
+                    <div class="w-3 h-3 rounded-full bg-primary mt-2"></div>
+                </div>
+            </div>
+
+            <!-- Login Type Switch -->
+            <div class="flip-switch-container">
+                <div class="flip-switch">
+                    <input type="radio" name="login-type" id="switch-opt-1" checked>
+                    <input type="radio" name="login-type" id="switch-opt-2">
+
+                    <label for="switch-opt-1" class="switch-button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>Cliente</span>
+                    </label>
+
+                    <label for="switch-opt-2" class="switch-button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path
+                                d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+                            </path>
+                        </svg>
+                        <span>Taller</span>
+                    </label>
+
+                    <div class="switch-card">
+                        <div class="card-face card-front"></div>
+                        <div class="card-face card-back"></div>
+                    </div>
+                </div>
+            </div>
+
+            <h1 class="text-2xl font-bold text-white text-center mb-2">Bienvenido</h1>
+            <p class="text-gray-400 text-center mb-8">Inicia sesión en tu cuenta</p>
+
+            <div id="alertContainer" class="hidden mb-4 p-4 rounded-lg text-sm"></div>
+
+            <form id="loginForm" class="space-y-6">
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2 ml-1">Email</label>
+                    <input type="email" id="email"
+                        class="w-full px-4 py-3.5 bg-[#1a1d24] border border-[#282e39] rounded-xl text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-all text-base shadow-inner"
+                        placeholder="ejemplo@correo.com">
+                    <p id="emailError" class="text-red-500 text-sm mt-2 font-medium hidden ml-1"></p>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2 ml-1">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="password"
+                            class="w-full px-4 py-3.5 bg-[#1a1d24] border border-[#282e39] rounded-xl text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-all text-base pr-12 shadow-inner"
+                            placeholder="••••••••">
+                        <button type="button" onclick="togglePassword()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors p-2">
+                            <span class="material-symbols-outlined" id="togglePasswordIcon"
+                                style="font-size: 22px;">visibility_off</span>
+                        </button>
+                    </div>
+                    <p id="passwordError" class="text-red-500 text-sm mt-2 font-medium hidden ml-1"></p>
+                </div>
+
+                <!-- Forgot password -->
+                <div class="flex justify-end">
+                    <button type="button" onclick="showForgotPassword()"
+                        class="text-sm text-[#ff5f00] hover:text-[#ff8844] hover:underline font-medium transition-colors">¿Olvidaste
+                        tu contraseña?</button>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" id="submitBtn"
+                    class="w-full px-6 py-4 bg-[#ff5f00] hover:bg-[#ff4500] text-white font-bold text-lg rounded-xl transition-all shadow-lg shadow-orange-900/20 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex justify-center items-center gap-2">
+                    <span id="submitText">Iniciar Sesión</span>
+                    <div id="submitLoader"
+                        class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="flex items-center gap-4 my-6">
+                <div class="flex-1 border-t border-[#282e39]"></div>
+                <span class="text-gray-500 text-sm">o</span>
+                <div class="flex-1 border-t border-[#282e39]"></div>
+            </div>
+
+            <!-- Register Link -->
+            <p class="text-center text-gray-400 text-sm">
+                ¿No tienes cuenta?
+                <a href="/cliente-register.html" class="text-primary hover:underline font-medium">
+                    Regístrate gratis
+                </a>
+            </p>
+
+            <!-- Back to home -->
+            <p class="text-center text-gray-500 text-sm mt-6">
+                <a href="/" class="hover:text-white transition-colors">
+                    ← Volver al inicio
+                </a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+        <div class="bg-[#111318] border border-[#282e39] rounded-2xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-bold text-white mb-4">Recuperar Contraseña</h2>
+            <p class="text-gray-400 text-sm mb-4">
+                Ingresa tu email y te enviaremos instrucciones para restablecer tu contraseña.
+            </p>
+            <form id="forgotForm" class="space-y-4">
+                <div>
+                    <input type="email" id="forgotEmail" required class="input-field" placeholder="tu@email.com">
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit"
+                        class="flex-1 px-4 py-3 bg-[#ff5f00] text-white rounded-lg hover:bg-[#ff4500] transition-colors font-bold">
+                        Enviar
+                    </button>
+                    <button type="button" onclick="closeForgotModal()"
+                        class="flex-1 px-4 py-3 bg-[#282e39] text-white rounded-lg hover:bg-[#3a4150] transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+            <div id="forgotSuccess"
+                class="hidden mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-sm">
+                Si el email existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña.
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { login, forgotPassword, redirectIfLoggedIn } from './services/cliente-service.js';
+
+        // Redirect if already logged in
+        redirectIfLoggedIn();
+
+        // Check URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('expired') === '1') {
+            showAlert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
+        }
+        if (urlParams.get('registered') === '1') {
+            showAlert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.', 'success');
+        }
+
+        // Form submit
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            // Clear errors
+            clearErrors();
+
+            // Validate
+            if (!email) {
+                showFieldError('email', 'El email es requerido');
+                return;
+            }
+            if (!password) {
+                showFieldError('password', 'La contraseña es requerida');
+                return;
+            }
+
+            // Submit
+            setLoading(true);
+
+            try {
+                const result = await login(email, password);
+
+                if (result.ok) {
+                    // Check for redirect
+                    const redirect = urlParams.get('redirect') || '/cliente-dashboard.html';
+                    window.location.href = redirect;
+                } else {
+                    showAlert(result.error || 'Error al iniciar sesión', 'error');
+                }
+            } catch (error) {
+                showAlert(error.message || 'Error al iniciar sesión', 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Forgot password form
+        document.getElementById('forgotForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('forgotEmail').value.trim();
+
+            try {
+                await forgotPassword(email);
+                document.getElementById('forgotForm').classList.add('hidden');
+                document.getElementById('forgotSuccess').classList.remove('hidden');
+            } catch (error) {
+                // Still show success to not reveal if email exists
+                document.getElementById('forgotForm').classList.add('hidden');
+                document.getElementById('forgotSuccess').classList.remove('hidden');
+            }
+        });
+
+        // Helpers
+        function showAlert(message, type = 'error') {
+            const container = document.getElementById('alertContainer');
+            container.textContent = message;
+            container.className = `mb-4 p-4 rounded-lg text-sm ${type === 'error' ? 'bg-red-500/10 border border-red-500/20 text-red-400' : type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'}`;
+            container.classList.remove('hidden');
+        }
+
+        function showFieldError(field, message) {
+            const el = document.getElementById(`${field}Error`);
+            if (el) {
+                el.textContent = message;
+                el.classList.remove('hidden');
+            }
+        }
+
+        function clearErrors() {
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.classList.add('hidden');
+                el.textContent = '';
+            });
+            document.getElementById('alertContainer').classList.add('hidden');
+        }
+
+        function setLoading(loading) {
+            document.getElementById('submitBtn').disabled = loading;
+            document.getElementById('submitText').classList.toggle('hidden', loading);
+            document.getElementById('submitLoader').classList.toggle('hidden', !loading);
+        }
+
+        // Password visibility
+        window.togglePassword = function () {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility_off';
+            }
+        };
+
+        // Forgot password modal
+        window.showForgotPassword = function () {
+            document.getElementById('forgotModal').classList.remove('hidden');
+            document.getElementById('forgotForm').classList.remove('hidden');
+            document.getElementById('forgotSuccess').classList.add('hidden');
+        };
+
+        window.closeForgotModal = function () {
+            document.getElementById('forgotModal').classList.add('hidden');
+        };
+
+        // Switch Logic
+        document.getElementById('switch-opt-2').addEventListener('change', function () {
+            if (this.checked) {
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 300);
+            }
+        });
+    </script>
+</body>
+
+</html>

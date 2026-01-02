@@ -16,15 +16,83 @@ const port = process.env.PORT || 3000;
 
 // --- Middlewares ---
 app.use(cors());
-app.use(express.json());
 
-// Rutas de autenticación
+// IMPORTANTE: El webhook de Stripe debe ir ANTES de express.json()
+// porque necesita acceso al raw body para verificar la firma
+app.use('/api/stripe/webhook', require('./routes/stripeWebhook'));
+
+// Ahora sí, aplicar el parser JSON para el resto de rutas
+// Límite aumentado para permitir subida de imágenes en base64
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+console.log('Customer Portal Routes loading...');
+const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');
+
+// --- RUTAS PRIORITARIAS DEL PORTAL ---
+app.use('/api/portal', require('./routes/portalCitas')); // Portal cliente (Citas/Perfil)
+app.use('/api/portal/notificaciones', require('./routes/portalNotificaciones')); // Notificaciones
+app.use('/api/cliente/auth', require('./routes/customerAuth'));
+app.use('/api/cliente', customerAuth, require('./routes/customerPortal'));
+app.use('/api/cliente/payment-methods', require('./routes/customerPaymentMethods')); // Payment Methods (Stripe)
+
+// Rutas de autenticación general
 app.use('/api/auth', authRouter);
 app.use('/api/admin', superAdminRouter);
 app.use('/api/proveedores', proveedoresRouter);
 app.use('/api/clientes', clientesRouter);
 app.use('/api/vehiculos', vehiculosRouter);
 app.use('/api/citas', require('./routes/citas'));
+app.use('/api/inventory', require('./routes/inventory'));
+app.use('/api/sucursales', require('./routes/sucursales'));
+app.use('/api/compras', require('./routes/compras'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/crm/chat', require('./routes/crm_chat'));
+app.use('/api/upload', require('./routes/upload'));
+app.use('/api/whatsapp', require('./routes/whatsapp'));
+app.use('/api/stripe', require('./routes/stripe'));
+app.use('/api/subscriptions', require('./routes/subscriptions'));
+app.use('/api/ordenes', require('./routes/ordenes'));
+app.use('/api/ordenpago', require('./routes/ordenPago'));
+app.use('/api/medio-pago', require('./routes/medioPago'));
+app.use('/api/impuestos', require('./routes/impuestos'));
+app.use('/api/caja', require('./routes/caja'));
+app.use('/api/tecnicos', require('./routes/tecnicos'));
+app.use('/api/trabajadores', require('./routes/trabajadores'));
+app.use('/api/facturas', require('./routes/facturas'));
+app.use('/api/cuentas-corrientes', require('./routes/cuentasCorrientes'));
+app.use('/api/ventas', require('./routes/ventas'));
+app.use('/api/income-events', verifyJWT, require('./routes/incomeEvents'));
+
+// Marketplace routes (público y admin)
+app.use('/api/marketplace', require('./routes/marketplace'));
+app.use('/api/marketplace/admin', verifyJWT, require('./routes/marketplaceAdmin'));
+
+// Marketing / Email Automations (admin)
+app.use('/api/marketing/email', verifyJWT, require('./routes/marketingEmail'));
+app.use('/api/marketing/campaigns', verifyJWT, require('./routes/emailCampaign'));
+
+// Fidelización - Public (tarjeta wallet, sin auth)
+app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
+
+// Fidelización - Admin (gestión miembros/puntos/promos, con JWT)
+app.use('/api/admin/fidelizacion', verifyJWT, require('./routes/fidelizacionAdmin'));
+
+// Customer Portal routes (Moved to top)
+// const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');
+// app.use('/api/cliente/auth', require('./routes/customerAuth'));
+// app.use('/api/cliente', customerAuth, require('./routes/customerPortal'));
+
+// Portal Citas - Nuevos endpoints (Moved to top)
+// app.use('/api/portal', require('./routes/portalCitas'));
+
+// Servir archivos estáticos subidos (ahora bajo /api/uploads para consistencia)
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Ruta de test para la base de datos
 app.get('/api/db-test', async (req, res) => {
@@ -55,8 +123,8 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // --- Iniciar Servidor ---
-app.listen(port, () => {
-  console.log(`🚀 Servidor escuchando en http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`🚀 Servidor escuchando en http://0.0.0.0:${port}`);
   if (process.env.NODE_ENV !== 'production') {
     console.log('-> Modo de Desarrollo: El backend solo funciona como API.');
     console.log('-> El frontend debe correr en su propio servidor (Vite).');

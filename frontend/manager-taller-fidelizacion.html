@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fidelización - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="manager.css">
+    <style>
+        :root {
+            --brand-orange: #ff5e00;
+            --brand-orange-strong: #ff7a2d;
+            --surface-bg: #111318;
+            --surface-elevated: #1a1c22;
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #ffffff;
+            --text-secondary: #9da6b9;
+        }
+
+        .manager-panel {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+            border: 1px solid var(--surface-border);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--surface-border);
+            padding-bottom: 16px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid transparent;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 94, 0, 0.15);
+            border-color: rgba(255, 94, 0, 0.4);
+            color: var(--text-primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .member-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            border: 1px solid var(--surface-border);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .member-card:hover {
+            border-color: var(--brand-orange);
+            transform: translateY(-2px);
+        }
+
+        .member-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .member-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .member-code {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .member-balance {
+            text-align: right;
+        }
+
+        .member-balance-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--brand-orange);
+        }
+
+        .member-balance-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .member-info {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .member-info i {
+            color: var(--brand-orange);
+            width: 16px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-active {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .badge-blocked {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 1000;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface-elevated);
+            border: 1px solid var(--surface-border);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--surface-border);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--surface-border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Form Input */
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--surface-border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--brand-orange);
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-orange), var(--brand-orange-strong));
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--surface-border);
+            color: var(--text-secondary);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+
+        .btn-icon {
+            padding: 8px 12px;
+        }
+
+        /* History Table */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+        }
+
+        .history-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--surface-border);
+            color: var(--text-primary);
+        }
+
+        .points-positive {
+            color: #4ade80;
+            font-weight: 600;
+        }
+
+        .points-negative {
+            color: #f87171;
+            font-weight: 600;
+        }
+
+        /* QR Input Section */
+        .qr-section {
+            background: linear-gradient(135deg, rgba(255, 94, 0, 0.08), rgba(255, 94, 0, 0.02));
+            border: 1px solid rgba(255, 94, 0, 0.2);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        /* Promo Card */
+        .promo-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--surface-border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .promo-info h4 {
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .promo-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .promo-dates {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .promo-status {
+            text-align: right;
+        }
+
+        /* Link display */
+        .link-display {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-top: 12px;
+        }
+
+        .link-display input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        .link-display input:focus {
+            outline: none;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex h-screen w-full">
+        <!-- SideNavBar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-ventas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Venta</a>
+                                <a href="manager-taller-ventas-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Ventas</a>
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-caja.html">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-cuentas-corrientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Cuentas Corrientes</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="contactos-arrow"></i>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-marketplace.html">
+                            <span class="icon-container"><i class="fas fa-store"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Marketplace</p>
+                        </a>
+
+                        <!-- Fidelización (ACTIVE) -->
+                        <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors"
+                            href="manager-taller-fidelizacion.html">
+                            <span class="icon-container"><i class="fas fa-gift"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Fidelización</p>
+                        </a>
+
+                        <!-- Marketing Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('marketing-submenu')">
+                                <span class="icon-container"><i class="fas fa-bullhorn"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Marketing</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="marketing-arrow"></i>
+                            </a>
+                            <div id="marketing-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-marketing-email.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Email Automations</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-configuracion.html">
+                            <span class="icon-container"><i class="fas fa-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Configuración</p>
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Bottom User Section -->
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs"
+                            id="user-avatar">
+                            IM
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate" id="user-name">Usuario</span>
+                            <span class="text-gray-500 text-xs truncate" id="user-role">admin</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <!-- Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 relative z-10">
+                <!-- Page Header -->
+                <div class="flex flex-wrap items-center justify-between mb-8 gap-4 border-b border-[#282e39] pb-6">
+                    <div>
+                        <h1 class="text-2xl font-bold text-white">Fidelización</h1>
+                        <p class="text-[#9da6b9] text-sm mt-1">Gestiona puntos, miembros y promociones</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="openEnrollModal()">
+                        <i class="fas fa-user-plus mr-2"></i> Inscribir Cliente
+                    </button>
+                </div>
+
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm font-medium mb-1">Miembros Activos</p>
+                            <h3 class="text-3xl font-bold text-white" id="total-members">-</h3>
+                        </div>
+                        <div
+                            class="w-12 h-12 rounded-full bg-[rgba(255,101,43,0.1)] flex items-center justify-center text-[var(--brand-orange)]">
+                            <i class="fas fa-users text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm font-medium mb-1">Puntos Totales</p>
+                            <h3 class="text-3xl font-bold text-white" id="total-points">-</h3>
+                        </div>
+                        <div
+                            class="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i class="fas fa-star text-xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-[#1a1a1a] p-6 rounded-xl border border-[#2a2a2a] flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400 text-sm font-medium mb-1">Promos Activas</p>
+                            <h3 class="text-3xl font-bold text-white" id="active-promos">-</h3>
+                        </div>
+                        <div
+                            class="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500">
+                            <i class="fas fa-percentage text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="manager-panel">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" data-tab="members">
+                            <i class="fas fa-users mr-2"></i> Miembros
+                        </button>
+                        <button class="tab-btn" data-tab="earn">
+                            <i class="fas fa-qrcode mr-2"></i> Sumar Puntos
+                        </button>
+                        <button class="tab-btn" data-tab="promos">
+                            <i class="fas fa-tags mr-2"></i> Promociones
+                        </button>
+                    </div>
+
+                    <!-- Members Tab -->
+                    <div id="tab-members" class="tab-content active">
+                        <!-- Search -->
+                        <div class="flex gap-4 mb-6">
+                            <input type="text" id="search-members" class="form-input flex-1"
+                                placeholder="Buscar por nombre, teléfono, email o código...">
+                            <button class="btn btn-ghost" onclick="searchMembers()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+
+                        <!-- Members Grid -->
+                        <div id="members-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Populated by JS -->
+                        </div>
+
+                        <div id="members-empty" class="empty-state hidden">
+                            <i class="fas fa-user-friends"></i>
+                            <p>No hay miembros inscritos aún.<br>Inscribe clientes para comenzar.</p>
+                        </div>
+                    </div>
+
+                    <!-- Earn Points Tab -->
+                    <div id="tab-earn" class="tab-content">
+                        <div class="qr-section">
+                            <h3 class="text-lg font-bold mb-4"><i class="fas fa-qrcode mr-2"></i> Sumar Puntos con QR
+                            </h3>
+                            <p class="text-sm text-[var(--text-secondary)] mb-6">
+                                Pega el código QR que el cliente te muestra en su tarjeta digital.
+                            </p>
+
+                            <div class="form-group">
+                                <label class="form-label">Código QR</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="qr-payload" class="form-input flex-1"
+                                        placeholder="VERSAQR.v1...." autocomplete="off">
+                                    <button class="btn btn-ghost" onclick="startQrScanner()"
+                                        title="Escanear con cámara">
+                                        <i class="fas fa-camera"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group">
+                                    <label class="form-label">Puntos a sumar</label>
+                                    <input type="number" id="earn-points" class="form-input" value="10" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Motivo</label>
+                                    <input list="motivo-suggestions" id="earn-motivo" class="form-input"
+                                        placeholder="Escribe o selecciona..." value="Alquiler">
+                                    <datalist id="motivo-suggestions">
+                                        <option value="Alquiler">
+                                        <option value="Taller">
+                                        <option value="Compra">
+                                        <option value="Bonificación">
+                                    </datalist>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary w-full mt-4" onclick="earnPoints()">
+                                <i class="fas fa-plus-circle mr-2"></i> Sumar Puntos
+                            </button>
+
+                            <div id="earn-result" class="mt-4 p-4 rounded-lg hidden"></div>
+                        </div>
+                    </div>
+
+                    <!-- Promos Tab -->
+                    <div id="tab-promos" class="tab-content">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold">Promociones</h3>
+                            <button class="btn btn-primary" onclick="openPromoModal()">
+                                <i class="fas fa-plus mr-2"></i> Nueva Promo
+                            </button>
+                        </div>
+
+                        <div id="promos-list">
+                            <!-- Populated by JS -->
+                        </div>
+
+                        <div id="promos-empty" class="empty-state hidden">
+                            <i class="fas fa-tags"></i>
+                            <p>No hay promociones creadas.<br>Crea una para atraer clientes.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- QR Scanner Modal -->
+    <div id="qr-scanner-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Escanear Código QR</h3>
+                <button class="modal-close" onclick="closeQrScanner()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="reader" style="width: 100%;"></div>
+                <p class="text-center text-sm text-[var(--text-secondary)] mt-4">
+                    Apunta la cámara al código QR del cliente
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Detail Modal -->
+    <div id="member-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-member-name">Detalle de Miembro</h3>
+                <button class="modal-close" onclick="closeMemberModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <p class="text-sm text-[var(--text-secondary)]" id="modal-member-code">#-</p>
+                        <p class="text-sm mt-1"><i class="fas fa-phone text-[var(--brand-orange)] mr-2"></i><span
+                                id="modal-member-phone">-</span></p>
+                        <p class="text-sm mt-1"><i class="fas fa-envelope text-[var(--brand-orange)] mr-2"></i><span
+                                id="modal-member-email">-</span></p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-4xl font-bold text-[var(--brand-orange)]" id="modal-member-balance">0</div>
+                        <div class="text-sm text-[var(--text-secondary)]">puntos</div>
+                    </div>
+                </div>
+
+                <!-- Link Section -->
+                <div class="mb-6">
+                    <h4 class="text-sm font-semibold mb-2">Link de Tarjeta</h4>
+                    <div class="link-display">
+                        <input type="text" id="modal-link-url" readonly placeholder="No generado">
+                        <button class="btn btn-ghost btn-icon" onclick="copyLink()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                        <button class="btn btn-ghost btn-icon" onclick="resetLink()">
+                            <i class="fas fa-sync"></i>
+                        </button>
+                    </div>
+                    <button class="btn btn-ghost w-full mt-2" id="btn-whatsapp" onclick="sendWhatsApp()">
+                        <i class="fab fa-whatsapp mr-2"></i> Enviar por WhatsApp
+                    </button>
+                </div>
+
+                <!-- History -->
+                <h4 class="text-sm font-semibold mb-2">Historial de Movimientos</h4>
+                <div class="max-h-64 overflow-y-auto">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Tipo</th>
+                                <th>Puntos</th>
+                                <th>Motivo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-history">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeMemberModal()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enroll Modal -->
+    <div id="enroll-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Inscribir Cliente</h3>
+                <button class="modal-close" onclick="closeEnrollModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Buscar cliente existente</label>
+                    <input type="text" id="enroll-search" class="form-input" placeholder="Nombre, teléfono o email..."
+                        oninput="searchClients()">
+                </div>
+                <div id="enroll-results" class="max-h-64 overflow-y-auto">
+                    <!-- Populated by JS -->
+                </div>
+                <div id="enroll-result" class="mt-4 p-4 rounded-lg hidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeEnrollModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promo Modal -->
+    <div id="promo-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="promo-modal-title">Nueva Promoción</h3>
+                <button class="modal-close" onclick="closePromoModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="promo-id">
+                <div class="form-group">
+                    <label class="form-label">Título *</label>
+                    <input type="text" id="promo-titulo" class="form-input" placeholder="Ej: 20% en servicios">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea id="promo-descripcion" class="form-input" rows="2"
+                        placeholder="Condiciones o detalles..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label">Inicio *</label>
+                        <input type="datetime-local" id="promo-starts" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fin *</label>
+                        <input type="datetime-local" id="promo-ends" class="form-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" id="promo-activo" checked>
+                        <span class="text-sm">Promo activa</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closePromoModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="savePromo()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let members = [];
+        let promos = [];
+        let currentMember = null;
+        const API_BASE = '';
+
+        // Tab Switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Sidebar Toggle
+        function toggleSubmenu(id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('-submenu', '-arrow'));
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.classList.add('rotate-180');
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.classList.remove('rotate-180');
+            }
+        }
+
+        // API Helpers
+
+        async function handleResponse(res) {
+            if (res.status === 401) {
+                console.warn('Unauthorized (401). Redirecting to login...');
+                // Opcional: limpiar token
+                // localStorage.removeItem('token');
+                window.location.href = '/index.html';
+                return { ok: false, error: 'Sesión expirada' };
+            }
+            try {
+                return await res.json();
+            } catch (e) {
+                console.error('Error parsing JSON:', e);
+                return { ok: false, error: 'Error de conexión' };
+            }
+        }
+
+        // Clipboard Helper
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Toast o feedback visual simple
+                alert('Código copiado: ' + text);
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+            });
+        }
+
+        // Helper para obtener token (Soporta versa_session_v1 y legacy)
+        function getToken() {
+            const sessionStr = localStorage.getItem('versa_session_v1');
+            if (sessionStr) {
+                try {
+                    const session = JSON.parse(sessionStr);
+                    if (session.token) return session.token;
+                } catch (e) {
+                    // ignore
+                }
+            }
+            return localStorage.getItem('token');
+        }
+
+        async function apiGet(url) {
+            const token = getToken();
+            try {
+                const res = await fetch(API_BASE + url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                return handleResponse(res);
+            } catch (e) {
+                console.error('API Error:', e);
+                return { ok: false, error: 'Error de red' };
+            }
+        }
+
+        async function apiPost(url, data) {
+            const token = getToken();
+            try {
+                const res = await fetch(API_BASE + url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                return handleResponse(res);
+            } catch (e) {
+                console.error('API Error:', e);
+                return { ok: false, error: 'Error de red' };
+            }
+        }
+
+        async function apiPatch(url, data) {
+            const token = getToken();
+            try {
+                const res = await fetch(API_BASE + url, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+                return handleResponse(res);
+            } catch (e) {
+                console.error('API Error:', e);
+                return { ok: false, error: 'Error de red' };
+            }
+        }
+
+        // QR Scanner Logic
+        let html5QrcodeScanner = null;
+
+        function startQrScanner() {
+            document.getElementById('qr-scanner-modal').classList.add('show');
+
+            // Esperar a que el modal sea visible
+            setTimeout(() => {
+                if (html5QrcodeScanner) return; // Ya inicializado
+
+                html5QrcodeScanner = new Html5Qrcode("reader");
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+                html5QrcodeScanner.start(
+                    { facingMode: "environment" },
+                    config,
+                    (decodedText, decodedResult) => {
+                        // Success
+                        console.log("QR Code detected: ", decodedText);
+                        document.getElementById('qr-payload').value = decodedText;
+
+                        // Efecto visual de éxito
+                        const reader = document.getElementById('reader');
+                        reader.style.border = "4px solid #4ade80";
+
+                        setTimeout(() => {
+                            closeQrScanner();
+                            // Restaurar estilo
+                            reader.style.border = "none";
+                        }, 500);
+                    },
+                    (errorMessage) => {
+                        // ignore parsing errors
+                    }
+                ).catch(err => {
+                    console.error("Error starting scanner", err);
+                    alert("No se pudo iniciar la cámara. Asegúrate de dar permisos.");
+                    closeQrScanner();
+                });
+            }, 100);
+        }
+
+        function closeQrScanner() {
+            document.getElementById('qr-scanner-modal').classList.remove('show');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = null;
+                }).catch(err => {
+                    console.error("Error stopping scanner", err);
+                });
+            }
+        }
+
+        // Load Members
+        async function loadMembers() {
+            const result = await apiGet('/api/admin/fidelizacion/members');
+            if (result.ok) {
+                members = result.data;
+                renderMembers();
+                updateStats();
+            }
+        }
+
+        async function searchMembers() {
+            const query = document.getElementById('search-members').value;
+            const url = query ? `/api/admin/fidelizacion/members?search=${encodeURIComponent(query)}` : '/api/admin/fidelizacion/members';
+            const result = await apiGet(url);
+            if (result.ok) {
+                members = result.data;
+                renderMembers();
+            }
+        }
+
+        function renderMembers() {
+            const grid = document.getElementById('members-grid');
+            const empty = document.getElementById('members-empty');
+
+            if (members.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            grid.innerHTML = members.map(m => `
+                <div class="member-card" onclick="openMemberModal(${m.id})">
+                    <div class="member-card-header">
+                        <div>
+                            <div class="member-name">${m.nombre || 'Sin nombre'}</div>
+                            <div class="member-code flex items-center gap-2">
+                                #${m.member_code}
+                                <button onclick="event.stopPropagation(); copyToClipboard('${m.member_code}')" class="text-xs text-[var(--text-secondary)] hover:text-white" title="Copiar código">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="member-balance">
+                            <div class="member-balance-value">${m.balance || 0}</div>
+                            <div class="member-balance-label">puntos</div>
+                        </div>
+                    </div>
+                    <div class="member-info">
+                        ${m.telefono ? `<span><i class="fas fa-phone"></i> ${m.telefono}</span>` : ''}
+                        ${m.email ? `<span><i class="fas fa-envelope"></i> ${m.email}</span>` : ''}
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge ${m.estado === 'active' ? 'badge-active' : 'badge-blocked'}">${m.estado}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Member Modal
+        async function openMemberModal(id) {
+            const result = await apiGet(`/api/admin/fidelizacion/members/${id}`);
+            if (!result.ok) {
+                alert('Error al cargar miembro');
+                return;
+            }
+
+            currentMember = result.data;
+            document.getElementById('modal-member-name').textContent = currentMember.nombre || 'Sin nombre';
+            document.getElementById('modal-member-code').textContent = '#' + currentMember.member_code;
+            document.getElementById('modal-member-phone').textContent = currentMember.telefono || '-';
+            document.getElementById('modal-member-email').textContent = currentMember.email || '-';
+            document.getElementById('modal-member-balance').textContent = currentMember.balance || 0;
+
+            // History
+            const historyTbody = document.getElementById('modal-history');
+            if (currentMember.historial && currentMember.historial.length > 0) {
+                historyTbody.innerHTML = currentMember.historial.map(h => `
+                    <tr>
+                        <td>${new Date(h.created_at).toLocaleDateString()}</td>
+                        <td>${h.tipo}</td>
+                        <td class="${h.puntos >= 0 ? 'points-positive' : 'points-negative'}">
+                            ${h.puntos >= 0 ? '+' : ''}${h.puntos}
+                        </td>
+                        <td>${h.motivo}</td>
+                    </tr>
+                `).join('');
+            } else {
+                historyTbody.innerHTML = '<tr><td colspan="4" class="text-center text-[var(--text-secondary)]">Sin movimientos</td></tr>';
+            }
+
+            // Link URL (placeholder - will need to regenerate)
+            document.getElementById('modal-link-url').value = '';
+
+            document.getElementById('member-modal').classList.add('show');
+        }
+
+        function closeMemberModal() {
+            document.getElementById('member-modal').classList.remove('show');
+            currentMember = null;
+        }
+
+        async function resetLink() {
+            if (!currentMember) return;
+            const result = await apiPost(`/api/admin/fidelizacion/members/${currentMember.id}/link/reset`, {});
+            if (result.ok) {
+                document.getElementById('modal-link-url').value = result.data.public_url;
+                alert('Link regenerado. ¡Cópialo ahora, no se mostrará de nuevo!');
+            } else {
+                alert('Error al regenerar link');
+            }
+        }
+
+        function copyLink() {
+            const input = document.getElementById('modal-link-url');
+            if (!input.value) {
+                alert('No hay link generado. Haz clic en regenerar primero.');
+                return;
+            }
+            input.select();
+            document.execCommand('copy');
+            alert('Link copiado al portapapeles');
+        }
+
+        function sendWhatsApp() {
+            if (!currentMember || !currentMember.telefono) {
+                alert('El cliente no tiene teléfono registrado');
+                return;
+            }
+            const link = document.getElementById('modal-link-url').value;
+            const message = encodeURIComponent(
+                `Hola 👋 Aquí tienes tu Tarjeta VERSA (puntos y promos). Ábrela y guárdala en tu móvil:\n${link}\niPhone: Safari > Compartir > Añadir a pantalla de inicio.`
+            );
+            const phone = currentMember.telefono.replace(/\D/g, '');
+            window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
+        }
+
+        // Enroll Modal
+        function openEnrollModal() {
+            document.getElementById('enroll-modal').classList.add('show');
+            document.getElementById('enroll-search').value = '';
+            document.getElementById('enroll-results').innerHTML = '';
+            document.getElementById('enroll-result').classList.add('hidden');
+        }
+
+        function closeEnrollModal() {
+            document.getElementById('enroll-modal').classList.remove('show');
+        }
+
+        async function searchClients() {
+            const query = document.getElementById('enroll-search').value;
+            if (query.length < 2) {
+                document.getElementById('enroll-results').innerHTML = '';
+                return;
+            }
+
+            const result = await apiGet(`/api/clientes/search?q=${encodeURIComponent(query)}`);
+            const clients = Array.isArray(result) ? result : (result.data || []);
+
+            document.getElementById('enroll-results').innerHTML = clients.map(c => `
+                <div class="member-card" onclick="enrollClient(${c.id}, '${(c.nombre || '').replace(/'/g, "\\'")}')">
+                    <div class="member-name">${c.nombre || 'Sin nombre'}</div>
+                    <div class="text-sm text-[var(--text-secondary)]">
+                        ${c.telefono || ''} ${c.email ? '• ' + c.email : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function enrollClient(idCliente, nombre) {
+            const result = await apiPost('/api/admin/fidelizacion/members/enroll', { id_cliente: idCliente });
+            const resultDiv = document.getElementById('enroll-result');
+
+            if (result.ok) {
+                resultDiv.className = 'mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/30';
+                resultDiv.innerHTML = `
+                    <p class="text-green-400 font-semibold mb-2">✓ ${nombre} inscrito correctamente</p>
+                    <p class="text-sm text-[var(--text-secondary)] mb-2">Link de tarjeta (cópialo ahora):</p>
+                    <div class="link-display">
+                        <input type="text" value="${result.data.public_url}" readonly onclick="this.select()">
+                    </div>
+                `;
+                resultDiv.classList.remove('hidden');
+                loadMembers();
+            } else {
+                resultDiv.className = 'mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30';
+                resultDiv.innerHTML = `<p class="text-red-400">${result.error || 'Error al inscribir cliente'}</p>`;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        // Earn Points
+        async function earnPoints() {
+            const qrPayload = document.getElementById('qr-payload').value.trim();
+            const puntos = parseInt(document.getElementById('earn-points').value);
+            const motivo = document.getElementById('earn-motivo').value;
+            const resultDiv = document.getElementById('earn-result');
+
+            if (!qrPayload || !puntos) {
+                resultDiv.className = 'mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30';
+                resultDiv.innerHTML = '<p class="text-red-400">Completa todos los campos</p>';
+                resultDiv.classList.remove('hidden');
+                return;
+            }
+
+            const result = await apiPost('/api/admin/fidelizacion/earn', { qr_payload: qrPayload, puntos, motivo });
+
+            if (result.ok) {
+                resultDiv.className = 'mt-4 p-4 rounded-lg bg-green-500/10 border border-green-500/30';
+                resultDiv.innerHTML = `
+                    <p class="text-green-400 font-semibold">✓ ${result.data.puntos_sumados} puntos sumados</p>
+                    <p class="text-sm text-[var(--text-secondary)]">Nuevo balance: ${result.data.nuevo_balance} puntos</p>
+                `;
+                document.getElementById('qr-payload').value = '';
+            } else {
+                resultDiv.className = 'mt-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30';
+                resultDiv.innerHTML = `<p class="text-red-400">${result.error || 'Error al sumar puntos'}</p>`;
+            }
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Promos
+        async function loadPromos() {
+            const result = await apiGet('/api/admin/fidelizacion/promos?includeInactive=true');
+            if (result.ok) {
+                promos = result.data;
+                renderPromos();
+                updateStats();
+            }
+        }
+
+        function renderPromos() {
+            const list = document.getElementById('promos-list');
+            const empty = document.getElementById('promos-empty');
+
+            if (promos.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            list.innerHTML = promos.map(p => `
+                <div class="promo-card">
+                    <div class="promo-info">
+                        <h4>${p.titulo}</h4>
+                        <p>${p.descripcion || ''}</p>
+                        <div class="promo-dates">
+                            ${new Date(p.starts_at).toLocaleDateString()} - ${new Date(p.ends_at).toLocaleDateString()}
+                        </div>
+                    </div>
+                    <div class="promo-status">
+                        <span class="badge ${p.activo ? 'badge-active' : 'badge-blocked'}">${p.activo ? 'Activa' : 'Inactiva'}</span>
+                        <button class="btn btn-ghost btn-icon mt-2" onclick="editPromo(${p.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openPromoModal() {
+            document.getElementById('promo-id').value = '';
+            document.getElementById('promo-modal-title').textContent = 'Nueva Promoción';
+            document.getElementById('promo-titulo').value = '';
+            document.getElementById('promo-descripcion').value = '';
+            document.getElementById('promo-starts').value = '';
+            document.getElementById('promo-ends').value = '';
+            document.getElementById('promo-activo').checked = true;
+            document.getElementById('promo-modal').classList.add('show');
+        }
+
+        function editPromo(id) {
+            const promo = promos.find(p => p.id === id);
+            if (!promo) return;
+
+            document.getElementById('promo-id').value = promo.id;
+            document.getElementById('promo-modal-title').textContent = 'Editar Promoción';
+            document.getElementById('promo-titulo').value = promo.titulo;
+            document.getElementById('promo-descripcion').value = promo.descripcion || '';
+            document.getElementById('promo-starts').value = promo.starts_at.slice(0, 16);
+            document.getElementById('promo-ends').value = promo.ends_at.slice(0, 16);
+            document.getElementById('promo-activo').checked = promo.activo;
+            document.getElementById('promo-modal').classList.add('show');
+        }
+
+        function closePromoModal() {
+            document.getElementById('promo-modal').classList.remove('show');
+        }
+
+        async function savePromo() {
+            const id = document.getElementById('promo-id').value;
+            const data = {
+                titulo: document.getElementById('promo-titulo').value,
+                descripcion: document.getElementById('promo-descripcion').value,
+                starts_at: document.getElementById('promo-starts').value,
+                ends_at: document.getElementById('promo-ends').value,
+                activo: document.getElementById('promo-activo').checked
+            };
+
+            if (!data.titulo || !data.starts_at || !data.ends_at) {
+                alert('Completa los campos obligatorios');
+                return;
+            }
+
+            let result;
+            if (id) {
+                result = await apiPatch(`/api/admin/fidelizacion/promos/${id}`, data);
+            } else {
+                result = await apiPost('/api/admin/fidelizacion/promos', data);
+            }
+
+            if (result.ok) {
+                closePromoModal();
+                loadPromos();
+            } else {
+                alert(result.error || 'Error al guardar promo');
+            }
+        }
+
+        // Stats
+        function updateStats() {
+            document.getElementById('total-members').textContent = members.length;
+
+            const totalPoints = members.reduce((sum, m) => sum + (m.balance || 0), 0);
+            document.getElementById('total-points').textContent = totalPoints.toLocaleString();
+
+            const activePromos = promos.filter(p => {
+                const now = new Date();
+                return p.activo && new Date(p.starts_at) <= now && new Date(p.ends_at) >= now;
+            }).length;
+            document.getElementById('active-promos').textContent = activePromos;
+        }
+
+        // Search on Enter
+        document.getElementById('search-members')?.addEventListener('keypress', e => {
+            if (e.key === 'Enter') searchMembers();
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadMembers();
+            loadPromos();
+        });
+    </script>
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

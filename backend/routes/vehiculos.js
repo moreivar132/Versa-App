@@ -7,6 +7,7 @@ const verifyJWT = require('../middleware/auth');
 router.get('/', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     const isSuperAdmin = req.user.is_super_admin;
+    const { idSucursal } = req.query;
 
     try {
         let query = `
@@ -14,13 +15,23 @@ router.get('/', verifyJWT, async (req, res) => {
             FROM vehiculo v
             LEFT JOIN clientefinal c ON v.id_cliente = c.id
             LEFT JOIN sucursal s ON v.id_sucursal = s.id
+            WHERE 1=1
         `;
         let params = [];
+        let paramIndex = 1;
 
         if (!isSuperAdmin) {
             // Filtrar por tenant a través de la sucursal
-            query += ` WHERE s.id_tenant = $1`;
-            params = [id_tenant];
+            query += ` AND s.id_tenant = $${paramIndex}`;
+            params.push(id_tenant);
+            paramIndex++;
+        }
+
+        // Filtro por sucursal específica
+        if (idSucursal) {
+            query += ` AND v.id_sucursal = $${paramIndex}`;
+            params.push(idSucursal);
+            paramIndex++;
         }
 
         query += ` ORDER BY v.created_at DESC`;
@@ -129,6 +140,61 @@ router.put('/:id', verifyJWT, async (req, res) => {
     } catch (error) {
         console.error('Error al actualizar vehículo:', error);
         res.status(500).json({ error: 'Error al actualizar vehículo' });
+    }
+});
+
+// GET /api/vehiculos/search - Buscar vehículos
+router.get('/search', verifyJWT, async (req, res) => {
+    const { q, id_cliente } = req.query;
+    const id_tenant = req.user.id_tenant;
+    const isSuperAdmin = req.user.is_super_admin;
+
+    // Si hay id_cliente, q es opcional (puede listar todos los del cliente)
+    // Si no hay id_cliente, q es obligatorio
+    if (!q && !id_cliente) {
+        return res.status(400).json({ error: 'Parámetro de búsqueda requerido (q) o ID de cliente' });
+    }
+
+
+
+    try {
+        let query = `
+            SELECT v.*, c.nombre as nombre_cliente 
+            FROM vehiculo v
+            LEFT JOIN clientefinal c ON v.id_cliente = c.id
+            LEFT JOIN sucursal s ON v.id_sucursal = s.id
+            WHERE 1=1
+        `;
+
+        const params = [];
+        let paramIndex = 1;
+
+        if (!isSuperAdmin) {
+            query += ` AND s.id_tenant = $${paramIndex}`;
+            params.push(id_tenant);
+            paramIndex++;
+        }
+
+        if (id_cliente) {
+            query += ` AND v.id_cliente = $${paramIndex}`;
+            params.push(id_cliente);
+            paramIndex++;
+        }
+
+        if (q) {
+            const searchTerm = `%${q}%`;
+            query += ` AND (v.matricula ILIKE $${paramIndex} OR v.marca ILIKE $${paramIndex} OR v.modelo ILIKE $${paramIndex})`;
+            params.push(searchTerm);
+            paramIndex++;
+        }
+
+        query += ` LIMIT 20`;
+
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error en búsqueda de vehículos:', error);
+        res.status(500).json({ error: 'Error al buscar vehículos' });
     }
 });
 

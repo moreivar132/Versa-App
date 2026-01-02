@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Citas - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <!-- FontAwesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Material Symbols (Iconos) -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 24px;
+        }
+
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+
+        /* Estilos específicos para las tarjetas de citas */
+        .card {
+            background-color: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 12px;
+            padding: 25px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="flex h-screen w-full">
+        <!-- SideNavBar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <!-- User Profile / Logo Area -->
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge"
+                            style="padding: 8px; border-radius: 12px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="logo-img"
+                                style="height: 24px; width: auto;">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium leading-normal" style="font-size: 15px;">
+                                Goversa</h1>
+                            <p class="text-[#9da6b9] text-sm font-normal leading-normal" style="font-size: 12px;">
+                                Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inicio</p>
+                        </a>
+
+                        <!-- Taller Dropdown (Active) -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Taller</p>
+                            </a>
+                            <div id="taller-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-white font-semibold text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Editar
+                                    órdenes</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Presupuestos</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Vehículos</a>
+                                <a href="manager-taller-chat.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Chat Clientes</a>
+                            </div>
+                        </div>
+
+                        <!-- Tienda Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Tienda</p>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Historial Compras</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Ventas</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Productos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-caja.html">
+                            <span class="icon-container"><i class="fas fa-cash-register"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Caja</p>
+                        </a>
+
+                        <!-- Cuentas Dropdown -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Cuentas</p>
+                            </a>
+                            <div id="cuentas-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                                <a href="#" class="text-gray-500 hover:text-white text-sm py-1 block">Gastos</a>
+                            </div>
+                        </div>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inventario.html">
+                            <span class="icon-container"><i class="fas fa-boxes"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Inventario</p>
+                        </a>
+
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-trabajadores.html">
+                            <span class="icon-container"><i class="fas fa-users-cog"></i></span>
+                            <p class="text-sm font-medium leading-normal sidebar-text">Trabajadores</p>
+                        </a>
+
+                        <!-- Contactos -->
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('contactos-submenu')">
+                                <span class="icon-container"><i class="fas fa-address-book"></i></span>
+                                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Contactos</p>
+                            </a>
+                            <div id="contactos-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-clientes.html"
+                                    class="text-gray-500 hover:text-white text-sm py-1 block">Clientes</a>
+                                <a href="manager-taller-proveedores.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Proveedores</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="flex flex-col gap-1 border-t border-[var(--surface-border)] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            IM
+                        </div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span class="text-white text-sm font-medium truncate">Iván Moreno</span>
+                            <span class="text-gray-500 text-xs truncate">admin</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" data-logout>
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium leading-normal sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <!-- Top Mobile Header -->
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 relative z-10">
+                <div class="manager-panel">
+
+                    <!-- Header -->
+                    <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Citas y Taller</h1>
+                            <p class="text-[#a0a0a0] text-sm">Vista general de operaciones del día.</p>
+                        </div>
+
+                        <div class="flex w-full items-center gap-4 sm:w-auto">
+                            <!-- SearchBar -->
+                            <label class="flex-1 sm:w-64">
+                                <div class="animated-search-form">
+                                    <input type="search" id="search-input" class="search-input"
+                                        placeholder="Buscar matrícula, cliente..." required>
+                                    <span class="caret"></span>
+                                    <i class="fas fa-calendar-check search-icon"></i>
+                                </div>
+                            </label>
+
+                            <!-- Notificaciones -->
+                            <button id="notification-btn"
+                                class="relative rounded-lg p-2 text-[#a0a0a0] hover:bg-[#1a1a1a] hover:text-white transition-colors">
+                                <span class="material-symbols-outlined">notifications</span>
+                                <span id="notification-badge"
+                                    class="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--brand-orange)] hidden"></span>
+                            </button>
+
+                            <!-- Botón Acción -->
+                            <button onclick="openModal()"
+                                class="flex h-10 items-center justify-center gap-2 rounded-lg bg-[var(--brand-orange)] px-4 text-sm font-bold text-white shadow-lg shadow-orange-900/20 hover:bg-orange-600 transition-all">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">add</span>
+                                <span class="hidden sm:inline">Nueva Cita</span>
+                            </button>
+                        </div>
+                    </header>
+
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- Citas Hoy -->
+                        <div
+                            class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[#3a3a3a] transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[#a0a0a0] text-sm font-medium">Citas para Hoy</span>
+                                <span class="material-symbols-outlined text-[var(--brand-orange)]">calendar_today</span>
+                            </div>
+                            <div class="flex items-end gap-3">
+                                <h2 id="stats-citas-hoy" class="text-3xl font-bold text-white">0</h2>
+                                <span class="text-green-500 text-xs font-medium mb-1"><span
+                                        class="material-symbols-outlined text-[10px] align-middle">trending_up</span> +2
+                                    vs ayer</span>
+                            </div>
+                        </div>
+
+                        <!-- En Taller -->
+                        <div
+                            class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[#3a3a3a] transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[#a0a0a0] text-sm font-medium">En Taller Ahora</span>
+                                <span class="material-symbols-outlined text-blue-500">build</span>
+                            </div>
+                            <div class="flex items-end gap-3">
+                                <h2 id="stats-en-taller" class="text-3xl font-bold text-white">0</h2>
+                            </div>
+                            <p class="text-xs text-[#a0a0a0] mt-2">Vehículos en proceso</p>
+                        </div>
+
+                        <!-- Facturación -->
+                        <div
+                            class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[#3a3a3a] transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[#a0a0a0] text-sm font-medium">Facturación (Est.)</span>
+                                <span class="material-symbols-outlined text-green-500">payments</span>
+                            </div>
+                            <div class="flex items-end gap-3">
+                                <h2 id="stats-facturacion" class="text-3xl font-bold text-white">0€</h2>
+                            </div>
+                            <p class="text-xs text-[#a0a0a0] mt-2">Pendiente de cobro: --</p>
+                        </div>
+
+                        <!-- Solicitudes Web -->
+                        <div
+                            class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 hover:border-[#3a3a3a] transition-colors">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[#a0a0a0] text-sm font-medium">Solicitudes Web</span>
+                                <span class="material-symbols-outlined text-purple-500">public</span>
+                            </div>
+                            <div class="flex items-end gap-3">
+                                <h2 id="stats-solicitudes" class="text-3xl font-bold text-white">0</h2>
+                            </div>
+                            <p class="text-xs text-[var(--brand-orange)] mt-2 font-medium">Requieren confirmación</p>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Area: Tablas y Gráficas -->
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+
+                        <!-- Appointments List (Tabla Grande) -->
+                        <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] lg:col-span-2 flex flex-col">
+                            <div
+                                class="border-b border-[#2a2a2a] p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div class="flex items-center gap-4">
+                                    <h3 class="text-lg font-bold text-white">Próximas Citas</h3>
+                                    <button
+                                        class="text-xs text-[var(--brand-orange)] font-semibold hover:text-white transition-colors"
+                                        onclick="loadCitas()">Actualizar</button>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <!-- Search -->
+                                    <div class="animated-search-form" style="width: 200px;">
+                                        <input type="search" id="table-search-input" class="search-input"
+                                            placeholder="Buscar..." required>
+                                        <span class="caret"></span>
+                                        <i class="fas fa-search search-icon"></i>
+                                    </div>
+                                    <!-- Status Filter -->
+                                    <div
+                                        class="flex items-center gap-2 bg-[#2a2a2a] rounded-lg p-1 border border-[#3a3a3a]">
+                                        <span
+                                            class="material-symbols-outlined text-[#a0a0a0] text-sm ml-2">filter_list</span>
+                                        <select id="status-filter"
+                                            class="bg-transparent border-none text-sm text-white focus:outline-none w-28 cursor-pointer outline-none">
+                                            <option value="" class="bg-[#1a1a1a]">Todos</option>
+                                            <option value="pendiente" class="bg-[#1a1a1a]">Pendiente</option>
+                                            <option value="en proceso" class="bg-[#1a1a1a]">En Proceso</option>
+                                            <option value="completado" class="bg-[#1a1a1a]">Completado</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-[#2a2a2a]">
+                                    <thead class="bg-black/20">
+                                        <tr>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Hora</th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Cliente / Vehículo</th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Servicio / Sucursal</th>
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Estado</th>
+                                            <th
+                                                class="px-6 py-3 text-center text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Pago</th>
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                                                Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-[#2a2a2a] bg-transparent" id="citas-tbody">
+                                        <!-- Filas dinámicas aquí -->
+                                        <tr>
+                                            <td colspan="5" class="px-6 py-4 text-center text-[#a0a0a0]">Cargando
+                                                citas...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Chart & Alerts -->
+                        <div class="flex flex-col gap-6">
+
+                            <!-- Performance Chart (Dinámico) -->
+                            <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 flex flex-col h-full">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-bold text-white">Ocupación Semanal</h3>
+                                    <div class="flex items-center gap-2 bg-[#2a2a2a] rounded-lg p-1">
+                                        <button onclick="changeWeek(-1)"
+                                            class="p-1 hover:text-white text-[#a0a0a0] transition-colors"><span
+                                                class="material-symbols-outlined text-sm">chevron_left</span></button>
+                                        <span id="current-week-label" class="text-xs font-medium text-white px-2">Semana
+                                            Actual</span>
+                                        <button onclick="changeWeek(1)"
+                                            class="p-1 hover:text-white text-[#a0a0a0] transition-colors"><span
+                                                class="material-symbols-outlined text-sm">chevron_right</span></button>
+                                    </div>
+                                </div>
+
+                                <div id="occupancy-chart"
+                                    class="flex h-full items-end justify-between gap-2 mt-auto min-h-[150px] px-2">
+                                    <!-- Barras dinámicas se insertarán aquí -->
+                                    <div class="w-full text-center text-[#a0a0a0] text-xs">Cargando...</div>
+                                </div>
+
+                                <!-- Legend -->
+                                <div class="flex justify-center gap-4 mt-4 pt-4 border-t border-[#2a2a2a]">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                        <span class="text-xs text-[#a0a0a0]">Coche</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-[var(--brand-orange)]"></span>
+                                        <span class="text-xs text-[#a0a0a0]">Moto</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                        <span class="text-xs text-[#a0a0a0]">Bici</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Alertas Rápidas -->
+                            <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5">
+                                <h3 class="mb-4 text-sm font-bold text-[#a0a0a0] uppercase tracking-wider">Alertas</h3>
+                                <div class="space-y-3">
+                                    <div class="flex gap-3 items-start">
+                                        <div class="bg-red-500/10 p-2 rounded-lg text-red-500">
+                                            <span class="material-symbols-outlined text-sm">warning</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-white font-medium">Stock bajo Aceite 10W40</p>
+                                            <p class="text-xs text-[#a0a0a0]">Quedan 2 unidades en Tesoro</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-3 items-start">
+                                        <div class="bg-blue-500/10 p-2 rounded-lg text-blue-500">
+                                            <span class="material-symbols-outlined text-sm">info</span>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-white font-medium">Nueva Solicitud Web</p>
+                                            <p class="text-xs text-[#a0a0a0]">Hace 10 min - Revisar</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Modal Cita -->
+    <div id="cita-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <h3 class="mb-4 text-xl font-bold text-white" id="modal-title">Nueva Cita</h3>
+            <form id="cita-form" class="space-y-4">
+                <input type="hidden" id="cita-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Cliente</label>
+                    <input type="text" id="cita-cliente"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Nombre del cliente" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Email</label>
+                    <input type="email" id="cita-email"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Email (para notificaciones)" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Sucursal</label>
+                    <select id="cita-sucursal"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Mecánico</label>
+                    <select id="cita-mecanico"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Cualquiera</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Fecha</label>
+                        <input type="date" id="cita-fecha"
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Hora</label>
+                        <input type="time" id="cita-hora"
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                            required>
+                    </div>
+                </div>
+
+                <!-- Availability Visualization -->
+                <div id="availability-container" class="hidden rounded-lg border border-[#2a2a2a] bg-[#111318] p-3">
+                    <h4 class="text-xs font-bold text-[#a0a0a0] mb-2">Disponibilidad del día</h4>
+                    <div id="availability-slots" class="flex flex-wrap gap-2 text-xs text-white">
+                        <!-- Slots will be injected here -->
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Vehículo</label>
+                    <select id="cita-vehiculo-tipo"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="coche">Coche</option>
+                        <option value="moto">Moto</option>
+                        <option value="bicicleta">Bicicleta</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Motivo / Servicio</label>
+                    <input type="text" id="cita-motivo"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Ej: Revisión General">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="rounded-lg px-4 py-2 text-sm font-medium text-[#a0a0a0] hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="rounded-lg bg-[var(--brand-orange)] px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 transition-colors">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cliente Detalles -->
+    <div id="client-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-white">Detalles del Cliente</h3>
+                <button onclick="closeClientModal()" class="text-[#a0a0a0] hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div id="client-details-content" class="space-y-4">
+                Servicio / Sucursal</th>
+                <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                    Estado</th>
+                <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#a0a0a0]">
+                    Acción</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-[#2a2a2a] bg-transparent" id="citas-tbody">
+                    <!-- Filas dinámicas aquí -->
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-[#a0a0a0]">Cargando
+                            citas...</td>
+                    </tr>
+                </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Column: Chart & Alerts -->
+        <div class="flex flex-col gap-6">
+
+            <!-- Performance Chart (Dinámico) -->
+            <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5 flex flex-col h-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-white">Ocupación Semanal</h3>
+                    <div class="flex items-center gap-2 bg-[#2a2a2a] rounded-lg p-1">
+                        <button onclick="changeWeek(-1)"
+                            class="p-1 hover:text-white text-[#a0a0a0] transition-colors"><span
+                                class="material-symbols-outlined text-sm">chevron_left</span></button>
+                        <span id="current-week-label" class="text-xs font-medium text-white px-2">Semana
+                            Actual</span>
+                        <button onclick="changeWeek(1)"
+                            class="p-1 hover:text-white text-[#a0a0a0] transition-colors"><span
+                                class="material-symbols-outlined text-sm">chevron_right</span></button>
+                    </div>
+                </div>
+
+                <div id="occupancy-chart"
+                    class="flex h-full items-end justify-between gap-2 mt-auto min-h-[150px] px-2">
+                    <!-- Barras dinámicas se insertarán aquí -->
+                    <div class="w-full text-center text-[#a0a0a0] text-xs">Cargando...</div>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex justify-center gap-4 mt-4 pt-4 border-t border-[#2a2a2a]">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                        <span class="text-xs text-[#a0a0a0]">Coche</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-[var(--brand-orange)]"></span>
+                        <span class="text-xs text-[#a0a0a0]">Moto</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                        <span class="text-xs text-[#a0a0a0]">Bici</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alertas Rápidas -->
+            <div class="rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-5">
+                <h3 class="mb-4 text-sm font-bold text-[#a0a0a0] uppercase tracking-wider">Alertas</h3>
+                <div class="space-y-3">
+                    <div class="flex gap-3 items-start">
+                        <div class="bg-red-500/10 p-2 rounded-lg text-red-500">
+                            <span class="material-symbols-outlined text-sm">warning</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-white font-medium">Stock bajo Aceite 10W40</p>
+                            <p class="text-xs text-[#a0a0a0]">Quedan 2 unidades en Tesoro</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 items-start">
+                        <div class="bg-blue-500/10 p-2 rounded-lg text-blue-500">
+                            <span class="material-symbols-outlined text-sm">info</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-white font-medium">Nueva Solicitud Web</p>
+                            <p class="text-xs text-[#a0a0a0]">Hace 10 min - Revisar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    </div>
+    </main>
+    </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Modal Cita -->
+    <div id="cita-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <h3 class="mb-4 text-xl font-bold text-white" id="modal-title">Nueva Cita</h3>
+            <form id="cita-form" class="space-y-4">
+                <input type="hidden" id="cita-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Cliente</label>
+                    <input type="text" id="cita-cliente"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Nombre del cliente" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Email</label>
+                    <input type="email" id="cita-email"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Email (para notificaciones)" required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Sucursal</label>
+                    <select id="cita-sucursal"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Mecánico</label>
+                    <select id="cita-mecanico"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="">Cualquiera</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Fecha</label>
+                        <input type="date" id="cita-fecha"
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Hora</label>
+                        <input type="time" id="cita-hora"
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                            required>
+                    </div>
+                </div>
+
+                <!-- Availability Visualization -->
+                <div id="availability-container" class="hidden rounded-lg border border-[#2a2a2a] bg-[#111318] p-3">
+                    <h4 class="text-xs font-bold text-[#a0a0a0] mb-2">Disponibilidad del día</h4>
+                    <div id="availability-slots" class="flex flex-wrap gap-2 text-xs text-white">
+                        <!-- Slots will be injected here -->
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Vehículo</label>
+                    <select id="cita-vehiculo-tipo"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="coche">Coche</option>
+                        <option value="moto">Moto</option>
+                        <option value="bicicleta">Bicicleta</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Motivo / Servicio</label>
+                    <input type="text" id="cita-motivo"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Ej: Revisión General">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="rounded-lg px-4 py-2 text-sm font-medium text-[#a0a0a0] hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="rounded-lg bg-[var(--brand-orange)] px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 transition-colors">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cliente Detalles -->
+    <div id="client-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-md rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <div class="flex justify-between items-start mb-4">
+                <h3 class="text-xl font-bold text-white">Detalles del Cliente</h3>
+                <button onclick="closeClientModal()" class="text-[#a0a0a0] hover:text-white">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div id="client-details-content" class="space-y-4">
+                <!-- Content injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pago Manual -->
+    <div id="payment-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-sm rounded-xl border border-[#2a2a2a] bg-[#1a1a1a] p-6 shadow-2xl">
+            <h3 class="mb-4 text-xl font-bold text-white">Registrar Pago</h3>
+            <p class="text-sm text-[#a0a0a0] mb-4">Registra un pago manual realizado en el taller.</p>
+
+            <form id="payment-form" class="space-y-4">
+                <input type="hidden" id="payment-cita-id">
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Método de Pago</label>
+                    <select id="payment-method"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none">
+                        <option value="CASH">Efectivo</option>
+                        <option value="CARD_TERMINAL">Tarjeta (Datáfono)</option>
+                        <option value="OTHER">Otro</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Importe (€)</label>
+                    <input type="number" step="0.01" id="payment-amount"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        required>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Notas (Opcional)</label>
+                    <textarea id="payment-note" rows="2"
+                        class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
+                        placeholder="Detalles adicionales..."></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closePaymentModal()"
+                        class="rounded-lg px-4 py-2 text-sm font-medium text-[#a0a0a0] hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
+                    <button type="submit"
+                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-bold text-white hover:bg-green-700 transition-colors">Confirmar
+                        Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="./manager-taller-citas-logic.js"></script>
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

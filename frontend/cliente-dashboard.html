@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mi Portal - Versa</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: #0b0d11;
+            min-height: 100vh;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0%;
+                opacity: 0;
+            }
+
+            5% {
+                opacity: 1;
+            }
+
+            95% {
+                opacity: 1;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+
+        .animate-scan {
+            animation: scan 2s linear infinite;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-[#0b0d11]/95 backdrop-blur-lg border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="/" class="flex items-center gap-2">
+                <img src="assets/versa-v-logo.png" alt="Versa" class="h-8">
+                <span class="text-white font-bold text-lg">Versa</span>
+            </a>
+
+            <nav class="flex items-center gap-6">
+                <a href="/marketplace-busqueda.html" class="text-gray-400 hover:text-white text-sm transition-colors">
+                    Marketplace
+                </a>
+                <div class="flex items-center gap-3">
+                    <!-- Notificaciones -->
+                    <div class="relative">
+                        <button id="notificationBtn" onclick="window.citasUI.toggleNotifications()"
+                            class="relative p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <span id="notificationBadge"
+                                class="absolute -top-1 -right-1 w-5 h-5 bg-[#ff5f00] text-white text-[10px] font-bold rounded-full flex items-center justify-center hidden">
+                                0
+                            </span>
+                        </button>
+                        <!-- Panel de notificaciones -->
+                        <div id="notificationPanel"
+                            class="absolute right-0 top-full mt-2 w-80 bg-[#111318] border border-[#282e39] rounded-xl shadow-2xl hidden z-50">
+                            <div class="flex items-center justify-between p-3 border-b border-[#282e39]">
+                                <h3 class="text-white font-semibold">Notificaciones</h3>
+                                <button onclick="window.citasUI.markAllAsRead()"
+                                    class="text-xs text-[#ff5f00] hover:underline">
+                                    Marcar todas como leídas
+                                </button>
+                            </div>
+                            <div id="notificationsList" class="max-h-80 overflow-y-auto">
+                                <div class="p-4 text-center text-gray-500 text-sm">
+                                    Cargando...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 bg-[#ff5f00] rounded-full flex items-center justify-center text-white font-bold text-sm"
+                        id="userAvatar">
+                        ?
+                    </div>
+                    <span class="text-white text-sm font-medium hidden sm:block" id="userName">Cargando...</span>
+                    <!-- Logout corregido -->
+                    <button onclick="window.citasUI.logout()" class="text-gray-400 hover:text-red-400 transition-colors"
+                        title="Cerrar sesión">
+                        <span class="material-symbols-outlined">logout</span>
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+
+        <!-- Welcome Banner -->
+        <div id="welcomeBanner" class="hidden mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-green-400">celebration</span>
+                <p class="text-green-400">¡Bienvenido a tu portal de cliente! Aquí podrás gestionar tus citas y pagos.
+                </p>
+                <button onclick="this.parentElement.parentElement.classList.add('hidden')"
+                    class="ml-auto text-green-400 hover:text-green-300">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-white">Mi Portal</h1>
+            <p class="text-gray-400 mt-1">Gestiona tus citas, pagos y datos personales</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="border-b border-[#282e39] mb-6">
+            <div class="flex gap-2 overflow-x-auto">
+                <button
+                    class="tab-button active px-4 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer text-white border-[#ff5f00]"
+                    data-tab="citas" onclick="window.citasUI.switchTab('citas')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">event</span>
+                    Mis Citas
+                </button>
+                <button
+                    class="tab-button px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer hover:text-white"
+                    data-tab="pagos" onclick="window.citasUI.switchTab('pagos')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">payments</span>
+                    Pagos
+                </button>
+                <button
+                    class="tab-button px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer hover:text-white"
+                    data-tab="perfil" onclick="window.citasUI.switchTab('perfil')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">person</span>
+                    Mi Perfil
+                </button>
+                <button
+                    class="tab-button px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer hover:text-white"
+                    data-tab="resenas" onclick="window.citasUI.switchTab('resenas')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">star</span>
+                    Mis Reseñas
+                </button>
+                <button
+                    class="tab-button px-4 py-3 text-sm font-medium text-gray-400 border-b-2 border-transparent transition-colors cursor-pointer hover:text-white"
+                    data-tab="fidelizacion" onclick="window.citasUI.switchTab('fidelizacion')">
+                    <span class="material-symbols-outlined mr-2"
+                        style="font-size: 18px; vertical-align: middle;">loyalty</span>
+                    Fidelización
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content: Citas -->
+        <div id="tab-citas" class="tab-content active">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-white">Mis Citas</h2>
+                <a href="/marketplace-busqueda.html"
+                    class="px-6 py-3 bg-[#ff5f00] text-white font-semibold rounded-lg hover:bg-[#e05300] transition-colors flex items-center gap-2 text-sm">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                    Nueva Cita
+                </a>
+            </div>
+
+            <div id="citasContainer" class="min-h-[200px]">
+                <div class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Pagos -->
+        <div id="tab-pagos" class="tab-content">
+            <!-- Saldo a favor -->
+            <div id="saldoSection" class="mb-6 hidden">
+                <div
+                    class="bg-green-500/10 border border-green-500/30 rounded-xl p-5 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                            <span class="material-symbols-outlined text-green-400"
+                                style="font-size: 28px;">account_balance_wallet</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-green-400">Saldo a Favor</p>
+                            <p class="text-2xl font-bold text-white" id="saldoAmount">0.00€</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-400">Este saldo se aplica automáticamente en tu próxima reserva</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagos Pendientes -->
+            <div id="pendingPaymentsSection" class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[#ff5f00]">pending_actions</span>
+                        Pagos Pendientes
+                    </h2>
+                </div>
+                <div id="pendingPaymentsContainer">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjetas Guardadas (Eliminado a petición del usuario) -->
+            <!--
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[#ff5f00]">credit_card</span>
+                        Métodos de Pago
+                    </h2>
+                    <button onclick="window.citasUI.addNewCard()"
+                        class="px-4 py-2 bg-[#ff5f00] text-white text-sm font-medium rounded-lg hover:bg-[#e05300] transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">add_card</span>
+                        Añadir Tarjeta
+                    </button>
+                </div>
+                <div id="paymentMethodsContainer">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                    </div>
+                </div>
+            </div>
+            -->
+
+            <!-- Historial de Pagos -->
+            <div>
+                <h2 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[#ff5f00]">receipt_long</span>
+                    Historial de Pagos
+                </h2>
+                <div id="pagosContainer" class="min-h-[100px]">
+                    <div class="flex items-center justify-center py-8">
+                        <div class="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Tab Content: Perfil -->
+        <div id="tab-perfil" class="tab-content">
+            <div class="max-w-2xl">
+                <h2 class="text-lg font-semibold text-white mb-6">Mi Perfil</h2>
+                <div class="bg-[#111318] border border-[#282e39] rounded-xl p-6">
+                    <form id="perfilForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Nombre</label>
+                            <input type="text" id="perfilNombre"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-colors"
+                                placeholder="Tu nombre">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Email</label>
+                            <input type="email" id="perfilEmail"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-gray-500"
+                                disabled>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Teléfono</label>
+                            <input type="tel" id="perfilTelefono"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-colors"
+                                placeholder="+34 600 00 00 00">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-white mb-2">Dirección</label>
+                            <input type="text" id="perfilDireccion"
+                                class="w-full px-4 py-3 bg-[#1a1d24] border border-[#282e39] rounded-lg text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-colors"
+                                placeholder="Tu dirección">
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button type="submit"
+                                class="px-6 py-3 bg-[#ff5f00] text-white font-semibold rounded-lg hover:bg-[#e05300] transition-colors">
+                                Guardar Cambios
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Mis Reseñas -->
+        <div id="tab-resenas" class="tab-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-white">Mis Reseñas</h2>
+            </div>
+            <div id="resenasContainer" class="min-h-[200px] space-y-4">
+                <div class="flex items-center justify-center py-12">
+                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff5f00]"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Fidelización -->
+        <div id="tab-fidelizacion" class="tab-content">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-semibold text-white">Mi Tarjeta de Fidelización</h2>
+            </div>
+
+            <div id="fidelizacionContainer" class="min-h-[200px] flex items-center justify-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#ff5f00]"></div>
+            </div>
+
+            <div id="fidelizacionContent" class="hidden">
+                <div
+                    class="max-w-md mx-auto bg-[#111318] border border-[#282e39] rounded-2xl p-6 shadow-2xl relative overflow-hidden group hover:border-[#ff5f00]/30 transition-all duration-300">
+                    <!-- Background Gradients -->
+                    <div
+                        class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#ff5f00]/20 to-transparent rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none">
+                    </div>
+                    <div
+                        class="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-blue-500/10 to-transparent rounded-full blur-3xl -ml-32 -mb-32 pointer-events-none">
+                    </div>
+
+                    <!-- Header: Logo & Brand -->
+                    <div class="relative flex items-center justify-between mb-6">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 bg-[#1a1d24] rounded-xl flex items-center justify-center border border-[#282e39] shadow-inner">
+                                <img src="assets/favicon.png" alt="Logo" class="w-6 h-6 object-contain">
+                            </div>
+                            <div>
+                                <h3 class="text-white font-bold text-lg leading-tight tracking-wide"
+                                    id="fidelizacionProgramName">VERSA Puntos</h3>
+                                <p class="text-[#9da6b9] text-xs font-medium uppercase tracking-wider">Fidelización</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span class="text-xs text-[#9da6b9] font-medium mb-1">Tu Saldo</span>
+                            <div class="flex items-baseline gap-1">
+                                <span class="text-3xl font-black text-white tracking-tight"
+                                    id="fidelizacionPuntos">0</span>
+                                <span class="text-xs font-bold text-[#ff5f00] uppercase">Pts</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Active Promo Banner -->
+                    <div id="promoContainer"
+                        class="hidden mx-6 mb-4 p-3 bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-500/30 rounded-lg backdrop-blur-sm">
+                        <div class="flex items-start gap-3">
+                            <span class="material-symbols-outlined text-orange-400 text-xl mt-0.5">local_offer</span>
+                            <div>
+                                <h4 class="text-white text-sm font-bold leading-tight" id="promoTitle">Promo</h4>
+                                <p class="text-[10px] text-gray-300 leading-snug mt-1" id="promoDesc">Descripción</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Body: QR Code -->
+                    <div class="relative bg-white p-4 rounded-xl shadow-lg mx-auto mb-6 transform transition-transform group-hover:scale-[1.02] duration-300"
+                        style="max-width: 200px;">
+                        <img id="fidelizacionQR" src="" alt="QR Code" class="w-full h-auto block opacity-95">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-b from-transparent to-black/5 rounded-xl pointer-events-none">
+                        </div>
+                        <!-- Scan Line Animation -->
+                        <div
+                            class="absolute top-0 left-0 w-full h-1 bg-[#ff5f00]/50 shadow-[0_0_15px_rgba(255,95,0,0.8)] animate-scan pointer-events-none">
+                        </div>
+                    </div>
+
+                    <!-- Member Details -->
+                    <div class="relative text-center mb-6">
+                        <p class="text-white font-semibold text-lg tracking-wide mb-1" id="fidelizacionNombre">Cliente
+                        </p>
+                        <div
+                            class="inline-flex items-center gap-2 px-3 py-1 bg-[#282e39]/50 rounded-full border border-[#282e39]">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            <span class="text-[#9da6b9] text-xs font-mono tracking-widest"
+                                id="fidelizacionMemberCode">V-0000</span>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <a id="fidelizacionWalletLink" href="#" target="_blank"
+                            class="flex flex-col items-center justify-center p-3 bg-[#1a1d24] border border-[#282e39] rounded-xl hover:bg-[#282e39] hover:border-[#ff5f00]/50 transition-all group/btn">
+                            <span
+                                class="material-symbols-outlined text-[#ff5f00] text-2xl mb-1 group-hover/btn:scale-110 transition-transform">confirmation_number</span>
+                            <span class="text-[10px] text-[#9da6b9] font-medium uppercase tracking-wider">Ver
+                                Tarjeta</span>
+                        </a>
+                        <div
+                            class="flex flex-col items-center justify-center p-3 bg-[#1a1d24] border border-[#282e39] rounded-xl">
+                            <span class="material-symbols-outlined text-green-500 text-2xl mb-1">check_circle</span>
+                            <span class="text-[10px] text-[#9da6b9] font-medium uppercase tracking-wider">Estado
+                                Activo</span>
+                        </div>
+                    </div>
+
+                    <!-- Decoration Circles -->
+                    <div class="absolute top-1/2 left-0 w-3 h-6 bg-[#0b0d11] rounded-r-full -mt-3"></div>
+                    <div class="absolute top-1/2 right-0 w-3 h-6 bg-[#0b0d11] rounded-l-full -mt-3"></div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="max-w-md mx-auto mt-6 text-center">
+                    <p class="text-[#9da6b9] text-sm leading-relaxed">
+                        Presenta este código QR en el taller al pagar para acumular puntos y acceder a descuentos
+                        exclusivos.
+                    </p>
+                </div>
+
+                <!-- All Active Promos Section (Always visible) -->
+                <div id="allPromosSection" class="mt-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[#ff5f00]">local_offer</span>
+                            Promociones Activas
+                        </h3>
+                        <span id="promosCount" class="text-xs text-[#9da6b9] bg-[#1a1d24] px-2 py-1 rounded-full">
+                            Cargando...
+                        </span>
+                    </div>
+                    <div id="allPromosGrid" class="grid gap-4 md:grid-cols-2">
+                        <!-- Loading state -->
+                        <div class="bg-[#1a1d24] border border-[#282e39] rounded-xl p-6 text-center col-span-full">
+                            <span
+                                class="material-symbols-outlined text-4xl text-[#9da6b9] animate-pulse">hourglass_empty</span>
+                            <p class="text-[#9da6b9] text-sm mt-2">Cargando promociones...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
+    <script type="module">
+        import {
+            requireAuth,
+            getProfile,
+            updateProfile,
+            getCitas,
+            getPagos,
+            cancelarCita,
+            reprogramarCita,
+            getDisponibilidadCita,
+            createResena,
+            getResena,
+            updateResena,
+            deleteResena,
+            getMisResenas,
+            logout,
+            getStoredCustomer,
+            getNotificaciones,
+            contarNotificacionesNoLeidas,
+            marcarNotificacionLeida,
+            marcarTodasNotificacionesLeidas,
+            // Payment Methods (Stripe)
+            getPaymentMethods,
+            createPaymentMethodSetupSession,
+            setDefaultPaymentMethod,
+            deletePaymentMethod,
+            getPendingPayments,
+            regeneratePaymentLink,
+            getClienteSaldo,
+            payCita,
+            getFidelizacion
+        } from './services/cliente-service.js';
+
+        import {
+            renderCitasList,
+            renderCancelModal,
+            renderReprogramModal,
+            renderReprogramSlots,
+            renderReviewModal,
+            formatFecha,
+            formatHora
+        } from './components/citas-ui.js';
+
+        // Check auth
+        if (!requireAuth()) {
+            // Will redirect to login
+        }
+
+        // State
+        let citasData = [];
+        let pagosData = [];
+        let profileData = null;
+        let selectedCita = null;
+        let selectedReprogramSlot = null;
+        let notificacionesData = [];
+        let reviewPhotos = [];
+        let existingReview = null;
+        let misResenasData = [];
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check welcome
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('welcome') === '1') {
+                document.getElementById('welcomeBanner').classList.remove('hidden');
+            }
+
+            // Initial load
+            await loadProfile();
+            await loadCitas();
+            await loadNotificaciones();
+
+            // Handle tab parameter (e.g., ?tab=pagos)
+            const tabParam = urlParams.get('tab');
+            if (tabParam && ['citas', 'pagos', 'perfil', 'resenas'].includes(tabParam)) {
+                window.citasUI.switchTab(tabParam);
+            }
+
+            // Handle Stripe setup callbacks
+            const setupResult = urlParams.get('setup');
+            if (setupResult === 'success') {
+                setTimeout(() => {
+                    showToast('¡Tarjeta añadida correctamente!', 'success');
+                    // Limpiar la URL
+                    window.history.replaceState({}, '', '/cliente-dashboard.html?tab=pagos');
+                }, 500);
+            } else if (setupResult === 'cancel') {
+                setTimeout(() => {
+                    showToast('Configuración de tarjeta cancelada', 'info');
+                    window.history.replaceState({}, '', '/cliente-dashboard.html?tab=pagos');
+                }, 500);
+            }
+
+            // Click outside to close notifications
+            document.addEventListener('click', (e) => {
+                const panel = document.getElementById('notificationPanel');
+                const btn = document.getElementById('notificationBtn');
+                if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                    panel.classList.add('hidden');
+                }
+            });
+        });
+
+        // Loaders
+        async function loadProfile() {
+            try {
+                const result = await getProfile();
+                if (result.ok) {
+                    profileData = result.data;
+                    document.getElementById('userName').textContent = profileData.nombre || 'Usuario';
+                    document.getElementById('userAvatar').textContent = (profileData.nombre || 'U')[0].toUpperCase();
+
+                    // Form
+                    document.getElementById('perfilNombre').value = profileData.nombre || '';
+                    document.getElementById('perfilEmail').value = profileData.email || '';
+                    document.getElementById('perfilTelefono').value = profileData.telefono || '';
+                    document.getElementById('perfilDireccion').value = profileData.direccion || '';
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error);
+            }
+        }
+
+        async function loadCitas() {
+            try {
+                const result = await getCitas('all');
+                if (result.ok) {
+                    citasData = result.data;
+                    renderCitasList(citasData, 'cliente', 'citasContainer');
+                } else {
+                    document.getElementById('citasContainer').innerHTML = '<p class="text-red-400 text-center py-4">Error cargando citas</p>';
+                }
+            } catch (error) {
+                console.error('Error loading citas:', error);
+                document.getElementById('citasContainer').innerHTML = '<p class="text-red-400 text-center py-4">Error cargando citas</p>';
+            }
+        }
+
+        async function loadPagos() {
+            try {
+                const result = await getPagos();
+                if (result.ok) {
+                    pagosData = result.data;
+                    const container = document.getElementById('pagosContainer');
+                    if (pagosData.length === 0) {
+                        container.innerHTML = '<p class="text-gray-400 text-center py-8">No hay pagos registrados</p>';
+                    } else {
+                        container.innerHTML = `
+                            <div class="bg-[#111318] border border-[#282e39] rounded-xl overflow-hidden">
+                                <table class="w-full text-left text-sm text-gray-400">
+                                    <thead class="bg-[#1a1d24] text-white">
+                                        <tr><th class="p-3">Fecha</th><th class="p-3">Concepto</th><th class="p-3">Importe</th><th class="p-3">Estado</th></tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-[#282e39]">
+                                        ${pagosData.map(p => `
+                                            <tr>
+                                                <td class="p-3">${new Date(p.fecha).toLocaleDateString()}</td>
+                                                <td class="p-3">${p.concepto}</td>
+                                                <td class="p-3 font-bold text-[#ff5f00]">${p.importe}€</td>
+                                                <td class="p-3">${getStatusBadge(p.status)}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading pagos:', error);
+            }
+        }
+
+        function getStatusBadge(status) {
+            const styles = {
+                'PAID': 'bg-green-500/20 text-green-400',
+                'PENDING': 'bg-yellow-500/20 text-yellow-400',
+                'EXPIRED': 'bg-red-500/20 text-red-400',
+                'FAILED': 'bg-red-500/20 text-red-400',
+                'CREDITED': 'bg-blue-500/20 text-blue-400'
+            };
+            const labels = {
+                'PAID': 'Pagado',
+                'PENDING': 'Pendiente',
+                'EXPIRED': 'Expirado',
+                'FAILED': 'Fallido',
+                'CREDITED': 'Saldo Acreditado'
+            };
+            const style = styles[status] || 'bg-gray-500/20 text-gray-400';
+            const label = labels[status] || status;
+            return `<span class="px-2 py-1 text-xs rounded-full ${style}">${label}</span>`;
+        }
+
+        // =============================================
+        // PAYMENT METHODS FUNCTIONS
+        // =============================================
+
+        async function loadPaymentMethods() {
+            try {
+                const result = await getPaymentMethods();
+                const container = document.getElementById('paymentMethodsContainer');
+
+                // Contenedor eliminado de la UI, salimos silenciosamente
+                if (!container) return;
+
+                if (!result.ok) {
+                    container.innerHTML = '<p class="text-red-400 text-center py-4">Error cargando métodos de pago</p>';
+                    return;
+                }
+
+                if (!result.has_customer || result.payment_methods.length === 0) {
+                    container.innerHTML = `
+                        <div class="bg-[#111318] border border-[#282e39] rounded-xl p-8 text-center">
+                            <span class="material-symbols-outlined text-4xl text-gray-600 mb-3 block">credit_card_off</span>
+                            <p class="text-gray-400">No tienes tarjetas guardadas</p>
+                            <p class="text-gray-500 text-sm mt-1">Añade una tarjeta para realizar pagos más rápido</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = `
+                    <div class="grid gap-3">
+                        ${result.payment_methods.map(pm => `
+                            <div class="bg-[#111318] border ${pm.is_default ? 'border-[#ff5f00]' : 'border-[#282e39]'} rounded-xl p-4 flex items-center justify-between group hover:border-[#ff5f00]/50 transition-colors">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-8 bg-white/10 rounded flex items-center justify-center">
+                                        <span class="text-white font-bold text-xs uppercase">${pm.brand}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white font-medium">•••• •••• •••• ${pm.last4}</p>
+                                        <p class="text-gray-500 text-xs">Expira ${String(pm.exp_month).padStart(2, '0')}/${pm.exp_year}</p>
+                                    </div>
+                                    ${pm.is_default ? '<span class="px-2 py-0.5 bg-[#ff5f00]/20 text-[#ff5f00] text-xs rounded-full">Predeterminada</span>' : ''}
+                                </div>
+                                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    ${!pm.is_default ? `
+                                        <button onclick="window.citasUI.setDefaultCard('${pm.id}')" 
+                                                class="p-2 text-gray-400 hover:text-white transition-colors" title="Establecer como predeterminada">
+                                            <span class="material-symbols-outlined" style="font-size: 20px;">star</span>
+                                        </button>
+                                    ` : ''}
+                                    <button onclick="window.citasUI.deleteCard('${pm.id}')" 
+                                            class="p-2 text-gray-400 hover:text-red-400 transition-colors" title="Eliminar tarjeta">
+                                        <span class="material-symbols-outlined" style="font-size: 20px;">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading payment methods:', error);
+            }
+        }
+
+        async function loadSaldo() {
+            try {
+                const result = await getClienteSaldo();
+                if (result.ok && result.has_balance) {
+                    document.getElementById('saldoSection').classList.remove('hidden');
+                    document.getElementById('saldoAmount').textContent = `${result.saldo_actual.toFixed(2)}€`;
+                } else {
+                    document.getElementById('saldoSection').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading saldo:', error);
+            }
+        }
+
+        async function loadPendingPayments() {
+            try {
+                const result = await getPendingPayments();
+                const container = document.getElementById('pendingPaymentsContainer');
+
+                if (!result.ok || result.pending_payments.length === 0) {
+                    document.getElementById('pendingPaymentsSection').classList.add('hidden');
+                    return;
+                }
+
+                document.getElementById('pendingPaymentsSection').classList.remove('hidden');
+
+                container.innerHTML = `
+                    <div class="grid gap-3">
+                        ${result.pending_payments.map(p => `
+                            <div class="bg-[#111318] border border-yellow-500/30 rounded-xl p-4 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                                        <span class="material-symbols-outlined text-yellow-400">schedule</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-white font-medium">${p.servicio_nombre || 'Reserva'}</p>
+                                        <p class="text-gray-500 text-xs">${p.sucursal_nombre || ''} · ${new Date(p.fecha_cita).toLocaleDateString()}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="text-right">
+                                        <p class="text-lg font-bold text-[#ff5f00]">${p.amount.toFixed(2)}€</p>
+                                        <p class="text-xs ${p.status === 'EXPIRED' ? 'text-red-400' : 'text-yellow-400'}">
+                                            ${p.status === 'EXPIRED' ? 'Link expirado' : 'Pendiente de pago'}
+                                        </p>
+                                    </div>
+                                    ${p.status === 'PENDING' && p.checkout_url ? `
+                                        <a href="${p.checkout_url}" target="_blank"
+                                           class="px-4 py-2 bg-[#ff5f00] text-white text-sm font-medium rounded-lg hover:bg-[#e05300] transition-colors">
+                                            Pagar Ahora
+                                        </a>
+                                    ` : ''}
+                                    ${p.can_regenerate ? `
+                                        <button onclick="window.citasUI.regeneratePayment(${p.id_cita})"
+                                                class="px-4 py-2 bg-white/10 text-white text-sm font-medium rounded-lg hover:bg-white/20 transition-colors">
+                                            Generar Nuevo Link
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading pending payments:', error);
+                document.getElementById('pendingPaymentsSection').classList.add('hidden');
+            }
+        }
+
+        // Load Notificaciones
+        async function loadNotificaciones() {
+            try {
+                // Contar no leídas
+                const countResult = await contarNotificacionesNoLeidas();
+                const badge = document.getElementById('notificationBadge');
+                if (countResult.ok && countResult.count > 0) {
+                    badge.textContent = countResult.count > 9 ? '9+' : countResult.count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+
+                // Cargar lista
+                const result = await getNotificaciones(false, 10);
+                if (result.ok) {
+                    notificacionesData = result.notificaciones;
+                    renderNotificaciones();
+                }
+            } catch (error) {
+                console.error('Error loading notificaciones:', error);
+            }
+        }
+
+        function renderNotificaciones() {
+            const container = document.getElementById('notificationsList');
+
+            if (notificacionesData.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center">
+                        <span class="material-symbols-outlined text-4xl text-gray-600 mb-2">notifications_off</span>
+                        <p class="text-gray-500 text-sm">No tienes notificaciones</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = notificacionesData.map(notif => {
+                const fecha = new Date(notif.created_at);
+                const tiempo = getTimeAgo(fecha);
+                const iconos = {
+                    cita_confirmada: 'check_circle',
+                    cita_en_progreso: 'build',
+                    cita_completada: 'task_alt',
+                    cita_cancelada: 'cancel',
+                    cita_actualizada: 'update',
+                    points_earned: 'stars',
+                    promo_created: 'redeem'
+                };
+                const icono = iconos[notif.tipo] || 'notifications';
+
+                return `
+                    <div class="p-3 border-b border-[#282e39] hover:bg-white/5 transition-colors cursor-pointer ${notif.leida ? 'opacity-60' : ''}"
+                         onclick="window.citasUI.markAsRead(${notif.id})">
+                        <div class="flex gap-3">
+                            <span class="material-symbols-outlined text-[#ff5f00]" style="font-size: 20px;">${icono}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-white text-sm font-medium truncate">${notif.titulo}</p>
+                                <p class="text-gray-400 text-xs mt-1 line-clamp-2">${notif.mensaje}</p>
+                                <p class="text-gray-500 text-xs mt-2">${tiempo}</p>
+                            </div>
+                            ${!notif.leida ? '<span class="w-2 h-2 bg-[#ff5f00] rounded-full flex-shrink-0 mt-1"></span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            if (seconds < 60) return 'Ahora';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `Hace ${minutes}m`;
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return `Hace ${hours}h`;
+            const days = Math.floor(hours / 24);
+            if (days < 7) return `Hace ${days}d`;
+            return date.toLocaleDateString('es-ES');
+        }
+
+        // Formatear fecha legible
+        function formatearFechaCompleta(fecha) {
+            if (!fecha) return '';
+            const d = new Date(fecha);
+            return d.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Load Mis Reseñas
+        async function loadMisResenas() {
+            try {
+                const result = await getMisResenas();
+                if (result.ok) {
+                    misResenasData = result.data || [];
+                    renderMisResenas();
+                }
+            } catch (error) {
+                console.error('Error loading reseñas:', error);
+            }
+        }
+
+        function renderMisResenas() {
+            const container = document.getElementById('resenasContainer');
+
+            if (misResenasData.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-[#111318] border border-[#282e39] rounded-xl p-8 text-center">
+                        <span class="material-symbols-outlined text-4xl text-gray-600 mb-3 block">rate_review</span>
+                        <p class="text-gray-400">Aún no has dejado ninguna reseña</p>
+                        <p class="text-gray-500 text-sm mt-1">Las reseñas aparecerán aquí después de completar tus citas</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = misResenasData.map(resena => {
+                // Parsear fotos
+                let fotos = resena.fotos || [];
+                if (typeof fotos === 'string') {
+                    try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
+                }
+
+                return `
+                    <div class="bg-[#111318] border border-[#282e39] rounded-xl p-5 hover:border-primary/30 transition-colors">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <h4 class="font-semibold text-white">${resena.sucursal_nombre || 'Taller'}</h4>
+                                <p class="text-xs text-gray-500">${formatearFechaCompleta(resena.cita_fecha || resena.created_at)}</p>
+                            </div>
+                            <div class="flex items-center gap-1 text-yellow-500">
+                                ${Array(5).fill(0).map((_, i) => `
+                                    <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' ${i < resena.rating ? 1 : 0};">star</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        
+                        ${resena.comentario ? `<p class="text-gray-300 text-sm mb-3">${resena.comentario}</p>` : ''}
+                        
+                        ${fotos.length > 0 ? `
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                ${fotos.map(url => `
+                                    <img src="${url}" alt="Foto" class="w-16 h-16 object-cover rounded-lg cursor-pointer hover:opacity-80" onclick="window.open('${url}', '_blank')">
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        <div class="flex gap-2 pt-3 border-t border-[#282e39]">
+                            <button onclick="window.citasUI.editarResena(${resena.id_cita})" 
+                                    class="flex-1 px-3 py-2 bg-blue-500/10 text-blue-400 rounded-lg text-sm hover:bg-blue-500/20 transition-colors flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+                                Editar
+                            </button>
+                            <button onclick="window.citasUI.eliminarResena(${resena.id_cita})" 
+                                    class="px-3 py-2 bg-red-500/10 text-red-400 rounded-lg text-sm hover:bg-red-500/20 transition-colors flex items-center justify-center gap-1">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Profile Update
+        document.getElementById('perfilForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const result = await updateProfile({
+                    nombre: document.getElementById('perfilNombre').value,
+                    telefono: document.getElementById('perfilTelefono').value,
+                    direccion: document.getElementById('perfilDireccion').value
+                });
+                if (result.ok) {
+                    showToast('Perfil actualizado', 'success');
+                    loadProfile();
+                } else {
+                    showToast('Error actualizando perfil', 'error');
+                }
+            } catch (e) { showToast('Error', 'error'); }
+        });        // ... (skip unchanged lines) ...
+        // Citas UI handlers - exposed globally
+        window.citasUI = {
+            logout: () => {
+                if (confirm('¿Cerrar sesión?')) logout();
+            },
+
+            // Notificaciones
+            toggleNotifications: () => {
+                const panel = document.getElementById('notificationPanel');
+                panel.classList.toggle('hidden');
+            },
+
+            markAsRead: async (notifId) => {
+                try {
+                    await marcarNotificacionLeida(notifId);
+                    await loadNotificaciones();
+                } catch (error) {
+                    console.error('Error marking as read:', error);
+                }
+            },
+
+            markAllAsRead: async () => {
+                try {
+                    await marcarTodasNotificacionesLeidas();
+                    await loadNotificaciones();
+                    showToast('Todas las notificaciones marcadas como leídas', 'success');
+                } catch (error) {
+                    console.error('Error marking all as read:', error);
+                }
+            },
+
+            switchTab: (tabId) => {
+                // Update buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    const isTarget = btn.dataset.tab === tabId;
+                    if (isTarget) {
+                        btn.classList.add('active', 'text-white', 'border-[#ff5f00]');
+                        btn.classList.remove('text-gray-400', 'border-transparent');
+                    } else {
+                        btn.classList.remove('active', 'text-white', 'border-[#ff5f00]');
+                        btn.classList.add('text-gray-400', 'border-transparent');
+                    }
+                });
+
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+
+                // Load data
+                if (tabId === 'pagos') {
+                    loadPaymentMethods();
+                    loadSaldo();
+                    loadPendingPayments();
+                    if (pagosData.length === 0) {
+                        loadPagos();
+                    }
+                }
+                if (tabId === 'fidelizacion') {
+                    loadFidelizacion();
+                }
+                if (tabId === 'resenas' && misResenasData.length === 0) {
+                    loadMisResenas();
+                }
+            },
+
+            handleAction: async (action, citaId) => {
+                selectedCita = citasData.find(c => c.id === citaId);
+                if (!selectedCita) return;
+
+                if (action === 'cancelar') {
+                    document.getElementById('modalContainer').innerHTML = renderCancelModal(selectedCita);
+                } else if (action === 'reprogramar') {
+                    document.getElementById('modalContainer').innerHTML = renderReprogramModal(selectedCita);
+                } else if (action === 'resena') {
+                    // Verificar si ya existe una reseña para esta cita
+                    try {
+                        const result = await getResena(citaId);
+                        if (result.ok && result.data) {
+                            existingReview = result.data;
+                            reviewPhotos = result.data.fotos || [];
+                        } else {
+                            existingReview = null;
+                            reviewPhotos = [];
+                        }
+                    } catch (e) {
+                        existingReview = null;
+                        reviewPhotos = [];
+                    }
+                    document.getElementById('modalContainer').innerHTML = renderReviewModal(selectedCita, existingReview);
+                }
+            },
+
+            closeModal: () => {
+                document.getElementById('modalContainer').innerHTML = '';
+                selectedCita = null;
+                selectedReprogramSlot = null;
+                existingReview = null;
+                reviewPhotos = [];
+            },
+
+            setRating: (rating) => {
+                document.getElementById('ratingValue').value = rating;
+                document.querySelectorAll('.review-star').forEach(btn => {
+                    const btnRating = parseInt(btn.dataset.rating);
+                    if (btnRating <= rating) {
+                        btn.classList.add('text-yellow-400', 'scale-110');
+                        btn.classList.remove('text-gray-700');
+                    } else {
+                        btn.classList.remove('text-yellow-400', 'scale-110');
+                        btn.classList.add('text-gray-700');
+                    }
+                });
+
+                const labels = ['Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'];
+                const labelEl = document.getElementById('ratingLabel');
+                if (labelEl) labelEl.textContent = labels[rating - 1];
+
+                const submitBtn = document.getElementById('submitReviewBtn');
+                if (submitBtn) submitBtn.disabled = false;
+            },
+
+            submitReview: async (citaId, esEdicion = false) => {
+                const puntuacion = parseInt(document.getElementById('ratingValue').value);
+                const comentario = document.getElementById('reviewComment').value.trim();
+                const fotos = reviewPhotos;
+
+                if (!puntuacion) {
+                    showToast('Por favor selecciona una puntuación', 'error');
+                    return;
+                }
+
+                try {
+                    let result;
+                    if (esEdicion) {
+                        result = await updateResena(citaId, { puntuacion, comentario, fotos });
+                    } else {
+                        result = await createResena(citaId, puntuacion, comentario, fotos);
+                    }
+
+                    if (result.ok) {
+                        showToast(esEdicion ? '¡Reseña actualizada!' : '¡Gracias por tu reseña!', 'success');
+                        window.citasUI.closeModal();
+                        loadCitas();
+                    } else {
+                        showToast(result.error || 'Error al guardar reseña', 'error');
+                    }
+                } catch (error) {
+                    showToast(error.message || 'Error al guardar reseña', 'error');
+                }
+            },
+
+            deleteReview: async (citaId) => {
+                if (!confirm('¿Seguro que quieres eliminar esta reseña?')) return;
+
+                try {
+                    const result = await deleteResena(citaId);
+                    if (result.ok) {
+                        showToast('Reseña eliminada', 'success');
+                        window.citasUI.closeModal();
+                        loadCitas();
+                    } else {
+                        showToast(result.error || 'Error al eliminar', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error al eliminar reseña', 'error');
+                }
+            },
+
+            handlePhotoUpload: async (event) => {
+                const files = event.target.files;
+                if (!files || files.length === 0) return;
+
+                const MAX_WIDTH = 1024;
+                const MAX_HEIGHT = 1024;
+                const QUALITY = 0.7;
+
+                // Función helper para comprimir
+                const compressImage = (file) => {
+                    return new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = (e) => {
+                            const img = new Image();
+                            img.src = e.target.result;
+                            img.onload = () => {
+                                let width = img.width;
+                                let height = img.height;
+
+                                if (width > height) {
+                                    if (width > MAX_WIDTH) {
+                                        height *= MAX_WIDTH / width;
+                                        width = MAX_WIDTH;
+                                    }
+                                } else {
+                                    if (height > MAX_HEIGHT) {
+                                        width *= MAX_HEIGHT / height;
+                                        height = MAX_HEIGHT;
+                                    }
+                                }
+
+                                const canvas = document.createElement('canvas');
+                                canvas.width = width;
+                                canvas.height = height;
+                                const ctx = canvas.getContext('2d');
+                                ctx.drawImage(img, 0, 0, width, height);
+
+                                const compressedDataUrl = canvas.toDataURL('image/jpeg', QUALITY);
+                                resolve(compressedDataUrl);
+                            };
+                        };
+                    });
+                };
+
+                const container = document.getElementById('photosPreview');
+                const loadingToast = document.createElement('div');
+                loadingToast.textContent = 'Procesando imágenes...';
+                loadingToast.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded shadow-lg z-50';
+                document.body.appendChild(loadingToast);
+
+                try {
+                    for (const file of files) {
+                        if (reviewPhotos.length >= 5) {
+                            showToast('Máximo 5 fotos permitidas', 'error');
+                            break;
+                        }
+
+                        // Comprimir imagen
+                        const compressedBase64 = await compressImage(file);
+                        reviewPhotos.push(compressedBase64);
+
+                        // Crear preview
+                        const newPhoto = document.createElement('div');
+                        newPhoto.className = 'relative w-20 h-20 rounded-lg overflow-hidden group border border-[#282e39]';
+                        newPhoto.innerHTML = `
+                            <img src="${compressedBase64}" class="w-full h-full object-cover">
+                            <button onclick="window.citasUI.removePhoto(${reviewPhotos.length - 1})" 
+                                    class="absolute top-1 right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span class="material-symbols-outlined text-white" style="font-size: 14px;">close</span>
+                            </button>
+                        `;
+                        container.appendChild(newPhoto);
+                    }
+                } catch (err) {
+                    console.error('Error comprimiendo imágenes:', err);
+                    showToast('Error al procesar imágenes', 'error');
+                } finally {
+                    loadingToast.remove();
+                    event.target.value = ''; // Reset input
+
+                    // Actualizar input hidden
+                    document.getElementById('reviewPhotos').value = JSON.stringify(reviewPhotos);
+                }
+            },
+
+            removePhoto: (index) => {
+                reviewPhotos.splice(index, 1);
+                // Re-render el modal con las fotos actualizadas
+                if (selectedCita) {
+                    const updatedReview = existingReview ? {
+                        ...existingReview,
+                        fotos: reviewPhotos
+                    } : null;
+                    document.getElementById('modalContainer').innerHTML = renderReviewModal(selectedCita, updatedReview);
+                    // Restaurar valores del formulario
+                    document.getElementById('reviewPhotos').value = JSON.stringify(reviewPhotos);
+                }
+            },
+
+            confirmCancel: async (citaId) => {
+                try {
+                    const result = await cancelarCita(citaId);
+                    if (result.ok) {
+                        showToast('Cita cancelada correctamente', 'success');
+                        window.citasUI.closeModal();
+                        loadCitas();
+                    } else {
+                        showToast(result.error || 'Error al cancelar', 'error');
+                    }
+                } catch (error) {
+                    showToast(error.message || 'Error al cancelar', 'error');
+                }
+            },
+
+            loadSlotsForReprogram: async (citaId, fecha) => {
+                if (!fecha) return;
+
+                try {
+                    const result = await getDisponibilidadCita(citaId, fecha);
+                    if (result.ok) {
+                        renderReprogramSlots(result.data);
+                    }
+                } catch (error) {
+                    console.error('Error loading slots:', error);
+                }
+            },
+
+            selectReprogramSlot: (hora) => {
+                selectedReprogramSlot = hora;
+
+                // Update UI
+                document.querySelectorAll('.reprogram-slot').forEach(btn => {
+                    btn.classList.remove('border-primary', 'bg-primary/20');
+                    if (btn.dataset.hora === hora) {
+                        btn.classList.add('border-primary', 'bg-primary/20');
+                    }
+                });
+
+                document.getElementById('confirmReprogramBtn').disabled = false;
+            },
+
+            confirmReprogram: async (citaId) => {
+                const fecha = document.getElementById('reprogramFecha').value;
+                if (!fecha || !selectedReprogramSlot) {
+                    showToast('Selecciona fecha y hora', 'error');
+                    return;
+                }
+
+                try {
+                    const result = await reprogramarCita(citaId, fecha, selectedReprogramSlot);
+                    if (result.ok) {
+                        showToast('Cita reprogramada correctamente', 'success');
+                        window.citasUI.closeModal();
+                        loadCitas();
+                    } else {
+                        showToast(result.error || 'Error al reprogramar', 'error');
+                    }
+                } catch (error) {
+                    showToast(error.message || 'Error al reprogramar', 'error');
+                }
+            },
+
+            showAllPast: () => {
+                // TODO: Implementar paginación
+                console.log('Show all past citas');
+            },
+
+            // Gestión de reseñas desde historial
+            editarResena: async (citaId) => {
+                try {
+                    const result = await getResena(citaId);
+                    if (result.ok && result.data) {
+                        existingReview = result.data;
+                        reviewPhotos = result.data.fotos || [];
+                        // Crear una cita simulada para el modal
+                        const resena = misResenasData.find(r => r.id_cita === citaId);
+                        selectedCita = {
+                            id: citaId,
+                            fecha_hora: resena?.cita_fecha || new Date().toISOString(),
+                            sucursal: { nombre: resena?.sucursal_nombre || 'Taller' },
+                            servicio: { nombre: 'Servicio' }
+                        };
+                        document.getElementById('modalContainer').innerHTML = renderReviewModal(selectedCita, existingReview);
+                    } else {
+                        showToast('Error al cargar reseña', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error al cargar reseña', 'error');
+                }
+            },
+
+            eliminarResena: async (citaId) => {
+                if (!confirm('¿Seguro que quieres eliminar esta reseña? Esta acción no se puede deshacer.')) return;
+
+                try {
+                    const result = await deleteResena(citaId);
+                    if (result.ok) {
+                        showToast('Reseña eliminada correctamente', 'success');
+                        // Recargar la lista de reseñas
+                        misResenasData = [];
+                        loadMisResenas();
+                    } else {
+                        showToast(result.error || 'Error al eliminar', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error al eliminar reseña', 'error');
+                }
+            },
+
+            // =============================================
+            // PAYMENT METHODS HANDLERS
+            // =============================================
+            // Handle Payment Methods actions
+            addNewCard: async () => {
+                try {
+                    const result = await createPaymentMethodSetupSession();
+                    if (result.ok && result.url) {
+                        window.location.href = result.url;
+                    } else {
+                        showToast('Error al iniciar configuración de tarjeta', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error de conexión', 'error');
+                }
+            },
+
+            setDefaultCard: async (pmId) => {
+                try {
+                    const result = await setDefaultPaymentMethod(pmId);
+                    if (result.ok) {
+                        showToast('Tarjeta predeterminada actualizada', 'success');
+                        loadPaymentMethods();
+                    } else {
+                        showToast(result.error || 'Error al actualizar', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error de conexión', 'error');
+                }
+            },
+
+            deleteCard: async (pmId) => {
+                if (!confirm('¿Seguro que quieres eliminar esta tarjeta?')) return;
+                try {
+                    const result = await deletePaymentMethod(pmId);
+                    if (result.ok) {
+                        showToast('Tarjeta eliminada', 'success');
+                        loadPaymentMethods();
+                    } else {
+                        showToast(result.error || 'Error al eliminar', 'error');
+                    }
+                } catch (error) {
+                    showToast('Error de conexión', 'error');
+                }
+            },
+
+            regeneratePayment: async (citaId) => {
+                try {
+                    const result = await regeneratePaymentLink(citaId);
+                    if (result.ok) {
+                        showToast('Link de pago regenerado', 'success');
+                        // Redirigir al checkout de Stripe
+                        window.open(result.checkout_url, '_blank');
+                        // Recargar pagos pendientes
+                        loadPendingPayments();
+                    } else {
+                        showToast(result.error || 'Error al regenerar link', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error regenerating payment:', error);
+                    showToast('link no regenerado', 'error');
+                }
+            },
+
+            // Pagar cita bajo demanda
+            payCitaAction: async (citaId) => {
+                try {
+                    showToast('Creando sesión de pago...', 'info');
+                    const result = await payCita(citaId);
+                    if (result.ok && result.checkout_url) {
+                        // Redirigir al checkout de Stripe
+                        window.location.href = result.checkout_url;
+                    } else {
+                        showToast(result.error || 'Error al crear pago', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error creating payment:', error);
+                    showToast(error.message || 'Error al crear sesión de pago', 'error');
+                }
+            }
+        };
+
+        // Load Fidelización Data
+        async function loadFidelizacion() {
+            const container = document.getElementById('fidelizacionContainer');
+            const content = document.getElementById('fidelizacionContent');
+
+            try {
+                const result = await getFidelizacion();
+
+                if (result.ok && result.data) {
+                    const data = result.data;
+
+                    // Actualizar UI
+                    document.getElementById('fidelizacionProgramName').textContent = data.program_name || 'VERSA Puntos';
+                    document.getElementById('fidelizacionPuntos').textContent = data.points_balance || '0';
+                    document.getElementById('fidelizacionNombre').textContent = data.display_name || 'Cliente';
+                    document.getElementById('fidelizacionMemberCode').textContent = data.member_code || 'V-0000';
+
+                    // QR Code
+                    if (data.token) {
+                        const walletUrl = data.publicUrl || `https://goversa.app/card.html?token=${data.token}`;
+                        document.getElementById('fidelizacionQR').src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(walletUrl)}`;
+                        document.getElementById('fidelizacionWalletLink').href = walletUrl;
+                    }
+
+                    // Promo Activa (Banner dentro de la tarjeta)
+                    const promoContainer = document.getElementById('promoContainer');
+                    if (data.promo_activa) {
+                        document.getElementById('promoTitle').textContent = data.promo_activa.titulo;
+                        document.getElementById('promoDesc').textContent = data.promo_activa.descripcion || '';
+                        promoContainer.classList.remove('hidden');
+                    } else {
+                        promoContainer.classList.add('hidden');
+                    }
+
+                    // Cargar TODAS las promos activas en la sección dedicada
+                    await loadAllActivePromos();
+
+                    // Mostrar contenido
+                    container.classList.remove('hidden'); // Ensure container is visible
+                    content.classList.remove('hidden');
+                } else {
+                    container.innerHTML = '<p class="text-red-400">Error al cargar tarjeta</p>';
+                }
+            } catch (error) {
+                console.error('Error loading fidelizacion:', error);
+                container.innerHTML = '<p class="text-red-400">Error de conexión</p>';
+            }
+        }
+
+        // Cargar todas las promociones activas
+        async function loadAllActivePromos() {
+            const grid = document.getElementById('allPromosGrid');
+            const countBadge = document.getElementById('promosCount');
+
+            try {
+                const token = localStorage.getItem('versa_customer_token');
+                const res = await fetch('/api/cliente/fidelizacion/promos', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+
+                if (result.ok && result.data && result.data.length > 0) {
+                    countBadge.textContent = `${result.data.length} disponible${result.data.length > 1 ? 's' : ''}`;
+                    countBadge.classList.remove('bg-[#1a1d24]');
+                    countBadge.classList.add('bg-[#ff5f00]/20', 'text-[#ff5f00]');
+
+                    grid.innerHTML = result.data.map(promo => `
+                        <div class="bg-gradient-to-br from-[#1a1d24] to-[#111318] border border-[#282e39] rounded-xl p-4 hover:border-[#ff5f00]/50 hover:shadow-lg hover:shadow-[#ff5f00]/5 transition-all cursor-pointer group">
+                            <div class="flex items-start gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ff5f00] to-[#ff8800] flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                                    <span class="material-symbols-outlined text-white text-2xl">redeem</span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-white font-bold text-sm truncate group-hover:text-[#ff5f00] transition-colors">${promo.titulo}</h4>
+                                    <p class="text-[#9da6b9] text-xs mt-1 line-clamp-2">${promo.descripcion || 'Promoción especial para miembros'}</p>
+                                    <div class="flex items-center gap-2 mt-2">
+                                        <span class="material-symbols-outlined text-xs text-[#ff5f00]">schedule</span>
+                                        <span class="text-[#ff5f00] text-xs font-medium">
+                                            Válido hasta: ${new Date(promo.ends_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    countBadge.textContent = '0 disponibles';
+                    grid.innerHTML = `
+                        <div class="bg-[#1a1d24] border border-[#282e39] rounded-xl p-8 text-center col-span-full">
+                            <span class="material-symbols-outlined text-5xl text-[#282e39]">loyalty</span>
+                            <p class="text-[#9da6b9] text-sm mt-3">No hay promociones activas en este momento</p>
+                            <p class="text-[#666] text-xs mt-1">¡Sigue acumulando puntos para futuros beneficios!</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading promos:', error);
+                countBadge.textContent = 'Error';
+                grid.innerHTML = `
+                    <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-6 text-center col-span-full">
+                        <span class="material-symbols-outlined text-4xl text-red-400">error</span>
+                        <p class="text-red-400 text-sm mt-2">Error al cargar promociones</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Logout handler
+        window.handleLogout = () => {
+            if (confirm('¿Seguro que deseas cerrar sesión?')) {
+                logout();
+            }
+        };
+
+        // Toast helper
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Change password modal (placeholder)
+        window.showChangePasswordModal = () => {
+            showToast('Funcionalidad próximamente disponible', 'info');
+        };
+    </script>
+</body>
+
+</html>

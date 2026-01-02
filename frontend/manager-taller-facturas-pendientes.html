@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pendientes Facturar - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
+
+    <style>
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: var(--brand-orange);
+            transform: translateY(-2px);
+        }
+
+        .icon-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body class="bg-[#0b0d11] text-white font-[Montserrat] overflow-hidden">
+    <div class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[#282e39]">
+            <div class="flex h-full flex-col justify-between">
+                <div class="flex flex-col gap-4">
+                    <div class="flex items-center gap-3 p-2 mb-4">
+                        <div class="logo-badge flex items-center justify-center w-10 h-10 rounded-xl bg-[#282e39]">
+                            <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                        </div>
+                        <div class="flex flex-col sidebar-text">
+                            <h1 class="text-white text-base font-medium">Goversa</h1>
+                            <p class="text-[#9da6b9] text-xs">Gestión</p>
+                        </div>
+                        <button id="toggle-sidebar" class="ml-auto text-gray-400 hover:text-white">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                    </div>
+
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                            href="manager-taller-inicio.html">
+                            <span class="icon-container"><i class="fas fa-home"></i></span>
+                            <p class="text-sm font-medium sidebar-text">Inicio</p>
+                        </a>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('taller-submenu')">
+                                <span class="icon-container"><i class="fas fa-wrench"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Taller</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="taller-arrow"></i>
+                            </a>
+                            <div id="taller-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-citas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Citas</a>
+                                <a href="manager-taller-ordenes-lista.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Órdenes</a>
+                                <a href="manager-taller-vehiculos.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Vehículos</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('tienda-submenu')">
+                                <span class="icon-container"><i class="fas fa-shopping-cart"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Tienda</p>
+                                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform"
+                                    id="tienda-arrow"></i>
+                            </a>
+                            <div id="tienda-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-compras.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Nueva Compra</a>
+                                <a href="manager-taller-compras-historial.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Historial Compras</a>
+                            </div>
+                        </div>
+
+                        <div class="nav-group">
+                            <a class="flex items-center gap-3 px-3 py-2 bg-[var(--brand-orange)] text-white rounded-lg transition-colors cursor-pointer"
+                                onclick="toggleSubmenu('cuentas-submenu')">
+                                <span class="icon-container"><i class="fas fa-file-invoice-dollar"></i></span>
+                                <p class="text-sm font-medium sidebar-text flex-1">Cuentas</p>
+                                <i class="fas fa-chevron-up text-xs sidebar-text transition-transform"
+                                    id="cuentas-arrow"></i>
+                            </a>
+                            <div id="cuentas-submenu" class="flex flex-col pl-9 gap-1 mt-1">
+                                <a href="manager-taller-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Facturas</a>
+                                <a href="manager-taller-facturas-pendientes.html"
+                                    class="text-white font-semibold text-sm py-1 block">Pendientes Facturar</a>
+                                <a href="manager-taller-config-facturas.html"
+                                    class="text-gray-400 hover:text-white text-sm py-1 block">Configuración</a>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <div class="flex flex-col gap-1 border-t border-[#282e39] pt-4">
+                    <div class="flex items-center gap-3 px-3 py-2 mb-2">
+                        <div id="user-avatar"
+                            class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white font-bold text-xs">
+                            --</div>
+                        <div class="flex flex-col sidebar-text overflow-hidden">
+                            <span id="user-name" class="text-white text-sm font-medium truncate">Usuario</span>
+                            <span id="user-role" class="text-gray-500 text-xs truncate">rol</span>
+                        </div>
+                    </div>
+                    <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
+                        href="#" id="logout-btn">
+                        <span class="icon-container"><i class="fas fa-sign-out-alt"></i></span>
+                        <p class="text-sm font-medium sidebar-text">Salir</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <header class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[#282e39]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6 bg-[#0b0d11]">
+                <div class="max-w-7xl mx-auto space-y-6">
+
+                    <div class="flex justify-between items-center border-b border-[#282e39] pb-6 mb-6">
+                        <div>
+                            <h1 class="text-3xl font-extrabold text-white">Pendientes de Facturar</h1>
+                            <p class="text-[#9da6b9] mt-1">Órdenes finalizadas listas para ser facturadas</p>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
+
+                    <!-- KPI Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="stat-card flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Total Pendientes</p>
+                                <h3 id="statTotal" class="text-3xl font-bold text-[var(--brand-orange)]">0</h3>
+                            </div>
+                            <div class="icon-box bg-[var(--brand-orange)]/10 text-[var(--brand-orange)]">
+                                <i class="fas fa-file-invoice"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Importe Total</p>
+                                <h3 id="statImporte" class="text-3xl font-bold text-green-400">0.00 €</h3>
+                            </div>
+                            <div class="icon-box bg-green-500/10 text-green-500">
+                                <i class="fas fa-euro-sign"></i>
+                            </div>
+                        </div>
+                        <div class="stat-card flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-[#9da6b9] uppercase font-bold mb-1">Ticket Promedio</p>
+                                <h3 id="statPromedio" class="text-3xl font-bold text-blue-400">0.00 €</h3>
+                            </div>
+                            <div class="icon-box bg-blue-500/10 text-blue-500">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table Panel -->
+                    <div class="manager-panel bg-[#1e242d] border border-[#282e39] rounded-xl overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-[#111318] text-xs uppercase text-[#9da6b9] border-b border-[#282e39]">
+                                        <th class="p-4 font-semibold tracking-wider">Nº Orden</th>
+                                        <th class="p-4 font-semibold tracking-wider">Fecha</th>
+                                        <th class="p-4 font-semibold tracking-wider">Cliente</th>
+                                        <th class="p-4 font-semibold tracking-wider">Vehículo</th>
+                                        <th class="p-4 font-semibold tracking-wider">Estado</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right">Total</th>
+                                        <th class="p-4 font-semibold tracking-wider text-right">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaOrdenes" class="text-sm divide-y divide-[#282e39]">
+                                    <!-- Dynamic Content -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Loading / Empty States -->
+                        <div id="loadingState" class="p-12 text-center text-[#9da6b9]">
+                            <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-[var(--brand-orange)]"></i>
+                            <p>Cargando órdenes...</p>
+                        </div>
+                        <div id="emptyState" class="hidden p-12 text-center text-[#9da6b9]">
+                            <div
+                                class="w-16 h-16 bg-[#282e39] rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-check text-2xl text-green-500"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white mb-1">Todo al día</h3>
+                            <p>No hay órdenes pendientes de facturación.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Confirmación -->
+    <div id="modalConfirmacion"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div
+            class="bg-[#1e242d] p-8 rounded-2xl max-w-sm w-full border border-[#282e39] shadow-2xl transform scale-95 transition-transform duration-200">
+            <div
+                class="w-16 h-16 bg-[var(--brand-orange)]/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-file-invoice text-3xl text-[var(--brand-orange)]"></i>
+            </div>
+
+            <h3 class="text-xl font-bold text-white text-center mb-2">Generar Factura</h3>
+            <p class="text-[#9da6b9] text-center text-sm mb-6">Se generará una factura oficial para la orden
+                seleccionada.</p>
+
+            <div class="bg-[#111318] p-4 rounded-xl mb-6 space-y-2 text-sm border border-[#282e39]">
+                <div class="flex justify-between"><span class="text-[#9da6b9]">Orden:</span> <span id="modalOrdenNumero"
+                        class="text-white font-mono">#000</span></div>
+                <div class="flex justify-between"><span class="text-[#9da6b9]">Cliente:</span> <span id="modalCliente"
+                        class="text-white font-medium">-</span></div>
+                <div class="flex justify-between border-t border-[#282e39] pt-2 mt-1"><span
+                        class="text-[#9da6b9]">Total:</span> <span id="modalTotal"
+                        class="text-[var(--brand-orange)] font-bold">0.00 €</span></div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs text-[#9da6b9] mb-1 ml-1">Observaciones (Opcional)</label>
+                <textarea id="observacionesFactura" rows="2"
+                    class="w-full bg-[#111318] border border-[#282e39] rounded-lg p-3 text-white text-sm focus:outline-none focus:border-[var(--brand-orange)]"
+                    placeholder="Notas internas..."></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="cerrarModal()"
+                    class="flex-1 py-3 bg-[#282e39] text-[#9da6b9] hover:text-white rounded-xl hover:bg-[#343b47] transition-colors">Cancelar</button>
+                <button onclick="confirmarGenerarFactura()"
+                    class="flex-1 py-3 bg-[var(--brand-orange)] text-white font-bold rounded-xl hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchWithAuth, getSession, clearSession, redirectToLogin } from '/auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        const API_BASE_URL = '/api';
+        let userData = null;
+        let ordenSeleccionada = null;
+        let currentSucursalId = null;
+
+        // UI Helpers
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                submenu.classList.add('flex');
+                if (arrow) arrow.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                submenu.classList.remove('flex');
+                if (arrow) arrow.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('-translate-x-full');
+            sb.classList.toggle('absolute');
+            sb.classList.toggle('z-50');
+            sb.classList.toggle('h-full');
+        });
+
+        document.addEventListener('click', (e) => {
+            const logoutLink = e.target.closest('#logout-btn') || e.target.closest('[data-logout]');
+            if (logoutLink) {
+                e.preventDefault();
+                clearSession();
+                redirectToLogin();
+            }
+        });
+
+        function cargarDatosUsuario() {
+            const session = getSession();
+            if (!session || !session.user) { redirectToLogin(); return false; }
+            userData = session.user;
+            document.getElementById('user-avatar').textContent = (userData.nombre || 'U').substring(0, 2).toUpperCase();
+            document.getElementById('user-name').textContent = userData.nombre || 'Usuario';
+            document.getElementById('user-role').textContent = userData.rol || 'admin';
+            return true;
+        }
+
+        async function cargarOrdenesPendientes() {
+            const loadingState = document.getElementById('loadingState');
+            const emptyState = document.getElementById('emptyState');
+            const tablaOrdenes = document.getElementById('tablaOrdenes');
+
+            loadingState.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            tablaOrdenes.innerHTML = '';
+
+            try {
+                const params = new URLSearchParams();
+                params.append('tenantId', userData.id_tenant);
+
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/ordenes/pendientes?${params.toString()}`);
+                const data = await response.json();
+                loadingState.classList.add('hidden');
+
+                if (!data.success || data.data.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    actualizarEstadisticas([], 0);
+                    return;
+                }
+                renderizarOrdenes(data.data);
+                actualizarEstadisticas(data.data, data.data.length);
+            } catch (error) {
+                console.error('Error:', error);
+                loadingState.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            }
+        }
+
+        function actualizarEstadisticas(ordenes, total) {
+            document.getElementById('statTotal').textContent = total;
+            const importeTotal = ordenes.reduce((sum, o) => sum + parseFloat(o.importe_total || 0), 0);
+            document.getElementById('statImporte').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(importeTotal);
+            const promedio = total > 0 ? importeTotal / total : 0;
+            document.getElementById('statPromedio').textContent = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(promedio);
+        }
+
+        function renderizarOrdenes(ordenes) {
+            const tabla = document.getElementById('tablaOrdenes');
+            tabla.innerHTML = '';
+
+            ordenes.forEach(orden => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-[#282e39]/50 transition-colors';
+
+                tr.innerHTML = `
+                    <td class="p-4 font-mono text-white font-medium">${orden.numero_orden || `#${orden.id}`}</td>
+                    <td class="p-4 text-gray-400">${new Date(orden.fecha_creacion).toLocaleDateString('es-ES')}</td>
+                    <td class="p-4 text-white font-medium">${orden.cliente_nombre}</td>
+                    <td class="p-4">
+                        <div class="text-white text-sm">${orden.vehiculo_matricula || 'N/A'}</div>
+                        <div class="text-xs text-gray-500">${orden.vehiculo_marca || ''}</div>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 text-xs font-semibold rounded bg-blue-900/30 text-blue-300 border border-blue-900/50">${orden.estado_nombre || 'Sin estado'}</span>
+                    </td>
+                    <td class="p-4 text-right font-bold text-white">${parseFloat(orden.importe_total || 0).toFixed(2)} €</td>
+                    <td class="p-4 text-right">
+                        <button onclick="mostrarModalConfirmacion(${orden.id}, '${orden.numero_orden || '#' + orden.id}', '${orden.cliente_nombre}', ${orden.importe_total || 0})" 
+                            class="px-4 py-2 text-xs font-bold bg-[var(--brand-orange)] text-white rounded hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">
+                            Facturar
+                        </button>
+                    </td>
+                `;
+                tabla.appendChild(tr);
+            });
+        }
+
+        // Modal Logic
+        window.mostrarModalConfirmacion = function (id, num, cliente, total) {
+            ordenSeleccionada = id;
+            document.getElementById('modalOrdenNumero').textContent = num;
+            document.getElementById('modalCliente').textContent = cliente;
+            document.getElementById('modalTotal').textContent = parseFloat(total).toFixed(2) + ' €';
+            document.getElementById('observacionesFactura').value = '';
+
+            const modal = document.getElementById('modalConfirmacion');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.firstElementChild.classList.remove('scale-95'), 10);
+        }
+
+        window.cerrarModal = function () {
+            const modal = document.getElementById('modalConfirmacion');
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                ordenSeleccionada = null;
+            }, 200);
+        }
+
+        window.confirmarGenerarFactura = async function () {
+            if (!ordenSeleccionada) return;
+            const observaciones = document.getElementById('observacionesFactura').value.trim();
+
+            try {
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/ordenes/${ordenSeleccionada}/emitir`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_usuario: userData.id, observaciones: observaciones || null })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert('Factura generada existosamente'); // Could replace with a prettier toast
+                    cerrarModal();
+                    cargarOrdenesPendientes();
+                } else {
+                    alert(`Error: ${data.error}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (cargarDatosUsuario()) {
+                // Inicializar selector de sucursal
+                currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
+                    onchange: (sucursalId) => {
+                        currentSucursalId = sucursalId;
+                        cargarOrdenesPendientes();
+                    }
+                });
+                cargarOrdenesPendientes();
+            }
+        });
+    </script>
+
+    <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

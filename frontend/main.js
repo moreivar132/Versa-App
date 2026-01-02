@@ -11,6 +11,9 @@ const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL;
 const LS_KEY = 'portal_facturas_v2';
 
 let cachedUser = null;
+const root = document.documentElement;
+(root && !root.classList.contains('auth-check-pending')) && root.classList.add('auth-check-pending');
+(root && root.classList.contains('auth-check-pending')) && root.setAttribute('data-auth-guard', 'enabled');
 
 (async function enforceAuth() {
   const user = await requireAuth();
@@ -42,7 +45,14 @@ let cachedUser = null;
     clearSession();
     window.location.replace('login.html');
   });
-})();
+})()
+  .catch(() => { /* Silencio para evitar romper la carga inicial */ })
+  .finally(() => {
+    if (cachedUser) {
+      root?.classList.remove('auth-check-pending');
+      root?.removeAttribute('data-auth-guard');
+    }
+  });
 
 // Activa/Desactiva filtros (para pruebas, mejor FALSE)
 const STRICT_FILTERS = false;   // si algo falla déjalo en false

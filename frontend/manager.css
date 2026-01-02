@@ -1,0 +1,529 @@
+/* ============================================
+   MANAGER.CSS - Estilos Globales del Panel
+   Archivo centralizado para variables y componentes
+   ============================================ */
+
+/* --- VARIABLES GLOBALES DEL TEMA --- */
+:root {
+    /* Brand Colors - Naranja Corporativo */
+    --brand-orange: #ff5f00;
+    --brand-orange-glow: rgba(255, 95, 0, 0.35);
+    --brand-orange-dark: #e05300;
+    --brand-orange-light: rgba(255, 95, 0, 0.1);
+
+    /* Background Colors */
+    --bg-deep: #0b0d11;
+    --bg-dark: #050505;
+    --bg-panel: rgba(22, 22, 26, 0.75);
+    --surface-bg: #111318;
+    --surface-secondary: #1a1d24;
+
+    /* Border Colors */
+    --border-subtle: rgba(255, 255, 255, 0.05);
+    --surface-border: #282e39;
+    --border-color: #444444;
+
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: #9da6b9;
+    --text-muted: #6b7280;
+
+    /* Input & Form */
+    --input-bg: #1a1d24;
+
+    /* Status Colors */
+    --success-color: #10b981;
+    --error-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #3b82f6;
+
+    /* Price Color */
+    --price-green: #22c55e;
+
+    /* Typography */
+    --font-main: 'Montserrat', sans-serif;
+}
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: "Montserrat", sans-serif;
+}
+
+/* --- LAYOUT FIXES --- */
+.container {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- MANAGER PANEL --- */
+.manager-panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border-subtle);
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    position: relative;
+    overflow: hidden;
+}
+
+.manager-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, var(--brand-orange), transparent);
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .manager-panel {
+        max-width: 100%;
+        padding: 20px;
+    }
+}
+
+/* --- FORM INPUTS (DARK THEME) --- */
+.form-input,
+.form-select,
+.form-textarea,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="search"],
+select,
+textarea {
+    background-color: #1a1d24 !important;
+    border: 1px solid #282e39 !important;
+    color: #ffffff !important;
+    border-radius: 10px;
+    padding: 10px 14px;
+    width: 100%;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    transition: all 0.25s ease;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--brand-orange) !important;
+    background-color: rgba(255, 101, 43, 0.05) !important;
+    box-shadow: 0 0 0 3px rgba(255, 101, 43, 0.15);
+}
+
+.form-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+    color: #6b7280 !important;
+    opacity: 1;
+}
+
+/* Ensure select options are also dark */
+select option {
+    background-color: #1a1d24;
+    color: #ffffff;
+}
+
+/* ============================================
+   GLOBAL PAGE LOADER
+   Loader de carga mientras se cargan los datos
+   From Uiverse.io by mobinkakei
+   ============================================ */
+
+/* Overlay del loader */
+.page-loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-deep);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.page-loader-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Loader wrapper - bouncing balls */
+.loader-wrapper {
+    width: 200px;
+    height: 60px;
+    position: relative;
+    z-index: 1;
+}
+
+.loader-wrapper .circle {
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    border-radius: 50%;
+    background-color: var(--brand-orange);
+    left: 15%;
+    transform-origin: 50%;
+    animation: circle-bounce .5s alternate infinite ease;
+}
+
+@keyframes circle-bounce {
+    0% {
+        top: 60px;
+        height: 5px;
+        border-radius: 50px 50px 25px 25px;
+        transform: scaleX(1.7);
+    }
+
+    40% {
+        height: 20px;
+        border-radius: 50%;
+        transform: scaleX(1);
+    }
+
+    100% {
+        top: 0%;
+    }
+}
+
+.loader-wrapper .circle:nth-child(2) {
+    left: 45%;
+    animation-delay: .2s;
+}
+
+.loader-wrapper .circle:nth-child(3) {
+    left: auto;
+    right: 15%;
+    animation-delay: .3s;
+}
+
+.loader-wrapper .shadow {
+    width: 20px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: rgba(255, 95, 0, 0.5);
+    position: absolute;
+    top: 62px;
+    transform-origin: 50%;
+    z-index: -1;
+    left: 15%;
+    filter: blur(1px);
+    animation: shadow-bounce .5s alternate infinite ease;
+}
+
+@keyframes shadow-bounce {
+    0% {
+        transform: scaleX(1.5);
+    }
+
+    40% {
+        transform: scaleX(1);
+        opacity: .7;
+    }
+
+    100% {
+        transform: scaleX(.2);
+        opacity: .4;
+    }
+}
+
+.loader-wrapper .shadow:nth-child(4) {
+    left: 45%;
+    animation-delay: .2s;
+}
+
+.loader-wrapper .shadow:nth-child(5) {
+    left: auto;
+    right: 15%;
+    animation-delay: .3s;
+}
+
+/* Loader text */
+.loader-text {
+    margin-top: 40px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    animation: pulse-text 2s ease-in-out infinite;
+}
+
+@keyframes pulse-text {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Logo en el loader */
+.loader-logo {
+    margin-bottom: 50px;
+}
+
+.loader-logo img {
+    height: 100px;
+    width: auto;
+    filter: drop-shadow(0 0 20px rgba(255, 95, 0, 0.4));
+    animation: logo-pulse 2s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 20px rgba(255, 95, 0, 0.4));
+    }
+
+    50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 30px rgba(255, 95, 0, 0.6));
+    }
+}
+
+/* ============================================
+   ANIMATED SEARCH INPUT COMPONENT
+   From Uiverse.io by Harsha2lucky
+   Adaptado al tema VERSA
+   ============================================ */
+
+/* Container del componente */
+.animated-search-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.animated-search-form {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.animated-search-form .search-input,
+.animated-search-form .caret {
+    display: block;
+    transition: all 0.5s linear;
+}
+
+/* Estilo del círculo inicial */
+.animated-search-form .search-input {
+    font-family: var(--font-main, 'Montserrat', sans-serif);
+    font-size: 0.9rem;
+    color: var(--text-primary, white);
+    background: transparent;
+    border-radius: 50%;
+    box-shadow: 0 0 0 0.2em var(--brand-orange, #ff5f00) inset;
+    caret-color: var(--brand-orange, #ff5f00);
+    width: 2.5em;
+    height: 2.5em;
+    padding: 0;
+    border: none !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+/* Estilo expandido (focus/valid) */
+.animated-search-form .search-input:focus,
+.animated-search-form .search-input:valid {
+    background: rgba(255, 95, 0, 0.08);
+    border-radius: 0.75em;
+    box-shadow: 0 0 0 2px var(--brand-orange, #ff5f00);
+    padding: 0.75em 1em 0.75em 2.5em;
+    transition-duration: 0.25s;
+    transition-delay: 0.25s;
+    width: 100%;
+    height: 3em;
+    cursor: text;
+}
+
+.animated-search-form .search-input:focus {
+    animation: searchShowCaret 1s steps(1);
+    outline: transparent;
+}
+
+.animated-search-form .search-input:focus+.caret,
+.animated-search-form .search-input:valid+.caret {
+    animation: searchHandleToCaret 1s linear forwards;
+    background: transparent;
+    width: 1px;
+    height: 1.2em;
+}
+
+.animated-search-form .search-input::-webkit-search-decoration {
+    -webkit-appearance: none;
+}
+
+/* Placeholder animation */
+.animated-search-form .search-input::placeholder {
+    color: var(--text-muted, #6b7280);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.animated-search-form .search-input:focus::placeholder,
+.animated-search-form .search-input:valid::placeholder {
+    opacity: 1;
+    transition-delay: 0.5s;
+}
+
+/* Caret (mango de lupa) */
+.animated-search-form .caret {
+    background: var(--brand-orange, #ff5f00);
+    border-radius: 0 0 0.125em 0.125em;
+    width: 0.2em;
+    height: 0.8em;
+    position: absolute;
+    left: 0.85em;
+    top: 50%;
+    transform: translateY(-50%) rotate(-45deg) translateY(0.2em);
+    transform-origin: 50% 0;
+    pointer-events: none;
+}
+
+/* Icono de búsqueda */
+.animated-search-form .search-icon {
+    position: absolute;
+    left: 0.8em;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--brand-orange, #ff5f00);
+    font-size: 1em;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.animated-search-form .search-input:focus~.search-icon,
+.animated-search-form .search-input:valid~.search-icon {
+    opacity: 1;
+    transition-delay: 0.5s;
+}
+
+.animated-search-form .search-input:focus~.caret,
+.animated-search-form .search-input:valid~.caret {
+    opacity: 0;
+}
+
+/* Label del componente */
+.animated-search-label {
+    color: var(--text-secondary, #9da6b9);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+
+.animated-search-label i {
+    margin-right: 0.5rem;
+}
+
+/* Animaciones */
+@keyframes searchShowCaret {
+    from {
+        caret-color: transparent;
+    }
+
+    to {
+        caret-color: var(--brand-orange, #ff5f00);
+    }
+}
+
+@keyframes searchHandleToCaret {
+    from {
+        background: var(--brand-orange, #ff5f00);
+        width: 0.2em;
+        height: 0.8em;
+        transform: translateY(-50%) rotate(-45deg) translateY(0.2em);
+    }
+
+    25% {
+        background: var(--brand-orange, #ff5f00);
+        width: 0.2em;
+        height: 0.8em;
+        transform: translateY(-50%) rotate(-180deg) translateY(0.2em);
+    }
+
+    50%,
+    100% {
+        background: transparent;
+        width: 1px;
+        height: 1.2em;
+        transform: translateY(-50%) rotate(-180deg) translateX(0);
+    }
+}
+
+/* Dropdown de resultados */
+.animated-search-wrapper .search-results-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
+    background: var(--surface-secondary, #1a1d24);
+    border: 1px solid var(--surface-border, #282e39);
+    border-radius: 0 0 12px 12px;
+    max-height: 350px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.animated-search-wrapper .search-results-dropdown.visible {
+    display: block;
+}
+
+/* Items del dropdown */
+.animated-search-wrapper .search-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--surface-border, #282e39);
+    transition: background 0.2s;
+}
+
+.animated-search-wrapper .search-item:hover {
+    background: var(--surface-bg, #111318);
+}
+
+.animated-search-wrapper .search-item:last-child {
+    border-bottom: none;
+}

@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Taller - Marketplace | VERSA</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700;900&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Modal animation */
+        @keyframes scale-in {
+            0% {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .animate-scale-in {
+            animation: scale-in 0.2s ease-out forwards;
+        }
+
+        /* Skeleton loader */
+        @keyframes skeleton-loading {
+            0% {
+                background-position: -200px 0;
+            }
+
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #1E1E1E 0px, #2A2A2A 40px, #1E1E1E 80px);
+            background-size: 200px 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        /* Slot button states */
+        .slot-btn {
+            transition: all 0.2s ease;
+        }
+
+        .slot-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .slot-btn.selected {
+            background: #ff4400;
+            border-color: #ff4400;
+            color: white;
+        }
+    </style>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff4400",
+                        "background-dark": "#121212",
+                    },
+                    fontFamily: {
+                        "display": ["Montserrat", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-dark text-[#E0E0E0] font-display">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-background-dark/95 backdrop-blur-sm border-b border-white/10">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <a href="/index.html" class="flex items-center gap-4">
+                        <img src="https://imgur.com/iBrjKwv.png" alt="VERSA Logo" class="h-6 w-auto">
+                        <h2 class="text-xl font-bold tracking-tight text-white">Marketplace</h2>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="/marketplace-busqueda.html"
+                        class="text-sm text-[#A0A0A0] hover:text-white transition-colors">
+                        ← Volver a búsqueda
+                    </a>
+                    <a href="/login.html"
+                        class="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold tracking-wide transition-opacity hover:opacity-90">
+                        <span class="truncate">Ingresar</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Loading State -->
+        <div id="loadingState" class="space-y-6">
+            <div class="skeleton h-32 rounded-xl"></div>
+            <div class="skeleton h-96 rounded-xl"></div>
+            <div class="skeleton h-64 rounded-xl"></div>
+        </div>
+
+        <!-- Content -->
+        <div id="content" class="hidden space-y-6">
+
+            <!-- Header Card -->
+            <div class="bg-[#1E1E1E] border border-white/10 rounded-xl p-6">
+                <div class="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-start gap-3 mb-2">
+                            <h1 id="tallerNombre" class="text-3xl font-black text-white"></h1>
+                            <span id="ofertaBadge"
+                                class="hidden px-3 py-1 bg-primary/20 border border-primary rounded-full text-primary text-xs font-bold">
+                                OFERTA
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-4 mb-4">
+                            <!-- Rating -->
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1 text-yellow-500">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 24px; font-variation-settings: 'FILL' 1;">star</span>
+                                    <span id="tallerRating" class="text-xl font-bold"></span>
+                                </div>
+                                <span id="tallerReviewsCount" class="text-sm text-[#707070]"></span>
+                            </div>
+
+                            <!-- Location -->
+                            <div class="flex items-center gap-1 text-[#A0A0A0]">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">location_on</span>
+                                <span id="tallerDireccion" class="text-sm"></span>
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="flex items-center gap-1 text-[#A0A0A0]">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">phone</span>
+                                <span id="tallerTelefono" class="text-sm"></span>
+                            </div>
+
+                            <!-- Schedule -->
+                            <div class="flex items-center gap-1 text-[#A0A0A0]">
+                                <span class="material-symbols-outlined" style="font-size: 20px;">schedule</span>
+                                <span id="tallerHorario" class="text-sm"></span>
+                            </div>
+                        </div>
+
+                        <p id="tallerDescripcion" class="text-[#A0A0A0] leading-relaxed"></p>
+                    </div>
+
+                    <button id="openReservaBtn"
+                        class="px-8 py-4 bg-primary text-white text-lg font-bold rounded-lg hover:opacity-90 transition-opacity whitespace-nowrap flex items-center gap-2">
+                        <span class="material-symbols-outlined" style="font-size: 24px;">event_available</span>
+                        <span>Reservar cita</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Galería de fotos -->
+            <div id="fotosSection" class="hidden">
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 28px;">photo_library</span>
+                    Galería
+                </h2>
+                <div id="fotosContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Fotos will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Ofertas (if available) -->
+            <div id="ofertasSection" class="hidden">
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 28px;">local_offer</span>
+                    Ofertas disponibles
+                </h2>
+                <div id="ofertasContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Ofertas will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Servicios -->
+            <div>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 28px;">build</span>
+                    Servicios disponibles
+                </h2>
+                <div class="bg-[#1E1E1E] border border-white/10 rounded-xl overflow-hidden">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-[#121212] border-b border-white/10">
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Servicio</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Categoría</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Duración</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Precio</th>
+                                <th class="px-6 py-4 text-left text-sm font-semibold text-white">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="serviciosTableBody">
+                            <!-- Services will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Disponibilidad -->
+            <div>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 28px;">calendar_month</span>
+                    Disponibilidad
+                </h2>
+                <div class="bg-[#1E1E1E] border border-white/10 rounded-xl p-6">
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-white mb-2">Selecciona una fecha</label>
+                        <input type="date" id="disponibilidadFecha"
+                            class="w-full sm:w-auto px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                    </div>
+
+                    <div id="slotsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                        <!-- Availability slots will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reseñas -->
+            <div>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 28px;">reviews</span>
+                    Reseñas de clientes
+                </h2>
+                <div id="resenasContainer" class="space-y-4">
+                    <!-- Reviews will be inserted here -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal Login Requerido -->
+    <div id="loginRequiredModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
+        <div class="bg-[#1E1E1E] border border-white/10 rounded-xl w-full max-w-md p-6 animate-scale-in">
+
+            <!-- Icon -->
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 32px;">login</span>
+                </div>
+                <h3 class="text-2xl font-bold text-white">Inicia sesión para reservar</h3>
+                <p class="text-[#A0A0A0] mt-2">Para reservar una cita, necesitas tener una cuenta en VERSA</p>
+            </div>
+
+            <!-- Info -->
+            <div class="bg-[#121212] border border-white/10 rounded-lg p-4 mb-6">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 20px;">info</span>
+                    <div class="text-sm text-[#A0A0A0]">
+                        <p class="mb-2">Con tu cuenta podrás:</p>
+                        <ul class="space-y-1">
+                            <li class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-green-500"
+                                    style="font-size: 16px;">check</span>
+                                Gestionar tus citas
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-green-500"
+                                    style="font-size: 16px;">check</span>
+                                Guardar tus vehículos
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-green-500"
+                                    style="font-size: 16px;">check</span>
+                                Recibir notificaciones
+                            </li>
+                            <li class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-green-500"
+                                    style="font-size: 16px;">check</span>
+                                Acceder a tu historial
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="space-y-3">
+                <a href="/cliente-login.html" id="loginRedirectBtn"
+                    class="flex items-center justify-center gap-2 w-full px-6 py-4 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-opacity">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">login</span>
+                    Iniciar sesión
+                </a>
+                <a href="/cliente-register.html" id="registerRedirectBtn"
+                    class="flex items-center justify-center gap-2 w-full px-6 py-4 bg-white/5 border border-white/10 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">person_add</span>
+                    Crear cuenta nueva
+                </a>
+                <button id="closeLoginRequiredBtn"
+                    class="w-full px-6 py-3 text-[#A0A0A0] hover:text-white transition-colors">
+                    Cancelar
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Reserva -->
+    <div id="reservaModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+        <div
+            class="bg-[#1E1E1E] border border-white/10 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
+
+            <!-- Modal Header -->
+            <div class="sticky top-0 bg-[#1E1E1E] border-b border-white/10 px-6 py-4 flex items-center justify-between">
+                <h3 class="text-2xl font-bold text-white">Reservar cita</h3>
+                <button id="closeModalBtn" class="text-[#A0A0A0] hover:text-white transition-colors">
+                    <span class="material-symbols-outlined" style="font-size: 28px;">close</span>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6">
+                <form id="reservaForm" class="space-y-4">
+
+                    <!-- Servicio -->
+                    <div>
+                        <label class="block text-sm font-semibold text-white mb-2">Servicio *</label>
+                        <select id="reservaServicio" required
+                            class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                            <option value="">Selecciona un servicio</option>
+                        </select>
+                    </div>
+
+                    <!-- Fecha y Hora -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-white mb-2">Fecha *</label>
+                            <input type="date" id="reservaFecha" required
+                                class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-white mb-2">Hora *</label>
+                            <select id="reservaHora" required
+                                class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                <option value="">Selecciona una hora</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Datos cliente -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-white mb-2">Nombre *</label>
+                            <input type="text" id="reservaNombre" required placeholder="Tu nombre completo"
+                                class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-white mb-2">Teléfono *</label>
+                            <input type="tel" id="reservaTelefono" required placeholder="+34 600 00 00 00"
+                                class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-white mb-2">Email *</label>
+                        <input type="email" id="reservaEmail" required placeholder="tu@email.com"
+                            class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                    </div>
+
+                    <!-- Vehículo -->
+                    <div id="vehiculoSection">
+                        <!-- Selector de vehículo existente (solo para usuarios logueados) -->
+                        <div id="vehiculoSelector" class="hidden mb-4">
+                            <label class="block text-sm font-semibold text-white mb-2">Vehículo *</label>
+                            <select id="reservaVehiculoExistente"
+                                class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                <option value="">Selecciona un vehículo</option>
+                                <option value="nuevo">+ Añadir nuevo vehículo</option>
+                            </select>
+                        </div>
+
+                        <!-- Formulario de vehículo (visible siempre para guests, o al seleccionar "nuevo" para logueados) -->
+                        <div id="vehiculoForm" class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-sm font-semibold text-white">Datos del vehículo *</label>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-[#A0A0A0] mb-1">Tipo *</label>
+                                    <select id="reservaTipoVehiculo" required
+                                        class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                        <option value="">Selecciona</option>
+                                        <option value="moto">Moto</option>
+                                        <option value="coche">Coche</option>
+                                        <option value="bici">Bici/E-bike</option>
+                                        <option value="furgoneta">Furgoneta</option>
+                                        <option value="camion">Camión</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#A0A0A0] mb-1">Matrícula</label>
+                                    <input type="text" id="reservaMatricula" placeholder="1234-ABC"
+                                        class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-[#A0A0A0] mb-1">Marca</label>
+                                    <input type="text" id="reservaMarca" placeholder="Honda, BMW, Toyota..."
+                                        class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#A0A0A0] mb-1">Modelo</label>
+                                    <input type="text" id="reservaModelo" placeholder="CBR 600, X5..."
+                                        class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs text-[#A0A0A0] mb-1">Año</label>
+                                    <input type="number" id="reservaAnio" placeholder="2023" min="1900" max="2030"
+                                        class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#A0A0A0] mb-1">Color</label>
+                                    <input type="text" id="reservaColor" placeholder="Rojo, Negro..."
+                                        class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-[#A0A0A0] mb-1">CC (cilindrada)</label>
+                                    <input type="text" id="reservaCC" placeholder="600, 1000..."
+                                        class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notas -->
+                    <div>
+                        <label class="block text-sm font-semibold text-white mb-2">Notas adicionales (opcional)</label>
+                        <textarea id="reservaNotas" rows="3"
+                            placeholder="Cualquier información adicional que debamos saber..."
+                            class="w-full px-4 py-3 bg-[#121212] border border-white/10 rounded-lg text-white placeholder-[#707070] focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"></textarea>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="flex gap-3 pt-4">
+                        <button type="submit"
+                            class="flex-1 px-6 py-4 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-opacity">
+                            Confirmar reserva
+                        </button>
+                        <button type="button" id="cancelReservaBtn"
+                            class="px-6 py-4 bg-white/5 border border-white/10 text-white font-semibold rounded-lg hover:bg-white/10 transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+
+                </form>
+
+                <!-- Success Message (hidden by default) -->
+                <div id="reservaSuccess" class="hidden text-center py-8">
+                    <span class="material-symbols-outlined text-primary"
+                        style="font-size: 80px; font-variation-settings: 'FILL' 1;">check_circle</span>
+                    <h3 class="text-2xl font-bold text-white mt-4">¡Reserva confirmada!</h3>
+                    <p class="text-[#A0A0A0] mt-2">ID de reserva: <span id="reservaId"
+                            class="font-mono text-primary"></span></p>
+                    <p class="text-[#A0A0A0] mt-2">Recibirás un email de confirmación en breve.</p>
+                    <button id="closeSuccessBtn"
+                        class="mt-6 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:opacity-90 transition-opacity">
+                        Cerrar
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- App Script -->
+    <script type="module">
+        import { getSucursalDetail, getAvailability } from './services/marketplace-service.js';
+        import { getStoredCustomer, isLoggedIn, crearCitaPortal, getClienteConVehiculos } from './services/cliente-service.js';
+
+        // State
+        let tallerData = null;
+        let availabilityData = [];
+        let vehiculosCliente = []; // Vehículos del cliente logueado
+
+        // Get sucursal ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sucursalId = urlParams.get('id_sucursal');
+
+        // DOM Elements
+        const loadingState = document.getElementById('loadingState');
+        const content = document.getElementById('content');
+        const reservaModal = document.getElementById('reservaModal');
+        const reservaForm = document.getElementById('reservaForm');
+        const reservaSuccess = document.getElementById('reservaSuccess');
+        const loginRequiredModal = document.getElementById('loginRequiredModal');
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Update Header if logged in
+            const customer = getStoredCustomer();
+            if (customer) {
+                const loginLink = document.querySelector('header a[href="/login.html"]');
+                if (loginLink) {
+                    const container = loginLink.parentElement;
+                    container.innerHTML = `
+                        <a href="/marketplace-busqueda.html" class="text-sm text-[#A0A0A0] hover:text-white transition-colors mr-4">
+                            ← Volver a búsqueda
+                        </a>
+                        <a href="/cliente-dashboard.html" class="flex items-center gap-3 hover:bg-white/5 py-1 px-2 rounded-lg transition-colors">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                ${customer.nombre ? customer.nombre[0].toUpperCase() : 'U'}
+                            </div>
+                            <span class="text-white text-sm font-bold hidden sm:block">${customer.nombre ? customer.nombre.split(' ')[0] : 'Mi Cuenta'}</span>
+                        </a>
+                    `;
+                }
+            }
+
+            if (!sucursalId) {
+                alert('No se especificó un taller');
+                window.location.href = '/marketplace-busqueda.html';
+                return;
+            }
+
+            await loadTallerData();
+            setupEventListeners();
+
+            // Si el usuario acaba de loguearse y tenía un servicio pendiente, abrir modal
+            const pendingServicioId = sessionStorage.getItem('pendingReservaServicioId');
+            if (pendingServicioId && isLoggedIn()) {
+                sessionStorage.removeItem('pendingReservaServicioId');
+                // Esperar un momento para que todo esté cargado
+                setTimeout(() => {
+                    openReservaModal(parseInt(pendingServicioId));
+                }, 500);
+            }
+        });
+
+        // Load Taller Data
+        async function loadTallerData() {
+            try {
+                tallerData = await getSucursalDetail(sucursalId);
+                renderTaller();
+
+                // Auto-load availability for today
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('disponibilidadFecha').value = today;
+                await loadAvailability(today);
+            } catch (error) {
+                console.error('Error loading taller:', error);
+                alert('Error cargando los datos del taller');
+            } finally {
+                loadingState.classList.add('hidden');
+                content.classList.remove('hidden');
+            }
+        }
+
+        // Render Taller
+        function renderTaller() {
+            // Handle both mock data (nombre) and real API data (titulo_publico)
+            const nombre = tallerData.nombre || tallerData.titulo_publico || 'Taller';
+            const rating = parseFloat(tallerData.rating) || 0;
+            const reviewsCount = tallerData.reviews_count || 0;
+            const direccion = tallerData.direccion || 'Consultar dirección';
+            const telefono = tallerData.telefono || tallerData.telefono_publico || 'Consultar';
+            const horario = tallerData.horario || 'Consultar horario';
+            const descripcion = tallerData.descripcion || tallerData.descripcion_publica || 'Taller especializado con amplia experiencia.';
+
+            document.getElementById('tallerNombre').textContent = nombre;
+            document.getElementById('tallerRating').textContent = rating.toFixed(1);
+            document.getElementById('tallerReviewsCount').textContent = `(${reviewsCount} reseñas)`;
+            document.getElementById('tallerDireccion').textContent = direccion;
+            document.getElementById('tallerTelefono').textContent = telefono;
+            document.getElementById('tallerHorario').textContent = horario;
+            document.getElementById('tallerDescripcion').textContent = descripcion;
+
+            // Oferta badge
+            if (tallerData.tiene_oferta) {
+                document.getElementById('ofertaBadge').classList.remove('hidden');
+            }
+
+            // Render fotos gallery
+            const fotos = tallerData.fotos || [];
+            if (fotos.length > 0) {
+                document.getElementById('fotosSection').classList.remove('hidden');
+                const fotosContainer = document.getElementById('fotosContainer');
+
+                // Guardar fotos en global para acceso seguro (evita problemas con base64)
+                window._galeriaFotos = fotos;
+
+                fotosContainer.innerHTML = fotos.map((foto, index) => `
+          <div class="aspect-video rounded-xl overflow-hidden cursor-pointer hover:opacity-80 hover:scale-[1.02] transition-all border border-white/10"
+               onclick="window.openGaleriaFoto(${index})">
+            <img src="${foto}" alt="Foto ${index + 1}" class="w-full h-full object-cover">
+          </div>
+        `).join('');
+
+                console.log(`[DEBUG] Galería renderizada con ${fotos.length} fotos`);
+            }
+
+            // Render ofertas
+            const ofertas = tallerData.ofertas || [];
+            if (ofertas.length > 0) {
+                document.getElementById('ofertasSection').classList.remove('hidden');
+                const ofertasContainer = document.getElementById('ofertasContainer');
+                ofertasContainer.innerHTML = ofertas.map(oferta => `
+          <div class="bg-[#121212] border border-primary/30 rounded-xl p-4">
+            <div class="flex items-start justify-between mb-2">
+              <h3 class="font-bold text-white text-lg">${oferta.titulo}</h3>
+              <span class="px-3 py-1 bg-primary text-white text-sm font-bold rounded-full">-${oferta.descuento || oferta.valor_descuento}%</span>
+            </div>
+            <p class="text-[#A0A0A0] text-sm mb-2">${oferta.descripcion || ''}</p>
+            <p class="text-xs text-[#707070]">Válido hasta: ${oferta.validez || oferta.fecha_fin || 'Consultar'}</p>
+          </div>
+        `).join('');
+            }
+
+            // Get servicios - handle both servicios_completos (mock) and servicios_destacados (real API)
+            const servicios = tallerData.servicios_completos || tallerData.servicios_destacados || [];
+
+            // Render servicios
+            const serviciosTableBody = document.getElementById('serviciosTableBody');
+            if (servicios.length > 0) {
+                serviciosTableBody.innerHTML = servicios.map(servicio => `
+        <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+          <td class="px-6 py-4 font-semibold text-white">${servicio.nombre}</td>
+          <td class="px-6 py-4 text-sm text-[#A0A0A0]">${servicio.categoria || 'General'}</td>
+          <td class="px-6 py-4 text-sm text-[#A0A0A0]">${servicio.duracion_min} min</td>
+          <td class="px-6 py-4 font-bold text-primary">${servicio.precio}€</td>
+          <td class="px-6 py-4">
+            <button onclick="openReservaModal(${servicio.id || 0})"
+              class="px-4 py-2 bg-primary/20 border border-primary text-primary text-sm font-bold rounded hover:bg-primary hover:text-white transition-colors">
+              Reservar
+            </button>
+          </td>
+        </tr>
+      `).join('');
+            } else {
+                serviciosTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="px-6 py-8 text-center text-[#707070]">
+            No hay servicios disponibles en este momento
+          </td>
+        </tr>
+      `;
+            }
+
+            // Populate servicio dropdown in modal
+            const reservaServicio = document.getElementById('reservaServicio');
+            if (servicios.length > 0) {
+                reservaServicio.innerHTML = '<option value="">Selecciona un servicio</option>' +
+                    servicios.map(s => `<option value="${s.id || 0}">${s.nombre} - ${s.precio}€</option>`).join('');
+            }
+
+            // Render reseñas
+            const resenas = tallerData.resenas || [];
+            const resenasContainer = document.getElementById('resenasContainer');
+
+            // Inicializar array global de fotos
+            window.resenasPhotos = [];
+
+            // Función para formatear fecha
+            const formatearFecha = (fecha) => {
+                if (!fecha) return '';
+                const d = new Date(fecha);
+                return d.toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                });
+            };
+
+            // Array global para almacenar todas las fotos de reseñas (evita problemas con base64 en onclick)
+            window.resenasPhotos = [];
+
+            if (resenas.length > 0) {
+                resenasContainer.innerHTML = resenas.map((resena, resenaIdx) => {
+                    // Obtener fotos (puede ser array o string JSON)
+                    let fotos = resena.fotos || resena.fotos_json || [];
+                    if (typeof fotos === 'string') {
+                        try { fotos = JSON.parse(fotos); } catch (e) { fotos = []; }
+                    }
+                    // Guardar fotos en global para acceso seguro
+                    window.resenasPhotos[resenaIdx] = fotos;
+
+                    if (fotos.length > 0) {
+                        console.log(`[DEBUG] Reseña ${resenaIdx} tiene ${fotos.length} fotos.`);
+                        console.log(`[DEBUG] Foto 0 src size: ${fotos[0].length}`);
+                    }
+
+                    return `
+                        <div class="bg-[#1E1E1E] border border-white/10 rounded-xl p-6">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-bold text-white">${resena.cliente || resena.cliente_nombre || 'Cliente'}</h4>
+                                    <p class="text-xs text-[#707070]">${formatearFecha(resena.fecha || resena.created_at)}</p>
+                                </div>
+                                <div class="flex items-center gap-1 text-yellow-500">
+                                    ${Array(5).fill(0).map((_, i) => `
+                                        <span class="material-symbols-outlined" style="font-size: 16px; font-variation-settings: 'FILL' ${i < resena.rating ? 1 : 0};">star</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <p class="text-[#E0E0E0] mb-3">${resena.comentario || ''}</p>
+                            ${fotos.length > 0 ? `
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    ${fotos.map((_, fotoIdx) => `
+                                        <img src="${window.resenasPhotos[resenaIdx][fotoIdx]}" alt="Foto reseña" 
+                                             class="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                             onclick="showFotoModal(window.resenasPhotos[${resenaIdx}][${fotoIdx}])">
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                resenasContainer.innerHTML = `
+                    <div class="bg-[#1E1E1E] border border-white/10 rounded-xl p-6 text-center">
+                        <p class="text-[#707070]">No hay reseñas todavía</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load Availability
+        async function loadAvailability(fecha) {
+            try {
+                availabilityData = await getAvailability(sucursalId, fecha);
+                renderAvailability();
+            } catch (error) {
+                console.error('Error loading availability:', error);
+            }
+        }
+
+        // Render Availability
+        function renderAvailability() {
+            const slotsContainer = document.getElementById('slotsContainer');
+
+            if (!availabilityData || availabilityData.length === 0) {
+                slotsContainer.innerHTML = `
+          <div class="col-span-full text-center py-6 text-[#707070]">
+            <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.5;">event_busy</span>
+            <p class="mt-2">No hay horarios disponibles este día</p>
+            <p class="text-sm">Selecciona otra fecha</p>
+          </div>
+        `;
+                return;
+            }
+
+            slotsContainer.innerHTML = availabilityData.map(slot => `
+        <button ${!slot.disponible ? 'disabled' : ''} 
+                class="slot-btn px-4 py-3 bg-[#121212] border ${slot.disponible ? 'border-white/10 hover:border-primary hover:bg-primary/10' : 'border-white/5'} rounded-lg text-white font-semibold transition-colors"
+                onclick="selectSlot('${slot.hora}')">
+          ${slot.hora}
+        </button>
+      `).join('');
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Open modal
+            document.getElementById('openReservaBtn').addEventListener('click', () => {
+                openReservaModal();
+            });
+
+            // Close modal
+            document.getElementById('closeModalBtn').addEventListener('click', closeReservaModal);
+            document.getElementById('cancelReservaBtn').addEventListener('click', closeReservaModal);
+            document.getElementById('closeSuccessBtn').addEventListener('click', closeReservaModal);
+
+            // Close login required modal
+            document.getElementById('closeLoginRequiredBtn').addEventListener('click', closeLoginRequiredModal);
+
+            // Set redirect URLs for login/register buttons
+            const currentUrl = window.location.href;
+            const loginBtn = document.getElementById('loginRedirectBtn');
+            const registerBtn = document.getElementById('registerRedirectBtn');
+            loginBtn.href = `/cliente-login.html?redirect=${encodeURIComponent(currentUrl)}`;
+            registerBtn.href = `/cliente-register.html?redirect=${encodeURIComponent(currentUrl)}`;
+
+            // Disponibilidad date change
+            document.getElementById('disponibilidadFecha').addEventListener('change', (e) => {
+                loadAvailability(e.target.value);
+            });
+
+            // Reserva form submit
+            reservaForm.addEventListener('submit', handleReservaSubmit);
+
+            // Reserva fecha change -> update hora options
+            document.getElementById('reservaFecha').addEventListener('change', async (e) => {
+                const fecha = e.target.value;
+                const horaSelect = document.getElementById('reservaHora');
+
+                try {
+                    const slots = await getAvailability(sucursalId, fecha);
+                    const availableSlots = slots.filter(s => s.disponible);
+
+                    if (availableSlots.length === 0) {
+                        horaSelect.innerHTML = '<option value="">No hay horas disponibles</option>';
+                    } else {
+                        horaSelect.innerHTML = '<option value="">Selecciona una hora</option>' +
+                            availableSlots.map(s => `<option value="${s.hora}">${s.hora}</option>`).join('');
+                    }
+                } catch (error) {
+                    console.error('Error loading slots:', error);
+                    horaSelect.innerHTML = '<option value="">Error cargando horas</option>';
+                }
+            });
+        }
+
+        // Open Login Required Modal
+        function openLoginRequiredModal() {
+            loginRequiredModal.classList.remove('hidden');
+        }
+
+        // Close Login Required Modal
+        function closeLoginRequiredModal() {
+            loginRequiredModal.classList.add('hidden');
+        }
+
+        // Open Reserva Modal
+        window.openReservaModal = async function (servicioId = null) {
+            // Verificar si el usuario está logueado
+            if (!isLoggedIn()) {
+                if (servicioId) {
+                    // Guardar el servicio seleccionado para después del login
+                    sessionStorage.setItem('pendingReservaServicioId', servicioId);
+                }
+                openLoginRequiredModal();
+                return;
+            }
+
+            if (servicioId) {
+                document.getElementById('reservaServicio').value = servicioId;
+            }
+
+            const vehiculoSelector = document.getElementById('vehiculoSelector');
+            const vehiculoForm = document.getElementById('vehiculoForm');
+            const vehiculoSelect = document.getElementById('reservaVehiculoExistente');
+            const tipoVehiculoInput = document.getElementById('reservaTipoVehiculo');
+
+            // Autofill user data if logged in
+            const customer = getStoredCustomer();
+            if (customer) {
+                if (customer.nombre) document.getElementById('reservaNombre').value = customer.nombre;
+                if (customer.email) document.getElementById('reservaEmail').value = customer.email;
+
+                // Try multiple properties for phone
+                const phone = customer.telefono || customer.cliente_telefono || customer.phone;
+                if (phone) document.getElementById('reservaTelefono').value = phone;
+
+                // Load vehicles for logged in user
+                try {
+                    const response = await getClienteConVehiculos();
+                    if (response.ok && response.data) {
+                        // Autofill with fresh data from API (more reliable than localStorage)
+                        const clienteData = response.data.cliente;
+                        if (clienteData) {
+                            if (clienteData.nombre) document.getElementById('reservaNombre').value = clienteData.nombre;
+                            if (clienteData.email) document.getElementById('reservaEmail').value = clienteData.email;
+                            if (clienteData.telefono) document.getElementById('reservaTelefono').value = clienteData.telefono;
+                        }
+
+                        vehiculosCliente = response.data.vehiculos || [];
+
+                        if (vehiculosCliente.length > 0) {
+                            // Show vehicle selector
+                            vehiculoSelector.classList.remove('hidden');
+                            vehiculoForm.classList.add('hidden');
+                            tipoVehiculoInput.removeAttribute('required');
+
+                            // Populate dropdown
+                            vehiculoSelect.innerHTML = `
+                                <option value="">Selecciona un vehículo</option>
+                                ${vehiculosCliente.map(v => `
+                                    <option value="${v.id}">${v.marca || 'Sin marca'} ${v.modelo || ''} ${v.matricula ? '(' + v.matricula + ')' : ''}</option>
+                                `).join('')}
+                                <option value="nuevo">+ Añadir nuevo vehículo</option>
+                            `;
+
+                            // Handle vehicle selection change
+                            vehiculoSelect.onchange = () => {
+                                if (vehiculoSelect.value === 'nuevo' || vehiculoSelect.value === '') {
+                                    vehiculoForm.classList.remove('hidden');
+                                    if (vehiculoSelect.value === 'nuevo') {
+                                        tipoVehiculoInput.setAttribute('required', 'required');
+                                    }
+                                } else {
+                                    vehiculoForm.classList.add('hidden');
+                                    tipoVehiculoInput.removeAttribute('required');
+                                }
+                            };
+                        } else {
+                            // No vehicles - show form
+                            vehiculoSelector.classList.add('hidden');
+                            vehiculoForm.classList.remove('hidden');
+                            tipoVehiculoInput.setAttribute('required', 'required');
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Session check failed (invalid token?), falling back to guest mode:', error);
+                    // If session invalid, clear it locally so next time we don't try
+                    if (error.message && (error.message.includes('Sesión expirada') || error.message.includes('401') || error.message.includes('403'))) {
+                        localStorage.removeItem('versa_customer_token');
+                        localStorage.removeItem('versa_customer');
+                    }
+
+                    // Fallback UI (show vehicle form)
+                    vehiculoSelector.classList.add('hidden');
+                    vehiculoForm.classList.remove('hidden');
+                    tipoVehiculoInput.setAttribute('required', 'required');
+                }
+            }
+
+            // Set min date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('reservaFecha').setAttribute('min', today);
+
+            reservaModal.classList.remove('hidden');
+            reservaForm.classList.remove('hidden');
+            reservaSuccess.classList.add('hidden');
+        };
+
+        // Close Reserva Modal
+        function closeReservaModal() {
+            reservaModal.classList.add('hidden');
+            reservaForm.reset();
+            vehiculosCliente = [];
+        }
+
+        // Select Slot (from availability section)
+        window.selectSlot = function (hora) {
+            const fecha = document.getElementById('disponibilidadFecha').value;
+            document.getElementById('reservaFecha').value = fecha;
+            document.getElementById('reservaHora').innerHTML = `<option value="${hora}" selected>${hora}</option>`;
+            openReservaModal();
+        };
+
+        // Handle Reserva Submit
+        async function handleReservaSubmit(e) {
+            e.preventDefault();
+
+            // Verificación de seguridad: debe estar logueado
+            if (!isLoggedIn()) {
+                openLoginRequiredModal();
+                return;
+            }
+
+            const fecha = document.getElementById('reservaFecha').value;
+            const hora = document.getElementById('reservaHora').value;
+            const servicioId = parseInt(document.getElementById('reservaServicio').value);
+            const vehiculoSelectValue = document.getElementById('reservaVehiculoExistente')?.value;
+
+            // Build fecha_hora ISO string
+            const fechaHora = `${fecha}T${hora}:00`;
+
+            // Decide if using existing vehicle or creating new one
+            let id_vehiculo = null;
+            let vehiculo_data = null;
+
+            if (vehiculoSelectValue && vehiculoSelectValue !== '' && vehiculoSelectValue !== 'nuevo') {
+                // Using existing vehicle
+                id_vehiculo = parseInt(vehiculoSelectValue);
+            } else {
+                // Creating new vehicle
+                vehiculo_data = {
+                    tipo: document.getElementById('reservaTipoVehiculo').value,
+                    matricula: document.getElementById('reservaMatricula').value || null,
+                    marca: document.getElementById('reservaMarca')?.value || null,
+                    modelo: document.getElementById('reservaModelo')?.value || null,
+                    anio: document.getElementById('reservaAnio')?.value ? parseInt(document.getElementById('reservaAnio').value) : null,
+                    color: document.getElementById('reservaColor')?.value || null,
+                    cc: document.getElementById('reservaCC')?.value || null
+                };
+
+                if (!vehiculo_data.tipo) {
+                    alert('Selecciona el tipo de vehículo');
+                    return;
+                }
+            }
+
+            try {
+                // Build payload for logged in user
+                const payload = {
+                    id_sucursal: parseInt(sucursalId),
+                    fecha_hora: fechaHora,
+                    id_servicio: servicioId,
+                    notas: document.getElementById('reservaNotas').value || null
+                };
+
+                if (id_vehiculo) {
+                    payload.id_vehiculo = id_vehiculo;
+                } else {
+                    payload.vehiculo_data = vehiculo_data;
+                }
+
+                const result = await crearCitaPortal(payload);
+
+                if (result.ok) {
+                    document.getElementById('reservaId').textContent = result.data.cita.id;
+                    reservaForm.classList.add('hidden');
+                    reservaSuccess.classList.remove('hidden');
+                } else {
+                    throw new Error(result.error || 'Error al crear la cita');
+                }
+
+            } catch (error) {
+                console.error('Error creating reservation:', error);
+                alert(`Error: ${error.message}`);
+            }
+        }
+
+        // Open Photo Modal (simple lightbox)
+        window.openPhotoModal = function (fotoUrl) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4';
+            modal.onclick = () => modal.remove();
+            modal.innerHTML = `
+              <img src="${fotoUrl}" alt="Foto" class="max-w-full max-h-full object-contain rounded-lg">
+              <button class="absolute top-4 right-4 text-white hover:text-primary transition-colors" onclick="this.parentElement.remove(); event.stopPropagation();">
+                <span class="material-symbols-outlined" style="font-size: 36px;">close</span>
+              </button>
+            `;
+            document.body.appendChild(modal);
+        };
+
+        // Open Gallery Photo (uses global array for base64 support)
+        window.openGaleriaFoto = function (index) {
+            const fotos = window._galeriaFotos || [];
+            if (!fotos.length || index < 0 || index >= fotos.length) return;
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4';
+            modal.id = 'galeria-lightbox';
+
+            const renderLightbox = (currentIdx) => {
+                const foto = fotos[currentIdx];
+                return `
+                    <img src="${foto}" alt="Foto ${currentIdx + 1}" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl">
+                    
+                    <!-- Close button -->
+                    <button class="absolute top-4 right-4 text-white hover:text-primary transition-colors bg-black/50 rounded-full p-2" 
+                            onclick="document.getElementById('galeria-lightbox').remove(); event.stopPropagation();">
+                        <span class="material-symbols-outlined" style="font-size: 32px;">close</span>
+                    </button>
+                    
+                    ${fotos.length > 1 ? `
+                        <!-- Navigation arrows -->
+                        <button class="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-primary transition-colors bg-black/50 rounded-full p-2"
+                                onclick="event.stopPropagation(); window.navigateGaleria(${currentIdx - 1});">
+                            <span class="material-symbols-outlined" style="font-size: 32px;">chevron_left</span>
+                        </button>
+                        <button class="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:text-primary transition-colors bg-black/50 rounded-full p-2"
+                                onclick="event.stopPropagation(); window.navigateGaleria(${currentIdx + 1});">
+                            <span class="material-symbols-outlined" style="font-size: 32px;">chevron_right</span>
+                        </button>
+                        
+                        <!-- Dots indicator -->
+                        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                            ${fotos.map((_, i) => `
+                                <button class="w-2.5 h-2.5 rounded-full ${i === currentIdx ? 'bg-primary' : 'bg-white/50'} transition-colors"
+                                        onclick="event.stopPropagation(); window.navigateGaleria(${i});"></button>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Counter -->
+                        <div class="absolute top-4 left-4 bg-black/50 text-white text-sm px-3 py-1 rounded-full">
+                            ${currentIdx + 1} / ${fotos.length}
+                        </div>
+                    ` : ''}
+                `;
+            };
+
+            modal.innerHTML = renderLightbox(index);
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+
+            document.body.appendChild(modal);
+
+            // Store current index for navigation
+            window._currentGaleriaIdx = index;
+        };
+
+        // Navigate gallery
+        window.navigateGaleria = function (newIdx) {
+            const fotos = window._galeriaFotos || [];
+            if (!fotos.length) return;
+
+            // Wrap around
+            if (newIdx < 0) newIdx = fotos.length - 1;
+            if (newIdx >= fotos.length) newIdx = 0;
+
+            // Remove old and open new
+            const oldModal = document.getElementById('galeria-lightbox');
+            if (oldModal) oldModal.remove();
+
+            window.openGaleriaFoto(newIdx);
+        };
+
+        // Alias for showFotoModal
+        window.showFotoModal = window.openPhotoModal;
+    </script>
+
+</body>
+
+</html>
