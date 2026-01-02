@@ -340,8 +340,18 @@
                 return;
             }
 
+            // Get API base URL (for production vs development)
+            let API_BASE_URL = '';
+            try {
+                if (import.meta && import.meta.env && import.meta.env.VITE_API_URL) {
+                    API_BASE_URL = import.meta.env.VITE_API_URL;
+                }
+            } catch (e) {
+                // import.meta not available, use empty string (relative URL)
+            }
+
             // Fetch user permissions from API
-            const response = await fetch('/api/access/me/permissions', {
+            const response = await fetch(API_BASE_URL + '/api/access/me/permissions', {
                 headers: {
                     'Authorization': `Bearer ${session.token}`,
                     'Content-Type': 'application/json'
