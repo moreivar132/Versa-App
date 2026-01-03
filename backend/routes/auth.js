@@ -70,12 +70,19 @@ router.post('/login', async (req, res) => {
       is_super_admin: user.is_super_admin,
     };
 
+    if (!process.env.JWT_SECRET) {
+      console.error('CRITICAL ERROR: JWT_SECRET is not defined in environment variables.');
+      return res.status(500).json({ error: 'Error de configuración del servidor (JWT).' });
+    }
+
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     return res.json({ token, user: sanitizeUser(user) });
   } catch (error) {
-    console.error('Error en login:', error);
-    return res.status(500).json({ error: 'No se pudo iniciar sesión.' });
+    console.error('Error detallado en login:', error);
+    // Print stack trace if available
+    if (error.stack) console.error(error.stack);
+    return res.status(500).json({ error: 'No se pudo iniciar sesión. Ver logs del servidor.' });
   }
 });
 

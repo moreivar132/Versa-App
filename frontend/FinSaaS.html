@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Financial Dashboard - Goversa</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                        "brand-orange": "#46ec13", // Sobrescribimos naranja por verde neón
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <!-- Guard.js -->
+    <script src="/guard.js"></script>
+
+    <style>
+        /* Custom scrollbar for dark theme matching */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #142210;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #25381e;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2c4823;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .tx-in {
+            color: #46ec13;
+        }
+
+        .tx-out {
+            color: #e11d48;
+        }
+
+        @keyframes pulse-green {
+
+            0%,
+            100% {
+                opacity: 1;
+                filter: drop-shadow(0 0 5px #46ec13);
+            }
+
+            50% {
+                opacity: 0.5;
+                filter: drop-shadow(0 0 2px #46ec13);
+            }
+        }
+
+        .sync-pulse {
+            animation: pulse-green 2s infinite;
+        }
+    </style>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+    <div class="flex h-screen w-full overflow-hidden">
+
+        <!-- Sidebar Navigation -->
+        <aside
+            class="hidden lg:flex flex-col w-72 h-full border-r border-gray-200 dark:border-[#25381e] bg-white dark:bg-background-dark z-20">
+            <div class="p-6 flex items-center gap-3 mb-2">
+                <div class="bg-center bg-no-repeat bg-cover rounded-lg size-10 shadow-lg shadow-primary/20"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDtnaABJsECy9evgMO32S4kjZA_0JVSde5zRo-B8YFIvDHlFzALe044u5-2qrj9SNOJbm_K_x2r72nrr6xjDu7i7xdH8CgEDSBnURfIzUVH1j3VU0BPKIGWQjbns9o1kCYh9pKSSec3TdhrsVj9E_XJKswtEu-qRidaDIwLxigl159QsM8g7EqQ0aF9vcyKT2fpsW1EjecqU_Bx9nJCHG3vBX_qFzBU3C298h4vDTSM9z_be2tcQSpGziTyssx2jn39mA5g7J04LKc");'>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">FinSaaS</h1>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-2 overflow-y-auto">
+                <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">Overview</p>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary group transition-all"
+                    href="#">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span class="text-sm font-semibold">Dashboard</span>
+                </a>
+
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-dark-light hover:text-slate-900 dark:hover:text-white transition-all group"
+                    href="manager-taller-inicio.html">
+                    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">warehouse</span>
+                    <span class="text-sm font-medium">Volver al Taller</span>
+                </a>
+
+                <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-8">Operaciones</p>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-dark-light hover:text-slate-900 dark:hover:text-white transition-all group"
+                    href="manager-taller-facturas.html">
+                    <span
+                        class="material-symbols-outlined group-hover:scale-110 transition-transform">description</span>
+                    <span class="text-sm font-medium">Facturas</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-dark-light hover:text-slate-900 dark:hover:text-white transition-all group"
+                    href="manager-taller-caja.html">
+                    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">payments</span>
+                    <span class="text-sm font-medium">Caja</span>
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-gray-200 dark:border-[#25381e]">
+                <div
+                    class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-surface-dark border border-gray-200 dark:border-transparent">
+                    <div id="user-avatar"
+                        class="size-10 rounded-full bg-primary flex items-center justify-center text-background-dark font-bold">
+                        --</div>
+                    <div class="flex flex-col overflow-hidden">
+                        <p id="user-name" class="text-sm font-bold text-slate-900 dark:text-white truncate">Usuario</p>
+                        <p id="user-role" class="text-xs text-gray-500 dark:text-gray-400 truncate">Admin</p>
+                    </div>
+                </div>
+                <!-- Logout Button -->
+                <button data-logout
+                    class="w-full mt-2 flex items-center justify-center gap-2 p-2 text-xs text-gray-500 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">logout</span> Salir
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+            <!-- Top Navbar -->
+            <header
+                class="h-16 flex items-center justify-between px-6 border-b border-gray-200 dark:border-[#25381e] bg-white dark:bg-background-dark/80 backdrop-blur-md sticky top-0 z-10">
+                <div class="flex items-center flex-1 gap-4">
+                    <!-- Mobile Menu Button -->
+                    <button class="lg:hidden p-2 text-gray-500 hover:text-slate-900 dark:hover:text-white">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="hidden md:flex relative w-full max-w-md group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span
+                                class="material-symbols-outlined text-gray-400 group-focus-within:text-primary transition-colors">search</span>
+                        </div>
+                        <input id="search-tx"
+                            class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-[#25381e] rounded-lg leading-5 bg-gray-50 dark:bg-surface-dark text-slate-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm transition-all"
+                            placeholder="Buscar transacciones..." type="text" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Connection Status Badge -->
+                    <div id="connection-status-pill"
+                        class="hidden items-center gap-2 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full">
+                        <span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                        <span class="text-xs font-bold text-primary uppercase">Conectado</span>
+                    </div>
+
+                    <button
+                        class="relative p-2 text-gray-500 hover:text-slate-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-surface-dark">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span
+                            class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-background-dark"></span>
+                    </button>
+                    <button id="btn-sync-now"
+                        class="flex items-center gap-2 px-3 py-2 bg-primary text-background-dark text-sm font-bold rounded-lg hover:brightness-110 transition-all shadow-[0_0_15px_rgba(70,236,19,0.3)] disabled:opacity-50">
+                        <span id="sync-icon" class="material-symbols-outlined text-[20px]">sync</span>
+                        <span class="hidden sm:inline">Sincronizar</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Scrollable Page Content -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth">
+                <div class="max-w-7xl mx-auto flex flex-col gap-8 pb-10">
+
+                    <!-- Page Heading -->
+                    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div>
+                            <h2 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Financial
+                                Overview</h2>
+                            <p class="text-gray-500 dark:text-gray-400 mt-1">Aquí está el estado financiero de tu
+                                negocio hoy.</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div id="last-sync-container"
+                                class="hidden px-3 py-1 bg-gray-100 dark:bg-surface-dark text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full border border-gray-200 dark:border-[#25381e]">
+                                Actualizado: <span id="last-sync-time">-</span>
+                            </div>
+                            <button class="p-2 text-gray-500 hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined">download</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- No Connection State (Hidden by default) -->
+                    <div id="no-connection"
+                        class="hidden bg-white dark:bg-surface-dark p-12 rounded-xl border-2 border-dashed border-gray-200 dark:border-[#25381e] text-center">
+                        <div class="size-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="material-symbols-outlined text-primary text-3xl">account_balance</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Conecta tu Banco</h3>
+                        <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">Vincula tus cuentas bancarias
+                            de forma segura con TrueLayer para ver tus finanzas en tiempo real.</p>
+                        <button id="btn-connect-bank"
+                            class="px-6 py-3 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                            Conectar Ahora
+                        </button>
+                    </div>
+
+                    <!-- Connected Content (Shown by default, hidden if no connection) -->
+                    <div id="connected-content" class="hidden flex flex-col gap-8">
+
+                        <!-- Stats Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <!-- Stat Card 1 -->
+                            <div
+                                class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-200 dark:border-[#25381e] shadow-sm hover:shadow-md transition-shadow group">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div
+                                        class="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg text-green-600 dark:text-green-400">
+                                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                                    </div>
+                                    <span
+                                        class="flex items-center text-xs font-bold text-green-600 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded-full">
+                                        <span class="material-symbols-outlined text-[14px] mr-1">trending_up</span>
+                                        +5.2%
+                                    </span>
+                                </div>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Balance Total</p>
+                                <h3 id="stat-balance" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                                    €0.00</h3>
+                            </div>
+
+                            <!-- Stat Card 2 -->
+                            <div
+                                class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-200 dark:border-[#25381e] shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div
+                                        class="p-2 bg-red-100 dark:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400">
+                                        <span class="material-symbols-outlined">trending_down</span>
+                                    </div>
+                                    <span
+                                        class="flex items-center text-xs font-bold text-red-600 bg-red-100 dark:bg-red-900/30 px-2 py-1 rounded-full">
+                                        Gastos
+                                    </span>
+                                </div>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Gastos (30d)</p>
+                                <h3 id="stat-expenses" class="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+                                    €0.00</h3>
+                            </div>
+
+                            <!-- Stat Card 3 -->
+                            <div
+                                class="bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-200 dark:border-[#25381e] shadow-sm hover:shadow-md transition-shadow">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div
+                                        class="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg text-blue-600 dark:text-blue-400">
+                                        <span class="material-symbols-outlined">receipt_long</span>
+                                    </div>
+                                    <span id="stat-accounts-count"
+                                        class="flex items-center text-xs font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
+                                        0 Cuentas
+                                    </span>
+                                </div>
+                                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Cuentas Activas</p>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1 text-primary">
+                                    Conectado</h3>
+                            </div>
+                        </div>
+
+                        <!-- Main Dashboard Grid -->
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-[450px]">
+                            <!-- Chart Section -->
+                            <div
+                                class="lg:col-span-2 bg-white dark:bg-surface-dark p-6 rounded-xl border border-gray-200 dark:border-[#25381e] shadow-sm flex flex-col h-full">
+                                <div class="flex justify-between items-center mb-6">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">Revenue vs Expenses
+                                        </h3>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400">Last 6 Months Performance
+                                        </p>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <select id="filter-account"
+                                            class="bg-gray-50 dark:bg-surface-dark-light border-none rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 focus:ring-primary">
+                                            <option value="">Todas las cuentas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex-1 w-full relative min-h-[250px]">
+                                    <!-- CSS-only Chart using SVG -->
+                                    <svg class="w-full h-full overflow-visible" preserveaspectratio="none"
+                                        viewbox="0 0 800 300">
+                                        <defs>
+                                            <lineargradient id="gradientPrimary" x1="0" x2="0" y1="0" y2="1">
+                                                <stop offset="0%" stop-color="#46ec13" stop-opacity="0.2"></stop>
+                                                <stop offset="100%" stop-color="#46ec13" stop-opacity="0"></stop>
+                                            </lineargradient>
+                                        </defs>
+                                        <!-- Grid Lines -->
+                                        <line class="text-gray-100 dark:text-gray-800" stroke="currentColor"
+                                            stroke-width="1" x1="0" x2="800" y1="225" y2="225"></line>
+                                        <line class="text-gray-100 dark:text-gray-800" stroke="currentColor"
+                                            stroke-width="1" x1="0" x2="800" y1="150" y2="150"></line>
+                                        <line class="text-gray-100 dark:text-gray-800" stroke="currentColor"
+                                            stroke-width="1" x1="0" x2="800" y1="75" y2="75"></line>
+                                        <!-- Area Fill -->
+                                        <path
+                                            d="M0,225 C100,225 100,180 200,190 C300,200 300,100 400,120 C500,140 500,50 600,60 C700,70 700,20 800,40 V300 H0 Z"
+                                            fill="url(#gradientPrimary)"></path>
+                                        <!-- Line Stroke -->
+                                        <path
+                                            d="M0,225 C100,225 100,180 200,190 C300,200 300,100 400,120 C500,140 500,50 600,60 C700,70 700,20 800,40"
+                                            fill="none" stroke="#46ec13" stroke-linecap="round" stroke-width="3"
+                                            vector-effect="non-scaling-stroke"></path>
+                                        <!-- Data Points -->
+                                        <circle class="fill-background-light dark:fill-background-dark stroke-primary"
+                                            cx="200" cy="190" r="4" stroke-width="2"></circle>
+                                        <circle class="fill-background-light dark:fill-background-dark stroke-primary"
+                                            cx="400" cy="120" r="4" stroke-width="2"></circle>
+                                        <circle class="fill-primary stroke-white dark:stroke-background-dark" cx="600"
+                                            cy="60" r="6" stroke-width="2"></circle>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="lg:col-span-1 flex flex-col gap-6">
+                                <div
+                                    class="bg-gradient-to-br from-surface-dark to-[#101b0d] dark:from-[#25381e] dark:to-[#1a2c15] p-6 rounded-xl border border-gray-200 dark:border-[#25381e] flex-1 text-white relative overflow-hidden group">
+                                    <div
+                                        class="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-2xl -mr-10 -mt-10 group-hover:bg-primary/20 transition-colors">
+                                    </div>
+                                    <div class="relative z-10 flex flex-col h-full justify-between">
+                                        <div>
+                                            <div class="bg-white/10 w-fit p-3 rounded-lg mb-4 backdrop-blur-sm">
+                                                <span class="material-symbols-outlined text-primary">bolt</span>
+                                            </div>
+                                            <h3 class="text-xl font-bold mb-2">Conciliación IA</h3>
+                                            <p class="text-sm text-gray-300 mb-6">Hemos detectado transacciones que
+                                                podrían coincidir con tus facturas pendientes.</p>
+                                        </div>
+                                        <button
+                                            class="w-full py-2.5 px-4 bg-primary text-background-dark rounded-lg flex items-center justify-center text-sm font-bold hover:brightness-110 transition-all">
+                                            Revisar Sugerencias
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Transactions Table -->
+                        <div
+                            class="bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-[#25381e] shadow-sm overflow-hidden">
+                            <div
+                                class="p-6 border-b border-gray-200 dark:border-[#25381e] flex justify-between items-center">
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Recent Transactions</h3>
+                                <div class="flex gap-2">
+                                    <input type="date" id="filter-from"
+                                        class="bg-gray-50 dark:bg-surface-dark-light border-none rounded-lg text-xs text-gray-500 dark:text-gray-300">
+                                    <input type="date" id="filter-to"
+                                        class="bg-gray-50 dark:bg-surface-dark-light border-none rounded-lg text-xs text-gray-500 dark:text-gray-300">
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm text-gray-500 dark:text-gray-400">
+                                    <thead
+                                        class="bg-gray-50 dark:bg-surface-dark-light text-xs uppercase font-semibold text-gray-500 dark:text-gray-300">
+                                        <tr>
+                                            <th class="px-6 py-4" scope="col">Transacción</th>
+                                            <th class="px-6 py-4" scope="col">Fecha</th>
+                                            <th class="px-6 py-4" scope="col">Categoría</th>
+                                            <th class="px-6 py-4 text-right" scope="col">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactions-tbody"
+                                        class="divide-y divide-gray-200 dark:divide-[#25381e]">
+                                        <!-- Dynamic rows will go here -->
+                                        <tr>
+                                            <td colspan="4" class="px-6 py-8 text-center">Cargando...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Pagination -->
+                            <div
+                                class="px-6 py-4 border-t border-gray-200 dark:border-[#25381e] flex items-center justify-between">
+                                <span id="tx-count" class="text-xs text-gray-500">0 movimientos</span>
+                                <div class="flex gap-2">
+                                    <button id="btn-prev-page"
+                                        class="p-1 px-3 rounded bg-gray-100 dark:bg-surface-dark-light text-gray-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-30">Prev</button>
+                                    <button id="btn-next-page"
+                                        class="p-1 px-3 rounded bg-gray-100 dark:bg-surface-dark-light text-gray-500 hover:text-slate-900 dark:hover:text-white disabled:opacity-30">Next</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Application Logic (Hidden implementation) -->
+    <script type="module">
+        import { requireAuth, getToken } from '/auth.js';
+
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+        // --- LOGIC ---
+        let currentConnectionId = null;
+        let currentPage = 0;
+        const PAGE_SIZE = 20;
+
+        async function apiGet(endpoint) {
+            const token = getToken();
+            const res = await fetch(API_BASE_URL + endpoint, { headers: { 'Authorization': 'Bearer ' + token } });
+            if (!res.ok) throw new Error('API Error');
+            return res.json();
+        }
+
+        async function apiPost(endpoint, data = {}) {
+            const token = getToken();
+            const res = await fetch(API_BASE_URL + endpoint, {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (!res.ok) throw await res.json();
+            return res.json();
+        }
+
+        const formatCurrency = (val, currency = 'EUR') => new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(val || 0);
+        const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+
+        // Load Dashboard Data
+        async function loadDashboard() {
+            try {
+                const res = await apiGet('/api/open-banking/connections');
+                if (!res.connections || res.connections.length === 0) {
+                    document.getElementById('no-connection').classList.remove('hidden');
+                    return;
+                }
+
+                // We have a connection
+                const conn = res.connections[0];
+                currentConnectionId = conn.id;
+
+                document.getElementById('no-connection').classList.add('hidden');
+                document.getElementById('connected-content').classList.remove('hidden');
+                document.getElementById('connection-status-pill').classList.replace('hidden', 'flex');
+
+                if (conn.last_sync_at) {
+                    document.getElementById('last-sync-container').classList.remove('hidden');
+                    document.getElementById('last-sync-time').textContent = new Date(conn.last_sync_at).toLocaleString();
+                }
+
+                await loadAccounts();
+                await loadTransactions();
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadAccounts() {
+            const res = await apiGet(`/api/open-banking/accounts?connection_id=${currentConnectionId}`);
+            document.getElementById('stat-accounts-count').textContent = `${res.accounts?.length || 0} Cuentas`;
+
+            const select = document.getElementById('filter-account');
+            res.accounts?.forEach(acc => {
+                const opt = document.createElement('option');
+                opt.value = acc.id;
+                opt.textContent = acc.display_name;
+                select.appendChild(opt);
+            });
+        }
+
+        async function loadTransactions(page = 0) {
+            const accountId = document.getElementById('filter-account').value;
+            const from = document.getElementById('filter-from').value;
+            const to = document.getElementById('filter-to').value;
+
+            let url = `/api/open-banking/transactions?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`;
+            if (accountId) url += `&account_id=${accountId}`;
+            if (from) url += `&from=${from}`;
+            if (to) url += `&to=${to}`;
+
+            const res = await apiGet(url);
+            const tbody = document.getElementById('transactions-tbody');
+
+            if (res.transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-8 text-center text-gray-500">No hay movimientos</td></tr>';
+            } else {
+                tbody.innerHTML = res.transactions.map(tx => `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-surface-dark-light/50 transition-colors group">
+                        <td class="px-6 py-4 font-medium text-slate-900 dark:text-white flex items-center gap-3">
+                            <div class="size-8 rounded-full bg-gray-100 dark:bg-surface-dark-light flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined text-[18px]">account_balance</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span>${tx.description || 'Movimiento'}</span>
+                                <span class="text-[10px] text-gray-400 capitalize">${tx.account_name}</span>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500 dark:text-gray-400">${formatDate(tx.booking_date)}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-surface-dark-light text-gray-600 dark:text-gray-300 uppercase">
+                                ${tx.category || 'General'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-right font-medium ${tx.direction === 'in' ? 'tx-in' : 'tx-out'}">
+                            ${tx.direction === 'in' ? '+' : ''}${formatCurrency(tx.amount, tx.currency)}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            document.getElementById('tx-count').textContent = `${res.total || 0} movimientos`;
+            document.getElementById('btn-prev-page').disabled = page === 0;
+            document.getElementById('btn-next-page').disabled = !res.hasMore;
+            currentPage = page;
+        }
+
+        async function syncNow() {
+            const btn = document.getElementById('btn-sync-now');
+            const icon = document.getElementById('sync-icon');
+            btn.disabled = true;
+            icon.classList.add('sync-pulse');
+
+            try {
+                const res = await apiPost('/api/open-banking/sync', { connection_id: currentConnectionId });
+                alert(`Sincronización completada: ${res.metrics?.transactions_upserted} nuevos movimientos.`);
+                await loadTransactions(0);
+                document.getElementById('last-sync-time').textContent = new Date().toLocaleString();
+            } catch (err) {
+                console.error(err);
+                alert('Error al sincronizar');
+            } finally {
+                btn.disabled = false;
+                icon.classList.remove('sync-pulse');
+            }
+        }
+
+        async function connectBank() {
+            const res = await apiPost('/api/open-banking/truelayer/link', { redirect_path: '/manager-taller-banking.html' });
+            window.location.href = res.url;
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            const u = JSON.parse(localStorage.getItem('userData') || '{}');
+            if (u.nombre) document.getElementById('user-name').textContent = u.nombre;
+
+            // Check URL for callback success
+            if (new URLSearchParams(window.location.search).get('connected') === 'true') {
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+
+            await loadDashboard();
+        });
+
+        // Events
+        document.getElementById('btn-connect-bank')?.addEventListener('click', connectBank);
+        document.getElementById('btn-sync-now')?.addEventListener('click', syncNow);
+        document.getElementById('filter-account')?.addEventListener('change', () => loadTransactions(0));
+        document.getElementById('btn-prev-page')?.addEventListener('click', () => loadTransactions(currentPage - 1));
+        document.getElementById('btn-next-page')?.addEventListener('click', () => loadTransactions(currentPage + 1));
+    </script>
+</body>
+
+</html>

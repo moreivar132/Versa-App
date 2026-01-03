@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Iniciar Sesión - Portal Cliente | Versa</title>
+    <title>FinSaaS Login | Versa</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -23,21 +23,20 @@
     <style>
         body {
             font-family: 'Montserrat', sans-serif;
-            background: linear-gradient(135deg, #0b0d11 0%, #1a1d24 100%);
+            background: linear-gradient(135deg, #0a1408 0%, #142210 100%);
             min-height: 100vh;
         }
 
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #111318;
+            background: #0a1408;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #282e39;
+            background: #25381e;
             border-radius: 4px;
         }
 
@@ -54,13 +53,9 @@
             --card-bg-finsaas: linear-gradient(135deg, rgba(70, 236, 19, 0.5), rgba(70, 236, 19, 0.2));
             --highlight-color: #ff5f00;
             --highlight-finsaas: #46ec13;
-
             display: grid;
             place-content: center;
-            min-height: auto;
             margin-bottom: 2rem;
-            font-family: "Montserrat", sans-serif;
-            -webkit-font-smoothing: antialiased;
         }
 
         .flip-switch {
@@ -91,7 +86,6 @@
             z-index: 2;
             color: var(--inactive-text-color);
             transition: all 0.3s ease;
-            -webkit-tap-highlight-color: transparent;
             position: relative;
         }
 
@@ -112,8 +106,8 @@
         }
 
         .flip-switch .switch-button span {
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 13px;
+            font-weight: 600;
             letter-spacing: 0.5px;
         }
 
@@ -174,69 +168,21 @@
             background: var(--highlight-finsaas);
         }
 
-        .flip-switch #switch-opt-1:checked~[for="switch-opt-1"]::after,
-        .flip-switch #switch-opt-2:checked~[for="switch-opt-2"]::after {
-            content: "";
-            position: absolute;
-            bottom: -5px;
-            width: 30px;
-            height: 3px;
-            background: var(--highlight-color);
-            border-radius: 2px;
-            animation: glow 1.5s infinite alternate;
-        }
-
         @keyframes glow {
             from {
-                box-shadow: 0 0 5px var(--highlight-color);
+                box-shadow: 0 0 5px var(--highlight-finsaas);
             }
 
             to {
-                box-shadow: 0 0 15px var(--highlight-color),
-                    0 0 25px var(--highlight-color);
+                box-shadow: 0 0 15px var(--highlight-finsaas), 0 0 25px var(--highlight-finsaas);
             }
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 14px 16px;
-            background: #1a1d24 !important;
-            border: 1px solid #282e39;
-            border-radius: 12px;
-            color: white !important;
-            font-size: 16px;
-            transition: all 0.2s;
-        }
-
-        /* Prevent background change on autofill */
-        .input-field:-webkit-autofill,
-        .input-field:-webkit-autofill:hover,
-        .input-field:-webkit-autofill:focus {
-            -webkit-text-fill-color: white !important;
-            -webkit-box-shadow: 0 0 0px 1000px #1a1d24 inset !important;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: #ff5f00;
-            box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.15);
         }
     </style>
 
     <script>
         tailwind.config = {
             darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        primary: "#ff5f00",
-                    },
-                    fontFamily: {
-                        main: ["Montserrat", "sans-serif"]
-                    },
-                },
-            },
+            theme: { extend: { colors: { primary: "#46ec13" }, fontFamily: { main: ["Montserrat", "sans-serif"] } } }
         }
     </script>
 </head>
@@ -244,23 +190,22 @@
 <body>
     <div class="min-h-screen flex items-center justify-center p-4">
         <div
-            class="bg-[#111318] border border-[#282e39] w-full max-w-md p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+            class="bg-[#1a2c15] border border-[#25381e] w-full max-w-md p-8 rounded-2xl shadow-2xl relative overflow-hidden">
 
             <!-- Logo -->
             <div class="flex justify-center mb-8">
-                <!-- Fallback to text if image fails, but ideally use assets/versa-v-logo.png if exists, or simple text -->
                 <div class="flex items-center gap-2">
-                    <span class="text-3xl font-black text-white tracking-tighter">VERSA</span>
-                    <div class="w-3 h-3 rounded-full bg-primary mt-2"></div>
+                    <span class="material-symbols-outlined text-primary text-4xl">account_balance_wallet</span>
+                    <span class="text-3xl font-black text-white tracking-tighter">FinSaaS</span>
                 </div>
             </div>
 
             <!-- Login Type Switch -->
             <div class="flip-switch-container">
                 <div class="flip-switch">
-                    <input type="radio" name="login-type" id="switch-opt-1" checked>
+                    <input type="radio" name="login-type" id="switch-opt-1">
                     <input type="radio" name="login-type" id="switch-opt-2">
-                    <input type="radio" name="login-type" id="switch-opt-3">
+                    <input type="radio" name="login-type" id="switch-opt-3" checked>
 
                     <label for="switch-opt-1" class="switch-button">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -294,8 +239,8 @@
                 </div>
             </div>
 
-            <h1 class="text-2xl font-bold text-white text-center mb-2">Bienvenido</h1>
-            <p class="text-gray-400 text-center mb-8">Inicia sesión en tu cuenta</p>
+            <h1 class="text-2xl font-bold text-white text-center mb-2">Panel Financiero</h1>
+            <p class="text-gray-400 text-center mb-8">Accede a tu dashboard bancario</p>
 
             <div id="alertContainer" class="hidden mb-4 p-4 rounded-lg text-sm"></div>
 
@@ -304,8 +249,8 @@
                 <div>
                     <label class="block text-sm font-bold text-gray-300 mb-2 ml-1">Email</label>
                     <input type="email" id="email"
-                        class="w-full px-4 py-3.5 bg-[#1a1d24] border border-[#282e39] rounded-xl text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-all text-base shadow-inner"
-                        placeholder="ejemplo@correo.com">
+                        class="w-full px-4 py-3.5 bg-[#142210] border border-[#25381e] rounded-xl text-white placeholder-gray-500 focus:border-[#46ec13] focus:ring-1 focus:ring-[#46ec13] transition-all text-base shadow-inner"
+                        placeholder="tu@empresa.com" required>
                     <p id="emailError" class="text-red-500 text-sm mt-2 font-medium hidden ml-1"></p>
                 </div>
 
@@ -314,8 +259,8 @@
                     <label class="block text-sm font-bold text-gray-300 mb-2 ml-1">Contraseña</label>
                     <div class="relative">
                         <input type="password" id="password"
-                            class="w-full px-4 py-3.5 bg-[#1a1d24] border border-[#282e39] rounded-xl text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-all text-base pr-12 shadow-inner"
-                            placeholder="••••••••">
+                            class="w-full px-4 py-3.5 bg-[#142210] border border-[#25381e] rounded-xl text-white placeholder-gray-500 focus:border-[#46ec13] focus:ring-1 focus:ring-[#46ec13] transition-all text-base pr-12 shadow-inner"
+                            placeholder="••••••••" required>
                         <button type="button" onclick="togglePassword()"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors p-2">
                             <span class="material-symbols-outlined" id="togglePasswordIcon"
@@ -325,88 +270,32 @@
                     <p id="passwordError" class="text-red-500 text-sm mt-2 font-medium hidden ml-1"></p>
                 </div>
 
-                <!-- Forgot password -->
-                <div class="flex justify-end">
-                    <button type="button" onclick="showForgotPassword()"
-                        class="text-sm text-[#ff5f00] hover:text-[#ff8844] hover:underline font-medium transition-colors">¿Olvidaste
-                        tu contraseña?</button>
-                </div>
-
                 <!-- Submit -->
                 <button type="submit" id="submitBtn"
-                    class="w-full px-6 py-4 bg-[#ff5f00] hover:bg-[#ff4500] text-white font-bold text-lg rounded-xl transition-all shadow-lg shadow-orange-900/20 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex justify-center items-center gap-2">
-                    <span id="submitText">Iniciar Sesión</span>
+                    class="w-full px-6 py-4 bg-[#46ec13] hover:bg-[#3bd610] text-[#0a1408] font-bold text-lg rounded-xl transition-all shadow-lg shadow-green-900/30 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                    <span id="submitText">Acceder a FinSaaS</span>
                     <div id="submitLoader"
-                        class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        class="hidden w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
                 </button>
             </form>
 
-            <!-- Divider -->
-            <div class="flex items-center gap-4 my-6">
-                <div class="flex-1 border-t border-[#282e39]"></div>
-                <span class="text-gray-500 text-sm">o</span>
-                <div class="flex-1 border-t border-[#282e39]"></div>
-            </div>
-
-            <!-- Register Link -->
-            <p class="text-center text-gray-400 text-sm">
-                ¿No tienes cuenta?
-                <a href="/cliente-register.html" class="text-primary hover:underline font-medium">
-                    Regístrate gratis
-                </a>
-            </p>
-
             <!-- Back to home -->
             <p class="text-center text-gray-500 text-sm mt-6">
-                <a href="/" class="hover:text-white transition-colors">
-                    ← Volver al inicio
-                </a>
+                <a href="/" class="hover:text-white transition-colors">← Volver al inicio</a>
             </p>
-        </div>
-    </div>
-
-    <!-- Forgot Password Modal -->
-    <div id="forgotModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80">
-        <div class="bg-[#111318] border border-[#282e39] rounded-2xl p-6 w-full max-w-md">
-            <h2 class="text-xl font-bold text-white mb-4">Recuperar Contraseña</h2>
-            <p class="text-gray-400 text-sm mb-4">
-                Ingresa tu email y te enviaremos instrucciones para restablecer tu contraseña.
-            </p>
-            <form id="forgotForm" class="space-y-4">
-                <div>
-                    <input type="email" id="forgotEmail" required class="input-field" placeholder="tu@email.com">
-                </div>
-                <div class="flex gap-3">
-                    <button type="submit"
-                        class="flex-1 px-4 py-3 bg-[#ff5f00] text-white rounded-lg hover:bg-[#ff4500] transition-colors font-bold">
-                        Enviar
-                    </button>
-                    <button type="button" onclick="closeForgotModal()"
-                        class="flex-1 px-4 py-3 bg-[#282e39] text-white rounded-lg hover:bg-[#3a4150] transition-colors">
-                        Cancelar
-                    </button>
-                </div>
-            </form>
-            <div id="forgotSuccess"
-                class="hidden mt-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-sm">
-                Si el email existe en nuestro sistema, recibirás instrucciones para restablecer tu contraseña.
-            </div>
         </div>
     </div>
 
     <script type="module">
-        import { login, forgotPassword, redirectIfLoggedIn } from './services/cliente-service.js';
+        // Import auth helpers from the ROOT auth.js which we know exists
+        import { login, setSession, getApiBaseUrl, getSession } from '/auth.js';
 
-        // Redirect if already logged in
-        redirectIfLoggedIn();
+        const API_BASE_URL = getApiBaseUrl();
 
-        // Check URL params
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('expired') === '1') {
-            showAlert('Tu sesión ha expirado. Por favor, inicia sesión nuevamente.', 'warning');
-        }
-        if (urlParams.get('registered') === '1') {
-            showAlert('¡Cuenta creada exitosamente! Ahora puedes iniciar sesión.', 'success');
+        // Check if already logged in
+        const session = getSession();
+        if (session && session.token) {
+            window.location.href = '/finsaas-dashboard.html';
         }
 
         // Form submit
@@ -417,15 +306,11 @@
             const password = document.getElementById('password').value;
 
             // Clear errors
-            clearErrors();
+            document.getElementById('alertContainer').classList.add('hidden');
 
             // Validate
-            if (!email) {
-                showFieldError('email', 'El email es requerido');
-                return;
-            }
-            if (!password) {
-                showFieldError('password', 'La contraseña es requerida');
+            if (!email || !password) {
+                showAlert('Por favor completa todos los campos', 'error');
                 return;
             }
 
@@ -433,36 +318,18 @@
             setLoading(true);
 
             try {
-                const result = await login(email, password);
+                // Use the shared login function from auth.js
+                // It internally calls the API and saves the session in 'versa_session_v1'
+                const user = await login(email, password);
 
-                if (result.ok) {
-                    // Check for redirect
-                    const redirect = urlParams.get('redirect') || '/cliente-dashboard.html';
-                    window.location.href = redirect;
-                } else {
-                    showAlert(result.error || 'Error al iniciar sesión', 'error');
-                }
+                // Redirect to FinSaaS Dashboard
+                window.location.href = '/finsaas-dashboard.html';
+
             } catch (error) {
+                console.error('Login error:', error);
                 showAlert(error.message || 'Error al iniciar sesión', 'error');
             } finally {
                 setLoading(false);
-            }
-        });
-
-        // Forgot password form
-        document.getElementById('forgotForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const email = document.getElementById('forgotEmail').value.trim();
-
-            try {
-                await forgotPassword(email);
-                document.getElementById('forgotForm').classList.add('hidden');
-                document.getElementById('forgotSuccess').classList.remove('hidden');
-            } catch (error) {
-                // Still show success to not reveal if email exists
-                document.getElementById('forgotForm').classList.add('hidden');
-                document.getElementById('forgotSuccess').classList.remove('hidden');
             }
         });
 
@@ -470,24 +337,8 @@
         function showAlert(message, type = 'error') {
             const container = document.getElementById('alertContainer');
             container.textContent = message;
-            container.className = `mb-4 p-4 rounded-lg text-sm ${type === 'error' ? 'bg-red-500/10 border border-red-500/20 text-red-400' : type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-yellow-500/10 border border-yellow-500/20 text-yellow-400'}`;
+            container.className = `mb-4 p-4 rounded-lg text-sm ${type === 'error' ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 'bg-green-500/10 border border-green-500/20 text-green-400'}`;
             container.classList.remove('hidden');
-        }
-
-        function showFieldError(field, message) {
-            const el = document.getElementById(`${field}Error`);
-            if (el) {
-                el.textContent = message;
-                el.classList.remove('hidden');
-            }
-        }
-
-        function clearErrors() {
-            document.querySelectorAll('.error-message').forEach(el => {
-                el.classList.add('hidden');
-                el.textContent = '';
-            });
-            document.getElementById('alertContainer').classList.add('hidden');
         }
 
         function setLoading(loading) {
@@ -509,31 +360,16 @@
             }
         };
 
-        // Forgot password modal
-        window.showForgotPassword = function () {
-            document.getElementById('forgotModal').classList.remove('hidden');
-            document.getElementById('forgotForm').classList.remove('hidden');
-            document.getElementById('forgotSuccess').classList.add('hidden');
-        };
-
-        window.closeForgotModal = function () {
-            document.getElementById('forgotModal').classList.add('hidden');
-        };
-
         // Switch Logic
-        document.getElementById('switch-opt-2').addEventListener('change', function () {
+        document.getElementById('switch-opt-1').addEventListener('change', function () {
             if (this.checked) {
-                setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 300);
+                setTimeout(() => { window.location.href = '/cliente-login.html'; }, 300);
             }
         });
 
-        document.getElementById('switch-opt-3').addEventListener('change', function () {
+        document.getElementById('switch-opt-2').addEventListener('change', function () {
             if (this.checked) {
-                setTimeout(() => {
-                    window.location.href = '/login-finsaas.html';
-                }, 300);
+                setTimeout(() => { window.location.href = '/login.html'; }, 300);
             }
         });
     </script>

@@ -84,6 +84,9 @@ app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
 // Fidelización - Admin (gestión miembros/puntos/promos, con JWT)
 app.use('/api/admin/fidelizacion', verifyJWT, require('./routes/fidelizacionAdmin'));
 
+// Open Banking (TrueLayer Data API)
+app.use('/api/open-banking', require('./routes/openBankingRoutes'));
+
 // Customer Portal routes (Moved to top)
 // const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');
 // app.use('/api/cliente/auth', require('./routes/customerAuth'));

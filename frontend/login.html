@@ -1,134 +1,73 @@
-<!-- Force redeploy -->
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="dark">
 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Acceso seguro al portal Versa Finanzas para el envío de facturas y tickets." />
-  <title>Acceso | Versa Finanzas</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso Taller | Versa Manager</title>
+
+  <!-- Favicon -->
   <link rel="icon" type="image/png" href="assets/favicon.png">
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./theme.css" />
-  <script src="https://unpkg.com/feather-icons"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
   <style>
-    /* Estilos específicos para el botón premium sin afectar el tema global */
-    .premium-card-link {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background-color: white;
-      border-radius: 1.5rem;
-      /* rounded-3xl */
-      padding: 1rem;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      border: 1px solid #f3f4f6;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-      margin-top: 1.5rem;
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: linear-gradient(135deg, #0b0d11 0%, #1a1d24 100%);
+      min-height: 100vh;
     }
 
-    .premium-card-link:hover {
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      transform: translateY(-2px);
+    ::-webkit-scrollbar {
+      width: 8px;
     }
 
-    .premium-icon-container {
-      height: 3.5rem;
-      width: 3.5rem;
-      background-color: #ff5f00;
-      border-radius: 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      box-shadow: 0 10px 15px -3px rgba(255, 95, 0, 0.3);
-      transition: all 0.3s ease;
+    ::-webkit-scrollbar-track {
+      background: #111318;
     }
 
-    .premium-card-link:hover .premium-icon-container {
-      transform: scale(1.1) rotate(3deg);
+    ::-webkit-scrollbar-thumb {
+      background: #282e39;
+      border-radius: 4px;
     }
 
-    .premium-text-container {
-      text-align: left;
-      margin-left: 1.25rem;
-      flex-grow: 1;
-    }
-
-    .premium-title {
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: #111827;
-      margin: 0;
-      transition: color 0.3s ease;
-    }
-
-    .premium-card-link:hover .premium-title {
-      color: #ff5f00;
-    }
-
-    .premium-subtitle {
-      font-size: 0.875rem;
-      color: #6b7280;
-      font-weight: 500;
-      margin: 0;
-    }
-
-    .premium-arrow {
-      color: #d1d5db;
-      transition: all 0.3s ease;
-    }
-
-    .premium-card-link:hover .premium-arrow {
-      color: #ff5f00;
-      transform: translateX(4px);
-    }
-
-    .external-services-title {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #9ca3af;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-      margin-left: 0.5rem;
-      margin-top: 2rem;
-    }
-
-    /* Login Switch CSS */
+    /* Login Switch CSS - 3 Options */
     .flip-switch-container {
-      --card-width: 110px;
-      --card-height: 120px;
+      --card-width: 80px;
+      --card-height: 100px;
       --switch-bg: rgba(255, 255, 255, 0.1);
       --switch-border-color: rgba(255, 255, 255, 0.2);
-      --text-color: #111827;
-      /* Dark text for light mode login */
-      --inactive-text-color: rgba(107, 114, 128, 0.8);
-      --icon-shadow-color: rgba(0, 0, 0, 0.1);
-      --card-bg: linear-gradient(135deg, rgba(255, 95, 0, 0.2), rgba(255, 95, 0, 0.1));
+      --text-color: #ffffff;
+      --inactive-text-color: rgba(255, 255, 255, 0.6);
+      --icon-shadow-color: rgba(0, 0, 0, 0.3);
+      --card-bg: linear-gradient(135deg, rgba(255, 95, 0, 0.5), rgba(255, 95, 0, 0.2));
+      --card-bg-finsaas: linear-gradient(135deg, rgba(70, 236, 19, 0.5), rgba(70, 236, 19, 0.2));
       --highlight-color: #ff5f00;
-
+      --highlight-finsaas: #46ec13;
       display: grid;
       place-content: center;
-      min-height: auto;
       margin-bottom: 2rem;
-      font-family: 'Montserrat', sans-serif;
     }
 
     .flip-switch {
       display: flex;
       position: relative;
-      width: calc(var(--card-width) * 2);
+      width: calc(var(--card-width) * 3);
       height: var(--card-height);
-      background: var(--bg);
-      /* Use theme bg if possible or white */
-      background: #f9fafb;
+      background: var(--switch-bg);
       border-radius: 20px;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--switch-border-color);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37), inset 0 4px 8px rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
       perspective: 1000px;
     }
 
@@ -147,7 +86,6 @@
       z-index: 2;
       color: var(--inactive-text-color);
       transition: all 0.3s ease;
-      -webkit-tap-highlight-color: transparent;
       position: relative;
     }
 
@@ -157,25 +95,31 @@
 
     .flip-switch .switch-button:hover svg {
       transform: translateY(-3px);
-      filter: drop-shadow(0 4px 6px var(--icon-shadow-color));
+      filter: drop-shadow(0 4px 6px var(--icon-shadow-color)) brightness(1.2);
     }
 
     .flip-switch .switch-button svg {
       transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      filter: drop-shadow(0 2px 3px var(--icon-shadow-color));
       width: 24px;
       height: 24px;
     }
 
     .flip-switch .switch-button span {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       letter-spacing: 0.5px;
     }
 
     .flip-switch #switch-opt-1:checked~[for="switch-opt-1"],
-    .flip-switch #switch-opt-2:checked~[for="switch-opt-2"] {
+    .flip-switch #switch-opt-2:checked~[for="switch-opt-2"],
+    .flip-switch #switch-opt-3:checked~[for="switch-opt-3"] {
       color: var(--text-color);
-      font-weight: 700;
+      text-shadow: 0 0 8px rgba(255, 95, 0, 0.5);
+    }
+
+    .flip-switch #switch-opt-3:checked~[for="switch-opt-3"] {
+      text-shadow: 0 0 8px rgba(70, 236, 19, 0.5);
     }
 
     .flip-switch .switch-card {
@@ -185,193 +129,257 @@
       width: var(--card-width);
       height: var(--card-height);
       z-index: 1;
-      transform-style: preserve-3d;
-    }
-
-    .flip-switch .card-face {
-      position: absolute;
-      width: 100%;
-      height: 100%;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
       border-radius: 20px;
-      background: white;
-      border: 1px solid #ff5f00;
-      box-shadow: 0 10px 15px -3px rgba(255, 95, 0, 0.1), 0 4px 6px -2px rgba(255, 95, 0, 0.05);
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-    }
-
-    .flip-switch .card-back {
-      transform: rotateY(180deg);
-    }
-
-    .flip-switch #switch-opt-2:checked~.switch-card {
-      animation: flipRight 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+      background: var(--card-bg);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
     }
 
     .flip-switch #switch-opt-1:checked~.switch-card {
-      animation: flipLeft 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+      transform: translateX(0%);
+      background: var(--card-bg);
     }
 
-    @keyframes flipRight {
-      0% {
-        transform: translateX(0%) rotateY(0deg);
-      }
-
-      50% {
-        transform: translateX(50%) rotateY(90deg) scale(1.05);
-      }
-
-      100% {
-        transform: translateX(100%) rotateY(180deg) scale(1);
-      }
+    .flip-switch #switch-opt-2:checked~.switch-card {
+      transform: translateX(100%);
+      background: var(--card-bg);
     }
 
-    @keyframes flipLeft {
-      0% {
-        transform: translateX(100%) rotateY(180deg);
-      }
-
-      50% {
-        transform: translateX(50%) rotateY(90deg) scale(1.05);
-      }
-
-      100% {
-        transform: translateX(0%) rotateY(0deg) scale(1);
-      }
+    .flip-switch #switch-opt-3:checked~.switch-card {
+      transform: translateX(200%);
+      background: var(--card-bg-finsaas);
     }
 
-    .back-link {
-      display: block;
-      margin-top: 2rem;
-      text-align: center;
-      color: #6b7280;
-      font-size: 0.875rem;
-      text-decoration: none;
-      transition: color 0.2s;
+    .flip-switch #switch-opt-1:checked~[for="switch-opt-1"]::after,
+    .flip-switch #switch-opt-2:checked~[for="switch-opt-2"]::after,
+    .flip-switch #switch-opt-3:checked~[for="switch-opt-3"]::after {
+      content: "";
+      position: absolute;
+      bottom: -5px;
+      width: 30px;
+      height: 3px;
+      background: var(--highlight-color);
+      border-radius: 2px;
+      animation: glow 1.5s infinite alternate;
     }
 
-    .back-link:hover {
-      color: #111827;
+    .flip-switch #switch-opt-3:checked~[for="switch-opt-3"]::after {
+      background: var(--highlight-finsaas);
+    }
+
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 5px var(--highlight-color);
+      }
+
+      to {
+        box-shadow: 0 0 15px var(--highlight-color), 0 0 25px var(--highlight-color);
+      }
     }
   </style>
+
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: { extend: { colors: { primary: "#ff5f00" }, fontFamily: { main: ["Montserrat", "sans-serif"] } } }
+    }
+  </script>
 </head>
 
-<body class="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center p-6">
-  <main class="login-shell">
-    <section class="login-header">
-      <div class="brand-lockup brand-lockup--centered">
-        <span class="brand-lockup__mark" aria-hidden="true">
-          <img src="assets/logo.png" alt="Logo de Versa Finanzas" />
-        </span>
-        <div class="brand-lockup__copy">
-          <span class="brand-lockup__title">Versa Finanzas</span>
-          <span class="brand-lockup__subtitle">Portal corporativo</span>
+<body>
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div
+      class="bg-[#111318] border border-[#282e39] w-full max-w-md p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+
+      <!-- Logo -->
+      <div class="flex justify-center mb-8">
+        <div class="flex items-center gap-2">
+          <span class="text-3xl font-black text-white tracking-tighter">VERSA</span>
+          <div class="w-3 h-3 rounded-full bg-primary mt-2"></div>
         </div>
       </div>
-    </section>
 
-    <section class="login-card">
-      <div class="surface">
-        <!-- Login Type Switch -->
-        <div class="flip-switch-container">
-          <div class="flip-switch">
-            <input type="radio" name="login-type" id="switch-opt-1">
-            <input type="radio" name="login-type" id="switch-opt-2" checked>
+      <!-- Login Type Switch -->
+      <div class="flip-switch-container">
+        <div class="flip-switch">
+          <input type="radio" name="login-type" id="switch-opt-1">
+          <input type="radio" name="login-type" id="switch-opt-2" checked>
+          <input type="radio" name="login-type" id="switch-opt-3">
 
-            <label for="switch-opt-1" class="switch-button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              <span>Cliente</span>
-            </label>
+          <label for="switch-opt-1" class="switch-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Cliente</span>
+          </label>
 
-            <label for="switch-opt-2" class="switch-button">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round">
-                <path
-                  d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
-                </path>
-              </svg>
-              <span>Taller</span>
-            </label>
+          <label for="switch-opt-2" class="switch-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path
+                d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
+              </path>
+            </svg>
+            <span>Taller</span>
+          </label>
 
-            <div class="switch-card">
-              <div class="card-face card-front"></div>
-              <div class="card-face card-back"></div>
-            </div>
-          </div>
+          <label for="switch-opt-3" class="switch-button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+            <span>FinSaaS</span>
+          </label>
+
+          <div class="switch-card"></div>
+        </div>
+      </div>
+
+      <h1 class="text-2xl font-bold text-white text-center mb-2">Iniciar sesión</h1>
+      <p class="text-gray-400 text-center mb-8">Accede con tu email corporativo</p>
+
+      <div id="alertContainer" class="hidden mb-4 p-4 rounded-lg text-sm"></div>
+
+      <form id="loginForm" class="space-y-6">
+        <!-- Email -->
+        <div>
+          <label class="block text-sm font-bold text-gray-300 mb-2 ml-1">Email</label>
+          <input type="email" id="email"
+            class="w-full px-4 py-3.5 bg-[#1a1d24] border border-[#282e39] rounded-xl text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-all text-base shadow-inner"
+            placeholder="tu@versa.com" required>
+          <p id="emailError" class="text-red-500 text-sm mt-2 font-medium hidden ml-1"></p>
         </div>
 
-        <h2 class="text-xl font-bold">Iniciar sesión</h2>
-        <p class="helper-text">
-          Accede con tu email corporativo y la contraseña que te asignó un administrador.
-        </p>
-
-        <form id="loginForm" class="space-y-4 mt-4">
-          <div class="login-actions">
-            <label class="text-sm font-semibold" for="email">Email</label>
-            <input id="email" type="email" class="input w-full" placeholder="tu@versa.com" required />
+        <!-- Password -->
+        <div>
+          <label class="block text-sm font-bold text-gray-300 mb-2 ml-1">Contraseña</label>
+          <div class="relative">
+            <input type="password" id="password"
+              class="w-full px-4 py-3.5 bg-[#1a1d24] border border-[#282e39] rounded-xl text-white placeholder-gray-500 focus:border-[#ff5f00] focus:ring-1 focus:ring-[#ff5f00] transition-all text-base pr-12 shadow-inner"
+              placeholder="••••••••" required minlength="6">
+            <button type="button" onclick="togglePassword()"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors p-2">
+              <span class="material-symbols-outlined" id="togglePasswordIcon"
+                style="font-size: 22px;">visibility_off</span>
+            </button>
           </div>
-          <div class="login-actions">
-            <label class="text-sm font-semibold" for="password">Contraseña</label>
-            <input id="password" type="password" class="input w-full" placeholder="••••••••" required minlength="10" />
-          </div>
-          <p id="loginError" class="form-error" role="alert" hidden></p>
-          <button class="btn btn-brand w-full" type="submit">Entrar</button>
-        </form>
+          <p id="passwordError" class="text-red-500 text-sm mt-2 font-medium hidden ml-1"></p>
+        </div>
 
-        <!-- External Services Section -->
-        <div class="external-services-title">Servicios Externos</div>
+        <!-- Submit -->
+        <button type="submit" id="submitBtn"
+          class="w-full px-6 py-4 bg-[#ff5f00] hover:bg-[#ff4500] text-white font-bold text-lg rounded-xl transition-all shadow-lg shadow-orange-900/20 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+          <span id="submitText">Entrar</span>
+          <div id="submitLoader"
+            class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        </button>
+      </form>
 
-        <a href="cita-previa.html" class="premium-card-link">
-          <div style="display: flex; align-items: center;">
-            <div class="premium-icon-container">
-              <i data-feather="calendar" style="width: 1.75rem; height: 1.75rem;"></i>
+      <!-- External Link -->
+      <div class="mt-6 pt-6 border-t border-[#282e39]">
+        <a href="cita-previa.html"
+          class="flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-xl transition-colors group">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+              <span class="material-symbols-outlined text-white">calendar_month</span>
             </div>
-            <div class="premium-text-container">
-              <h3 class="premium-title">Solicitar Cita Previa</h3>
-              <p class="premium-subtitle">Reserva taller sin cuenta</p>
+            <div>
+              <p class="text-white font-semibold text-sm">Solicitar Cita Previa</p>
+              <p class="text-gray-500 text-xs">Reserva taller sin cuenta</p>
             </div>
           </div>
-          <div class="premium-arrow">
-            <i data-feather="chevron-right" style="width: 1.5rem; height: 1.5rem;"></i>
-          </div>
+          <span
+            class="material-symbols-outlined text-gray-500 group-hover:text-white transition-colors">chevron_right</span>
         </a>
-
-        <a href="/" class="back-link">
-          ← Volver al inicio
-        </a>
-
       </div>
-    </section>
-  </main>
 
-  <script type="module" src="./login.js"></script>
-  <script>
-    feather.replace();
-  </script>
+      <!-- Back to home -->
+      <p class="text-center text-gray-500 text-sm mt-6">
+        <a href="/" class="hover:text-white transition-colors">← Volver al inicio</a>
+      </p>
+    </div>
+  </div>
+
   <script type="module">
-    import ChatWidget from '/components/ChatWidget.js';
-    import { getApiBaseUrl } from '/auth.js';
+    import { login, redirectIfLoggedIn } from '/auth.js';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const API_BASE_URL = getApiBaseUrl();
-      // Inicializar chat widget
-      new ChatWidget({
-        apiUrl: `${API_BASE_URL}/api/chat`,
-        tenantId: 1,
-        clientId: 1 // Simulado
-      });
+    // Redirect if already logged in
+    redirectIfLoggedIn();
+
+    // Form submit
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      // Clear errors
+      document.getElementById('alertContainer').classList.add('hidden');
+
+      // Validate
+      if (!email || !password) {
+        showAlert('Por favor completa todos los campos', 'error');
+        return;
+      }
+
+      // Submit
+      setLoading(true);
+
+      try {
+        const user = await login(email, password);
+
+        // Exito
+        window.location.href = '/manager-taller-inicio.html';
+
+      } catch (error) {
+        console.error('Login error:', error);
+        showAlert(error.message || 'Error al iniciar sesión', 'error');
+      } finally {
+        setLoading(false);
+      }
     });
+
+    // Helpers
+    function showAlert(message, type = 'error') {
+      const container = document.getElementById('alertContainer');
+      container.textContent = message;
+      container.className = `mb-4 p-4 rounded-lg text-sm ${type === 'error' ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 'bg-green-500/10 border border-green-500/20 text-green-400'}`;
+      container.classList.remove('hidden');
+    }
+
+    function setLoading(loading) {
+      document.getElementById('submitBtn').disabled = loading;
+      document.getElementById('submitText').classList.toggle('hidden', loading);
+      document.getElementById('submitLoader').classList.toggle('hidden', !loading);
+    }
+
+    // Password visibility
+    window.togglePassword = function () {
+      const input = document.getElementById('password');
+      const icon = document.getElementById('togglePasswordIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility';
+      } else {
+        input.type = 'password';
+        icon.textContent = 'visibility_off';
+      }
+    };
 
     // Switch Logic
     document.getElementById('switch-opt-1').addEventListener('change', function () {
       if (this.checked) {
-        setTimeout(() => {
-          window.location.href = '/cliente-login.html';
-        }, 300);
+        setTimeout(() => { window.location.href = '/cliente-login.html'; }, 300);
+      }
+    });
+
+    document.getElementById('switch-opt-3').addEventListener('change', function () {
+      if (this.checked) {
+        setTimeout(() => { window.location.href = '/login-finsaas.html'; }, 300);
       }
     });
   </script>

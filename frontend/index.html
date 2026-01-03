@@ -726,10 +726,10 @@
             <a class="transition-colors hover:text-white" href="#faq">FAQ</a>
             <a class="transition-colors hover:text-white" href="#contacto">Contacto</a>
           </nav>
-          <div class="flex items-center gap-3">
-            <!-- Vault Menu Container (Mobile) -->
-            <div id="vault-container" class="md:hidden relative h-[350px] w-[320px]"
-              style="position: fixed; top: 0; right: 0; pointer-events: none;">
+          <div class="flex items-center gap-4">
+
+            <!-- Vault Menu Container (Mobile & Desktop Trigger) -->
+            <div id="vault-container" class="relative">
               <!-- Vault Trigger -->
               <div id="vault-trigger" class="vault-trigger" style="pointer-events: auto;">
                 MENÚ
@@ -751,6 +751,11 @@
                     <a href="#pricing" class="vault-nav-link" onclick="closeVaultMenu()">Planes</a>
                     <a href="#faq" class="vault-nav-link" onclick="closeVaultMenu()">FAQ</a>
                     <a href="#contacto" class="vault-nav-link" onclick="closeVaultMenu()">Contacto</a>
+                    <!-- FinSaaS in Mobile Menu -->
+                    <a id="mobile-finsaas-btn" href="login-finsaas.html" class="vault-nav-link flex items-center gap-2"
+                      onclick="closeVaultMenu()" style="color: #46ec13;">
+                      <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span> FinSaaS
+                    </a>
                     <div class="h-px bg-white/10 my-4"></div>
                     <a href="/cliente-login.html" class="vault-nav-link" style="color: #ff8844;">→ Soy Cliente</a>
                     <a href="/login.html" class="vault-nav-link" style="color: #ff4400;">→ Soy Taller</a>
@@ -760,7 +765,6 @@
             </div>
           </div>
         </div>
-      </div>
     </header>
 
     <!-- HeroSection -->
@@ -805,38 +809,41 @@
                 </a>
               </div>
 
-              <!-- Login Type Switch -->
+              <!-- Login Type Switch (3 Options) -->
               <div class="mt-8">
-                <p class="text-sm text-[#A0A0A0] mb-4">¿Ya tienes cuenta? Accede aquí:</p>
-                <div class="flip-switch-container">
-                  <div class="flip-switch" id="hero-flip-switch">
-                    <input type="radio" name="hero-login-type" id="switch-opt-1">
-                    <input type="radio" name="hero-login-type" id="switch-opt-2">
+                <p class="text-sm text-[#A0A0A0] mb-4">Selecciona tu perfil para acceder:</p>
+                <div class="relative inline-flex bg-white/5 p-1 rounded-xl border border-white/10">
+                  <!-- Background slider logic handled by JS or simple checking -->
 
-                    <label for="switch-opt-1" class="switch-button">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                      </svg>
-                      <span>Cliente</span>
-                    </label>
-
-                    <label for="switch-opt-2" class="switch-button">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path
-                          d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z">
-                        </path>
-                      </svg>
-                      <span>Taller</span>
-                    </label>
-
-                    <div class="switch-card">
-                      <div class="card-face card-front"></div>
-                      <div class="card-face card-back"></div>
+                  <label class="cursor-pointer">
+                    <input type="radio" name="login_type" value="cliente" class="peer sr-only"
+                      onchange="window.location.href='/cliente-login.html'">
+                    <div
+                      class="px-6 py-2 rounded-lg text-sm font-medium text-gray-400 peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg transition-all flex items-center gap-2 hover:text-white">
+                      <span class="material-symbols-outlined text-[18px]">person</span>
+                      Cliente
                     </div>
-                  </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="radio" name="login_type" value="taller" class="peer sr-only"
+                      onchange="window.location.href='/login.html'">
+                    <div
+                      class="px-6 py-2 rounded-lg text-sm font-medium text-gray-400 peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-lg transition-all flex items-center gap-2 hover:text-white">
+                      <span class="material-symbols-outlined text-[18px]">build</span>
+                      Taller
+                    </div>
+                  </label>
+
+                  <label class="cursor-pointer">
+                    <input type="radio" name="login_type" value="finsaas" class="peer sr-only"
+                      onchange="window.location.href='/login-finsaas.html'">
+                    <div
+                      class="px-6 py-2 rounded-lg text-sm font-medium text-gray-400 peer-checked:bg-[#46ec13] peer-checked:text-black peer-checked:font-bold peer-checked:shadow-[0_0_15px_rgba(70,236,19,0.3)] transition-all flex items-center gap-2 hover:text-[#46ec13]">
+                      <span class="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+                      FinSaaS
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>
@@ -2161,6 +2168,31 @@
 
   <!-- Flip Switch Navigation Logic -->
   <script>
+    // Check Auth for FinSaaS Button
+    (function () {
+      const token = localStorage.getItem('authToken');
+      const navBtn = document.getElementById('nav-finsaas-btn');
+      const mobileBtn = document.getElementById('mobile-finsaas-btn');
+
+      if (token) {
+        // User is logged in
+        if (navBtn) {
+          navBtn.href = 'finsaas-dashboard.html';
+          navBtn.querySelector('span:last-child').textContent = 'Mi FinSaaS';
+          navBtn.classList.add('border-[#46ec13]', 'text-[#46ec13]');
+        }
+        if (mobileBtn) {
+          mobileBtn.href = 'finsaas-dashboard.html';
+          mobileBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">account_balance_wallet</span> Mi FinSaaS';
+        }
+      } else {
+        // User is guest -> Point to Login with redirect param
+        // Note: Your login.html should ideally handle ?redirect=... but for now simple login is fine
+        if (navBtn) navBtn.href = 'login.html';
+        if (mobileBtn) mobileBtn.href = 'login.html';
+      }
+    })();
+
     // Handle login type switch
     document.getElementById('switch-opt-1').addEventListener('change', function () {
       if (this.checked) {
