@@ -114,11 +114,14 @@
             ]
         },
         {
-            type: 'link',
+            type: 'dropdown',
             id: 'configuracion',
             label: 'Configuración',
             icon: 'fa-cog',
-            href: 'manager-taller-configuracion.html'
+            items: [
+                { label: 'General', href: 'manager-taller-configuracion.html' },
+                { label: 'Accesos', href: 'manager-admin-accesos.html', requiresPermission: 'access.manage' }
+            ]
         }
     ];
 
@@ -185,8 +188,12 @@
                         ? 'text-white font-semibold'
                         : 'text-gray-400 hover:text-white';
 
+                    // Items requiring permission are hidden by default
+                    const hideStyle = subItem.requiresPermission ? 'style="display: none;"' : '';
+                    const permAttr = subItem.requiresPermission ? `data-requires-permission="${subItem.requiresPermission}"` : '';
+
                     submenuHTML += `
-                        <a href="${subItem.href}" class="${subActiveClass} text-sm py-1 block">${subItem.label}</a>
+                        <a href="${subItem.href}" class="${subActiveClass} text-sm py-1 block" ${permAttr} ${hideStyle}>${subItem.label}</a>
                     `;
                 });
 
@@ -319,10 +326,64 @@
         }
     }
 
-    // Inicializar cuando el DOM esté listo
+    // Check user permissions and show/hide protected items
+    async function checkPermissionsAndShowItems() {
+        try {
+            const session = JSON.parse(localStorage.getItem('versa_session_v1') || 'null');
+            if (!session || !session.token) return;
+
+            // Check if user is super admin first
+            if (session.user && session.user.is_super_admin) {
+                document.querySelectorAll('[data-requires-permission]').forEach(el => {
+                    el.style.display = 'block';
+                });
+                return;
+            }
+
+            // Get API base URL (for production vs development)
+            let API_BASE_URL = '';
+            try {
+                if (import.meta && import.meta.env && import.meta.env.VITE_API_URL) {
+                    API_BASE_URL = import.meta.env.VITE_API_URL;
+                }
+            } catch (e) {
+                // import.meta not available, use empty string (relative URL)
+            }
+
+            // Fetch user permissions from API
+            const response = await fetch(API_BASE_URL + '/api/access/me/permissions', {
+                headers: {
+                    'Authorization': `Bearer ${session.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) return;
+
+            const perms = await response.json();
+            const userPermissions = perms.permissions || [];
+            const isSuperAdmin = perms.isSuperAdmin || false;
+
+            // Show items based on permissions
+            document.querySelectorAll('[data-requires-permission]').forEach(el => {
+                const requiredPerm = el.getAttribute('data-requires-permission');
+                if (isSuperAdmin || userPermissions.includes(requiredPerm)) {
+                    el.style.display = 'block';
+                }
+            });
+        } catch (e) {
+            console.warn('Error checking sidebar permissions:', e);
+        }
+    }
+
+    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', generateSidebar);
+        document.addEventListener('DOMContentLoaded', async () => {
+            generateSidebar();
+            await checkPermissionsAndShowItems();
+        });
     } else {
         generateSidebar();
+        checkPermissionsAndShowItems();
     }
 })();

@@ -1335,6 +1335,119 @@
             }
 
             // --- 8. ENVÍO FORMULARIO FINAL ---
+            // Helper para mostrar modal de fondos insuficientes
+            function showFondosModal(efectivoDisponible, montoRequerido, onConfirm) {
+                const diferencia = montoRequerido - efectivoDisponible;
+                const modalHtml = `
+                    <div id="fondos-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                        <div class="w-full max-w-lg rounded-2xl overflow-hidden" style="background: #111318; border: 1px solid #282e39;">
+                            <div class="px-6 py-5 border-b border-[#282e39] flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-orange-400"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-white">Fondos Insuficientes</h3>
+                                    <p class="text-xs text-gray-400">Se requiere registrar un ingreso antes de pagar</p>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-3 gap-3 mb-6">
+                                    <div class="bg-[#1a1d24] p-3 rounded-xl text-center">
+                                        <span class="text-[10px] text-gray-400 uppercase font-bold">Disponible</span>
+                                        <p class="text-lg font-bold ${efectivoDisponible >= 0 ? 'text-green-400' : 'text-red-400'}">${efectivoDisponible.toFixed(2)}€</p>
+                                    </div>
+                                    <div class="bg-[#1a1d24] p-3 rounded-xl text-center">
+                                        <span class="text-[10px] text-gray-400 uppercase font-bold">Requerido</span>
+                                        <p class="text-lg font-bold text-white">${montoRequerido.toFixed(2)}€</p>
+                                    </div>
+                                    <div class="bg-red-500/10 p-3 rounded-xl text-center border border-red-500/30">
+                                        <span class="text-[10px] text-red-400 uppercase font-bold">Faltante</span>
+                                        <p class="text-lg font-bold text-red-400">${diferencia.toFixed(2)}€</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-[#1a1d24] p-4 rounded-xl border border-[#282e39] mb-4">
+                                    <label class="text-sm font-medium text-gray-300 mb-2 block">
+                                        <i class="fas fa-question-circle mr-1 text-orange-400"></i>
+                                        ¿De dónde proviene el dinero? <span class="text-red-400">*</span>
+                                    </label>
+                                    <select id="fondos-origen" class="w-full rounded-xl bg-[#0b0d11] border border-[#282e39] px-4 py-3 text-white mb-3">
+                                        <option value="">Seleccionar origen...</option>
+                                        <option value="PROPIETARIO">Aportación del Propietario</option>
+                                        <option value="CAJA_CHICA">Caja Chica</option>
+                                        <option value="BANCO">Retiro de Banco</option>
+                                        <option value="OTRO">Otro origen</option>
+                                    </select>
+                                    <input type="text" id="fondos-descripcion" placeholder="Descripción adicional (opcional)" 
+                                           class="w-full rounded-xl bg-[#0b0d11] border border-[#282e39] px-4 py-3 text-white">
+                                </div>
+                                
+                                <div class="flex items-center gap-2 mb-4 text-sm text-gray-400">
+                                    <i class="fas fa-info-circle text-blue-400"></i>
+                                    <span>Se registrará un ingreso de <strong class="text-white">${diferencia.toFixed(2)}€</strong> antes de procesar la compra.</span>
+                                </div>
+                            </div>
+                            <div class="px-6 py-4 border-t border-[#282e39] flex justify-end gap-3 bg-[#0b0d11]">
+                                <button id="fondos-cancel" class="px-5 py-2.5 rounded-xl text-gray-400 hover:text-white transition-colors">
+                                    Cancelar
+                                </button>
+                                <button id="fondos-confirm" class="px-6 py-2.5 rounded-xl text-white font-bold transition-colors" 
+                                        style="background: var(--brand-orange);">
+                                    <i class="fas fa-check mr-2"></i>Registrar y Continuar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                const modal = document.getElementById('fondos-modal');
+
+                document.getElementById('fondos-cancel').addEventListener('click', () => {
+                    modal.remove();
+                });
+
+                document.getElementById('fondos-confirm').addEventListener('click', async () => {
+                    const origen = document.getElementById('fondos-origen').value;
+                    const descripcion = document.getElementById('fondos-descripcion').value;
+
+                    if (!origen) {
+                        alert('Debes seleccionar el origen del dinero');
+                        return;
+                    }
+
+                    modal.remove();
+                    await onConfirm(diferencia, origen, descripcion);
+                });
+            }
+
+            // Función para registrar ingreso en caja
+            async function registrarIngresoCaja(monto, origen, descripcion, sucursalId) {
+                const conceptosOrigen = {
+                    'PROPIETARIO': 'Aportación del Propietario',
+                    'CAJA_CHICA': 'Transferencia desde Caja Chica',
+                    'BANCO': 'Retiro de Banco',
+                    'OTRO': 'Ingreso externo'
+                };
+
+                const response = await fetchWithAuth('/api/caja/movimientos', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        tipo: 'INGRESO',
+                        monto: monto,
+                        concepto: conceptosOrigen[origen] || origen,
+                        descripcion: descripcion || `Ingreso para cubrir pago de compra`,
+                        idsucursal: sucursalId
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al registrar ingreso en caja');
+                }
+
+                return response.json();
+            }
+
             form.addEventListener("submit", async (e) => {
                 e.preventDefault();
 
@@ -1356,63 +1469,111 @@
                     return;
                 }
 
-                const payload = {
-                    id_proveedor: providerId,
-                    nombre_proveedor: providerName,
-                    id_sucursal: branchId,
-                    fecha_emision: document.getElementById("fecha-emision").value,
-                    metodo_pago: paymentMethod,
-                    observaciones: observations,
-                    items: items,
-                    total_final: totalFinal
-                };
+                // ===== VALIDACIÓN DE FONDOS PARA PAGO EN EFECTIVO =====
+                const esEfectivo = paymentMethod.toLowerCase() === 'efectivo' || paymentMethod.toLowerCase() === 'cash';
 
-                console.log('Enviando payload de compra:', payload);
-
-                try {
-                    console.log('Iniciando fetchWithAuth...');
-                    const response = await fetchWithAuth('/api/compras', {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
-                    });
-                    console.log('Respuesta recibida:', response);
-
-                    let result;
+                if (esEfectivo) {
                     try {
-                        result = await response.json();
-                        console.log('Resultado JSON:', result);
-                    } catch (e) {
-                        console.error('Error al parsear JSON:', e);
-                        throw new Error(`Error del servidor (${response.status}): ${response.statusText}`);
+                        const fondosResponse = await fetchWithAuth(`/api/caja/verificar-fondos?monto=${totalFinal}&idsucursal=${branchId}`);
+                        const fondosData = await fondosResponse.json();
+
+                        if (!fondosData.ok) {
+                            alert(fondosData.error || 'Error al verificar fondos');
+                            return;
+                        }
+
+                        if (!fondosData.hay_caja_abierta) {
+                            alert('No hay caja abierta en esta sucursal. Debes abrir caja primero.');
+                            return;
+                        }
+
+                        if (!fondosData.fondos_suficientes) {
+                            // Mostrar modal para solicitar origen del dinero
+                            showFondosModal(fondosData.efectivo_disponible, totalFinal, async (diferencia, origen, descripcion) => {
+                                try {
+                                    // Registrar el ingreso primero
+                                    await registrarIngresoCaja(diferencia, origen, descripcion, branchId);
+                                    // Ahora sí procesar la compra
+                                    await procesarCompra();
+                                } catch (err) {
+                                    console.error('Error:', err);
+                                    alert('Error al registrar el ingreso: ' + err.message);
+                                }
+                            });
+                            return; // Detenemos aquí, el modal manejará el resto
+                        }
+                    } catch (err) {
+                        console.error('Error verificando fondos:', err);
+                        // Si falla la verificación, preguntamos si desea continuar
+                        if (!confirm('No se pudo verificar los fondos disponibles. ¿Deseas continuar de todas formas?')) {
+                            return;
+                        }
                     }
+                }
 
-                    if (result.ok) {
-                        successModal.classList.remove("hidden");
-                        successModal.classList.add("flex");
+                // Si hay fondos suficientes o no es efectivo, procesar directamente
+                await procesarCompra();
 
-                        // Reset form
-                        form.reset();
-                        items = [];
-                        renderItems();
-                        calculateTotals();
-                        previewsContainer.innerHTML = "";
+                // Función interna para procesar la compra
+                async function procesarCompra() {
+                    const payload = {
+                        id_proveedor: providerId,
+                        nombre_proveedor: providerName,
+                        id_sucursal: branchId,
+                        fecha_emision: document.getElementById("fecha-emision").value,
+                        metodo_pago: paymentMethod,
+                        observaciones: observations,
+                        items: items,
+                        total_final: totalFinal
+                    };
 
-                        // Reset date to current time
-                        const now = new Date();
-                        const year = now.getFullYear();
-                        const month = String(now.getMonth() + 1).padStart(2, '0');
-                        const day = String(now.getDate()).padStart(2, '0');
-                        const hours = String(now.getHours()).padStart(2, '0');
-                        const minutes = String(now.getMinutes()).padStart(2, '0');
-                        fechaEmisionInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    console.log('Enviando payload de compra:', payload);
 
-                        document.getElementById("proveedor").dataset.id = "";
-                    } else {
-                        alert('Error al registrar la compra: ' + (result.error || 'Error desconocido'));
+                    try {
+                        console.log('Iniciando fetchWithAuth...');
+                        const response = await fetchWithAuth('/api/compras', {
+                            method: 'POST',
+                            body: JSON.stringify(payload)
+                        });
+                        console.log('Respuesta recibida:', response);
+
+                        let result;
+                        try {
+                            result = await response.json();
+                            console.log('Resultado JSON:', result);
+                        } catch (e) {
+                            console.error('Error al parsear JSON:', e);
+                            throw new Error(`Error del servidor (${response.status}): ${response.statusText}`);
+                        }
+
+                        if (result.ok) {
+                            successModal.classList.remove("hidden");
+                            successModal.classList.add("flex");
+
+                            // Reset form
+                            form.reset();
+                            items = [];
+                            renderItems();
+                            calculateTotals();
+                            previewsContainer.innerHTML = "";
+
+                            // Reset date to current time
+                            const now = new Date();
+                            const year = now.getFullYear();
+                            const month = String(now.getMonth() + 1).padStart(2, '0');
+                            const day = String(now.getDate()).padStart(2, '0');
+                            const hours = String(now.getHours()).padStart(2, '0');
+                            const minutes = String(now.getMinutes()).padStart(2, '0');
+                            fechaEmisionInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+                            document.getElementById("proveedor").dataset.id = "";
+                        } else {
+                            alert('Error al registrar la compra: ' + (result.error || 'Error desconocido'));
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error de conexión al registrar la compra: ' + error.message);
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Error de conexión al registrar la compra: ' + error.message);
                 }
             });
 

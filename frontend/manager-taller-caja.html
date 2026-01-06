@@ -1052,8 +1052,11 @@
                 // Ingresos de efectivo para mostrar en el desglose
                 const ingresosEfectivo = ventasEfectivo + totalIngresos;
 
-                // Egresos para mostrar (movimientos manuales, NO incluye retiros aún)
-                const egresosEfectivo = totalEgresos;
+                // Egresos para mostrar (ahora viene del backend incluyendo compras)
+                const egresosEfectivo = parseMonetario(c.egresos_efectivo) || totalEgresos;
+
+                // Compras en efectivo (nuevo campo del backend para mostrar por separado)
+                const comprasEfectivo = parseMonetario(c.compras_efectivo) || 0;
 
                 // === MÉTRICAS CONTABLES (informativas, no afectan arqueo) ===
                 // Gastos operativos REALES = totalEgresos - retiros a caja chica (que son movimientos internos)
@@ -1160,6 +1163,11 @@
                                     <span class="text-[#9da6b9]">- Egresos efectivo</span>
                                     <span class="text-red-400 font-medium">-${formatCurrency(egresosEfectivo)}</span>
                                 </div>
+                                ${comprasEfectivo > 0 ? `
+                                <div class="flex justify-between text-sm pl-4 text-[11px]">
+                                    <span class="text-[#9da6b9] italic">(incl. ${formatCurrency(comprasEfectivo)} en Compras)</span>
+                                </div>
+                                ` : ''}
                                 ${retirosCajaChica > 0 ? `
                                 <div class="flex justify-between text-sm pl-4 text-[11px]">
                                     <span class="text-[#9da6b9] italic">(incl. ${formatCurrency(retirosCajaChica)} a Caja Chica)</span>
@@ -1312,7 +1320,8 @@
                     const tipoClass = m.tipo === 'INGRESO' ? 'bg-green-500/10 text-green-500' : m.tipo === 'EGRESO' ? 'bg-red-500/10 text-red-500' : 'bg-gray-500/10 text-gray-400';
                     const montoClass = m.tipo === 'INGRESO' ? 'text-green-400' : 'text-red-400';
                     const conceptoDisplay = m.concepto || m.origen_tipo || '-';
-                    return '<tr class="hover:bg-[#1a1d24]"><td class="px-6 py-4 text-xs font-mono text-[#9da6b9]">' + m.id + '</td><td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs font-medium ' + tipoClass + '">' + m.tipo + '</span></td><td class="px-6 py-4 text-sm text-gray-300">Efectivo</td><td class="px-6 py-4 text-sm text-gray-300 max-w-[200px] truncate">' + conceptoDisplay + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + m.usuario + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + formatDate(m.fecha) + '</td><td class="px-6 py-4 text-sm font-bold text-right ' + montoClass + '">' + formatCurrency(m.monto) + '</td></tr>';
+                    const descripcionTooltip = m.descripcion ? `title="${m.descripcion}"` : '';
+                    return '<tr class="hover:bg-[#1a1d24]"><td class="px-6 py-4 text-xs font-mono text-[#9da6b9]">' + m.id + '</td><td class="px-6 py-4"><span class="px-2 py-0.5 rounded text-xs font-medium ' + tipoClass + '">' + m.tipo + '</span></td><td class="px-6 py-4 text-sm text-gray-300">Efectivo</td><td class="px-6 py-4 text-sm text-gray-300 max-w-[200px] truncate cursor-help" ' + descripcionTooltip + '>' + conceptoDisplay + (m.descripcion ? ' <span class="material-symbols-outlined text-[12px] text-[#9da6b9] align-middle">info</span>' : '') + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + m.usuario + '</td><td class="px-6 py-4 text-sm text-[#9da6b9]">' + formatDate(m.fecha) + '</td><td class="px-6 py-4 text-sm font-bold text-right ' + montoClass + '">' + formatCurrency(m.monto) + '</td></tr>';
                 }).join('');
             } catch (e) { console.error('Error loading movimientos:', e); }
         }

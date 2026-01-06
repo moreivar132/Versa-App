@@ -288,11 +288,21 @@
               </div>
             </div>
 
-            <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors"
-              href="manager-taller-configuracion.html">
-              <span class="icon-container"><i class="fas fa-cog"></i></span>
-              <p class="text-sm font-medium leading-normal sidebar-text">Configuración</p>
-            </a>
+            <!-- Configuración (Submenu) -->
+            <div class="nav-group">
+              <a class="flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-white hover:bg-[#282e39] rounded-lg transition-colors cursor-pointer"
+                onclick="toggleSubmenu('config-submenu')">
+                <span class="icon-container"><i class="fas fa-cog"></i></span>
+                <p class="text-sm font-medium leading-normal sidebar-text flex-1">Configuración</p>
+                <i class="fas fa-chevron-down text-xs sidebar-text transition-transform" id="config-arrow"></i>
+              </a>
+              <div id="config-submenu" class="hidden flex-col pl-9 gap-1 mt-1">
+                <a href="manager-taller-configuracion.html"
+                  class="text-gray-500 hover:text-white text-sm py-1 block">General</a>
+                <a href="manager-admin-accesos.html" class="text-gray-500 hover:text-white text-sm py-1 block"
+                  id="accesos-nav-link" style="display: none;">Accesos</a>
+              </div>
+            </div>
           </nav>
         </div>
 
@@ -1078,6 +1088,24 @@
 
         // Actualizar UI Header
         updateUserHeader(user);
+
+        // Check if user can access "Accesos" page (super admin or access.manage permission)
+        try {
+          const accessLink = document.getElementById('accesos-nav-link');
+          if (accessLink) {
+            if (user.is_super_admin) {
+              accessLink.style.display = 'block';
+            } else {
+              const permRes = await fetchWithAuth('/api/access/me/permissions');
+              if (permRes.ok) {
+                const perms = await permRes.json();
+                if (perms.isSuperAdmin || perms.permissions.includes('access.manage')) {
+                  accessLink.style.display = 'block';
+                }
+              }
+            }
+          }
+        } catch (e) { console.warn('Error checking access permissions:', e); }
 
         // Calcular fechas
         const { start, end } = getDatesForRange(range);
