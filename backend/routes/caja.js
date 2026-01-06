@@ -136,6 +136,103 @@ router.get('/sucursales', async (req, res) => {
     }
 });
 
+// GET /api/caja/verificar-fondos - Verificar si hay fondos suficientes para pagar en efectivo
+router.get('/verificar-fondos', async (req, res) => {
+    try {
+        const { monto, idsucursal } = req.query;
+        const idSucursal = idsucursal || await resolverSucursal(req);
+
+        if (!idSucursal) {
+            return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
+        }
+
+        const montoRequerido = parseFloat(monto) || 0;
+
+        // Obtener caja abierta
+        const cajaResult = await pool.query(
+            `SELECT * FROM caja WHERE id_sucursal = $1 AND estado = 'ABIERTA' LIMIT 1`,
+            [idSucursal]
+        );
+
+        if (cajaResult.rows.length === 0) {
+            return res.json({
+                ok: true,
+                hay_caja_abierta: false,
+                efectivo_disponible: 0,
+                fondos_suficientes: false,
+                diferencia: -montoRequerido,
+                mensaje: 'No hay caja abierta. Debe abrir caja primero.'
+            });
+        }
+
+        const caja = cajaResult.rows[0];
+
+        // Calcular efectivo disponible (igual que en estado-actual)
+        const totalesPagoResult = await pool.query(`
+            SELECT mp.codigo, COALESCE(SUM(op.importe), 0) as total
+            FROM ordenpago op 
+            JOIN mediopago mp ON op.id_medio_pago = mp.id
+            WHERE op.id_caja = $1 AND mp.codigo = 'CASH'
+            GROUP BY mp.codigo
+        `, [caja.id]);
+        const efectivoPagos = parseFloat(totalesPagoResult.rows[0]?.total) || 0;
+
+        // Movimientos manuales
+        const movResult = await pool.query(`
+            SELECT tipo, COALESCE(SUM(monto), 0) as total 
+            FROM cajamovimiento WHERE id_caja = $1 GROUP BY tipo
+        `, [caja.id]);
+        let totalIngresos = 0, totalEgresos = 0;
+        movResult.rows.forEach(r => {
+            if (r.tipo === 'INGRESO') totalIngresos += parseFloat(r.total);
+            else if (r.tipo === 'EGRESO') totalEgresos += parseFloat(r.total);
+        });
+
+        // Compras en efectivo ya realizadas
+        let comprasEfectivo = 0;
+        try {
+            const comprasResult = await pool.query(`
+                SELECT COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo
+                FROM compracabecera 
+                WHERE id_sucursal = $1 AND created_at >= $2
+            `, [idSucursal, caja.created_at]);
+            comprasEfectivo = parseFloat(comprasResult.rows[0]?.efectivo) || 0;
+        } catch (e) { /* tabla puede no existir */ }
+
+        // Saldo inicial del último cierre
+        const ultimoCierreResult = await pool.query(
+            `SELECT saldo_real FROM cajacierre WHERE id_caja = $1 ORDER BY fecha DESC LIMIT 1`,
+            [caja.id]
+        );
+        const saldoApertura = parseFloat(ultimoCierreResult.rows[0]?.saldo_real) || 0;
+
+        // Efectivo disponible = apertura + ingresos efectivo - egresos - compras efectivo
+        const efectivoDisponible = saldoApertura + efectivoPagos + totalIngresos - totalEgresos - comprasEfectivo;
+        const diferencia = efectivoDisponible - montoRequerido;
+        const fondosSuficientes = diferencia >= 0;
+
+        res.json({
+            ok: true,
+            hay_caja_abierta: true,
+            id_caja: caja.id,
+            efectivo_disponible: efectivoDisponible,
+            monto_requerido: montoRequerido,
+            fondos_suficientes: fondosSuficientes,
+            diferencia: diferencia,
+            desglose: {
+                saldo_apertura: saldoApertura,
+                ingresos_ventas: efectivoPagos,
+                ingresos_manuales: totalIngresos,
+                egresos_manuales: totalEgresos,
+                compras_efectivo: comprasEfectivo
+            }
+        });
+    } catch (error) {
+        console.error('Error en /verificar-fondos:', error);
+        res.status(500).json({ ok: false, error: 'Error interno', details: error.message });
+    }
+});
+
 // GET /api/caja/estado-actual
 router.get('/estado-actual', async (req, res) => {
     try {
@@ -652,7 +749,11 @@ router.get('/cierres/:id', async (req, res) => {
         if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Cierre no encontrado' });
         const cierre = result.rows[0];
 
-        // Obtener totales de ingresos y egresos del periodo
+        // Obtener la caja asociada para consultar la fecha de apertura
+        const cajaResult = await pool.query('SELECT created_at, id_sucursal FROM caja WHERE id = $1', [cierre.id_caja]);
+        const cajaData = cajaResult.rows[0] || {};
+
+        // Obtener totales de ingresos y egresos del periodo (movimientos manuales)
         const movimientosResult = await pool.query(`
             SELECT 
                 COALESCE(SUM(CASE WHEN tipo = 'INGRESO' THEN monto ELSE 0 END), 0) as total_ingresos,
@@ -661,6 +762,19 @@ router.get('/cierres/:id', async (req, res) => {
             WHERE id_caja = $1
         `, [cierre.id_caja]);
         const movTotales = movimientosResult.rows[0] || { total_ingresos: 0, total_egresos: 0 };
+
+        // Obtener compras en efectivo del periodo (CRUCIAL - esto faltaba en el detalle)
+        let comprasEfectivo = 0;
+        try {
+            const comprasResult = await pool.query(`
+                SELECT COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo
+                FROM compracabecera 
+                WHERE id_sucursal = $1 AND created_at >= $2 AND created_at <= $3
+            `, [cajaData.id_sucursal, cajaData.created_at, cierre.fecha]);
+            comprasEfectivo = parseFloat(comprasResult.rows[0]?.efectivo) || 0;
+        } catch (e) {
+            console.warn('Error consultando compras en detalle cierre:', e.message);
+        }
 
         // Obtener desglose por forma de pago (pagos de órdenes en este cierre)
         const desglosePagoResult = await pool.query(`
@@ -689,6 +803,9 @@ router.get('/cierres/:id', async (req, res) => {
         // Calcular resultado del periodo
         const resultadoPeriodo = parseFloat(cierre.saldo_real) - parseFloat(cierre.saldo_inicial);
 
+        // Egresos efectivo = movimientos manuales + compras en efectivo
+        const egresosEfectivoTotal = parseFloat(movTotales.total_egresos) + comprasEfectivo;
+
         res.json({
             ok: true,
             cierre: {
@@ -706,8 +823,9 @@ router.get('/cierres/:id', async (req, res) => {
                 total_facturado: formatCurrency(totalFacturado),
                 total_ingresos: formatCurrency(movTotales.total_ingresos),
                 total_egresos: formatCurrency(movTotales.total_egresos),
+                compras_efectivo: formatCurrency(comprasEfectivo), // NUEVO: mostrar compras separadas
                 ingresos_efectivo: formatCurrency(parseFloat(movTotales.total_ingresos) + parseFloat(desglosePagoResult.rows.find(r => r.nombre?.toLowerCase().includes('efectivo'))?.total || 0)),
-                egresos_efectivo: formatCurrency(movTotales.total_egresos),
+                egresos_efectivo: formatCurrency(egresosEfectivoTotal), // CORREGIDO: ahora incluye compras
                 a_caja_chica: formatCurrency(cajaChicaData.monto),
                 id_movimiento_caja_chica: cajaChicaData.id_movimiento_caja_chica
             },
