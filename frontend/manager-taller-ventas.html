@@ -452,20 +452,34 @@
                             <!-- 2. Items Table -->
                             <div class="form-section overflow-visible">
                                 <h3 class="form-section-title flex justify-between items-center">
-                                    Carrito de Productos
+                                    CARRITO DE PRODUCTOS
                                 </h3>
                                 <div class="overflow-x-auto">
                                     <table class="items-table w-full text-left">
                                         <thead>
                                             <tr>
-                                                <th class="p-2 text-[#9da6b9]">Producto</th>
-                                                <th class="p-2 text-[#9da6b9] w-24">Precio</th>
-                                                <th class="p-2 text-[#9da6b9] w-20">Desc. %</th>
-                                                <th class="p-2 text-[#9da6b9] w-16">IVA %</th>
-                                                <th class="p-2 text-[#9da6b9] w-16">Stock</th>
-                                                <th class="p-2 text-[#9da6b9] w-16">Cant.</th>
-                                                <th class="p-2 text-[#9da6b9] w-24">Total</th>
-                                                <th class="p-2 text-[#9da6b9] w-10"></th>
+                                                <th
+                                                    class="p-3 text-[#9da6b9] text-xs font-semibold uppercase tracking-wide">
+                                                    Producto</th>
+                                                <th
+                                                    class="p-3 text-[#9da6b9] text-xs font-semibold uppercase tracking-wide w-24 text-center">
+                                                    Precio</th>
+                                                <th
+                                                    class="p-3 text-[#9da6b9] text-xs font-semibold uppercase tracking-wide w-20 text-center">
+                                                    Desc. %</th>
+                                                <th
+                                                    class="p-3 text-[#9da6b9] text-xs font-semibold uppercase tracking-wide w-16 text-center">
+                                                    IVA %</th>
+                                                <th
+                                                    class="p-3 text-[#9da6b9] text-xs font-semibold uppercase tracking-wide w-16 text-center">
+                                                    Stock</th>
+                                                <th
+                                                    class="p-3 text-[#9da6b9] text-xs font-semibold uppercase tracking-wide w-16 text-center">
+                                                    Cant.</th>
+                                                <th
+                                                    class="p-3 text-[#9da6b9] text-xs font-semibold uppercase tracking-wide w-24 text-right">
+                                                    Total</th>
+                                                <th class="p-3 w-10"></th>
                                             </tr>
                                         </thead>
                                         <tbody id="sales-items-list" class="text-sm">
@@ -476,54 +490,54 @@
                                             </tr>
                                         </tbody>
                                         <tfoot>
-                                            <tr class="bg-[#111318]/50">
-                                                <td class="p-2">
+                                            <tr class="bg-[#0b0d11] border-t border-[#282e39]">
+                                                <td class="p-3">
                                                     <input type="hidden" id="new-item-id-hidden" />
-                                                    <div class="custom-select-container flex gap-1">
+                                                    <div class="custom-select-container flex gap-2 items-center">
                                                         <div class="animated-search-form" style="flex: 1;">
                                                             <input type="search" id="new-item-name"
                                                                 class="search-input text-sm"
-                                                                placeholder="Buscar producto..." autocomplete="off"
-                                                                required>
+                                                                placeholder="Buscar producto..." autocomplete="off">
                                                             <span class="caret"></span>
                                                             <i class="fas fa-box search-icon"></i>
                                                         </div>
                                                         <button type="button" id="btn-new-product"
                                                             title="Crear Producto"
-                                                            class="px-3 bg-[#282e39] text-white rounded-lg hover:bg-[#343b47]">
+                                                            class="w-10 h-10 bg-[#282e39] text-white rounded-lg hover:bg-[#343b47] flex items-center justify-center">
                                                             <i class="fas fa-plus"></i>
                                                         </button>
                                                         <div class="custom-select-options" id="product-options"></div>
                                                     </div>
                                                 </td>
-                                                <td class="p-2">
+                                                <td class="p-3">
                                                     <input type="number" id="new-item-price"
-                                                        class="form-input text-sm text-right" placeholder="0.00">
+                                                        class="form-input text-sm text-center" placeholder="0.00"
+                                                        step="0.01">
                                                 </td>
-                                                <td class="p-2">
+                                                <td class="p-3">
                                                     <input type="number" id="new-item-discount"
                                                         class="form-input text-sm text-center" placeholder="0" min="0"
                                                         max="100">
                                                 </td>
-                                                <td class="p-2">
-                                                    <input type="number" id="new-item-iva"
-                                                        class="form-input text-sm text-center" value="21" min="0"
-                                                        max="100">
+                                                <td class="p-3">
+                                                    <select id="new-item-iva" class="form-select text-sm text-center">
+                                                        <option value="0">0%</option>
+                                                        <option value="10">10%</option>
+                                                        <option value="21" selected>21%</option>
+                                                    </select>
                                                 </td>
-                                                <td class="p-2">
-                                                    <input type="text" id="new-item-stock"
-                                                        class="form-input text-sm text-center bg-transparent border-none"
-                                                        value="-" readonly>
+                                                <td class="p-3 text-center">
+                                                    <span id="new-item-stock" class="text-[#9da6b9]">-</span>
                                                 </td>
-                                                <td class="p-2">
+                                                <td class="p-3">
                                                     <input type="number" id="new-item-quantity"
                                                         class="form-input text-sm text-center" value="1" min="1">
                                                 </td>
-                                                <td class="p-2 text-right font-bold text-white pt-4"
+                                                <td class="p-3 text-right font-bold text-[var(--brand-orange)] text-lg"
                                                     id="new-item-total">0.00€</td>
-                                                <td class="p-2 text-center">
+                                                <td class="p-3 text-center">
                                                     <button type="button" id="add-item-btn"
-                                                        class="w-8 h-8 rounded bg-[var(--brand-orange)] text-white hover:bg-[#e05300] flex items-center justify-center">
+                                                        class="w-10 h-10 rounded-lg bg-[var(--brand-orange)] text-white hover:bg-[#e05300] flex items-center justify-center shadow-lg">
                                                         <i class="fas fa-plus"></i>
                                                     </button>
                                                 </td>
@@ -538,59 +552,84 @@
                         <div class="space-y-6">
 
                             <div class="form-section sticky top-4">
-                                <h3 class="form-section-title">Pago</h3>
+                                <h3 class="form-section-title">PAGO</h3>
 
-                                <div class="bg-[#111318] p-4 rounded-xl border border-[#282e39] mb-6">
+                                <!-- Total a Pagar -->
+                                <div class="bg-[#0b0d11] p-4 rounded-xl border border-[#282e39] mb-6">
                                     <label class="block text-xs text-[#9da6b9] mb-2 uppercase font-bold">Total a
                                         Pagar</label>
                                     <div class="text-4xl font-extrabold text-[var(--brand-orange)] text-right"
                                         id="display-total">0.00€</div>
                                 </div>
 
+                                <!-- Formulario de Pago -->
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-xs text-[#9da6b9] mb-1">Medio de Pago</label>
-                                        <select id="medio-pago" class="form-select">
-                                            <option value="EFECTIVO">Efectivo</option>
-                                            <option value="TARJETA">Tarjeta</option>
-                                            <option value="TRANSFERENCIA">Transferencia</option>
+                                        <label class="block text-xs text-[#9da6b9] mb-2">Método de Pago</label>
+                                        <select id="medio-pago"
+                                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-3 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
+                                            required>
+                                            <option value="">Cargando...</option>
                                         </select>
                                     </div>
+
                                     <div>
-                                        <label class="block text-xs text-[#9da6b9] mb-1">Caja</label>
-                                        <select id="caja" class="form-select">
-                                            <option value="1">Caja Principal</option>
-                                            <!-- Future: Load dynamic boxes -->
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs text-[#9da6b9] mb-1">Notas</label>
-                                        <textarea id="observaciones" class="form-input text-sm" rows="2"
-                                            placeholder="Opcional..."></textarea>
+                                        <label class="block text-xs text-[#9da6b9] mb-2">Referencia (opcional)</label>
+                                        <input type="text" id="referencia-pago"
+                                            placeholder="Ej: Nº transacción, últimos 4 dígitos..."
+                                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-3 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]" />
                                     </div>
                                 </div>
 
-                                <table class="summary-table w-full text-sm mt-6 pt-6 border-t border-[#282e39]">
-                                    <tr>
-                                        <td>Subtotal</td>
-                                        <td id="summary-subtotal">0.00€</td>
-                                    </tr>
-                                    <tr>
-                                        <td>IVA (21%)</td>
-                                        <td id="summary-iva">0.00€</td>
-                                    </tr>
-                                    <tr class="text-green-500" id="row-descuento-global" style="display:none;">
-                                        <td>Descuento Global</td>
-                                        <td id="summary-descuento">-0.00€</td>
-                                    </tr>
-                                </table>
+                                <div>
+                                    <label class="block text-xs text-[#9da6b9] mb-2">Notas</label>
+                                    <textarea id="observaciones"
+                                        class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-3 text-sm text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
+                                        rows="2" placeholder="Opcional..."></textarea>
+                                </div>
 
+                                <!-- Botón Registrar Venta -->
+                                <button type="submit"
+                                    class="w-full py-3 mt-4 bg-[var(--brand-orange)] hover:bg-[#e05300] text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-orange-900/30">
+                                    <span class="material-symbols-outlined">shopping_cart_checkout</span>
+                                    Registrar Venta
+                                </button>
                             </div>
+
+                            <!-- Separador y botón Cuenta Corriente -->
+                            <div id="seccion-cuenta-corriente" class="mt-4 pt-4 border-t border-[#282e39]">
+                                <p class="text-xs text-[#9da6b9] mb-3 text-center">¿El cliente no puede pagar ahora?</p>
+                                <button type="button" id="btn-pasar-cuenta-corriente"
+                                    class="w-full py-3 bg-[#1a1d24] hover:bg-[#282e39] border border-[#3e4552] hover:border-yellow-500/50 text-yellow-400 font-medium rounded-xl transition-colors flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                                    Pasar a Cuenta Corriente
+                                </button>
+                                <p class="text-xs text-gray-500 mt-2 text-center">El saldo pendiente se cargará a la
+                                    cuenta del cliente</p>
+                            </div>
+
+                            <!-- Resumen -->
+                            <table class="summary-table w-full text-sm mt-6 pt-6 border-t border-[#282e39]">
+                                <tr>
+                                    <td>Subtotal</td>
+                                    <td id="summary-subtotal">0.00€</td>
+                                </tr>
+                                <tr>
+                                    <td>IVA (21%)</td>
+                                    <td id="summary-iva">0.00€</td>
+                                </tr>
+                                <tr class="text-green-500" id="row-descuento-global" style="display:none;">
+                                    <td>Descuento Global</td>
+                                    <td id="summary-descuento">-0.00€</td>
+                                </tr>
+                            </table>
+
                         </div>
                     </div>
-                </form>
-            </main>
         </div>
+        </form>
+        </main>
+    </div>
     </div>
 
     <!-- Success Modal -->
@@ -655,7 +694,7 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs text-[#9da6b9] mb-1">Precio Venta</label>
-                        <input type="number" name="precio" class="form-input" step="0.01" required>
+                        <input type="number" name="precio_venta_bruto" class="form-input" step="0.01" required>
                     </div>
                     <div>
                         <label class="block text-xs text-[#9da6b9] mb-1">Stock Inicial</label>
@@ -663,8 +702,8 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs text-[#9da6b9] mb-1">Código (Opcional)</label>
-                    <input type="text" name="codigo" class="form-input">
+                    <label class="block text-xs text-[#9da6b9] mb-1">Código de Barras</label>
+                    <input type="text" name="codigo_barras_articulo" class="form-input" required>
                 </div>
                 <div class="flex justify-end gap-3 mt-6">
                     <button type="button" onclick="document.getElementById('new-product-modal').classList.add('hidden')"

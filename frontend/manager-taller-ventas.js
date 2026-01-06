@@ -2,10 +2,14 @@ import { loadSucursales } from './loadSucursales.js';
 import { searchClientes, createClient } from './services/clientes-service.js';
 import { searchInventario, createProduct } from './services/inventory-service.js';
 import { createVenta } from './services/ventas-service.js';
+import { obtenerMediosPago } from './services/pagos-service.js';
 import '/components/datetime-picker.js';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 let salesItems = [];
 let clienteMostradorId = null;
+let mediosPagoData = [];
 
 // UI Helpers
 const showToast = (message, isError = false) => {
@@ -27,9 +31,12 @@ const showToast = (message, isError = false) => {
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Load Sucursales
-    loadSucursales(); // Populates #taller
+    await loadSucursales(); // Populates #taller
 
-    // 2. Set Date/Time
+    // 2. Load Medios de Pago
+    await cargarMediosPago();
+
+    // 3. Set Date/Time
     if (window.VersaDateTimePicker) {
         window.VersaDateTimePicker.initDateTimePicker('fecha-venta');
     }
@@ -73,7 +80,77 @@ document.addEventListener('DOMContentLoaded', async () => {
     ['new-item-quantity', 'new-item-price', 'new-item-discount', 'new-item-iva'].forEach(id => {
         document.getElementById(id).addEventListener('input', updatePendingItemTotal);
     });
+
+    // 9. Pasar a Cuenta Corriente
+    document.getElementById('btn-pasar-cuenta-corriente')?.addEventListener('click', handlePasarACuentaCorriente);
 });
+
+// --- Carga de Medios de Pago ---
+async function cargarMediosPago() {
+    try {
+        const medios = await obtenerMediosPago();
+        mediosPagoData = medios;
+
+        const select = document.getElementById('medio-pago');
+        select.innerHTML = '<option value="">Seleccionar...</option>';
+
+        // Excluir Cuenta Corriente del selector - es un botón separado
+        medios.filter(m => m.codigo !== 'CUENTA_CORRIENTE').forEach(medio => {
+            const option = document.createElement('option');
+            option.value = medio.id;
+            option.textContent = medio.nombre;
+            option.dataset.codigo = medio.codigo;
+            select.appendChild(option);
+        });
+
+        // Seleccionar Efectivo por defecto
+        const efectivo = medios.find(m => m.codigo === 'CASH');
+        if (efectivo) select.value = efectivo.id;
+
+    } catch (error) {
+        console.error('Error cargando medios de pago:', error);
+        showToast('Error cargando medios de pago', true);
+    }
+}
+
+// --- Carga de Cajas Abiertas ---
+async function cargarCajas() {
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) return;
+        const token = JSON.parse(sessionRaw).token;
+
+        const idSucursal = localStorage.getItem('versa_selected_sucursal');
+        if (!idSucursal) {
+            document.getElementById('caja').innerHTML = '<option value="">Seleccione sucursal</option>';
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/api/caja/abiertas?idSucursal=${idSucursal}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Error al cargar cajas');
+
+        const cajas = await response.json();
+        const select = document.getElementById('caja');
+
+        if (cajas.length === 0) {
+            select.innerHTML = '<option value="">No hay cajas abiertas</option>';
+        } else {
+            select.innerHTML = '';
+            cajas.forEach(caja => {
+                const option = document.createElement('option');
+                option.value = caja.id;
+                option.textContent = caja.nombre || `Caja ${caja.id}`;
+                select.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando cajas:', error);
+        document.getElementById('caja').innerHTML = '<option value="">Error cargando cajas</option>';
+    }
+}
 
 // --- Logic ---
 
@@ -269,7 +346,7 @@ function selectProduct(product) {
     document.getElementById('new-item-name').value = product.nombre;
     document.getElementById('new-item-id-hidden').value = product.id;
     document.getElementById('new-item-price').value = parseFloat(product.precio).toFixed(2);
-    document.getElementById('new-item-stock').value = product.stock;
+    document.getElementById('new-item-stock').textContent = product.stock;
 
     document.getElementById('new-item-quantity').value = 1;
     document.getElementById('new-item-discount').value = 0;
@@ -299,7 +376,7 @@ function addItemToCart() {
     let name = document.getElementById('new-item-name').value;
     let qty = parseFloat(document.getElementById('new-item-quantity').value) || 0;
     let price = parseFloat(document.getElementById('new-item-price').value) || 0;
-    let stock = parseFloat(document.getElementById('new-item-stock').value) || 0;
+    let stock = parseFloat(document.getElementById('new-item-stock').textContent) || 0;
     let discount = parseFloat(document.getElementById('new-item-discount').value) || 0;
     let iva = parseFloat(document.getElementById('new-item-iva').value) || 21;
     let idProducto = document.getElementById('new-item-id-hidden').value;
@@ -342,7 +419,7 @@ function addItemToCart() {
     document.getElementById('new-item-name').value = '';
     document.getElementById('new-item-id-hidden').value = '';
     document.getElementById('new-item-price').value = '';
-    document.getElementById('new-item-stock').value = '-';
+    document.getElementById('new-item-stock').textContent = '-';
     document.getElementById('new-item-quantity').value = 1;
     document.getElementById('new-item-discount').value = '';
     document.getElementById('new-item-iva').value = 21;
@@ -488,12 +565,17 @@ async function handleSaleSubmit(e) {
             descuento: item.descuento || 0
         })),
 
-        pagos: [{
-            codigoMedioPago: document.getElementById('medio-pago').value,
-            importe: totalDisplay,
-            idCaja: cajaValue ? parseInt(cajaValue) : null,
-            referencia: 'Venta Mostrador'
-        }]
+        pagos: [(() => {
+            const selectMedio = document.getElementById('medio-pago');
+            const selectedOption = selectMedio.options[selectMedio.selectedIndex];
+            const codigo = selectedOption?.dataset?.codigo || 'CASH';
+            return {
+                codigoMedioPago: codigo,
+                importe: totalDisplay,
+                idCaja: cajaValue ? parseInt(cajaValue) : null,
+                referencia: document.getElementById('referencia-pago')?.value || 'Venta Mostrador'
+            };
+        })()]
     };
 
     try {
@@ -516,4 +598,109 @@ function resetForm() {
     // Clear footer inputs
     document.getElementById('new-item-name').value = '';
     document.getElementById('new-item-price').value = '';
+}
+
+// --- Pasar a Cuenta Corriente ---
+async function handlePasarACuentaCorriente() {
+    if (salesItems.length === 0) {
+        showToast("No hay productos en la venta", true);
+        return;
+    }
+
+    const idCliente = document.getElementById('id-cliente-hidden').value;
+    const idSucursal = document.getElementById('taller').value;
+
+    if (!idCliente) {
+        showToast("Debes seleccionar un cliente", true);
+        return;
+    }
+
+    if (!idSucursal) {
+        showToast("Debes seleccionar una sucursal", true);
+        return;
+    }
+
+    const total = parseFloat(document.getElementById('display-total').textContent.replace('€', ''));
+
+    if (total <= 0) {
+        showToast("El total debe ser mayor a 0", true);
+        return;
+    }
+
+    const confirmar = confirm(`¿Cargar ${total.toFixed(2)}€ a la cuenta corriente del cliente?\n\nEl saldo quedará registrado como deuda pendiente de cobro.`);
+    if (!confirmar) return;
+
+    const btn = document.getElementById('btn-pasar-cuenta-corriente');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
+    btn.disabled = true;
+
+    try {
+        const sessionRaw = localStorage.getItem('versa_session_v1');
+        if (!sessionRaw) throw new Error('No autenticado');
+        const token = JSON.parse(sessionRaw).token;
+
+        // Primero crear la venta SIN pago
+        const ventaData = {
+            idSucursal: parseInt(idSucursal),
+            idCliente: parseInt(idCliente),
+            observaciones: document.getElementById('observaciones').value || 'Venta a Cuenta Corriente',
+            lineas: salesItems.map(item => ({
+                idProducto: item.idProducto,
+                cantidad: item.cantidad,
+                precio: item.precio,
+                descripcion: item.nombre,
+                iva: item.iva || 21,
+                descuento: item.descuento || 0
+            })),
+            pagos: [] // Sin pagos - va a cuenta corriente
+        };
+
+        // Crear la venta
+        const ventaResponse = await fetch(`${API_BASE_URL}/api/ventas`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(ventaData)
+        });
+
+        if (!ventaResponse.ok) {
+            const error = await ventaResponse.json();
+            throw new Error(error.mensaje || error.error || 'Error al crear venta');
+        }
+
+        const venta = await ventaResponse.json();
+
+        // Cargar a cuenta corriente
+        const ccResponse = await fetch(`${API_BASE_URL}/api/cuentas-corrientes/cargar`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                idCliente: parseInt(idCliente),
+                importe: total,
+                concepto: `Venta #${venta.id || 'Nueva'} - A Cuenta Corriente`,
+                idSucursal: parseInt(idSucursal)
+            })
+        });
+
+        if (!ccResponse.ok) {
+            const error = await ccResponse.json();
+            throw new Error(error.mensaje || error.error || 'Error al cargar a cuenta corriente');
+        }
+
+        showToast(`Venta registrada y ${total.toFixed(2)}€ cargados a cuenta corriente`);
+        document.getElementById('success-modal').classList.remove('hidden');
+
+    } catch (error) {
+        console.error('Error:', error);
+        showToast(error.message || 'Error al procesar', true);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
 }

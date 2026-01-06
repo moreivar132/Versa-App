@@ -153,16 +153,28 @@ router.get('/estado-actual', async (req, res) => {
             GROUP BY mp.id, mp.codigo, mp.nombre
         `, [caja.id]);
 
-        // Movimientos manuales de caja
+        // Movimientos de caja - separados por método de pago
         const movimientosResult = await pool.query(`
-            SELECT tipo, COALESCE(SUM(monto), 0) as total 
-            FROM cajamovimiento WHERE id_caja = $1 GROUP BY tipo
+            SELECT 
+                cm.tipo,
+                COALESCE(SUM(CASE WHEN mp.codigo = 'CASH' OR mp.codigo IS NULL THEN cm.monto ELSE 0 END), 0) as total_efectivo,
+                COALESCE(SUM(CASE WHEN mp.codigo IN ('CARD', 'TRANSFER') THEN cm.monto ELSE 0 END), 0) as total_tarjeta,
+                COALESCE(SUM(cm.monto), 0) as total 
+            FROM cajamovimiento cm
+            LEFT JOIN mediopago mp ON cm.id_medio_pago = mp.id
+            WHERE cm.id_caja = $1 
+            GROUP BY cm.tipo
         `, [caja.id]);
 
-        let totalIngresos = 0, totalEgresos = 0;
+        let totalIngresosEfectivo = 0, totalIngresosTarjeta = 0, totalIngresos = 0, totalEgresos = 0;
         movimientosResult.rows.forEach(row => {
-            if (row.tipo === 'INGRESO') totalIngresos += parseFloat(row.total);
-            else if (row.tipo === 'EGRESO') totalEgresos += parseFloat(row.total);
+            if (row.tipo === 'INGRESO') {
+                totalIngresosEfectivo += parseFloat(row.total_efectivo);
+                totalIngresosTarjeta += parseFloat(row.total_tarjeta);
+                totalIngresos += parseFloat(row.total);
+            } else if (row.tipo === 'EGRESO') {
+                totalEgresos += parseFloat(row.total);
+            }
         });
 
         const efectivoPagos = totalesPagoResult.rows.filter(r => r.codigo === 'CASH').reduce((s, r) => s + parseFloat(r.total), 0);
@@ -200,7 +212,8 @@ router.get('/estado-actual', async (req, res) => {
         const egresosEfectivoTotal = totalEgresos + comprasEfectivo;
 
         // Efectivo esperado = apertura + ingresos en efectivo - egresos en efectivo
-        const efectivoEsperado = parseFloat(saldoApertura) + efectivoPagos + totalIngresos - egresosEfectivoTotal;
+        // Solo suma los ingresos en efectivo, NO los de tarjeta (que van al banco)
+        const efectivoEsperado = parseFloat(saldoApertura) + efectivoPagos + totalIngresosEfectivo - egresosEfectivoTotal;
 
         // Detalle de operaciones - Total de ÓRDENES (sin agrupar por tipo)
         const ordenesTotalResult = await pool.query(`
@@ -253,23 +266,27 @@ router.get('/estado-actual', async (req, res) => {
         }
 
         // Cobros de Cuentas Corrientes - movimientos con origen_tipo = 'CUENTA_CORRIENTE'
+        // Ahora separamos por método de pago (efectivo vs tarjeta/transferencia)
         const cuentasCorrientesResult = await pool.query(`
             SELECT 
-                COALESCE(SUM(CASE WHEN tipo = 'INGRESO' THEN monto ELSE 0 END), 0) as ingresos,
-                COALESCE(SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END), 0) as egresos
-            FROM cajamovimiento 
-            WHERE id_caja = $1 AND origen_tipo = 'CUENTA_CORRIENTE'
+                COALESCE(SUM(CASE WHEN tipo = 'INGRESO' AND (mp.codigo = 'CASH' OR mp.codigo IS NULL) THEN cm.monto ELSE 0 END), 0) as ingresos_efectivo,
+                COALESCE(SUM(CASE WHEN tipo = 'INGRESO' AND mp.codigo IN ('CARD', 'TRANSFER') THEN cm.monto ELSE 0 END), 0) as ingresos_tarjeta,
+                COALESCE(SUM(CASE WHEN tipo = 'EGRESO' THEN cm.monto ELSE 0 END), 0) as egresos
+            FROM cajamovimiento cm
+            LEFT JOIN mediopago mp ON cm.id_medio_pago = mp.id
+            WHERE cm.id_caja = $1 AND cm.origen_tipo = 'CUENTA_CORRIENTE'
         `, [caja.id]);
-        const ccData = cuentasCorrientesResult.rows[0] || { ingresos: 0, egresos: 0 };
-        const ccIngresos = parseFloat(ccData.ingresos) || 0;
+        const ccData = cuentasCorrientesResult.rows[0] || { ingresos_efectivo: 0, ingresos_tarjeta: 0, egresos: 0 };
+        const ccEfectivo = parseFloat(ccData.ingresos_efectivo) || 0;
+        const ccTarjeta = parseFloat(ccData.ingresos_tarjeta) || 0;
         const ccEgresos = parseFloat(ccData.egresos) || 0;
-        const ccTotal = ccIngresos - ccEgresos;
+        const ccTotal = ccEfectivo + ccTarjeta - ccEgresos;
 
-        if (ccIngresos > 0 || ccEgresos > 0) {
+        if (ccEfectivo > 0 || ccTarjeta > 0 || ccEgresos > 0) {
             detalleOperaciones.push({
                 operacion: 'Cuentas Corrientes',
-                efectivo: formatCurrency(ccTotal),
-                tarjeta: '-',
+                efectivo: formatCurrency(ccEfectivo - ccEgresos),
+                tarjeta: ccTarjeta > 0 ? formatCurrency(ccTarjeta) : '-',
                 total: formatCurrency(ccTotal),
                 es_gasto: ccTotal < 0
             });
@@ -400,8 +417,8 @@ router.get('/estado-actual', async (req, res) => {
             },
             totales: {
                 efectivo: formatCurrency(efectivoPagos),
-                tarjeta: formatCurrency(tarjetaPagos),
-                ingresos_efectivo: formatCurrency(efectivoPagos + totalIngresos),
+                tarjeta: formatCurrency(tarjetaPagos + totalIngresosTarjeta),
+                ingresos_efectivo: formatCurrency(efectivoPagos + totalIngresosEfectivo),
                 egresos_efectivo: formatCurrency(egresosEfectivoTotal),
                 efectivo_esperado: formatCurrency(efectivoEsperado),
                 total_periodo: formatCurrency(efectivoPagos + tarjetaPagos + totalIngresos - egresosEfectivoTotal)
