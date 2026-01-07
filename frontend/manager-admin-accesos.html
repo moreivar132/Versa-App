@@ -259,6 +259,10 @@
                                         </th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Sucursales
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
                                             Tipo</th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
@@ -406,9 +410,16 @@
 
                 <div id="password-group">
                     <label class="block text-sm text-[#9da6b9] mb-1">Contraseña</label>
-                    <input type="password" id="user-password" name="password"
-                        class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
-                        placeholder="Dejar vacío para mantener">
+                    <div class="relative">
+                        <input type="password" id="user-password" name="password"
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg pl-4 pr-10 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
+                            placeholder="Dejar vacío para mantener">
+                        <button type="button" id="toggle-password"
+                            class="absolute inset-y-0 right-0 px-3 flex items-center text-[#9da6b9] hover:text-white transition-colors"
+                            tabindex="-1">
+                            <span class="material-symbols-outlined text-xl">visibility</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -435,7 +446,69 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 pt-2">
+                <!-- Sucursales Section -->
+                <div id="sucursales-section">
+                    <label class="block text-sm text-[#9da6b9] mb-2">
+                        Sucursales
+                        <span id="sucursales-required" class="text-red-400 text-xs ml-1 hidden">* Obligatorio</span>
+                    </label>
+
+                    <!-- Loading state -->
+                    <div id="sucursales-loading"
+                        class="hidden bg-[#1a1d24] p-3 rounded-lg border border-[#282e39] text-[#9da6b9] text-sm">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Cargando sucursales...
+                    </div>
+
+                    <!-- Sucursales list (when tenant has branches) -->
+                    <div id="sucursales-list-container" class="hidden">
+                        <div id="user-sucursales-container"
+                            class="grid grid-cols-2 gap-2 bg-[#1a1d24] p-3 rounded-lg border border-[#282e39] max-h-32 overflow-y-auto">
+                            <!-- Sucursales checkboxes injected here -->
+                        </div>
+                        <p class="text-[10px] text-[#6b7280] mt-1">Selecciona las sucursales donde operará este usuario
+                        </p>
+                    </div>
+
+                    <!-- No sucursales message + create form (when tenant has no branches) -->
+                    <div id="sucursales-empty-container" class="hidden">
+                        <div
+                            class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <span class="material-symbols-outlined text-amber-400 text-xl">info</span>
+                                <div class="flex-1">
+                                    <p class="text-amber-200 text-sm font-medium mb-1">Este tenant no tiene sucursales
+                                    </p>
+                                    <p class="text-[#9da6b9] text-xs mb-3">Crea la primera sucursal para comenzar a
+                                        operar.</p>
+
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs text-[#9da6b9] mb-1">Nombre sucursal *</label>
+                                            <input type="text" id="new-sucursal-nombre" placeholder="Sucursal Principal"
+                                                class="w-full bg-[#111318] border border-[#282e39] rounded-lg px-3 py-2 text-white text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-[#9da6b9] mb-1">Dirección
+                                                (opcional)</label>
+                                            <input type="text" id="new-sucursal-direccion"
+                                                placeholder="Av. Principal 123"
+                                                class="w-full bg-[#111318] border border-[#282e39] rounded-lg px-3 py-2 text-white text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Select tenant first message -->
+                    <div id="sucursales-select-tenant"
+                        class="bg-[#1a1d24] p-3 rounded-lg border border-[#282e39] text-[#6b7280] text-sm">
+                        <span class="material-symbols-outlined text-sm align-middle mr-1">storefront</span>
+                        Selecciona un tenant primero
+                    </div>
+                </div>
+
+                <div id="super-admin-group" class="flex items-center gap-2 pt-2 hidden">
                     <input type="checkbox" id="user-super-admin" name="is_super_admin"
                         class="rounded border-[#282e39] text-[var(--brand-orange)] focus:ring-[var(--brand-orange)] bg-[#1a1d24]">
                     <label for="user-super-admin" class="text-sm text-white">Es Super Admin</label>
@@ -619,6 +692,14 @@
             // Setup create button
             createBtn.addEventListener('click', handleCreate);
 
+            // Password toggle
+            document.getElementById('toggle-password')?.addEventListener('click', function () {
+                const input = document.getElementById('user-password');
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                this.querySelector('span').textContent = type === 'password' ? 'visibility' : 'visibility_off';
+            });
+
             // Setup forms
             document.getElementById('user-form').addEventListener('submit', handleUserSubmit);
             document.getElementById('role-form').addEventListener('submit', handleRoleSubmit);
@@ -748,6 +829,9 @@
             <td class="px-6 py-4 text-white font-medium">${escapeHtml(u.nombre || '')}</td>
             <td class="px-6 py-4 text-[#9da6b9]">${escapeHtml(u.email)}</td>
             <td class="px-6 py-4 text-[#9da6b9]">${escapeHtml(tenant?.nombre || u.tenant_nombre || '-')}</td>
+            <td class="px-6 py-4 text-[#9da6b9]">
+                ${(u.sucursales || []).map(s => `<span class="inline-block bg-[#282e39] rounded px-1.5 py-0.5 text-xs mr-1 mb-1">${escapeHtml(s.nombre)}</span>`).join('') || '<span class="text-xs text-[#6b7280]">-</span>'}
+            </td>
             <td class="px-6 py-4">
               ${u.is_super_admin
                         ? '<span class="badge badge-super">Super Admin</span>'
@@ -1030,13 +1114,35 @@
             document.getElementById('user-tenant').value = user?.id_tenant || '';
             document.getElementById('user-porcentaje').value = user?.porcentaje_mano_obra || 0.5;
             document.getElementById('user-super-admin').checked = user?.is_super_admin || false;
+            if (isSuperAdmin) {
+                document.getElementById('super-admin-group').classList.remove('hidden');
+            } else {
+                document.getElementById('super-admin-group').classList.add('hidden');
+            }
 
             // Password not required for edit
             document.getElementById('user-password').required = !user;
 
             // Populate tenant select
-            document.getElementById('user-tenant').innerHTML = '<option value="">Seleccionar...</option>' +
-                tenants.map(t => `<option value="${t.id}" ${user?.id_tenant === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('');
+            const tenantSelect = document.getElementById('user-tenant');
+
+            if (isSuperAdmin) {
+                // Super admin can select any tenant
+                tenantSelect.innerHTML = '<option value="">Seleccionar...</option>' +
+                    tenants.map(t => `<option value="${t.id}" ${user?.id_tenant === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('');
+                tenantSelect.disabled = false;
+            } else {
+                // Non-super admin: auto-select and lock their own tenant
+                const myTenantId = currentUser.id_tenant;
+                const myTenantName = currentUser.tenant_nombre || currentUser.nombre || `Tenant ${myTenantId}`;
+                tenantSelect.innerHTML = `<option value="${myTenantId}" selected>${myTenantName}</option>`;
+                tenantSelect.disabled = true;
+
+                // Auto-load sucursales for their tenant
+                if (myTenantId && !user) {
+                    loadSucursalesForTenant(myTenantId, []);
+                }
+            }
 
             // Populate roles
             const rolesContainer = document.getElementById('user-roles-container');
@@ -1049,8 +1155,82 @@
         </label>
       `).join('');
 
+            // Reset sucursales section
+            resetSucursalesSection();
+
+            // Clear new sucursal form
+            document.getElementById('new-sucursal-nombre').value = '';
+            document.getElementById('new-sucursal-direccion').value = '';
+
+            // Add tenant change listener
+            tenantSelect.onchange = async () => {
+                const tenantId = tenantSelect.value;
+                if (tenantId) {
+                    await loadSucursalesForTenant(parseInt(tenantId), user?.sucursales || []);
+                } else {
+                    resetSucursalesSection();
+                }
+            };
+
+            // Load sucursales if tenant is already selected (edit mode)
+            if (user?.id_tenant) {
+                loadSucursalesForTenant(user.id_tenant, user.sucursales || []);
+            }
+
             openModal('user-modal');
         }
+
+        // Sucursales helper functions
+        function resetSucursalesSection() {
+            document.getElementById('sucursales-loading').classList.add('hidden');
+            document.getElementById('sucursales-list-container').classList.add('hidden');
+            document.getElementById('sucursales-empty-container').classList.add('hidden');
+            document.getElementById('sucursales-select-tenant').classList.remove('hidden');
+            document.getElementById('sucursales-required').classList.add('hidden');
+            document.getElementById('user-sucursales-container').innerHTML = '';
+        }
+
+        async function loadSucursalesForTenant(tenantId, existingSucursales = []) {
+            // Show loading
+            document.getElementById('sucursales-select-tenant').classList.add('hidden');
+            document.getElementById('sucursales-loading').classList.remove('hidden');
+            document.getElementById('sucursales-list-container').classList.add('hidden');
+            document.getElementById('sucursales-empty-container').classList.add('hidden');
+
+            try {
+                const res = await fetchWithAuth(`/api/sucursales?tenant_id=${tenantId}`);
+                const sucursales = await res.json();
+
+                document.getElementById('sucursales-loading').classList.add('hidden');
+
+                if (sucursales.length === 0) {
+                    // No sucursales - show onboarding form
+                    document.getElementById('sucursales-empty-container').classList.remove('hidden');
+                    document.getElementById('sucursales-required').classList.add('hidden');
+                } else {
+                    // Has sucursales - show list
+                    document.getElementById('sucursales-list-container').classList.remove('hidden');
+                    document.getElementById('sucursales-required').classList.remove('hidden');
+
+                    const existingIds = existingSucursales.map(s => s.id);
+                    const container = document.getElementById('user-sucursales-container');
+
+                    container.innerHTML = sucursales.map(s => `
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="sucursales" value="${s.id}" 
+                                ${existingIds.includes(s.id) || sucursales.length === 1 ? 'checked' : ''}
+                                class="rounded border-[#282e39] text-[var(--brand-orange)] focus:ring-[var(--brand-orange)] bg-[#111318]">
+                            <span class="text-sm text-[#9da6b9]">${escapeHtml(s.nombre)}</span>
+                        </label>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Error loading sucursales:', e);
+                document.getElementById('sucursales-loading').classList.add('hidden');
+                document.getElementById('sucursales-select-tenant').classList.remove('hidden');
+            }
+        }
+
 
         function openRoleModal(role = null) {
             const form = document.getElementById('role-form');
@@ -1303,12 +1483,13 @@
             e.preventDefault();
             const form = e.target;
             const id = form.querySelector('#user-id').value;
+            const isSuperAdmin = form.querySelector('#user-super-admin').checked;
 
             const body = {
                 nombre: form.querySelector('#user-nombre').value,
                 email: form.querySelector('#user-email').value,
                 id_tenant: parseInt(form.querySelector('#user-tenant').value),
-                is_super_admin: form.querySelector('#user-super-admin').checked,
+                is_super_admin: isSuperAdmin,
                 porcentaje_mano_obra: parseFloat(form.querySelector('#user-porcentaje').value) || 0.5
             };
 
@@ -1316,6 +1497,38 @@
             if (password) body.password = password;
 
             const selectedRoles = Array.from(form.querySelectorAll('input[name="roles"]:checked')).map(c => parseInt(c.value));
+            const selectedSucursales = Array.from(form.querySelectorAll('input[name="sucursales"]:checked')).map(c => parseInt(c.value));
+
+            // Check if we need to create a new sucursal (onboarding flow)
+            const newSucursalNombre = document.getElementById('new-sucursal-nombre').value.trim();
+            const newSucursalDireccion = document.getElementById('new-sucursal-direccion').value.trim();
+            const isSucursalEmptyVisible = !document.getElementById('sucursales-empty-container').classList.contains('hidden');
+
+            if (isSucursalEmptyVisible && newSucursalNombre) {
+                // Add create_sucursal to body
+                body.crear_sucursal = {
+                    nombre: newSucursalNombre,
+                    direccion: newSucursalDireccion || null
+                };
+            }
+
+            // Validation: non-super-admins need at least 1 sucursal (unless it's onboarding)
+            const isSucursalListVisible = !document.getElementById('sucursales-list-container').classList.contains('hidden');
+            if (!isSuperAdmin && isSucursalListVisible && selectedSucursales.length === 0) {
+                alert('Debes seleccionar al menos una sucursal para este usuario.');
+                return;
+            }
+
+            // Validation: if onboarding but no sucursal name provided
+            if (isSucursalEmptyVisible && !newSucursalNombre && !isSuperAdmin) {
+                alert('Debes crear una sucursal para este tenant.');
+                return;
+            }
+
+            // Add sucursal_ids to body
+            if (selectedSucursales.length > 0) {
+                body.sucursal_ids = selectedSucursales;
+            }
 
             try {
                 let res;
@@ -1337,12 +1550,21 @@
                     });
                 }
 
+                // Assign sucursales (if selected and not handled by backend onboarding)
+                if (selectedSucursales.length > 0) {
+                    await fetchWithAuth(`/api/access/users/${id || savedUser.id}/sucursales`, {
+                        method: 'POST',
+                        body: JSON.stringify({ sucursal_ids: selectedSucursales })
+                    });
+                }
+
                 closeModal('user-modal');
                 await loadUsers();
             } catch (e) {
                 alert('Error: ' + e.message);
             }
         }
+
 
         async function handleRoleSubmit(e) {
             e.preventDefault();

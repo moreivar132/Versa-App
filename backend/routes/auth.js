@@ -88,7 +88,16 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', verifyJWT, async (req, res) => {
   try {
-    const user = await getUserById(req.user.id);
+    // Get user with tenant name
+    const pool = require('../db');
+    const result = await pool.query(`
+      SELECT u.*, t.nombre as tenant_nombre
+      FROM usuario u
+      LEFT JOIN tenant t ON u.id_tenant = t.id
+      WHERE u.id = $1
+    `, [req.user.id]);
+
+    const user = result.rows[0];
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }

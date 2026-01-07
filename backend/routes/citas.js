@@ -4,21 +4,51 @@ const pool = require('../db');
 const verifyJWT = require('../middleware/auth');
 
 // GET /api/citas/config - Obtener configuración (sucursales y técnicos)
-// This is public for booking widget, no tenant filter
-router.get('/config', async (req, res) => {
+// Requires auth to filter by tenant
+router.get('/config', verifyJWT, async (req, res) => {
     try {
-        const sucursalesRes = await pool.query('SELECT id, nombre, direccion, direccion_iframe FROM sucursal ORDER BY id');
+        const id_tenant = req.user.id_tenant;
+        const isSuperAdmin = req.user.is_super_admin;
+
+        // Fetch sucursales filtered by tenant (super admin sees all)
+        let sucursalesQuery;
+        let sucursalesParams = [];
+
+        if (isSuperAdmin) {
+            sucursalesQuery = 'SELECT id, nombre, direccion, direccion_iframe FROM sucursal ORDER BY id';
+        } else {
+            sucursalesQuery = 'SELECT id, nombre, direccion, direccion_iframe FROM sucursal WHERE id_tenant = $1 ORDER BY id';
+            sucursalesParams = [id_tenant];
+        }
+
+        const sucursalesRes = await pool.query(sucursalesQuery, sucursalesParams);
 
         let tecnicos = [];
         try {
-            // Fetch technicians (users associated with sucursales)
-            // We assume 'usuariosucursal' links users to sucursales
-            const tecnicosRes = await pool.query(`
-                SELECT u.id, u.nombre, us.id_sucursal 
-                FROM usuario u 
-                JOIN usuariosucursal us ON u.id = us.id_usuario
-                ORDER BY u.nombre
-            `);
+            // Fetch technicians filtered by tenant's sucursales
+            let tecnicosQuery;
+            let tecnicosParams = [];
+
+            if (isSuperAdmin) {
+                tecnicosQuery = `
+                    SELECT u.id, u.nombre, us.id_sucursal 
+                    FROM usuario u 
+                    JOIN usuariosucursal us ON u.id = us.id_usuario
+                    ORDER BY u.nombre
+                `;
+            } else {
+                tecnicosQuery = `
+                    SELECT u.id, u.nombre, us.id_sucursal 
+                    FROM usuario u 
+                    JOIN usuariosucursal us ON u.id = us.id_usuario
+                    JOIN sucursal s ON us.id_sucursal = s.id
+                    WHERE s.id_tenant = $1
+                    ORDER BY u.nombre
+                `;
+                tecnicosParams = [id_tenant];
+            }
+
+            const tecnicosRes = await pool.query(tecnicosQuery, tecnicosParams);
             tecnicos = tecnicosRes.rows;
         } catch (err) {
             console.warn('Could not fetch technicians (usuariosucursal might be missing):', err.message);
@@ -31,6 +61,48 @@ router.get('/config', async (req, res) => {
         });
     } catch (error) {
         console.error('Error al obtener config de citas:', error);
+        res.status(500).json({ ok: false, error: 'Error al obtener configuración' });
+    }
+});
+
+// GET /api/citas/config/public/:sucursalId - Public config for marketplace booking widget
+// No auth required - used by public booking pages
+router.get('/config/public/:sucursalId', async (req, res) => {
+    try {
+        const { sucursalId } = req.params;
+
+        // Only fetch the specific sucursal requested
+        const sucursalesRes = await pool.query(
+            'SELECT id, nombre, direccion, direccion_iframe FROM sucursal WHERE id = $1',
+            [sucursalId]
+        );
+
+        if (sucursalesRes.rows.length === 0) {
+            return res.status(404).json({ ok: false, error: 'Sucursal no encontrada' });
+        }
+
+        // Fetch technicians for this specific sucursal
+        let tecnicos = [];
+        try {
+            const tecnicosRes = await pool.query(`
+                SELECT u.id, u.nombre, us.id_sucursal 
+                FROM usuario u 
+                JOIN usuariosucursal us ON u.id = us.id_usuario
+                WHERE us.id_sucursal = $1
+                ORDER BY u.nombre
+            `, [sucursalId]);
+            tecnicos = tecnicosRes.rows;
+        } catch (err) {
+            console.warn('Could not fetch technicians:', err.message);
+        }
+
+        res.json({
+            ok: true,
+            sucursales: sucursalesRes.rows,
+            tecnicos: tecnicos
+        });
+    } catch (error) {
+        console.error('Error al obtener config pública de citas:', error);
         res.status(500).json({ ok: false, error: 'Error al obtener configuración' });
     }
 });

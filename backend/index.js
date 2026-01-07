@@ -12,7 +12,12 @@ const vehiculosRouter = require('./routes/vehiculos');
 const verifyJWT = require('./middleware/auth');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
+
+console.log('---------------------------------------------------');
+console.log('   VERSA BACKEND - VERSION CHECK: v2026.01.07.2      ');
+console.log('   (If you do not see this, code is OLD)             ');
+console.log('---------------------------------------------------');
 
 // --- Middlewares ---
 app.use(cors());

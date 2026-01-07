@@ -170,6 +170,68 @@ function validateTenantAccess(req, targetTenantId) {
     return req.user?.id_tenant === targetTenantId;
 }
 
+/**
+ * Get user's allowed sucursales from the pivot table
+ */
+async function getUserAllowedSucursales(userId) {
+    const result = await pool.query(`
+        SELECT s.id, s.nombre
+        FROM sucursal s
+        JOIN usuariosucursal us ON s.id = us.id_sucursal
+        WHERE us.id_usuario = $1
+    `, [userId]);
+    return result.rows;
+}
+
+/**
+ * Express middleware factory - requires access to a specific sucursal
+ * @param {string} paramName - Name of the parameter containing sucursal ID
+ */
+function requireSucursalScope(paramName = 'id_sucursal') {
+    return async (req, res, next) => {
+        try {
+            // Super admins bypass
+            if (req.userPermissions?.isSuperAdmin) {
+                return next();
+            }
+
+            // Get target sucursal ID from request
+            const targetSucursalId = parseInt(
+                req.params[paramName] ||
+                req.body[paramName] ||
+                req.body?.id_sucursal ||
+                req.query[paramName] ||
+                req.query?.id_sucursal
+            );
+
+            // If no sucursal in request, allow (some endpoints may not need it)
+            if (!targetSucursalId || isNaN(targetSucursalId)) {
+                return next();
+            }
+
+            // Get user's allowed sucursales
+            const allowedSucursales = await getUserAllowedSucursales(req.user.id);
+            const allowedIds = allowedSucursales.map(s => s.id);
+
+            // Check if target is in allowed list
+            if (!allowedIds.includes(targetSucursalId)) {
+                return res.status(403).json({
+                    error: 'Acceso denegado a esta sucursal',
+                    required_sucursal: targetSucursalId,
+                    allowed_sucursales: allowedIds
+                });
+            }
+
+            // Attach allowed sucursales to request for downstream use
+            req.allowedSucursales = allowedSucursales;
+            next();
+        } catch (error) {
+            console.error('Sucursal scope check error:', error);
+            res.status(500).json({ error: 'Error al verificar acceso a sucursal' });
+        }
+    };
+}
+
 module.exports = {
     isSuperAdmin,
     getUserPermissions,
@@ -179,5 +241,8 @@ module.exports = {
     requireAccessManage,
     can,
     getEffectiveTenant,
-    validateTenantAccess
+    validateTenantAccess,
+    getUserAllowedSucursales,
+    requireSucursalScope
 };
+

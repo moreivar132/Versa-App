@@ -965,6 +965,108 @@
         document.addEventListener("DOMContentLoaded", () => {
             // --- ESTADO & VARIABLES ---
             let items = [];
+
+            // Edit Mode State
+            let isEditMode = false;
+            let currentPurchaseId = null;
+
+            // Check URL parameters for Edit Mode
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('mode') === 'edit' && urlParams.get('id')) {
+                isEditMode = true;
+                currentPurchaseId = urlParams.get('id');
+                console.log('Modo edición activado para compra ID:', currentPurchaseId);
+                // Call load function (defined below)
+                setTimeout(() => loadPurchaseForEdit(currentPurchaseId), 500);
+            }
+
+            // --- 0. HELPER FUNCTIONS ---
+
+            async function loadPurchaseForEdit(id) {
+                try {
+                    const response = await fetchWithAuth(`/api/compras/${id}`);
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        console.error('Error response body:', errText);
+                        try {
+                            const errData = JSON.parse(errText);
+                            throw new Error(errData.error || 'Error al cargar compra');
+                        } catch (e) {
+                            throw new Error('Error 500 del servidor: ' + errText.substring(0, 100));
+                        }
+                    }
+                    const data = await response.json();
+
+                    console.log('Datos de compra cargados:', data);
+
+                    // 1. Update UI Titles
+                    const titleEl = document.querySelector('.form-main-title');
+                    // Use more robust selector - find badge by looking for specific text or parent
+                    const badgeEl = Array.from(document.querySelectorAll('span')).find(el => 
+                        el.className.includes('bg-[rgba') && el.className.includes('text-sm')
+                    );
+                    if (titleEl) titleEl.textContent = `Editar Compra #${id}`;
+                    if (badgeEl) {
+                        badgeEl.textContent = 'EDITANDO';
+                        badgeEl.classList.remove('text-[var(--brand-orange)]');
+                        badgeEl.classList.add('text-blue-400');
+                    }
+
+                    // 2. Populate Fields
+                    // Date format handling
+                    if (data.fecha_emision) {
+                        // Ensure format YYYY-MM-DDTHH:MM
+                        const dateObj = new Date(data.fecha_emision);
+                        const year = dateObj.getFullYear();
+                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                        const day = String(dateObj.getDate()).padStart(2, '0');
+                        const hours = String(dateObj.getHours()).padStart(2, '0');
+                        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                        document.getElementById("fecha-emision").value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                    }
+
+                    const provInput = document.getElementById("proveedor");
+                    provInput.value = data.proveedor_nombre || data.nombre_proveedor || '';
+                    provInput.dataset.id = data.id_proveedor || '';
+
+                    if (data.id_sucursal) {
+                        const tallerSelect = document.getElementById("taller");
+                        // Wait slightly for options to populate if needed, though we run this after 500ms
+                        if (tallerSelect) tallerSelect.value = data.id_sucursal;
+                    }
+
+                    if (data.observaciones) {
+                        document.getElementById("observaciones").value = data.observaciones;
+                    }
+
+                    // Payment method
+                    const payMethodSelect = document.querySelector('select[name="metodo_pago"]');
+                    if (payMethodSelect && data.metodo_pago) {
+                        payMethodSelect.value = data.metodo_pago;
+                    }
+
+                    // 3. Populate Items
+                    // Map API items to Frontend structure
+                    items = (data.items || data.lineas || []).map(i => ({
+                        id_producto: i.id_producto || null,
+                        barcode: i.codigo_barras || i.barcode || 'GENERICO',
+                        name: i.concepto || i.name || i.descripcion || i.producto_nombre || '',
+                        price: parseFloat(i.precio_unitario || i.price || 0),
+                        quantity: parseInt(i.cantidad || i.quantity || 1),
+                        bonus: parseFloat(i.descuento || i.bonus || 0),
+                        iva: parseFloat(i.iva || 0),
+                        id_impuesto: i.id_impuesto,
+                        type: i.tipo || 'Producto'
+                    }));
+
+                    renderItems();
+                    calculateTotals();
+
+                } catch (err) {
+                    console.error('Error cargando compra para edición:', err);
+                    alert('Error cargando los datos de la compra: ' + err.message);
+                }
+            }
             let uploadedFiles = [];
 
             // --- ELEMENTOS DOM ---
@@ -1371,8 +1473,12 @@
 
                 try {
                     console.log('Iniciando fetchWithAuth...');
-                    const response = await fetchWithAuth('/api/compras', {
-                        method: 'POST',
+
+                    const url = isEditMode ? `/api/compras/${currentPurchaseId}` : '/api/compras';
+                    const method = isEditMode ? 'PUT' : 'POST';
+
+                    const response = await fetchWithAuth(url, {
+                        method: method,
                         body: JSON.stringify(payload)
                     });
                     console.log('Respuesta recibida:', response);
@@ -1387,6 +1493,12 @@
                     }
 
                     if (result.ok) {
+                        if (isEditMode) {
+                            alert('Compra actualizada correctamente');
+                            window.location.href = 'manager-taller-compras-historial.html';
+                            return;
+                        }
+
                         successModal.classList.remove("hidden");
                         successModal.classList.add("flex");
 
@@ -1671,7 +1783,7 @@
             const sucursalId = await initSucursalSelector('sucursal-selector-container', {
                 onchange: (sucursalId) => {
                     // Actualizar el campo de sucursal si existe
-                    const sucursalSelect = document.getElementById('sucursal');
+                    const sucursalSelect = document.getElementById('taller');
                     if (sucursalSelect && sucursalId) {
                         sucursalSelect.value = sucursalId;
                     }
@@ -1680,7 +1792,7 @@
 
             // Pre-seleccionar la sucursal si hay guaradada
             if (sucursalId) {
-                const sucursalSelect = document.getElementById('sucursal');
+                const sucursalSelect = document.getElementById('taller');
                 if (sucursalSelect) {
                     setTimeout(() => {
                         sucursalSelect.value = sucursalId;
