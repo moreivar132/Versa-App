@@ -58,6 +58,7 @@ app.use('/api/upload', require('./routes/upload'));
 app.use('/api/whatsapp', require('./routes/whatsapp'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/subscriptions', require('./routes/subscriptions'));
+app.use('/api/billing', require('./routes/billingRoutes'));
 app.use('/api/ordenes', require('./routes/ordenes'));
 app.use('/api/ordenpago', require('./routes/ordenPago'));
 app.use('/api/medio-pago', require('./routes/medioPago'));

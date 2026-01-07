@@ -120,7 +120,9 @@
             icon: 'fa-cog',
             items: [
                 { label: 'General', href: 'manager-taller-configuracion.html' },
-                { label: 'Accesos', href: 'manager-admin-accesos.html', requiresPermission: 'access.manage' }
+                { label: 'Accesos', href: 'manager-admin-accesos.html', requiresPermission: 'access.manage' },
+                { label: 'Sucursales', href: 'manager-taller-sucursales.html', requiresPermission: 'sucursales.manage' },
+                { label: 'Suscripción', href: 'manager-taller-billing.html' }
             ]
         }
     ];

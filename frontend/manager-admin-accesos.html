@@ -673,6 +673,11 @@
                 const select = document.getElementById('tenant-select');
                 select.innerHTML = '<option value="">Todos los Tenants</option>' +
                     tenants.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+
+                // Add change listener
+                select.addEventListener('change', () => {
+                    renderUsers();
+                });
             } catch (e) {
                 console.error('Error loading tenants:', e);
             }
@@ -723,13 +728,20 @@
         // Render functions
         function renderUsers() {
             const tbody = document.getElementById('users-tbody');
+            const tenantSelect = document.getElementById('tenant-select');
+            const selectedTenantId = tenantSelect ? parseInt(tenantSelect.value) : null;
 
-            if (users.length === 0) {
+            let filteredUsers = users;
+            if (selectedTenantId) {
+                filteredUsers = users.filter(u => u.id_tenant === selectedTenantId);
+            }
+
+            if (filteredUsers.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-[#9da6b9]">No hay usuarios</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = users.map(u => {
+            tbody.innerHTML = filteredUsers.map(u => {
                 const tenant = tenants.find(t => t.id === u.id_tenant);
                 return `
           <tr class="hover:bg-[#1a1d24] transition-colors">

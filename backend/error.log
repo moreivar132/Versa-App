@@ -1,1 +1,23 @@
-insert or update on table "orden" violates foreign key constraint "orden_id_usuario_fkey"
+EmailService: No SMTP credentials found (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console only.
+Error creating sucursal detailed: error: value too long for type character varying(50)
+    at /Users/admin/Library/Mobile Documents/com~apple~CloudDocs/Versa-App/backend/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async /Users/admin/Library/Mobile Documents/com~apple~CloudDocs/Versa-App/backend/routes/sucursales.js:57:24 {
+  length: 98,
+  severity: 'ERROR',
+  code: '22001',
+  detail: undefined,
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'varchar.c',
+  line: '637',
+  routine: 'varchar'
+}
