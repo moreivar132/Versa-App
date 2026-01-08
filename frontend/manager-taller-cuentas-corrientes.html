@@ -698,6 +698,9 @@
             btn.disabled = true;
 
             try {
+                // Obtener sucursal seleccionada del localStorage (misma que usa Caja)
+                const sucursalSeleccionada = localStorage.getItem('versa_selected_sucursal');
+
                 const response = await fetch(`${API_BASE}/cuentas-corrientes/pago`, {
                     method: 'POST',
                     headers: {
@@ -709,7 +712,8 @@
                         importe,
                         concepto,
                         fecha,
-                        idMedioPago
+                        idMedioPago,
+                        idSucursal: sucursalSeleccionada ? parseInt(sucursalSeleccionada) : null
                     })
                 });
 

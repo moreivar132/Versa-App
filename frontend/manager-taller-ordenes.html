@@ -128,6 +128,35 @@
       box-shadow: 0 0 0 3px rgba(255, 95, 0, 0.2);
     }
 
+    /* Selector de IVA compacto y estético */
+    .iva-select {
+      width: 70px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+      padding-right: 24px;
+    }
+
+    .iva-select:hover {
+      border-color: var(--brand-orange);
+    }
+
+    .iva-select:focus {
+      outline: none;
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 2px rgba(255, 95, 0, 0.2);
+    }
+
     .input-group {
       display: flex;
     }
@@ -218,6 +247,39 @@
       color: var(--text-secondary);
       grid-template-columns: 1fr 1fr;
       gap: 40px;
+    }
+
+    /* Inputs editables dentro de la tabla de items */
+    .items-table .form-input,
+    .items-table .form-select {
+      padding: 8px 10px;
+      font-size: 13px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+
+    .items-table .form-input:focus,
+    .items-table .form-select:focus {
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 2px rgba(255, 95, 0, 0.15);
+    }
+
+    .items-table .edit-tipo {
+      padding: 8px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .items-table .order-row:hover {
+      background-color: rgba(255, 95, 0, 0.05);
+    }
+
+    .items-table .subtotal-cell {
+      color: var(--brand-orange);
     }
 
     .summary-table {
@@ -774,8 +836,8 @@
           <div class="form-header">
             <h2 class="form-main-title">Orden de Reparación</h2>
             <div class="form-header-actions">
-              <button type="button" class="btn btn-outline">Volver</button>
-              <button type="button" class="btn btn-secondary">Cancelar</button>
+              <button type="button" id="btn-volver" class="btn btn-outline">Volver</button>
+              <button type="button" id="btn-cancelar" class="btn btn-secondary">Cancelar</button>
               <button type="submit" class="btn">Confirmar</button>
             </div>
           </div>
@@ -929,7 +991,7 @@
                   <td><input type="number" id="new-item-bonus" class="form-input" value="0"></td>
                   <td id="new-item-subtotal">0.00€</td>
                   <td>
-                    <select id="new-item-iva" class="form-select">
+                    <select id="new-item-iva" class="iva-select">
                       <option value="0">0%</option>
                       <option value="10">10%</option>
                       <option value="21" selected>21%</option>
@@ -1099,6 +1161,23 @@
             <button id="new-order-btn" type="button" class="btn">Crear Nueva</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Éxito -->
+  <div id="success-modal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h3>¡Orden Enviada!</h3>
+      <p>La orden de reparación ha sido procesada.</p>
+      <div class="modal-actions">
+        <button type="button" id="close-modal-btn" class="btn btn-secondary">Cerrar</button>
+        <button type="button" id="new-order-btn" class="btn">Crear Nueva</button>
       </div>
     </div>
   </div>
@@ -1343,6 +1422,52 @@
 
       loadSucursales();
       loadTecnicosSelect();
+
+      // --- Botones Volver y Cancelar ---
+      const btnVolver = document.getElementById('btn-volver');
+      const btnCancelar = document.getElementById('btn-cancelar');
+
+      if (btnVolver) {
+        btnVolver.addEventListener('click', () => {
+          // Redirigir a la lista de órdenes
+          window.location.href = 'manager-taller-ordenes-lista.html';
+        });
+      }
+
+      if (btnCancelar) {
+        btnCancelar.addEventListener('click', () => {
+          // Confirmar antes de cancelar y limpiar el formulario
+          if (confirm('¿Estás seguro de que deseas cancelar? Se perderán todos los datos ingresados.')) {
+            const orderForm = document.getElementById('order-form');
+            if (orderForm) {
+              orderForm.reset();
+              // Limpiar campos ocultos
+              document.getElementById('id-cliente-hidden').value = '';
+              document.getElementById('id-vehiculo-hidden').value = '';
+              document.getElementById('id-tecnico-hidden').value = '';
+              document.getElementById('id-tipo-orden-hidden').value = '';
+              // Limpiar displays de info
+              document.getElementById('cliente-info').textContent = '';
+              document.getElementById('vehiculo-info').textContent = '';
+              // Limpiar lista de items
+              document.getElementById('order-items-list').innerHTML = '';
+              // Resetear resumen
+              document.getElementById('summary-repuestos').textContent = '0.00€';
+              document.getElementById('summary-mano-obra').textContent = '0.00€';
+              document.getElementById('summary-neto').textContent = '0.00€';
+              document.getElementById('summary-iva').textContent = '0.00€';
+              document.getElementById('summary-total').textContent = '0.00€';
+              // Deshabilitar selector de vehículo
+              document.getElementById('buscar-vehiculo').disabled = true;
+              document.getElementById('buscar-vehiculo').placeholder = 'Seleccione un cliente primero';
+              showToast('Formulario limpiado');
+            }
+          }
+        });
+      }
+      // Variable global para almacenar los impuestos cargados del backend
+      let impuestosDisponibles = [];
+
       // Función para cargar impuestos en el select de IVA
       async function loadImpuestos() {
         const ivaSelect = document.getElementById('new-item-iva');
@@ -1350,16 +1475,48 @@
 
         try {
           const impuestos = await getImpuestos();
-          ivaSelect.innerHTML = '<option value="">Seleccionar IVA</option>';
-          impuestos.forEach(imp => {
+          impuestosDisponibles = impuestos; // Guardar globalmente para renderizar líneas
+
+          // Poblar el selector con porcentaje como value
+          ivaSelect.innerHTML = '';
+          impuestos.forEach((imp, index) => {
             const option = document.createElement('option');
-            option.value = imp.id;
-            option.textContent = `${imp.nombre} (${imp.porcentaje}%)`;
-            option.dataset.percentage = imp.porcentaje;
+            option.value = imp.porcentaje; // El value es el porcentaje
+            option.dataset.id = imp.id; // Guardar id por si se necesita
+            option.textContent = `${imp.porcentaje}%`;
+            // Seleccionar el primer impuesto con porcentaje > 0 como default, o el primero
+            if (index === 0 || (imp.porcentaje > 0 && !ivaSelect.querySelector('option[selected]'))) {
+              option.selected = true;
+            }
             ivaSelect.appendChild(option);
           });
+
+          // Si no hay impuestos en BD, poner valores por defecto
+          if (impuestos.length === 0) {
+            impuestosDisponibles = [
+              { id: null, porcentaje: 0, nombre: '0%' },
+              { id: null, porcentaje: 10, nombre: '10%' },
+              { id: null, porcentaje: 21, nombre: '21%' }
+            ];
+            ivaSelect.innerHTML = `
+              <option value="0">0%</option>
+              <option value="10">10%</option>
+              <option value="21" selected>21%</option>
+            `;
+          }
         } catch (error) {
           console.error('Error cargando impuestos:', error);
+          // Fallback: opciones por defecto
+          impuestosDisponibles = [
+            { id: null, porcentaje: 0, nombre: '0%' },
+            { id: null, porcentaje: 10, nombre: '10%' },
+            { id: null, porcentaje: 21, nombre: '21%' }
+          ];
+          ivaSelect.innerHTML = `
+            <option value="0">0%</option>
+            <option value="10">10%</option>
+            <option value="21" selected>21%</option>
+          `;
         }
       }
 
@@ -1417,6 +1574,20 @@
       // Mostrar/Ocultar Modal
       function showSuccessModal() { successModal.classList.add('show'); }
       function hideSuccessModal() { successModal.classList.remove('show'); }
+
+      // Event listeners para botones del modal de éxito
+      if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+          hideSuccessModal();
+        });
+      }
+
+      if (newOrderBtn) {
+        newOrderBtn.addEventListener('click', () => {
+          window.location.href = 'manager-taller-ordenes.html'; // Sin ID = nueva orden
+        });
+      }
+
 
       // --- DETECCIÓN MODO EDICIÓN ---
       const urlParams = new URLSearchParams(window.location.search);
@@ -1539,7 +1710,7 @@
           lineas.forEach(linea => {
             orderItems.push({
               id: linea.id, // ID de la línea para actualizaciones
-              idProducto: linea.id_producto || null,
+              idProducto: linea.id_producto ? parseInt(linea.id_producto) : null,
               idImpuesto: linea.id_impuesto || null,
               descripcion: linea.descripcion || linea.producto_nombre || 'Item',
               precio: parseFloat(linea.precio) || 0,
@@ -1557,16 +1728,23 @@
 
           // Cargar pagos existentes (si los hay)
           if (pagos.length > 0) {
+            // Resetear array de pagos eliminados al cargar una orden
+            window.pagosEliminados = [];
             window.orderPayments = pagos.map(pago => ({
+              id: pago.id, // ID del pago existente para distinguir de nuevos
               idMedioPago: pago.id_medio_pago,
               codigoMedioPago: pago.medio_pago_codigo,
-              nombreMedioPago: pago.medio_pago_nombre,
-              importe: parseFloat(pago.importe),
+              metodoNombre: pago.medio_pago_nombre, // Usar metodoNombre para consistencia con pagos-logic.js
+              importe: parseFloat(pago.importe) || 0,
               referencia: pago.referencia
             }));
-            // Si existe función de renderizar pagos
+            // Renderizar pagos existentes
             if (typeof window.renderPayments === 'function') {
               window.renderPayments();
+            }
+            // Actualizar resumen de pagos (Total Pagado y Saldo Pendiente)
+            if (typeof window.updatePaymentSummary === 'function') {
+              window.updatePaymentSummary();
             }
           }
 
@@ -1577,12 +1755,6 @@
         }
       }
 
-      // Resetear formulario completo al crear nueva orden
-      if (newOrderBtn) {
-        newOrderBtn.addEventListener('click', () => {
-          window.location.href = 'manager-taller-ordenes.html'; // Sin ID = nueva orden
-        });
-      }
 
       // --- LÓGICA MODAL NUEVO CLIENTE ---
       const newClientModal = document.getElementById('new-client-modal');
@@ -1869,8 +2041,17 @@
         renderOption: item => {
           const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
           const price = parseFloat(rawPrice);
-          const stock = parseInt(item.stock) || 0;
-          return `${item.nombre} <small>(${price.toFixed(2)}€ - Stock: ${stock})</small>`;
+          const stockReal = parseInt(item.stock) || 0;
+
+          // Calcular stock ya usado en esta orden para este producto
+          const usadoEnOrden = orderItems
+            .filter(lineItem => lineItem.idProducto === item.id)
+            .reduce((sum, lineItem) => sum + (lineItem.cantidad || 0), 0);
+
+          const stockDisponible = stockReal - usadoEnOrden;
+          const stockClass = stockDisponible <= 0 ? 'color: #ff6b6b;' : (stockDisponible <= 3 ? 'color: #ffd93d;' : '');
+
+          return `${item.nombre} <small>(${price.toFixed(2)}€ - <span style="${stockClass}">Stock: ${stockDisponible}</span>)</small>`;
         },
         onSelect: item => {
           const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
@@ -1907,9 +2088,8 @@
         const bonus = parseFloat(document.getElementById('new-item-bonus').value) || 0;
         const id = document.getElementById('new-item-id-hidden').value;
         const ivaSelect = document.getElementById('new-item-iva');
-        const selectedOption = ivaSelect.options[ivaSelect.selectedIndex];
-        const ivaPercentage = parseFloat(selectedOption?.dataset.percentage) || 0;
-        const ivaId = selectedOption?.value || null;
+        const ivaPercentage = parseFloat(ivaSelect.value) || 0;
+        const ivaId = null; // Ya no usamos id de impuesto, solo porcentaje
 
         if (!name || price < 0) {
           showToast("Selecciona un item y precio válido.", true);
@@ -1920,7 +2100,7 @@
         const displayType = normalizedType === 'SERVICIO' ? 'Servicio' : 'Repuesto';
 
         orderItems.push({
-          idProducto: id || null,
+          idProducto: id ? parseInt(id) : null,
           idImpuesto: ivaId,
           descripcion: name,
           precio: price,
@@ -1949,27 +2129,57 @@
         orderItems.forEach((item, index) => {
           const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
 
-          // Badges para Tipo
-          const typeLabel = item.tipoItemLabel || (item.tipoItem === 'SERVICIO' ? 'Servicio' : 'Repuesto');
-          let typeBadge = '';
-          if (item.tipoItem === 'PRODUCTO') {
-            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-blue-900 text-blue-200 border border-blue-700">Repuesto</span>';
-          } else if (item.tipoItem === 'SERVICIO') {
-            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-orange-900 text-orange-200 border border-orange-700">Servicio</span>';
+          // Generar opciones de Tipo
+          const tipoOptions = `
+            <option value="PRODUCTO" ${item.tipoItem === 'PRODUCTO' ? 'selected' : ''}>Repuesto</option>
+            <option value="SERVICIO" ${item.tipoItem === 'SERVICIO' ? 'selected' : ''}>Servicio</option>
+          `;
+
+          // Generar opciones de IVA dinámicamente
+          const itemIva = parseFloat(item.iva) || 0;
+          let ivaOptionsHtml = '';
+          if (impuestosDisponibles.length > 0) {
+            ivaOptionsHtml = impuestosDisponibles.map(imp => {
+              const impPct = parseFloat(imp.porcentaje);
+              const isSelected = Math.abs(itemIva - impPct) < 0.01; // Comparación con tolerancia
+              return `<option value="${impPct}" ${isSelected ? 'selected' : ''}>${impPct}%</option>`;
+            }).join('');
           } else {
-            typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${typeLabel}</span>`;
+            // Fallback si no hay impuestos cargados
+            ivaOptionsHtml = `
+              <option value="0" ${itemIva === 0 ? 'selected' : ''}>0%</option>
+              <option value="10" ${Math.abs(itemIva - 10) < 0.01 ? 'selected' : ''}>10%</option>
+              <option value="21" ${Math.abs(itemIva - 21) < 0.01 ? 'selected' : ''}>21%</option>
+            `;
           }
 
           const tr = document.createElement('tr');
+          tr.className = 'order-row';
           tr.innerHTML = `
-            <td>${item.descripcion}</td>
-            <td>${item.precio.toFixed(2)}€</td>
-            <td>${item.cantidad}</td>
-            <td>${typeBadge}</td>
-            <td>${(item.descuento || 0).toFixed(2)}€</td>
-            <td>${subtotal.toFixed(2)}€</td>
-            <td>${item.iva}%</td>
-            <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold" data-index="${index}">&times;</button></td>
+            <td>
+              <input type="text" class="form-input edit-descripcion" data-index="${index}" value="${item.descripcion}" style="min-width: 150px;" />
+            </td>
+            <td>
+              <input type="number" class="form-input edit-precio" data-index="${index}" value="${item.precio.toFixed(2)}" step="0.01" min="0" style="width: 90px; text-align: right;" />
+            </td>
+            <td>
+              <input type="number" class="form-input edit-cantidad" data-index="${index}" value="${item.cantidad}" min="1" style="width: 70px; text-align: center;" />
+            </td>
+            <td>
+              <select class="form-select edit-tipo" data-index="${index}" style="min-width: 100px;">
+                ${tipoOptions}
+              </select>
+            </td>
+            <td>
+              <input type="number" class="form-input edit-descuento" data-index="${index}" value="${(item.descuento || 0).toFixed(2)}" step="0.01" min="0" style="width: 80px; text-align: right;" />
+            </td>
+            <td class="subtotal-cell" style="font-weight: 600;">${subtotal.toFixed(2)}€</td>
+            <td>
+              <select class="iva-select edit-iva-select" data-index="${index}">
+                ${ivaOptionsHtml}
+              </select>
+            </td>
+            <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold text-xl" data-index="${index}">&times;</button></td>
           `;
           tbody.appendChild(tr);
         });
@@ -1983,6 +2193,77 @@
           calculateNetTotals();
         }
       });
+
+      // Event listener para cambios en los campos editables de items
+      document.getElementById('order-items-list').addEventListener('change', (e) => {
+        const target = e.target;
+        const index = parseInt(target.dataset.index);
+
+        if (isNaN(index) || !orderItems[index]) return;
+
+        // Actualizar según el tipo de campo editado
+        if (target.classList.contains('edit-descripcion')) {
+          orderItems[index].descripcion = target.value;
+        } else if (target.classList.contains('edit-precio')) {
+          orderItems[index].precio = parseFloat(target.value) || 0;
+          updateSubtotalCell(index);
+          calculateNetTotals();
+        } else if (target.classList.contains('edit-cantidad')) {
+          orderItems[index].cantidad = parseInt(target.value) || 1;
+          updateSubtotalCell(index);
+          calculateNetTotals();
+        } else if (target.classList.contains('edit-tipo')) {
+          orderItems[index].tipoItem = target.value;
+          calculateNetTotals();
+        } else if (target.classList.contains('edit-descuento')) {
+          orderItems[index].descuento = parseFloat(target.value) || 0;
+          updateSubtotalCell(index);
+          calculateNetTotals();
+        } else if (target.classList.contains('edit-iva-select')) {
+          orderItems[index].iva = parseFloat(target.value) || 0;
+          calculateNetTotals();
+        }
+      });
+
+      // También escuchar 'input' para actualización en tiempo real
+      document.getElementById('order-items-list').addEventListener('input', (e) => {
+        const target = e.target;
+        const index = parseInt(target.dataset.index);
+
+        if (isNaN(index) || !orderItems[index]) return;
+
+        if (target.classList.contains('edit-precio') ||
+          target.classList.contains('edit-cantidad') ||
+          target.classList.contains('edit-descuento')) {
+
+          // Actualizar valores temporalmente para mostrar el subtotal correcto
+          if (target.classList.contains('edit-precio')) {
+            orderItems[index].precio = parseFloat(target.value) || 0;
+          } else if (target.classList.contains('edit-cantidad')) {
+            orderItems[index].cantidad = parseInt(target.value) || 1;
+          } else if (target.classList.contains('edit-descuento')) {
+            orderItems[index].descuento = parseFloat(target.value) || 0;
+          }
+
+          updateSubtotalCell(index);
+          calculateNetTotals();
+        }
+      });
+
+      // Función auxiliar para actualizar la celda de subtotal
+      function updateSubtotalCell(index) {
+        const item = orderItems[index];
+        if (!item) return;
+
+        const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
+        const rows = document.getElementById('order-items-list').querySelectorAll('tr');
+        if (rows[index]) {
+          const subtotalCell = rows[index].querySelector('.subtotal-cell');
+          if (subtotalCell) {
+            subtotalCell.textContent = subtotal.toFixed(2) + '€';
+          }
+        }
+      }
 
       // --- CÁLCULOS FINANCIEROS ---
       function calculateNetTotals() {
@@ -2112,16 +2393,22 @@
           descripcion: document.getElementById('observaciones').value || '',
           comentarioInterno: document.getElementById('comentario-interno').value || '',
           lineas: lineasPayload,
-          pagos: (window.orderPayments || []).map(p => ({
-            idMedioPago: p.idMedioPago,
-            codigoMedioPago: p.codigoMedioPago,
-            importe: p.importe,
-            referencia: p.referencia || null,
-            idCaja: p.idCaja || 1
-          }))
+          pagos: (window.orderPayments || [])
+            .filter(p => !p.id) // Solo enviar pagos NUEVOS (sin id del backend)
+            .map(p => ({
+              idMedioPago: p.idMedioPago,
+              codigoMedioPago: p.codigoMedioPago,
+              importe: p.importe,
+              referencia: p.referencia || null,
+              idCaja: p.idCaja || 1
+            })),
+          pagosEliminados: window.pagosEliminados || [] // IDs de pagos a eliminar
         };
 
         console.log("Payload JSON de la Orden:", payload);
+        console.log("[DEBUG] orderPayments completo:", window.orderPayments);
+        console.log("[DEBUG] Pagos a enviar (nuevos sin id):", payload.pagos);
+        console.log("[DEBUG] Pagos a eliminar:", payload.pagosEliminados);
 
         try {
           let response;
@@ -2136,6 +2423,8 @@
             console.log("--- ORDEN CREADA ---", response);
             showToast('Orden creada con éxito');
           }
+          // Limpiar array de pagos eliminados después de guardar
+          window.pagosEliminados = [];
           showSuccessModal();
         } catch (error) {
           console.error('Error al guardar orden', error);

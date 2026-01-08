@@ -325,6 +325,101 @@ router.get('/cliente/:idCliente', verifyJWT, async (req, res) => {
 });
 
 /**
+ * POST /api/cuentas-corrientes/cargar
+ * Carga un importe genérico a la cuenta corriente de un cliente
+ * Body: { idCliente, importe, concepto, idSucursal }
+ */
+router.post('/cargar', verifyJWT, async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        const { idCliente, importe, concepto, idSucursal } = req.body;
+        const tenantId = req.user?.id_tenant;
+        const userId = req.user?.id;
+
+        if (!idCliente || !importe) {
+            return res.status(400).json({ success: false, error: 'Cliente e importe son obligatorios' });
+        }
+
+        if (importe <= 0) {
+            return res.status(400).json({ success: false, error: 'El importe debe ser mayor a 0' });
+        }
+
+        await client.query('BEGIN');
+
+        // 1. Obtener o crear cuenta corriente del cliente
+        let cuentaResult = await client.query(`
+            SELECT id, saldo FROM cuentacorriente 
+            WHERE id_cliente = $1 AND id_tenant = $2
+        `, [idCliente, tenantId]);
+
+        let idCuenta;
+        let saldoAnterior;
+
+        if (cuentaResult.rows.length === 0) {
+            // Crear cuenta corriente
+            const nuevaCuenta = await client.query(`
+                INSERT INTO cuentacorriente (id_cliente, id_tenant, saldo, estado, created_by)
+                VALUES ($1, $2, 0, 'ACTIVA', $3)
+                RETURNING id
+            `, [idCliente, tenantId, userId]);
+            idCuenta = nuevaCuenta.rows[0].id;
+            saldoAnterior = 0;
+        } else {
+            idCuenta = cuentaResult.rows[0].id;
+            saldoAnterior = parseFloat(cuentaResult.rows[0].saldo) || 0;
+        }
+
+        // 2. Crear movimiento de cargo
+        const saldoPosterior = saldoAnterior + parseFloat(importe);
+
+        await client.query(`
+            INSERT INTO movimientocuenta (
+                id_cuenta_corriente,
+                tipo_movimiento,
+                importe,
+                saldo_anterior,
+                saldo_posterior,
+                concepto,
+                created_by
+            ) VALUES ($1, 'CARGO', $2, $3, $4, $5, $6)
+        `, [
+            idCuenta,
+            importe,
+            saldoAnterior,
+            saldoPosterior,
+            concepto || 'Cargo a cuenta corriente',
+            userId
+        ]);
+
+        // 3. Actualizar saldo de la cuenta
+        await client.query(`
+            UPDATE cuentacorriente SET saldo = $1 WHERE id = $2
+        `, [saldoPosterior, idCuenta]);
+
+        await client.query('COMMIT');
+
+        res.json({
+            success: true,
+            message: `${parseFloat(importe).toFixed(2)}€ cargados a cuenta corriente`,
+            data: {
+                idCuenta,
+                saldoAnterior,
+                saldoPosterior,
+                importe: parseFloat(importe)
+            }
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error al cargar a cuenta corriente:', error);
+        res.status(500).json({ success: false, error: error.message });
+    } finally {
+        client.release();
+    }
+});
+
+/**
  * POST /api/cuentas-corrientes/cargar-orden
  * Carga el saldo pendiente de una orden a cuenta corriente
  */
@@ -332,11 +427,13 @@ router.post('/cargar-orden', verifyJWT, async (req, res) => {
     const client = await pool.connect();
 
     try {
+        console.log('[DEBUG cargar-orden] Body recibido:', req.body);
         const { idOrden } = req.body;
         const tenantId = req.user?.id_tenant;
         const userId = req.user?.id;
 
         if (!idOrden) {
+            console.log('[DEBUG cargar-orden] ERROR: idOrden no encontrado en body');
             return res.status(400).json({ success: false, error: 'ID de orden requerido' });
         }
 
@@ -346,7 +443,6 @@ router.post('/cargar-orden', verifyJWT, async (req, res) => {
         const ordenResult = await client.query(`
             SELECT 
                 o.id,
-                o.numero_orden,
                 o.id_cliente,
                 o.total_neto,
                 o.en_cuenta_corriente,
@@ -416,15 +512,18 @@ router.post('/cargar-orden', verifyJWT, async (req, res) => {
             pendiente,
             saldoAnterior,
             saldoPosterior,
-            `Orden #${orden.numero_orden} - Saldo pendiente`,
+            `Orden #${orden.id} - Saldo pendiente`,
             idOrden,
             userId
         ]);
 
         // 4. Marcar orden como cargada a cuenta corriente
+        // Solo actualizamos en_cuenta_corriente e id_cuenta_corriente
+        // (la columna estado_pago no existe en la tabla)
         await client.query(`
             UPDATE orden 
-            SET en_cuenta_corriente = true, id_cuenta_corriente = $1
+            SET en_cuenta_corriente = true, 
+                id_cuenta_corriente = $1
             WHERE id = $2
         `, [idCuenta, idOrden]);
 
@@ -464,11 +563,14 @@ router.post('/pago', verifyJWT, async (req, res) => {
             importe,
             concepto = 'Pago a cuenta',
             idMedioPago,
-            fecha
+            fecha,
+            idSucursal // Opcional: sucursal donde se registra el pago
         } = req.body;
 
         const tenantId = req.user?.id_tenant;
         const userId = req.user?.id;
+        // Usar la sucursal enviada, o la del usuario, o buscar una del tenant
+        const sucursalDelUsuario = req.user?.id_sucursal;
 
         if (!importe || importe <= 0) {
             return res.status(400).json({ success: false, error: 'Importe inválido' });
@@ -528,6 +630,78 @@ router.post('/pago', verifyJWT, async (req, res) => {
             fecha || new Date().toISOString().split('T')[0],
             userId
         ]);
+
+        // Actualizar saldo de la cuenta corriente
+        await client.query(`
+            UPDATE cuentacorriente SET saldo_actual = $1 WHERE id = $2
+        `, [saldoPosterior, cuentaId]);
+
+        // Si el medio de pago implica movimiento de caja, crearlo
+        if (idMedioPago) {
+            // Verificar si el medio de pago requiere movimiento de caja (EFECTIVO, TARJETA, etc.)
+            const medioPagoResult = await client.query(`
+                SELECT codigo, nombre FROM mediopago WHERE id = $1
+            `, [idMedioPago]);
+
+            if (medioPagoResult.rows.length > 0) {
+                const codigoMedio = (medioPagoResult.rows[0].codigo || '').toUpperCase();
+                console.log(`[CC Pago] Medio de pago ID ${idMedioPago}: código "${codigoMedio}"`);
+                // Cualquier pago real genera movimiento de caja (excepto CUENTA_CORRIENTE que es aplazamiento)
+                const mediosSinCaja = ['CUENTA_CORRIENTE'];
+                const generaCaja = !mediosSinCaja.includes(codigoMedio);
+
+                if (generaCaja) {
+                    console.log(`[CC Pago] Medio ${codigoMedio} requiere movimiento de caja`);
+                    // Obtener la sucursal del cliente desde la cuenta corriente
+                    const cuentaInfo = await client.query(`
+                        SELECT cc.id_tenant, cf.id
+                        FROM cuentacorriente cc
+                        JOIN clientefinal cf ON cc.id_cliente = cf.id
+                        WHERE cc.id = $1
+                    `, [cuentaId]);
+
+                    if (cuentaInfo.rows.length > 0) {
+                        const tenantIdPago = cuentaInfo.rows[0].id_tenant;
+
+                        // Determinar sucursal: usar la enviada, la del usuario, o buscar una del tenant
+                        let sucursalParaCaja = idSucursal || sucursalDelUsuario;
+
+                        if (!sucursalParaCaja) {
+                            const sucursalResult = await client.query(`
+                                SELECT id FROM sucursal WHERE id_tenant = $1 LIMIT 1
+                            `, [tenantIdPago]);
+                            sucursalParaCaja = sucursalResult.rows[0]?.id;
+                        }
+
+                        if (sucursalParaCaja) {
+                            console.log(`[CC Pago] Buscando caja abierta en sucursal ${sucursalParaCaja}`);
+
+                            // Buscar caja abierta
+                            const cajaResult = await client.query(`
+                                SELECT id FROM caja 
+                                WHERE id_sucursal = $1 AND estado = 'ABIERTA' 
+                                ORDER BY created_at DESC LIMIT 1
+                            `, [sucursalParaCaja]);
+
+                            if (cajaResult.rows.length > 0) {
+                                const idCaja = cajaResult.rows[0].id;
+
+                                // Crear movimiento de caja (INGRESO) con el medio de pago
+                                await client.query(`
+                                    INSERT INTO cajamovimiento 
+                                    (id_caja, id_usuario, tipo, monto, concepto, origen_tipo, origen_id, id_medio_pago, fecha, created_at, created_by)
+                                    VALUES ($1, $2, 'INGRESO', $3, $4, 'CUENTA_CORRIENTE', $5, $6, NOW(), NOW(), $2)
+                                `, [idCaja, userId, importe, `Pago cuenta corriente - ${concepto}`, cuentaId, idMedioPago]);
+
+                                console.log(`Movimiento de caja creado: ${importe}€ en caja ${idCaja}`);
+                            } else {
+                                console.warn('No hay caja abierta para registrar el movimiento de efectivo');
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         await client.query('COMMIT');
 

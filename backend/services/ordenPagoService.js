@@ -61,7 +61,19 @@ class OrdenPagoService {
             // 6. Insertar pago
             const pagoCreado = await ordenPagoRepository.insertarPagoOrden(nuevoPago, client);
 
+            // 7. Registrar movimiento de caja para pagos reales (excepto cuenta corriente)
+            const codigoMedio = (medioPagoEntidad.codigo || '').toUpperCase();
+            const mediosSinCaja = ['CUENTA_CORRIENTE'];
+            console.log(`[ordenPagoService] Pago ${importeNumerico}€ - Medio: ${codigoMedio} - Caja: ${idCajaFinal}`);
 
+            if (!mediosSinCaja.includes(codigoMedio) && idCajaFinal) {
+                await client.query(`
+                    INSERT INTO cajamovimiento 
+                    (id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, fecha, created_at, created_by)
+                    VALUES ($1, $2, 'INGRESO', $3, 'ORDEN_PAGO', $4, NOW(), NOW(), $2)
+                `, [idCajaFinal, createdBy, importeNumerico, idOrden]);
+                console.log(`[ordenPagoService] Movimiento de caja creado: ${importeNumerico}€ en caja ${idCajaFinal}`);
+            }
 
             await client.query('COMMIT');
             return { pago: pagoCreado };

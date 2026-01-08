@@ -6,7 +6,13 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "build": "echo 'No build step for backend'"
+    "build": "echo 'No build step for backend'",
+    "test": "jest --detectOpenHandles",
+    "test:watch": "jest --watch --detectOpenHandles",
+    "test:coverage": "jest --coverage --detectOpenHandles",
+    "test:critical": "jest --testPathPattern=\"(ordenPago|caja|ordenes|ventas)\" --detectOpenHandles",
+    "test:unit": "jest --testPathPattern=\"unit\" --detectOpenHandles",
+    "test:integration": "jest --testPathPattern=\"integration\" --detectOpenHandles"
   },
   "repository": {
     "type": "git",
@@ -33,6 +39,8 @@
     "stripe": "^20.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.11",
+    "supertest": "^6.3.4"
   }
 }
