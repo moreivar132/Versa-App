@@ -92,6 +92,62 @@ router.get('/orden/:idOrden', verifyJWT, async (req, res) => {
     }
 });
 
+// DELETE /api/ordenpago/:id - Eliminar un pago y su movimiento de caja
+router.delete('/:id', verifyJWT, async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { id } = req.params;
+        const idPago = parseInt(id);
+
+        await client.query('BEGIN');
+
+        // Obtener información del pago antes de eliminar
+        const pagoResult = await client.query(
+            'SELECT op.*, o.id_sucursal FROM ordenpago op JOIN orden o ON op.id_orden = o.id WHERE op.id = $1',
+            [idPago]
+        );
+
+        if (pagoResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, mensaje: 'Pago no encontrado' });
+        }
+
+        const pago = pagoResult.rows[0];
+        const idOrden = pago.id_orden;
+
+        // Eliminar movimiento de caja asociado (si existe)
+        const movDeleted = await client.query(`
+            DELETE FROM cajamovimiento 
+            WHERE origen_tipo = 'ORDEN_PAGO' 
+              AND origen_id = $1 
+              AND monto = $2
+            RETURNING id
+        `, [idOrden, pago.importe]);
+
+        console.log(`[DELETE ordenpago] Movimientos de caja eliminados: ${movDeleted.rowCount}`);
+
+        // Eliminar el pago
+        await client.query('DELETE FROM ordenpago WHERE id = $1', [idPago]);
+
+        await client.query('COMMIT');
+
+        console.log(`[DELETE ordenpago] Pago ${idPago} eliminado correctamente (${pago.importe}€)`);
+
+        res.json({
+            success: true,
+            mensaje: 'Pago eliminado correctamente',
+            importe: pago.importe,
+            movimientosEliminados: movDeleted.rowCount
+        });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error eliminando pago:', error);
+        res.status(500).json({ success: false, mensaje: error.message });
+    } finally {
+        client.release();
+    }
+});
+
 // GET /api/ordenpago/estadisticas/semanal - Obtener pagos por día de la semana actual
 router.get('/estadisticas/semanal', verifyJWT, async (req, res) => {
     try {

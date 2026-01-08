@@ -251,6 +251,7 @@ router.get('/estado-actual', async (req, res) => {
         `, [caja.id]);
 
         // Movimientos de caja - separados por método de pago
+        // EXCLUIR origen_tipo = 'ORDEN_PAGO' porque esos ya se cuentan en efectivoPagos
         const movimientosResult = await pool.query(`
             SELECT 
                 cm.tipo,
@@ -260,6 +261,7 @@ router.get('/estado-actual', async (req, res) => {
             FROM cajamovimiento cm
             LEFT JOIN mediopago mp ON cm.id_medio_pago = mp.id
             WHERE cm.id_caja = $1 
+              AND (cm.origen_tipo IS NULL OR cm.origen_tipo != 'ORDEN_PAGO')
             GROUP BY cm.tipo
         `, [caja.id]);
 
@@ -754,12 +756,13 @@ router.get('/cierres/:id', async (req, res) => {
         const cajaData = cajaResult.rows[0] || {};
 
         // Obtener totales de ingresos y egresos del periodo (movimientos manuales)
+        // EXCLUIR ORDEN_PAGO porque esos ya se cuentan en el desglose de pagos
         const movimientosResult = await pool.query(`
             SELECT 
                 COALESCE(SUM(CASE WHEN tipo = 'INGRESO' THEN monto ELSE 0 END), 0) as total_ingresos,
                 COALESCE(SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END), 0) as total_egresos
             FROM cajamovimiento 
-            WHERE id_caja = $1
+            WHERE id_caja = $1 AND (origen_tipo IS NULL OR origen_tipo != 'ORDEN_PAGO')
         `, [cierre.id_caja]);
         const movTotales = movimientosResult.rows[0] || { total_ingresos: 0, total_egresos: 0 };
 
@@ -864,8 +867,12 @@ router.post('/cerrar', async (req, res) => {
         const caja = cajaResult.rows[0];
 
         // Calcular saldo teórico
+        // EXCLUIR origen_tipo = 'ORDEN_PAGO' porque esos ya se cuentan en efectivoPagos
         const movResult = await client.query(
-            `SELECT tipo, COALESCE(SUM(monto), 0) as total FROM cajamovimiento WHERE id_caja = $1 GROUP BY tipo`,
+            `SELECT tipo, COALESCE(SUM(monto), 0) as total 
+             FROM cajamovimiento 
+             WHERE id_caja = $1 AND (origen_tipo IS NULL OR origen_tipo != 'ORDEN_PAGO')
+             GROUP BY tipo`,
             [caja.id]
         );
         let totalIngresos = 0, totalEgresos = 0;

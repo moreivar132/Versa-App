@@ -556,6 +556,108 @@
         font-size: 12px;
       }
     }
+
+    /* ============================================
+       LAYOUT PRINCIPAL - Lista y Detalle
+       ============================================ */
+
+    /* Contenedor principal de la lista de órdenes */
+    .orders-list-panel {
+      flex: 2;
+      min-width: 0;
+      /* Permite que flexbox reduzca el tamaño */
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow-y: auto;
+      border-right: 1px solid #282e39;
+    }
+
+    /* Panel de detalle lateral */
+    .order-detail-panel {
+      flex: 1;
+      min-width: 320px;
+      max-width: 420px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background-color: #111318;
+      border-left: 1px solid #282e39;
+      padding: 24px;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Pantallas medianas (tablets, laptops pequeños) */
+    @media (min-width: 1024px) {
+      .orders-list-panel {
+        flex: 2.5;
+      }
+
+      .order-detail-panel {
+        flex: 1;
+        min-width: 340px;
+        max-width: 400px;
+      }
+    }
+
+    /* Pantallas grandes */
+    @media (min-width: 1280px) {
+      .orders-list-panel {
+        flex: 3;
+      }
+
+      .order-detail-panel {
+        flex: 1;
+        min-width: 360px;
+        max-width: 420px;
+      }
+    }
+
+    /* Pantallas extra grandes */
+    @media (min-width: 1536px) {
+      .order-detail-panel {
+        min-width: 380px;
+        max-width: 450px;
+      }
+    }
+
+    /* Pantallas pequeñas - Apilar verticalmente */
+    @media (max-width: 1023px) {
+      .main-content-container {
+        flex-direction: column;
+      }
+
+      .orders-list-panel {
+        flex: 1;
+        border-right: none;
+        border-bottom: 1px solid #282e39;
+        max-height: 60vh;
+      }
+
+      .order-detail-panel {
+        flex: 1;
+        max-width: 100%;
+        min-width: 100%;
+        border-left: none;
+        border-top: 1px solid #282e39;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        max-height: 40vh;
+      }
+    }
+
+    /* Ajuste de la tabla para que use bien el espacio */
+    .orders-table-container {
+      flex: 1;
+      overflow: hidden;
+      min-height: 300px;
+    }
+
+    .orders-table-container .overflow-x-auto {
+      height: 100%;
+    }
   </style>
 
   <script>
@@ -732,9 +834,9 @@
         <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
       </header>
 
-      <main class="flex flex-1 overflow-hidden">
+      <main class="flex flex-1 overflow-hidden main-content-container">
         <!-- Lista de órdenes -->
-        <div class="flex-grow-[2] flex flex-col p-6 overflow-y-auto border-r border-[#282e39]">
+        <div class="orders-list-panel">
 
           <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-[#282e39] mb-4">
             <div>
@@ -827,7 +929,7 @@
           </div>
 
           <!-- TABLA -->
-          <div class="py-2 flex-1 overflow-hidden">
+          <div class="orders-table-container">
             <div class="overflow-x-auto rounded-xl border border-[#282e39] bg-[#111318] h-full">
               <table class="w-full text-left border-collapse">
                 <thead class="bg-[#1c1f27] sticky top-0 z-10">
@@ -869,8 +971,7 @@
         </div>
 
         <!-- Panel de detalle -->
-        <aside
-          class="flex-grow-[1] max-w-md w-full flex flex-col h-full bg-[#111318] border-l border-[#282e39] p-6 overflow-y-auto z-10 shadow-2xl">
+        <aside class="order-detail-panel">
           <div class="flex justify-between items-center pb-6 border-b border-[#282e39]">
             <div>
               <h2 class="text-2xl font-bold text-white" id="detail-order-id">Selecciona una orden</h2>
@@ -1703,7 +1804,7 @@
       });
 
       // --- MODAL PAGOS ---
-      function abrirModalPagos() {
+      async function abrirModalPagos() {
         if (!ordenSeleccionada) return;
 
         const modal = document.getElementById('modal-pagos');
@@ -1720,6 +1821,78 @@
         document.getElementById('modal-pendiente').textContent = `${pendiente.toFixed(2)}€`;
         document.getElementById('modal-progress').style.width = `${Math.min(100, progreso)}%`;
         document.getElementById('modal-importe').value = pendiente > 0 ? pendiente.toFixed(2) : '';
+
+        // Cargar pagos existentes de la orden
+        const listaPagos = document.getElementById('modal-lista-pagos');
+        listaPagos.innerHTML = '<p class="text-sm text-[#9da6b9] italic">Cargando...</p>';
+
+        try {
+          const response = await fetchWithAuth(`/api/ordenpago/orden/${ordenSeleccionada.id}`);
+          const data = await response.json();
+
+          if (data.success && data.pagos && data.pagos.length > 0) {
+            listaPagos.innerHTML = data.pagos.map(pago => `
+              <div class="flex items-center justify-between py-2 px-3 bg-[#1a1d24] rounded-lg">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-green-400 text-sm">payments</span>
+                  <span class="text-sm text-white">${pago.medio_pago_nombre || 'Pago'}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm font-bold text-green-400">${parseFloat(pago.importe).toFixed(2)}€</span>
+                  <button type="button" class="btn-eliminar-pago text-red-400 hover:text-red-300 transition-colors" data-pago-id="${pago.id}" data-importe="${pago.importe}">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                  </button>
+                </div>
+              </div>
+            `).join('');
+
+            // Event listeners para eliminar pagos
+            listaPagos.querySelectorAll('.btn-eliminar-pago').forEach(btn => {
+              btn.addEventListener('click', async (e) => {
+                const pagoId = btn.dataset.pagoId;
+                const importe = btn.dataset.importe;
+
+                if (!confirm(`¿Eliminar pago de ${importe}€? Esto también eliminará el movimiento de caja asociado.`)) {
+                  return;
+                }
+
+                try {
+                  const deleteResponse = await fetchWithAuth(`/api/ordenpago/${pagoId}`, {
+                    method: 'DELETE'
+                  });
+                  const deleteData = await deleteResponse.json();
+
+                  if (deleteData.success) {
+                    showToast(`Pago de ${importe}€ eliminado correctamente`);
+                    // Recargar las órdenes para actualizar totales
+                    await cargarOrdenes();
+                    // Actualizar orden seleccionada con los nuevos datos
+                    const ordenActualizada = ordenes.find(o => o.id === ordenSeleccionada.id);
+                    if (ordenActualizada) {
+                      ordenSeleccionada = ordenActualizada;
+                      // Actualizar el panel de detalle si existe la función
+                      if (typeof mostrarDetalleOrden === 'function') {
+                        mostrarDetalleOrden(ordenActualizada);
+                      }
+                    }
+                    // Recargar el modal con los pagos actualizados
+                    await abrirModalPagos();
+                  } else {
+                    showToast(deleteData.mensaje || 'Error al eliminar pago', true);
+                  }
+                } catch (error) {
+                  console.error('Error eliminando pago:', error);
+                  showToast('Error al eliminar el pago', true);
+                }
+              });
+            });
+          } else {
+            listaPagos.innerHTML = '<p class="text-sm text-[#9da6b9] italic">No hay pagos registrados</p>';
+          }
+        } catch (error) {
+          console.error('Error cargando pagos:', error);
+          listaPagos.innerHTML = '<p class="text-sm text-red-400 italic">Error al cargar pagos</p>';
+        }
 
         // Mostrar sección de cuenta corriente solo si hay pendiente y no está ya en cuenta corriente
         const seccionCC = document.getElementById('seccion-cuenta-corriente');

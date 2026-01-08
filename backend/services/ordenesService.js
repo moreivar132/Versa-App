@@ -197,7 +197,8 @@ class OrdenesService {
 
                 pagosProcesados.push({
                     ...pago,
-                    idMedioPago: medio.id
+                    idMedioPago: medio.id,
+                    codigoMedioPago: medio.codigo // Guardar código para verificar si es efectivo
                 });
             }
         }
@@ -284,7 +285,8 @@ class OrdenesService {
             }
 
             for (const pago of pagosProcesados) {
-                const idCajaFinal = pago.idCaja || idCajaActual;
+                // SIEMPRE usar la caja de la sucursal de la orden (ignorar idCaja del frontend)
+                const idCajaFinal = idCajaActual;
 
                 const pagoCreado = await ordenesRepository.createOrdenPago(client, {
                     id_orden: idOrden,
@@ -294,6 +296,24 @@ class OrdenesService {
                     id_caja: idCajaFinal,
                     created_by: id_usuario
                 });
+
+                // Registrar movimiento de caja para pagos reales (excepto cuenta corriente)
+                const codigoMedio = (pago.codigoMedioPago || '').toUpperCase();
+                const mediosSinCaja = ['CUENTA_CORRIENTE'];
+                console.log(`[createOrden] Pago ${pago.importe}€ - Medio: ${codigoMedio} - Caja: ${idCajaFinal}`);
+
+                if (!mediosSinCaja.includes(codigoMedio) && idCajaFinal) {
+                    await ordenesRepository.createCajaMovimiento(client, {
+                        id_caja: idCajaFinal,
+                        id_usuario: id_usuario,
+                        tipo: 'INGRESO',
+                        monto: pago.importe,
+                        origen_tipo: 'ORDEN_PAGO',
+                        origen_id: idOrden,
+                        created_by: id_usuario
+                    });
+                    console.log(`[createOrden] Movimiento de caja creado: ${pago.importe}€ en caja ${idCajaFinal}`);
+                }
             }
 
             // Actualizar Totales en Orden
@@ -556,7 +576,13 @@ class OrdenesService {
                 ol.subtotal,
                 p.nombre as producto_nombre,
                 p.codigo_barras as producto_codigo,
-                i.porcentaje as impuesto_porcentaje,
+                -- Si hay impuesto registrado, usar su porcentaje. Si no, calcular del monto/subtotal
+                COALESCE(
+                    i.porcentaje,
+                    CASE WHEN ol.subtotal > 0 THEN ROUND((ol.iva / ol.subtotal) * 100, 2)
+                         ELSE 0
+                    END
+                ) as impuesto_porcentaje,
                 i.nombre as impuesto_nombre
             FROM ordenlinea ol
             LEFT JOIN producto p ON ol.id_producto = p.id
@@ -610,7 +636,9 @@ class OrdenesService {
             concepto,
             descripcion,
             comentarioInterno,
-            lineas
+            lineas,
+            pagos, // Pagos nuevos a agregar
+            pagosEliminados // IDs de pagos a eliminar
         } = data;
 
         // Verificar que la orden existe
@@ -939,6 +967,107 @@ class OrdenesService {
                 });
             }
 
+            // Procesar pagos eliminados (si se envían)
+            if (pagosEliminados && pagosEliminados.length > 0) {
+                console.log(`[updateOrden] Eliminando ${pagosEliminados.length} pagos:`, pagosEliminados);
+                for (const idPago of pagosEliminados) {
+                    // Primero eliminar movimientos de caja asociados
+                    await client.query(`
+                        DELETE FROM cajamovimiento 
+                        WHERE origen_tipo = 'ORDEN_PAGO' AND origen_id = $1
+                    `, [idOrden]);
+
+                    // Luego eliminar el pago
+                    await client.query('DELETE FROM ordenpago WHERE id = $1 AND id_orden = $2', [idPago, idOrden]);
+                    console.log(`[updateOrden] Pago ${idPago} y sus movimientos de caja eliminados`);
+                }
+            }
+
+            // Procesar nuevos pagos (si se envían)
+            let pagosProcesados = 0;
+            console.log(`[updateOrden] Pagos recibidos: ${pagos ? pagos.length : 0}`, pagos);
+            if (pagos && pagos.length > 0) {
+                // Validar que el total a pagar no exceda el total de la orden
+                const ordenInfo = await client.query(
+                    'SELECT total_neto FROM orden WHERE id = $1',
+                    [idOrden]
+                );
+                const totalOrden = parseFloat(ordenInfo.rows[0]?.total_neto) || 0;
+
+                const pagosExistentes = await client.query(
+                    'SELECT COALESCE(SUM(importe), 0) as total_pagado FROM ordenpago WHERE id_orden = $1',
+                    [idOrden]
+                );
+                const totalPagadoActual = parseFloat(pagosExistentes.rows[0]?.total_pagado) || 0;
+
+                const nuevoTotalPago = pagos.reduce((sum, p) => sum + (parseFloat(p.importe) || 0), 0);
+                const totalFinal = totalPagadoActual + nuevoTotalPago;
+
+                console.log(`[updateOrden] Validación: Total orden=${totalOrden}, Pagado=${totalPagadoActual}, Nuevo=${nuevoTotalPago}, Final=${totalFinal}`);
+
+                if (totalFinal > totalOrden + 0.01) { // Tolerancia de 1 céntimo
+                    throw new Error(`El total de pagos (${totalFinal.toFixed(2)}€) excede el total de la orden (${totalOrden.toFixed(2)}€)`);
+                }
+
+                // Obtener o crear caja abierta
+                let idCajaActual = null;
+                const sucursalId = idSucursal || (await client.query('SELECT id_sucursal FROM orden WHERE id = $1', [idOrden])).rows[0]?.id_sucursal;
+
+                if (sucursalId) {
+                    const cajaAbierta = await ordenesRepository.getOpenCaja(client, sucursalId);
+                    if (cajaAbierta) {
+                        idCajaActual = cajaAbierta.id;
+                    } else {
+                        const nuevaCaja = await ordenesRepository.createOpenCaja(client, sucursalId, id_usuario);
+                        idCajaActual = nuevaCaja.id;
+                    }
+                }
+
+                for (const pago of pagos) {
+                    // Validar medio de pago
+                    const medio = await ordenesRepository.getMedioPagoByCodigoOrId({
+                        codigo: pago.codigoMedioPago,
+                        id: pago.idMedioPago
+                    });
+                    if (!medio) {
+                        console.warn(`Medio de pago ${pago.codigoMedioPago || pago.idMedioPago} no encontrado, omitiendo pago`);
+                        continue;
+                    }
+                    // SIEMPRE usar la caja de la sucursal de la orden (ignorar idCaja del frontend)
+                    const idCajaFinal = idCajaActual;
+
+                    // Crear registro de pago
+                    await ordenesRepository.createOrdenPago(client, {
+                        id_orden: idOrden,
+                        id_medio_pago: medio.id,
+                        importe: pago.importe,
+                        referencia: pago.referencia,
+                        id_caja: idCajaFinal,
+                        created_by: id_usuario
+                    });
+
+                    // Registrar movimiento de caja para pagos reales (excepto cuenta corriente)
+                    const codigoMedio = (medio.codigo || '').toUpperCase();
+                    const mediosSinCaja = ['CUENTA_CORRIENTE'];
+                    console.log(`[updateOrden] Pago ${pago.importe}€ - Medio: ${codigoMedio} - Caja: ${idCajaFinal}`);
+
+                    if (!mediosSinCaja.includes(codigoMedio) && idCajaFinal) {
+                        await ordenesRepository.createCajaMovimiento(client, {
+                            id_caja: idCajaFinal,
+                            id_usuario: id_usuario,
+                            tipo: 'INGRESO',
+                            monto: pago.importe,
+                            origen_tipo: 'ORDEN_PAGO',
+                            origen_id: idOrden,
+                            created_by: id_usuario
+                        });
+                        console.log(`[updateOrden] Movimiento de caja creado: ${pago.importe}€ en caja ${idCajaFinal}`);
+                    }
+
+                    pagosProcesados++;
+                }
+            }
+
             await client.query('COMMIT');
 
             return {
@@ -947,7 +1076,8 @@ class OrdenesService {
                 total_bruto: totalBruto,
                 total_iva: totalIva,
                 total_neto: totalBruto + totalIva,
-                lineas: lineasProcesadas.length
+                lineas: lineasProcesadas.length,
+                pagos: pagosProcesados
             };
 
         } catch (error) {
