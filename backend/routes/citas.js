@@ -1,23 +1,54 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const verifyJWT = require('../middleware/auth');
 
 // GET /api/citas/config - Obtener configuración (sucursales y técnicos)
-// GET /api/citas/config - Obtener configuración (sucursales y técnicos)
-router.get('/config', async (req, res) => {
+// Requires auth to filter by tenant
+router.get('/config', verifyJWT, async (req, res) => {
     try {
-        const sucursalesRes = await pool.query('SELECT id, nombre, direccion, direccion_iframe FROM sucursal ORDER BY id');
+        const id_tenant = req.user.id_tenant;
+        const isSuperAdmin = req.user.is_super_admin;
+
+        // Fetch sucursales filtered by tenant (super admin sees all)
+        let sucursalesQuery;
+        let sucursalesParams = [];
+
+        if (isSuperAdmin) {
+            sucursalesQuery = 'SELECT id, nombre, direccion, direccion_iframe FROM sucursal ORDER BY id';
+        } else {
+            sucursalesQuery = 'SELECT id, nombre, direccion, direccion_iframe FROM sucursal WHERE id_tenant = $1 ORDER BY id';
+            sucursalesParams = [id_tenant];
+        }
+
+        const sucursalesRes = await pool.query(sucursalesQuery, sucursalesParams);
 
         let tecnicos = [];
         try {
-            // Fetch technicians (users associated with sucursales)
-            // We assume 'usuariosucursal' links users to sucursales
-            const tecnicosRes = await pool.query(`
-                SELECT u.id, u.nombre, us.id_sucursal 
-                FROM usuario u 
-                JOIN usuariosucursal us ON u.id = us.id_usuario
-                ORDER BY u.nombre
-            `);
+            // Fetch technicians filtered by tenant's sucursales
+            let tecnicosQuery;
+            let tecnicosParams = [];
+
+            if (isSuperAdmin) {
+                tecnicosQuery = `
+                    SELECT u.id, u.nombre, us.id_sucursal 
+                    FROM usuario u 
+                    JOIN usuariosucursal us ON u.id = us.id_usuario
+                    ORDER BY u.nombre
+                `;
+            } else {
+                tecnicosQuery = `
+                    SELECT u.id, u.nombre, us.id_sucursal 
+                    FROM usuario u 
+                    JOIN usuariosucursal us ON u.id = us.id_usuario
+                    JOIN sucursal s ON us.id_sucursal = s.id
+                    WHERE s.id_tenant = $1
+                    ORDER BY u.nombre
+                `;
+                tecnicosParams = [id_tenant];
+            }
+
+            const tecnicosRes = await pool.query(tecnicosQuery, tecnicosParams);
             tecnicos = tecnicosRes.rows;
         } catch (err) {
             console.warn('Could not fetch technicians (usuariosucursal might be missing):', err.message);
@@ -34,12 +65,56 @@ router.get('/config', async (req, res) => {
     }
 });
 
-// GET /api/citas - Listar citas (Interno)
-router.get('/', async (req, res) => {
+// GET /api/citas/config/public/:sucursalId - Public config for marketplace booking widget
+// No auth required - used by public booking pages
+router.get('/config/public/:sucursalId', async (req, res) => {
+    try {
+        const { sucursalId } = req.params;
+
+        // Only fetch the specific sucursal requested
+        const sucursalesRes = await pool.query(
+            'SELECT id, nombre, direccion, direccion_iframe FROM sucursal WHERE id = $1',
+            [sucursalId]
+        );
+
+        if (sucursalesRes.rows.length === 0) {
+            return res.status(404).json({ ok: false, error: 'Sucursal no encontrada' });
+        }
+
+        // Fetch technicians for this specific sucursal
+        let tecnicos = [];
+        try {
+            const tecnicosRes = await pool.query(`
+                SELECT u.id, u.nombre, us.id_sucursal 
+                FROM usuario u 
+                JOIN usuariosucursal us ON u.id = us.id_usuario
+                WHERE us.id_sucursal = $1
+                ORDER BY u.nombre
+            `, [sucursalId]);
+            tecnicos = tecnicosRes.rows;
+        } catch (err) {
+            console.warn('Could not fetch technicians:', err.message);
+        }
+
+        res.json({
+            ok: true,
+            sucursales: sucursalesRes.rows,
+            tecnicos: tecnicos
+        });
+    } catch (error) {
+        console.error('Error al obtener config pública de citas:', error);
+        res.status(500).json({ ok: false, error: 'Error al obtener configuración' });
+    }
+});
+
+// GET /api/citas - Listar citas (Interno - requires auth)
+router.get('/', verifyJWT, async (req, res) => {
     try {
         const { start_date, end_date } = req.query;
+        const id_tenant = req.user.id_tenant;
+        const isSuperAdmin = req.user.is_super_admin;
 
-        // 1. Fetch Citas
+        // 1. Fetch Citas with tenant filtering
         let query = `
             SELECT 
                 c.id,
@@ -73,71 +148,90 @@ router.get('/', async (req, res) => {
         `;
 
         const params = [];
+        let whereClause = '';
+
+        // Tenant filtering (unless super admin)
+        if (!isSuperAdmin && id_tenant) {
+            whereClause = ' WHERE s.id_tenant = $1';
+            params.push(id_tenant);
+        }
+
         if (start_date && end_date) {
-            query += ` WHERE c.fecha_hora BETWEEN $1 AND $2`;
+            if (whereClause) {
+                whereClause += ` AND c.fecha_hora BETWEEN $${params.length + 1} AND $${params.length + 2}`;
+            } else {
+                whereClause = ` WHERE c.fecha_hora BETWEEN $1 AND $2`;
+            }
             params.push(start_date, end_date);
         }
 
-        query += ` ORDER BY c.fecha_hora ASC`; // Order by date ascending for calendar view
+        query += whereClause;
+        query += ` ORDER BY c.fecha_hora ASC`;
 
         if (!start_date) {
-            query += ` LIMIT 50`; // Default limit if no range
+            query += ` LIMIT 50`;
         }
 
         const result = await pool.query(query, params);
 
-        // 2. Calculate Stats (Real Data)
-        // We need separate queries for global stats or derive them if the range covers today.
-        // For robustness, let's do a quick separate query for "Today's Stats" regardless of the filter.
-
+        // 2. Calculate Stats with tenant filtering
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        const statsQuery = `
-            SELECT
-                COUNT(*) FILTER (WHERE fecha_hora BETWEEN $1 AND $2) as citas_hoy,
-                COUNT(*) FILTER (WHERE estado = 'en proceso') as en_taller,
-                COUNT(*) FILTER (WHERE estado = 'pendiente') as solicitudes_web
-            FROM citataller
-        `;
-        const statsRes = await pool.query(statsQuery, [todayStart.toISOString(), todayEnd.toISOString()]);
+        let globalStatsQuery;
+        let statsParams;
 
-        // For billing, we sum 'total_neto' from 'orden' where created_at is today (Estimate)
-        const billingQuery = `
-            SELECT SUM(total_neto) as total 
-            FROM orden 
-            WHERE created_at BETWEEN $1 AND $2
-        `;
-        const billingRes = await pool.query(billingQuery, [todayStart.toISOString(), todayEnd.toISOString()]);
+        if (!isSuperAdmin && id_tenant) {
+            globalStatsQuery = `
+                SELECT
+                    (SELECT COUNT(*) FROM citataller c JOIN sucursal s ON c.id_sucursal = s.id 
+                     WHERE s.id_tenant = $1 AND c.fecha_hora BETWEEN $2 AND $3) as citas_hoy,
+                    (SELECT COUNT(*) FROM citataller c JOIN sucursal s ON c.id_sucursal = s.id 
+                     WHERE s.id_tenant = $1 AND c.estado = 'en proceso') as en_taller,
+                    (SELECT COUNT(*) FROM citataller c JOIN sucursal s ON c.id_sucursal = s.id
+                     WHERE s.id_tenant = $1 AND c.estado = 'pendiente') as solicitudes_web
+            `;
+            statsParams = [id_tenant, todayStart.toISOString(), todayEnd.toISOString()];
+        } else {
+            globalStatsQuery = `
+                SELECT
+                    (SELECT COUNT(*) FROM citataller WHERE fecha_hora BETWEEN $1 AND $2) as citas_hoy,
+                    (SELECT COUNT(*) FROM citataller WHERE estado = 'en proceso') as en_taller,
+                    (SELECT COUNT(*) FROM citataller WHERE estado = 'pendiente') as solicitudes_web
+            `;
+            statsParams = [todayStart.toISOString(), todayEnd.toISOString()];
+        }
 
-        const stats = {
-            citas_hoy: parseInt(statsRes.rows[0].citas_hoy || 0),
-            en_taller: parseInt(statsRes.rows[0].en_taller || 0), // This might need to be global, not just today? Usually "In Workshop Now" implies current state. The query above filters 'en_taller' globally because the WHERE clause for date is only inside the first FILTER. Wait, no.
-            // Correction: The FILTER syntax applies the condition. 
-            // The query `SELECT COUNT(*) FILTER (WHERE fecha_hora...)` counts only those matching.
-            // `COUNT(*) FILTER (WHERE estado = 'en proceso')` counts ALL 'en proceso' in the table? 
-            // Yes, if there is no main WHERE clause.
-            // Let's refine the stats query to be safe.
-            solicitudes_web: parseInt(statsRes.rows[0].solicitudes_web || 0),
-            facturacion_est: parseFloat(billingRes.rows[0].total || 0)
-        };
+        const globalStatsRes = await pool.query(globalStatsQuery, statsParams);
 
-        // Refined Stats Query to ensure 'en_taller' and 'solicitudes_web' are global (or relevant context)
-        // and 'citas_hoy' is strictly today.
-        const globalStatsRes = await pool.query(`
-            SELECT
-                (SELECT COUNT(*) FROM citataller WHERE fecha_hora BETWEEN $1 AND $2) as citas_hoy,
-                (SELECT COUNT(*) FROM citataller WHERE estado = 'en proceso') as en_taller,
-                (SELECT COUNT(*) FROM citataller WHERE estado = 'pendiente') as solicitudes_web
-        `, [todayStart.toISOString(), todayEnd.toISOString()]);
+        // Billing stats with tenant filter
+        let billingQuery;
+        let billingParams;
+        if (!isSuperAdmin && id_tenant) {
+            billingQuery = `
+                SELECT SUM(o.total_neto) as total 
+                FROM orden o
+                JOIN sucursal s ON o.id_sucursal = s.id
+                WHERE s.id_tenant = $1 AND o.created_at BETWEEN $2 AND $3
+            `;
+            billingParams = [id_tenant, todayStart.toISOString(), todayEnd.toISOString()];
+        } else {
+            billingQuery = `
+                SELECT SUM(total_neto) as total 
+                FROM orden 
+                WHERE created_at BETWEEN $1 AND $2
+            `;
+            billingParams = [todayStart.toISOString(), todayEnd.toISOString()];
+        }
+        const billingRes = await pool.query(billingQuery, billingParams);
 
         const finalStats = {
             citas_hoy: parseInt(globalStatsRes.rows[0].citas_hoy || 0),
             en_taller: parseInt(globalStatsRes.rows[0].en_taller || 0),
             solicitudes_web: parseInt(globalStatsRes.rows[0].solicitudes_web || 0),
-            facturacion_est: parseFloat(billingRes.rows[0].total || 0)
+            facturacion_est: parseFloat(billingRes.rows[0]?.total || 0)
         };
 
         res.json({ ok: true, citas: result.rows, stats: finalStats });

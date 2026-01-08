@@ -13,7 +13,7 @@ export async function searchInventario(query, idSucursal) {
             throw new Error('Debes seleccionar un taller antes de buscar.');
         }
 
-        const url = new URL(API_URL);
+        const url = new URL(API_URL, window.location.origin);
         url.searchParams.set('q', query || '');
         url.searchParams.set('id_sucursal', idSucursal);
 

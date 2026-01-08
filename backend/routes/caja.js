@@ -743,10 +743,11 @@ router.get('/cierres/:id', async (req, res) => {
                    u_apertura.nombre as usuario_apertura
             FROM cajacierre cc 
             JOIN caja c ON cc.id_caja = c.id 
+            JOIN sucursal s ON c.id_sucursal = s.id
             LEFT JOIN usuario u_cierre ON cc.id_usuario = u_cierre.id 
             LEFT JOIN usuario u_apertura ON c.id_usuario_apertura = u_apertura.id
-            WHERE cc.id = $1
-        `, [req.params.id]);
+            WHERE cc.id = $1 AND s.id_tenant = $2
+        `, [req.params.id, req.user.id_tenant]);
 
         if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Cierre no encontrado' });
         const cierre = result.rows[0];

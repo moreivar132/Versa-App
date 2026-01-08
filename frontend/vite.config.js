@@ -55,6 +55,8 @@ export default defineConfig({
                 cancel: 'cancel.html',
                 stripeSuccess: 'stripe-success.html',
                 stripeCancel: 'stripe-cancel.html',
+                // Billing
+                managerTallerBilling: 'manager-taller-billing.html',
             }
         }
     },

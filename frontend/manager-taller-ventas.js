@@ -11,6 +11,10 @@ let salesItems = [];
 let clienteMostradorId = null;
 let mediosPagoData = [];
 
+// Edit Mode State
+let isEditMode = false;
+let currentSaleId = null;
+
 // UI Helpers
 const showToast = (message, isError = false) => {
     const toast = document.getElementById('toast-notification');
@@ -579,8 +583,14 @@ async function handleSaleSubmit(e) {
     };
 
     try {
-        await createVenta(ventaData);
-        document.getElementById('success-modal').classList.remove('hidden');
+        if (isEditMode && currentSaleId) {
+            await updateVenta(currentSaleId, ventaData);
+            showToast("Venta actualizada correctamente");
+            document.getElementById('success-modal').classList.remove('hidden');
+        } else {
+            await createVenta(ventaData);
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
     } catch (error) {
         console.error(error);
         showToast(error.message || "Error al registrar venta", true);
@@ -598,6 +608,104 @@ function resetForm() {
     // Clear footer inputs
     document.getElementById('new-item-name').value = '';
     document.getElementById('new-item-price').value = '';
+
+    // Reset edit mode
+    isEditMode = false;
+    currentSaleId = null;
+}
+
+// --- EDIT MODE FUNCTION ---
+async function loadSaleForEdit(saleId) {
+    console.log('[VentasEdit] Cargando venta #' + saleId + '...');
+
+    try {
+        const responseData = await getVentaById(saleId);
+        console.log('[VentasEdit] Datos recibidos:', responseData);
+
+        const { venta, lineas, pagos } = responseData;
+
+        if (!venta || !venta.id) {
+            throw new Error('Venta no encontrada');
+        }
+
+        // 1. Update UI Title
+        const pageTitle = document.querySelector('h2.form-main-title, .form-main-title');
+        if (pageTitle) {
+            pageTitle.innerHTML = `Editar Venta <span class="text-[var(--brand-orange)]">#${saleId}</span>`;
+        }
+
+        // Change badge if exists
+        const badge = document.querySelector('.badge-nueva, [class*="NUEVA"]');
+        if (badge) {
+            badge.textContent = 'EDITANDO';
+            badge.style.background = 'rgba(59, 130, 246, 0.1)';
+            badge.style.color = '#3b82f6';
+            badge.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+        }
+
+        // 2. Populate Client
+        if (venta.cliente_nombre || venta.clienteNombre) {
+            document.getElementById('buscar-cliente').value = venta.cliente_nombre || venta.clienteNombre;
+            document.getElementById('id-cliente-hidden').value = venta.id_cliente || venta.idCliente || '';
+        }
+
+        // 3. Populate Sucursal (with retry for async loading)
+        const setSucursal = () => {
+            const sucursalSelect = document.getElementById('taller');
+            const sucursalId = venta.id_sucursal || venta.idSucursal;
+            if (sucursalSelect && sucursalId) {
+                if (sucursalSelect.options.length > 0) {
+                    sucursalSelect.value = sucursalId;
+                    console.log('[VentasEdit] Sucursal establecida:', sucursalId);
+                } else {
+                    setTimeout(setSucursal, 200);
+                }
+            }
+        };
+        setSucursal();
+
+        // 4. Populate Observations
+        if (venta.observaciones) {
+            document.getElementById('observaciones').value = venta.observaciones;
+        }
+
+        // 5. Populate Payment Method
+        const medioPagoSelect = document.getElementById('medio-pago');
+        if (medioPagoSelect && pagos && pagos.length > 0) {
+            const pago = pagos[0];
+            const codigo = pago.medio_pago_codigo || pago.codigoMedioPago || 'EFECTIVO';
+            // Case-insensitive matching
+            for (let i = 0; i < medioPagoSelect.options.length; i++) {
+                if (medioPagoSelect.options[i].value.toUpperCase() === codigo.toUpperCase()) {
+                    medioPagoSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // 6. Populate Items (Lines)
+        const itemsList = lineas || [];
+        salesItems = itemsList.map(item => ({
+            idProducto: item.id_producto || item.idProducto || null,
+            nombre: item.descripcion || item.nombre || item.producto_nombre || 'Producto',
+            precio: parseFloat(item.precio || item.precio_unitario || 0),
+            cantidad: parseFloat(item.cantidad || 1),
+            stock: item.stock || '-',
+            descuento: parseFloat(item.descuento || item.descuento_porcentaje || 0),
+            iva: parseFloat(item.iva_porcentaje || item.iva || 21),
+            subtotal: parseFloat(item.subtotal || 0),
+            total: parseFloat(item.total || item.subtotal || 0)
+        }));
+
+        console.log('[VentasEdit] Items cargados:', salesItems);
+        renderCart();
+
+        showToast('Venta cargada para edición');
+
+    } catch (error) {
+        console.error('[VentasEdit] Error cargando venta:', error);
+        showToast('Error al cargar la venta: ' + error.message, true);
+    }
 }
 
 // --- Pasar a Cuenta Corriente ---

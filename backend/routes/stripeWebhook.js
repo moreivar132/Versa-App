@@ -7,6 +7,10 @@
  * Maneja:
  * - Suscripciones de tenant (subscription events)
  * - Pagos de reservas del marketplace (checkout one-time payment)
+ * 
+ * Features:
+ * - Idempotency via stripe_event_log table
+ * - Plan inference from price.id when not in metadata
  */
 
 const express = require('express');
@@ -14,6 +18,58 @@ const router = express.Router();
 const pool = require('../db');
 const stripeService = require('../services/stripeService');
 const incomeService = require('../services/incomeService');
+
+// ============================================================
+// IDEMPOTENCY HELPERS
+// ============================================================
+
+/**
+ * Check if an event has already been processed
+ * @param {string} eventId - Stripe event ID
+ * @returns {Promise<boolean>} True if already processed
+ */
+async function isEventProcessed(eventId) {
+    try {
+        const result = await pool.query(
+            'SELECT id FROM stripe_event_log WHERE stripe_event_id = $1',
+            [eventId]
+        );
+        return result.rows.length > 0;
+    } catch (error) {
+        // If table doesn't exist yet, return false
+        if (error.code === '42P01') {
+            console.warn('[Stripe Webhook] stripe_event_log table not found, skipping idempotency check');
+            return false;
+        }
+        throw error;
+    }
+}
+
+/**
+ * Mark an event as processed
+ * @param {Object} event - Stripe event object
+ * @param {string|null} error - Processing error if any
+ */
+async function markEventProcessed(event, processingError = null) {
+    try {
+        await pool.query(`
+            INSERT INTO stripe_event_log (stripe_event_id, type, created, payload_json, processing_error)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (stripe_event_id) DO UPDATE SET
+                processing_error = COALESCE(EXCLUDED.processing_error, stripe_event_log.processing_error),
+                processed_at = NOW()
+        `, [
+            event.id,
+            event.type,
+            event.created,
+            JSON.stringify(event.data.object),
+            processingError
+        ]);
+    } catch (error) {
+        // Non-fatal - log but don't throw
+        console.error('[Stripe Webhook] Error marking event as processed:', error.message);
+    }
+}
 
 /**
  * POST /api/stripe/webhook
@@ -26,70 +82,91 @@ router.post('/', express.raw({ type: 'application/json' }), async (req, res) => 
         // Verificar la firma del webhook
         const event = stripeService.verifyWebhookSignature(req.body, signature);
 
-        console.log(`[Stripe Webhook] Evento recibido: ${event.type}`);
+        console.log(`[Stripe Webhook] Evento recibido: ${event.type} (${event.id})`);
+
+        // IDEMPOTENCY CHECK
+        const alreadyProcessed = await isEventProcessed(event.id);
+        if (alreadyProcessed) {
+            console.log(`[Stripe Webhook] Evento ${event.id} ya procesado, ignorando`);
+            return res.json({ received: true, status: 'already_processed' });
+        }
 
         // Obtener el tipo de transacción desde metadata
         const metadata = event.data.object?.metadata || {};
         const transactionType = metadata.type || 'unknown';
 
-        // Procesar el evento según su tipo
-        switch (event.type) {
-            // =====================================================
-            // EVENTOS DE CHECKOUT SESSION
-            // =====================================================
-            case 'checkout.session.completed':
-                if (transactionType === 'marketplace_booking') {
-                    await handleBookingCheckoutCompleted(event.data.object);
-                } else {
-                    // Asumir suscripción (comportamiento anterior)
-                    await handleSubscriptionCheckoutCompleted(event.data.object);
-                }
-                break;
+        let processingError = null;
 
-            case 'checkout.session.expired':
-                if (transactionType === 'marketplace_booking') {
-                    await handleBookingCheckoutExpired(event.data.object);
-                } else {
-                    console.log('[Stripe] Checkout session expirada (suscripción)');
-                }
-                break;
+        try {
+            // Procesar el evento según su tipo
+            switch (event.type) {
+                // =====================================================
+                // EVENTOS DE CHECKOUT SESSION
+                // =====================================================
+                case 'checkout.session.completed':
+                    if (transactionType === 'marketplace_booking') {
+                        await handleBookingCheckoutCompleted(event.data.object);
+                    } else {
+                        // Asumir suscripción (comportamiento anterior)
+                        await handleSubscriptionCheckoutCompleted(event.data.object);
+                    }
+                    break;
 
-            // =====================================================
-            // EVENTOS DE PAYMENT INTENT
-            // =====================================================
-            case 'payment_intent.payment_failed':
-                if (transactionType === 'marketplace_booking' || metadata.id_cita) {
-                    await handleBookingPaymentFailed(event.data.object);
-                }
-                break;
+                case 'checkout.session.expired':
+                    if (transactionType === 'marketplace_booking') {
+                        await handleBookingCheckoutExpired(event.data.object);
+                    } else {
+                        console.log('[Stripe] Checkout session expirada (suscripción)');
+                    }
+                    break;
 
-            case 'payment_intent.succeeded':
-                // Por si completamos el payment intent directamente
-                console.log(`[Stripe] Payment Intent succeeded: ${event.data.object.id}`);
-                break;
+                // =====================================================
+                // EVENTOS DE PAYMENT INTENT
+                // =====================================================
+                case 'payment_intent.payment_failed':
+                    if (transactionType === 'marketplace_booking' || metadata.id_cita) {
+                        await handleBookingPaymentFailed(event.data.object);
+                    }
+                    break;
 
-            // =====================================================
-            // EVENTOS DE SUSCRIPCIÓN
-            // =====================================================
-            case 'invoice.paid':
-                await handleInvoicePaid(event.data.object);
-                break;
+                case 'payment_intent.succeeded':
+                    // Por si completamos el payment intent directamente
+                    console.log(`[Stripe] Payment Intent succeeded: ${event.data.object.id}`);
+                    break;
 
-            case 'invoice.payment_failed':
-                await handleInvoicePaymentFailed(event.data.object);
-                break;
+                // =====================================================
+                // EVENTOS DE SUSCRIPCIÓN
+                // =====================================================
+                case 'customer.subscription.created':
+                    await handleSubscriptionCreated(event.data.object);
+                    break;
 
-            case 'customer.subscription.deleted':
-                await handleSubscriptionDeleted(event.data.object);
-                break;
+                case 'customer.subscription.updated':
+                    await handleSubscriptionUpdated(event.data.object);
+                    break;
 
-            case 'customer.subscription.updated':
-                await handleSubscriptionUpdated(event.data.object);
-                break;
+                case 'customer.subscription.deleted':
+                    await handleSubscriptionDeleted(event.data.object);
+                    break;
 
-            default:
-                console.log(`[Stripe] Evento no manejado: ${event.type}`);
+                case 'invoice.paid':
+                    await handleInvoicePaid(event.data.object);
+                    break;
+
+                case 'invoice.payment_failed':
+                    await handleInvoicePaymentFailed(event.data.object);
+                    break;
+
+                default:
+                    console.log(`[Stripe] Evento no manejado: ${event.type}`);
+            }
+        } catch (handlerError) {
+            console.error(`[Stripe Webhook] Error procesando ${event.type}:`, handlerError);
+            processingError = handlerError.message;
         }
+
+        // Mark event as processed (with error if any)
+        await markEventProcessed(event, processingError);
 
         // Responder 200 OK para confirmar recepción
         res.json({ received: true });
@@ -370,6 +447,7 @@ async function handleSubscriptionCheckoutCompleted(session) {
 
 /**
  * Maneja el evento invoice.paid
+ * Clears past_due_since when payment succeeds
  */
 async function handleInvoicePaid(invoice) {
     console.log('[Stripe] Procesando invoice.paid:', invoice.id);
@@ -384,12 +462,13 @@ async function handleInvoicePaid(invoice) {
     try {
         const subscription = await stripeService.getSubscription(subscriptionId);
 
-        // Actualizar el estado de la suscripción
+        // Actualizar el estado de la suscripción y clear past_due_since
         await pool.query(
             `UPDATE tenant_suscripcion SET
               status = $1,
               current_period_start = $2,
               current_period_end = $3,
+              past_due_since = NULL,
               ultima_sync_stripe_at = NOW()
             WHERE stripe_subscription_id = $4`,
             [
@@ -400,7 +479,7 @@ async function handleInvoicePaid(invoice) {
             ]
         );
 
-        console.log(`[Stripe] Suscripción ${subscriptionId} actualizada a status ${subscription.status}`);
+        console.log(`[Stripe] Suscripción ${subscriptionId} actualizada a status ${subscription.status}, past_due cleared`);
     } catch (error) {
         console.error('[Stripe] Error actualizando suscripción:', error);
     }
@@ -408,6 +487,7 @@ async function handleInvoicePaid(invoice) {
 
 /**
  * Maneja el evento invoice.payment_failed
+ * Sets past_due_since if not already set
  */
 async function handleInvoicePaymentFailed(invoice) {
     console.log('[Stripe] Procesando invoice.payment_failed:', invoice.id);
@@ -419,10 +499,11 @@ async function handleInvoicePaymentFailed(invoice) {
     }
 
     try {
-        // Marcar la suscripción como con problemas de pago
+        // Marcar la suscripción como past_due y set past_due_since if null
         await pool.query(
             `UPDATE tenant_suscripcion SET
               status = 'past_due',
+              past_due_since = COALESCE(past_due_since, NOW()),
               ultima_sync_stripe_at = NOW()
             WHERE stripe_subscription_id = $1`,
             [subscriptionId]
@@ -431,6 +512,89 @@ async function handleInvoicePaymentFailed(invoice) {
         console.log(`[Stripe] Suscripción ${subscriptionId} marcada como past_due`);
     } catch (error) {
         console.error('[Stripe] Error marcando suscripción como past_due:', error);
+    }
+}
+
+/**
+ * Maneja el evento customer.subscription.created
+ * Creates or updates subscription record with plan_key inference
+ */
+async function handleSubscriptionCreated(subscription) {
+    console.log('[Stripe] Procesando customer.subscription.created:', subscription.id);
+
+    try {
+        // Get tenant_id from metadata
+        const tenantId = parseInt(subscription.metadata?.tenant_id);
+        const metadataPlanKey = subscription.metadata?.plan_key;
+        const customerId = subscription.customer;
+
+        if (!tenantId) {
+            console.warn('[Stripe] customer.subscription.created sin tenant_id en metadata');
+            return;
+        }
+
+        // Get price_id and infer plan if not in metadata
+        const priceId = subscription.items?.data?.[0]?.price?.id;
+        let planKey = metadataPlanKey;
+
+        if (!planKey && priceId) {
+            planKey = await stripeService.inferPlanKeyFromPriceId(priceId);
+        }
+
+        // Get plan_id from database
+        const planQuery = await pool.query(
+            `SELECT id, plan_key FROM plan_suscripcion 
+             WHERE (plan_key = $1 OR precio_mensual_stripe_price_id = $2 OR precio_anual_stripe_price_id = $2)
+             AND activo = true
+             LIMIT 1`,
+            [planKey, priceId]
+        );
+
+        if (planQuery.rows.length === 0) {
+            console.error('[Stripe] No se encontró plan para:', { planKey, priceId });
+            return;
+        }
+
+        const plan = planQuery.rows[0];
+
+        // Upsert subscription
+        await pool.query(`
+            INSERT INTO tenant_suscripcion (
+                tenant_id, plan_id, plan_key, stripe_customer_id, stripe_subscription_id,
+                status, trial_start_at, trial_end_at, current_period_start, current_period_end,
+                cancel_at_period_end, ultima_sync_stripe_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+            ON CONFLICT (tenant_id) DO UPDATE SET
+                plan_id = EXCLUDED.plan_id,
+                plan_key = EXCLUDED.plan_key,
+                stripe_customer_id = EXCLUDED.stripe_customer_id,
+                stripe_subscription_id = EXCLUDED.stripe_subscription_id,
+                status = EXCLUDED.status,
+                trial_start_at = EXCLUDED.trial_start_at,
+                trial_end_at = EXCLUDED.trial_end_at,
+                current_period_start = EXCLUDED.current_period_start,
+                current_period_end = EXCLUDED.current_period_end,
+                cancel_at_period_end = EXCLUDED.cancel_at_period_end,
+                past_due_since = NULL,
+                ultima_sync_stripe_at = NOW()
+        `, [
+            tenantId,
+            plan.id,
+            plan.plan_key,
+            customerId,
+            subscription.id,
+            subscription.status,
+            subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
+            subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
+            new Date(subscription.current_period_start * 1000),
+            new Date(subscription.current_period_end * 1000),
+            subscription.cancel_at_period_end || false
+        ]);
+
+        console.log(`[Stripe] ✅ Suscripción creada para tenant ${tenantId} con plan ${plan.plan_key}`);
+    } catch (error) {
+        console.error('[Stripe] Error en handleSubscriptionCreated:', error);
+        throw error;
     }
 }
 
@@ -461,29 +625,75 @@ async function handleSubscriptionDeleted(subscription) {
 
 /**
  * Maneja el evento customer.subscription.updated
+ * Updates status, period dates, and infers plan if changed
  */
 async function handleSubscriptionUpdated(subscription) {
     console.log('[Stripe] Procesando customer.subscription.updated:', subscription.id);
 
     try {
-        await pool.query(
-            `UPDATE tenant_suscripcion SET
-              status = $1,
-              current_period_start = $2,
-              current_period_end = $3,
-              cancel_at_period_end = $4,
-              cancel_at = $5,
-              ultima_sync_stripe_at = NOW()
-            WHERE stripe_subscription_id = $6`,
-            [
-                subscription.status,
-                new Date(subscription.current_period_start * 1000),
-                new Date(subscription.current_period_end * 1000),
-                subscription.cancel_at_period_end || false,
-                subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
-                subscription.id,
-            ]
+        // Check if plan changed
+        const priceId = subscription.items?.data?.[0]?.price?.id;
+        let planKey = subscription.metadata?.plan_key;
+
+        if (!planKey && priceId) {
+            planKey = await stripeService.inferPlanKeyFromPriceId(priceId);
+        }
+
+        // Get plan details
+        const planQuery = await pool.query(
+            `SELECT id, plan_key FROM plan_suscripcion 
+             WHERE (plan_key = $1 OR precio_mensual_stripe_price_id = $2 OR precio_anual_stripe_price_id = $2)
+             AND activo = true
+             LIMIT 1`,
+            [planKey, priceId]
         );
+
+        const plan = planQuery.rows[0];
+
+        if (plan) {
+            await pool.query(
+                `UPDATE tenant_suscripcion SET
+                  plan_id = $1,
+                  plan_key = $2,
+                  status = $3,
+                  current_period_start = $4,
+                  current_period_end = $5,
+                  cancel_at_period_end = $6,
+                  cancel_at = $7,
+                  ultima_sync_stripe_at = NOW()
+                WHERE stripe_subscription_id = $8`,
+                [
+                    plan.id,
+                    plan.plan_key,
+                    subscription.status,
+                    new Date(subscription.current_period_start * 1000),
+                    new Date(subscription.current_period_end * 1000),
+                    subscription.cancel_at_period_end || false,
+                    subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
+                    subscription.id,
+                ]
+            );
+        } else {
+            // Just update status without plan change
+            await pool.query(
+                `UPDATE tenant_suscripcion SET
+                  status = $1,
+                  current_period_start = $2,
+                  current_period_end = $3,
+                  cancel_at_period_end = $4,
+                  cancel_at = $5,
+                  ultima_sync_stripe_at = NOW()
+                WHERE stripe_subscription_id = $6`,
+                [
+                    subscription.status,
+                    new Date(subscription.current_period_start * 1000),
+                    new Date(subscription.current_period_end * 1000),
+                    subscription.cancel_at_period_end || false,
+                    subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
+                    subscription.id,
+                ]
+            );
+        }
 
         console.log(`[Stripe] Suscripción ${subscription.id} actualizada`);
     } catch (error) {

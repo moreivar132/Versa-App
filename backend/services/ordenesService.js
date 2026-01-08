@@ -389,11 +389,12 @@ class OrdenesService {
             LEFT JOIN estadoorden eo ON o.id_estado_orden = eo.id
             LEFT JOIN tipoorden to_field ON o.id_tipo_orden = to_field.id
             LEFT JOIN ordenpago op ON o.id = op.id_orden
-            WHERE 1=1
+            JOIN sucursal s ON o.id_sucursal = s.id
+            WHERE s.id_tenant = $1
         `;
 
-        const values = [];
-        let paramIndex = 1;
+        const values = [id_tenant];
+        let paramIndex = 2;
 
         // Filtro por estado de orden
         if (estado) {
@@ -550,10 +551,10 @@ class OrdenesService {
             LEFT JOIN tipoorden to_field ON o.id_tipo_orden = to_field.id
             LEFT JOIN sucursal s ON o.id_sucursal = s.id
             LEFT JOIN usuario u ON o.id_mecanico = u.id
-            WHERE o.id = $1
+            WHERE o.id = $1 AND s.id_tenant = $2
         `;
 
-        const ordenResult = await pool.query(ordenQuery, [idOrden]);
+        const ordenResult = await pool.query(ordenQuery, [idOrden, id_tenant]);
 
         if (ordenResult.rows.length === 0) {
             throw new Error('Orden no encontrada');
@@ -641,8 +642,12 @@ class OrdenesService {
             pagosEliminados // IDs de pagos a eliminar
         } = data;
 
-        // Verificar que la orden existe
-        const ordenExistente = await pool.query('SELECT id FROM orden WHERE id = $1', [idOrden]);
+        // Verificar que la orden existe y pertenece al tenant
+        const ordenExistente = await pool.query(`
+            SELECT o.id FROM orden o 
+            JOIN sucursal s ON o.id_sucursal = s.id 
+            WHERE o.id = $1 AND s.id_tenant = $2
+        `, [idOrden, id_tenant]);
         if (ordenExistente.rows.length === 0) {
             throw new Error('Orden no encontrada');
         }

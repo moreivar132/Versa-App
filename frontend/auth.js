@@ -47,6 +47,20 @@ export function logout() {
   redirectToLogin();
 }
 
+export function redirectIfLoggedIn() {
+  const session = getSession();
+  if (session && session.token) {
+    // Redirigir según el tipo de usuario o página por defecto
+    // Si estamos en login-finsaas, ir al dashboard de finsaas
+    if (window.location.pathname.includes('finsaas')) {
+      window.location.href = '/finsaas-dashboard.html';
+      return;
+    }
+    // Por defecto al manager
+    window.location.href = '/manager-taller-inicio.html';
+  }
+}
+
 export async function requireAuth() {
   const session = getSession();
   if (!session?.token) {

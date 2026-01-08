@@ -12,7 +12,12 @@ const vehiculosRouter = require('./routes/vehiculos');
 const verifyJWT = require('./middleware/auth');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
+
+console.log('---------------------------------------------------');
+console.log('   VERSA BACKEND - VERSION CHECK: v2026.01.07.2      ');
+console.log('   (If you do not see this, code is OLD)             ');
+console.log('---------------------------------------------------');
 
 // --- Middlewares ---
 app.use(cors());
@@ -58,6 +63,7 @@ app.use('/api/upload', require('./routes/upload'));
 app.use('/api/whatsapp', require('./routes/whatsapp'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/subscriptions', require('./routes/subscriptions'));
+app.use('/api/billing', require('./routes/billingRoutes'));
 app.use('/api/ordenes', require('./routes/ordenes'));
 app.use('/api/ordenpago', require('./routes/ordenPago'));
 app.use('/api/medio-pago', require('./routes/medioPago'));
@@ -69,6 +75,7 @@ app.use('/api/facturas', require('./routes/facturas'));
 app.use('/api/cuentas-corrientes', require('./routes/cuentasCorrientes'));
 app.use('/api/ventas', require('./routes/ventas'));
 app.use('/api/income-events', verifyJWT, require('./routes/incomeEvents'));
+app.use('/api/dashboard', verifyJWT, require('./routes/dashboardPrefs'));
 
 // Marketplace routes (público y admin)
 app.use('/api/marketplace', require('./routes/marketplace'));
@@ -83,6 +90,9 @@ app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
 
 // Fidelización - Admin (gestión miembros/puntos/promos, con JWT)
 app.use('/api/admin/fidelizacion', verifyJWT, require('./routes/fidelizacionAdmin'));
+
+// Open Banking (TrueLayer Data API)
+app.use('/api/open-banking', require('./routes/openBankingRoutes'));
 
 // Customer Portal routes (Moved to top)
 // const { customerAuth, customerAuthOptional } = require('./middleware/customerAuth');

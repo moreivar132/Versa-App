@@ -68,8 +68,24 @@ async function getTenantPlan(tenantId) {
 function featureGate(feature) {
     return async (req, res, next) => {
         try {
+            // SUPER ADMIN BYPASS - never restricted by features
+            if (req.user?.is_super_admin || req.isSuperAdmin) {
+                req.tenantPlan = { name: 'SUPER_ADMIN_BYPASS', features_json: {} };
+                return next();
+            }
+
+            // Check is_super_admin from database if not already set
+            if (req.user?.id) {
+                const { isSuperAdmin } = require('./subscriptionCheck');
+                if (await isSuperAdmin(req.user.id)) {
+                    req.isSuperAdmin = true;
+                    req.tenantPlan = { name: 'SUPER_ADMIN_BYPASS', features_json: {} };
+                    return next();
+                }
+            }
+
             // Obtener tenantId del request (puede venir de auth o params)
-            const tenantId = req.tenantId || req.user?.tenantId || req.params?.tenantId;
+            const tenantId = req.tenantId || req.user?.tenantId || req.user?.tenant_id || req.params?.tenantId;
 
             if (!tenantId) {
                 return res.status(401).json({
