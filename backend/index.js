@@ -75,6 +75,7 @@ app.use('/api/facturas', require('./routes/facturas'));
 app.use('/api/cuentas-corrientes', require('./routes/cuentasCorrientes'));
 app.use('/api/ventas', require('./routes/ventas'));
 app.use('/api/income-events', verifyJWT, require('./routes/incomeEvents'));
+app.use('/api/dashboard', verifyJWT, require('./routes/dashboardPrefs'));
 
 // Marketplace routes (público y admin)
 app.use('/api/marketplace', require('./routes/marketplace'));

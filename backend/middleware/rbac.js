@@ -232,6 +232,24 @@ function requireSucursalScope(paramName = 'id_sucursal') {
     };
 }
 
+/**
+ * Simple authorization middleware factory
+ * Returns verifyJWT middleware for basic auth without specific permission check
+ * Use this when you just need to verify the user is logged in
+ * @param {string} [permissionKey] - Optional permission to check
+ */
+function authorize(permissionKey) {
+    const verifyJWT = require('./auth');
+
+    if (!permissionKey) {
+        // Just verify JWT, no permission check
+        return verifyJWT;
+    }
+
+    // If permission specified, chain verifyJWT + permission check
+    return [verifyJWT, requirePermission(permissionKey)];
+}
+
 module.exports = {
     isSuperAdmin,
     getUserPermissions,
@@ -239,6 +257,7 @@ module.exports = {
     requirePermission,
     requireSuperAdmin,
     requireAccessManage,
+    authorize,
     can,
     getEffectiveTenant,
     validateTenantAccess,

@@ -984,87 +984,101 @@
 
             async function loadPurchaseForEdit(id) {
                 try {
+                    console.log(`[EditMode] Fetching purchase #${id}...`);
                     const response = await fetchWithAuth(`/api/compras/${id}`);
                     if (!response.ok) {
                         const errText = await response.text();
                         console.error('Error response body:', errText);
-                        try {
-                            const errData = JSON.parse(errText);
-                            throw new Error(errData.error || 'Error al cargar compra');
-                        } catch (e) {
-                            throw new Error('Error 500 del servidor: ' + errText.substring(0, 100));
-                        }
+                        throw new Error(`Error ${response.status}: ` + errText);
                     }
                     const data = await response.json();
 
-                    console.log('Datos de compra cargados:', data);
+                    console.log('Datos de compra cargados (RAW):', data);
 
                     // 1. Update UI Titles
                     const titleEl = document.querySelector('.form-main-title');
-                    // Use more robust selector - find badge by looking for specific text or parent
-                    const badgeEl = Array.from(document.querySelectorAll('span')).find(el => 
-                        el.className.includes('bg-[rgba') && el.className.includes('text-sm')
-                    );
-                    if (titleEl) titleEl.textContent = `Editar Compra #${id}`;
+                    const badgeEl = document.querySelector('.bg-\\[rgba\\(255\\,101\\,43\\,0\\.1\\)\\]'); // Selector más específico por clase generada
+
+                    if (titleEl) titleEl.innerHTML = `Editar Compra <span class="text-[var(--brand-orange)]">#${id}</span>`;
                     if (badgeEl) {
-                        badgeEl.textContent = 'EDITANDO';
-                        badgeEl.classList.remove('text-[var(--brand-orange)]');
-                        badgeEl.classList.add('text-blue-400');
+                        badgeEl.textContent = 'MODO EDICIÓN';
+                        badgeEl.className = 'bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-xs font-bold border border-blue-500/20';
                     }
 
                     // 2. Populate Fields
                     // Date format handling
                     if (data.fecha_emision) {
-                        // Ensure format YYYY-MM-DDTHH:MM
                         const dateObj = new Date(data.fecha_emision);
-                        const year = dateObj.getFullYear();
-                        const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                        const day = String(dateObj.getDate()).padStart(2, '0');
-                        const hours = String(dateObj.getHours()).padStart(2, '0');
-                        const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-                        document.getElementById("fecha-emision").value = `${year}-${month}-${day}T${hours}:${minutes}`;
+                        // Ajustar a zona horaria local para input datetime-local
+                        dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
+                        document.getElementById("fecha-emision").value = dateObj.toISOString().slice(0, 16);
                     }
 
                     const provInput = document.getElementById("proveedor");
-                    provInput.value = data.proveedor_nombre || data.nombre_proveedor || '';
+                    provInput.value = data.proveedor_nombre || data.nombre_proveedor || 'Proveedor desconocido';
                     provInput.dataset.id = data.id_proveedor || '';
 
+                    // Sucursal handling with retry to avoid race condition
                     if (data.id_sucursal) {
-                        const tallerSelect = document.getElementById("taller");
-                        // Wait slightly for options to populate if needed, though we run this after 500ms
-                        if (tallerSelect) tallerSelect.value = data.id_sucursal;
+                        const setSucursal = () => {
+                            const tallerSelect = document.getElementById("taller");
+                            if (tallerSelect && tallerSelect.options.length > 0) {
+                                tallerSelect.value = data.id_sucursal;
+                                console.log('[EditMode] Sucursal set to:', data.id_sucursal);
+                            } else {
+                                // Retry if selector not yet populated
+                                setTimeout(setSucursal, 200);
+                            }
+                        };
+                        setSucursal();
                     }
 
                     if (data.observaciones) {
                         document.getElementById("observaciones").value = data.observaciones;
                     }
 
-                    // Payment method
+                    // Payment method handling (Case Insensitive)
                     const payMethodSelect = document.querySelector('select[name="metodo_pago"]');
                     if (payMethodSelect && data.metodo_pago) {
-                        payMethodSelect.value = data.metodo_pago;
+                        const val = data.metodo_pago.toLowerCase();
+                        let found = false;
+                        for (let i = 0; i < payMethodSelect.options.length; i++) {
+                            if (payMethodSelect.options[i].value.toLowerCase() === val) {
+                                payMethodSelect.selectedIndex = i;
+                                found = true;
+                                break;
+                            }
+                        }
+                        // If not found, add it temporarily or leave default
+                        if (!found) {
+                            console.warn(`[EditMode] Payment method '${data.metodo_pago}' not found in options.`);
+                        }
                     }
 
                     // 3. Populate Items
-                    // Map API items to Frontend structure
-                    items = (data.items || data.lineas || []).map(i => ({
+                    // Normalize backend items to frontend structure
+                    items = (data.lineas || data.items || []).map(i => ({
                         id_producto: i.id_producto || null,
-                        barcode: i.codigo_barras || i.barcode || 'GENERICO',
-                        name: i.concepto || i.name || i.descripcion || i.producto_nombre || '',
+                        barcode: i.codigo_barras || i.barcode || '', // Keep empty if generic
+                        name: i.descripcion || i.producto_nombre || i.name || '',
                         price: parseFloat(i.precio_unitario || i.price || 0),
-                        quantity: parseInt(i.cantidad || i.quantity || 1),
-                        bonus: parseFloat(i.descuento || i.bonus || 0),
+                        quantity: parseFloat(i.cantidad || i.quantity || 1),
+                        bonus: parseFloat(i.descuento || 0), // Assuming compralinea doesn't store bonus separate from total line yet? Backend mapping needed
                         iva: parseFloat(i.iva || 0),
                         id_impuesto: i.id_impuesto,
                         type: i.tipo || 'Producto'
                     }));
 
+                    // Re-calculate bonus if total_linea is available and different from plain calc
+                    // (Optional refinement)
+
+                    console.log('Items processed:', items);
                     renderItems();
                     calculateTotals();
 
                 } catch (err) {
                     console.error('Error cargando compra para edición:', err);
-                    alert('Error cargando los datos de la compra: ' + err.message);
+                    alert('Error al cargar la compra para edición. Ver consola.');
                 }
             }
             let uploadedFiles = [];

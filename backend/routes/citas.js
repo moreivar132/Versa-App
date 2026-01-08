@@ -211,9 +211,10 @@ router.get('/', verifyJWT, async (req, res) => {
         let billingParams;
         if (!isSuperAdmin && id_tenant) {
             billingQuery = `
-                SELECT SUM(total_neto) as total 
-                FROM orden 
-                WHERE id_tenant = $1 AND created_at BETWEEN $2 AND $3
+                SELECT SUM(o.total_neto) as total 
+                FROM orden o
+                JOIN sucursal s ON o.id_sucursal = s.id
+                WHERE s.id_tenant = $1 AND o.created_at BETWEEN $2 AND $3
             `;
             billingParams = [id_tenant, todayStart.toISOString(), todayEnd.toISOString()];
         } else {

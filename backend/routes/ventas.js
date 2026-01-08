@@ -110,4 +110,40 @@ router.post('/:id/anular', verifyJWT, async (req, res) => {
     }
 });
 
+/**
+ * PUT /api/ventas/:id - Actualizar una venta existente
+ */
+router.put('/:id', verifyJWT, async (req, res) => {
+    try {
+        const userContext = {
+            id_tenant: req.user.id_tenant,
+            id_usuario: req.user.id
+        };
+
+        const result = await ventasService.updateVenta(req.params.id, req.body, userContext);
+        res.json(result);
+    } catch (error) {
+        console.error('Error al actualizar venta:', error);
+        res.status(500).json({ ok: false, error: error.message });
+    }
+});
+
+/**
+ * DELETE /api/ventas/:id - Eliminar una venta
+ */
+router.delete('/:id', verifyJWT, async (req, res) => {
+    try {
+        const userContext = {
+            id_tenant: req.user.id_tenant,
+            id_usuario: req.user.id
+        };
+
+        const result = await ventasService.deleteVenta(req.params.id, userContext);
+        res.json(result);
+    } catch (error) {
+        console.error('Error al eliminar venta:', error);
+        res.status(500).json({ ok: false, error: error.message });
+    }
+});
+
 module.exports = router;

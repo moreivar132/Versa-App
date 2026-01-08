@@ -1,11 +1,15 @@
 import { loadSucursales } from './loadSucursales.js';
 import { searchClientes, createClient } from './services/clientes-service.js';
 import { searchInventario, createProduct } from './services/inventory-service.js';
-import { createVenta } from './services/ventas-service.js';
+import { createVenta, getVentaById, updateVenta } from './services/ventas-service.js';
 import '/components/datetime-picker.js';
 
 let salesItems = [];
 let clienteMostradorId = null;
+
+// Edit Mode State
+let isEditMode = false;
+let currentSaleId = null;
 
 // UI Helpers
 const showToast = (message, isError = false) => {
@@ -73,6 +77,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     ['new-item-quantity', 'new-item-price', 'new-item-discount', 'new-item-iva'].forEach(id => {
         document.getElementById(id).addEventListener('input', updatePendingItemTotal);
     });
+
+    // Allow adding item with Enter on footer inputs
+    ['new-item-name', 'new-item-price', 'new-item-discount', 'new-item-iva', 'new-item-quantity'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Stop form submit
+                    addItemToCart();
+                }
+            });
+        }
+    });
+
+    // 9. CHECK FOR EDIT MODE
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mode') === 'edit' && urlParams.get('id')) {
+        isEditMode = true;
+        currentSaleId = urlParams.get('id');
+        console.log('[VentasEdit] Modo edición activado para venta ID:', currentSaleId);
+        // Wait for sucursales to load, then load sale data
+        setTimeout(() => loadSaleForEdit(currentSaleId), 600);
+    }
 });
 
 // --- Logic ---
@@ -497,8 +524,14 @@ async function handleSaleSubmit(e) {
     };
 
     try {
-        await createVenta(ventaData);
-        document.getElementById('success-modal').classList.remove('hidden');
+        if (isEditMode && currentSaleId) {
+            await updateVenta(currentSaleId, ventaData);
+            showToast("Venta actualizada correctamente");
+            document.getElementById('success-modal').classList.remove('hidden');
+        } else {
+            await createVenta(ventaData);
+            document.getElementById('success-modal').classList.remove('hidden');
+        }
     } catch (error) {
         console.error(error);
         showToast(error.message || "Error al registrar venta", true);
@@ -516,4 +549,102 @@ function resetForm() {
     // Clear footer inputs
     document.getElementById('new-item-name').value = '';
     document.getElementById('new-item-price').value = '';
+
+    // Reset edit mode
+    isEditMode = false;
+    currentSaleId = null;
+}
+
+// --- EDIT MODE FUNCTION ---
+async function loadSaleForEdit(saleId) {
+    console.log('[VentasEdit] Cargando venta #' + saleId + '...');
+
+    try {
+        const responseData = await getVentaById(saleId);
+        console.log('[VentasEdit] Datos recibidos:', responseData);
+
+        const { venta, lineas, pagos } = responseData;
+
+        if (!venta || !venta.id) {
+            throw new Error('Venta no encontrada');
+        }
+
+        // 1. Update UI Title
+        const pageTitle = document.querySelector('h2.form-main-title, .form-main-title');
+        if (pageTitle) {
+            pageTitle.innerHTML = `Editar Venta <span class="text-[var(--brand-orange)]">#${saleId}</span>`;
+        }
+
+        // Change badge if exists
+        const badge = document.querySelector('.badge-nueva, [class*="NUEVA"]');
+        if (badge) {
+            badge.textContent = 'EDITANDO';
+            badge.style.background = 'rgba(59, 130, 246, 0.1)';
+            badge.style.color = '#3b82f6';
+            badge.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+        }
+
+        // 2. Populate Client
+        if (venta.cliente_nombre || venta.clienteNombre) {
+            document.getElementById('buscar-cliente').value = venta.cliente_nombre || venta.clienteNombre;
+            document.getElementById('id-cliente-hidden').value = venta.id_cliente || venta.idCliente || '';
+        }
+
+        // 3. Populate Sucursal (with retry for async loading)
+        const setSucursal = () => {
+            const sucursalSelect = document.getElementById('taller');
+            const sucursalId = venta.id_sucursal || venta.idSucursal;
+            if (sucursalSelect && sucursalId) {
+                if (sucursalSelect.options.length > 0) {
+                    sucursalSelect.value = sucursalId;
+                    console.log('[VentasEdit] Sucursal establecida:', sucursalId);
+                } else {
+                    setTimeout(setSucursal, 200);
+                }
+            }
+        };
+        setSucursal();
+
+        // 4. Populate Observations
+        if (venta.observaciones) {
+            document.getElementById('observaciones').value = venta.observaciones;
+        }
+
+        // 5. Populate Payment Method
+        const medioPagoSelect = document.getElementById('medio-pago');
+        if (medioPagoSelect && pagos && pagos.length > 0) {
+            const pago = pagos[0];
+            const codigo = pago.medio_pago_codigo || pago.codigoMedioPago || 'EFECTIVO';
+            // Case-insensitive matching
+            for (let i = 0; i < medioPagoSelect.options.length; i++) {
+                if (medioPagoSelect.options[i].value.toUpperCase() === codigo.toUpperCase()) {
+                    medioPagoSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // 6. Populate Items (Lines)
+        const itemsList = lineas || [];
+        salesItems = itemsList.map(item => ({
+            idProducto: item.id_producto || item.idProducto || null,
+            nombre: item.descripcion || item.nombre || item.producto_nombre || 'Producto',
+            precio: parseFloat(item.precio || item.precio_unitario || 0),
+            cantidad: parseFloat(item.cantidad || 1),
+            stock: item.stock || '-',
+            descuento: parseFloat(item.descuento || item.descuento_porcentaje || 0),
+            iva: parseFloat(item.iva_porcentaje || item.iva || 21),
+            subtotal: parseFloat(item.subtotal || 0),
+            total: parseFloat(item.total || item.subtotal || 0)
+        }));
+
+        console.log('[VentasEdit] Items cargados:', salesItems);
+        renderCart();
+
+        showToast('Venta cargada para edición');
+
+    } catch (error) {
+        console.error('[VentasEdit] Error cargando venta:', error);
+        showToast('Error al cargar la venta: ' + error.message, true);
+    }
 }
