@@ -833,14 +833,7 @@
                   <option value="">Seleccionar técnico</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="taller">Taller *</label>
-                <select id="taller" name="taller" class="form-select" required>
-                  <option value="" disabled selected>Seleccionar Taller</option>
-                  <option value="1">SUCURSAL PRINCIPAL</option>
-                  <option value="2">SUCURSAL CENTRO</option>
-                </select>
-              </div>
+              <!-- Campo Taller ELIMINADO - La sucursal se hereda del selector global superior -->
             </div>
           </div>
 
@@ -1309,7 +1302,7 @@
 
   <script type="module">
     import { loadSucursales } from '/loadSucursales.js';
-    import { searchTecnicos } from '/services/tecnicos-service.js';
+    import { getTecnicosBySucursal } from '/services/tecnicos-service.js';
     import { searchClientes } from '/services/clientes-service.js';
     import { searchVehiculos, createVehicle } from '/services/vehiculos-service.js';
     import { createClient } from '/services/clientes-service.js';
@@ -1322,6 +1315,8 @@
     let modoEdicion = false;
     let ordenIdEdicion = null;
 
+    // Variable global para la sucursal activa (del selector superior)
+    let sucursalActivaId = null;
 
     // --- LÓGICA DE INTERFAZ (UI) ---
     // (Sidebar, Menús, Pestañas - Sin backend)
@@ -1387,8 +1382,46 @@
       // Exponer globalmente para pagos-logic.js
       window.showToast = showToast;
 
-      loadSucursales();
-      loadTecnicosSelect();
+      // Inicializar sucursal desde localStorage y cargar técnicos
+      async function initSucursalYTecnicos() {
+        // Obtener sucursal guardada
+        const SUCURSAL_KEY = 'sucursal_seleccionada';
+        const saved = localStorage.getItem(SUCURSAL_KEY);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            sucursalActivaId = parsed.id || parsed;
+          } catch {
+            sucursalActivaId = parseInt(saved) || null;
+          }
+        }
+
+        // Cargar selector de sucursales
+        await loadSucursales();
+
+        // Cargar técnicos de la sucursal activa
+        await loadTecnicosSelect();
+
+        // Escuchar cambios en el selector de sucursal
+        const sucursalSelector = document.querySelector('#sucursal-selector-container select, #branch-selector');
+        if (sucursalSelector) {
+          sucursalSelector.addEventListener('change', async (e) => {
+            sucursalActivaId = parseInt(e.target.value) || null;
+            console.log('[Orden] Sucursal cambiada a:', sucursalActivaId);
+            await loadTecnicosSelect();
+          });
+        }
+
+        // También escuchar evento personalizado de cambio de sucursal (si existe)
+        window.addEventListener('sucursalChanged', async (e) => {
+          sucursalActivaId = e.detail?.id || null;
+          console.log('[Orden] Evento sucursalChanged:', sucursalActivaId);
+          await loadTecnicosSelect();
+        });
+      }
+
+      // Llamar inicialización
+      initSucursalYTecnicos();
       // Variable global para almacenar los impuestos cargados del backend
       let impuestosDisponibles = [];
 
@@ -1446,10 +1479,8 @@
 
       loadImpuestos();
 
-      const tallerSelect = document.getElementById('taller');
-      tallerSelect.addEventListener('change', () => {
-        document.getElementById('id-taller-hidden').value = tallerSelect.value;
-      });
+      // La sucursal ahora se toma del selector global (sucursalActivaId)
+      // No hay campo "taller" en el formulario
 
       const tecnicoSelect = document.getElementById('tecnico-select');
       tecnicoSelect.addEventListener('change', () => {
@@ -1548,11 +1579,13 @@
           const pagos = data.pagos || [];
 
           // Rellenar campos de cabecera - usando verificaciones null-safe
+          // La sucursal de la orden se usa como sucursal activa para edición
           if (orden.id_sucursal) {
-            const tallerEl = document.getElementById('taller');
-            if (tallerEl) tallerEl.value = orden.id_sucursal;
+            sucursalActivaId = orden.id_sucursal;
             const tallerHidden = document.getElementById('id-taller-hidden');
             if (tallerHidden) tallerHidden.value = orden.id_sucursal;
+            // Recargar técnicos con la sucursal de la orden
+            await loadTecnicosSelect();
           }
 
           if (orden.id_mecanico) {
@@ -1723,19 +1756,42 @@
         const select = document.getElementById('tecnico-select');
         if (!select) return;
 
+        // Guardar técnico seleccionado previo
+        const prevValue = select.value;
+
         select.innerHTML = '<option value="">Seleccionar técnico</option>';
+
+        // Verificar que hay sucursal activa
+        if (!sucursalActivaId) {
+          console.warn('[loadTecnicosSelect] No hay sucursal activa, no se cargan técnicos');
+          const option = document.createElement('option');
+          option.textContent = 'Seleccione una sucursal primero';
+          option.disabled = true;
+          select.appendChild(option);
+          return;
+        }
+
         try {
-          const tecnicos = await searchTecnicos('');
+          console.log(`[loadTecnicosSelect] Cargando técnicos para sucursal ${sucursalActivaId}`);
+          const tecnicos = await getTecnicosBySucursal(sucursalActivaId);
+
           tecnicos.forEach(tec => {
             const option = document.createElement('option');
             option.value = tec.id;
             option.textContent = tec.nombre;
             select.appendChild(option);
           });
+
+          // Restaurar selección si el técnico sigue existiendo
+          if (prevValue && tecnicos.find(t => t.id == prevValue)) {
+            select.value = prevValue;
+          }
+
+          console.log(`[loadTecnicosSelect] ${tecnicos.length} técnicos cargados`);
         } catch (error) {
           console.error('Error cargando técnicos:', error);
           const option = document.createElement('option');
-          option.textContent = 'No se pudieron cargar técnicos';
+          option.textContent = 'Error cargando técnicos';
           select.appendChild(option);
         }
       }
@@ -2189,22 +2245,26 @@
       orderForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Asignar manualmente los valores de los selects si no se han seteado por cambio
-        const idTaller = document.getElementById('taller').value;
-        document.getElementById('id-taller-hidden').value = idTaller;
+        // Usar sucursal activa del selector global
+        if (!sucursalActivaId) {
+          showToast('Debes seleccionar una sucursal.', true);
+          return;
+        }
+        document.getElementById('id-taller-hidden').value = sucursalActivaId;
 
         const idTipoOrden = document.getElementById('concepto').value;
         document.getElementById('id-tipo-orden-hidden').value = idTipoOrden;
 
         const idCliente = document.getElementById('id-cliente-hidden').value;
         const idVehiculo = document.getElementById('id-vehiculo-hidden').value;
+        const idTecnico = document.getElementById('id-tecnico-hidden').value;
 
-        if (!idTaller) {
-          showToast('Debes seleccionar un taller.', true);
-          return;
-        }
         if (!idCliente) {
           showToast('Debes seleccionar un cliente.', true);
+          return;
+        }
+        if (!idTecnico) {
+          showToast('Debes seleccionar un técnico.', true);
           return;
         }
         if (orderItems.length === 0) {
@@ -2212,11 +2272,18 @@
           return;
         }
 
+        // Validación de kilometraje obligatorio
         const kmValue = document.getElementById('kilometraje').value;
-        const kmNumber = kmValue !== '' ? Number(kmValue) : 0;
-
-        if (Number.isNaN(kmNumber) || kmNumber < 0) {
-          return showToast('Kilometraje inválido', true);
+        if (!kmValue || kmValue === '') {
+          showToast('Los kilómetros son obligatorios para registrar la orden.', true);
+          document.getElementById('kilometraje').focus();
+          return;
+        }
+        const kmNumber = Number(kmValue);
+        if (Number.isNaN(kmNumber) || kmNumber < 1) {
+          showToast('El kilometraje debe ser un número mayor o igual a 1.', true);
+          document.getElementById('kilometraje').focus();
+          return;
         }
 
         const lineasPayload = orderItems.map(item => ({
@@ -2233,7 +2300,7 @@
 
         // RECOPILACIÓN DE DATOS (LISTO PARA API)
         const payload = {
-          idSucursal: Number(document.getElementById('taller').value),
+          idSucursal: Number(sucursalActivaId),
           idCliente: Number(document.getElementById('id-cliente-hidden').value),
           idVehiculo: Number(document.getElementById('id-vehiculo-hidden').value),
           idMecanico: Number(document.getElementById('id-tecnico-hidden').value),
@@ -2376,26 +2443,21 @@
     // Inicializar selector de sucursal
     (async () => {
       const sucursalId = await initSucursalSelector('sucursal-selector-container', {
-        onchange: (sucursalId) => {
-          // Actualizar el selector de taller en el formulario
-          const tallerSelect = document.getElementById('taller');
-          if (tallerSelect && sucursalId) {
-            tallerSelect.value = sucursalId;
-            tallerSelect.dispatchEvent(new Event('change'));
-          }
+        onchange: async (newSucursalId) => {
+          // Actualizar la variable global de sucursal activa
+          sucursalActivaId = newSucursalId;
+          console.log('[Orden] Sucursal cambiada via selector:', sucursalActivaId);
+          // Recargar técnicos para la nueva sucursal
+          await loadTecnicosSelect();
         }
       });
 
-      // Pre-seleccionar el taller si hay sucursal guardada
+      // Guardar sucursal inicial
       if (sucursalId) {
-        const tallerSelect = document.getElementById('taller');
-        if (tallerSelect) {
-          // Esperar a que se carguen las opciones
-          setTimeout(() => {
-            tallerSelect.value = sucursalId;
-            tallerSelect.dispatchEvent(new Event('change'));
-          }, 500);
-        }
+        sucursalActivaId = sucursalId;
+        console.log('[Orden] Sucursal inicial:', sucursalActivaId);
+        // Cargar técnicos con la sucursal inicial
+        await loadTecnicosSelect();
       }
     })();
   </script>
