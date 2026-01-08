@@ -1,7 +1,7 @@
 import { loadSucursales } from './loadSucursales.js';
 import { searchClientes, createClient } from './services/clientes-service.js';
 import { searchInventario, createProduct } from './services/inventory-service.js';
-import { createVenta } from './services/ventas-service.js';
+import { createVenta, getVentaById, updateVenta } from './services/ventas-service.js';
 import { obtenerMediosPago } from './services/pagos-service.js';
 import '/components/datetime-picker.js';
 
@@ -87,6 +87,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 9. Pasar a Cuenta Corriente
     document.getElementById('btn-pasar-cuenta-corriente')?.addEventListener('click', handlePasarACuentaCorriente);
+
+    // 10. CHECK FOR EDIT MODE
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('mode') === 'edit' && urlParams.get('id')) {
+        isEditMode = true;
+        currentSaleId = urlParams.get('id');
+        console.log('[VentasEdit] Modo edición activado para venta ID:', currentSaleId);
+        // Wait for sucursales and medios de pago to load, then load sale data
+        setTimeout(() => loadSaleForEdit(currentSaleId), 800);
+    }
 });
 
 // --- Carga de Medios de Pago ---
@@ -120,6 +130,9 @@ async function cargarMediosPago() {
 // --- Carga de Cajas Abiertas ---
 async function cargarCajas() {
     try {
+        const cajaElement = document.getElementById('caja');
+        if (!cajaElement) return;
+
         const sessionRaw = localStorage.getItem('versa_session_v1');
         if (!sessionRaw) return;
         const token = JSON.parse(sessionRaw).token;
@@ -552,7 +565,10 @@ async function handleSaleSubmit(e) {
     }
 
     const totalDisplay = parseFloat(document.getElementById('display-total').textContent.replace('€', ''));
-    const cajaValue = document.getElementById('caja').value;
+
+    // Safety check for caja element since it was removed from UI
+    const cajaElement = document.getElementById('caja');
+    const cajaValue = cajaElement ? cajaElement.value : null;
 
     const ventaData = {
         idSucursal: parseInt(idSucursal),
@@ -676,10 +692,18 @@ async function loadSaleForEdit(saleId) {
             const codigo = pago.medio_pago_codigo || pago.codigoMedioPago || 'EFECTIVO';
             // Case-insensitive matching
             for (let i = 0; i < medioPagoSelect.options.length; i++) {
-                if (medioPagoSelect.options[i].value.toUpperCase() === codigo.toUpperCase()) {
+                const opt = medioPagoSelect.options[i];
+                const optCode = opt.dataset.codigo || opt.value;
+                if (optCode && optCode.toUpperCase() === codigo.toUpperCase()) {
                     medioPagoSelect.selectedIndex = i;
                     break;
                 }
+            }
+
+            // Populate Referencia
+            if (pago.referencia) {
+                const refInput = document.getElementById('referencia-pago');
+                if (refInput) refInput.value = pago.referencia;
             }
         }
 
@@ -706,6 +730,41 @@ async function loadSaleForEdit(saleId) {
         console.error('[VentasEdit] Error cargando venta:', error);
         showToast('Error al cargar la venta: ' + error.message, true);
     }
+}
+// --- Helper for CC Modal ---
+function confirmChargeModal(amount) {
+    return new Promise((resolve) => {
+        const modal = document.getElementById('cc-confirm-modal');
+        const msg = document.getElementById('cc-confirm-message');
+        const btnConfirm = document.getElementById('btn-cc-confirm');
+        const btnCancel = document.getElementById('btn-cc-cancel');
+
+        msg.textContent = `¿Cargar ${amount.toFixed(2)}€ a la cuenta corriente del cliente?`;
+
+        // Show
+        modal.classList.remove('hidden');
+        // Small delay for transition
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            modal.querySelector('div').classList.remove('scale-95');
+            modal.querySelector('div').classList.add('scale-100');
+        }, 10);
+
+        const close = (confirmed) => {
+            modal.classList.add('opacity-0');
+            modal.querySelector('div').classList.remove('scale-100');
+            modal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                resolve(confirmed);
+            }, 300);
+
+            // Cleanup separate listeners if needed or just rely on overwriting them next time
+        };
+
+        btnConfirm.onclick = () => close(true);
+        btnCancel.onclick = () => close(false);
+    });
 }
 
 // --- Pasar a Cuenta Corriente ---
@@ -735,8 +794,8 @@ async function handlePasarACuentaCorriente() {
         return;
     }
 
-    const confirmar = confirm(`¿Cargar ${total.toFixed(2)}€ a la cuenta corriente del cliente?\n\nEl saldo quedará registrado como deuda pendiente de cobro.`);
-    if (!confirmar) return;
+    const confirmed = await confirmChargeModal(total);
+    if (!confirmed) return;
 
     const btn = document.getElementById('btn-pasar-cuenta-corriente');
     const originalText = btn.innerHTML;
@@ -775,8 +834,15 @@ async function handlePasarACuentaCorriente() {
         });
 
         if (!ventaResponse.ok) {
-            const error = await ventaResponse.json();
-            throw new Error(error.mensaje || error.error || 'Error al crear venta');
+            const errorText = await ventaResponse.text();
+            let errorMsg = 'Error al crear venta';
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMsg = errorJson.mensaje || errorJson.error || errorMsg;
+            } catch (e) {
+                errorMsg = errorText || errorMsg;
+            }
+            throw new Error(errorMsg);
         }
 
         const venta = await ventaResponse.json();
@@ -797,8 +863,15 @@ async function handlePasarACuentaCorriente() {
         });
 
         if (!ccResponse.ok) {
-            const error = await ccResponse.json();
-            throw new Error(error.mensaje || error.error || 'Error al cargar a cuenta corriente');
+            const errorText = await ccResponse.text();
+            let errorMsg = 'Error al cargar a cuenta corriente';
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMsg = errorJson.mensaje || errorJson.error || errorMsg;
+            } catch (e) {
+                errorMsg = errorText || errorMsg;
+            }
+            throw new Error(errorMsg);
         }
 
         showToast(`Venta registrada y ${total.toFixed(2)}€ cargados a cuenta corriente`);
