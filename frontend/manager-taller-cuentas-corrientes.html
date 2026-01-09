@@ -626,38 +626,43 @@
 
     <!-- Modal Historial Cuenta Corriente -->
     <div id="modalHistorial"
-        class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-[#1e242d] rounded-2xl border border-[#282e39] w-full max-w-3xl max-h-[90vh] overflow-hidden shadow-2xl transform scale-95 opacity-0 transition-all duration-300"
+        class="fixed inset-0 bg-black/90 backdrop-blur-md z-[9999] hidden items-center justify-center p-4">
+        <div class="bg-[#1e242d] rounded-2xl border border-[var(--brand-orange)]/30 w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl transform scale-95 opacity-0 transition-all duration-300"
             id="modalHistorialContent">
             <!-- Header -->
-            <div class="p-6 border-b border-[#282e39] flex justify-between items-start">
-                <div>
-                    <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                        <i class="fas fa-file-invoice-dollar text-[var(--brand-orange)]"></i>
-                        <span id="historialClienteNombre">Cuenta Corriente</span>
-                    </h3>
-                    <div class="flex gap-4 mt-2 text-sm">
-                        <span class="text-[#9da6b9]">Teléfono: <span id="historialClienteTel"
-                                class="text-white">-</span></span>
-                        <span class="text-[#9da6b9]">NIF: <span id="historialClienteNif"
-                                class="text-white">-</span></span>
+            <div class="p-6 border-b border-[#282e39] bg-gradient-to-r from-[#1e242d] to-[#282e39]">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-2xl font-bold text-white flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 bg-[var(--brand-orange)]/20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-file-invoice-dollar text-[var(--brand-orange)]"></i>
+                            </div>
+                            <span id="historialClienteNombre">Cuenta Corriente</span>
+                        </h3>
+                        <div class="flex gap-6 mt-3 text-sm ml-13">
+                            <span class="text-[#9da6b9]"><i class="fas fa-phone mr-2"></i>Tel: <span
+                                    id="historialClienteTel" class="text-white font-medium">-</span></span>
+                            <span class="text-[#9da6b9]"><i class="fas fa-id-card mr-2"></i>NIF: <span
+                                    id="historialClienteNif" class="text-white font-medium">-</span></span>
+                        </div>
                     </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="text-right">
-                        <p class="text-xs text-[#9da6b9] uppercase font-bold">Saldo Actual</p>
-                        <p id="historialSaldo" class="text-2xl font-bold text-red-400">€0.00</p>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]">
+                            <p class="text-xs text-[#9da6b9] uppercase font-bold">Saldo Actual</p>
+                            <p id="historialSaldo" class="text-2xl font-bold text-red-400">€0.00</p>
+                        </div>
+                        <button onclick="cerrarModalHistorial()"
+                            class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-[#282e39] rounded-lg">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
                     </div>
-                    <button onclick="cerrarModalHistorial()"
-                        class="text-gray-400 hover:text-white transition-colors p-2 hover:bg-[#282e39] rounded-lg">
-                        <i class="fas fa-times text-lg"></i>
-                    </button>
                 </div>
             </div>
-            <!-- Body -->
-            <div class="overflow-y-auto max-h-[60vh]">
-                <table class="w-full text-left">
-                    <thead class="bg-[#111318] text-xs uppercase text-[#9da6b9] sticky top-0">
+            <!-- Body - Tabla de movimientos -->
+            <div class="overflow-y-auto max-h-[55vh] bg-[#111318]" id="historialTableContainer">
+                <table class="w-full text-left" id="historialTable">
+                    <thead class="bg-[#1e242d] text-xs uppercase text-[#9da6b9] sticky top-0 z-10">
                         <tr>
                             <th class="p-4 font-semibold">Fecha</th>
                             <th class="p-4 font-semibold">Concepto</th>
@@ -668,21 +673,30 @@
                     </thead>
                     <tbody id="historialMovimientos" class="text-sm divide-y divide-[#282e39]">
                         <tr>
-                            <td colspan="5" class="p-4 text-center text-[#9da6b9]">Cargando...</td>
+                            <td colspan="5" class="p-8 text-center text-[#9da6b9]">
+                                <i class="fas fa-circle-notch fa-spin text-2xl mb-2 text-[var(--brand-orange)]"></i>
+                                <p>Cargando movimientos...</p>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
             <!-- Footer -->
-            <div class="p-4 border-t border-[#282e39] bg-[#111318]/50 flex justify-between items-center">
-                <span id="historialMovCount" class="text-xs text-[#9da6b9]">0 movimientos</span>
-                <div class="flex gap-2">
+            <div class="p-4 border-t border-[#282e39] bg-[#1e242d] flex justify-between items-center">
+                <span id="historialMovCount" class="text-sm text-[#9da6b9]">
+                    <i class="fas fa-list-ul mr-2"></i>0 movimientos
+                </span>
+                <div class="flex gap-3">
+                    <button onclick="imprimirCuentaCliente()"
+                        class="px-4 py-2.5 bg-[#282e39] hover:bg-[#343b47] text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors border border-[#3e4552]">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
                     <button onclick="exportarCuentaCliente()"
-                        class="px-4 py-2 bg-[#282e39] hover:bg-[#343b47] text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors">
-                        <i class="fas fa-download"></i> Exportar
+                        class="px-4 py-2.5 bg-[var(--brand-orange)] hover:bg-[#e05300] text-white text-sm font-bold rounded-lg flex items-center gap-2 transition-colors shadow-lg shadow-orange-900/20">
+                        <i class="fas fa-download"></i> Descargar CSV
                     </button>
                     <button onclick="cerrarModalHistorial()"
-                        class="px-4 py-2 text-gray-400 hover:text-white text-sm font-medium transition-colors">Cerrar</button>
+                        class="px-4 py-2.5 text-gray-400 hover:text-white text-sm font-medium transition-colors">Cerrar</button>
                 </div>
             </div>
         </div>
@@ -1155,6 +1169,7 @@
             // Mostrar modal con loading
             tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i>Cargando historial...</td></tr>';
             modal.classList.remove('hidden');
+            modal.classList.add('flex');
             setTimeout(() => {
                 content.classList.remove('scale-95', 'opacity-0');
                 content.classList.add('scale-100', 'opacity-100');
@@ -1225,15 +1240,146 @@
 
             setTimeout(() => {
                 modal.classList.add('hidden');
+                modal.classList.remove('flex');
             }, 300);
         }
+        // --- Print Account History ---
+        window.imprimirCuentaCliente = function () {
+            const clienteNombre = document.getElementById('historialClienteNombre').textContent;
+            const clienteTel = document.getElementById('historialClienteTel').textContent;
+            const clienteNif = document.getElementById('historialClienteNif').textContent;
+            const saldo = document.getElementById('historialSaldo').textContent;
+            const tableBody = document.getElementById('historialMovimientos');
 
+            // Create print content
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Extracto - ${clienteNombre}</title>
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+                        body { padding: 30px; color: #333; }
+                        .header { border-bottom: 2px solid #ff5f00; padding-bottom: 20px; margin-bottom: 20px; }
+                        .logo { font-size: 24px; font-weight: bold; color: #ff5f00; }
+                        .client-info { margin: 20px 0; }
+                        .client-name { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+                        .client-details { display: flex; gap: 30px; color: #666; font-size: 14px; }
+                        .saldo-box { background: #f5f5f5; padding: 15px 20px; border-radius: 8px; text-align: right; margin: 20px 0; }
+                        .saldo-label { font-size: 12px; color: #666; text-transform: uppercase; }
+                        .saldo-value { font-size: 28px; font-weight: bold; color: ${parseFloat(saldo.replace(/[^0-9,-]/g, '').replace(',', '.')) > 0 ? '#dc2626' : '#16a34a'}; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+                        th { background: #ff5f00; color: white; padding: 12px 10px; text-align: left; font-weight: 600; }
+                        th.right { text-align: right; }
+                        td { padding: 10px; border-bottom: 1px solid #eee; }
+                        td.right { text-align: right; }
+                        tr:nth-child(even) { background: #fafafa; }
+                        .debe { color: #dc2626; }
+                        .haber { color: #16a34a; }
+                        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999; text-align: center; }
+                        @media print { body { padding: 15px; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div class="logo">Goversa - Taller</div>
+                        <div style="font-size: 12px; color: #666;">Extracto de Cuenta Corriente</div>
+                    </div>
+                    <div class="client-info">
+                        <div class="client-name">${clienteNombre}</div>
+                        <div class="client-details">
+                            <span>Tel: ${clienteTel}</span>
+                            <span>NIF: ${clienteNif}</span>
+                            <span>Fecha: ${new Date().toLocaleDateString('es-ES')}</span>
+                        </div>
+                    </div>
+                    <div class="saldo-box">
+                        <div class="saldo-label">Saldo Actual</div>
+                        <div class="saldo-value">${saldo}</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Concepto</th>
+                                <th class="right">Debe</th>
+                                <th class="right">Haber</th>
+                                <th class="right">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${Array.from(tableBody.querySelectorAll('tr')).map(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 5) return '';
+                return `<tr>
+                                    <td>${cells[0].textContent}</td>
+                                    <td>${cells[1].textContent}</td>
+                                    <td class="right debe">${cells[2].textContent}</td>
+                                    <td class="right haber">${cells[3].textContent}</td>
+                                    <td class="right">${cells[4].textContent}</td>
+                                </tr>`;
+            }).join('')}
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        Generado el ${new Date().toLocaleString('es-ES')} · Goversa Gestión de Talleres
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Open print window
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        }
+
+        // --- Export to CSV ---
         window.exportarCuentaCliente = function () {
-            showToast('Exportación en desarrollo', 'success');
+            const clienteNombre = document.getElementById('historialClienteNombre').textContent;
+            const tableBody = document.getElementById('historialMovimientos');
+            const rows = tableBody.querySelectorAll('tr');
+
+            if (rows.length === 0) {
+                showToast('No hay datos para exportar', 'error');
+                return;
+            }
+
+            // Build CSV content
+            let csv = 'Fecha,Concepto,Debe,Haber,Saldo\n';
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 5) {
+                    const fecha = cells[0].textContent.trim();
+                    const concepto = cells[1].textContent.trim().replace(/,/g, ';');
+                    const debe = cells[2].textContent.trim().replace(/[€\s]/g, '').replace(',', '.');
+                    const haber = cells[3].textContent.trim().replace(/[€\s]/g, '').replace(',', '.');
+                    const saldo = cells[4].textContent.trim().replace(/[€\s]/g, '').replace(',', '.');
+                    csv += `${fecha},"${concepto}",${debe || '0'},${haber || '0'},${saldo}\n`;
+                }
+            });
+
+            // Download file
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `cuenta_${clienteNombre.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showToast('CSV descargado correctamente', 'success');
         }
 
         window.exportarExtracto = function () {
-            showToast('Exportación en desarrollo', 'success');
+            showToast('Selecciona un cliente para ver su extracto', 'success');
         }
 
         // --- Helpers ---

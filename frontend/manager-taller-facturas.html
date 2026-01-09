@@ -178,6 +178,11 @@
             <main class="flex-1 overflow-y-auto p-6 bg-[#0b0d11]">
                 <div class="max-w-7xl mx-auto space-y-6">
 
+                    <!-- Selector de Sucursal Centrado -->
+                    <div class="flex justify-center mb-6">
+                        <div id="sucursal-selector-container"></div>
+                    </div>
+
                     <!-- Header Actions -->
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
@@ -293,9 +298,11 @@
 
     <script type="module">
         import { fetchWithAuth, getCurrentUser, getSession, clearSession, redirectToLogin } from '/auth.js';
+        import { initSucursalSelector } from '/services/sucursal-selector.js';
 
         const API_BASE_URL = '/api';
         let userData = null;
+        let currentSucursalId = null;
 
         // UI Helpers
         window.toggleSubmenu = function (id) {
@@ -355,6 +362,11 @@
             try {
                 const params = new URLSearchParams();
                 params.append('tenantId', userData.id_tenant);
+
+                // Agregar filtro de sucursal si hay una seleccionada
+                if (currentSucursalId) {
+                    params.append('id_sucursal', currentSucursalId);
+                }
 
                 const texto = document.getElementById('filtroTexto').value.trim();
                 if (texto) params.append('texto', texto);
@@ -432,7 +444,11 @@
 
         async function cargarEstadisticas() {
             try {
-                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/stats/general?tenantId=${userData.id_tenant}`);
+                let url = `${API_BASE_URL}/facturas/stats/general?tenantId=${userData.id_tenant}`;
+                if (currentSucursalId) {
+                    url += `&idSucursal=${currentSucursalId}`;
+                }
+                const response = await fetchWithAuth(url);
                 if (!response.ok) return;
                 const data = await response.json();
                 if (data.success) {
@@ -470,8 +486,17 @@
         }
 
         // Init
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             if (cargarDatosUsuario()) {
+                // Inicializar selector de sucursales
+                currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
+                    onChange: (sucursalId) => {
+                        currentSucursalId = sucursalId;
+                        buscarFacturas();
+                        cargarEstadisticas();
+                    }
+                });
+
                 inicializarFiltrosFecha();
                 configurarEventListenersFiltros();
                 buscarFacturas();

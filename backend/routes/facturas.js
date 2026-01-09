@@ -133,29 +133,6 @@ router.get('/', async (req, res) => {
 });
 
 /**
- * GET /api/facturas/:id
- * Obtiene una factura completa por ID
- */
-router.get('/:id', async (req, res) => {
-    try {
-        const idFactura = parseInt(req.params.id);
-        const factura = await facturacionService.obtenerFacturaCompleta(idFactura);
-
-        res.json({
-            success: true,
-            data: factura
-        });
-
-    } catch (error) {
-        console.error('Error al obtener factura:', error);
-        res.status(404).json({
-            success: false,
-            error: error.message
-        });
-    }
-});
-
-/**
  * GET /api/facturas/ordenes/pendientes
  * Lista órdenes que requieren factura y aún no la tienen
  */
@@ -728,6 +705,43 @@ router.put('/config-tenant', async (req, res) => {
     } catch (error) {
         console.error('Error al actualizar config de facturación:', error);
         res.status(500).json({
+            success: false,
+            error: error.message
+        });
+    }
+});
+
+// =====================================================
+// RUTA GENÉRICA /:id - DEBE IR AL FINAL
+// para no capturar rutas específicas como /series, /config-tenant
+// =====================================================
+
+/**
+ * GET /api/facturas/:id
+ * Obtiene una factura completa por ID
+ */
+router.get('/:id', async (req, res) => {
+    try {
+        const idFactura = parseInt(req.params.id);
+
+        // Validar que es un número
+        if (isNaN(idFactura)) {
+            return res.status(400).json({
+                success: false,
+                error: 'ID de factura inválido'
+            });
+        }
+
+        const factura = await facturacionService.obtenerFacturaCompleta(idFactura);
+
+        res.json({
+            success: true,
+            data: factura
+        });
+
+    } catch (error) {
+        console.error('Error al obtener factura:', error);
+        res.status(404).json({
             success: false,
             error: error.message
         });
