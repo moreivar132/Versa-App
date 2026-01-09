@@ -90,14 +90,16 @@ class OrdenPDFService {
 
         const orden = ordenResult.rows[0];
 
-        // Obtener líneas de la orden
+        // Obtener líneas de la orden con porcentaje de impuesto
         const lineasResult = await pool.query(`
             SELECT 
                 ol.*,
                 p.nombre as producto_nombre,
-                p.codigo_barras
+                p.codigo_barras,
+                i.porcentaje as impuesto_porcentaje
             FROM ordenlinea ol
             LEFT JOIN producto p ON ol.id_producto = p.id
+            LEFT JOIN impuesto i ON ol.id_impuesto = i.id
             WHERE ol.id_orden = $1
             ORDER BY ol.id
         `, [ordenId]);
@@ -168,9 +170,33 @@ class OrdenPDFService {
             const descripcion = linea.descripcion || linea.producto_nombre || 'Servicio';
             const cantidad = parseFloat(linea.cantidad) || 1;
             const precioUnit = parseFloat(linea.precio) || 0;
-            const iva = parseFloat(linea.iva) || 21;
-            const baseLinea = cantidad * precioUnit;
-            const ivaLinea = baseLinea * (iva / 100);
+
+            // IMPORTANTE: linea.iva contiene el MONTO del IVA, no el porcentaje
+            // El porcentaje viene de impuesto_porcentaje (del JOIN con tabla impuesto)
+            let ivaPorcentaje = 0;
+            const montoIvaGuardado = parseFloat(linea.iva) || 0;
+            const subtotalGuardado = parseFloat(linea.subtotal) || (cantidad * precioUnit);
+
+            // 1. Usar el porcentaje del JOIN si está disponible
+            if (linea.impuesto_porcentaje !== null && linea.impuesto_porcentaje !== undefined) {
+                ivaPorcentaje = parseFloat(linea.impuesto_porcentaje);
+            }
+            // 2. Si no, calcular el porcentaje desde el monto guardado
+            else if (subtotalGuardado > 0 && montoIvaGuardado > 0) {
+                const porcentajeCalculado = (montoIvaGuardado / subtotalGuardado) * 100;
+                // Redondear a valores comunes de IVA
+                const valoresIvaComunes = [0, 4, 10, 21];
+                const ivaRedondeado = valoresIvaComunes.find(v => Math.abs(v - porcentajeCalculado) < 0.5);
+                ivaPorcentaje = ivaRedondeado !== undefined ? ivaRedondeado : Math.round(porcentajeCalculado);
+            }
+            // 3. Si no hay monto de IVA guardado, asumir 0% (exento de IVA)
+            else if (montoIvaGuardado === 0) {
+                ivaPorcentaje = 0; // Sin IVA registrado = exento
+            }
+
+            // Usar los valores guardados en la BD (ya calculados correctamente al crear la orden)
+            const baseLinea = subtotalGuardado;
+            const ivaLinea = montoIvaGuardado;
             const totalLinea = baseLinea + ivaLinea;
 
             subtotal += baseLinea;
@@ -183,7 +209,7 @@ class OrdenPDFService {
                     <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${cantidad}</td>
                     ${mostrarPrecios ? `
                         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">${precioUnit.toFixed(2)} €</td>
-                        ${mostrarIVA ? `<td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${iva}%</td>` : ''}
+                        ${mostrarIVA ? `<td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${ivaPorcentaje}%</td>` : ''}
                         <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">${totalLinea.toFixed(2)} €</td>
                     ` : ''}
                 </tr>

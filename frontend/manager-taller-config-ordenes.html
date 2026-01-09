@@ -21,8 +21,6 @@
     <!-- Manager CSS Base -->
     <link rel="stylesheet" href="manager.css">
     <link rel="stylesheet" href="styles/sucursal-selector.css">
-
-
     <style>
         /* --- SCROLLBAR --- */
         ::-webkit-scrollbar {
@@ -380,8 +378,12 @@
                     <i class="fas fa-bars"></i>
                 </button>
             </header>
-
             <main class="flex-1 overflow-y-auto p-6">
+                <!-- Selector de Sucursal Estandarizado -->
+                <div class="sucursal-selector-wrapper">
+                  <div id="sucursal-selector-container"></div>
+                </div>
+
                 <div class="max-w-7xl mx-auto">
                     <!-- Header -->
                     <div class="mb-8">
@@ -604,6 +606,7 @@
 
     <script type="module">
         import { fetchWithAuth, getSession, clearSession, redirectToLogin, getToken } from '/auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
         const API_BASE_URL = '/api';
         let userData = null;
@@ -1050,6 +1053,18 @@
 
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
+  <script type="module">
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+    
+    (async () => {
+      await initSucursalSelector('sucursal-selector-container', {
+        onchange: async (nuevaSucursalId) => {
+          console.log('Sucursal cambiada:', nuevaSucursalId);
+          location.reload();
+        }
+      });
+    })();
+  </script>
 </body>
 
 </html>

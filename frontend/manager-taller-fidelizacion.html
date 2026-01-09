@@ -15,6 +15,7 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <style>
         :root {
             --brand-orange: #ff5e00;
@@ -603,6 +604,11 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
+                <!-- Selector de Sucursal Estandarizado -->
+                <div class="sucursal-selector-wrapper">
+                    <div id="sucursal-selector-container"></div>
+                </div>
+
                 <!-- Page Header -->
                 <div class="flex flex-wrap items-center justify-between mb-8 gap-4 border-b border-[#282e39] pb-6">
                     <div>
@@ -1423,6 +1429,20 @@
     </script>
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
+
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        // Inicializar selector de sucursal estándar
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: async (nuevaSucursalId) => {
+                    console.log('Sucursal cambiada:', nuevaSucursalId);
+                    location.reload();
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>

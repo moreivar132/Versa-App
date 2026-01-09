@@ -16,6 +16,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
 
     <style>
         ::-webkit-scrollbar {
@@ -663,6 +664,11 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6">
+                <!-- Selector de Sucursal Estandarizado -->
+                <div class="sucursal-selector-wrapper">
+                    <div id="sucursal-selector-container"></div>
+                </div>
+
                 <div class="max-w-6xl mx-auto">
                     <!-- Header -->
                     <div class="mb-8">
@@ -1863,6 +1869,19 @@
     </script>
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
+
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: async (nuevaSucursalId) => {
+                    console.log('Sucursal cambiada:', nuevaSucursalId);
+                    location.reload();
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>

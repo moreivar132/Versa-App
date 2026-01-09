@@ -40,8 +40,6 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
-
-
         /* Scrollbar personalizada */
         ::-webkit-scrollbar {
             width: 8px;
@@ -178,6 +176,11 @@
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
+                <!-- Selector de Sucursal Estandarizado -->
+                <div class="sucursal-selector-wrapper">
+                  <div id="sucursal-selector-container"></div>
+                </div>
+
             <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                 <header class="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-[#282e39]">
                     <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
@@ -189,12 +192,6 @@
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight text-white">Gestión de Personal</h1>
                         <p class="text-[#9da6b9] text-sm mt-1">Control del flujo de liquidaciones y comisiones</p>
-                    </div>
-                    <!-- Sucursal Selector Container - centrado -->
-                    <div id="sucursal-container"
-                        class="flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]">
-                        <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
-                        <span class="text-white font-medium text-sm">Cargando...</span>
                     </div>
                     <!-- Spacer para mantener el selector centrado (ancho igual al título aprox) -->
                     <div class="w-[200px] hidden md:block"></div>
@@ -566,6 +563,7 @@
 
     <script type="module">
         import { requireAuth, clearSession, redirectToLogin, getToken } from '/auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
         import '/components/datetime-picker.js';
 
         const API_BASE_URL = import.meta.env.VITE_API_URL || '';
@@ -581,69 +579,19 @@
         }
 
         // ==========================================
-        // SUCURSAL MANAGEMENT
+        // SUCURSAL - usando componente estándar
         // ==========================================
-        let currentSucursalId = null;
-        let puedeSeleccionarSucursal = false;
 
-        // Constante para la clave de localStorage
-        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
-
-        async function loadSucursales() {
-            try {
-                const data = await apiGet('/api/caja/sucursales');
-                if (!data.ok) throw new Error(data.error);
-                puedeSeleccionarSucursal = data.puede_seleccionar;
-
-                // Verificar si hay una sucursal guardada en localStorage
-                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
-                // Usar la guardada si existe y es válida, sino usar la actual del backend
-                currentSucursalId = savedSucursal && data.sucursales.some(s => s.id == savedSucursal)
-                    ? parseInt(savedSucursal)
-                    : data.sucursal_actual;
-
-                const sucursalContainer = document.getElementById('sucursal-container');
-                if (!sucursalContainer) return;
-
-                if (data.puede_seleccionar && data.sucursales.length > 1) {
-                    // Usuario puede seleccionar entre múltiples sucursales - mostrar select
-                    let options = data.sucursales.map(function (s) {
-                        const label = s.tenant_nombre ? s.tenant_nombre + ' - ' + s.nombre : s.nombre;
-                        return '<option value="' + s.id + '"' + (s.id == currentSucursalId ? ' selected' : '') + '>' + label + '</option>';
-                    }).join('');
-                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><select id="sucursal-select" class="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer">' + options + '</select>';
-
-                    // Event listener para cambio de sucursal
-                    setTimeout(function () {
-                        const sel = document.getElementById('sucursal-select');
-                        if (sel) {
-                            sel.addEventListener('change', function (e) {
-                                currentSucursalId = parseInt(e.target.value);
-                                // Guardar selección en localStorage para persistencia
-                                localStorage.setItem(SUCURSAL_STORAGE_KEY, currentSucursalId);
-                                // Recargar datos cuando cambia la sucursal
-                                updateDashboard();
-                            });
-                        }
-                    }, 0);
-                } else {
-                    // Solo una sucursal o usuario no puede seleccionar - mostrar label
-                    const sucursal = data.sucursales.find(function (s) { return s.id == currentSucursalId; }) || data.sucursales[0];
-                    const label = sucursal ? (sucursal.tenant_nombre ? sucursal.tenant_nombre + ' - ' + sucursal.nombre : sucursal.nombre) : 'Sin sucursal';
-                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><span class="text-white font-medium text-sm">' + label + '</span>';
-                    // Si solo hay una sucursal, guardarla también
-                    if (sucursal) {
-                        localStorage.setItem(SUCURSAL_STORAGE_KEY, sucursal.id);
-                    }
+        // Inicializar selector de sucursal estándar
+        (async () => {
+                onchange: async (nuevaSucursalId) => {
+                    // Recargar datos cuando cambia la sucursal
+                    updateDashboard();
                 }
-            } catch (e) {
-                console.error('Error loading sucursales:', e);
-                const sucursalContainer = document.getElementById('sucursal-container');
-                if (sucursalContainer) {
-                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><span class="text-white font-medium text-sm">Error al cargar</span>';
-                }
-            }
-        }
+            });
+            // Cargar datos iniciales
+            updateDashboard();
+        })();
 
         // ==========================================
         // DATA LOADING - Real API Integration
@@ -689,6 +637,7 @@
         async function loadWorkerOrders(workerId) {
             try {
                 // Build URL with filters
+                const currentSucursalId = getCurrentSucursalId();
                 let url = API_BASE_URL + '/api/ordenes?idMecanico=' + workerId;
                 if (currentSucursalId) {
                     url += '&idSucursal=' + currentSucursalId;
@@ -727,8 +676,9 @@
                 if (endDate) {
                     url += '&fechaHasta=' + endDate + 'T23:59:59';
                 }
-                if (currentSucursalId) {
-                    url += '&idSucursal=' + currentSucursalId;
+                const sucursalIdMov = getCurrentSucursalId();
+                if (sucursalIdMov) {
+                    url += '&idSucursal=' + sucursalIdMov;
                 }
 
                 const response = await fetch(url, {
@@ -766,7 +716,7 @@
                         origen_tipo: 'MANUAL',
                         descripcion: descripcion,
                         id_medio_pago: parseInt(idMedioPago),
-                        id_sucursal: currentSucursalId
+                        id_sucursal: getCurrentSucursalId()
                     })
                 });
 
@@ -865,9 +815,6 @@
                 endDateInput.value = formatDateForDisplay(lastDay.toISOString().split('T')[0]);
                 startDate = convertToISO(startDateInput.value);
                 endDate = convertToISO(endDateInput.value);
-
-                // Load sucursales (dynamic selector)
-                await loadSucursales();
 
                 // Load workers from API
                 await loadWorkers();
@@ -1149,8 +1096,6 @@
                 }).join('');
             }
         }
-
-
         // ==========================================
         // MODAL PAGO - STATE & FUNCTIONS
         // ==========================================
@@ -1387,13 +1332,9 @@
                 if (e.target === modalPago) closeModalPago();
             });
         }
-
-
         // ==========================================
         // HELPERS
         // ==========================================
-
-
         function convertToISO(displayDate) {
             if (!displayDate) return '';
             if (displayDate.includes('-')) return displayDate; // Already ISO

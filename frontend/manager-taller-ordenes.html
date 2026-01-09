@@ -1559,8 +1559,19 @@
         const submitBtn = document.querySelector('#order-form button[type="submit"]');
         if (submitBtn) submitBtn.textContent = 'Actualizar Orden';
 
-        // Cargar datos de la orden
-        cargarOrdenParaEdicion(ordenIdEdicion);
+        // Esperar a que los impuestos estén cargados antes de cargar la orden
+        // para que impuestosDisponibles esté poblado y podamos resolver idImpuesto
+        (async () => {
+          // Pequeña espera para asegurar que loadImpuestos() haya terminado
+          // ya que se llamó de forma asíncrona sin await
+          let intentos = 0;
+          while (impuestosDisponibles.length === 0 && intentos < 20) {
+            await new Promise(r => setTimeout(r, 100));
+            intentos++;
+          }
+          // Cargar datos de la orden
+          await cargarOrdenParaEdicion(ordenIdEdicion);
+        })();
       }
 
       // Función para cargar orden existente
@@ -1665,17 +1676,48 @@
 
           // Cargar líneas de la orden
           lineas.forEach(linea => {
+            // Calcular porcentaje de IVA:
+            // 1. Primero intentar usar impuesto_porcentaje del JOIN
+            // 2. Si no existe, calcular desde el monto de IVA guardado y el subtotal
+            let ivaPorcentaje = 0;
+            let idImpuestoResuelto = linea.id_impuesto || null;
+
+            if (linea.impuesto_porcentaje !== null && linea.impuesto_porcentaje !== undefined) {
+              ivaPorcentaje = parseFloat(linea.impuesto_porcentaje);
+            } else if (linea.subtotal && parseFloat(linea.subtotal) > 0 && linea.iva) {
+              // Calcular porcentaje: (montoIva / subtotal) * 100
+              const montoIva = parseFloat(linea.iva) || 0;
+              const subtotal = parseFloat(linea.subtotal);
+              ivaPorcentaje = (montoIva / subtotal) * 100;
+              // Redondear a valores comunes de IVA (0, 4, 10, 21)
+              const valoresIvaComunes = [0, 4, 10, 21];
+              const ivaRedondeado = valoresIvaComunes.find(v => Math.abs(v - ivaPorcentaje) < 0.5);
+              if (ivaRedondeado !== undefined) {
+                ivaPorcentaje = ivaRedondeado;
+              }
+            }
+
+            // Si no tenemos id_impuesto, buscar el que corresponde al porcentaje calculado
+            if (!idImpuestoResuelto && ivaPorcentaje > 0 && impuestosDisponibles.length > 0) {
+              const impuestoEncontrado = impuestosDisponibles.find(imp =>
+                Math.abs(parseFloat(imp.porcentaje) - ivaPorcentaje) < 0.01
+              );
+              if (impuestoEncontrado && impuestoEncontrado.id) {
+                idImpuestoResuelto = impuestoEncontrado.id;
+              }
+            }
+
             orderItems.push({
               id: linea.id, // ID de la línea para actualizaciones
               idProducto: linea.id_producto ? parseInt(linea.id_producto) : null,
-              idImpuesto: linea.id_impuesto || null,
+              idImpuesto: idImpuestoResuelto,
               descripcion: linea.descripcion || linea.producto_nombre || 'Item',
               precio: parseFloat(linea.precio) || 0,
               cantidad: parseInt(linea.cantidad) || 1,
               tipoItem: linea.tipo_item || 'PRODUCTO',
               tipoItemLabel: linea.tipo_item === 'SERVICIO' ? 'Servicio' : 'Repuesto',
               descuento: parseFloat(linea.descuento) || 0,
-              iva: parseFloat(linea.impuesto_porcentaje) || 0
+              iva: ivaPorcentaje
             });
           });
 
@@ -2062,7 +2104,9 @@
         const id = document.getElementById('new-item-id-hidden').value;
         const ivaSelect = document.getElementById('new-item-iva');
         const ivaPercentage = parseFloat(ivaSelect.value) || 0;
-        const ivaId = null; // Ya no usamos id de impuesto, solo porcentaje
+        // Obtener el ID del impuesto del data-id del option seleccionado
+        const selectedOption = ivaSelect.options[ivaSelect.selectedIndex];
+        const ivaId = selectedOption && selectedOption.dataset.id ? parseInt(selectedOption.dataset.id) : null;
 
         if (!name || price < 0) {
           showToast("Selecciona un item y precio válido.", true);
@@ -2120,7 +2164,7 @@
             ivaOptionsHtml = impuestosDisponibles.map(imp => {
               const impPct = parseFloat(imp.porcentaje);
               const isSelected = Math.abs(itemIva - impPct) < 0.01; // Comparación con tolerancia
-              return `<option value="${impPct}" ${isSelected ? 'selected' : ''}>${impPct}%</option>`;
+              return `<option value="${impPct}" data-id="${imp.id || ''}" ${isSelected ? 'selected' : ''}>${impPct}%</option>`;
             }).join('');
           } else {
             // Fallback si no hay impuestos cargados
@@ -2164,8 +2208,12 @@
         if (e.target.classList.contains('edit-iva-select')) {
           const index = parseInt(e.target.dataset.index);
           const newIva = parseFloat(e.target.value) || 0;
+          // Obtener el ID del impuesto del data-id del option seleccionado
+          const selectedOption = e.target.options[e.target.selectedIndex];
+          const newIdImpuesto = selectedOption && selectedOption.dataset.id ? parseInt(selectedOption.dataset.id) : null;
           if (orderItems[index]) {
             orderItems[index].iva = newIva;
+            orderItems[index].idImpuesto = newIdImpuesto;
             calculateNetTotals();
           }
         }
