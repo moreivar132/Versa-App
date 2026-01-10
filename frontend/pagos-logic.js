@@ -17,12 +17,23 @@ function loadMediosPago() {
 }
 window.loadMediosPago = loadMediosPago;
 
+// Función auxiliar para parsear el total de la orden correctamente
+function parseTotalOrden() {
+    let totalText = document.getElementById('summary-total')?.textContent || '0';
+    // Limpiar formato: quitar €, espacios, y convertir coma a punto
+    totalText = totalText.replace('€', '').replace(/\s/g, '').replace(',', '.').trim();
+    return parseFloat(totalText) || 0;
+}
+
 function updatePaymentSummary(totalOrden = null) {
     if (totalOrden === null) {
-        totalOrden = parseFloat(document.getElementById('summary-total')?.textContent) || 0;
+        totalOrden = parseTotalOrden();
     }
-    const totalPagado = window.orderPayments.reduce((sum, p) => sum + p.importe, 0);
+
+    const totalPagado = window.orderPayments.reduce((sum, p) => sum + (parseFloat(p.importe) || 0), 0);
     const saldoPendiente = Math.max(0, totalOrden - totalPagado);
+
+    console.log('[Pagos] Total Orden:', totalOrden, 'Total Pagado:', totalPagado, 'Saldo Pendiente:', saldoPendiente);
 
     const totalPagadoEl = document.getElementById('resumen-total-pagado');
     const saldoPendienteEl = document.getElementById('resumen-saldo-pendiente');
@@ -35,7 +46,7 @@ function updatePaymentSummary(totalOrden = null) {
         badge.style.display = window.orderPayments.length > 0 ? 'inline' : 'none';
     }
 
-    // Siempre actualizar el campo de importe al saldo pendiente
+    // Siempre actualizar el importe sugerido al saldo pendiente
     const importeInput = document.getElementById('nuevo-pago-importe');
     if (importeInput) {
         importeInput.value = saldoPendiente.toFixed(2);
@@ -53,15 +64,24 @@ function renderPayments() {
         if (emptyMsg) emptyMsg.style.display = 'block';
     } else {
         if (emptyMsg) emptyMsg.style.display = 'none';
-        window.orderPayments.forEach((pago, index) => {
-            // Manejar diferentes nombres de campo del método de pago (frontend vs backend)
-            const nombreMetodo = pago.metodoNombre || pago.nombreMedioPago || pago.medio_pago_nombre || pago.nombre_medio_pago || pago.nombre || 'Sin método';
-            const importePago = parseFloat(pago.importe || pago.monto || 0);
 
+        // Mapeo de códigos a nombres en español
+        const codigoANombre = {
+            'CASH': 'Efectivo',
+            'CARD': 'Tarjeta',
+            'TRANSFER': 'Transferencia'
+        };
+
+        window.orderPayments.forEach((pago, index) => {
+            // Asegurar que metodoNombre tenga un valor en español
+            let nombreMetodo = pago.metodoNombre || pago.nombreMedioPago;
+            if (!nombreMetodo || nombreMetodo === 'Pago') {
+                nombreMetodo = codigoANombre[pago.codigoMedioPago] || pago.codigoMedioPago || 'Pago';
+            }
             const tr = document.createElement('tr');
             tr.innerHTML = `
         <td style="color: var(--text-secondary);">${nombreMetodo}</td>
-        <td style="text-align: right; font-weight: 600;">${importePago.toFixed(2)}€</td>
+        <td style="text-align: right; font-weight: 600;">${parseFloat(pago.importe).toFixed(2)}€</td>
         <td style="text-align: right;">
           <button type="button" class="remove-pago-btn" data-index="${index}" style="background: none; border: none; cursor: pointer; font-size: 16px; color: #ef4444;">&times;</button>
         </td>
@@ -83,11 +103,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const importeInput = document.getElementById('nuevo-pago-importe');
             const referenciaInput = document.getElementById('nuevo-pago-referencia');
 
-            const importe = parseFloat(importeInput?.value) || 0;
+            // Parsear importe correctamente (manejar comas)
+            let importeStr = importeInput?.value || '0';
+            importeStr = importeStr.replace(',', '.');
+            const importe = parseFloat(importeStr) || 0;
+
             const metodoId = metodoSelect?.value;
-            const metodoNombre = metodoSelect?.options[metodoSelect.selectedIndex]?.text || '';
-            const metodoCodigo = metodoSelect?.options[metodoSelect.selectedIndex]?.dataset.codigo || '';
+
+            // Obtener nombre del método de forma segura
+            let metodoNombre = 'Pago';
+            let metodoCodigo = '';
+            if (metodoSelect && metodoSelect.selectedIndex >= 0 && metodoSelect.options[metodoSelect.selectedIndex]) {
+                metodoNombre = metodoSelect.options[metodoSelect.selectedIndex].text || 'Pago';
+                metodoCodigo = metodoSelect.options[metodoSelect.selectedIndex].dataset?.codigo || '';
+            }
+
             const referencia = referenciaInput?.value || '';
+
+            console.log('[Pagos] Agregando pago:', { metodoId, metodoNombre, importe });
 
             if (importe <= 0) {
                 showToast('Ingresa un importe válido', true);
@@ -98,8 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const totalOrden = parseFloat(document.getElementById('summary-total')?.textContent) || 0;
-            const totalPagado = window.orderPayments.reduce((sum, p) => sum + p.importe, 0);
+            const totalOrden = parseTotalOrden();
+            const totalPagado = window.orderPayments.reduce((sum, p) => sum + (parseFloat(p.importe) || 0), 0);
             const saldoPendiente = totalOrden - totalPagado;
 
             if (importe > saldoPendiente + 0.01) {
@@ -110,17 +143,19 @@ document.addEventListener('DOMContentLoaded', () => {
             window.orderPayments.push({
                 idMedioPago: parseInt(metodoId),
                 codigoMedioPago: metodoCodigo,
-                metodoNombre,
-                importe,
+                metodoNombre: metodoNombre,
+                importe: importe,
                 referencia: referencia || null,
                 idCaja: 1
             });
+
+            console.log('[Pagos] Pagos actuales:', window.orderPayments);
 
             if (importeInput) importeInput.value = '';
             if (referenciaInput) referenciaInput.value = '';
 
             renderPayments();
-            updatePaymentSummary();
+            updatePaymentSummary(totalOrden);
             showToast(`Pago de ${importe.toFixed(2)}€ agregado`);
         });
     }
@@ -129,8 +164,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const pagosTbody = document.getElementById('pagos-tbody');
     if (pagosTbody) {
         pagosTbody.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-pago-btn')) {
-                const index = parseInt(e.target.dataset.index);
+            // Buscar el botón de eliminar (puede ser el target o un ancestro)
+            const btn = e.target.closest('.remove-pago-btn');
+            if (btn) {
+                const index = parseInt(btn.dataset.index);
+                console.log('[Pagos] Click en eliminar, index:', index);
+
+                const pagoEliminado = window.orderPayments[index];
+                console.log('[Pagos] Pago a eliminar:', pagoEliminado);
+
+                // Si el pago tiene id (existe en el backend), guardarlo para eliminarlo
+                if (pagoEliminado && pagoEliminado.id) {
+                    window.pagosEliminados = window.pagosEliminados || [];
+                    window.pagosEliminados.push(pagoEliminado.id);
+                    console.log('[Pagos] Pago marcado para eliminar del backend:', pagoEliminado.id);
+                    console.log('[Pagos] Lista de pagos a eliminar:', window.pagosEliminados);
+                }
+
                 window.orderPayments.splice(index, 1);
                 renderPayments();
                 updatePaymentSummary();

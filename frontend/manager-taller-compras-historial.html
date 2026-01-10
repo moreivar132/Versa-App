@@ -778,13 +778,14 @@
                         <table class="items-table">
                             <thead>
                                 <tr>
-                                    <th>Nº Ref</th>
-                                    <th>Proveedor</th>
-                                    <th>Fecha</th>
-                                    <th>Tipo</th>
-                                    <th>Estado</th>
-                                    <th class="text-right">Total</th>
-                                    <th class="text-center">Acciones</th>
+                                    <th>Nº REF</th>
+                                    <th>PROVEEDOR</th>
+                                    <th>SUCURSAL</th>
+                                    <th>FECHA</th>
+                                    <th>TIPO</th>
+                                    <th>ESTADO</th>
+                                    <th>TOTAL</th>
+                                    <th>ACCIONES</th>
                                 </tr>
                             </thead>
                             <tbody id="history-table-body">
@@ -894,15 +895,16 @@
                 }
             });
 
-            // Set default dates
+            // Set default dates (Amplio rango para capturar todo, incluyendo fechas futuras como Julio 2026)
             const today = new Date();
-            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 6, 1); // 6 meses atrás
+            const nextYear = new Date(today.getFullYear() + 1, today.getMonth(), 1); // 1 año en el futuro
 
             // Format dates as YYYY-MM-DD for input values
             const formatDate = (d) => d.toISOString().split('T')[0];
 
-            document.getElementById('filter-date-start').value = formatDate(firstDay);
-            document.getElementById('filter-date-end').value = formatDate(today);
+            document.getElementById('filter-date-start').value = formatDate(threeMonthsAgo);
+            document.getElementById('filter-date-end').value = formatDate(nextYear);
 
             loadPurchases();
 
@@ -927,57 +929,87 @@
 
         async function loadPurchases() {
             const tableBody = document.getElementById('history-table-body');
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-[#bca39a]">Cargando compras...</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-[#bca39a]">Cargando compras...</td></tr>';
 
             try {
-                // Fetch more items to allow for better client-side filtering
-                const response = await fetchWithAuth('/api/compras?limit=200');
-                if (!response.ok) throw new Error('Error al cargar compras');
+                // Fetch purchases - el backend filtra por tenant automáticamente
+                const response = await fetchWithAuth('/api/compras?limit=500');
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.error || 'Error al cargar compras');
+                }
 
                 allPurchases = await response.json();
+                console.log('[DEBUG loadPurchases] Compras cargadas desde API:', allPurchases.length);
+
+                if (allPurchases.length > 0) {
+                    console.log('[DEBUG loadPurchases] Ejemplo primera compra:', allPurchases[0]);
+                }
+
                 applyFilters();
 
             } catch (error) {
-                console.error(error);
-                tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-red-400">Error al cargar el historial.</td></tr>';
+                console.error('[ERROR loadPurchases]', error);
+                tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-red-400">Error al cargar el historial: ' + error.message + '</td></tr>';
             }
         }
 
         window.applyFilters = function () {
-            const search = document.getElementById('search-input').value.toLowerCase();
+            const search = document.getElementById('search-input').value.toLowerCase().trim();
             const status = document.getElementById('filter-status').value;
             const startDateStr = document.getElementById('filter-date-start').value;
             const endDateStr = document.getElementById('filter-date-end').value;
             const filterType = document.getElementById('filter-type');
             const type = filterType ? filterType.value : 'all';
 
-            const startDate = startDateStr ? new Date(startDateStr) : null;
-            const endDate = endDateStr ? new Date(endDateStr) : null;
-            // Adjust end date to include the full day
-            if (endDate) endDate.setHours(23, 59, 59, 999);
+            console.log('[DEBUG applyFilters] allPurchases:', allPurchases.length);
+            console.log('[DEBUG applyFilters] Filters:', { search, status, startDateStr, endDateStr, type });
 
             let filtered = allPurchases.filter(p => {
+                // 0. Sucursal Filter
+                if (currentSucursalId && p.id_sucursal && String(p.id_sucursal) !== String(currentSucursalId)) {
+                    return false;
+                }
+
                 // 1. Search Text
-                const searchText = `${p.proveedor_nombre || ''} ${p.sucursal_nombre || ''} ${p.id} ${p.total}`.toLowerCase();
-                if (search && !searchText.includes(search)) return false;
+                if (search) {
+                    const searchText = `${p.proveedor_nombre || ''} ${p.sucursal_nombre || ''} ${p.id} ${p.total}`.toLowerCase();
+                    if (!searchText.includes(search)) return false;
+                }
 
-                // 2. Date Range
-                const pDate = new Date(p.fecha_emision);
-                if (startDate && pDate < startDate) return false;
-                if (endDate && pDate > endDate) return false;
+                // 2. Date Range Filter (solo si hay fechas válidas)
+                if (startDateStr) {
+                    const startDate = new Date(startDateStr);
+                    startDate.setHours(0, 0, 0, 0);
+                    const pDate = new Date(p.fecha_emision);
+                    if (pDate < startDate) return false;
+                }
 
-                // 3. Status filter
-                if (status === 'pending') return false; // Currently no pending state in DB
-                if (status === 'paid' && p.estado !== 'pagado') return false;
+                if (endDateStr) {
+                    const endDate = new Date(endDateStr);
+                    endDate.setHours(23, 59, 59, 999);
+                    const pDate = new Date(p.fecha_emision);
+                    if (pDate > endDate) return false;
+                }
+
+                // 3. Status filter (solo si es diferente de 'all')
+                if (status && status !== 'all') {
+                    // pending = compras sin estado pagado, paid = compras con estado pagado
+                    const isPaid = (p.estado === 'pagado');
+                    if (status === 'pending' && isPaid) return false;
+                    if (status === 'paid' && !isPaid) return false;
+                }
 
                 // 4. Type filter
-                if (type !== 'all') {
+                if (type && type !== 'all') {
                     const pType = (p.tipo || 'factura').toLowerCase();
-                    if (pType !== type) return false;
+                    if (pType !== type.toLowerCase()) return false;
                 }
 
                 return true;
             });
+
+            console.log('[DEBUG applyFilters] Filtered:', filtered.length);
 
             // Sort by date (newest first by default)
             filtered.sort((a, b) => new Date(b.fecha_emision) - new Date(a.fecha_emision));
@@ -1026,6 +1058,7 @@
                 row.innerHTML = `
                     <td class="font-medium whitespace-nowrap">${refNum}</td>
                     <td>${p.proveedor_nombre || 'Desconocido'}</td>
+                    <td><span class="text-xs text-gray-400">${p.sucursal_nombre || 'N/A'}</span></td>
                     <td>${formattedDate}</td>
                     <td>${tipo}</td>
                     <td>

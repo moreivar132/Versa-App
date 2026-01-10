@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Accesos - Goversa Manager</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <!-- Guard.js - Autenticación -->
+    <script src="/guard.js"></script>
+
+    <!-- Estilos Globales del Manager -->
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111318;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #282e39;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff5f00;
+        }
+
+        /* Tabs styling */
+        .tab-btn {
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: rgba(255, 95, 0, 0.1);
+            border-color: rgba(255, 95, 0, 0.3);
+            color: #ff5f00;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Badge styles */
+        .badge {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge-super {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .badge-admin {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .badge-system {
+            background: rgba(156, 163, 175, 0.15);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        .badge-global {
+            background: rgba(234, 179, 8, 0.15);
+            color: #eab308;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .badge-tenant {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            orange: "#ff5f00",
+                            dark: "#0b0d11",
+                            surface: "#111318",
+                            border: "#282e39",
+                            input: "#1a1d24",
+                            text: "#ffffff",
+                            muted: "#9da6b9"
+                        }
+                    },
+                    fontFamily: {
+                        main: ["Montserrat", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-[#0b0d11] font-[Montserrat] text-white">
+
+    <!-- PAGE LOADER -->
+    <div id="page-loader" class="page-loader-overlay">
+        <div class="loader-logo">
+            <img src="assets/versa-v-logo.png" alt="Versa Logo">
+        </div>
+        <div class="loader-wrapper">
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="circle"></div>
+            <div class="shadow"></div>
+            <div class="shadow"></div>
+            <div class="shadow"></div>
+        </div>
+        <p class="loader-text">Cargando accesos...</p>
+    </div>
+
+    <div class="flex h-screen w-full">
+
+        <!-- SIDEBAR - Loaded dynamically by sidebar-manager.js -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[#282e39]">
+            <!-- Content will be injected by sidebar-manager.js -->
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
+            <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+
+                <!-- Header -->
+                <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="material-symbols-outlined text-[var(--brand-orange)] bg-[rgba(255,95,0,0.1)] p-3 rounded-xl text-2xl">shield</span>
+                            <div>
+                                <h1 class="text-2xl font-bold tracking-tight text-white">Gestión de Accesos</h1>
+                                <p class="text-[#9da6b9] text-sm font-normal">Administra usuarios, roles y permisos del
+                                    sistema</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tenant Selector (Super Admin Only) -->
+                    <div id="tenant-selector-container" class="hidden">
+                        <select id="tenant-select"
+                            class="appearance-none h-10 rounded-lg border border-[#282e39] bg-[#1a1d24] pl-4 pr-10 text-white text-sm focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                            <option value="">Todos los Tenants</option>
+                        </select>
+                    </div>
+
+                    <button id="create-btn"
+                        class="flex h-10 cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg bg-[var(--brand-orange)] px-4 text-sm font-bold text-white shadow-lg shadow-orange-900/20 hover:bg-[#e05300] transition-colors">
+                        <span class="material-symbols-outlined" style="font-size: 20px;">add_circle</span>
+                        <span id="create-btn-text">Crear Usuario</span>
+                    </button>
+                </header>
+
+                <!-- Tabs -->
+                <div class="flex gap-2 mb-6 border-b border-[#282e39] pb-4" id="tabs-container">
+                    <button
+                        class="tab-btn active flex items-center gap-2 py-2.5 px-5 rounded-xl border border-transparent"
+                        data-tab="users">
+                        <span class="material-symbols-outlined text-lg">group</span>
+                        <span class="font-medium text-sm">Usuarios</span>
+                    </button>
+                    <button class="tab-btn flex items-center gap-2 py-2.5 px-5 rounded-xl border border-transparent"
+                        data-tab="roles">
+                        <span class="material-symbols-outlined text-lg">theater_comedy</span>
+                        <span class="font-medium text-sm">Roles</span>
+                    </button>
+                    <button class="tab-btn flex items-center gap-2 py-2.5 px-5 rounded-xl border border-transparent"
+                        data-tab="permissions">
+                        <span class="material-symbols-outlined text-lg">lock</span>
+                        <span class="font-medium text-sm">Permisos</span>
+                    </button>
+                    <button class="tab-btn flex items-center gap-2 py-2.5 px-5 rounded-xl border border-transparent"
+                        data-tab="audit">
+                        <span class="material-symbols-outlined text-lg">history</span>
+                        <span class="font-medium text-sm">Auditoría</span>
+                    </button>
+                </div>
+
+                <!-- Content Container -->
+                <div class="bg-[#111318] rounded-2xl border border-[#282e39] p-6">
+
+                    <!-- USERS TAB -->
+                    <div id="tab-users" class="tab-content active">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead class="bg-[#1a1d24]">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Usuario
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Email
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Tenant
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Sucursales
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Tipo</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Roles
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Acciones
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-tbody" class="divide-y divide-[#282e39]">
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-8 text-center text-[#9da6b9]">
+                                            <i class="fas fa-spinner fa-spin mr-2"></i> Cargando usuarios...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- ROLES TAB -->
+                    <div id="tab-roles" class="tab-content">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead class="bg-[#1a1d24]">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Rol</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Scope
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Nivel
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Tipo</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Permisos
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Acciones
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roles-tbody" class="divide-y divide-[#282e39]">
+                                    <tr>
+                                        <td colspan="6" class="px-6 py-8 text-center text-[#9da6b9]">
+                                            <i class="fas fa-spinner fa-spin mr-2"></i> Cargando roles...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- PERMISSIONS TAB -->
+                    <div id="tab-permissions" class="tab-content">
+                        <div class="mb-4 flex gap-2 flex-wrap" id="module-filters">
+                            <!-- Module filter buttons will be injected here -->
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="permissions-grid">
+                            <div class="col-span-full text-center py-8 text-[#9da6b9]">
+                                <i class="fas fa-spinner fa-spin mr-2"></i> Cargando permisos...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AUDIT TAB -->
+                    <div id="tab-audit" class="tab-content">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead class="bg-[#1a1d24]">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Fecha
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Usuario
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Acción
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Entidad
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-[#9da6b9]">
+                                            Detalles
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="audit-tbody" class="divide-y divide-[#282e39]">
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-8 text-center text-[#9da6b9]">
+                                            <i class="fas fa-spinner fa-spin mr-2"></i> Cargando registros de
+                                            auditoría...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- USER MODAL -->
+    <div id="user-modal" class="modal-overlay">
+        <div class="bg-[#111318] rounded-2xl border border-[#282e39] w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div class="flex items-center justify-between p-6 border-b border-[#282e39]">
+                <h2 id="user-modal-title" class="text-xl font-bold text-white">Crear Usuario</h2>
+                <button onclick="closeModal('user-modal')" class="text-[#9da6b9] hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="user-form" class="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-180px)]">
+                <input type="hidden" id="user-id" name="id">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-[#9da6b9] mb-1">Nombre</label>
+                        <input type="text" id="user-nombre" name="nombre" required
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-[#9da6b9] mb-1">Email</label>
+                        <input type="email" id="user-email" name="email" required
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                    </div>
+                </div>
+
+                <div id="password-group">
+                    <label class="block text-sm text-[#9da6b9] mb-1">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="user-password" name="password"
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg pl-4 pr-10 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
+                            placeholder="Dejar vacío para mantener">
+                        <button type="button" id="toggle-password"
+                            class="absolute inset-y-0 right-0 px-3 flex items-center text-[#9da6b9] hover:text-white transition-colors"
+                            tabindex="-1">
+                            <span class="material-symbols-outlined text-xl">visibility</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-[#9da6b9] mb-1">Tenant</label>
+                        <select id="user-tenant" name="id_tenant" required
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-[#9da6b9] mb-1">% Mano de Obra</label>
+                        <input type="number" id="user-porcentaje" name="porcentaje_mano_obra" step="0.01" min="0"
+                            max="1" placeholder="0.5"
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-[#9da6b9] mb-2">Roles</label>
+                    <div id="user-roles-container"
+                        class="grid grid-cols-2 gap-2 bg-[#1a1d24] p-3 rounded-lg border border-[#282e39] max-h-40 overflow-y-auto">
+                        <!-- Roles checkboxes injected here -->
+                    </div>
+                </div>
+
+                <!-- Sucursales Section -->
+                <div id="sucursales-section">
+                    <label class="block text-sm text-[#9da6b9] mb-2">
+                        Sucursales
+                        <span id="sucursales-required" class="text-red-400 text-xs ml-1 hidden">* Obligatorio</span>
+                    </label>
+
+                    <!-- Loading state -->
+                    <div id="sucursales-loading"
+                        class="hidden bg-[#1a1d24] p-3 rounded-lg border border-[#282e39] text-[#9da6b9] text-sm">
+                        <i class="fas fa-spinner fa-spin mr-2"></i> Cargando sucursales...
+                    </div>
+
+                    <!-- Sucursales list (when tenant has branches) -->
+                    <div id="sucursales-list-container" class="hidden">
+                        <div id="user-sucursales-container"
+                            class="grid grid-cols-2 gap-2 bg-[#1a1d24] p-3 rounded-lg border border-[#282e39] max-h-32 overflow-y-auto">
+                            <!-- Sucursales checkboxes injected here -->
+                        </div>
+                        <p class="text-[10px] text-[#6b7280] mt-1">Selecciona las sucursales donde operará este usuario
+                        </p>
+                    </div>
+
+                    <!-- No sucursales message + create form (when tenant has no branches) -->
+                    <div id="sucursales-empty-container" class="hidden">
+                        <div
+                            class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-lg p-4">
+                            <div class="flex items-start gap-3">
+                                <span class="material-symbols-outlined text-amber-400 text-xl">info</span>
+                                <div class="flex-1">
+                                    <p class="text-amber-200 text-sm font-medium mb-1">Este tenant no tiene sucursales
+                                    </p>
+                                    <p class="text-[#9da6b9] text-xs mb-3">Crea la primera sucursal para comenzar a
+                                        operar.</p>
+
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label class="block text-xs text-[#9da6b9] mb-1">Nombre sucursal *</label>
+                                            <input type="text" id="new-sucursal-nombre" placeholder="Sucursal Principal"
+                                                class="w-full bg-[#111318] border border-[#282e39] rounded-lg px-3 py-2 text-white text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs text-[#9da6b9] mb-1">Dirección
+                                                (opcional)</label>
+                                            <input type="text" id="new-sucursal-direccion"
+                                                placeholder="Av. Principal 123"
+                                                class="w-full bg-[#111318] border border-[#282e39] rounded-lg px-3 py-2 text-white text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Select tenant first message -->
+                    <div id="sucursales-select-tenant"
+                        class="bg-[#1a1d24] p-3 rounded-lg border border-[#282e39] text-[#6b7280] text-sm">
+                        <span class="material-symbols-outlined text-sm align-middle mr-1">storefront</span>
+                        Selecciona un tenant primero
+                    </div>
+                </div>
+
+                <div id="super-admin-group" class="flex items-center gap-2 pt-2 hidden">
+                    <input type="checkbox" id="user-super-admin" name="is_super_admin"
+                        class="rounded border-[#282e39] text-[var(--brand-orange)] focus:ring-[var(--brand-orange)] bg-[#1a1d24]">
+                    <label for="user-super-admin" class="text-sm text-white">Es Super Admin</label>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-[#282e39]">
+                    <button type="button" onclick="closeModal('user-modal')"
+                        class="px-5 py-2.5 rounded-lg text-[#9da6b9] hover:text-white hover:bg-[#282e39] transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="px-6 py-2.5 rounded-lg bg-[var(--brand-orange)] text-white font-bold hover:bg-[#e05300] transition-colors">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ROLE MODAL -->
+    <div id="role-modal" class="modal-overlay">
+        <div class="bg-[#111318] rounded-2xl border border-[#282e39] w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div class="flex items-center justify-between p-6 border-b border-[#282e39]">
+                <h2 id="role-modal-title" class="text-xl font-bold text-white">Crear Rol</h2>
+                <button onclick="closeModal('role-modal')" class="text-[#9da6b9] hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <form id="role-form" class="p-6 space-y-4 overflow-y-auto max-h-[calc(90vh-180px)]">
+                <input type="hidden" id="role-id" name="id">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-[#9da6b9] mb-1">Nombre (código)</label>
+                        <input type="text" id="role-nombre" name="nombre" required
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
+                            placeholder="ROLE_NAME">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-[#9da6b9] mb-1">Nombre para mostrar</label>
+                        <input type="text" id="role-display-name" name="display_name"
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white focus:border-[var(--brand-orange)] focus:ring-1 focus:ring-[var(--brand-orange)]"
+                            placeholder="Nombre del Rol">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm text-[#9da6b9] mb-1">Scope</label>
+                        <select id="role-scope" name="scope"
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white">
+                            <option value="tenant">Tenant (por taller)</option>
+                            <option value="global">Global (todos)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-[#9da6b9] mb-1">Nivel de jerarquía</label>
+                        <input type="number" id="role-level" name="level" value="50" min="0" max="100"
+                            class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white">
+                    </div>
+                </div>
+
+                <!-- Role Templates -->
+                <div>
+                    <label class="block text-sm text-[#9da6b9] mb-1">Plantilla rápida (opcional)</label>
+                    <select id="role-template"
+                        class="w-full bg-[#1a1d24] border border-[#282e39] rounded-lg px-4 py-2.5 text-white focus:border-[var(--brand-orange)]">
+                        <option value="">-- Seleccionar plantilla --</option>
+                        <option value="mecanico">👷 Mecánico - Solo órdenes de trabajo</option>
+                        <option value="recepcionista">📞 Recepcionista - Citas, clientes, vehículos</option>
+                        <option value="gerente">💼 Gerente - Todo excepto config global</option>
+                        <option value="contabilidad">📊 Contabilidad - Caja, facturas, reportes</option>
+                        <option value="solo_lectura">👀 Solo Lectura - Ver sin modificar</option>
+                        <option value="inventario">📦 Inventario - Stock y compras</option>
+                    </select>
+                    <p class="text-[10px] text-[#6b7280] mt-1">Selecciona una plantilla para precargar permisos comunes
+                    </p>
+                </div>
+
+                <!-- Permissions by Module -->
+                <div>
+                    <label class="block text-sm text-[#9da6b9] mb-2">Permisos por módulo</label>
+                    <div id="role-permissions-container" class="space-y-2 max-h-80 overflow-y-auto pr-2">
+                        <!-- Permissions grouped by module will be injected here -->
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-[#282e39]">
+                    <button type="button" onclick="closeModal('role-modal')"
+                        class="px-5 py-2.5 rounded-lg text-[#9da6b9] hover:text-white hover:bg-[#282e39] transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="px-6 py-2.5 rounded-lg bg-[var(--brand-orange)] text-white font-bold hover:bg-[#e05300] transition-colors">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PERMISSIONS VIEW MODAL -->
+    <div id="permissions-modal" class="modal-overlay">
+        <div class="bg-[#111318] rounded-2xl border border-[#282e39] w-full max-w-3xl max-h-[85vh] overflow-hidden">
+            <div class="flex items-center justify-between p-6 border-b border-[#282e39]">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-[var(--brand-orange)] text-2xl">lock</span>
+                    <h2 id="permissions-modal-title" class="text-xl font-bold text-white">Permisos del Rol</h2>
+                </div>
+                <button onclick="closeModal('permissions-modal')"
+                    class="text-[#9da6b9] hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[calc(85vh-140px)]">
+                <div id="permissions-modal-content" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Permissions will be injected here -->
+                </div>
+            </div>
+            <div class="flex justify-end p-4 border-t border-[#282e39]">
+                <button onclick="closeModal('permissions-modal')"
+                    class="px-5 py-2.5 rounded-lg bg-[#282e39] text-white font-medium hover:bg-[#3a4050] transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { fetchWithAuth, requireAuth, clearSession } from '/auth.js';
+
+        // State
+        let currentTab = 'users';
+        let users = [], roles = [], permissions = [], audit = [], tenants = [];
+        let currentUser = null;
+        let isSuperAdmin = false;
+
+        // DOM Elements
+        const createBtn = document.getElementById('create-btn');
+        const createBtnText = document.getElementById('create-btn-text');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            currentUser = await requireAuth();
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Check permissions
+            try {
+                const permRes = await fetchWithAuth('/api/access/me/permissions');
+                const perms = await permRes.json();
+                isSuperAdmin = perms.isSuperAdmin;
+
+                // If not super admin and no access.manage permission, redirect
+                if (!isSuperAdmin && !perms.permissions.includes('access.manage')) {
+                    alert('Sin permisos para acceder a Gestión de Accesos');
+                    window.location.href = 'manager-taller-inicio.html';
+                    return;
+                }
+            } catch (e) {
+                console.error('Error checking permissions:', e);
+                window.location.href = 'manager-taller-inicio.html';
+                return;
+            }
+
+            // Show tenant selector for super admins
+            if (isSuperAdmin) {
+                document.getElementById('tenant-selector-container').classList.remove('hidden');
+                await loadTenants();
+            }
+
+            // User info in sidebar is handled by sidebar-manager.js
+
+            // Setup tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+            });
+
+            // Setup create button
+            createBtn.addEventListener('click', handleCreate);
+
+            // Password toggle
+            document.getElementById('toggle-password')?.addEventListener('click', function () {
+                const input = document.getElementById('user-password');
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                this.querySelector('span').textContent = type === 'password' ? 'visibility' : 'visibility_off';
+            });
+
+            // Setup forms
+            document.getElementById('user-form').addEventListener('submit', handleUserSubmit);
+            document.getElementById('role-form').addEventListener('submit', handleRoleSubmit);
+
+            // Load initial data
+            await loadData();
+
+            // Hide loader
+            document.getElementById('page-loader').style.display = 'none';
+        });
+
+        // Tab switching
+        function switchTab(tab) {
+            currentTab = tab;
+
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+
+            // Update content visibility
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.toggle('active', content.id === `tab-${tab}`);
+            });
+
+            // Update create button text
+            const texts = {
+                users: 'Crear Usuario',
+                roles: 'Crear Rol',
+                permissions: null, // read-only
+                audit: null // read-only
+            };
+            createBtnText.textContent = texts[tab] || '';
+            createBtn.style.display = texts[tab] ? 'flex' : 'none';
+        }
+
+        // Load all data
+        async function loadData() {
+            await Promise.all([
+                loadUsers(),
+                loadRoles(),
+                loadPermissions(),
+                loadAudit()
+            ]);
+        }
+
+        async function loadTenants() {
+            try {
+                const res = await fetchWithAuth('/api/access/tenants');
+                tenants = await res.json();
+
+                const select = document.getElementById('tenant-select');
+                select.innerHTML = '<option value="">Todos los Tenants</option>' +
+                    tenants.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+
+                // Add change listener
+                select.addEventListener('change', () => {
+                    renderUsers();
+                });
+            } catch (e) {
+                console.error('Error loading tenants:', e);
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const res = await fetchWithAuth('/api/access/users');
+                users = await res.json();
+                renderUsers();
+            } catch (e) {
+                console.error('Error loading users:', e);
+                document.getElementById('users-tbody').innerHTML =
+                    `<tr><td colspan="6" class="px-6 py-8 text-center text-red-400">Error cargando usuarios</td></tr>`;
+            }
+        }
+
+        async function loadRoles() {
+            try {
+                const res = await fetchWithAuth('/api/access/roles');
+                roles = await res.json();
+                renderRoles();
+            } catch (e) {
+                console.error('Error loading roles:', e);
+            }
+        }
+
+        async function loadPermissions() {
+            try {
+                const res = await fetchWithAuth('/api/access/permissions');
+                permissions = await res.json();
+                renderPermissions();
+            } catch (e) {
+                console.error('Error loading permissions:', e);
+            }
+        }
+
+        async function loadAudit() {
+            try {
+                const res = await fetchWithAuth('/api/access/audit?limit=50');
+                audit = await res.json();
+                renderAudit();
+            } catch (e) {
+                console.error('Error loading audit:', e);
+            }
+        }
+
+        // Render functions
+        function renderUsers() {
+            const tbody = document.getElementById('users-tbody');
+            const tenantSelect = document.getElementById('tenant-select');
+            const selectedTenantId = tenantSelect ? parseInt(tenantSelect.value) : null;
+
+            let filteredUsers = users;
+            if (selectedTenantId) {
+                filteredUsers = users.filter(u => u.id_tenant === selectedTenantId);
+            }
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-[#9da6b9]">No hay usuarios</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredUsers.map(u => {
+                const tenant = tenants.find(t => t.id === u.id_tenant);
+                return `
+          <tr class="hover:bg-[#1a1d24] transition-colors">
+            <td class="px-6 py-4 text-white font-medium">${escapeHtml(u.nombre || '')}</td>
+            <td class="px-6 py-4 text-[#9da6b9]">${escapeHtml(u.email)}</td>
+            <td class="px-6 py-4 text-[#9da6b9]">${escapeHtml(tenant?.nombre || u.tenant_nombre || '-')}</td>
+            <td class="px-6 py-4 text-[#9da6b9]">
+                ${(u.sucursales || []).map(s => `<span class="inline-block bg-[#282e39] rounded px-1.5 py-0.5 text-xs mr-1 mb-1">${escapeHtml(s.nombre)}</span>`).join('') || '<span class="text-xs text-[#6b7280]">-</span>'}
+            </td>
+            <td class="px-6 py-4">
+              ${u.is_super_admin
+                        ? '<span class="badge badge-super">Super Admin</span>'
+                        : '<span class="badge badge-admin">Usuario</span>'
+                    }
+            </td>
+            <td class="px-6 py-4">
+              ${(u.roles || []).map(r => `<span class="badge badge-system mr-1">${r}</span>`).join('') || '-'}
+            </td>
+            <td class="px-6 py-4 text-right">
+              <button onclick="editUser(${u.id})" class="text-[#9da6b9] hover:text-white p-1 transition-colors">
+                <span class="material-symbols-outlined text-lg">edit</span>
+              </button>
+              <button onclick="deleteUser(${u.id})" class="text-[#9da6b9] hover:text-red-500 p-1 transition-colors">
+                <span class="material-symbols-outlined text-lg">delete</span>
+              </button>
+            </td>
+          </tr>
+        `;
+            }).join('');
+        }
+
+        function renderRoles() {
+            const tbody = document.getElementById('roles-tbody');
+
+            if (roles.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-8 text-center text-[#9da6b9]">No hay roles</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = roles.map(r => `
+        <tr class="hover:bg-[#1a1d24] transition-colors">
+          <td class="px-6 py-4">
+            <div class="font-medium text-white">${escapeHtml(r.display_name || r.nombre)}</div>
+            <div class="text-xs text-[#9da6b9]">${escapeHtml(r.nombre)}</div>
+          </td>
+          <td class="px-6 py-4">
+            <span class="badge ${r.scope === 'global' ? 'badge-global' : 'badge-tenant'}">${r.scope || 'tenant'}</span>
+          </td>
+          <td class="px-6 py-4 text-[#9da6b9]">${r.level || 50}</td>
+          <td class="px-6 py-4">
+            ${r.is_system ? '<span class="badge badge-system">Sistema</span>' : '<span class="badge badge-admin">Custom</span>'}
+          </td>
+          <td class="px-6 py-4 text-[#9da6b9]">
+            <button onclick="viewRolePermissions(${r.id})" class="text-[var(--brand-orange)] hover:underline text-sm">
+              Ver permisos
+            </button>
+          </td>
+          <td class="px-6 py-4 text-right">
+            ${!r.is_system ? `
+              <button onclick="editRole(${r.id})" class="text-[#9da6b9] hover:text-white p-1 transition-colors">
+                <span class="material-symbols-outlined text-lg">edit</span>
+              </button>
+              <button onclick="deleteRole(${r.id})" class="text-[#9da6b9] hover:text-red-500 p-1 transition-colors">
+                <span class="material-symbols-outlined text-lg">delete</span>
+              </button>
+            ` : '<span class="text-[#9da6b9] text-xs">Protegido</span>'}
+          </td>
+        </tr>
+      `).join('');
+        }
+
+        function renderPermissions() {
+            const grid = document.getElementById('permissions-grid');
+            const filtersContainer = document.getElementById('module-filters');
+
+            // Module name translations
+            const MODULE_NAMES = {
+                access: 'Accesos', appointments: 'Citas', cashregister: 'Caja',
+                config: 'Configuración', customers: 'Clientes', fleet: 'Flotas',
+                inventory: 'Inventario', invoices: 'Facturas', loyalty: 'Fidelización',
+                marketing: 'Marketing', marketplace: 'Marketplace', payments: 'Pagos',
+                purchases: 'Compras', reports: 'Reportes', services: 'Servicios',
+                suppliers: 'Proveedores', vehicles: 'Vehículos', workorders: 'Órdenes',
+                other: 'Otros'
+            };
+
+            // Group by module
+            const modules = {};
+            permissions.forEach(p => {
+                const mod = p.module || 'other';
+                if (!modules[mod]) modules[mod] = [];
+                modules[mod].push(p);
+            });
+
+            // Render module filters (with "Todos" option)
+            filtersContainer.innerHTML = `
+                <button class="module-filter active px-3 py-1.5 rounded-lg text-sm border border-[var(--brand-orange)] bg-[var(--brand-orange)] text-white transition-colors" data-module="all">
+                    Todos (${permissions.length})
+                </button>
+                ${Object.keys(modules).sort().map(mod =>
+                `<button class="module-filter px-3 py-1.5 rounded-lg text-sm border border-[#282e39] text-[#9da6b9] hover:text-white hover:bg-[#282e39] transition-colors" data-module="${mod}">
+                        ${MODULE_NAMES[mod] || mod} (${modules[mod].length})
+                    </button>`
+            ).join('')}`;
+
+            // Add event listeners to filters
+            filtersContainer.querySelectorAll('.module-filter').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const selectedMod = btn.dataset.module;
+
+                    // Update UI buttons
+                    filtersContainer.querySelectorAll('.module-filter').forEach(b => {
+                        b.classList.remove('active', 'bg-[var(--brand-orange)]', 'text-white', 'border-[var(--brand-orange)]');
+                        b.classList.add('border-[#282e39]', 'text-[#9da6b9]');
+                    });
+                    btn.classList.add('active', 'bg-[var(--brand-orange)]', 'text-white', 'border-[var(--brand-orange)]');
+                    btn.classList.remove('border-[#282e39]', 'text-[#9da6b9]');
+
+                    // Filter cards
+                    document.querySelectorAll('.module-group').forEach(card => {
+                        if (selectedMod === 'all' || card.dataset.module === selectedMod) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            // Helper function (inline version)
+            const getTranslation = (key) => {
+                const translations = {
+                    'access.manage': { name: 'Gestión de Accesos', desc: 'Administrar usuarios, roles y permisos' },
+                    'audit.view': { name: 'Ver Auditoría', desc: 'Consultar registro de actividades' },
+                    'permissions.view': { name: 'Ver Permisos', desc: 'Consultar permisos disponibles' },
+                    'roles.create': { name: 'Crear Roles', desc: 'Crear nuevos roles' },
+                    'roles.delete': { name: 'Eliminar Roles', desc: 'Eliminar roles' },
+                    'roles.update': { name: 'Editar Roles', desc: 'Modificar roles' },
+                    'roles.view': { name: 'Ver Roles', desc: 'Consultar roles' },
+                    'users.create': { name: 'Crear Usuarios', desc: 'Crear cuentas de usuario' },
+                    'users.delete': { name: 'Eliminar Usuarios', desc: 'Eliminar usuarios' },
+                    'users.update': { name: 'Editar Usuarios', desc: 'Modificar usuarios' },
+                    'users.view': { name: 'Ver Usuarios', desc: 'Consultar usuarios' },
+                    'appointments.create': { name: 'Crear Citas', desc: 'Agendar citas' },
+                    'appointments.delete': { name: 'Eliminar Citas', desc: 'Cancelar citas' },
+                    'appointments.update': { name: 'Editar Citas', desc: 'Modificar citas' },
+                    'appointments.view': { name: 'Ver Citas', desc: 'Consultar citas' },
+                    'cashregister.manage': { name: 'Gestionar Caja', desc: 'Administrar caja' },
+                    'cashregister.view': { name: 'Ver Caja', desc: 'Consultar movimientos' },
+                    'customers.create': { name: 'Crear Clientes', desc: 'Registrar clientes' },
+                    'customers.delete': { name: 'Eliminar Clientes', desc: 'Eliminar clientes' },
+                    'customers.update': { name: 'Editar Clientes', desc: 'Modificar clientes' },
+                    'customers.view': { name: 'Ver Clientes', desc: 'Consultar clientes' },
+                    'inventory.adjust': { name: 'Ajustar Stock', desc: 'Ajustar inventario' },
+                    'inventory.create': { name: 'Crear Productos', desc: 'Añadir productos' },
+                    'inventory.delete': { name: 'Eliminar Productos', desc: 'Eliminar productos' },
+                    'inventory.update': { name: 'Editar Productos', desc: 'Modificar productos' },
+                    'inventory.view': { name: 'Ver Inventario', desc: 'Consultar stock' },
+                    'invoices.create': { name: 'Crear Facturas', desc: 'Generar facturas' },
+                    'invoices.delete': { name: 'Eliminar Facturas', desc: 'Anular facturas' },
+                    'invoices.update': { name: 'Editar Facturas', desc: 'Modificar facturas' },
+                    'invoices.view': { name: 'Ver Facturas', desc: 'Consultar facturas' },
+                    'payments.create': { name: 'Registrar Pagos', desc: 'Registrar cobros' },
+                    'payments.delete': { name: 'Eliminar Pagos', desc: 'Anular pagos' },
+                    'payments.update': { name: 'Editar Pagos', desc: 'Modificar pagos' },
+                    'payments.view': { name: 'Ver Pagos', desc: 'Consultar pagos' },
+                    'purchases.create': { name: 'Crear Compras', desc: 'Registrar compras' },
+                    'purchases.delete': { name: 'Eliminar Compras', desc: 'Anular compras' },
+                    'purchases.update': { name: 'Editar Compras', desc: 'Modificar compras' },
+                    'purchases.view': { name: 'Ver Compras', desc: 'Consultar compras' },
+                    'suppliers.create': { name: 'Crear Proveedores', desc: 'Registrar proveedores' },
+                    'suppliers.delete': { name: 'Eliminar Proveedores', desc: 'Eliminar proveedores' },
+                    'suppliers.update': { name: 'Editar Proveedores', desc: 'Modificar proveedores' },
+                    'suppliers.view': { name: 'Ver Proveedores', desc: 'Consultar proveedores' },
+                    'vehicles.create': { name: 'Crear Vehículos', desc: 'Registrar vehículos' },
+                    'vehicles.delete': { name: 'Eliminar Vehículos', desc: 'Eliminar vehículos' },
+                    'vehicles.update': { name: 'Editar Vehículos', desc: 'Modificar vehículos' },
+                    'vehicles.view': { name: 'Ver Vehículos', desc: 'Consultar vehículos' },
+                    'workorders.assign': { name: 'Asignar Órdenes', desc: 'Asignar técnicos' },
+                    'workorders.create': { name: 'Crear Órdenes', desc: 'Crear órdenes de trabajo' },
+                    'workorders.delete': { name: 'Eliminar Órdenes', desc: 'Eliminar órdenes' },
+                    'workorders.status': { name: 'Cambiar Estado', desc: 'Modificar estado de órdenes' },
+                    'workorders.update': { name: 'Editar Órdenes', desc: 'Modificar órdenes' },
+                    'workorders.view': { name: 'Ver Órdenes', desc: 'Consultar órdenes' },
+                    'workorders.close': { name: 'Cerrar Órdenes', desc: 'Finalizar órdenes' },
+                    'reports.view': { name: 'Ver Reportes', desc: 'Consultar informes' },
+                    'reports.export': { name: 'Exportar Reportes', desc: 'Descargar informes' },
+                    'config.sucursales': { name: 'Config. Sucursales', desc: 'Administrar sucursales' },
+                    'config.tenants': { name: 'Config. Tenants', desc: 'Administrar tenants' },
+                    'fleet.create': { name: 'Crear Flotas', desc: 'Registrar flotas' },
+                    'fleet.delete': { name: 'Eliminar Flotas', desc: 'Eliminar flotas' },
+                    'fleet.update': { name: 'Editar Flotas', desc: 'Modificar flotas' },
+                    'fleet.view': { name: 'Ver Flotas', desc: 'Consultar flotas' },
+                    'fleet.assign': { name: 'Asignar Flotas', desc: 'Asignar vehículos' },
+                    'fleet.reports': { name: 'Reportes Flotas', desc: 'Ver informes' },
+                    'fleet.maintenance': { name: 'Mant. Flotas', desc: 'Gestionar mantenimiento' },
+                    'fleet.reminders': { name: 'Recordatorios', desc: 'Configurar alertas' },
+                    'fleet.costs': { name: 'Costos Flotas', desc: 'Ver costos' },
+                    'marketing.campaigns': { name: 'Campañas', desc: 'Gestionar campañas' },
+                    'marketing.templates': { name: 'Plantillas Email', desc: 'Administrar plantillas' },
+                    'marketplace.manage': { name: 'Gestionar Marketplace', desc: 'Administrar publicaciones' },
+                    'marketplace.publish': { name: 'Publicar', desc: 'Publicar en marketplace' },
+                    'loyalty.manage': { name: 'Gestionar Fidelización', desc: 'Administrar programa' },
+                    'loyalty.view': { name: 'Ver Fidelización', desc: 'Consultar puntos' },
+                    'services.manage': { name: 'Gestionar Servicios', desc: 'Administrar servicios' },
+                    'dashboard.view': { name: 'Ver Dashboard', desc: 'Acceder al panel' },
+                    'settings.general': { name: 'Config. General', desc: 'Modificar configuración' },
+                    'notifications.send': { name: 'Enviar Notificaciones', desc: 'Enviar alertas' }
+                };
+                if (translations[key]) return translations[key];
+                const parts = key.split('.');
+                return { name: key, desc: `Permiso ${parts[1] || ''} para ${parts[0] || ''}` };
+            };
+
+            // Render permissions as cards
+            grid.innerHTML = Object.entries(modules).map(([mod, perms]) => `
+                <div class="bg-[#1a1d24] rounded-xl border border-[#282e39] p-4 module-group" data-module="${mod}">
+                    <h3 class="text-[var(--brand-orange)] font-bold text-sm uppercase mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">folder</span>
+                        ${MODULE_NAMES[mod] || mod}
+                    </h3>
+                    <div class="space-y-2">
+                        ${perms.map(p => {
+                const key = p.key || p.nombre;
+                const t = getTranslation(key);
+                return `
+                                <div class="flex items-start gap-2 py-1.5 border-b border-[#282e39]/50 last:border-0">
+                                    <span class="text-green-400 mt-0.5 text-sm">✓</span>
+                                    <div class="flex-1">
+                                        <div class="text-white text-sm font-medium">${escapeHtml(t.name)}</div>
+                                        <div class="text-[#9da6b9] text-xs">${escapeHtml(t.desc)}</div>
+                                        <code class="text-[#6b7280] text-[10px] mt-0.5 block">${escapeHtml(key)}</code>
+                                    </div>
+                                </div>`;
+            }).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderAudit() {
+            const tbody = document.getElementById('audit-tbody');
+
+            if (audit.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-[#9da6b9]">No hay registros de auditoría</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = audit.map(a => `
+        <tr class="hover:bg-[#1a1d24] transition-colors">
+          <td class="px-6 py-4 text-[#9da6b9] text-sm">${new Date(a.created_at).toLocaleString('es-ES')}</td>
+          <td class="px-6 py-4 text-white">${escapeHtml(a.actor_name || 'Sistema')}</td>
+          <td class="px-6 py-4">
+            <span class="badge badge-system">${escapeHtml(a.action)}</span>
+          </td>
+          <td class="px-6 py-4 text-[#9da6b9]">${escapeHtml(a.entity_type)} #${a.entity_id}</td>
+          <td class="px-6 py-4 text-[#9da6b9] text-xs max-w-xs truncate">
+            ${a.after_json ? JSON.stringify(a.after_json).substring(0, 50) + '...' : '-'}
+          </td>
+        </tr>
+      `).join('');
+        }
+
+        // Modal handlers
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        window.closeModal = function (id) {
+            document.getElementById(id).classList.remove('active');
+        };
+
+        function handleCreate() {
+            if (currentTab === 'users') {
+                openUserModal();
+            } else if (currentTab === 'roles') {
+                openRoleModal();
+            }
+        }
+
+        function openUserModal(user = null) {
+            const form = document.getElementById('user-form');
+            form.reset();
+
+            document.getElementById('user-modal-title').textContent = user ? 'Editar Usuario' : 'Crear Usuario';
+            document.getElementById('user-id').value = user?.id || '';
+            document.getElementById('user-nombre').value = user?.nombre || '';
+            document.getElementById('user-email').value = user?.email || '';
+            document.getElementById('user-tenant').value = user?.id_tenant || '';
+            document.getElementById('user-porcentaje').value = user?.porcentaje_mano_obra || 0.5;
+            document.getElementById('user-super-admin').checked = user?.is_super_admin || false;
+            if (isSuperAdmin) {
+                document.getElementById('super-admin-group').classList.remove('hidden');
+            } else {
+                document.getElementById('super-admin-group').classList.add('hidden');
+            }
+
+            // Password not required for edit
+            document.getElementById('user-password').required = !user;
+
+            // Populate tenant select
+            const tenantSelect = document.getElementById('user-tenant');
+
+            if (isSuperAdmin) {
+                // Super admin can select any tenant
+                tenantSelect.innerHTML = '<option value="">Seleccionar...</option>' +
+                    tenants.map(t => `<option value="${t.id}" ${user?.id_tenant === t.id ? 'selected' : ''}>${t.nombre}</option>`).join('');
+                tenantSelect.disabled = false;
+            } else {
+                // Non-super admin: auto-select and lock their own tenant
+                const myTenantId = currentUser.id_tenant;
+                const myTenantName = currentUser.tenant_nombre || currentUser.nombre || `Tenant ${myTenantId}`;
+                tenantSelect.innerHTML = `<option value="${myTenantId}" selected>${myTenantName}</option>`;
+                tenantSelect.disabled = true;
+
+                // Auto-load sucursales for their tenant
+                if (myTenantId && !user) {
+                    loadSucursalesForTenant(myTenantId, []);
+                }
+            }
+
+            // Populate roles
+            const rolesContainer = document.getElementById('user-roles-container');
+            rolesContainer.innerHTML = roles.map(r => `
+        <label class="flex items-center gap-2">
+          <input type="checkbox" name="roles" value="${r.id}" 
+            ${user?.roles?.includes(r.nombre) ? 'checked' : ''}
+            class="rounded border-[#282e39] text-[var(--brand-orange)] focus:ring-[var(--brand-orange)] bg-[#111318]">
+          <span class="text-sm text-[#9da6b9]">${r.display_name || r.nombre}</span>
+        </label>
+      `).join('');
+
+            // Reset sucursales section
+            resetSucursalesSection();
+
+            // Clear new sucursal form
+            document.getElementById('new-sucursal-nombre').value = '';
+            document.getElementById('new-sucursal-direccion').value = '';
+
+            // Add tenant change listener
+            tenantSelect.onchange = async () => {
+                const tenantId = tenantSelect.value;
+                if (tenantId) {
+                    await loadSucursalesForTenant(parseInt(tenantId), user?.sucursales || []);
+                } else {
+                    resetSucursalesSection();
+                }
+            };
+
+            // Load sucursales if tenant is already selected (edit mode)
+            if (user?.id_tenant) {
+                loadSucursalesForTenant(user.id_tenant, user.sucursales || []);
+            }
+
+            openModal('user-modal');
+        }
+
+        // Sucursales helper functions
+        function resetSucursalesSection() {
+            document.getElementById('sucursales-loading').classList.add('hidden');
+            document.getElementById('sucursales-list-container').classList.add('hidden');
+            document.getElementById('sucursales-empty-container').classList.add('hidden');
+            document.getElementById('sucursales-select-tenant').classList.remove('hidden');
+            document.getElementById('sucursales-required').classList.add('hidden');
+            document.getElementById('user-sucursales-container').innerHTML = '';
+        }
+
+        async function loadSucursalesForTenant(tenantId, existingSucursales = []) {
+            // Show loading
+            document.getElementById('sucursales-select-tenant').classList.add('hidden');
+            document.getElementById('sucursales-loading').classList.remove('hidden');
+            document.getElementById('sucursales-list-container').classList.add('hidden');
+            document.getElementById('sucursales-empty-container').classList.add('hidden');
+
+            try {
+                const res = await fetchWithAuth(`/api/sucursales?tenant_id=${tenantId}`);
+                const sucursales = await res.json();
+
+                document.getElementById('sucursales-loading').classList.add('hidden');
+
+                if (sucursales.length === 0) {
+                    // No sucursales - show onboarding form
+                    document.getElementById('sucursales-empty-container').classList.remove('hidden');
+                    document.getElementById('sucursales-required').classList.add('hidden');
+                } else {
+                    // Has sucursales - show list
+                    document.getElementById('sucursales-list-container').classList.remove('hidden');
+                    document.getElementById('sucursales-required').classList.remove('hidden');
+
+                    const existingIds = existingSucursales.map(s => s.id);
+                    const container = document.getElementById('user-sucursales-container');
+
+                    container.innerHTML = sucursales.map(s => `
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" name="sucursales" value="${s.id}" 
+                                ${existingIds.includes(s.id) || sucursales.length === 1 ? 'checked' : ''}
+                                class="rounded border-[#282e39] text-[var(--brand-orange)] focus:ring-[var(--brand-orange)] bg-[#111318]">
+                            <span class="text-sm text-[#9da6b9]">${escapeHtml(s.nombre)}</span>
+                        </label>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Error loading sucursales:', e);
+                document.getElementById('sucursales-loading').classList.add('hidden');
+                document.getElementById('sucursales-select-tenant').classList.remove('hidden');
+            }
+        }
+
+
+        function openRoleModal(role = null) {
+            const form = document.getElementById('role-form');
+            form.reset();
+
+            document.getElementById('role-modal-title').textContent = role ? 'Editar Rol' : 'Crear Rol';
+            document.getElementById('role-id').value = role?.id || '';
+            document.getElementById('role-nombre').value = role?.nombre || '';
+            document.getElementById('role-display-name').value = role?.display_name || '';
+            document.getElementById('role-scope').value = role?.scope || 'tenant';
+            document.getElementById('role-level').value = role?.level || 50;
+
+            // Permission modules with friendly Spanish labels
+            const PERMISSION_MODULES = {
+                taller: {
+                    icon: '🔧',
+                    label: 'Taller',
+                    desc: 'Órdenes de trabajo y citas',
+                    permissions: {
+                        'workorders.view': 'Ver órdenes de trabajo',
+                        'workorders.create': 'Crear nuevas órdenes',
+                        'workorders.update': 'Editar órdenes',
+                        'workorders.delete': 'Eliminar órdenes',
+                        'workorders.assign': 'Asignar técnicos',
+                        'workorders.update_status': 'Cambiar estado de órdenes',
+                        'workorders.add_notes': 'Añadir notas a órdenes',
+                        'appointments.view': 'Ver citas',
+                        'appointments.create': 'Crear citas',
+                        'appointments.update': 'Editar citas',
+                        'appointments.delete': 'Cancelar citas'
+                    }
+                },
+                clientes: {
+                    icon: '👥',
+                    label: 'Clientes y Vehículos',
+                    desc: 'Base de datos de clientes',
+                    permissions: {
+                        'customers.view': 'Ver clientes',
+                        'customers.create': 'Crear clientes',
+                        'customers.update': 'Editar clientes',
+                        'customers.delete': 'Eliminar clientes',
+                        'vehicles.view': 'Ver vehículos',
+                        'vehicles.create': 'Registrar vehículos',
+                        'vehicles.update': 'Editar vehículos',
+                        'vehicles.delete': 'Eliminar vehículos'
+                    }
+                },
+                caja: {
+                    icon: '💰',
+                    label: 'Caja y Pagos',
+                    desc: 'Gestión de efectivo y cobros',
+                    permissions: {
+                        'cashregister.view': 'Ver estado de caja',
+                        'cashregister.manage': 'Abrir/cerrar caja',
+                        'payments.view': 'Ver pagos',
+                        'payments.create': 'Registrar pagos',
+                        'payments.update': 'Editar pagos',
+                        'payments.delete': 'Anular pagos',
+                        'invoices.view': 'Ver facturas',
+                        'invoices.create': 'Crear facturas',
+                        'invoices.update': 'Editar facturas',
+                        'invoices.delete': 'Anular facturas'
+                    }
+                },
+                inventario: {
+                    icon: '📦',
+                    label: 'Inventario',
+                    desc: 'Stock y productos',
+                    permissions: {
+                        'inventory.view': 'Ver productos en stock',
+                        'inventory.create': 'Añadir productos',
+                        'inventory.update': 'Editar productos',
+                        'inventory.delete': 'Eliminar productos',
+                        'inventory.adjust': 'Ajustar cantidades de stock'
+                    }
+                },
+                compras: {
+                    icon: '🛒',
+                    label: 'Compras y Proveedores',
+                    desc: 'Gestión de compras',
+                    permissions: {
+                        'purchases.view': 'Ver compras',
+                        'purchases.create': 'Registrar compras',
+                        'purchases.update': 'Editar compras',
+                        'purchases.delete': 'Anular compras',
+                        'suppliers.view': 'Ver proveedores',
+                        'suppliers.create': 'Crear proveedores',
+                        'suppliers.update': 'Editar proveedores',
+                        'suppliers.delete': 'Eliminar proveedores'
+                    }
+                },
+                reportes: {
+                    icon: '📊',
+                    label: 'Reportes y Dashboard',
+                    desc: 'Informes y estadísticas',
+                    permissions: {
+                        'dashboard.view': 'Ver panel principal',
+                        'reports.view': 'Ver reportes',
+                        'reports.export': 'Exportar reportes'
+                    }
+                },
+                marketing: {
+                    icon: '📣',
+                    label: 'Marketing y Fidelización',
+                    desc: 'Campañas y programa de puntos',
+                    permissions: {
+                        'marketing.campaigns': 'Gestionar campañas',
+                        'marketing.templates': 'Editar plantillas de email',
+                        'loyalty.view': 'Ver programa de puntos',
+                        'loyalty.manage': 'Gestionar fidelización',
+                        'marketplace.publish': 'Publicar en marketplace',
+                        'marketplace.manage': 'Gestionar marketplace'
+                    }
+                },
+                config: {
+                    icon: '⚙️',
+                    label: 'Configuración',
+                    desc: 'Ajustes del sistema',
+                    permissions: {
+                        'settings.general': 'Configuración general',
+                        'config.sucursales': 'Gestionar sucursales',
+                        'services.manage': 'Gestionar catálogo de servicios',
+                        'access.manage': 'Gestionar usuarios y permisos'
+                    }
+                }
+            };
+
+            // Role templates
+            const ROLE_TEMPLATES = {
+                mecanico: ['workorders.view', 'workorders.update', 'workorders.update_status', 'workorders.add_notes', 'vehicles.view', 'inventory.view'],
+                recepcionista: ['appointments.view', 'appointments.create', 'appointments.update', 'customers.view', 'customers.create', 'customers.update', 'vehicles.view', 'vehicles.create', 'workorders.view', 'workorders.create'],
+                gerente: Object.values(PERMISSION_MODULES).flatMap(m => Object.keys(m.permissions)).filter(p => !p.startsWith('config.') && p !== 'access.manage'),
+                contabilidad: ['cashregister.view', 'cashregister.manage', 'payments.view', 'payments.create', 'invoices.view', 'invoices.create', 'invoices.update', 'reports.view', 'reports.export', 'dashboard.view'],
+                solo_lectura: Object.values(PERMISSION_MODULES).flatMap(m => Object.keys(m.permissions)).filter(p => p.endsWith('.view')),
+                inventario: ['inventory.view', 'inventory.create', 'inventory.update', 'inventory.adjust', 'purchases.view', 'purchases.create', 'suppliers.view']
+            };
+
+            // Render permissions as visual modules
+            const permsContainer = document.getElementById('role-permissions-container');
+            permsContainer.innerHTML = Object.entries(PERMISSION_MODULES).map(([modKey, mod]) => {
+                const permIds = Object.keys(mod.permissions).map(key => {
+                    const found = permissions.find(p => (p.key || p.nombre) === key);
+                    return found ? { key, id: found.id, label: mod.permissions[key] } : null;
+                }).filter(Boolean);
+
+                if (permIds.length === 0) return '';
+
+                return `
+                    <div class="bg-[#1a1d24] rounded-xl border border-[#282e39] overflow-hidden">
+                        <div class="flex items-center justify-between px-4 py-3 bg-[#1c1f27] cursor-pointer hover:bg-[#22262f] transition-colors"
+                             onclick="toggleModulePerms('${modKey}')">
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg">${mod.icon}</span>
+                                <div>
+                                    <span class="text-white font-medium text-sm">${mod.label}</span>
+                                    <span class="text-[#6b7280] text-xs ml-2">${mod.desc}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <label class="flex items-center gap-1 text-[10px] text-[#9da6b9]" onclick="event.stopPropagation()">
+                                    <input type="checkbox" class="module-toggle rounded border-[#282e39] text-[var(--brand-orange)] focus:ring-[var(--brand-orange)] bg-[#111318]"
+                                           data-module="${modKey}" onchange="toggleAllModulePerms('${modKey}', this.checked)">
+                                    Todos
+                                </label>
+                                <span class="material-symbols-outlined text-[#6b7280] text-sm module-arrow" id="arrow-${modKey}">expand_more</span>
+                            </div>
+                        </div>
+                        <div id="perms-${modKey}" class="px-4 py-3 grid grid-cols-2 gap-2 hidden">
+                            ${permIds.map(p => `
+                                <label class="flex items-center gap-2 py-1 px-2 rounded hover:bg-[#282e39]/50 cursor-pointer transition-colors">
+                                    <input type="checkbox" name="permissions" value="${p.id}" data-key="${p.key}" data-module="${modKey}"
+                                           class="perm-checkbox rounded border-[#282e39] text-[var(--brand-orange)] focus:ring-[var(--brand-orange)] bg-[#111318]"
+                                           onchange="updateModuleToggle('${modKey}')">
+                                    <span class="text-xs text-[#c9cfd8]">${p.label}</span>
+                                </label>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Template change handler
+            document.getElementById('role-template').value = '';
+            document.getElementById('role-template').onchange = function () {
+                const template = this.value;
+                if (!template) return;
+
+                // Uncheck all first
+                document.querySelectorAll('.perm-checkbox').forEach(cb => cb.checked = false);
+                document.querySelectorAll('.module-toggle').forEach(cb => cb.checked = false);
+
+                // Check template permissions
+                const templatePerms = ROLE_TEMPLATES[template] || [];
+                templatePerms.forEach(key => {
+                    const cb = document.querySelector(`.perm-checkbox[data-key="${key}"]`);
+                    if (cb) cb.checked = true;
+                });
+
+                // Update module toggles
+                Object.keys(PERMISSION_MODULES).forEach(mod => updateModuleToggle(mod));
+
+                // Auto-fill name if empty
+                if (!document.getElementById('role-nombre').value) {
+                    const names = { mecanico: 'MECANICO', recepcionista: 'RECEPCIONISTA', gerente: 'GERENTE', contabilidad: 'CONTABILIDAD', solo_lectura: 'VIEWER', inventario: 'INVENTARIO' };
+                    document.getElementById('role-nombre').value = names[template] || '';
+                    document.getElementById('role-display-name').value = this.options[this.selectedIndex].text.split(' - ')[0].replace(/^. /, '');
+                }
+            };
+
+            // If editing, load existing permissions
+            if (role && role.id) {
+                fetchWithAuth(`/api/access/roles/${role.id}/permisos`)
+                    .then(res => res.json())
+                    .then(existingPerms => {
+                        existingPerms.forEach(p => {
+                            const key = p.key || p.nombre;
+                            const cb = document.querySelector(`.perm-checkbox[data-key="${key}"]`);
+                            if (cb) cb.checked = true;
+                        });
+                        // Update all module toggles
+                        Object.keys(PERMISSION_MODULES).forEach(mod => updateModuleToggle(mod));
+                    })
+                    .catch(e => console.warn('Error loading role permissions:', e));
+            }
+
+            openModal('role-modal');
+        }
+
+        // Module toggle helpers (global)
+        window.toggleModulePerms = function (modKey) {
+            const container = document.getElementById('perms-' + modKey);
+            const arrow = document.getElementById('arrow-' + modKey);
+            container.classList.toggle('hidden');
+            arrow.textContent = container.classList.contains('hidden') ? 'expand_more' : 'expand_less';
+        };
+
+        window.toggleAllModulePerms = function (modKey, checked) {
+            document.querySelectorAll(`.perm-checkbox[data-module="${modKey}"]`).forEach(cb => cb.checked = checked);
+        };
+
+        window.updateModuleToggle = function (modKey) {
+            const checkboxes = document.querySelectorAll(`.perm-checkbox[data-module="${modKey}"]`);
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const toggle = document.querySelector(`.module-toggle[data-module="${modKey}"]`);
+            if (toggle) toggle.checked = allChecked;
+        };
+
+        // Form handlers
+        async function handleUserSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const id = form.querySelector('#user-id').value;
+            const isSuperAdmin = form.querySelector('#user-super-admin').checked;
+
+            const body = {
+                nombre: form.querySelector('#user-nombre').value,
+                email: form.querySelector('#user-email').value,
+                id_tenant: parseInt(form.querySelector('#user-tenant').value),
+                is_super_admin: isSuperAdmin,
+                porcentaje_mano_obra: parseFloat(form.querySelector('#user-porcentaje').value) || 0.5
+            };
+
+            const password = form.querySelector('#user-password').value;
+            if (password) body.password = password;
+
+            const selectedRoles = Array.from(form.querySelectorAll('input[name="roles"]:checked')).map(c => parseInt(c.value));
+            const selectedSucursales = Array.from(form.querySelectorAll('input[name="sucursales"]:checked')).map(c => parseInt(c.value));
+
+            // Check if we need to create a new sucursal (onboarding flow)
+            const newSucursalNombre = document.getElementById('new-sucursal-nombre').value.trim();
+            const newSucursalDireccion = document.getElementById('new-sucursal-direccion').value.trim();
+            const isSucursalEmptyVisible = !document.getElementById('sucursales-empty-container').classList.contains('hidden');
+
+            if (isSucursalEmptyVisible && newSucursalNombre) {
+                // Add create_sucursal to body
+                body.crear_sucursal = {
+                    nombre: newSucursalNombre,
+                    direccion: newSucursalDireccion || null
+                };
+            }
+
+            // Validation: non-super-admins need at least 1 sucursal (unless it's onboarding)
+            const isSucursalListVisible = !document.getElementById('sucursales-list-container').classList.contains('hidden');
+            if (!isSuperAdmin && isSucursalListVisible && selectedSucursales.length === 0) {
+                alert('Debes seleccionar al menos una sucursal para este usuario.');
+                return;
+            }
+
+            // Validation: if onboarding but no sucursal name provided
+            if (isSucursalEmptyVisible && !newSucursalNombre && !isSuperAdmin) {
+                alert('Debes crear una sucursal para este tenant.');
+                return;
+            }
+
+            // Add sucursal_ids to body
+            if (selectedSucursales.length > 0) {
+                body.sucursal_ids = selectedSucursales;
+            }
+
+            try {
+                let res;
+                if (id) {
+                    res = await fetchWithAuth(`/api/access/users/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+                } else {
+                    body.password = password;
+                    res = await fetchWithAuth('/api/access/users', { method: 'POST', body: JSON.stringify(body) });
+                }
+
+                if (!res.ok) throw new Error((await res.json()).error || 'Error');
+                const savedUser = await res.json();
+
+                // Assign roles
+                if (selectedRoles.length > 0) {
+                    await fetchWithAuth(`/api/access/users/${id || savedUser.id}/roles`, {
+                        method: 'POST',
+                        body: JSON.stringify({ role_ids: selectedRoles })
+                    });
+                }
+
+                // Assign sucursales (if selected and not handled by backend onboarding)
+                if (selectedSucursales.length > 0) {
+                    await fetchWithAuth(`/api/access/users/${id || savedUser.id}/sucursales`, {
+                        method: 'POST',
+                        body: JSON.stringify({ sucursal_ids: selectedSucursales })
+                    });
+                }
+
+                closeModal('user-modal');
+                await loadUsers();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+
+        async function handleRoleSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const id = form.querySelector('#role-id').value;
+
+            const body = {
+                nombre: form.querySelector('#role-nombre').value,
+                display_name: form.querySelector('#role-display-name').value,
+                scope: form.querySelector('#role-scope').value,
+                level: parseInt(form.querySelector('#role-level').value)
+            };
+
+            const selectedPerms = Array.from(form.querySelectorAll('input[name="permissions"]:checked')).map(c => parseInt(c.value));
+
+            try {
+                let res;
+                if (id) {
+                    res = await fetchWithAuth(`/api/access/roles/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+                } else {
+                    res = await fetchWithAuth('/api/access/roles', { method: 'POST', body: JSON.stringify(body) });
+                }
+
+                if (!res.ok) throw new Error((await res.json()).error || 'Error');
+                const savedRole = await res.json();
+
+                // Assign permissions
+                await fetchWithAuth(`/api/access/roles/${id || savedRole.id}/permisos`, {
+                    method: 'POST',
+                    body: JSON.stringify({ permiso_ids: selectedPerms })
+                });
+
+                closeModal('role-modal');
+                await loadRoles();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // Global action handlers
+        window.editUser = function (id) {
+            const user = users.find(u => u.id === id);
+            if (user) openUserModal(user);
+        };
+
+        window.deleteUser = async function (id) {
+            if (!confirm('¿Eliminar este usuario?')) return;
+            try {
+                const res = await fetchWithAuth(`/api/access/users/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error((await res.json()).error);
+                await loadUsers();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        };
+
+        window.editRole = function (id) {
+            const role = roles.find(r => r.id === id);
+            if (role) openRoleModal(role);
+        };
+
+        window.deleteRole = async function (id) {
+            if (!confirm('¿Eliminar este rol?')) return;
+            try {
+                const res = await fetchWithAuth(`/api/access/roles/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error((await res.json()).error);
+                await loadRoles();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        };
+
+        // Permission translations to Spanish
+        const PERM_TRANSLATIONS = {
+            // Access
+            'access.manage': { name: 'Gestión de Accesos', desc: 'Administrar usuarios, roles y permisos del sistema' },
+            'audit.view': { name: 'Ver Auditoría', desc: 'Consultar el registro de actividades del sistema' },
+            'permissions.view': { name: 'Ver Permisos', desc: 'Consultar la lista de permisos disponibles' },
+            'roles.create': { name: 'Crear Roles', desc: 'Crear nuevos roles en el sistema' },
+            'roles.delete': { name: 'Eliminar Roles', desc: 'Eliminar roles existentes' },
+            'roles.update': { name: 'Editar Roles', desc: 'Modificar roles existentes' },
+            'roles.view': { name: 'Ver Roles', desc: 'Consultar la lista de roles' },
+            'users.create': { name: 'Crear Usuarios', desc: 'Crear nuevas cuentas de usuario' },
+            'users.delete': { name: 'Eliminar Usuarios', desc: 'Eliminar cuentas de usuario' },
+            'users.update': { name: 'Editar Usuarios', desc: 'Modificar datos de usuarios' },
+            'users.view': { name: 'Ver Usuarios', desc: 'Consultar la lista de usuarios' },
+            // Appointments
+            'appointments.create': { name: 'Crear Citas', desc: 'Agendar nuevas citas' },
+            'appointments.delete': { name: 'Eliminar Citas', desc: 'Cancelar o eliminar citas' },
+            'appointments.update': { name: 'Editar Citas', desc: 'Modificar citas existentes' },
+            'appointments.view': { name: 'Ver Citas', desc: 'Consultar el calendario de citas' },
+            // Cash Register
+            'cashregister.manage': { name: 'Gestionar Caja', desc: 'Abrir, cerrar y administrar la caja' },
+            'cashregister.view': { name: 'Ver Caja', desc: 'Consultar estado y movimientos de caja' },
+            // Customers
+            'customers.create': { name: 'Crear Clientes', desc: 'Registrar nuevos clientes' },
+            'customers.delete': { name: 'Eliminar Clientes', desc: 'Eliminar fichas de clientes' },
+            'customers.update': { name: 'Editar Clientes', desc: 'Modificar datos de clientes' },
+            'customers.view': { name: 'Ver Clientes', desc: 'Consultar la base de datos de clientes' },
+            // Inventory
+            'inventory.adjust': { name: 'Ajustar Inventario', desc: 'Realizar ajustes de stock' },
+            'inventory.create': { name: 'Crear Productos', desc: 'Añadir nuevos productos al inventario' },
+            'inventory.delete': { name: 'Eliminar Productos', desc: 'Eliminar productos del inventario' },
+            'inventory.update': { name: 'Editar Productos', desc: 'Modificar información de productos' },
+            'inventory.view': { name: 'Ver Inventario', desc: 'Consultar el stock de productos' },
+            // Invoices
+            'invoices.create': { name: 'Crear Facturas', desc: 'Generar nuevas facturas' },
+            'invoices.delete': { name: 'Eliminar Facturas', desc: 'Anular facturas emitidas' },
+            'invoices.update': { name: 'Editar Facturas', desc: 'Modificar facturas existentes' },
+            'invoices.view': { name: 'Ver Facturas', desc: 'Consultar historial de facturación' },
+            // Payments
+            'payments.create': { name: 'Registrar Pagos', desc: 'Registrar cobros y pagos' },
+            'payments.delete': { name: 'Eliminar Pagos', desc: 'Anular registros de pago' },
+            'payments.update': { name: 'Editar Pagos', desc: 'Modificar registros de pago' },
+            'payments.view': { name: 'Ver Pagos', desc: 'Consultar historial de pagos' },
+            // Purchases
+            'purchases.create': { name: 'Crear Compras', desc: 'Registrar nuevas compras' },
+            'purchases.delete': { name: 'Eliminar Compras', desc: 'Anular compras registradas' },
+            'purchases.update': { name: 'Editar Compras', desc: 'Modificar compras existentes' },
+            'purchases.view': { name: 'Ver Compras', desc: 'Consultar historial de compras' },
+            // Suppliers
+            'suppliers.create': { name: 'Crear Proveedores', desc: 'Registrar nuevos proveedores' },
+            'suppliers.delete': { name: 'Eliminar Proveedores', desc: 'Eliminar fichas de proveedores' },
+            'suppliers.update': { name: 'Editar Proveedores', desc: 'Modificar datos de proveedores' },
+            'suppliers.view': { name: 'Ver Proveedores', desc: 'Consultar la lista de proveedores' },
+            // Vehicles
+            'vehicles.create': { name: 'Crear Vehículos', desc: 'Registrar nuevos vehículos' },
+            'vehicles.delete': { name: 'Eliminar Vehículos', desc: 'Eliminar fichas de vehículos' },
+            'vehicles.update': { name: 'Editar Vehículos', desc: 'Modificar datos de vehículos' },
+            'vehicles.view': { name: 'Ver Vehículos', desc: 'Consultar la base de datos de vehículos' },
+            // Work Orders
+            'workorders.assign': { name: 'Asignar Órdenes', desc: 'Asignar técnicos a órdenes de trabajo' },
+            'workorders.create': { name: 'Crear Órdenes', desc: 'Crear nuevas órdenes de trabajo' },
+            'workorders.delete': { name: 'Eliminar Órdenes', desc: 'Eliminar órdenes de trabajo' },
+            'workorders.status': { name: 'Cambiar Estado', desc: 'Modificar el estado de órdenes' },
+            'workorders.update': { name: 'Editar Órdenes', desc: 'Modificar órdenes de trabajo' },
+            'workorders.view': { name: 'Ver Órdenes', desc: 'Consultar órdenes de trabajo' },
+            'workorders.close': { name: 'Cerrar Órdenes', desc: 'Finalizar y cerrar órdenes de trabajo' },
+            // Reports
+            'reports.view': { name: 'Ver Reportes', desc: 'Consultar informes y estadísticas' },
+            'reports.export': { name: 'Exportar Reportes', desc: 'Descargar informes en diferentes formatos' },
+            // Config
+            'config.sucursales': { name: 'Config. Sucursales', desc: 'Administrar sucursales del taller' },
+            'config.tenants': { name: 'Config. Tenants', desc: 'Administrar tenants del sistema' },
+            // Fleet
+            'fleet.create': { name: 'Crear Flotas', desc: 'Registrar nuevas flotas de vehículos' },
+            'fleet.delete': { name: 'Eliminar Flotas', desc: 'Eliminar flotas registradas' },
+            'fleet.update': { name: 'Editar Flotas', desc: 'Modificar información de flotas' },
+            'fleet.view': { name: 'Ver Flotas', desc: 'Consultar flotas registradas' },
+            'fleet.assign': { name: 'Asignar Flotas', desc: 'Asignar vehículos a flotas' },
+            'fleet.reports': { name: 'Reportes Flotas', desc: 'Ver informes de flotas' },
+            'fleet.maintenance': { name: 'Mant. Flotas', desc: 'Gestionar mantenimiento de flotas' },
+            'fleet.reminders': { name: 'Recordatorios Flotas', desc: 'Configurar alertas de flotas' },
+            'fleet.costs': { name: 'Costos Flotas', desc: 'Ver costos asociados a flotas' },
+            // Marketing
+            'marketing.campaigns': { name: 'Campañas', desc: 'Gestionar campañas de marketing' },
+            'marketing.templates': { name: 'Plantillas Email', desc: 'Administrar plantillas de email' },
+            // Marketplace
+            'marketplace.manage': { name: 'Gestionar Marketplace', desc: 'Administrar publicaciones del marketplace' },
+            'marketplace.publish': { name: 'Publicar Marketplace', desc: 'Publicar en el marketplace' },
+            // Loyalty
+            'loyalty.manage': { name: 'Gestionar Fidelización', desc: 'Administrar programa de fidelización' },
+            'loyalty.view': { name: 'Ver Fidelización', desc: 'Consultar puntos y recompensas' },
+            // Services
+            'services.manage': { name: 'Gestionar Servicios', desc: 'Administrar catálogo de servicios' },
+            // Other
+            'dashboard.view': { name: 'Ver Dashboard', desc: 'Acceder al panel principal' },
+            'settings.general': { name: 'Config. General', desc: 'Modificar configuración del sistema' },
+            'notifications.send': { name: 'Enviar Notificaciones', desc: 'Enviar notificaciones a usuarios' }
+        };
+
+        function getPermTranslation(key) {
+            const t = PERM_TRANSLATIONS[key];
+            if (t) return t;
+            // Fallback: generate from key
+            const parts = key.split('.');
+            const action = parts[1] || '';
+            const module = parts[0] || '';
+            const actionMap = { view: 'Ver', create: 'Crear', update: 'Editar', delete: 'Eliminar', manage: 'Gestionar' };
+            return {
+                name: `${actionMap[action] || action} ${module}`,
+                desc: `Permiso de ${action} para ${module}`
+            };
+        }
+
+        window.viewRolePermissions = async function (id) {
+            try {
+                const role = roles.find(r => r.id === id);
+                const res = await fetchWithAuth(`/api/access/roles/${id}/permisos`);
+                const perms = await res.json();
+
+                document.getElementById('permissions-modal-title').textContent =
+                    `Permisos de ${role?.display_name || role?.nombre || 'Rol'}`;
+
+                const container = document.getElementById('permissions-modal-content');
+
+                if (perms.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-8 text-[#9da6b9]">
+                            <span class="material-symbols-outlined text-4xl mb-2 block">lock_open</span>
+                            Este rol no tiene permisos asignados
+                        </div>`;
+                } else {
+                    // Group by module
+                    const grouped = {};
+                    perms.forEach(p => {
+                        const key = p.key || p.nombre;
+                        const module = key.split('.')[0] || 'otros';
+                        if (!grouped[module]) grouped[module] = [];
+                        grouped[module].push(p);
+                    });
+
+                    container.innerHTML = Object.entries(grouped).map(([mod, items]) => `
+                        <div class="bg-[#1a1d24] rounded-xl border border-[#282e39] p-4">
+                            <h4 class="text-[var(--brand-orange)] font-bold text-xs uppercase tracking-wider mb-3 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">folder</span>
+                                ${mod}
+                            </h4>
+                            <div class="space-y-2">
+                                ${items.map(p => {
+                        const key = p.key || p.nombre;
+                        const t = getPermTranslation(key);
+                        return `
+                                        <div class="flex items-start gap-2 py-1.5 border-b border-[#282e39] last:border-0">
+                                            <span class="text-green-400 mt-0.5">✓</span>
+                                            <div>
+                                                <div class="text-white text-sm font-medium">${escapeHtml(t.name)}</div>
+                                                <div class="text-[#9da6b9] text-xs">${escapeHtml(t.desc)}</div>
+                                            </div>
+                                        </div>`;
+                    }).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+
+                openModal('permissions-modal');
+            } catch (e) {
+                console.error('Error loading permissions:', e);
+                alert('Error al cargar permisos: ' + e.message);
+            }
+        };
+
+        // Utilities
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Sidebar toggle
+        window.toggleSubmenu = function (id) {
+            const submenu = document.getElementById(id);
+            const arrow = document.getElementById(id.replace('submenu', 'arrow'));
+            submenu.classList.toggle('hidden');
+            submenu.classList.toggle('flex');
+            if (arrow) arrow.style.transform = submenu.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        };
+
+        // Logout
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('[data-logout]')) {
+                e.preventDefault();
+                clearSession();
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
+
+    <!-- Sidebar Manager - Dynamic sidebar generation -->
+    <script type="module" src="./sidebar-manager.js"></script>
+</body>
+
+</html>

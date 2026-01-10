@@ -189,6 +189,9 @@ router.get('/movimientos', verifyJWT, async (req, res) => {
             case 'anio':
                 fechaDesde = `${hoy.getFullYear()}-01-01`;
                 break;
+            case 'custom':
+                // Se usarán fechaInicio y fechaFin del query
+                break;
             // 'todo' no filtra por fecha
         }
 
@@ -218,7 +221,20 @@ router.get('/movimientos', verifyJWT, async (req, res) => {
         const params = [tenantId];
         let paramIndex = 2;
 
-        if (fechaDesde) {
+        const { fechaInicio, fechaFin } = req.query;
+
+        if (periodo === 'custom') {
+            if (fechaInicio) {
+                query += ` AND mc.fecha_movimiento >= $${paramIndex}`;
+                params.push(fechaInicio);
+                paramIndex++;
+            }
+            if (fechaFin) {
+                query += ` AND mc.fecha_movimiento <= $${paramIndex}`;
+                params.push(fechaFin);
+                paramIndex++;
+            }
+        } else if (fechaDesde) {
             query += ` AND mc.fecha_movimiento >= $${paramIndex}`;
             params.push(fechaDesde);
             paramIndex++;
@@ -237,6 +253,14 @@ router.get('/movimientos', verifyJWT, async (req, res) => {
                 mc.concepto ILIKE $${paramIndex}
             )`;
             params.push(`%${busqueda}%`);
+            paramIndex++;
+        }
+
+        // Nuevo: Filtrado por ID Cliente exacto (para el autocomplete)
+        const { idCliente } = req.query;
+        if (idCliente) {
+            query += ` AND cf.id = $${paramIndex}`;
+            params.push(idCliente);
             paramIndex++;
         }
 
@@ -349,7 +373,7 @@ router.post('/cargar', verifyJWT, async (req, res) => {
 
         // 1. Obtener o crear cuenta corriente del cliente
         let cuentaResult = await client.query(`
-            SELECT id, saldo FROM cuentacorriente 
+            SELECT id, saldo_actual FROM cuentacorriente 
             WHERE id_cliente = $1 AND id_tenant = $2
         `, [idCliente, tenantId]);
 
@@ -359,7 +383,7 @@ router.post('/cargar', verifyJWT, async (req, res) => {
         if (cuentaResult.rows.length === 0) {
             // Crear cuenta corriente
             const nuevaCuenta = await client.query(`
-                INSERT INTO cuentacorriente (id_cliente, id_tenant, saldo, estado, created_by)
+                INSERT INTO cuentacorriente (id_cliente, id_tenant, saldo_actual, estado, created_by)
                 VALUES ($1, $2, 0, 'ACTIVA', $3)
                 RETURNING id
             `, [idCliente, tenantId, userId]);
@@ -367,7 +391,7 @@ router.post('/cargar', verifyJWT, async (req, res) => {
             saldoAnterior = 0;
         } else {
             idCuenta = cuentaResult.rows[0].id;
-            saldoAnterior = parseFloat(cuentaResult.rows[0].saldo) || 0;
+            saldoAnterior = parseFloat(cuentaResult.rows[0].saldo_actual) || 0;
         }
 
         // 2. Crear movimiento de cargo
@@ -394,7 +418,7 @@ router.post('/cargar', verifyJWT, async (req, res) => {
 
         // 3. Actualizar saldo de la cuenta
         await client.query(`
-            UPDATE cuentacorriente SET saldo = $1 WHERE id = $2
+            UPDATE cuentacorriente SET saldo_actual = $1 WHERE id = $2
         `, [saldoPosterior, idCuenta]);
 
         await client.query('COMMIT');

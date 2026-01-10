@@ -450,7 +450,7 @@
 
     <!-- FOOTER -->
     <footer>
-        <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
+        <p>&copy; 2021 Goversa S.L. Todos los derechos reservados.</p>
     </footer>
 
     <!-- Modal Cita -->
@@ -460,11 +460,16 @@
             <form id="cita-form" class="space-y-4">
                 <input type="hidden" id="cita-id">
 
-                <div>
+                <div class="relative">
                     <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Cliente</label>
-                    <input type="text" id="cita-cliente"
+                    <input type="hidden" id="cita-cliente-id">
+                    <input type="text" id="cita-cliente" autocomplete="off"
                         class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
-                        placeholder="Nombre del cliente" required>
+                        placeholder="Buscar o escribir nombre del cliente" required>
+                    <div id="cliente-suggestions"
+                        class="hidden absolute z-50 w-full mt-1 bg-[#1a1a1a] border border-[#3a3a3a] rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                        <!-- Suggestions will be injected here -->
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Email</label>
@@ -491,15 +496,15 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Fecha</label>
-                        <input type="date" id="cita-fecha"
-                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
-                            required>
+                        <input type="text" id="cita-fecha" readonly
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none cursor-pointer"
+                            placeholder="Seleccionar fecha" required>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-[#a0a0a0] mb-1">Hora</label>
-                        <input type="time" id="cita-hora"
-                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none"
-                            required>
+                        <input type="text" id="cita-hora" readonly
+                            class="w-full rounded-lg border border-[#2a2a2a] bg-[#111318] p-2 text-white text-sm focus:border-[var(--brand-orange)] outline-none cursor-pointer"
+                            placeholder="Seleccionar hora" required>
                     </div>
                 </div>
 
@@ -643,7 +648,7 @@
 
     <!-- FOOTER -->
     <footer>
-        <p>&copy; 2025 Goversa Mobility S.L. Todos los derechos reservados.</p>
+
     </footer>
 
     <!-- Modal Cita -->
