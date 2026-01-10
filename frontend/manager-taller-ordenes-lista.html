@@ -303,9 +303,9 @@
     .filters-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding: 12px 0;
-      margin-bottom: 8px;
+      gap: 8px;
+      padding: 8px 0;
+      margin-bottom: 4px;
     }
 
     /* Barra de búsqueda - usa estilos globales de animated-search-form */
@@ -352,13 +352,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 10px 16px;
-      border-radius: 8px;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 6px;
       background: transparent;
       border: none;
       color: #9da6b9;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -423,10 +423,10 @@
     .secondary-filters {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding: 12px;
+      gap: 8px;
+      padding: 8px 10px;
       background: #111318;
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid #282e39;
     }
 
@@ -454,9 +454,9 @@
       appearance: none;
       background: #1a1d24;
       border: 1px solid #282e39;
-      border-radius: 8px;
-      padding: 10px 36px 10px 12px;
-      font-size: 13px;
+      border-radius: 6px;
+      padding: 6px 32px 6px 10px;
+      font-size: 12px;
       color: #fff;
       cursor: pointer;
       transition: border-color 0.2s, box-shadow 0.2s;
@@ -490,8 +490,8 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding-top: 12px;
+      gap: 8px;
+      padding-top: 8px;
       border-top: 1px solid #282e39;
     }
 
@@ -838,20 +838,19 @@
         <!-- Lista de órdenes -->
         <div class="orders-list-panel">
 
-          <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-[#282e39] mb-4">
+          <div class="flex flex-wrap justify-between items-center gap-2 pb-2 border-b border-[#282e39] mb-2">
             <div>
-              <h1 class="text-white text-2xl font-bold leading-tight">Órdenes de Trabajo</h1>
-              <p class="text-[#9da6b9] text-sm mt-1">Gestión y seguimiento de reparaciones</p>
+              <h1 class="text-white text-xl font-bold leading-tight">Órdenes de Trabajo</h1>
             </div>
             <a href="manager-taller-ordenes.html"
-              class="flex items-center justify-center rounded-lg h-10 px-5 bg-[var(--brand-orange)] text-white text-sm font-bold hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">
-              <span class="material-symbols-outlined mr-2 text-xl">add_circle</span>
+              class="flex items-center justify-center rounded-lg h-9 px-4 bg-[var(--brand-orange)] text-white text-sm font-bold hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">
+              <span class="material-symbols-outlined mr-1 text-lg">add_circle</span>
               <span>Nueva Orden</span>
             </a>
           </div>
 
           <!-- Selector de Sucursal Centrado -->
-          <div class="flex justify-center mb-4">
+          <div class="flex justify-center mb-2">
             <div id="sucursal-selector-container"></div>
           </div>
 
@@ -935,25 +934,25 @@
                 <thead class="bg-[#1c1f27] sticky top-0 z-10">
                   <tr>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       N° Orden</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Cliente</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Vehículo</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Entrada</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Estado</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Pago</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39] text-right">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39] text-right">
                       Total</th>
                     <th class="px-2 py-4 border-b border-[#282e39]"></th>
                   </tr>
@@ -1239,8 +1238,8 @@
   </script>
 
   <script type="module">
-    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
-    import { registrarPago } from '/services/pagos-service.js';
+    import { getOrdenes, getOrdenById, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
+    import { registrarPago, eliminarPago } from '/services/pagos-service.js';
     import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from '/auth.js';
     import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
@@ -1455,7 +1454,7 @@
       // --- CARGAR ÓRDENES ---
       async function cargarOrdenes(filtros = {}) {
         const tbody = document.getElementById('orders-table-body');
-        tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...</td></tr>';
 
         try {
           // Usar la sucursal del selector (que ya lee de localStorage si no hay selección)
@@ -1470,7 +1469,7 @@
           renderOrdenes();
         } catch (error) {
           console.error('Error cargando órdenes:', error);
-          tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-red-400"><i class="fas fa-exclamation-circle mr-2"></i> Error: ${error.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-4 text-center text-red-400"><i class="fas fa-exclamation-circle mr-2"></i> Error: ${error.message}</td></tr>`;
         }
       }
 
@@ -1497,7 +1496,7 @@
           : `${ordenes.length} orden(es)`;
 
         if (ordenesVisibles.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]">No hay órdenes que coincidan con los filtros</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-[#9da6b9]">No hay órdenes que coincidan con los filtros</td></tr>';
           return;
         }
 
@@ -1518,28 +1517,28 @@
 
           return `
           <tr class="order-row hover:bg-[#1a1d24] cursor-pointer transition-colors ${index === 0 ? 'active' : ''}" data-id="${orden.id}">
-            <td class="px-5 py-4 text-[var(--brand-orange)] font-bold">#${orden.id}</td>
-            <td class="px-5 py-4 text-white font-medium">
+            <td class="px-3 py-2 text-[var(--brand-orange)] font-bold text-sm">#${orden.id}</td>
+            <td class="px-3 py-2 text-white font-medium text-sm">
               <div>${orden.cliente_nombre || '-'}</div>
               <div class="text-xs text-[#9da6b9]">${orden.cliente_telefono || ''}</div>
             </td>
-            <td class="px-5 py-4 text-[#9da6b9]">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} <span class="text-xs border border-[#282e39] px-1 rounded ml-1">${orden.vehiculo_matricula || ''}</span></td>
-            <td class="px-5 py-4 text-[#9da6b9]">${fecha}</td>
-            <td class="px-5 py-4">
+            <td class="px-3 py-2 text-[#9da6b9] text-sm">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} <span class="text-xs border border-[#282e39] px-1 rounded ml-1">${orden.vehiculo_matricula || ''}</span></td>
+            <td class="px-3 py-2 text-[#9da6b9] text-sm">${fecha}</td>
+            <td class="px-3 py-2">
               <div class="estado-dropdown-container" data-orden-id="${orden.id}">
-                <div class="estado-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border" style="${estadoBgStyle}" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
+                <div class="estado-badge inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border" style="${estadoBgStyle}" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
                   <span class="w-1.5 h-1.5 rounded-full" style="${dotStyle}"></span> ${estadoNombre}
-                  <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
+                  <span class="material-symbols-outlined" style="font-size: 12px;">expand_more</span>
                 </div>
                 <div class="estado-dropdown" id="dropdown-${orden.id}"></div>
               </div>
             </td>
-            <td class="px-5 py-4">
-              <div class="${estadoPagoClass} font-medium">${estadoPagoLabel}</div>
+            <td class="px-3 py-2">
+              <div class="${estadoPagoClass} font-medium text-sm">${estadoPagoLabel}</div>
               <div class="text-xs text-[#9da6b9]">${orden.ultimo_medio_pago || 'Sin pagos'}</div>
             </td>
-            <td class="px-5 py-4 text-right font-medium text-green-400">${parseFloat(orden.total_neto || 0).toFixed(2)}€</td>
-            <td class="px-2 py-4 text-right">
+            <td class="px-3 py-2 text-right font-medium text-green-400 text-sm">${parseFloat(orden.total_neto || 0).toFixed(2)}€</td>
+            <td class="px-2 py-2 text-right">
               <div class="acciones-dropdown-container" data-orden-id="${orden.id}" data-estado-pago="${orden.estado_pago}" data-tiene-factura="${orden.id_factura || orden.numero_factura ? 'true' : 'false'}">
                 <button class="btn-acciones text-[#9da6b9] hover:text-white cursor-pointer p-1 rounded hover:bg-[#282e39] transition-colors" data-id="${orden.id}">
                   <span class="material-symbols-outlined">more_vert</span>

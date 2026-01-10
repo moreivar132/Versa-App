@@ -420,13 +420,9 @@
           </div>
         </header>
 
-        <!-- Sucursal Selector - Centrado -->
-        <div class="flex justify-center mb-6">
-          <div id="sucursal-container"
-            class="flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]">
-            <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
-            <span class="text-white font-medium text-sm">Cargando...</span>
-          </div>
+        <!-- Selector de Sucursal Estandarizado -->
+        <div class="sucursal-selector-wrapper">
+          <div id="sucursal-selector-container"></div>
         </div>
 
         <!-- ==========================================
@@ -812,6 +808,7 @@
     import { getOrdenes } from '/services/ordenes-service.js';
     import { getVentas } from '/services/ventas-service.js';
     import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getCurrentUser } from '/auth.js';
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
     // Logout logic
     // Logout logic - Event Delegation
@@ -1094,9 +1091,8 @@
         const isoStart = start.toISOString();
         const isoEnd = end.toISOString();
 
-        // 1. Cargar Órdenes (Filtradas por fecha)
-        const sucursalSelect = document.getElementById('sucursal-select');
-        const sucursalId = sucursalSelect ? sucursalSelect.value : '';
+        // 1. Cargar Órdenes (Filtradas por fecha y sucursal activa)
+        const sucursalId = getCurrentSucursalId() || '';
 
         // Fetch orders
         const ordenesResponse = await getOrdenes({
@@ -1852,77 +1848,20 @@
       }
     });
 
-    // Constante para la clave de localStorage
-    const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
-
-    // Cargar sucursales y mostrar en selector
-    async function loadSucursales() {
-      try {
-        const response = await fetchWithAuth('/api/caja/sucursales');
-        if (!response.ok) throw new Error('Error cargando sucursales');
-        const data = await response.json();
-
-        const sucursalContainer = document.getElementById('sucursal-container');
-        if (!sucursalContainer) return;
-
-        if (data.puede_seleccionar && data.sucursales.length > 1) {
-          // Verificar si hay una selección guardada en localStorage
-          const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
-          // Usar la guardada si existe y es válida, sino usar la actual del backend
-          const selectedSucursalId = savedSucursal && data.sucursales.some(s => s.id == savedSucursal)
-            ? savedSucursal
-            : data.sucursal_actual;
-
-          // Usuario puede seleccionar entre múltiples sucursales
-          const options = data.sucursales.map(s => {
-            const label = s.tenant_nombre ? `${s.tenant_nombre} - ${s.nombre}` : s.nombre;
-            return `<option value="${s.id}"${s.id == selectedSucursalId ? ' selected' : ''}>${label}</option>`;
-          }).join('');
-
-          sucursalContainer.innerHTML = `
-            <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
-            <select id="sucursal-select" class="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer">
-              ${options}
-            </select>
-          `;
-
-          // Agregar event listener para cambio de sucursal
-          setTimeout(() => {
-            const select = document.getElementById('sucursal-select');
-            if (select) {
-              select.addEventListener('change', () => {
-                // Guardar selección en localStorage para persistencia
-                localStorage.setItem(SUCURSAL_STORAGE_KEY, select.value);
-                // Recargar estadísticas cuando cambia la sucursal
-                const range = document.getElementById('time-range-select')?.value || 'month';
-                cargarDashboard(range);
-              });
-            }
-          }, 0);
-        } else {
-          // Solo una sucursal - mostrar label
-          const sucursal = data.sucursales.find(s => s.id == data.sucursal_actual) || data.sucursales[0];
-          const label = sucursal ? (sucursal.tenant_nombre ? `${sucursal.tenant_nombre} - ${sucursal.nombre}` : sucursal.nombre) : 'Sin sucursal';
-          sucursalContainer.innerHTML = `
-            <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
-            <span class="text-white font-medium text-sm">${label}</span>
-          `;
-          // Si solo hay una sucursal, guardarla también
-          if (sucursal) {
-            localStorage.setItem(SUCURSAL_STORAGE_KEY, sucursal.id);
-          }
+    // Inicializar selector de sucursal estándar
+    (async () => {
+      const sucursalId = await initSucursalSelector('sucursal-selector-container', {
+        onchange: async () => {
+          // Recargar dashboard cuando cambia la sucursal
+          const range = document.getElementById('time-range-select')?.value || 'month';
+          await cargarDashboard(range);
         }
-      } catch (error) {
-        console.warn('Error loading sucursales:', error);
-        const sucursalContainer = document.getElementById('sucursal-container');
-        if (sucursalContainer) {
-          sucursalContainer.innerHTML = `
-            <span class="material-symbols-outlined text-[var(--brand-orange)]">store</span>
-            <span class="text-[#9da6b9] font-medium text-sm">Sin sucursal</span>
-          `;
-        }
-      }
-    }
+      });
+
+      // Cargar dashboard inicial
+      const range = document.getElementById('time-range-select')?.value || 'month';
+      await cargarDashboard(range);
+    })();
 
     // Cargar al inicio
     loadSucursales();

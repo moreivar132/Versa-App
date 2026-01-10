@@ -14,6 +14,7 @@
 
     <!-- Estilos Globales del Manager -->
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
 
     <style>
         body {
@@ -313,6 +314,20 @@
 
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
+
+  <script type="module">
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+    
+    // Inicializar selector de sucursal estándar
+    (async () => {
+      await initSucursalSelector('sucursal-selector-container', {
+        onchange: async (nuevaSucursalId) => {
+          console.log('Sucursal cambiada:', nuevaSucursalId);
+          // Recargar datos si es necesario
+        }
+      });
+    })();
+  </script>
 </body>
 
 </html>

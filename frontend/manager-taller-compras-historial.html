@@ -28,8 +28,6 @@
 
         /* --- SCROLLBAR --- */
         /* Redundant scrollbar styles removed */
-
-
         /* --- SIDEBAR --- */
         #sidebar {
             background: rgba(17, 19, 24, 0.85);
@@ -40,8 +38,6 @@
 
         /* --- FORM CONTENEDOR --- */
         /* --- FORM CONTENEDOR --- */
-
-
 
         .form-main-title {
             font-size: 28px;
@@ -684,6 +680,11 @@
             </header>
 
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
+                <!-- Selector de Sucursal Estandarizado -->
+                <div class="sucursal-selector-wrapper">
+                  <div id="sucursal-selector-container"></div>
+                </div>
+
 
                 <div class="manager-panel">
 
@@ -700,9 +701,7 @@
                         </div>
                     </div>
 
-                    <!-- Selector de Sucursal Centrado -->
                     <div class="flex justify-center mb-6">
-                        <div id="sucursal-selector-container"></div>
                     </div>
 
                     <!-- STATS -->
@@ -772,8 +771,6 @@
                             </button>
                         </div>
                     </div>
-
-
                     <!-- TABLE -->
                     <h3 class="text-lg font-bold text-white mb-4 pl-2 border-l-4 border-[var(--brand-orange)]">Listado
                         de Compras</h3>
@@ -892,7 +889,6 @@
 
         document.addEventListener("DOMContentLoaded", async () => {
             // Inicializar selector de sucursal
-            currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
                 onchange: (sucursalId) => {
                     currentSucursalId = sucursalId;
                     loadPurchases();
@@ -1173,6 +1169,19 @@
 
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
+
+  <script type="module">
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+    
+    (async () => {
+      await initSucursalSelector('sucursal-selector-container', {
+        onchange: async (nuevaSucursalId) => {
+          console.log('Sucursal cambiada:', nuevaSucursalId);
+          location.reload();
+        }
+      });
+    })();
+  </script>
 </body>
 
 </html>

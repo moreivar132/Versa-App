@@ -666,8 +666,12 @@
                     <i class="fas fa-bars"></i>
                 </button>
             </header>
-
             <main class="flex-1 overflow-y-auto p-6">
+                <!-- Selector de Sucursal Estandarizado -->
+                <div class="sucursal-selector-wrapper">
+                  <div id="sucursal-selector-container"></div>
+                </div>
+
                 <div class="max-w-6xl mx-auto">
                     <!-- Header -->
                     <div class="mb-8">
@@ -1010,6 +1014,7 @@
 
     <script type="module">
         import { fetchWithAuth, getSession, clearSession, redirectToLogin } from '/auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
         import { getEstadosOrden, updateEstadoConfig } from '/services/ordenes-service.js';
 
         // Estado por defecto
@@ -1361,6 +1366,18 @@
     </script>
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
+  <script type="module">
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+    
+    (async () => {
+      await initSucursalSelector('sucursal-selector-container', {
+        onchange: async (nuevaSucursalId) => {
+          console.log('Sucursal cambiada:', nuevaSucursalId);
+          location.reload();
+        }
+      });
+    })();
+  </script>
 </body>
 
 </html>
