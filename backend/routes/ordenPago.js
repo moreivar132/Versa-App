@@ -92,6 +92,38 @@ router.get('/orden/:idOrden', verifyJWT, async (req, res) => {
     }
 });
 
+// DELETE /api/ordenpago/:idPago - Eliminar un pago
+router.delete('/:idPago', verifyJWT, async (req, res) => {
+    try {
+        const { idPago } = req.params;
+
+        if (!idPago) {
+            return res.status(400).json({
+                success: false,
+                mensaje: 'ID de pago requerido'
+            });
+        }
+
+        const pagoEliminado = await ordenPagoRepository.eliminarPago(parseInt(idPago));
+
+        if (!pagoEliminado) {
+            return res.status(404).json({
+                success: false,
+                mensaje: 'Pago no encontrado'
+            });
+        }
+
+        res.json({
+            success: true,
+            mensaje: 'Pago eliminado correctamente',
+            pago: pagoEliminado
+        });
+    } catch (error) {
+        console.error('Error eliminando pago:', error);
+        res.status(500).json({ success: false, mensaje: error.message });
+    }
+});
+
 // GET /api/ordenpago/estadisticas/semanal - Obtener pagos por día de la semana actual
 router.get('/estadisticas/semanal', verifyJWT, async (req, res) => {
     try {

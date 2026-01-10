@@ -35,8 +35,9 @@ function updatePaymentSummary(totalOrden = null) {
         badge.style.display = window.orderPayments.length > 0 ? 'inline' : 'none';
     }
 
+    // Siempre actualizar el campo de importe al saldo pendiente
     const importeInput = document.getElementById('nuevo-pago-importe');
-    if (importeInput && (importeInput.value === '' || importeInput.value === '0')) {
+    if (importeInput) {
         importeInput.value = saldoPendiente.toFixed(2);
     }
 }
@@ -53,10 +54,14 @@ function renderPayments() {
     } else {
         if (emptyMsg) emptyMsg.style.display = 'none';
         window.orderPayments.forEach((pago, index) => {
+            // Manejar diferentes nombres de campo del método de pago (frontend vs backend)
+            const nombreMetodo = pago.metodoNombre || pago.nombreMedioPago || pago.medio_pago_nombre || pago.nombre_medio_pago || pago.nombre || 'Sin método';
+            const importePago = parseFloat(pago.importe || pago.monto || 0);
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
-        <td style="color: var(--text-secondary);">${pago.metodoNombre}</td>
-        <td style="text-align: right; font-weight: 600;">${pago.importe.toFixed(2)}€</td>
+        <td style="color: var(--text-secondary);">${nombreMetodo}</td>
+        <td style="text-align: right; font-weight: 600;">${importePago.toFixed(2)}€</td>
         <td style="text-align: right;">
           <button type="button" class="remove-pago-btn" data-index="${index}" style="background: none; border: none; cursor: pointer; font-size: 16px; color: #ef4444;">&times;</button>
         </td>

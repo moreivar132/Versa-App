@@ -1724,13 +1724,17 @@
             window.orderPayments = pagos.map(pago => ({
               idMedioPago: pago.id_medio_pago,
               codigoMedioPago: pago.medio_pago_codigo,
-              nombreMedioPago: pago.medio_pago_nombre,
+              metodoNombre: pago.medio_pago_nombre,
               importe: parseFloat(pago.importe),
               referencia: pago.referencia
             }));
             // Si existe función de renderizar pagos
             if (typeof window.renderPayments === 'function') {
               window.renderPayments();
+            }
+            // Actualizar resumen de pagos
+            if (typeof window.updatePaymentSummary === 'function') {
+              window.updatePaymentSummary();
             }
           }
 
@@ -2039,14 +2043,14 @@
         inputId: 'new-item-name',
         optionsId: 'product-options',
         searchFunction: async (query, params) => {
-          const sucursalId = params?.idSucursal || document.getElementById('taller').value;
+          const sucursalId = params?.idSucursal || sucursalActivaId;
           if (!sucursalId) {
-            showToast('Selecciona un taller para buscar en el inventario', true);
+            showToast('Selecciona una sucursal para buscar en el inventario', true);
             return [];
           }
           return searchInventario(query, sucursalId);
         },
-        getSearchParams: () => ({ idSucursal: document.getElementById('taller').value }),
+        getSearchParams: () => ({ idSucursal: sucursalActivaId }),
         renderOption: item => {
           const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
           const price = parseFloat(rawPrice);
@@ -2140,16 +2144,13 @@
         orderItems.forEach((item, index) => {
           const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
 
-          // Badges para Tipo
-          const typeLabel = item.tipoItemLabel || (item.tipoItem === 'SERVICIO' ? 'Servicio' : 'Repuesto');
-          let typeBadge = '';
-          if (item.tipoItem === 'PRODUCTO') {
-            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-blue-900 text-blue-200 border border-blue-700">Repuesto</span>';
-          } else if (item.tipoItem === 'SERVICIO') {
-            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-orange-900 text-orange-200 border border-orange-700">Servicio</span>';
-          } else {
-            typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${typeLabel}</span>`;
-          }
+          // Select para Tipo (editable)
+          const tipoSelectHtml = `
+            <select class="tipo-select edit-tipo-select" data-index="${index}" style="background: transparent; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 12px; color: white; cursor: pointer;">
+              <option value="PRODUCTO" ${item.tipoItem === 'PRODUCTO' ? 'selected' : ''}>Repuesto</option>
+              <option value="SERVICIO" ${item.tipoItem === 'SERVICIO' ? 'selected' : ''}>Servicio</option>
+            </select>
+          `;
 
           // Generar opciones de IVA dinámicamente
           const itemIva = parseFloat(item.iva) || 0;
@@ -2172,11 +2173,20 @@
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${item.descripcion}</td>
-            <td>${item.precio.toFixed(2)}€</td>
-            <td>${item.cantidad}</td>
-            <td>${typeBadge}</td>
-            <td>${(item.descuento || 0).toFixed(2)}€</td>
-            <td>${subtotal.toFixed(2)}€</td>
+            <td>
+              <input type="number" class="edit-precio-input" data-index="${index}" value="${item.precio.toFixed(2)}" step="0.01" min="0" 
+                style="width: 70px; background: transparent; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 6px; font-size: 12px; color: white; text-align: right;" />€
+            </td>
+            <td>
+              <input type="number" class="edit-cantidad-input" data-index="${index}" value="${item.cantidad}" min="1" step="1"
+                style="width: 50px; background: transparent; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 6px; font-size: 12px; color: white; text-align: center;" />
+            </td>
+            <td>${tipoSelectHtml}</td>
+            <td>
+              <input type="number" class="edit-bonif-input" data-index="${index}" value="${(item.descuento || 0).toFixed(2)}" step="0.01" min="0"
+                style="width: 60px; background: transparent; border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 6px; font-size: 12px; color: white; text-align: right;" />€
+            </td>
+            <td class="subtotal-cell" style="font-weight: 500;">${subtotal.toFixed(2)}€</td>
             <td>
               <select class="iva-select edit-iva-select" data-index="${index}">
                 ${ivaOptionsHtml}
@@ -2197,8 +2207,9 @@
         }
       });
 
-      // Event listener para cambiar el IVA de líneas ya agregadas
+      // Event listener para cambiar el IVA y Tipo de líneas ya agregadas
       document.getElementById('order-items-list').addEventListener('change', (e) => {
+        // Cambio de IVA
         if (e.target.classList.contains('edit-iva-select')) {
           const index = parseInt(e.target.dataset.index);
           const newIva = parseFloat(e.target.value) || 0;
@@ -2211,7 +2222,62 @@
             calculateNetTotals();
           }
         }
+
+        // Cambio de Tipo (Repuesto/Servicio)
+        if (e.target.classList.contains('edit-tipo-select')) {
+          const index = parseInt(e.target.dataset.index);
+          const newTipo = e.target.value;
+          if (orderItems[index]) {
+            orderItems[index].tipoItem = newTipo;
+            orderItems[index].tipoItemLabel = newTipo === 'SERVICIO' ? 'Servicio' : 'Repuesto';
+            calculateNetTotals();
+          }
+        }
       });
+
+      // Event listener para editar precio, cantidad y bonificación (usa 'input' para actualización en tiempo real)
+      document.getElementById('order-items-list').addEventListener('input', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        if (isNaN(index) || !orderItems[index]) return;
+
+        // Cambio de Precio
+        if (e.target.classList.contains('edit-precio-input')) {
+          const newPrecio = parseFloat(e.target.value) || 0;
+          orderItems[index].precio = newPrecio;
+          updateRowSubtotal(index);
+          calculateNetTotals();
+        }
+
+        // Cambio de Cantidad
+        if (e.target.classList.contains('edit-cantidad-input')) {
+          const newCantidad = parseInt(e.target.value) || 1;
+          orderItems[index].cantidad = Math.max(1, newCantidad);
+          updateRowSubtotal(index);
+          calculateNetTotals();
+        }
+
+        // Cambio de Bonificación
+        if (e.target.classList.contains('edit-bonif-input')) {
+          const newBonif = parseFloat(e.target.value) || 0;
+          orderItems[index].descuento = Math.max(0, newBonif);
+          updateRowSubtotal(index);
+          calculateNetTotals();
+        }
+      });
+
+      // Función auxiliar para actualizar el subtotal de una fila sin re-renderizar toda la tabla
+      function updateRowSubtotal(index) {
+        const item = orderItems[index];
+        if (!item) return;
+        const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
+        const rows = document.querySelectorAll('#order-items-list tr');
+        if (rows[index]) {
+          const subtotalCell = rows[index].querySelector('.subtotal-cell');
+          if (subtotalCell) {
+            subtotalCell.textContent = subtotal.toFixed(2) + '€';
+          }
+        }
+      }
 
       // --- CÁLCULOS FINANCIEROS ---
       function calculateNetTotals() {

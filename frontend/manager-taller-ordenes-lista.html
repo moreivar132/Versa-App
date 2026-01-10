@@ -1137,8 +1137,8 @@
   </script>
 
   <script type="module">
-    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
-    import { registrarPago } from '/services/pagos-service.js';
+    import { getOrdenes, getOrdenById, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
+    import { registrarPago, eliminarPago } from '/services/pagos-service.js';
     import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from '/auth.js';
     import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
@@ -1702,7 +1702,7 @@
       });
 
       // --- MODAL PAGOS ---
-      function abrirModalPagos() {
+      async function abrirModalPagos() {
         if (!ordenSeleccionada) return;
 
         const modal = document.getElementById('modal-pagos');
@@ -1719,6 +1719,56 @@
         document.getElementById('modal-pendiente').textContent = `${pendiente.toFixed(2)}€`;
         document.getElementById('modal-progress').style.width = `${Math.min(100, progreso)}%`;
         document.getElementById('modal-importe').value = pendiente > 0 ? pendiente.toFixed(2) : '';
+
+        // Cargar pagos existentes de la orden
+        const listaPagosEl = document.getElementById('modal-lista-pagos');
+        listaPagosEl.innerHTML = '<p class="text-sm text-[#9da6b9] italic">Cargando pagos...</p>';
+
+        try {
+          const ordenData = await getOrdenById(ordenSeleccionada.id);
+          const pagos = ordenData.pagos || [];
+
+          if (pagos.length === 0) {
+            listaPagosEl.innerHTML = '<p class="text-sm text-[#9da6b9] italic">No hay pagos registrados</p>';
+          } else {
+            listaPagosEl.innerHTML = pagos.map(pago => `
+              <div class="flex justify-between items-center py-2 px-3 bg-[#1a1d24] rounded-lg border border-[#282e39]">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-green-400 text-sm">payments</span>
+                  <span class="text-sm text-white">${pago.medio_pago_nombre || 'Sin método'}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-medium text-green-400">${parseFloat(pago.importe || 0).toFixed(2)}€</span>
+                  <button type="button" class="btn-eliminar-pago text-red-400 hover:text-red-300 transition-colors" data-id="${pago.id}" title="Eliminar pago">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                  </button>
+                </div>
+              </div>
+            `).join('');
+
+            // Añadir event listeners a los botones de eliminar
+            listaPagosEl.querySelectorAll('.btn-eliminar-pago').forEach(btn => {
+              btn.addEventListener('click', async (e) => {
+                const idPago = parseInt(btn.dataset.id);
+                if (!confirm('¿Estás seguro de eliminar este pago?')) return;
+
+                try {
+                  await eliminarPago(idPago);
+                  showToast('Pago eliminado correctamente');
+                  // Recargar el modal y la lista de órdenes
+                  await cargarOrdenes(filtrosActuales);
+                  await abrirModalPagos();
+                } catch (error) {
+                  console.error('Error eliminando pago:', error);
+                  showToast(error.message || 'Error al eliminar pago', true);
+                }
+              });
+            });
+          }
+        } catch (error) {
+          console.error('Error cargando pagos:', error);
+          listaPagosEl.innerHTML = '<p class="text-sm text-red-400 italic">Error al cargar pagos</p>';
+        }
 
         // Mostrar sección de cuenta corriente solo si hay pendiente y no está ya en cuenta corriente
         const seccionCC = document.getElementById('seccion-cuenta-corriente');

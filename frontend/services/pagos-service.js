@@ -86,3 +86,26 @@ export async function obtenerMediosPago() {
 
     return response.json();
 }
+
+/**
+ * Elimina un pago
+ * @param {number} idPago - ID del pago a eliminar
+ */
+export async function eliminarPago(idPago) {
+    const token = getAuthToken();
+    if (!token) throw new Error('No autenticado');
+
+    const response = await fetch(`${API_BASE_URL}/api/ordenpago/${idPago}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.mensaje || 'Error al eliminar pago');
+    }
+
+    return response.json();
+}

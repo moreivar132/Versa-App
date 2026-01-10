@@ -97,6 +97,21 @@ class OrdenPagoRepository {
     }
 
     /**
+     * Elimina un pago de una orden.
+     * @param {number} idPago - ID del pago a eliminar
+     * @returns {Promise<object>} - Pago eliminado
+     */
+    async eliminarPago(idPago) {
+        const query = `
+            DELETE FROM ordenpago 
+            WHERE id = $1
+            RETURNING *
+        `;
+        const result = await pool.query(query, [idPago]);
+        return result.rows[0];
+    }
+
+    /**
      * Obtiene todos los medios de pago disponibles.
      * @returns {Promise<Array>}
      */
