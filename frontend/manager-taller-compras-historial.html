@@ -1136,6 +1136,19 @@
 
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
+
+  <script type="module">
+    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+    
+    (async () => {
+      await initSucursalSelector('sucursal-selector-container', {
+        onchange: async (nuevaSucursalId) => {
+          console.log('Sucursal cambiada:', nuevaSucursalId);
+          location.reload();
+        }
+      });
+    })();
+  </script>
 </body>
 
 </html>

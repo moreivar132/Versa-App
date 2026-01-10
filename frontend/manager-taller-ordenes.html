@@ -790,7 +790,9 @@
       <main class="flex-1 overflow-y-auto p-6 relative z-10">
         <!-- Selector de Sucursal Centrado -->
         <div class="flex justify-center mb-6">
-          <div id="sucursal-selector-container"></div>
+          <div class="sucursal-selector-wrapper">
+            <div id="sucursal-selector-container"></div>
+          </div>
         </div>
 
         <form id="order-form" class="manager-panel">
@@ -1301,7 +1303,7 @@
   </div>
 
   <script type="module">
-    import { loadSucursales } from '/loadSucursales.js';
+    import { initSucursalSelector, getCurrentSucursalId, onSucursalChange } from '/services/sucursal-selector.js';
     import { getTecnicosBySucursal } from '/services/tecnicos-service.js';
     import { searchClientes } from '/services/clientes-service.js';
     import { searchVehiculos, createVehicle } from '/services/vehiculos-service.js';
@@ -1384,39 +1386,31 @@
 
       // Inicializar sucursal desde localStorage y cargar técnicos
       async function initSucursalYTecnicos() {
-        // Obtener sucursal guardada
-        const SUCURSAL_KEY = 'sucursal_seleccionada';
-        const saved = localStorage.getItem(SUCURSAL_KEY);
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            sucursalActivaId = parsed.id || parsed;
-          } catch {
-            sucursalActivaId = parseInt(saved) || null;
+        // Inicializar el selector de sucursales estandarizado
+        // Esto carga las sucursales y pre-selecciona la guardada en localStorage
+        const sucursalInicial = await initSucursalSelector('sucursal-selector-container', {
+          onchange: async (nuevaSucursalId) => {
+            console.log('[Orden] Sucursal cambiada a:', nuevaSucursalId);
+            sucursalActivaId = nuevaSucursalId;
+            await loadTecnicosSelect();
           }
-        }
+        });
 
-        // Cargar selector de sucursales
-        await loadSucursales();
+        // Obtener la sucursal actual (ya inicializada por el selector)
+        sucursalActivaId = sucursalInicial || getCurrentSucursalId();
+        console.log('[Orden] Sucursal activa inicial:', sucursalActivaId);
 
         // Cargar técnicos de la sucursal activa
         await loadTecnicosSelect();
 
-        // Escuchar cambios en el selector de sucursal
-        const sucursalSelector = document.querySelector('#sucursal-selector-container select, #branch-selector');
-        if (sucursalSelector) {
-          sucursalSelector.addEventListener('change', async (e) => {
-            sucursalActivaId = parseInt(e.target.value) || null;
-            console.log('[Orden] Sucursal cambiada a:', sucursalActivaId);
-            await loadTecnicosSelect();
-          });
-        }
-
-        // También escuchar evento personalizado de cambio de sucursal (si existe)
+        // También escuchar evento personalizado de cambio de sucursal (por si se cambia desde otro componente)
         window.addEventListener('sucursalChanged', async (e) => {
-          sucursalActivaId = e.detail?.id || null;
-          console.log('[Orden] Evento sucursalChanged:', sucursalActivaId);
-          await loadTecnicosSelect();
+          const nuevaSucursalId = e.detail?.sucursalId || null;
+          if (nuevaSucursalId && nuevaSucursalId !== sucursalActivaId) {
+            sucursalActivaId = nuevaSucursalId;
+            console.log('[Orden] Evento sucursalChanged:', sucursalActivaId);
+            await loadTecnicosSelect();
+          }
         });
       }
 

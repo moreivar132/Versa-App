@@ -40,6 +40,7 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
+
         /* Scrollbar personalizada */
         ::-webkit-scrollbar {
             width: 8px;
@@ -176,10 +177,10 @@
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
-                <!-- Selector de Sucursal Estandarizado -->
-                <div class="sucursal-selector-wrapper">
-                  <div id="sucursal-selector-container"></div>
-                </div>
+            <!-- Selector de Sucursal Estandarizado -->
+            <div class="sucursal-selector-wrapper">
+                <div id="sucursal-selector-container"></div>
+            </div>
 
             <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                 <header class="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-[#282e39]">
@@ -584,6 +585,7 @@
 
         // Inicializar selector de sucursal estándar
         (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
                 onchange: async (nuevaSucursalId) => {
                     // Recargar datos cuando cambia la sucursal
                     updateDashboard();

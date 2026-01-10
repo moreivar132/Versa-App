@@ -40,6 +40,7 @@
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
             vertical-align: middle;
         }
+
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -280,10 +281,10 @@
         </aside>
 
         <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
-                <!-- Selector de Sucursal Estandarizado -->
-                <div class="sucursal-selector-wrapper">
-                  <div id="sucursal-selector-container"></div>
-                </div>
+            <!-- Selector de Sucursal Estandarizado -->
+            <div class="sucursal-selector-wrapper">
+                <div id="sucursal-selector-container"></div>
+            </div>
 
             <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                 <header class="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-[#282e39]">
@@ -291,7 +292,6 @@
                     <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
                 </header>
 
-        </div>
                 <header class="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-[#282e39] pb-6">
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight text-white">Gestión de Caja</h1>
@@ -816,6 +816,20 @@
         });
 
         // Constante para la clave de localStorage
+        const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+        // Obtener la sucursal actual del localStorage (función local)
+        function getSucursalIdFromStorage() {
+            const saved = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+            return saved ? parseInt(saved) : null;
+        }
+        // Variable para compatibilidad con código existente
+        let currentSucursalId = getSucursalIdFromStorage();
+
+        // Escuchar cambios de sucursal
+        window.addEventListener('sucursalChanged', (e) => {
+            currentSucursalId = e.detail.sucursalId;
+        });
+
         // Cargar sucursales disponibles y mostrar selector/label
         // Sucursal gestionada por initSucursalSelector
         function reloadAllData() { loadEstadoCaja(); if (currentTab !== 'estado') loadTabData(currentTab); }
@@ -1737,18 +1751,18 @@
 
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
-  <script type="module">
-    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
-    
-    (async () => {
-      await initSucursalSelector('sucursal-selector-container', {
-        onchange: async (nuevaSucursalId) => {
-          console.log('Sucursal cambiada:', nuevaSucursalId);
-          location.reload();
-        }
-      });
-    })();
-  </script>
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: async (nuevaSucursalId) => {
+                    console.log('Sucursal cambiada:', nuevaSucursalId);
+                    location.reload();
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>

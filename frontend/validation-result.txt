@@ -1,0 +1,66 @@
+
+📋 Archivos con selector de sucursal: 27
+
+✅ manager-marketing-email.html
+✅ manager-taller-caja.html
+❗ manager-taller-chat.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+❗ manager-taller-citas.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+❗ manager-taller-clientes.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+❗ manager-taller-compras-historial.html
+   Container: ✅ | Wrapper: ✅ | Init: ❌ | Import: ✅ | Clean: ✅
+❗ manager-taller-compras.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+❗ manager-taller-config-facturas.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+✅ manager-taller-config-ordenes.html
+✅ manager-taller-configuracion.html
+✅ manager-taller-cuentas-corrientes.html
+❗ manager-taller-facturas-pendientes.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+✅ manager-taller-facturas.html
+✅ manager-taller-fidelizacion.html
+❗ manager-taller-historial-unificado.html
+   Container: ✅ | Wrapper: ✅ | Init: ✅ | Import: ✅ | Clean: ⚠️
+✅ manager-taller-inicio.html
+❗ manager-taller-inventario-nuevo.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+❗ manager-taller-inventario.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+✅ manager-taller-marketplace.html
+❗ manager-taller-ordenes-lista.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+❗ manager-taller-ordenes.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+❗ manager-taller-proveedores.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+✅ manager-taller-trabajadores.html
+❗ manager-taller-vehiculos.html
+   Container: ✅ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+✅ manager-taller-ventas-historial.html
+✅ manager-taller-ventas.html
+❗ manager-taller-whatsapp.html
+   Container: ❌ | Wrapper: ❌ | Init: ✅ | Import: ✅ | Clean: ✅
+
+==================================================
+Total: 27 archivos
+Con problemas: 15
+
+⚠️ Archivos que necesitan revisión:
+   - manager-taller-chat.html
+   - manager-taller-citas.html
+   - manager-taller-clientes.html
+   - manager-taller-compras-historial.html
+   - manager-taller-compras.html
+   - manager-taller-config-facturas.html
+   - manager-taller-facturas-pendientes.html
+   - manager-taller-historial-unificado.html
+   - manager-taller-inventario-nuevo.html
+   - manager-taller-inventario.html
+   - manager-taller-ordenes-lista.html
+   - manager-taller-ordenes.html
+   - manager-taller-proveedores.html
+   - manager-taller-vehiculos.html
+   - manager-taller-whatsapp.html
