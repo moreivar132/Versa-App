@@ -1,0 +1,23 @@
+﻿[dotenv@17.2.3] injecting env (4) from .env -- tip: ­ƒæÑ sync secrets across teammates & machines: https://dotenvx.com/ops
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ­ƒôí add observability to secrets: https://dotenvx.com/ops
+­ƒöî Conexi├│n exitosa a la base de datos de Neon!
+­ƒöì DIAGN├ôSTICO EXHAUSTIVO DE CAJA
+
+============================================================
+node : ÔØî Error: column 
+c.saldo_apertura does not 
+exist
+En línea: 1 Carácter: 1
++ node diagnostico-caja.js 
+2>&1 | Out-File -FilePath 
+diagnostico-output ...
++ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (ÔØî Err  
+  or: colu... does not exi   
+ st:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 

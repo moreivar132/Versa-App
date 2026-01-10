@@ -92,35 +92,59 @@ router.get('/orden/:idOrden', verifyJWT, async (req, res) => {
     }
 });
 
-// DELETE /api/ordenpago/:idPago - Eliminar un pago
-router.delete('/:idPago', verifyJWT, async (req, res) => {
+// DELETE /api/ordenpago/:id - Eliminar un pago y su movimiento de caja
+router.delete('/:id', verifyJWT, async (req, res) => {
+    const client = await pool.connect();
     try {
-        const { idPago } = req.params;
+        const { id } = req.params;
+        const idPago = parseInt(id);
 
-        if (!idPago) {
-            return res.status(400).json({
-                success: false,
-                mensaje: 'ID de pago requerido'
-            });
+        await client.query('BEGIN');
+
+        // Obtener información del pago antes de eliminar
+        const pagoResult = await client.query(
+            'SELECT op.*, o.id_sucursal FROM ordenpago op JOIN orden o ON op.id_orden = o.id WHERE op.id = $1',
+            [idPago]
+        );
+
+        if (pagoResult.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, mensaje: 'Pago no encontrado' });
         }
 
-        const pagoEliminado = await ordenPagoRepository.eliminarPago(parseInt(idPago));
+        const pago = pagoResult.rows[0];
+        const idOrden = pago.id_orden;
 
-        if (!pagoEliminado) {
-            return res.status(404).json({
-                success: false,
-                mensaje: 'Pago no encontrado'
-            });
-        }
+        // Eliminar movimiento de caja asociado (si existe)
+        const movDeleted = await client.query(`
+            DELETE FROM cajamovimiento 
+            WHERE origen_tipo = 'ORDEN_PAGO' 
+              AND origen_id = $1 
+              AND monto = $2
+            RETURNING id
+        `, [idOrden, pago.importe]);
+
+        console.log(`[DELETE ordenpago] Movimientos de caja eliminados: ${movDeleted.rowCount}`);
+
+        // Eliminar el pago
+        await client.query('DELETE FROM ordenpago WHERE id = $1', [idPago]);
+
+        await client.query('COMMIT');
+
+        console.log(`[DELETE ordenpago] Pago ${idPago} eliminado correctamente (${pago.importe}€)`);
 
         res.json({
             success: true,
             mensaje: 'Pago eliminado correctamente',
-            pago: pagoEliminado
+            importe: pago.importe,
+            movimientosEliminados: movDeleted.rowCount
         });
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Error eliminando pago:', error);
         res.status(500).json({ success: false, mensaje: error.message });
+    } finally {
+        client.release();
     }
 });
 

@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suscripción - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        :root {
+            --brand-orange: #FF5F00;
+            --bg-deep: #0d0d0f;
+            --surface-border: rgba(255, 255, 255, 0.06);
+        }
+
+        /* Subscription Status Cards */
+        .status-card {
+            background: linear-gradient(145deg, rgba(26, 26, 30, 0.95), rgba(20, 20, 24, 0.98));
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--brand-orange), #ff8c42);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.active {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-badge.trialing {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status-badge.past_due {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .status-badge.canceled {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Plan Cards */
+        .plan-card {
+            background: rgba(26, 26, 30, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .plan-card:hover {
+            border-color: rgba(255, 95, 0, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .plan-card.recommended {
+            border-color: var(--brand-orange);
+        }
+
+        .plan-card.recommended::before {
+            content: 'Recomendado';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, var(--brand-orange), #ff8c42);
+            color: white;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .plan-card.current {
+            border-color: #4ade80;
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .plan-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+
+        .plan-price {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--brand-orange);
+        }
+
+        .plan-price span {
+            font-size: 14px;
+            font-weight: 400;
+            color: #9da6b9;
+        }
+
+        .plan-features {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .plan-feature {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 14px;
+            color: #c4c9d4;
+        }
+
+        .plan-feature i {
+            color: #4ade80;
+            font-size: 12px;
+            width: 20px;
+        }
+
+        .plan-feature.disabled i {
+            color: #6b7280;
+        }
+
+        .plan-feature.disabled {
+            color: #6b7280;
+            text-decoration: line-through;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--brand-orange), #ff8c42);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 95, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Trial countdown */
+        .trial-countdown {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(147, 51, 234, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .trial-days {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Alert banners */
+        .alert-banner {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-banner.warning {
+            background: rgba(251, 191, 36, 0.1);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+        }
+
+        .alert-banner.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        /* Billing cycle toggle */
+        .billing-toggle {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .billing-toggle button {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #9da6b9;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .billing-toggle button.active {
+            background: var(--brand-orange);
+            color: white;
+        }
+
+        .billing-toggle button:hover:not(.active) {
+            color: #fff;
+        }
+
+        /* Loading state */
+        .loading-skeleton {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Super admin badge */
+        .super-admin-badge {
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <!-- Sidebar content loaded dynamically -->
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-6xl mx-auto">
+                    <!-- Header -->
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-white mb-2">Suscripción</h1>
+                        <p class="text-gray-400">Gestiona tu plan y facturación</p>
+                    </div>
+
+                    <!-- Super Admin Notice (hidden by default) -->
+                    <div id="super-admin-notice" class="hidden mb-8">
+                        <div class="status-card" style="border-top: 4px solid #9333ea;">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                                    <i class="fas fa-crown text-2xl text-white"></i>
+                                </div>
+                                <div>
+                                    <span class="super-admin-badge">
+                                        <i class="fas fa-shield-alt"></i>
+                                        Super Admin
+                                    </span>
+                                    <h3 class="text-xl font-bold text-white mt-2">Acceso Sin Restricciones</h3>
+                                    <p class="text-gray-400 text-sm">Como Super Admin, tienes acceso completo a todas
+                                        las funcionalidades sin importar el estado de suscripción.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alert Banners -->
+                    <div id="alert-container"></div>
+
+                    <!-- Current Subscription Card -->
+                    <div id="subscription-card" class="status-card mb-8">
+                        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                            <div>
+                                <p class="text-sm text-gray-400 mb-2">Tu Plan Actual</p>
+                                <h2 id="current-plan-name" class="text-2xl font-bold text-white mb-3">
+                                    <span class="loading-skeleton"
+                                        style="display: inline-block; width: 150px; height: 28px;"></span>
+                                </h2>
+                                <div id="subscription-status" class="mb-4">
+                                    <span class="loading-skeleton"
+                                        style="display: inline-block; width: 100px; height: 24px;"></span>
+                                </div>
+                                <div id="subscription-info" class="space-y-2 text-sm text-gray-400">
+                                    <div class="loading-skeleton" style="width: 200px; height: 16px;"></div>
+                                    <div class="loading-skeleton" style="width: 180px; height: 16px;"></div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-3">
+                                <button id="btn-manage-subscription" class="btn-secondary" style="display: none;">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    Gestionar Suscripción
+                                </button>
+                                <button id="btn-update-payment" class="btn-secondary" style="display: none;">
+                                    <i class="fas fa-credit-card"></i>
+                                    Actualizar Pago
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Trial Countdown (shown when in trial) -->
+                        <div id="trial-countdown-container" class="trial-countdown mt-6" style="display: none;">
+                            <div class="flex items-center gap-6">
+                                <div class="text-center">
+                                    <div id="trial-days-remaining" class="trial-days">--</div>
+                                    <p class="text-sm text-blue-300">días restantes</p>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-white font-semibold mb-1">Período de Prueba Activo</h4>
+                                    <p class="text-sm text-gray-400">Tienes acceso completo a todas las funcionalidades
+                                        durante tu prueba gratuita de 15 días.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Available Plans Section -->
+                    <div id="plans-section">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-white">Planes Disponibles</h3>
+
+                            <!-- Billing Cycle Toggle -->
+                            <div class="billing-toggle">
+                                <button id="btn-monthly" class="active"
+                                    onclick="setBillingCycle('monthly')">Mensual</button>
+                                <button id="btn-yearly" onclick="setBillingCycle('yearly')">
+                                    Anual
+                                    <span class="ml-1 text-xs text-green-400">-20%</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="plans-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Plan cards loaded dynamically -->
+                            <div class="plan-card">
+                                <div class="loading-skeleton" style="width: 100%; height: 300px;"></div>
+                            </div>
+                            <div class="plan-card">
+                                <div class="loading-skeleton" style="width: 100%; height: 300px;"></div>
+                            </div>
+                            <div class="plan-card">
+                                <div class="loading-skeleton" style="width: 100%; height: 300px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50"></div>
+
+    <script type="module" src="./sidebar-manager.js"></script>
+    <script type="module">
+        import { getSession, getApiBaseUrl, fetchWithAuth, logout } from './auth.js';
+
+        // API Configuration
+        const API_BASE = getApiBaseUrl();
+
+        // State
+        let currentSubscription = null;
+        let availablePlans = [];
+        let billingCycle = 'monthly';
+        let isSuperAdmin = false;
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${type === 'error' ? 'bg-red-500/90' : 'bg-green-500/90'} text-white mb-2`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        }
+
+        // Fetch subscription data
+        async function loadSubscription() {
+            const session = getSession();
+            if (!session?.token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/billing/my-subscription`, {
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.isSuperAdmin) {
+                    isSuperAdmin = true;
+                    showSuperAdminNotice();
+                    return;
+                }
+
+                currentSubscription = data.subscription;
+                renderSubscriptionCard();
+
+            } catch (error) {
+                console.error('Error loading subscription:', error);
+                showToast('Error cargando suscripción', 'error');
+            }
+        }
+
+        // Fetch available plans
+        async function loadPlans() {
+            try {
+                const response = await fetch(`${API_BASE}/api/billing/plans`);
+                const data = await response.json();
+
+                if (data.ok) {
+                    availablePlans = data.plans;
+                    renderPlans();
+                }
+            } catch (error) {
+                console.error('Error loading plans:', error);
+            }
+        }
+
+        // Show super admin notice
+        function showSuperAdminNotice() {
+            document.getElementById('super-admin-notice').classList.remove('hidden');
+            document.getElementById('subscription-card').style.display = 'none';
+            document.getElementById('plans-section').style.display = 'none';
+        }
+
+        // Render subscription card
+        function renderSubscriptionCard() {
+            const planNameEl = document.getElementById('current-plan-name');
+            const statusEl = document.getElementById('subscription-status');
+            const infoEl = document.getElementById('subscription-info');
+            const alertContainer = document.getElementById('alert-container');
+            const trialContainer = document.getElementById('trial-countdown-container');
+            const btnManage = document.getElementById('btn-manage-subscription');
+            const btnPayment = document.getElementById('btn-update-payment');
+
+            if (!currentSubscription) {
+                planNameEl.textContent = 'Sin Suscripción';
+                statusEl.innerHTML = '<span class="status-badge canceled"><i class="fas fa-times-circle"></i> Sin plan activo</span>';
+                infoEl.innerHTML = '<p>No tienes una suscripción activa. Selecciona un plan para comenzar.</p>';
+                return;
+            }
+
+            // Plan name
+            planNameEl.textContent = currentSubscription.planName || 'Plan Actual';
+
+            // Status badge
+            const statusMap = {
+                'active': { class: 'active', icon: 'fa-check-circle', text: 'Activo' },
+                'trialing': { class: 'trialing', icon: 'fa-clock', text: 'Período de Prueba' },
+                'past_due': { class: 'past_due', icon: 'fa-exclamation-triangle', text: 'Pago Pendiente' },
+                'canceled': { class: 'canceled', icon: 'fa-times-circle', text: 'Cancelado' }
+            };
+
+            const status = statusMap[currentSubscription.status] || statusMap.canceled;
+            statusEl.innerHTML = `<span class="status-badge ${status.class}"><i class="fas ${status.icon}"></i> ${status.text}</span>`;
+
+            // Subscription info
+            let infoHTML = '';
+            if (currentSubscription.status === 'trialing' && currentSubscription.trialEndAt) {
+                const trialEnd = new Date(currentSubscription.trialEndAt);
+                infoHTML += `<p><i class="fas fa-calendar mr-2"></i>Prueba termina: ${trialEnd.toLocaleDateString('es-ES')}</p>`;
+
+                // Show trial countdown
+                if (currentSubscription.trialDaysRemaining != null) {
+                    trialContainer.style.display = 'block';
+                    document.getElementById('trial-days-remaining').textContent = currentSubscription.trialDaysRemaining;
+                }
+            } else if (currentSubscription.currentPeriodEnd) {
+                const periodEnd = new Date(currentSubscription.currentPeriodEnd);
+                infoHTML += `<p><i class="fas fa-calendar mr-2"></i>Próxima facturación: ${periodEnd.toLocaleDateString('es-ES')}</p>`;
+            }
+
+            if (currentSubscription.cancelAtPeriodEnd) {
+                infoHTML += `<p class="text-yellow-400"><i class="fas fa-info-circle mr-2"></i>Se cancelará al final del período</p>`;
+            }
+
+            infoEl.innerHTML = infoHTML;
+
+            // Show management buttons if has Stripe subscription
+            if (currentSubscription.stripeSubscriptionId) {
+                btnManage.style.display = 'inline-flex';
+            }
+
+            // Show alerts for problematic states
+            if (currentSubscription.status === 'past_due') {
+                alertContainer.innerHTML = `
+                    <div class="alert-banner warning">
+                        <i class="fas fa-exclamation-triangle text-xl"></i>
+                        <div>
+                            <strong>Pago Fallido</strong>
+                            <p class="text-sm opacity-80">Tu último pago no pudo procesarse. Actualiza tu método de pago para mantener tu acceso.</p>
+                        </div>
+                        <button onclick="openPortal()" class="btn-primary ml-auto">Actualizar Pago</button>
+                    </div>
+                `;
+            } else if (currentSubscription.status === 'canceled') {
+                alertContainer.innerHTML = `
+                    <div class="alert-banner error">
+                        <i class="fas fa-times-circle text-xl"></i>
+                        <div>
+                            <strong>Suscripción Cancelada</strong>
+                            <p class="text-sm opacity-80">Tu suscripción ha sido cancelada. Selecciona un plan para restaurar tu acceso.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Render plan cards
+        function renderPlans() {
+            const container = document.getElementById('plans-container');
+
+            const planPrices = {
+                basic: { monthly: 29, yearly: 279 },
+                pro: { monthly: 59, yearly: 566 },
+                business: { monthly: 119, yearly: 1142 }
+            };
+
+            const featureLabels = {
+                'FEATURE_APPOINTMENTS': 'Gestión de citas',
+                'FEATURE_CUSTOMERS': 'Gestión de clientes',
+                'FEATURE_VEHICLES': 'Gestión de vehículos',
+                'FEATURE_INVOICES': 'Facturación completa',
+                'FEATURE_MARKETING_AUTOMATIONS': 'Automatizaciones marketing',
+                'FEATURE_ROLES_PERMISSIONS': 'Roles y permisos',
+                'FEATURE_ANALYTICS': 'Informes y estadísticas',
+                'FEATURE_INTEGRATIONS': 'Integraciones API',
+                'FEATURE_INVENTORY': 'Control de inventario',
+                'FEATURE_MARKETPLACE': 'Acceso al Marketplace'
+            };
+
+            container.innerHTML = availablePlans.map(plan => {
+                const prices = planPrices[plan.planKey] || { monthly: 0, yearly: 0 };
+                const price = billingCycle === 'monthly' ? prices.monthly : Math.round(prices.yearly / 12);
+                const isCurrent = currentSubscription?.planKey === plan.planKey;
+                const isRecommended = plan.planKey === 'pro';
+
+                // Get features
+                const features = Object.entries(plan.features || {})
+                    .filter(([key, value]) => key.startsWith('FEATURE_') && featureLabels[key])
+                    .map(([key, value]) => ({
+                        label: featureLabels[key],
+                        enabled: value === true
+                    }));
+
+                // Limits
+                const maxUsers = plan.features?.max_users;
+                const maxSucursales = plan.features?.max_sucursales;
+
+                return `
+                    <div class="plan-card ${isCurrent ? 'current' : ''} ${isRecommended && !isCurrent ? 'recommended' : ''}">
+                        ${isCurrent ? '<span class="status-badge active" style="position: absolute; top: 16px; right: 16px;"><i class="fas fa-check"></i> Plan Actual</span>' : ''}
+                        
+                        <h3 class="plan-name">${plan.name}</h3>
+                        <p class="text-sm text-gray-400 mb-4">${plan.description || ''}</p>
+                        
+                        <div class="plan-price">
+                            ${price > 0 ? `${price}€ <span>/ mes</span>` : 'Gratis'}
+                        </div>
+                        ${billingCycle === 'yearly' && price > 0 ? `<p class="text-sm text-green-400 mt-1">Facturado anualmente: ${prices.yearly}€</p>` : ''}
+                        
+                        <div class="mt-6">
+                            <p class="text-sm text-gray-400 mb-3">
+                                ${maxUsers ? `Hasta ${maxUsers} usuarios` : 'Usuarios ilimitados'}
+                                • ${maxSucursales ? `${maxSucursales} sucursales` : 'Sucursales ilimitadas'}
+                            </p>
+                        </div>
+
+                        <div class="plan-features">
+                            ${features.slice(0, 6).map(f => `
+                                <div class="plan-feature ${f.enabled ? '' : 'disabled'}">
+                                    <i class="fas ${f.enabled ? 'fa-check' : 'fa-times'}"></i>
+                                    ${f.label}
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div class="mt-6">
+                            ${isCurrent
+                        ? '<button class="btn-secondary w-full" disabled><i class="fas fa-check"></i> Plan Actual</button>'
+                        : `<button class="btn-primary w-full" onclick="selectPlan('${plan.planKey}')">
+                                    ${currentSubscription ? 'Cambiar a este plan' : 'Seleccionar Plan'}
+                                   </button>`
+                    }
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Set billing cycle
+        window.setBillingCycle = function (cycle) {
+            billingCycle = cycle;
+            document.getElementById('btn-monthly').classList.toggle('active', cycle === 'monthly');
+            document.getElementById('btn-yearly').classList.toggle('active', cycle === 'yearly');
+            renderPlans();
+        };
+
+        // Select plan and create checkout
+        window.selectPlan = async function (planKey) {
+            const session = getSession();
+            if (!session?.token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                showToast('Redirigiendo a checkout...', 'success');
+
+                const response = await fetch(`${API_BASE}/api/billing/checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        planKey,
+                        billingCycle
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.ok && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error(data.error || 'Error creando checkout');
+                }
+
+            } catch (error) {
+                console.error('Error selecting plan:', error);
+                showToast(error.message || 'Error al procesar', 'error');
+            }
+        };
+
+        // Open Stripe portal
+        window.openPortal = async function () {
+            const session = getSession();
+            if (!session?.token) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/billing/portal-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.ok && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    throw new Error(data.error || 'Error abriendo portal');
+                }
+
+            } catch (error) {
+                console.error('Error opening portal:', error);
+                showToast(error.message || 'Error al abrir portal', 'error');
+            }
+        };
+
+        // Handle checkout return
+        function handleCheckoutReturn() {
+            const params = new URLSearchParams(window.location.search);
+            const checkout = params.get('checkout');
+            const sessionId = params.get('session_id');
+
+            if (checkout === 'success') {
+                showToast('¡Suscripción activada correctamente!', 'success');
+                // Clean URL
+                window.history.replaceState({}, '', window.location.pathname);
+            } else if (checkout === 'cancel') {
+                showToast('Checkout cancelado', 'error');
+                window.history.replaceState({}, '', window.location.pathname);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            handleCheckoutReturn();
+            await loadSubscription();
+            await loadPlans();
+
+            // Setup portal button
+            document.getElementById('btn-manage-subscription').addEventListener('click', openPortal);
+        });
+    </script>
+</body>
+
+</html>

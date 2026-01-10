@@ -251,6 +251,7 @@ router.get('/estado-actual', async (req, res) => {
         `, [caja.id]);
 
         // Movimientos de caja - separados por método de pago
+        // EXCLUIR origen_tipo = 'ORDEN_PAGO' porque esos ya se cuentan en efectivoPagos
         const movimientosResult = await pool.query(`
             SELECT 
                 cm.tipo,
@@ -260,6 +261,7 @@ router.get('/estado-actual', async (req, res) => {
             FROM cajamovimiento cm
             LEFT JOIN mediopago mp ON cm.id_medio_pago = mp.id
             WHERE cm.id_caja = $1 
+              AND (cm.origen_tipo IS NULL OR cm.origen_tipo != 'ORDEN_PAGO')
             GROUP BY cm.tipo
         `, [caja.id]);
 
@@ -741,10 +743,11 @@ router.get('/cierres/:id', async (req, res) => {
                    u_apertura.nombre as usuario_apertura
             FROM cajacierre cc 
             JOIN caja c ON cc.id_caja = c.id 
+            JOIN sucursal s ON c.id_sucursal = s.id
             LEFT JOIN usuario u_cierre ON cc.id_usuario = u_cierre.id 
             LEFT JOIN usuario u_apertura ON c.id_usuario_apertura = u_apertura.id
-            WHERE cc.id = $1
-        `, [req.params.id]);
+            WHERE cc.id = $1 AND s.id_tenant = $2
+        `, [req.params.id, req.user.id_tenant]);
 
         if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Cierre no encontrado' });
         const cierre = result.rows[0];
@@ -754,12 +757,13 @@ router.get('/cierres/:id', async (req, res) => {
         const cajaData = cajaResult.rows[0] || {};
 
         // Obtener totales de ingresos y egresos del periodo (movimientos manuales)
+        // EXCLUIR ORDEN_PAGO porque esos ya se cuentan en el desglose de pagos
         const movimientosResult = await pool.query(`
             SELECT 
                 COALESCE(SUM(CASE WHEN tipo = 'INGRESO' THEN monto ELSE 0 END), 0) as total_ingresos,
                 COALESCE(SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END), 0) as total_egresos
             FROM cajamovimiento 
-            WHERE id_caja = $1
+            WHERE id_caja = $1 AND (origen_tipo IS NULL OR origen_tipo != 'ORDEN_PAGO')
         `, [cierre.id_caja]);
         const movTotales = movimientosResult.rows[0] || { total_ingresos: 0, total_egresos: 0 };
 
@@ -864,8 +868,12 @@ router.post('/cerrar', async (req, res) => {
         const caja = cajaResult.rows[0];
 
         // Calcular saldo teórico
+        // EXCLUIR origen_tipo = 'ORDEN_PAGO' porque esos ya se cuentan en efectivoPagos
         const movResult = await client.query(
-            `SELECT tipo, COALESCE(SUM(monto), 0) as total FROM cajamovimiento WHERE id_caja = $1 GROUP BY tipo`,
+            `SELECT tipo, COALESCE(SUM(monto), 0) as total 
+             FROM cajamovimiento 
+             WHERE id_caja = $1 AND (origen_tipo IS NULL OR origen_tipo != 'ORDEN_PAGO')
+             GROUP BY tipo`,
             [caja.id]
         );
         let totalIngresos = 0, totalEgresos = 0;

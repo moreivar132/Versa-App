@@ -127,10 +127,27 @@ class VentasService {
                     let medioPagoId = pago.idMedioPago;
                     if (!medioPagoId && pago.codigoMedioPago) {
                         const mpResult = await client.query(
-                            'SELECT id FROM mediopago WHERE codigo = $1',
+                            'SELECT id FROM mediopago WHERE UPPER(codigo) = UPPER($1)',
                             [pago.codigoMedioPago]
                         );
                         medioPagoId = mpResult.rows[0]?.id;
+
+                        // Auto-seed if missing
+                        if (!medioPagoId) {
+                            console.log(`[VentasService] Auto-seeding Payment Method: ${pago.codigoMedioPago}`);
+                            const nombreMap = {
+                                'EFECTIVO': 'Efectivo',
+                                'TARJETA': 'Tarjeta',
+                                'TRANSFERENCIA': 'Transferencia'
+                            };
+                            const nombre = nombreMap[pago.codigoMedioPago.toUpperCase()] || pago.codigoMedioPago;
+
+                            const insertResult = await client.query(
+                                'INSERT INTO mediopago (nombre, codigo) VALUES ($1, $2) RETURNING id',
+                                [nombre, pago.codigoMedioPago.toUpperCase()]
+                            );
+                            medioPagoId = insertResult.rows[0].id;
+                        }
                     }
 
                     if (!medioPagoId) {
@@ -373,6 +390,205 @@ class VentasService {
             await client.query('COMMIT');
 
             return { ok: true, message: 'Venta anulada correctamente' };
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Actualizar una venta existente
+     */
+    async updateVenta(idVenta, data, userContext) {
+        const { id_tenant, id_usuario } = userContext;
+        const {
+            idSucursal,
+            idCliente,
+            idCaja,
+            observaciones,
+            lineas,
+            pagos
+        } = data;
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Verificar que existe y pertenece al tenant
+            const ventaResult = await client.query(
+                'SELECT * FROM venta WHERE id = $1 AND id_tenant = $2',
+                [idVenta, id_tenant]
+            );
+
+            if (ventaResult.rows.length === 0) {
+                throw new Error('Venta no encontrada');
+            }
+
+            if (ventaResult.rows[0].estado === 'ANULADA') {
+                throw new Error('No se puede editar una venta anulada');
+            }
+
+            // 1. Revertir stock de líneas anteriores
+            const oldLineas = await client.query(
+                'SELECT id_producto, cantidad FROM ventalinea WHERE id_venta = $1',
+                [idVenta]
+            );
+
+            for (const linea of oldLineas.rows) {
+                if (linea.id_producto) {
+                    await client.query(`
+                        UPDATE producto 
+                        SET stock = COALESCE(stock, 0) + $1, updated_at = NOW()
+                        WHERE id = $2
+                    `, [linea.cantidad, linea.id_producto]);
+                }
+            }
+
+            // 2. Eliminar líneas y pagos antiguos
+            await client.query('DELETE FROM ventalinea WHERE id_venta = $1', [idVenta]);
+            await client.query('DELETE FROM ventapago WHERE id_venta = $1', [idVenta]);
+
+            // 3. Recalcular totales con las nuevas líneas
+            let totalBruto = 0;
+            let totalDescuento = 0;
+            let totalIva = 0;
+
+            for (const linea of lineas) {
+                const cantidad = Number(linea.cantidad) || 0;
+                const precio = Number(linea.precio) || 0;
+                const descuentoPorcentaje = Number(linea.descuento) || 0;
+                const ivaPorcentaje = Number(linea.iva) || 0;
+
+                const subtotalSinDescuento = cantidad * precio;
+                const montoDescuento = subtotalSinDescuento * (descuentoPorcentaje / 100);
+                const subtotal = subtotalSinDescuento - montoDescuento;
+                const montoIva = subtotal * (ivaPorcentaje / 100);
+
+                // Insertar nueva línea
+                await client.query(`
+                    INSERT INTO ventalinea (
+                        id_venta, id_producto, descripcion, cantidad,
+                        precio, descuento, iva_porcentaje, iva_monto, subtotal
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                `, [
+                    idVenta, linea.idProducto || null, linea.descripcion || linea.nombre || 'Producto', cantidad,
+                    precio, descuentoPorcentaje, ivaPorcentaje, montoIva, subtotal
+                ]);
+
+                // Descontar stock
+                if (linea.idProducto) {
+                    await client.query(`
+                        UPDATE producto 
+                        SET stock = COALESCE(stock, 0) - $1, updated_at = NOW()
+                        WHERE id = $2
+                    `, [cantidad, linea.idProducto]);
+                }
+
+                totalBruto += subtotal;
+                totalDescuento += montoDescuento;
+                totalIva += montoIva;
+            }
+
+            const totalNeto = totalBruto + totalIva;
+
+            // 4. Actualizar cabecera
+            await client.query(`
+                UPDATE venta SET
+                    id_sucursal = $1, id_cliente = $2, id_caja = $3,
+                    total_bruto = $4, total_descuento = $5, total_iva = $6, total_neto = $7,
+                    observaciones = $8, updated_at = NOW(), updated_by = $9
+                WHERE id = $10
+            `, [
+                idSucursal, idCliente, idCaja || null,
+                totalBruto, totalDescuento, totalIva, totalNeto,
+                observaciones || '', id_usuario, idVenta
+            ]);
+
+            // 5. Insertar nuevos pagos
+            if (pagos && pagos.length > 0) {
+                for (const pago of pagos) {
+                    let medioPagoId = pago.idMedioPago;
+                    if (!medioPagoId && pago.codigoMedioPago) {
+                        const mpResult = await client.query(
+                            'SELECT id FROM mediopago WHERE UPPER(codigo) = UPPER($1)',
+                            [pago.codigoMedioPago]
+                        );
+                        medioPagoId = mpResult.rows[0]?.id;
+                    }
+
+                    if (medioPagoId) {
+                        await client.query(`
+                            INSERT INTO ventapago (
+                                id_venta, id_medio_pago, id_caja, importe, referencia, created_by
+                            ) VALUES ($1, $2, $3, $4, $5, $6)
+                        `, [idVenta, medioPagoId, idCaja || null, pago.importe, pago.referencia || '', id_usuario]);
+                    }
+                }
+            }
+
+            await client.query('COMMIT');
+
+            return { ok: true, idVenta, message: 'Venta actualizada correctamente' };
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Eliminar una venta
+     */
+    async deleteVenta(idVenta, userContext) {
+        const { id_tenant, id_usuario } = userContext;
+
+        const client = await pool.connect();
+        try {
+            await client.query('BEGIN');
+
+            // Verificar que existe y pertenece al tenant
+            const ventaResult = await client.query(
+                'SELECT * FROM venta WHERE id = $1 AND id_tenant = $2',
+                [idVenta, id_tenant]
+            );
+
+            if (ventaResult.rows.length === 0) {
+                throw new Error('Venta no encontrada');
+            }
+
+            // Revertir stock
+            const lineasResult = await client.query(
+                'SELECT id_producto, cantidad FROM ventalinea WHERE id_venta = $1',
+                [idVenta]
+            );
+
+            for (const linea of lineasResult.rows) {
+                if (linea.id_producto) {
+                    await client.query(`
+                        UPDATE producto 
+                        SET stock = COALESCE(stock, 0) + $1, updated_at = NOW()
+                        WHERE id = $2
+                    `, [linea.cantidad, linea.id_producto]);
+                }
+            }
+
+            // Eliminar pagos
+            await client.query('DELETE FROM ventapago WHERE id_venta = $1', [idVenta]);
+
+            // Eliminar líneas
+            await client.query('DELETE FROM ventalinea WHERE id_venta = $1', [idVenta]);
+
+            // Eliminar cabecera
+            await client.query('DELETE FROM venta WHERE id = $1', [idVenta]);
+
+            await client.query('COMMIT');
+
+            return { ok: true, message: 'Venta eliminada correctamente' };
 
         } catch (error) {
             await client.query('ROLLBACK');

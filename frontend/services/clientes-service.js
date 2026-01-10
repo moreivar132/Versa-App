@@ -9,7 +9,7 @@ export async function searchClientes(query) {
         if (!sessionRaw) throw new Error('No autenticado');
         const token = JSON.parse(sessionRaw).token;
 
-        const url = new URL(API_URL);
+        const url = new URL(API_URL, window.location.origin);
         url.searchParams.set('q', query);
 
         const response = await fetch(url, {

@@ -43,6 +43,8 @@ export default defineConfig({
                 card: 'card.html',
                 // Marketing
                 managerMarketingEmail: 'manager-marketing-email.html',
+                // RBAC Access Management
+                managerAdminAccesos: 'manager-admin-accesos.html',
                 // Portal Cliente (PASO 5)
                 clienteLogin: 'cliente-login.html',
                 clienteRegister: 'cliente-register.html',
@@ -53,6 +55,8 @@ export default defineConfig({
                 cancel: 'cancel.html',
                 stripeSuccess: 'stripe-success.html',
                 stripeCancel: 'stripe-cancel.html',
+                // Billing
+                managerTallerBilling: 'manager-taller-billing.html',
             }
         }
     },

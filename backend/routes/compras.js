@@ -34,9 +34,11 @@ router.get('/', verifyJWT, async (req, res) => {
     const isSuperAdmin = req.user.is_super_admin;
     const { limit = 50 } = req.query;
 
+    console.log(`[DEBUG GET /api/compras] User: ${req.user.id}, Tenant: ${id_tenant}, SuperAdmin: ${isSuperAdmin}, Limit: ${limit}`);
+
     try {
         let query = `
-            SELECT c.*, p.nombre as proveedor_nombre, s.nombre as sucursal_nombre
+            SELECT c.*, p.nombre as proveedor_nombre, s.nombre as sucursal_nombre, c.id_sucursal
             FROM compracabecera c
             LEFT JOIN proveedor p ON c.id_proveedor = p.id
             LEFT JOIN sucursal s ON c.id_sucursal = s.id
@@ -50,13 +52,14 @@ router.get('/', verifyJWT, async (req, res) => {
         }
 
         query += ` ORDER BY c.fecha_emision DESC LIMIT $${params.length + 1}`;
-        params.push(limit);
+        params.push(parseInt(limit));
 
         const result = await pool.query(query, params);
+        console.log(`[DEBUG GET /api/compras] Devolviendo ${result.rows.length} compras`);
         res.json(result.rows);
     } catch (error) {
-        console.error('Error al obtener compras:', error);
-        res.status(500).json({ error: 'Error al obtener historial de compras' });
+        console.error('[ERROR GET /api/compras]:', error);
+        res.status(500).json({ error: 'Error al obtener historial de compras: ' + error.message });
     }
 });
 
@@ -485,18 +488,25 @@ router.get('/:id/pdf', verifyJWT, async (req, res) => {
 
 // GET /api/compras/:id - Obtener una compra por ID (DEBE IR DESPUÉS DE /:id/pdf)
 router.get('/:id', verifyJWT, async (req, res) => {
-    const { id } = req.params;
+    // Validación estricta del ID
+    if (!req.params.id || !/^\d+$/.test(req.params.id)) {
+        return res.status(400).json({ error: 'ID de compra inválido (debe ser numérico)' });
+    }
+    const id = parseInt(req.params.id);
+
     const id_tenant = req.user.id_tenant;
     const isSuperAdmin = req.user.is_super_admin;
 
+    console.log(`[DEBUG] GET /api/compras/${id} - User: ${req.user.id}, Tenant: ${id_tenant}`);
+
     try {
+        // Query simplificada para reducir posibles puntos de fallo
         let query = `
-            SELECT c.*, p.nombre as proveedor_nombre, p.nif as proveedor_nif, 
-                   s.nombre as sucursal_nombre, a.nombre as almacen_nombre
+            SELECT c.*, p.nombre as proveedor_nombre, p.cif as proveedor_nif, 
+                   s.nombre as sucursal_nombre
             FROM compracabecera c
             LEFT JOIN proveedor p ON c.id_proveedor = p.id
             LEFT JOIN sucursal s ON c.id_sucursal = s.id
-            LEFT JOIN almacen a ON c.id_almacen = a.id
             WHERE c.id = $1
         `;
         let params = [id];
@@ -509,7 +519,8 @@ router.get('/:id', verifyJWT, async (req, res) => {
         const cabeceraRes = await pool.query(query, params);
 
         if (cabeceraRes.rows.length === 0) {
-            return res.status(404).json({ error: 'Compra no encontrada' });
+            console.log(`[DEBUG] Compra ${id} no encontrada o acceso denegado para tenant ${id_tenant}`);
+            return res.status(404).json({ error: 'Compra no encontrada o no tienes permisos para verla.' });
         }
 
         // Obtener líneas de la compra
@@ -520,14 +531,182 @@ router.get('/:id', verifyJWT, async (req, res) => {
             WHERE cl.id_compra = $1
         `, [id]);
 
+        console.log(`[DEBUG] Compra ${id} encontrada. Líneas: ${lineasRes.rows.length}`);
+
         res.json({
             ...cabeceraRes.rows[0],
-            lineas: lineasRes.rows
+            lineas: lineasRes.rows,
+            items: lineasRes.rows
         });
 
     } catch (error) {
-        console.error('Error al obtener compra:', error);
-        res.status(500).json({ error: 'Error al obtener la compra' });
+        console.error(`[CRITICAL ERROR] GET /api/compras/${id}:`, error);
+        res.status(500).json({
+            error: 'Error interno al cargar los datos de la compra.',
+            details: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+});
+
+// PUT /api/compras/:id - Actualizar compra existente
+router.put('/:id', verifyJWT, async (req, res) => {
+    console.log(`PUT /api/compras/${req.params.id} request received`);
+    const { id } = req.params;
+    const {
+        id_proveedor,
+        nombre_proveedor,
+        id_sucursal,
+        fecha_emision,
+        metodo_pago,
+        observaciones,
+        items,
+        total_final
+    } = req.body;
+
+    const id_tenant = req.user.id_tenant;
+    const id_usuario = req.user.id;
+    const isSuperAdmin = req.user.is_super_admin;
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // 1. Verificar existencia y permisos
+        let checkQuery = 'SELECT id FROM compracabecera WHERE id = $1';
+        let checkParams = [id];
+        if (!isSuperAdmin) {
+            checkQuery += ' AND id_tenant = $2';
+            checkParams.push(id_tenant);
+        }
+        const checkRes = await client.query(checkQuery, checkParams);
+        if (checkRes.rows.length === 0) {
+            // Si es admin, permitir editar aunque no sea de su tenant (caso borde o error de permisos legacy)
+            // PERO SOLO SI EL TENANT COINCIDE O ES SUPER ADMIN.
+            // Si el check falló con el tenant, probamos sin tenant para loguear
+            const checkExist = await client.query('SELECT id, id_tenant FROM compracabecera WHERE id = $1', [id]);
+            if (checkExist.rows.length === 0) {
+                throw new Error('Compra no encontrada.');
+            } else {
+                const realTenant = checkExist.rows[0].id_tenant;
+                if (!isSuperAdmin && String(realTenant) !== String(id_tenant)) {
+                    throw new Error(`Permiso denegado. La compra pertenece al tenant ${realTenant} y tú eres ${id_tenant}`);
+                }
+            }
+        }
+
+        // 2. Actualizar Cabecera
+        let fecha = new Date();
+        if (fecha_emision) fecha = new Date(fecha_emision);
+
+        await client.query(`
+            UPDATE compracabecera 
+            SET id_proveedor = $1, id_sucursal = $2, fecha_emision = $3, metodo_pago = $4, observaciones = $5, total = $6
+            WHERE id = $7
+        `, [id_proveedor, id_sucursal, fecha, metodo_pago, observaciones, 0, id]); // Total update later
+
+        // 3. Reemplazar Líneas (Estrategia: Eliminar e Insertar)
+
+        // A. REVERTIR STOCK DE LÍNEAS ANTERIORES
+        // Obtener líneas actuales antes de borrar
+        const oldLines = await client.query('SELECT id_producto, cantidad FROM compralinea WHERE id_compra = $1', [id]);
+
+        for (const oldLine of oldLines.rows) {
+            if (oldLine.id_producto && oldLine.cantidad) {
+                await client.query(
+                    'UPDATE producto SET stock = stock - $1 WHERE id = $2',
+                    [oldLine.cantidad, oldLine.id_producto]
+                );
+            }
+        }
+
+        // B. BORRAR REGISTROS PREVIOS
+        await client.query("DELETE FROM movimientoinventario WHERE origen_tipo = 'COMPRA' AND origen_id = $1", [id]);
+        await client.query("DELETE FROM compralinea WHERE id_compra = $1", [id]);
+
+        // C. INSERTAR NUEVAS LÍNEAS
+        let calculatedTotal = 0;
+
+        // Resolver Almacén (Reusar existente o default)
+        const almacenRes = await client.query('SELECT id FROM almacen WHERE id_sucursal = $1 LIMIT 1', [id_sucursal]);
+        const finalAlmacenId = almacenRes.rows[0]?.id;
+
+        for (const item of items) {
+            let productId = item.id_producto;
+            const quantity = parseFloat(item.quantity) || 0;
+            const price = parseFloat(item.price) || 0;
+            const bonus = parseFloat(item.bonus) || 0;
+
+            // Resolver/Actualizar Producto (Igual que en POST)
+            if (!productId && item.barcode) {
+                const prodRes = await client.query(
+                    'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2 AND id_sucursal = $3',
+                    [item.barcode, id_tenant, id_sucursal]
+                );
+                if (prodRes.rows.length > 0) {
+                    productId = prodRes.rows[0].id;
+                } else {
+                    // Crear producto si no existe
+                    const createProd = await client.query(
+                        `INSERT INTO producto 
+                             (id_tenant, codigo_barras, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
+                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, NOW()) RETURNING id`,
+                        [id_tenant, item.barcode, item.name, price, price, id_sucursal, id_proveedor, item.type || 'Producto', 'Unidades']
+                    );
+                    productId = createProd.rows[0].id;
+                }
+            } else if (!productId) {
+                // Buscar por nombre
+                const prodRes = await client.query(
+                    'SELECT id FROM producto WHERE nombre = $1 AND id_tenant = $2 AND id_sucursal = $3',
+                    [item.name, id_tenant, id_sucursal]
+                );
+                if (prodRes.rows.length > 0) {
+                    productId = prodRes.rows[0].id;
+                } else {
+                    const createProd = await client.query(
+                        `INSERT INTO producto 
+                             (id_tenant, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
+                         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, NOW()) RETURNING id`,
+                        [id_tenant, item.name, price, price, id_sucursal, id_proveedor, item.type || 'Producto', 'Unidades']
+                    );
+                    productId = createProd.rows[0].id;
+                }
+            }
+
+            if (productId) {
+                // Recuperar IVA real si id_impuesto existe (logic simple)
+                const iva = parseFloat(item.iva) || 0;
+                const subtotal = (price * quantity) - bonus;
+                const lineTotal = subtotal * (1 + (iva / 100));
+                calculatedTotal += lineTotal;
+
+                await client.query(`
+                    INSERT INTO compralinea (id_compra, id_producto, descripcion, cantidad, precio_unitario, iva, total_linea)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                 `, [id, productId, item.name, quantity, price, iva, lineTotal]);
+
+                if (finalAlmacenId) {
+                    await registrarEntradaInventario(client, {
+                        productId, quantity, idAlmacen: finalAlmacenId, idCompra: id, idUsuario: id_usuario
+                    });
+                }
+            }
+        }
+
+        // Actualizar total
+        await client.query('UPDATE compracabecera SET total = $1 WHERE id = $2', [calculatedTotal, id]);
+
+        await client.query('COMMIT');
+        res.json({ ok: true });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error PUT /compras:', error);
+        res.status(500).json({ error: error.message });
+    } finally {
+        client.release();
     }
 });
 
