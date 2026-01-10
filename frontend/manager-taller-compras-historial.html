@@ -682,7 +682,7 @@
             <main class="flex-1 overflow-y-auto p-6 relative z-10">
                 <!-- Selector de Sucursal Estandarizado -->
                 <div class="sucursal-selector-wrapper">
-                  <div id="sucursal-selector-container"></div>
+                    <div id="sucursal-selector-container"></div>
                 </div>
 
 
@@ -889,6 +889,7 @@
 
         document.addEventListener("DOMContentLoaded", async () => {
             // Inicializar selector de sucursal
+            await initSucursalSelector({
                 onchange: (sucursalId) => {
                     currentSucursalId = sucursalId;
                     loadPurchases();
@@ -1170,18 +1171,18 @@
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
 
-  <script type="module">
-    import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
-    
-    (async () => {
-      await initSucursalSelector('sucursal-selector-container', {
-        onchange: async (nuevaSucursalId) => {
-          console.log('Sucursal cambiada:', nuevaSucursalId);
-          location.reload();
-        }
-      });
-    })();
-  </script>
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: async (nuevaSucursalId) => {
+                    console.log('Sucursal cambiada:', nuevaSucursalId);
+                    location.reload();
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>
