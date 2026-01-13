@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trimestres IVA | FinSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #111111;
+            --bg-hover: #1a1a1a;
+            --text-main: #ffffff;
+            --text-secondary: #888888;
+            --accent: #4ade80;
+            --accent-dim: rgba(74, 222, 128, 0.1);
+            --border: #222222;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+        }
+
+        .sidebar-link {
+            transition: all 0.2s;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background-color: var(--accent-dim);
+            color: var(--accent);
+            border-right: 3px solid var(--accent);
+        }
+
+        .quarter-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.2s;
+        }
+
+        .quarter-card:hover {
+            border-color: var(--accent);
+        }
+
+        .quarter-card.current {
+            border-color: var(--accent);
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        .quarter-card.closed {
+            opacity: 0.7;
+        }
+
+        .status-ABIERTO {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .status-CERRADO {
+            background: rgba(156, 163, 175, 0.15);
+            color: #9ca3af;
+        }
+
+        .status-REABIERTO {
+            background: rgba(250, 204, 21, 0.15);
+            color: #facc15;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .iva-positive {
+            color: #f87171;
+        }
+
+        .iva-negative {
+            color: #4ade80;
+        }
+
+        .iva-neutral {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body class="h-screen overflow-hidden flex">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-black border-r border-[#222] flex flex-col z-20">
+        <div class="h-16 flex items-center gap-3 px-6 border-b border-[#222]">
+            <div
+                class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shadow-lg shadow-green-900/50">
+                <span class="material-symbols-outlined text-black font-bold text-lg">pie_chart</span>
+            </div>
+            <span class="font-bold text-lg tracking-tight">FinSaaS</span>
+        </div>
+
+        <div class="p-4">
+            <h3 class="text-xs font-bold text-[#444] uppercase tracking-wider mb-2 px-2">Overview</h3>
+            <nav class="space-y-1">
+                <a href="/finsaas-dashboard.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white">
+                    <span class="material-symbols-outlined text-[20px]">dashboard</span>
+                    <span class="text-sm font-medium">Dashboard</span>
+                </a>
+                <a href="/manager-taller-inicio.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white">
+                    <span class="material-symbols-outlined text-[20px]">garage_home</span>
+                    <span class="text-sm font-medium">Volver al Taller</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="px-4 mt-2">
+            <h3 class="text-xs font-bold text-[#444] uppercase tracking-wider mb-2 px-2">Contabilidad</h3>
+            <nav class="space-y-1">
+                <a href="/finsaas-facturas.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white">
+                    <span class="material-symbols-outlined text-[20px]">description</span>
+                    <span class="text-sm font-medium">Facturas</span>
+                </a>
+                <a href="/finsaas-caja.html"
+                    class="sidebar-link flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white">
+                    <span class="material-symbols-outlined text-[20px]">payments</span>
+                    <span class="text-sm font-medium">Caja</span>
+                </a>
+                <a href="/finsaas-trimestres.html"
+                    class="sidebar-link active flex items-center gap-3 px-3 py-2 rounded-md text-gray-400 hover:text-white">
+                    <span class="material-symbols-outlined text-[20px]">calendar_month</span>
+                    <span class="text-sm font-medium">Trimestres IVA</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="mt-auto border-t border-[#222] p-4">
+            <div class="flex items-center gap-3 px-2">
+                <div
+                    class="w-8 h-8 rounded-full bg-[#222] flex items-center justify-center text-xs font-bold text-gray-400">
+                    <span id="user-initials">U</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-white truncate" id="user-name">Usuario</p>
+                    <p class="text-xs text-gray-500 truncate">Admin</p>
+                </div>
+                <button onclick="logout()" class="text-gray-500 hover:text-white">
+                    <span class="material-symbols-outlined text-[20px]">logout</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-[#0a0a0a]">
+
+        <!-- Header -->
+        <header class="h-16 flex items-center justify-between px-8 border-b border-[#222]">
+            <div class="flex items-center gap-4">
+                <select id="year-select"
+                    class="bg-[#111] border border-[#222] rounded-lg py-2 px-4 text-white focus:outline-none focus:border-green-500/50">
+                </select>
+            </div>
+            <div class="text-sm text-gray-500">
+                Trimestre actual: <span id="current-quarter" class="text-green-400 font-bold">Q1 2026</span>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-5xl mx-auto">
+
+                <!-- Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Control de Trimestres IVA</h1>
+                    <p class="text-gray-500">Gestiona los cierres trimestrales y visualiza el IVA a pagar o a compensar.
+                    </p>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <div class="bg-[#111] border border-[#222] rounded-xl p-5">
+                        <p class="text-xs text-gray-500 uppercase mb-1">IVA Anual</p>
+                        <p id="iva-anual" class="text-2xl font-bold">€0</p>
+                    </div>
+                    <div class="bg-[#111] border border-[#222] rounded-xl p-5">
+                        <p class="text-xs text-gray-500 uppercase mb-1">Trimestres Cerrados</p>
+                        <p id="trimestres-cerrados" class="text-2xl font-bold text-gray-400">0/4</p>
+                    </div>
+                    <div class="bg-[#111] border border-[#222] rounded-xl p-5">
+                        <p class="text-xs text-gray-500 uppercase mb-1">Próximo Cierre</p>
+                        <p id="proximo-cierre" class="text-2xl font-bold text-yellow-400">-</p>
+                    </div>
+                </div>
+
+                <!-- Quarter Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="quarters-container">
+                    <!-- Loaded via JS -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { logout, getSession, requireAuth } from '/auth.js';
+
+        window.logout = logout;
+
+        const API_BASE = '';
+        let session = null;
+
+        function getAuthHeaders() {
+            if (!session) {
+                session = JSON.parse(localStorage.getItem('versa_session_v1') || 'null');
+            }
+            return {
+                'Authorization': `Bearer ${session?.token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        async function apiGet(endpoint) {
+            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            if (!res.ok) throw new Error('API Error');
+            return res.json();
+        }
+
+        async function apiPost(endpoint, data = {}) {
+            const res = await fetch(API_BASE + endpoint, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        }
+
+        const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val || 0);
+
+        const QUARTER_MONTHS = {
+            1: 'Enero - Marzo',
+            2: 'Abril - Junio',
+            3: 'Julio - Septiembre',
+            4: 'Octubre - Diciembre'
+        };
+
+        const QUARTER_DEADLINES = {
+            1: '20 de Abril',
+            2: '20 de Julio',
+            3: '20 de Octubre',
+            4: '30 de Enero (año siguiente)'
+        };
+
+        // Initialize year selector
+        function initYearSelector() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentQ = Math.ceil((now.getMonth() + 1) / 3);
+
+            document.getElementById('current-quarter').textContent = `Q${currentQ} ${currentYear}`;
+
+            const select = document.getElementById('year-select');
+            for (let y = currentYear; y >= currentYear - 3; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                select.appendChild(opt);
+            }
+            select.value = currentYear;
+            select.addEventListener('change', () => loadTrimestres());
+        }
+
+        // Load quarters
+        async function loadTrimestres() {
+            const anio = document.getElementById('year-select').value;
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentQ = Math.ceil((now.getMonth() + 1) / 3);
+
+            try {
+                const res = await apiGet(`/api/contabilidad/trimestres?anio=${anio}`);
+                const container = document.getElementById('quarters-container');
+
+                // Build quarters array (ensure all 4 exist)
+                const quarters = [1, 2, 3, 4].map(q => {
+                    const found = res.data?.find(t => t.trimestre === q) || {};
+                    return {
+                        trimestre: q,
+                        anio: parseInt(anio),
+                        estado: found.estado || 'ABIERTO',
+                        base_ingresos: found.base_ingresos || 0,
+                        iva_repercutido: found.iva_repercutido || 0,
+                        base_gastos: found.base_gastos || 0,
+                        iva_soportado: found.iva_soportado || 0,
+                        resultado_iva: found.resultado_iva || 0,
+                        closed_at: found.closed_at,
+                        id: found.id,
+                        is_current: parseInt(anio) === currentYear && q === currentQ
+                    };
+                });
+
+                // Calculate summary
+                const totalIVA = quarters.reduce((sum, q) => sum + parseFloat(q.resultado_iva || 0), 0);
+                const cerrados = quarters.filter(q => q.estado === 'CERRADO').length;
+                document.getElementById('iva-anual').textContent = formatCurrency(totalIVA);
+                document.getElementById('iva-anual').className = `text-2xl font-bold ${totalIVA > 0 ? 'iva-positive' : totalIVA < 0 ? 'iva-negative' : 'iva-neutral'}`;
+                document.getElementById('trimestres-cerrados').textContent = `${cerrados}/4`;
+
+                // Next deadline
+                const openQuarter = quarters.find(q => q.estado !== 'CERRADO');
+                document.getElementById('proximo-cierre').textContent = openQuarter ? QUARTER_DEADLINES[openQuarter.trimestre] : 'Todos cerrados';
+
+                // Render cards
+                container.innerHTML = quarters.map(q => `
+                    <div class="quarter-card ${q.is_current ? 'current' : ''} ${q.estado === 'CERRADO' ? 'closed' : ''}">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-white">Q${q.trimestre}</h3>
+                                <p class="text-sm text-gray-500">${QUARTER_MONTHS[q.trimestre]}</p>
+                            </div>
+                            <span class="badge status-${q.estado}">${q.estado}</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-xs text-gray-500">IVA Repercutido</p>
+                                <p class="text-lg font-bold text-green-400">${formatCurrency(q.iva_repercutido)}</p>
+                                <p class="text-xs text-gray-600">Base: ${formatCurrency(q.base_ingresos)}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">IVA Soportado</p>
+                                <p class="text-lg font-bold text-red-400">${formatCurrency(q.iva_soportado)}</p>
+                                <p class="text-xs text-gray-600">Base: ${formatCurrency(q.base_gastos)}</p>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-[#222] pt-4 mb-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-400">Resultado IVA:</span>
+                                <span class="text-xl font-bold ${parseFloat(q.resultado_iva) > 0 ? 'iva-positive' : parseFloat(q.resultado_iva) < 0 ? 'iva-negative' : 'iva-neutral'}">
+                                    ${formatCurrency(q.resultado_iva)}
+                                </span>
+                            </div>
+                            ${parseFloat(q.resultado_iva) > 0 ? '<p class="text-xs text-red-400 mt-1">A pagar a Hacienda</p>' :
+                        parseFloat(q.resultado_iva) < 0 ? '<p class="text-xs text-green-400 mt-1">A compensar</p>' : ''}
+                        </div>
+
+                        <div class="flex gap-2">
+                            ${q.estado === 'ABIERTO' ? `
+                                <button onclick="cerrarTrimestre(${q.anio}, ${q.trimestre})" 
+                                    class="flex-1 py-2 px-4 bg-green-500 hover:bg-green-400 text-black font-bold rounded-lg text-sm flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">lock</span>
+                                    Cerrar Trimestre
+                                </button>
+                            ` : q.estado === 'CERRADO' ? `
+                                <button onclick="reabrirTrimestre(${q.anio}, ${q.trimestre})" 
+                                    class="flex-1 py-2 px-4 bg-[#222] hover:bg-[#333] text-gray-400 font-medium rounded-lg text-sm flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">lock_open</span>
+                                    Reabrir
+                                </button>
+                                <button class="py-2 px-4 bg-[#111] border border-[#222] hover:border-green-500 text-gray-400 rounded-lg text-sm flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">download</span>
+                                    Modelo 303
+                                </button>
+                            ` : ''}
+                        </div>
+
+                        ${q.closed_at ? `<p class="text-xs text-gray-600 mt-3">Cerrado: ${new Date(q.closed_at).toLocaleDateString('es-ES')}</p>` : ''}
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error('Error loading trimestres:', err);
+            }
+        }
+
+        // Close quarter
+        window.cerrarTrimestre = async function (anio, trimestre) {
+            if (!confirm(`¿Cerrar el trimestre Q${trimestre} de ${anio}?\n\nEsto calculará y guardará los totales de IVA.`)) return;
+
+            try {
+                const res = await apiPost(`/api/contabilidad/trimestres/${anio}/${trimestre}/cerrar`);
+                if (res.ok) {
+                    alert('Trimestre cerrado correctamente');
+                    loadTrimestres();
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo cerrar'));
+                }
+            } catch (err) {
+                alert('Error al cerrar: ' + err.message);
+            }
+        };
+
+        // Reopen quarter
+        window.reabrirTrimestre = async function (anio, trimestre) {
+            const reason = prompt('Motivo para reabrir el trimestre (requerido):');
+            if (!reason) return;
+
+            try {
+                const res = await apiPost(`/api/contabilidad/trimestres/${anio}/${trimestre}/reabrir`, { reason });
+                if (res.ok) {
+                    alert('Trimestre reabierto');
+                    loadTrimestres();
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo reabrir'));
+                }
+            } catch (err) {
+                alert('Error al reabrir: ' + err.message);
+            }
+        };
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+
+            const session = getSession();
+            if (session?.user) {
+                document.getElementById('user-name').textContent = session.user.nombre;
+                document.getElementById('user-initials').textContent = session.user.nombre?.charAt(0).toUpperCase() || 'U';
+            }
+
+            initYearSelector();
+            loadTrimestres();
+        });
+    </script>
+</body>
+
+</html>

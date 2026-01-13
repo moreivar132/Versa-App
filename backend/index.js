@@ -7,9 +7,26 @@ const pool = require('./db');
 const authRouter = require('./routes/auth');
 const superAdminRouter = require('./routes/superAdminRoutes');
 const proveedoresRouter = require('./routes/proveedores');
-const clientesRouter = require('./routes/clientes');
-const vehiculosRouter = require('./routes/vehiculos');
+// LEGACY (movidos a legacy/backend/) - ahora usamos módulos V2
+// const clientesRouter = require('./routes/clientes');
+// const vehiculosRouter = require('./routes/vehiculos');
+const clientesRouterV2 = require('./src/modules/clientes/api/clientes.routes');
+const vehiculosRouterV2 = require('./src/modules/vehiculos/api/vehiculos.routes');
 const verifyJWT = require('./middleware/auth');
+
+// --- Core Middlewares (Observabilidad) ---
+const { requestIdMiddleware } = require('./src/core/http/middlewares/request-id');
+const { errorHandler, notFoundHandler } = require('./src/core/http/middlewares/error-handler');
+const { tenantContextMiddleware, getTenantId } = require('./src/core/http/middlewares/tenant-context');
+const logger = require('./src/core/logging/logger');
+
+// --- Swagger/OpenAPI Documentation ---
+const swaggerUi = require('swagger-ui-express');
+const { swaggerSpec } = require('./src/core/docs/swagger');
+
+// Middleware combinado para rutas privadas: auth + tenant context
+// Uso: app.use('/api/ruta-privada', privateRoute, require('./routes/...'))
+const privateRoute = [verifyJWT, tenantContextMiddleware()];
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -22,6 +39,21 @@ console.log('---------------------------------------------------');
 // --- Middlewares ---
 app.use(cors());
 
+// --- API DOCUMENTATION (Swagger) ---
+// Acceder a /api-docs para ver la documentación interactiva
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'VERSA API Docs',
+  customCss: '.swagger-ui .topbar { display: none }'
+}));
+// Endpoint JSON para integraciones
+app.get('/api-docs.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
+
+// REQUEST ID: Primero de todo para trazabilidad
+app.use(requestIdMiddleware);
+
 // IMPORTANTE: El webhook de Stripe debe ir ANTES de express.json()
 // porque necesita acceso al raw body para verificar la firma
 app.use('/api/stripe/webhook', require('./routes/stripeWebhook'));
@@ -31,8 +63,13 @@ app.use('/api/stripe/webhook', require('./routes/stripeWebhook'));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Request logging (usa el logger estructurado con requestId)
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  logger.info({
+    requestId: req.requestId,
+    method: req.method,
+    url: req.url
+  }, 'Incoming request');
   next();
 });
 
@@ -51,8 +88,9 @@ app.use('/api/auth', authRouter);
 app.use('/api/admin', superAdminRouter);
 app.use('/api/access', require('./routes/accessRoutes')); // RBAC Access Management
 app.use('/api/proveedores', proveedoresRouter);
-app.use('/api/clientes', clientesRouter);
-app.use('/api/vehiculos', vehiculosRouter);
+// Usando módulos V2 (mismos endpoints, nueva arquitectura)
+app.use('/api/clientes', clientesRouterV2);
+app.use('/api/vehiculos', vehiculosRouterV2);
 app.use('/api/citas', require('./routes/citas'));
 app.use('/api/inventory', require('./routes/inventory'));
 app.use('/api/sucursales', require('./routes/sucursales'));
@@ -73,23 +111,27 @@ app.use('/api/tecnicos', require('./routes/tecnicos'));
 app.use('/api/trabajadores', require('./routes/trabajadores'));
 app.use('/api/facturas', require('./routes/facturas'));
 app.use('/api/cuentas-corrientes', require('./routes/cuentasCorrientes'));
-app.use('/api/ventas', require('./routes/ventas'));
-app.use('/api/income-events', verifyJWT, require('./routes/incomeEvents'));
-app.use('/api/dashboard', verifyJWT, require('./routes/dashboardPrefs'));
+app.use('/api/ventas', require('./src/modules/ventas/api/ventas.routes')); // MIGRADO a modular
+app.use('/api/income-events', privateRoute, require('./routes/incomeEvents'));
+app.use('/api/dashboard', privateRoute, require('./routes/dashboardPrefs'));
+
+// Contabilidad Module (V3 - Facturas, Pagos, Trimestres, IVA)
+app.use('/api/contabilidad', privateRoute, require('./src/modules/contable/api/contabilidad.routes'));
+
 
 // Marketplace routes (público y admin)
 app.use('/api/marketplace', require('./routes/marketplace'));
-app.use('/api/marketplace/admin', verifyJWT, require('./routes/marketplaceAdmin'));
+app.use('/api/marketplace/admin', privateRoute, require('./routes/marketplaceAdmin'));
 
 // Marketing / Email Automations (admin)
-app.use('/api/marketing/email', verifyJWT, require('./routes/marketingEmail'));
-app.use('/api/marketing/campaigns', verifyJWT, require('./routes/emailCampaign'));
+app.use('/api/marketing/email', privateRoute, require('./routes/marketingEmail'));
+app.use('/api/marketing/campaigns', privateRoute, require('./routes/emailCampaign'));
 
 // Fidelización - Public (tarjeta wallet, sin auth)
 app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
 
 // Fidelización - Admin (gestión miembros/puntos/promos, con JWT)
-app.use('/api/admin/fidelizacion', verifyJWT, require('./routes/fidelizacionAdmin'));
+app.use('/api/admin/fidelizacion', privateRoute, require('./routes/fidelizacionAdmin'));
 
 // Open Banking (TrueLayer Data API)
 app.use('/api/open-banking', require('./routes/openBankingRoutes'));
@@ -116,6 +158,13 @@ app.get('/api/db-test', async (req, res) => {
   }
 });
 
+// --- ERROR HANDLERS (deben ir DESPUÉS de todas las rutas) ---
+// 404 para rutas API no encontradas (solo en desarrollo, producción sirve SPA)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('/api', notFoundHandler);
+}
+// Error handler global centralizado
+app.use(errorHandler);
 
 // --- Lógica para Producción ---
 // Este bloque solo se ejecuta cuando el servidor está en modo producción
