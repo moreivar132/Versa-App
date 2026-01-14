@@ -52,7 +52,9 @@ function getEmpresaId(req) {
  * Upload file and process with OpenAI GPT-4 Vision (synchronous)
  */
 async function createIntake(req, res) {
+    console.log('[Egresos] createIntake called');
     upload(req, res, async (err) => {
+        console.log('[Egresos] Multer callback, err:', err ? err.message : 'none');
         if (err) return res.status(400).json({ ok: false, error: err.message });
 
         const client = await pool.connect();
@@ -302,6 +304,13 @@ async function createGasto(req, res) {
 
         if (!empresaId) return res.status(400).json({ ok: false, error: 'Empresa no especificada' });
 
+        // Normalize estado to uppercase and validate
+        const allowedEstados = ['PENDIENTE', 'PAGADA', 'PARCIAL', 'ANULADA'];
+        let normalizedEstado = (estado || 'PENDIENTE').toUpperCase();
+        if (!allowedEstados.includes(normalizedEstado)) {
+            normalizedEstado = 'PENDIENTE';
+        }
+
         await client.query('BEGIN');
 
         // Find or create contacto
@@ -342,7 +351,7 @@ async function createGasto(req, res) {
                 contactoId, empresaId, numero_factura,
                 fecha_emision, fecha_vencimiento || fecha_emision,
                 base_imponible || 0, iva_porcentaje || 0, calcIvaImporte, total || 0,
-                concepto, estado, userId, finalId, tenantId
+                concepto, normalizedEstado, userId, finalId, tenantId
             ]);
         } else {
             // Create new
@@ -358,7 +367,7 @@ async function createGasto(req, res) {
                 tenantId, empresaId, contactoId, numero_factura,
                 fecha_emision || new Date(), fecha_vencimiento,
                 base_imponible || 0, iva_porcentaje || 0, calcIvaImporte, total || 0,
-                estado, concepto, intake_id, userId
+                normalizedEstado, concepto, intake_id, userId
             ]);
             finalId = ins.rows[0].id;
         }

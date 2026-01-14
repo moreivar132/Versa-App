@@ -553,9 +553,13 @@
             pollingInterval = setInterval(async () => {
                 attempts++;
                 try {
-                    const res = await fetchWithAuth(`${API_BASE}/egresos/intakes/${intakeId}`, {
+                    const response = await fetchWithAuth(`${API_BASE}/egresos/intakes/${intakeId}`, {
                         headers: { 'X-Empresa-Id': selectedEmpresaId }
                     });
+
+                    // Parse JSON from response
+                    const res = await response.json();
+                    console.log('[Polling] Response:', res);
 
                     const intake = res?.data || res;
                     const status = intake?.status || 'processing';
