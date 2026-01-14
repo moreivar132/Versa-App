@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Trimestres IVA | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                        "brand-orange": "#46ec13",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <link href="/src/verticals/finsaas/layout/FinSaaSLayout.css" rel="stylesheet" />
+
+    <style>
+        .quarter-card {
+            transition: all 0.2s;
+        }
+
+        .quarter-card:hover {
+            border-color: #46ec13;
+        }
+
+        .quarter-card.current {
+            border-color: #46ec13;
+            background: rgba(74, 222, 128, 0.05);
+        }
+
+        .quarter-card.closed {
+            opacity: 0.7;
+        }
+
+        .status-ABIERTO {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .status-CERRADO {
+            background: rgba(156, 163, 175, 0.15);
+            color: #9ca3af;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .iva-positive {
+            color: #f87171;
+        }
+
+        .iva-negative {
+            color: #4ade80;
+        }
+
+        .iva-neutral {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+
+    <div id="app-shell" class="flex h-screen w-full overflow-hidden">
+
+        <div class="max-w-5xl mx-auto w-full flex flex-col gap-6 pb-10">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Control de IVA
+                    </h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1">Gestión de cierres trimestrales.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div
+                        class="flex items-center gap-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-3 py-2">
+                        <span class="material-symbols-outlined text-gray-500 text-[18px]">business</span>
+                        <select id="empresa-select"
+                            class="bg-transparent text-sm text-slate-700 dark:text-white focus:outline-none min-w-[150px]">
+                            <option value="">Cargando...</option>
+                        </select>
+                    </div>
+                    <select id="year-select"
+                        class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg py-2 px-4 text-slate-900 dark:text-white focus:outline-none focus:border-green-500"></select>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-5 shadow-sm">
+                    <p class="text-xs text-gray-500 uppercase mb-1 font-bold">IVA Anual</p>
+                    <p id="iva-anual" class="text-2xl font-bold">€0.00</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-5 shadow-sm">
+                    <p class="text-xs text-gray-500 uppercase mb-1 font-bold">Trimestres Cerrados</p>
+                    <p id="trimestres-cerrados" class="text-2xl font-bold text-gray-400">0/4</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-5 shadow-sm">
+                    <p class="text-xs text-gray-500 uppercase mb-1 font-bold">Próximo Cierre</p>
+                    <p id="proximo-cierre" class="text-2xl font-bold text-yellow-500">-</p>
+                </div>
+            </div>
+
+            <!-- Quarter Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="quarters-container">
+                <!-- Loaded via JS -->
+                <p class="text-center text-gray-500 col-span-2 py-10">Cargando trimestres...</p>
+            </div>
+
+        </div>
+    </div>
+
+
+    <script type="module">
+        import { logout, getSession, requireAuth } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        window.logout = logout;
+        const API_BASE = '';
+        let session = null;
+        let currentEmpresaId = null;
+
+        function getAuthHeaders() {
+            if (!session) session = JSON.parse(localStorage.getItem('versa_session_v1') || 'null');
+            const headers = { 'Authorization': `Bearer ${session?.token}`, 'Content-Type': 'application/json' };
+            if (currentEmpresaId) headers['X-Empresa-Id'] = currentEmpresaId;
+            return headers;
+        }
+        async function apiGet(endpoint) {
+            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            if (!res.ok) throw new Error('API Error');
+            return res.json();
+        }
+        async function apiPost(endpoint, data = {}) {
+            const res = await fetch(API_BASE + endpoint, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) });
+            return res.json();
+        }
+        const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val || 0);
+
+        const QUARTER_MONTHS = { 1: 'Enero - Marzo', 2: 'Abril - Junio', 3: 'Julio - Septiembre', 4: 'Octubre - Diciembre' };
+        const QUARTER_DEADLINES = { 1: '20 de Abril', 2: '20 de Julio', 3: '20 de Octubre', 4: '30 de Enero' };
+
+        async function loadEmpresas() {
+            try {
+                const res = await apiGet('/api/contabilidad/empresas');
+                const select = document.getElementById('empresa-select');
+                select.innerHTML = '';
+
+                if (res.data && res.data.items && res.data.items.length > 0) {
+                    res.data.items.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.textContent = emp.nombre_legal || emp.nombre_comercial;
+                        select.appendChild(opt);
+                    });
+
+                    // Restore saved selection
+                    const stored = localStorage.getItem('finsaas_current_empresa');
+                    if (stored && res.data.items.find(e => e.id == stored)) {
+                        currentEmpresaId = stored;
+                        select.value = stored;
+                    } else {
+                        currentEmpresaId = res.data.items[0].id;
+                        select.value = currentEmpresaId;
+                    }
+                } else {
+                    select.innerHTML = '<option value="">No hay empresas - Crear una primero</option>';
+                }
+
+                select.addEventListener('change', (e) => {
+                    currentEmpresaId = e.target.value || null;
+                    if (currentEmpresaId) {
+                        localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
+                    }
+                    loadTrimestres();
+                });
+            } catch (e) { console.error('Error loading empresas:', e); }
+        }
+
+        function initYearSelector() {
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const select = document.getElementById('year-select');
+            select.innerHTML = '';
+            for (let y = currentYear; y >= currentYear - 3; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                select.appendChild(opt);
+            }
+            select.value = currentYear;
+            select.addEventListener('change', () => loadTrimestres());
+        }
+
+        async function loadTrimestres() {
+            const anio = document.getElementById('year-select').value;
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentQ = Math.ceil((now.getMonth() + 1) / 3);
+
+            try {
+                const res = await apiGet(`/api/contabilidad/trimestres?anio=${anio}`);
+                const container = document.getElementById('quarters-container');
+                const quarters = [1, 2, 3, 4].map(q => {
+                    const found = res.data?.find(t => t.trimestre === q) || {};
+                    return {
+                        trimestre: q, anio: parseInt(anio), estado: found.estado || 'ABIERTO',
+                        base_ingresos: found.base_ingresos || 0, iva_repercutido: found.iva_repercutido || 0,
+                        base_gastos: found.base_gastos || 0, iva_soportado: found.iva_soportado || 0,
+                        resultado_iva: found.resultado_iva || 0, closed_at: found.closed_at,
+                        id: found.id, is_current: parseInt(anio) === currentYear && q === currentQ
+                    };
+                });
+
+                const totalIVA = quarters.reduce((sum, q) => sum + parseFloat(q.resultado_iva || 0), 0);
+                const cerrados = quarters.filter(q => q.estado === 'CERRADO').length;
+                const ivaEl = document.getElementById('iva-anual');
+                ivaEl.textContent = formatCurrency(totalIVA);
+                ivaEl.className = `text-2xl font-bold ${totalIVA > 0 ? 'iva-positive' : totalIVA < 0 ? 'iva-negative' : 'iva-neutral'}`;
+                document.getElementById('trimestres-cerrados').textContent = `${cerrados}/4`;
+                const openQuarter = quarters.find(q => q.estado !== 'CERRADO');
+                document.getElementById('proximo-cierre').textContent = openQuarter ? QUARTER_DEADLINES[openQuarter.trimestre] : 'Todos cerrados';
+
+
+                container.innerHTML = quarters.map(q => `
+                    <div class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-6 quarter-card ${q.is_current ? 'current' : ''} ${q.estado === 'CERRADO' ? 'closed' : ''}">
+                         <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-slate-900 dark:text-white">Q${q.trimestre}</h3>
+                                <p class="text-sm text-gray-500">${QUARTER_MONTHS[q.trimestre]}</p>
+                            </div>
+                            <span class="badge status-${q.estado}">${q.estado}</span>
+                        </div>
+                         <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-xs text-gray-500">Repercutido</p>
+                                <p class="text-lg font-bold text-green-500">${formatCurrency(q.iva_repercutido)}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Soportado</p>
+                                <p class="text-lg font-bold text-red-500">${formatCurrency(q.iva_soportado)}</p>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200 dark:border-[#25381e] pt-4 mb-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-400">Resultado:</span>
+                                <span class="text-xl font-bold ${parseFloat(q.resultado_iva) > 0 ? 'iva-positive' : parseFloat(q.resultado_iva) < 0 ? 'iva-negative' : 'iva-neutral'}">
+                                    ${formatCurrency(q.resultado_iva)}
+                                </span>
+                            </div>
+                        </div>
+                         <div class="flex gap-2">
+                            ${q.estado === 'ABIERTO' ? `
+                                <button onclick="cerrarTrimestre(${q.anio}, ${q.trimestre})" class="flex-1 py-2 px-4 bg-primary text-background-dark font-bold rounded-lg text-sm flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">lock</span> Cerrar
+                                </button>
+                            ` : q.estado === 'CERRADO' ? `
+                                <button onclick="reabrirTrimestre(${q.anio}, ${q.trimestre})" class="flex-1 py-2 px-4 bg-gray-100 dark:bg-[#25381e] text-gray-500 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-gray-200 dark:hover:bg-[#333]">
+                                    <span class="material-symbols-outlined text-[18px]">lock_open</span> Reabrir
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (e) { }
+        }
+
+        window.cerrarTrimestre = async function (anio, trimestre) {
+            if (!confirm(`¿Cerrar el trimestre Q${trimestre}?`)) return;
+            try {
+                const res = await apiPost(`/api/contabilidad/trimestres/${anio}/${trimestre}/cerrar`);
+                if (res.ok) { alert('Cerrado correctamente'); loadTrimestres(); } else alert('Error: ' + res.error);
+            } catch (err) { alert('Error: ' + err.message); }
+        };
+
+        window.reabrirTrimestre = async function (anio, trimestre) {
+            const reason = prompt('Motivo para reabrir:');
+            if (!reason) return;
+            try {
+                const res = await apiPost(`/api/contabilidad/trimestres/${anio}/${trimestre}/reabrir`, { reason });
+                if (res.ok) { alert('Reabierto'); loadTrimestres(); } else alert('Error: ' + res.error);
+            } catch (err) { alert('Error: ' + err.message); }
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            const layout = new FinSaaSLayout('app-shell');
+            layout.init();
+            await loadEmpresas();
+            initYearSelector();
+            loadTrimestres();
+        });
+
+    </script>
+</body>
+
+</html>

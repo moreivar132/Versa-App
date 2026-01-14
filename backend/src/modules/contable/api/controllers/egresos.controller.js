@@ -264,22 +264,50 @@ async function ocrResultCallback(req, res) {
         // ===================================================================
 
         if (extracted) {
-            // 1. Parsear LINEAS (puede venir como string JSON o array)
+            // 1. Parsear LINEAS (puede venir como string JSON sucio o array)
             if (extracted.lineas) {
                 if (typeof extracted.lineas === 'string') {
                     try {
                         console.log('[OCR] Parsing lineas from string:', extracted.lineas.substring(0, 100));
-                        // Limpiar y parsear: "{...}, {...}" -> [{...}, {...}]
-                        const cleaned = extracted.lineas.replace(/\n/g, '').replace(/\r/g, '').trim();
-                        extracted.lineas = JSON.parse(`[${cleaned}]`);
+                        // Intentar limpiar saltos de línea y formatear correctamente
+                        // Caso común: "{...}, {...}" sin corchetes
+                        let cleaned = extracted.lineas.trim();
+
+                        // Si empieza con { y no con [, asumimos que es una lista de objetos separados por comas
+                        if (cleaned.startsWith('{') && !cleaned.startsWith('[')) {
+                            cleaned = `[${cleaned}]`;
+                        }
+
+                        // Reemplazar saltos de línea internos que rompen JSON
+                        cleaned = cleaned.replace(/\n/g, ' ').replace(/\r/g, '');
+
+                        extracted.lineas = JSON.parse(cleaned);
                         console.log('[OCR] Lineas parsed successfully:', extracted.lineas.length, 'items');
                     } catch (e) {
-                        console.error('[OCR] Error parsing lineas, setting to empty array:', e.message);
-                        extracted.lineas = [];
+                        console.error('[OCR] Error parsing lineas, trying aggressive regex fix:', e.message);
+                        // Intento desesperado: usar regex para extraer objetos
+                        try {
+                            const matches = extracted.lineas.match(/\{.*?\}/g);
+                            if (matches) {
+                                extracted.lineas = matches.map(m => JSON.parse(m));
+                                console.log('[OCR] Regex recovery success:', extracted.lineas.length, 'items');
+                            } else {
+                                extracted.lineas = [];
+                            }
+                        } catch (e2) {
+                            console.error('[OCR] Regex recovery failed:', e2.message);
+                            extracted.lineas = [];
+                        }
                     }
                 } else if (!Array.isArray(extracted.lineas)) {
-                    console.warn('[OCR] Lineas is not string or array, converting to array');
-                    extracted.lineas = [extracted.lineas];
+                    // Si es un objeto único, convertirlo en array
+                    if (typeof extracted.lineas === 'object') {
+                        console.warn('[OCR] Lineas was object, converting to array');
+                        extracted.lineas = [extracted.lineas];
+                    } else {
+                        console.warn('[OCR] Lineas invalid type, resetting');
+                        extracted.lineas = [];
+                    }
                 }
             }
 
@@ -287,7 +315,17 @@ async function ocrResultCallback(req, res) {
             const parseNum = (val) => {
                 if (typeof val === 'number') return val;
                 if (typeof val === 'string') {
-                    const cleaned = val.replace(',', '.').trim();
+                    // Manejar formato "1.000,50" -> "1000.50" (Europeo) vs "1,000.50" (US) se vuelve complejo
+                    // Asumimos formato estándar de programación "1000.50" si es posible, o limpiamos todo menos dígitos y punto
+                    // Limpieza simple: reemplazar coma por punto si hay solo una coma y está al final (decimal)
+                    let cleaned = val.trim();
+                    if (cleaned.indexOf(',') > -1 && cleaned.indexOf('.') === -1) {
+                        // Solo comas (formato "10,50")
+                        cleaned = cleaned.replace(',', '.');
+                    } else {
+                        // Mezcla o formato US "1,000.00" -> quitar comas
+                        cleaned = cleaned.replace(/,/g, '');
+                    }
                     const parsed = parseFloat(cleaned);
                     return isNaN(parsed) ? 0 : parsed;
                 }
@@ -309,10 +347,10 @@ async function ocrResultCallback(req, res) {
 
                 // Convertir booleans que vienen como strings
                 if (typeof validation.check_total === 'string') {
-                    validation.check_total = validation.check_total === 'true';
+                    validation.check_total = validation.check_total.toLowerCase() === 'true';
                 }
                 if (typeof validation.check_iva === 'string') {
-                    validation.check_iva = validation.check_iva === 'true';
+                    validation.check_iva = validation.check_iva.toLowerCase() === 'true';
                 }
             }
         }
@@ -374,7 +412,13 @@ async function ocrResultCallback(req, res) {
                 const provNombre = extracted.proveedor_nombre || extracted.proveedor || extracted.supplier_name;
                 const provNif = extracted.proveedor_nif || extracted.cif_nif || extracted.supplier_nif;
                 const numFactura = extracted.numero_factura || extracted.invoice_number || 'BORRADOR-' + intake.id;
-                const fecha = extracted.fecha_emision || extracted.date || new Date();
+
+                // Fecha: intentar parsear
+                let fecha = new Date();
+                if (extracted.fecha_emision || extracted.date) {
+                    const d = new Date(extracted.fecha_emision || extracted.date);
+                    if (!isNaN(d.getTime())) fecha = d;
+                }
 
                 const parseNum = (val) => {
                     if (typeof val === 'number') return val;
@@ -388,32 +432,22 @@ async function ocrResultCallback(req, res) {
                 const ivaImp = parseNum(extracted.iva_importe || (total - baseImp));
 
                 let contactoId = null;
+                // Intentar buscar contacto por NIF
                 if (provNif) {
-                    const cRows = await client.query(`SELECT id FROM contabilidad_contacto WHERE id_tenant=$1 AND nif_cif=$2`, [intake.id_tenant, provNif]);
+                    // Buscar incluyendo contactos borrados, o activos
+                    const cRows = await client.query(`SELECT id FROM contabilidad_contacto WHERE id_tenant=$1 AND nif_cif=$2 LIMIT 1`, [intake.id_tenant, provNif]);
                     if (cRows.rows.length > 0) contactoId = cRows.rows[0].id;
                 }
 
                 if (!contactoId && provNombre) {
-                    // First try to find existing
-                    if (provNif) {
-                        const existingContact = await client.query(
-                            `SELECT id FROM contabilidad_contacto WHERE id_tenant=$1 AND nif_cif=$2 AND deleted_at IS NULL`,
-                            [intake.id_tenant, provNif]
-                        );
-                        if (existingContact.rows.length > 0) {
-                            contactoId = existingContact.rows[0].id;
-                        }
-                    }
-
-                    // Create new if not found
-                    if (!contactoId) {
-                        const newContact = await client.query(`
-                            INSERT INTO contabilidad_contacto (id_tenant, id_empresa, tipo, nombre, nif_cif, created_by)
-                            VALUES ($1, $2, 'PROVEEDOR', $3, $4, $5)
-                            RETURNING id
-                        `, [intake.id_tenant, intake.id_empresa, provNombre, provNif, intake.created_by]);
-                        if (newContact.rows.length > 0) contactoId = newContact.rows[0].id;
-                    }
+                    // Crear nuevo contacto si no existe existe
+                    // TODO: Mejorar búsqueda por nombre similar
+                    const newContact = await client.query(`
+                        INSERT INTO contabilidad_contacto (id_tenant, id_empresa, tipo, nombre, nif_cif, created_by)
+                        VALUES ($1, $2, 'PROVEEDOR', $3, $4, $5)
+                        RETURNING id
+                    `, [intake.id_tenant, intake.id_empresa, provNombre, provNif, intake.created_by]);
+                    if (newContact.rows.length > 0) contactoId = newContact.rows[0].id;
                 }
 
                 console.log('[OCR] Creating factura with:', {
@@ -433,7 +467,7 @@ async function ocrResultCallback(req, res) {
                     RETURNING id
                 `, [
                     intake.id_tenant, intake.id_empresa,
-                    contactoId, numFactura, fecha, extracted.fecha_vencimiento || fecha,
+                    contactoId, numFactura, fecha, fecha, // Vencimiento = Emision por defecto
                     baseImp, ivaPct, ivaImp, total,
                     `Generado por OCR (Intake ${intake.id})`, intake.id, intake.created_by
                 ]);
@@ -441,12 +475,15 @@ async function ocrResultCallback(req, res) {
 
                 console.log('[OCR] ✅ Factura created with ID:', gastoId);
 
-                if (intake.file_url) {
-                    console.log('[OCR] Attaching file:', intake.file_url);
+                // Si Make nos devuelve la URL del archivo (ej. procesada o la misma), usarla si no teníamos una
+                const finalFileUrl = file_url || intake.file_url;
+
+                if (finalFileUrl) {
+                    console.log('[OCR] Attaching file:', finalFileUrl);
                     await client.query(`
                         INSERT INTO contabilidad_factura_archivo (id_factura, file_url, storage_key, mime_type, size_bytes, original_name, created_by)
                         VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    `, [gastoId, intake.file_url, intake.file_storage_key, intake.file_mime, intake.file_size_bytes, intake.file_original_name, intake.created_by]);
+                    `, [gastoId, finalFileUrl, intake.file_storage_key, intake.file_mime, intake.file_size_bytes, intake.file_original_name, intake.created_by]);
                     console.log('[OCR] ✅ File attached');
                 }
                 // Release savepoint on success
@@ -459,22 +496,32 @@ async function ocrResultCallback(req, res) {
             }
         }
 
-        // Update intake con file_url si Make lo proporciona
-        const updateQuery = file_url
-            ? `UPDATE accounting_intake SET status = $1, extracted_json = $2, validation_json = $3, trace_id = $4,
-                error_code = $5, error_message = $6, file_url = $7, updated_at = NOW()
-                WHERE id = $8`
-            : `UPDATE accounting_intake SET status = $1, extracted_json = $2, validation_json = $3, trace_id = $4,
-                error_code = $5, error_message = $6, updated_at = NOW()
-                WHERE id = $7`;
+        // Update intake
+        const query = `
+            UPDATE accounting_intake 
+            SET status = $1, 
+                extracted_json = $2, 
+                validation_json = $3, 
+                trace_id = $4,
+                error_code = $5, 
+                error_message = $6, 
+                file_url = COALESCE($7, file_url), 
+                updated_at = NOW()
+            WHERE id = $8
+        `;
 
-        const updateParams = file_url
-            ? [dbStatus, extracted ? JSON.stringify(extracted) : null, validation ? JSON.stringify(validation) : null,
-                trace_id, error_code, error_message, file_url, intakeId]
-            : [dbStatus, extracted ? JSON.stringify(extracted) : null, validation ? JSON.stringify(validation) : null,
-                trace_id, error_code, error_message, intakeId];
+        const params = [
+            dbStatus,
+            extracted ? JSON.stringify(extracted) : null,
+            validation ? JSON.stringify(validation) : null,
+            trace_id,
+            error_code,
+            error_message,
+            file_url || null,
+            intakeId
+        ];
 
-        await client.query(updateQuery, updateParams);
+        await client.query(query, params);
 
         console.log('[OCR] Intake updated. Status:', dbStatus, 'Gasto ID:', gastoId);
 
