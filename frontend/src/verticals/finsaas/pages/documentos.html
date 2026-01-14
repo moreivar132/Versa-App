@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Biblioteca de Facturas | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                        "brand-orange": "#46ec13",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <link href="/src/verticals/finsaas/layout/FinSaaSLayout.css" rel="stylesheet" />
+
+    <style>
+        /* Table Styles */
+        .glass-table th {
+            font-weight: 600;
+            color: #9ca3af;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .glass-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #1f2937;
+            font-size: 0.875rem;
+        }
+
+        .dark .glass-table th {
+            border-bottom-color: #25381e;
+            color: #9ca3af;
+        }
+
+        .dark .glass-table td {
+            border-bottom-color: #25381e;
+            color: #e5e7eb;
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .status-PAGADA {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .status-PENDIENTE {
+            background: rgba(250, 204, 21, 0.15);
+            color: #facc15;
+        }
+
+        .status-PARCIAL {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+        }
+
+        .status-VENCIDA {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        .status-BORRADOR {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+        }
+
+        .status-PROCESANDO {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+        }
+
+        .status-ERROR {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .type-badge {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
+        .type-INGRESO {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .type-GASTO {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        .origin-badge {
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+
+        .origin-IA {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+        }
+
+        .origin-MANUAL {
+            background: rgba(156, 163, 175, 0.15);
+            color: #9ca3af;
+        }
+
+        .file-badge {
+            padding: 0.15rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.6rem;
+            font-weight: 700;
+        }
+
+        .file-PDF {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .file-IMG {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+
+        /* Quarter tabs */
+        .quarter-tab {
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .quarter-tab:hover {
+            background: rgba(70, 236, 19, 0.1);
+        }
+
+        .quarter-tab.active {
+            background: #46ec13;
+            color: #142210;
+        }
+
+        /* Preview drawer */
+        .preview-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 500px;
+            max-width: 90vw;
+            height: 100vh;
+            background: #1a2c15;
+            border-left: 1px solid #25381e;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-drawer.open {
+            transform: translateX(0);
+        }
+
+        .preview-drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 49;
+        }
+
+        .preview-drawer-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Gallery view */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .gallery-card {
+            background: #1a2c15;
+            border: 1px solid #25381e;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gallery-card:hover {
+            border-color: #46ec13;
+            box-shadow: 0 0 20px rgba(70, 236, 19, 0.1);
+        }
+
+        .gallery-thumbnail {
+            width: 100%;
+            height: 120px;
+            background: #25381e;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .gallery-thumbnail img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* PDF viewer */
+        .pdf-viewer {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #0a0a0a;
+        }
+
+        /* Skeleton loading */
+        .skeleton {
+            background: linear-gradient(90deg, #25381e 25%, #2d4525 50%, #25381e 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+        }
+
+        @keyframes skeleton-loading {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+
+    <div id="app-shell" class="flex h-screen w-full overflow-hidden">
+        <!-- Main Content Slot -->
+        <div class="max-w-7xl mx-auto flex flex-col gap-4 pb-6 h-full w-full">
+
+            <!-- Header Row -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1
+                        class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">folder_open</span>
+                        Biblioteca de Facturas
+                    </h1>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Respaldo visual de todos los documentos
+                        contables por trimestre.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <!-- View toggle -->
+                    <div class="flex bg-surface-dark rounded-lg p-0.5 border border-[#25381e]">
+                        <button id="btn-view-table" onclick="setView('table')"
+                            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1 view-toggle active">
+                            <span class="material-symbols-outlined text-[16px]">table_rows</span> Tabla
+                        </button>
+                        <button id="btn-view-gallery" onclick="setView('gallery')"
+                            class="px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1 view-toggle">
+                            <span class="material-symbols-outlined text-[16px]">grid_view</span> Galería
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Year & Quarter Selector -->
+            <div class="flex flex-wrap items-center gap-4">
+                <!-- Empresa Selector -->
+                <div
+                    class="flex items-center gap-2 bg-gray-50 dark:bg-surface-dark-light px-3 py-2 rounded-lg border border-gray-200 dark:border-transparent">
+                    <span class="material-symbols-outlined text-gray-500 text-[18px]">business</span>
+                    <select id="empresa-selector"
+                        class="bg-transparent text-sm text-slate-700 dark:text-white focus:outline-none min-w-[150px]">
+                        <option value="">Cargando...</option>
+                    </select>
+                </div>
+
+                <div class="h-6 w-px bg-gray-200 dark:bg-[#25381e]"></div>
+
+                <!-- Year Selector -->
+                <div class="flex items-center gap-2 bg-surface-dark-light px-3 py-2 rounded-lg">
+                    <span class="material-symbols-outlined text-gray-500 text-[16px]">calendar_today</span>
+                    <select id="year-selector" class="bg-transparent text-sm font-medium focus:outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <!-- Quarter Tabs -->
+                <div class="flex gap-1 bg-surface-dark rounded-lg p-1 border border-[#25381e]">
+                    <button data-quarter="" class="quarter-tab active">Todos</button>
+                    <button data-quarter="1" class="quarter-tab">Q1</button>
+                    <button data-quarter="2" class="quarter-tab">Q2</button>
+                    <button data-quarter="3" class="quarter-tab">Q3</button>
+                    <button data-quarter="4" class="quarter-tab">Q4</button>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                <div class="bg-surface-dark border border-[#25381e] rounded-lg p-3">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Total</p>
+                    <p id="stat-total" class="text-xl font-bold text-white mt-0.5">-</p>
+                </div>
+                <div class="bg-surface-dark border border-[#25381e] rounded-lg p-3">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Gastos</p>
+                    <p id="stat-gastos" class="text-xl font-bold text-red-400 mt-0.5">-</p>
+                </div>
+                <div class="bg-surface-dark border border-[#25381e] rounded-lg p-3">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Ingresos</p>
+                    <p id="stat-ingresos" class="text-xl font-bold text-green-400 mt-0.5">-</p>
+                </div>
+                <div class="bg-surface-dark border border-[#25381e] rounded-lg p-3">
+                    <p class="text-xs text-gray-500 font-bold uppercase">IA</p>
+                    <p id="stat-ia" class="text-xl font-bold text-purple-400 mt-0.5">-</p>
+                </div>
+                <div class="bg-surface-dark border border-[#25381e] rounded-lg p-3">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Manual</p>
+                    <p id="stat-manual" class="text-xl font-bold text-gray-400 mt-0.5">-</p>
+                </div>
+                <div class="bg-surface-dark border border-[#25381e] rounded-lg p-3">
+                    <p class="text-xs text-gray-500 font-bold uppercase">Con Adjunto</p>
+                    <p id="stat-adjunto" class="text-xl font-bold text-primary mt-0.5">-</p>
+                </div>
+            </div>
+
+            <!-- Filters & Content Container -->
+            <div
+                class="flex-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-sm flex flex-col overflow-hidden">
+
+                <!-- Filters Toolbar -->
+                <div class="p-3 border-b border-gray-200 dark:border-[#25381e] flex flex-wrap items-center gap-3">
+                    <!-- Search -->
+                    <div class="relative flex-1 min-w-[180px]">
+                        <span
+                            class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-[16px]">search</span>
+                        <input type="text" id="search-input" placeholder="Buscar factura..."
+                            class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent rounded-lg text-sm focus:ring-1 focus:ring-primary focus:outline-none">
+                    </div>
+
+                    <!-- Type filter -->
+                    <select id="filter-tipo"
+                        class="bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent text-sm rounded-lg px-3 py-2 focus:outline-none">
+                        <option value="">Todos tipos</option>
+                        <option value="GASTO">Gastos</option>
+                        <option value="INGRESO">Ingresos</option>
+                    </select>
+
+                    <!-- Origin filter -->
+                    <select id="filter-origen"
+                        class="bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent text-sm rounded-lg px-3 py-2 focus:outline-none">
+                        <option value="">Todos orígenes</option>
+                        <option value="ia">IA (OCR)</option>
+                        <option value="manual">Manual</option>
+                    </select>
+
+                    <!-- Estado filter -->
+                    <select id="filter-estado"
+                        class="bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent text-sm rounded-lg px-3 py-2 focus:outline-none">
+                        <option value="">Todos estados</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="PAGADA">Pagada</option>
+                        <option value="PARCIAL">Parcial</option>
+                        <option value="VENCIDA">Vencida</option>
+                    </select>
+
+                    <!-- Has attachment filter -->
+                    <select id="filter-adjunto"
+                        class="bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent text-sm rounded-lg px-3 py-2 focus:outline-none">
+                        <option value="">Con/sin adjunto</option>
+                        <option value="true">Con adjunto</option>
+                        <option value="false">Sin adjunto</option>
+                    </select>
+                </div>
+
+                <!-- Table View -->
+                <div id="table-view" class="overflow-auto flex-1">
+                    <table class="w-full glass-table text-left border-collapse">
+                        <thead class="bg-gray-50 dark:bg-surface-dark-light sticky top-0 z-10">
+                            <tr>
+                                <th class="w-12"></th>
+                                <th>Número</th>
+                                <th>Empresa</th>
+                                <th>Contacto</th>
+                                <th>Tipo</th>
+                                <th>Origen</th>
+                                <th>Fecha</th>
+                                <th class="text-right">Total</th>
+                                <th>Estado</th>
+                                <th>Archivo</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="documents-list" class="divide-y divide-gray-200 dark:divide-[#25381e]">
+                            <tr>
+                                <td colspan="10" class="p-8 text-center text-gray-500">Cargando documentos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Gallery View -->
+                <div id="gallery-view" class="overflow-auto flex-1 p-4 hidden">
+                    <div id="gallery-grid" class="gallery-grid">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div
+                    class="border-t border-gray-200 dark:border-[#25381e] p-3 flex justify-between items-center bg-gray-50 dark:bg-surface-dark-light/50">
+                    <p class="text-xs text-gray-500">Mostrando <span id="showing-count">0</span> de <span
+                            id="total-count">0</span></p>
+                    <div class="flex gap-2">
+                        <button id="btn-prev" onclick="changePage(-1)"
+                            class="px-3 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded text-xs hover:bg-gray-50 dark:hover:bg-surface-dark-light disabled:opacity-50">Anterior</button>
+                        <button id="btn-next" onclick="changePage(1)"
+                            class="px-3 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded text-xs hover:bg-gray-50 dark:hover:bg-surface-dark-light disabled:opacity-50">Siguiente</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Preview Drawer Overlay -->
+    <div id="drawer-overlay" class="preview-drawer-overlay" onclick="closeDrawer()"></div>
+
+    <!-- Preview Drawer -->
+    <div id="preview-drawer" class="preview-drawer">
+        <div class="flex items-center justify-between p-4 border-b border-[#25381e]">
+            <h3 class="text-lg font-bold text-white">Vista Previa</h3>
+            <button onclick="closeDrawer()" class="text-gray-400 hover:text-red-500 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- Document info -->
+        <div id="drawer-info" class="p-4 border-b border-[#25381e] space-y-2">
+            <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Número:</span>
+                <span id="drawer-numero" class="font-bold text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Empresa:</span>
+                <span id="drawer-empresa" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Contacto:</span>
+                <span id="drawer-contacto" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Fecha:</span>
+                <span id="drawer-fecha" class="text-white">-</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500 text-sm">Total:</span>
+                <span id="drawer-total" class="font-bold text-primary">-</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-500 text-sm">Tipo:</span>
+                <span id="drawer-tipo" class="type-badge"></span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-500 text-sm">Origen:</span>
+                <span id="drawer-origen" class="origin-badge"></span>
+            </div>
+        </div>
+
+        <!-- Preview area -->
+        <div id="drawer-preview" class="flex-1 overflow-hidden flex items-center justify-center bg-black/20">
+            <p class="text-gray-500">Selecciona un documento para ver la vista previa</p>
+        </div>
+
+        <!-- Actions -->
+        <div class="p-4 border-t border-[#25381e] flex gap-3">
+            <a id="btn-download" href="#" download
+                class="flex-1 px-4 py-2 bg-surface-dark-light text-white font-medium rounded-lg hover:bg-[#2d4525] transition-colors text-center flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">download</span> Descargar
+            </a>
+            <button id="btn-goto-record" onclick="goToRecord()"
+                class="flex-1 px-4 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">open_in_new</span> Ir al registro
+            </button>
+        </div>
+    </div>
+
+    <!-- Logic -->
+    <script type="module">
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        window.logout = logout;
+        const API_BASE = '';
+        let session = getSession();
+
+        let currentPage = 0;
+        const PAGE_SIZE = 30;
+        let currentEmpresaId = null;
+        let currentYear = new Date().getFullYear();
+        let currentQuarter = '';
+        let currentView = 'table';
+        let currentDocument = null;
+        let documentsData = [];
+
+        // --- HELPERS ---
+        function getAuthHeaders() {
+            const token = session?.token || getToken();
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            if (currentEmpresaId) headers['X-Empresa-Id'] = currentEmpresaId;
+            return headers;
+        }
+
+        async function apiGet(endpoint) {
+            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            if (!res.ok) {
+                console.error('[Documentos] API Error:', res.status);
+                throw new Error(`API Error ${res.status}`);
+            }
+            return res.json();
+        }
+
+        const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val || 0);
+        const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-ES') : '-';
+        function debounce(fn, ms) { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); }; }
+
+        // --- INIT ---
+        async function init() {
+            await requireAuth();
+            session = getSession();
+
+            initYearSelector();
+            initQuarterTabs();
+            initFilters();
+            await loadEmpresas();
+        }
+
+        function initYearSelector() {
+            const select = document.getElementById('year-selector');
+            const currentY = new Date().getFullYear();
+            for (let y = currentY; y >= currentY - 5; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                select.appendChild(opt);
+            }
+            select.value = currentYear;
+            select.addEventListener('change', (e) => {
+                currentYear = parseInt(e.target.value);
+                loadDocuments(0);
+            });
+        }
+
+        function initQuarterTabs() {
+            const tabs = document.querySelectorAll('.quarter-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentQuarter = tab.dataset.quarter;
+                    loadDocuments(0);
+                });
+            });
+        }
+
+        function initFilters() {
+            const debouncedLoad = debounce(() => loadDocuments(0), 300);
+
+            document.getElementById('search-input').addEventListener('input', debouncedLoad);
+            document.getElementById('filter-tipo').addEventListener('change', () => loadDocuments(0));
+            document.getElementById('filter-origen').addEventListener('change', () => loadDocuments(0));
+            document.getElementById('filter-estado').addEventListener('change', () => loadDocuments(0));
+            document.getElementById('filter-adjunto').addEventListener('change', () => loadDocuments(0));
+        }
+
+        async function loadEmpresas() {
+            try {
+                const res = await apiGet('/api/contabilidad/empresas');
+                const select = document.getElementById('empresa-selector');
+                select.innerHTML = '';
+
+                // Add "All empresas" option first
+                const allOpt = document.createElement('option');
+                allOpt.value = '';
+                allOpt.textContent = '📁 Todas las empresas';
+                select.appendChild(allOpt);
+
+                if (res.data && res.data.items) {
+                    res.data.items.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.textContent = emp.nombre_legal || emp.nombre_comercial || 'Sin nombre';
+                        select.appendChild(opt);
+                    });
+
+                    // Default to "all empresas" to show all documents
+                    currentEmpresaId = '';
+                    select.value = '';
+
+                    loadDocuments(0);
+
+                    select.addEventListener('change', (e) => {
+                        currentEmpresaId = e.target.value;
+                        localStorage.setItem('filsaas_current_empresa', currentEmpresaId);
+                        loadDocuments(0);
+                    });
+                } else {
+                    select.innerHTML = '<option value="">Sin empresas</option>';
+                }
+            } catch (e) { console.error('[Documentos] Error loading empresas:', e); }
+        }
+
+        async function loadDocuments(page = 0) {
+            const tipo = document.getElementById('filter-tipo').value;
+            const origen = document.getElementById('filter-origen').value;
+            const estado = document.getElementById('filter-estado').value;
+            const adjunto = document.getElementById('filter-adjunto').value;
+            const search = document.getElementById('search-input').value;
+
+            let url = `/api/contabilidad/documentos?year=${currentYear}&limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`;
+            if (currentQuarter) url += `&quarter=${currentQuarter}`;
+            if (tipo) url += `&tipo=${tipo}`;
+            if (origen) url += `&origen=${origen}`;
+            if (estado) url += `&estado=${estado}`;
+            if (adjunto) url += `&hasAttachment=${adjunto}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+
+            try {
+                const res = await apiGet(url);
+
+                if (res.ok && res.data) {
+                    documentsData = res.data.items || [];
+                    updateStats(res.data.stats);
+
+                    if (currentView === 'table') {
+                        renderTable(documentsData);
+                    } else {
+                        renderGallery(documentsData);
+                    }
+
+                    document.getElementById('showing-count').textContent = documentsData.length;
+                    document.getElementById('total-count').textContent = res.data.total || 0;
+                    document.getElementById('btn-prev').disabled = page === 0;
+                    document.getElementById('btn-next').disabled = (page + 1) * PAGE_SIZE >= (res.data.total || 0);
+                    currentPage = page;
+                }
+            } catch (e) {
+                console.error('[Documentos] Error loading documents:', e);
+                renderTable([]);
+            }
+        }
+
+        function updateStats(stats) {
+            if (!stats) return;
+            document.getElementById('stat-total').textContent = stats.total_docs || 0;
+            document.getElementById('stat-gastos').textContent = stats.total_gastos || 0;
+            document.getElementById('stat-ingresos').textContent = stats.total_ingresos || 0;
+            document.getElementById('stat-ia').textContent = stats.total_ia || 0;
+            document.getElementById('stat-manual').textContent = stats.total_manual || 0;
+            document.getElementById('stat-adjunto').textContent = `${stats.con_adjunto || 0}/${stats.total_docs || 0}`;
+        }
+
+        function renderTable(items) {
+            const tbody = document.getElementById('documents-list');
+            const token = getToken();
+            const authParam = token ? `&token=${encodeURIComponent(token)}` : '';
+
+            if (!items || items.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="p-8 text-center text-gray-500">
+                    <span class="material-symbols-outlined text-4xl text-gray-600 mb-2 block">folder_off</span>
+                    No hay documentos para este período
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = items.map(doc => {
+                const thumbnailHtml = doc.has_attachment
+                    ? `<div class="w-10 h-10 rounded bg-surface-dark-light flex items-center justify-center overflow-hidden">
+                         ${doc.archivo?.file_type === 'IMG'
+                        ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500\\'>image</span>'">`
+                        : `<span class="material-symbols-outlined text-red-400 text-[20px]">picture_as_pdf</span>`
+                    }
+                       </div>`
+                    : `<div class="w-10 h-10 rounded bg-surface-dark-light/50 flex items-center justify-center">
+                         <span class="material-symbols-outlined text-gray-600 text-[18px]">visibility_off</span>
+                       </div>`;
+
+                const fileTypeBadge = doc.has_attachment && doc.archivo?.file_type
+                    ? `<span class="file-badge file-${doc.archivo.file_type}">${doc.archivo.file_type}</span>`
+                    : `<span class="text-xs text-gray-500">Sin adjunto</span>`;
+
+                return `
+                    <tr class="cursor-pointer hover:bg-gray-50 dark:hover:bg-surface-dark-light/50 transition-colors" 
+                        onclick="openPreview(${doc.id})">
+                        <td>${thumbnailHtml}</td>
+                        <td class="font-bold text-slate-900 dark:text-white">${doc.numero_factura}</td>
+                        <td class="text-gray-500 dark:text-gray-400">
+                            <div class="text-xs font-semibold py-0.5 px-1.5 rounded bg-slate-100 dark:bg-surface-dark-light inline-block">
+                                ${doc.empresa_nombre || '-'}
+                            </div>
+                        </td>
+                        <td class="text-gray-500 dark:text-gray-400">${doc.contacto?.nombre || '-'}</td>
+                        <td><span class="type-badge type-${doc.tipo}">${doc.tipo}</span></td>
+                        <td><span class="origin-badge origin-${doc.origen}">${doc.origen}</span></td>
+                        <td class="text-gray-500 dark:text-gray-400">${formatDate(doc.fecha_emision)}</td>
+                        <td class="text-right font-bold text-slate-900 dark:text-white">${formatCurrency(doc.total)}</td>
+                        <td><span class="status-badge status-${doc.estado}">${doc.estado}</span></td>
+                        <td>${fileTypeBadge}</td>
+                        <td class="text-right">
+                            <button onclick="event.stopPropagation(); openPreview(${doc.id})" 
+                                class="text-gray-400 hover:text-primary transition-colors p-1" title="Ver">
+                                <span class="material-symbols-outlined text-[18px]">visibility</span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderGallery(items) {
+            const grid = document.getElementById('gallery-grid');
+            const token = getToken();
+            const authParam = token ? `&token=${encodeURIComponent(token)}` : '';
+
+            if (!items || items.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">
+                    <span class="material-symbols-outlined text-4xl text-gray-600 mb-2 block">folder_off</span>
+                    No hay documentos para este período
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = items.map(doc => {
+                const thumbnailHtml = doc.has_attachment
+                    ? (doc.archivo?.file_type === 'IMG'
+                        ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500 text-4xl\\'>image</span>'">`
+                        : `<span class="material-symbols-outlined text-red-400 text-4xl">picture_as_pdf</span>`)
+                    : `<span class="material-symbols-outlined text-gray-600 text-4xl">visibility_off</span>`;
+
+                return `
+                    <div class="gallery-card" onclick="openPreview(${doc.id})">
+                        <div class="gallery-thumbnail mb-3">
+                            ${thumbnailHtml}
+                        </div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="type-badge type-${doc.tipo}">${doc.tipo}</span>
+                            <span class="origin-badge origin-${doc.origen}">${doc.origen}</span>
+                        </div>
+                        <p class="font-bold text-white text-sm truncate">${doc.numero_factura}</p>
+                        <p class="text-primary/80 text-[10px] uppercase font-bold tracking-wider truncate mb-1">${doc.empresa_nombre || '-'}</p>
+                        <p class="text-gray-400 text-xs truncate">${doc.contacto?.nombre || '-'}</p>
+                        <div class="flex items-center justify-between mt-2">
+                            <span class="text-primary font-bold">${formatCurrency(doc.total)}</span>
+                            <span class="status-badge status-${doc.estado} text-[10px]">${doc.estado}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- VIEW TOGGLE ---
+        window.setView = function (view) {
+            currentView = view;
+
+            document.getElementById('btn-view-table').classList.toggle('active', view === 'table');
+            document.getElementById('btn-view-gallery').classList.toggle('active', view === 'gallery');
+
+            document.getElementById('table-view').classList.toggle('hidden', view !== 'table');
+            document.getElementById('gallery-view').classList.toggle('hidden', view !== 'gallery');
+
+            // Add active styling
+            document.querySelectorAll('.view-toggle').forEach(btn => {
+                if (btn.classList.contains('active')) {
+                    btn.classList.add('bg-primary', 'text-background-dark');
+                } else {
+                    btn.classList.remove('bg-primary', 'text-background-dark');
+                }
+            });
+
+            if (view === 'gallery') {
+                renderGallery(documentsData);
+            } else {
+                renderTable(documentsData);
+            }
+        };
+
+        // --- PREVIEW DRAWER ---
+        window.openPreview = function (docId) {
+            console.log('[Documentos] Opening preview for:', docId);
+            const doc = documentsData.find(d => d.id == docId);
+            if (!doc) {
+                console.error('[Documentos] Document not found in cache:', docId, 'Cache size:', documentsData.length);
+                return;
+            }
+
+            currentDocument = doc;
+
+            // Update info
+            document.getElementById('drawer-numero').textContent = doc.numero_factura;
+            document.getElementById('drawer-empresa').textContent = doc.empresa_nombre || '-';
+            document.getElementById('drawer-contacto').textContent = doc.contacto?.nombre || '-';
+            document.getElementById('drawer-fecha').textContent = formatDate(doc.fecha_emision);
+            document.getElementById('drawer-total').textContent = formatCurrency(doc.total);
+
+            const tipoEl = document.getElementById('drawer-tipo');
+            tipoEl.textContent = doc.tipo;
+            tipoEl.className = `type-badge type-${doc.tipo}`;
+
+            const origenEl = document.getElementById('drawer-origen');
+            origenEl.textContent = doc.origen;
+            origenEl.className = `origin-badge origin-${doc.origen}`;
+
+            // Update preview
+            const previewArea = document.getElementById('drawer-preview');
+            const downloadBtn = document.getElementById('btn-download');
+
+            if (doc.has_attachment && doc.archivo) {
+                const token = session?.token || getToken();
+                const authParam = token ? `&token=${encodeURIComponent(token)}` : '';
+                const fileUrl = doc.archivo.preview_url + authParam;
+
+                // Ensure download URL has token correctly
+                let downloadUrl = doc.archivo.download_url;
+                if (downloadUrl.includes('?')) {
+                    downloadUrl += authParam;
+                } else {
+                    downloadUrl += `?token=${encodeURIComponent(token)}`;
+                }
+
+                console.log('[Documentos] Preview URL:', fileUrl);
+                console.log('[Documentos] File Type:', doc.archivo.file_type);
+
+                if (doc.archivo.file_type === 'PDF') {
+                    previewArea.innerHTML = `
+                        <iframe src="${fileUrl}" class="pdf-viewer w-full h-full" style="min-height: 500px;" title="PDF Preview"></iframe>
+                    `;
+                } else if (doc.archivo.file_type === 'IMG') {
+                    previewArea.innerHTML = `
+                        <div class="w-full h-full flex items-center justify-center p-2">
+                            <img src="${fileUrl}" 
+                                 class="max-w-full max-h-full object-contain rounded shadow-lg" 
+                                 style="display: block; min-height: 100px;"
+                                 alt="Preview"
+                                 onload="console.log('[Documentos] Image loaded successfully')"
+                                 onerror="this.parentElement.innerHTML='<div class=\\'text-center p-4\\'><span class=\\'material-symbols-outlined text-red-500 text-4xl mb-2\\'>error</span><p class=\\'text-gray-400 text-sm\\'>Error al cargar la imagen</p></div>'">
+                        </div>
+                    `;
+                } else {
+                    previewArea.innerHTML = `
+                        <div class="text-center p-8">
+                            <span class="material-symbols-outlined text-6xl text-gray-400 mb-4 block">insert_drive_file</span>
+                            <p class="text-gray-400">Vista previa no disponible</p>
+                            <p class="text-xs text-gray-500 mt-2">${doc.archivo.original_name || 'archivo'}</p>
+                        </div>
+                    `;
+                }
+
+                downloadBtn.href = downloadUrl;
+                downloadBtn.target = "_blank"; // Open in new tab as fallback
+                downloadBtn.classList.remove('opacity-50', 'pointer-events-none');
+            } else {
+                previewArea.innerHTML = `
+                    <div class="text-center p-8">
+                        <span class="material-symbols-outlined text-6xl text-gray-500/30 mb-4 block">visibility_off</span>
+                        <p class="text-gray-500 mb-4">Sin archivo adjunto</p>
+                        <button onclick="goToRecord()" class="px-4 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110">
+                            Ir al registro
+                        </button>
+                    </div>
+                `;
+                downloadBtn.href = '#';
+                downloadBtn.classList.add('opacity-50', 'pointer-events-none');
+            }
+
+            // Open drawer
+            document.getElementById('preview-drawer').classList.add('open');
+            document.getElementById('drawer-overlay').classList.add('open');
+        };
+
+        window.closeDrawer = function () {
+            document.getElementById('preview-drawer').classList.remove('open');
+            document.getElementById('drawer-overlay').classList.remove('open');
+            currentDocument = null;
+        };
+
+        window.goToRecord = function () {
+            if (currentDocument) {
+                // For orphan intakes, redirect to the gastos nuevo page
+                if (currentDocument.source_type === 'intake') {
+                    window.location.href = `gastos-nuevo.html?intakeId=${currentDocument.intake_id}`;
+                } else {
+                    window.location.href = `facturas.html?id=${currentDocument.id}`;
+                }
+            }
+        };
+
+        // --- PAGINATION ---
+        window.changePage = function (delta) {
+            loadDocuments(currentPage + delta);
+        };
+
+        // Escape key closes drawer
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDrawer();
+        });
+
+        // Init
+        init();
+    </script>
+</body>
+
+</html>

@@ -2,7 +2,13 @@ const jwt = require('jsonwebtoken');
 
 function verifyJWT(req, res, next) {
   const authHeader = req.headers.authorization || '';
-  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  // Support token from Authorization header OR query parameter (for iframes/images)
+  let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  // Fallback to query parameter token (for file downloads/previews)
+  if (!token && req.query.token) {
+    token = req.query.token;
+  }
 
   if (!token) {
     return res.status(401).json({ error: 'Token no proporcionado.' });

@@ -200,9 +200,9 @@ async function createIntake(req, res) {
 
                     // Attach file
                     await client.query(`
-                        INSERT INTO contabilidad_factura_archivo (id_factura, file_url, storage_key, mime_type, size_bytes, original_name, created_by)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7)
-                    `, [gastoId, fileData.url, fileData.storage_key, fileData.mime, fileData.size, fileData.original_name, userId]);
+                        INSERT INTO contabilidad_factura_archivo (id_factura, id_empresa, file_url, storage_key, mime_type, size_bytes, original_name, created_by)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    `, [gastoId, empresaId, fileData.url, fileData.storage_key, fileData.mime, fileData.size, fileData.original_name, userId]);
 
                     await client.query('RELEASE SAVEPOINT create_borrador');
                 } catch (borradorError) {
@@ -269,10 +269,12 @@ async function getIntake(req, res) {
             ok: true,
             data: {
                 id: intake.id,
+                id_empresa: intake.id_empresa,
                 status: intake.status,
                 extracted: intake.extracted_json,
                 validation: intake.validation_json,
                 file_url: intake.file_url,
+                file_mime: intake.file_mime, // Added to help frontend preview
                 gasto_id: gastoId,
                 error_message: intake.error_message
             }

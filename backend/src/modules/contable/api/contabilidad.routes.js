@@ -18,12 +18,16 @@ const trimestresController = require('./controllers/trimestres.controller');
 const categoriasController = require('./controllers/categorias.controller');
 const empresaController = require('./controllers/empresa.controller');
 const tesoreriaController = require('./controllers/tesoreria.controller');
+const fiscalProfileController = require('./controllers/fiscalProfile.controller');
 
 // Test route (Sanity check)
 router.get('/ping', (req, res) => res.json({ ok: true, message: 'pong', timestamp: new Date().toISOString() }));
 
 // Egresos controller (OCR via OpenAI - synchronous)
 const egresosController = require('./controllers/egresos.controller');
+
+// Documentos controller (Biblioteca de Facturas)
+const documentosController = require('./controllers/documentos.controller');
 
 // Todas las rutas siguientes requieren autenticación
 router.use(verifyJWT);
@@ -75,6 +79,25 @@ router.post('/facturas/:id/archivo',
 router.get('/facturas/:id/archivos',
     requirePermission('contabilidad.read'),
     facturasController.listArchivos
+);
+
+// ===================================================================
+// DOCUMENTOS (Biblioteca de Facturas)
+// ===================================================================
+
+router.get('/documentos',
+    requirePermission('contabilidad.read'),
+    documentosController.list
+);
+
+router.get('/documentos/:facturaId/archivo',
+    requirePermission('contabilidad.read'),
+    documentosController.serveArchivo
+);
+
+router.get('/documentos/intake/:intakeId/archivo',
+    requirePermission('contabilidad.read'),
+    documentosController.serveIntakeArchivo
 );
 
 // ===================================================================
@@ -229,6 +252,17 @@ router.post('/empresas/:id/usuarios',
 router.delete('/empresas/:id/usuarios/:userId',
     requirePermission('contabilidad.empresa.write'),
     empresaController.removeUsuario
+);
+
+// Fiscal Configuration
+router.get('/empresas/:id/fiscal-config',
+    requirePermission('contabilidad.empresa.read'),
+    fiscalProfileController.getFiscalConfig
+);
+
+router.post('/empresas/:id/fiscal-config',
+    requirePermission('contabilidad.empresa.write'),
+    fiscalProfileController.upsertFiscalConfig
 );
 
 // ===================================================================

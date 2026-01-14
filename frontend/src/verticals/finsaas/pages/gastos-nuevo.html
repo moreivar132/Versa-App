@@ -376,6 +376,53 @@
         async function init() {
             await loadEmpresas();
             setupDragAndDrop();
+
+            // Handle intakeId from URL (e.g. from Library "Ir al registro")
+            const urlParams = new URLSearchParams(window.location.search);
+            const intakeId = urlParams.get('intakeId');
+            if (intakeId) {
+                loadIntake(intakeId);
+            }
+        }
+
+        async function loadIntake(id) {
+            try {
+                // Fetch intake details regardless of current company context
+                const res = await fetchWithAuth(`${API_BASE}/egresos/intakes/${id}`);
+                const data = await res.json();
+
+                if (data.ok && data.data) {
+                    const intake = data.data;
+                    currentIntakeId = intake.id;
+
+                    // Switch to correct empresa context if we have one
+                    if (intake.id_empresa) {
+                        if (selectedEmpresaId != intake.id_empresa) {
+                            selectedEmpresaId = intake.id_empresa;
+                            empresaSelect.value = selectedEmpresaId;
+                            // Trigger change just in case
+                            localStorage.setItem('finsaas_last_empresa', selectedEmpresaId);
+                        }
+                    }
+
+                    // Show review UI
+                    stepUpload.classList.add('hidden');
+                    if (intake.status.includes('fail') || intake.status === 'error') {
+                        showReview(intake, true);
+                    } else if (intake.status === 'processing') {
+                        stepProcessing.classList.remove('hidden');
+                        startPolling(intake.id);
+                    } else {
+                        showReview(intake);
+                    }
+                } else {
+                    console.error('Intake not found or error:', data.error);
+                    alert('No se pudo cargar el documento: ' + (data.error || 'Error desconocido'));
+                }
+            } catch (e) {
+                console.error('Error loading intake:', e);
+                alert('Error cargando documento: ' + e.message);
+            }
         }
 
         async function loadEmpresas() {
@@ -408,14 +455,20 @@
                     empresaSelect.appendChild(opt);
                 });
 
-                // Auto-select
-                const stored = localStorage.getItem('finsaas_last_empresa');
-                if (stored && items.find(e => e.id == stored)) {
-                    empresaSelect.value = stored;
+                // Auto-select: if URL intake loading hasn't set it yet
+                if (!selectedEmpresaId) {
+                    const stored = localStorage.getItem('finsaas_last_empresa');
+                    if (stored && items.find(e => e.id == stored)) {
+                        empresaSelect.value = stored;
+                    } else {
+                        empresaSelect.value = items[0].id;
+                    }
+                    selectedEmpresaId = empresaSelect.value;
                 } else {
-                    empresaSelect.value = items[0].id;
+                    // Maintain selected if already set (e.g. by loadIntake racing)
+                    empresaSelect.value = selectedEmpresaId;
                 }
-                selectedEmpresaId = empresaSelect.value;
+
                 loadCategorias();
 
                 empresaSelect.addEventListener('change', (e) => {
@@ -603,10 +656,20 @@
             const previewPlaceholder = document.getElementById('file-preview-placeholder');
             const downloadLink = document.getElementById('file-download-link');
 
-            const fileUrl = intake?.file_url || lastUploadedFileUrl || '';
+            let fileUrl = intake?.file_url || lastUploadedFileUrl || '';
+
+            // Add token for authenticated access if URL is a local path
+            if (fileUrl && !fileUrl.startsWith('http')) {
+                const token = getToken();
+                // For intake files, use the intake archivo endpoint
+                if (currentIntakeId || intake?.id) {
+                    const intakeIdForUrl = intake?.id || currentIntakeId;
+                    fileUrl = `/api/contabilidad/documentos/intake/${intakeIdForUrl}/archivo?preview=true&token=${encodeURIComponent(token)}`;
+                }
+            }
 
             if (fileUrl) {
-                downloadLink.href = fileUrl;
+                downloadLink.href = fileUrl.replace('preview=true', '');
                 downloadLink.classList.remove('hidden');
             } else {
                 downloadLink.classList.add('hidden');
@@ -615,16 +678,27 @@
             // Capture draft ID if exists
             currentGastoId = intake?.gasto_id || null;
 
-            if (fileUrl && fileUrl.toLowerCase().endsWith('.pdf')) {
+            // Check file type from URL or mime
+            const isPDF = fileUrl.toLowerCase().includes('.pdf') || (intake?.file_mime && intake.file_mime.includes('pdf'));
+            const isImage = fileUrl.match(/\.(jpeg|jpg|png|heic)$/i) || (intake?.file_mime && intake.file_mime.includes('image'));
+
+            if (isPDF) {
                 previewFrame.src = fileUrl;
                 previewFrame.classList.remove('hidden');
                 previewImg.classList.add('hidden');
                 previewPlaceholder.classList.add('hidden');
-            } else if (fileUrl && fileUrl.match(/\.(jpeg|jpg|png|heic)$/i)) {
+            } else if (isImage || fileUrl) {
+                // Try to load as image
                 previewImg.src = fileUrl;
                 previewImg.classList.remove('hidden');
                 previewFrame.classList.add('hidden');
                 previewPlaceholder.classList.add('hidden');
+
+                // Handle image load error
+                previewImg.onerror = () => {
+                    previewPlaceholder.classList.remove('hidden');
+                    previewImg.classList.add('hidden');
+                };
             } else {
                 previewPlaceholder.classList.remove('hidden');
                 previewFrame.classList.add('hidden');

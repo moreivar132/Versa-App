@@ -266,20 +266,87 @@
 
                     <div
                         class="bg-gray-50 dark:bg-surface-dark-light rounded-lg p-4 mb-6 border border-gray-200 dark:border-[#25381e]">
-                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-4">Configuración Fiscal</h4>
-                        <div class="grid grid-cols-2 gap-6">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase mb-4">Configuración Fiscal (España)</h4>
+
+                        <!-- Row 1: Legal Form & VAT -->
+                        <div class="grid grid-cols-2 gap-6 mb-4">
                             <div>
-                                <label class="form-label">Régimen</label>
-                                <select id="e-regimen" class="form-input">
-                                    <option value="GENERAL">General</option>
-                                    <option value="SIMPLIFICADO">Simplificado</option>
-                                    <option value="RECARGO">Recargo de Eq.</option>
+                                <label class="form-label">Tipo de Contribuyente</label>
+                                <select id="f-legal-form" class="form-input" onchange="updateFiscalUI()">
+                                    <option value="SL">Sociedad Limitada (S.L.)</option>
+                                    <option value="SA">Sociedad Anónima (S.A.)</option>
+                                    <option value="AUTONOMO">Autónomo / Persona Física</option>
                                 </select>
                             </div>
-                            <div class="flex items-center pt-6">
+                            <div>
+                                <label class="form-label">Régimen IVA</label>
+                                <select id="f-vat-regime" class="form-input">
+                                    <option value="GENERAL">General</option>
+                                    <option value="SIMPLIFICADO">Simplificado</option>
+                                    <option value="RECARGO_EQUIVALENCIA">Recargo de Equivalencia</option>
+                                    <option value="AGRICULTURA_GANADERIA_PESCA">Agricultura/Ganadería</option>
+                                    <option value="EXENTO">Exento</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: IRPF (Only for Autonomo) -->
+                        <div id="container-irpf" class="mb-4 hidden">
+                            <label class="form-label">Régimen IRPF</label>
+                            <select id="f-irpf-regime" class="form-input" onchange="checkFiscalLimits()">
+                                <option value="">Seleccionar...</option>
+                                <option value="DIRECTA_SIMPLIFICADA">Estimación Directa Simplificada</option>
+                                <option value="DIRECTA_NORMAL">Estimación Directa Normal</option>
+                                <option value="OBJETIVA_MODULOS">Estimación Objetiva (Módulos)</option>
+                            </select>
+                            <div id="warn-limits"
+                                class="hidden mt-2 p-2 bg-orange-100 border border-orange-200 text-orange-800 text-xs rounded flex gap-2 items-start">
+                                <span class="material-symbols-outlined text-[16px] mt-0.5">warning</span>
+                                <span>La cifra de negocio anterior supera 600.000€. Debería usar <strong>Directa
+                                        Normal</strong>.</span>
+                            </div>
+                            <div id="warn-modulos"
+                                class="hidden mt-2 p-2 bg-yellow-100 border border-yellow-200 text-yellow-800 text-xs rounded flex gap-2 items-start">
+                                <span class="material-symbols-outlined text-[16px] mt-0.5">info</span>
+                                <div>
+                                    <p>Sujeto a límites de personal e ingresos.</p>
+                                    <label class="flex items-center gap-2 mt-1 cursor-pointer">
+                                        <input type="checkbox" id="f-modulos-ack"
+                                            class="rounded border-yellow-400 text-yellow-600 focus:ring-yellow-500">
+                                        <span>Confirmo cumplir requisitos</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Row 3: Toggles & Extra Data -->
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label class="form-label">Cifra Negocio Año Anterior</label>
+                                <div class="relative">
+                                    <input type="number" id="f-turnover" class="form-input pl-8" placeholder="0.00"
+                                        onchange="checkFiscalLimits()">
+                                    <span class="absolute left-3 top-2.5 text-gray-500">€</span>
+                                </div>
+                            </div>
+                            <div class="space-y-3 pt-1">
+                                <label class="flex items-center gap-3 cursor-pointer select-none">
+                                    <input type="checkbox" id="f-is-new"
+                                        class="form-checkbox h-4 w-4 text-primary rounded">
+                                    <span class="text-sm font-medium text-slate-700 dark:text-gray-300">Nueva Creación
+                                        (IS Reducido)</span>
+                                </label>
+                                <label id="container-prof"
+                                    class="flex items-center gap-3 cursor-pointer select-none hidden">
+                                    <input type="checkbox" id="f-professional"
+                                        class="form-checkbox h-4 w-4 text-primary rounded">
+                                    <span class="text-sm font-medium text-slate-700 dark:text-gray-300">Actividad
+                                        Profesional (Retención)</span>
+                                </label>
+                                <!-- Legacy Active Toggle -->
                                 <label class="flex items-center gap-3 cursor-pointer select-none">
                                     <input type="checkbox" id="e-activo"
-                                        class="form-checkbox h-5 w-5 text-primary rounded border-gray-300 dark:border-gray-600 focus:ring-primary">
+                                        class="form-checkbox h-4 w-4 text-primary rounded">
                                     <span class="text-sm font-medium text-slate-700 dark:text-gray-300">Empresa
                                         Activa</span>
                                 </label>
@@ -376,6 +443,108 @@
         }
 
 
+        // === Fiscal Logic ===
+        window.updateFiscalUI = function () {
+            const legalForm = document.getElementById('f-legal-form').value;
+            const isAutonomo = legalForm === 'AUTONOMO';
+
+            // Show/Hide IRPF Section
+            const irpfContainer = document.getElementById('container-irpf');
+            if (isAutonomo) {
+                irpfContainer.classList.remove('hidden');
+            } else {
+                irpfContainer.classList.add('hidden');
+                document.getElementById('f-irpf-regime').value = '';
+            }
+
+            // Show/Hide Professional Toggle
+            const profContainer = document.getElementById('container-prof');
+            if (isAutonomo) {
+                profContainer.classList.remove('hidden');
+                profContainer.classList.add('flex');
+            } else {
+                profContainer.classList.add('hidden');
+                profContainer.classList.remove('flex');
+                document.getElementById('f-professional').checked = false;
+            }
+
+            checkFiscalLimits();
+        };
+
+        window.checkFiscalLimits = function () {
+            const turnover = parseFloat(document.getElementById('f-turnover').value) || 0;
+            const regime = document.getElementById('f-irpf-regime').value;
+
+            // Limit 600k for Directa Simplificada
+            const warnLimits = document.getElementById('warn-limits');
+            if (regime === 'DIRECTA_SIMPLIFICADA' && turnover > 600000) {
+                warnLimits.classList.remove('hidden');
+            } else {
+                warnLimits.classList.add('hidden');
+            }
+
+            // Modulos Acknowledgement
+            const warnModulos = document.getElementById('warn-modulos');
+            if (regime === 'OBJETIVA_MODULOS') {
+                warnModulos.classList.remove('hidden');
+            } else {
+                warnModulos.classList.add('hidden');
+            }
+        };
+
+        async function loadFiscalConfig(empresaId) {
+            try {
+                // Default current year
+                const year = new Date().getFullYear();
+                const res = await apiGet(`/api/contabilidad/empresas/${empresaId}/fiscal-config?year=${year}`);
+                const profile = res.profile;
+
+                if (profile) {
+                    document.getElementById('f-legal-form').value = profile.legal_form || 'SL';
+                    document.getElementById('f-vat-regime').value = profile.vat_regime || 'GENERAL';
+                    document.getElementById('f-irpf-regime').value = profile.irpf_regime || '';
+                    document.getElementById('f-turnover').value = profile.turnover_prev_year || '';
+                    document.getElementById('f-is-new').checked = !!profile.is_new_company;
+                    document.getElementById('f-professional').checked = !!profile.professional_activity;
+                    if (profile.modulos_ack) {
+                        document.getElementById('f-modulos-ack').checked = true;
+                    }
+
+                    updateFiscalUI();
+                } else {
+                    // Reset to defaults if no profile exists
+                    document.getElementById('f-legal-form').value = 'SL';
+                    updateFiscalUI();
+                }
+            } catch (e) {
+                console.warn('Could not load fiscal config:', e);
+            }
+        }
+
+        async function saveFiscalConfig(empresaId) {
+            try {
+                const year = new Date().getFullYear(); // Assuming current year context
+                const data = {
+                    fiscal_year: year,
+                    legal_form: document.getElementById('f-legal-form').value,
+                    vat_regime: document.getElementById('f-vat-regime').value,
+                    irpf_regime: document.getElementById('f-irpf-regime').value || null,
+                    turnover_prev_year: parseFloat(document.getElementById('f-turnover').value) || 0,
+                    is_new_company: document.getElementById('f-is-new').checked,
+                    professional_activity: document.getElementById('f-professional').checked,
+                    modulos_ack: document.getElementById('f-modulos-ack')?.checked || false
+                };
+
+                await apiPost(`/api/contabilidad/empresas/${empresaId}/fiscal-config`, data);
+            } catch (e) {
+                console.error('Error saving fiscal config:', e);
+                // Non-blocking error for main flow? or alert?
+                // alert('Error guardando configuración fiscal: ' + e.message);
+            }
+        }
+
+        // =======================
+
         window.openModal = function (mode) {
             const modal = document.getElementById('empresa-modal');
             modal.classList.remove('hidden');
@@ -388,6 +557,10 @@
                 document.getElementById('e-moneda').value = 'EUR';
                 document.getElementById('e-iva').value = '21';
                 document.getElementById('e-activo').checked = true;
+
+                // Defaults for fiscal
+                document.getElementById('f-legal-form').value = 'SL';
+                updateFiscalUI();
             }
         };
 
@@ -412,7 +585,8 @@
                 pais: document.getElementById('e-pais').value,
                 moneda: document.getElementById('e-moneda').value,
                 iva_defecto: parseFloat(document.getElementById('e-iva').value) || 21,
-                regimen: document.getElementById('e-regimen').value,
+                // Legacy field 'regimen' mapped from new selector or just kept for compatibility
+                regimen: document.getElementById('f-vat-regime').value,
                 activo: document.getElementById('e-activo').checked
             };
             const id = document.getElementById('e-id').value;
@@ -421,7 +595,12 @@
                 if (id) res = await apiPatch(`/api/contabilidad/empresas/${id}`, data);
                 else res = await apiPost('/api/contabilidad/empresas', data);
 
-                if (res.ok || res.id) {
+                const finalId = id || res.id || res.data?.id;
+
+                if (finalId) {
+                    // Save Fiscal Config
+                    await saveFiscalConfig(finalId);
+
                     closeModal();
                     loadEmpresas();
                 } else alert('Error: ' + (res.error || 'Desconocido'));
@@ -446,14 +625,16 @@
                     document.getElementById('e-pais').value = e.pais || 'ES';
                     document.getElementById('e-moneda').value = e.moneda || 'EUR';
                     document.getElementById('e-iva').value = e.iva_defecto || 21;
-                    document.getElementById('e-regimen').value = e.regimen || 'GENERAL';
                     document.getElementById('e-activo').checked = e.activo !== false;
+
+                    // Load Fiscal Config
+                    await loadFiscalConfig(e.id);
 
                     document.getElementById('modal-title').textContent = 'Editar Empresa';
                     document.getElementById('empresa-modal').classList.remove('hidden');
                     document.getElementById('empresa-modal').classList.add('flex');
                 }
-            } catch (e) { }
+            } catch (e) { console.error(e); }
         };
 
         window.deleteEmpresa = async function (id) {

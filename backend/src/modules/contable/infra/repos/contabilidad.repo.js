@@ -263,14 +263,21 @@ class ContabilidadRepository {
     // ===================================================================
 
     async createArchivo(facturaId, data, userId) {
+        // Obtenemos el id_empresa de la factura si no viene en data
+        let empresaId = data.id_empresa;
+        if (!empresaId) {
+            const fact = await pool.query('SELECT id_empresa FROM contabilidad_factura WHERE id = $1', [facturaId]);
+            if (fact.rows.length > 0) empresaId = fact.rows[0].id_empresa;
+        }
+
         const result = await pool.query(`
             INSERT INTO contabilidad_factura_archivo (
-                id_factura, file_url, storage_key, mime_type, 
+                id_factura, id_empresa, file_url, storage_key, mime_type, 
                 size_bytes, original_name, created_by
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
         `, [
-            facturaId, data.file_url, data.storage_key,
+            facturaId, empresaId, data.file_url, data.storage_key,
             data.mime_type, data.size_bytes, data.original_name, userId
         ]);
 

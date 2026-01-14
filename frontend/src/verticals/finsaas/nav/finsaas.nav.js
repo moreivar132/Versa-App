@@ -28,6 +28,13 @@ export const finSaaSNav = [
         order: 2
     },
     {
+        id: 'documentos',
+        label: 'Biblioteca',
+        route: '/src/verticals/finsaas/pages/documentos.html',
+        icon: 'folder_open',
+        order: 2.3
+    },
+    {
         id: 'gastos-ocr',
         label: 'Subir Gasto (IA)',
         route: '/src/verticals/finsaas/pages/gastos-nuevo.html',

@@ -451,7 +451,7 @@ async function getCashflow(req, res) {
         resumen.rows.forEach(row => {
             if (row.tipo === 'COBRO' || row.tipo === 'INGRESO_EFECTIVO') {
                 entradas += parseFloat(row.total || 0);
-            } else if (row.tipo === 'PAGO') {
+            } else if (row.tipo === 'PAGO' || row.tipo === 'RETIRO_EFECTIVO') {
                 salidas += parseFloat(row.total || 0);
             }
         });
