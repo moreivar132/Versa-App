@@ -292,9 +292,8 @@
 
         const API_BASE_URL = getApiBaseUrl();
 
-        // Check for debug/force parameters to bypass auto-redirect
+        // Check for logout parameter
         const urlParams = new URLSearchParams(window.location.search);
-        const isDebugMode = urlParams.get('debug') === 'true' || urlParams.get('force') === 'true';
         const shouldLogout = urlParams.get('logout') === 'true';
 
         // Handle logout parameter
@@ -308,22 +307,21 @@
             window.history.replaceState({}, '', newUrl);
         }
 
-        // Show debug indicator if in debug mode
-        if (isDebugMode) {
-            const debugBadge = document.createElement('div');
-            debugBadge.className = 'fixed top-4 right-4 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold z-50';
-            debugBadge.innerHTML = '🛠️ DEBUG MODE';
-            document.body.appendChild(debugBadge);
-            console.log('[FinSaaS Login] Debug mode enabled - auto-redirect disabled');
-        }
-
-        // Check if already logged in (skip if debug mode)
+        // NO automatic redirect - always show login page
+        // User will be redirected only after successful login
         const session = getSession();
-        if (session && session.token && !isDebugMode) {
-            window.location.href = '/src/verticals/finsaas/pages/dashboard.html';
-        } else if (session && session.token && isDebugMode) {
-            console.log('[FinSaaS Login] Session exists but debug mode is active. Staying on login page.');
-            console.log('[FinSaaS Login] Session user:', session.user?.email);
+        if (session && session.token) {
+            console.log('[FinSaaS Login] Session exists for:', session.user?.email);
+            console.log('[FinSaaS Login] Use the form to login again or go directly to dashboard.');
+
+            // Show info banner about existing session
+            const infoBanner = document.createElement('div');
+            infoBanner.className = 'fixed top-4 right-4 bg-green-500/20 border border-green-500/40 text-green-400 px-4 py-2 rounded-lg text-sm z-50 flex items-center gap-2';
+            infoBanner.innerHTML = `
+                <span>✓ Sesión activa: ${session.user?.email || 'Usuario'}</span>
+                <a href="/src/verticals/finsaas/pages/dashboard.html" class="underline hover:text-white ml-2">Ir al Dashboard →</a>
+            `;
+            document.body.appendChild(infoBanner);
         }
 
         // Form submit
