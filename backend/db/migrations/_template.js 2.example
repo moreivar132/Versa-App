@@ -1,0 +1,74 @@
+/**
+ * Template de Migración Knex
+ * 
+ * Copia este archivo y renómbralo con formato:
+ * YYYYMMDDHHMMSS_descripcion.js
+ * 
+ * Ejemplo: 20260115100000_add_column_orden_tenant.js
+ * 
+ * IMPORTANTE: No modificar migraciones ya ejecutadas.
+ * Crear una nueva para corregir errores.
+ */
+
+exports.up = async function(knex) {
+  // === OPCIÓN 1: Usar Schema Builder (recomendado) ===
+  
+  // Crear tabla
+  // await knex.schema.createTable('nueva_tabla', (table) => {
+  //   table.bigIncrements('id').primary();
+  //   table.bigInteger('id_tenant').notNullable().references('tenant.id').onDelete('CASCADE');
+  //   table.string('nombre', 255).notNullable();
+  //   table.text('descripcion');
+  //   table.boolean('activo').notNullable().defaultTo(true);
+  //   table.timestamps(true, true); // created_at, updated_at
+  //   
+  //   // Índices
+  //   table.index(['id_tenant', 'nombre']);
+  // });
+  
+  // Alterar tabla
+  // await knex.schema.alterTable('mi_tabla', (table) => {
+  //   table.string('nueva_columna', 100).nullable();
+  // });
+  
+  // === OPCIÓN 2: SQL Crudo (para cambios complejos) ===
+  
+  // await knex.raw(`
+  //   ALTER TABLE mi_tabla 
+  //   ADD COLUMN nueva_columna TEXT DEFAULT 'valor';
+  // `);
+  
+  // === LOGGING ===
+  console.log('✅ Migración completada: [DESCRIPCIÓN]');
+};
+
+exports.down = async function(knex) {
+  // Revertir los cambios de up()
+  
+  // await knex.schema.dropTableIfExists('nueva_tabla');
+  
+  // await knex.schema.alterTable('mi_tabla', (table) => {
+  //   table.dropColumn('nueva_columna');
+  // });
+  
+  console.log('⏪ Rollback completado: [DESCRIPCIÓN]');
+};
+
+// === NOTAS ===
+// 
+// 1. Para migraciones irreversibles (ej: borrar datos), hacer el down() 
+//    que solo loggee un warning:
+//    
+//    exports.down = async function(knex) {
+//      console.warn('⚠️ Esta migración es irreversible');
+//      console.warn('   Los datos eliminados no se pueden recuperar');
+//    };
+//
+// 2. Para backfills, procesar en batches pequeños para no bloquear:
+//
+//    const batchSize = 1000;
+//    for (let offset = 0; ; offset += batchSize) {
+//      const rows = await knex('tabla').limit(batchSize).offset(offset);
+//      if (rows.length === 0) break;
+//      // procesar...
+//    }

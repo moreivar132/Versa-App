@@ -22,12 +22,8 @@ const tesoreriaController = require('./controllers/tesoreria.controller');
 // Test route (Sanity check)
 router.get('/ping', (req, res) => res.json({ ok: true, message: 'pong', timestamp: new Date().toISOString() }));
 
-// ===================================================================
-// CALLBACK DE MAKE (SIN AUTH - Usa HMAC signature)
-// IMPORTANTE: Esta ruta DEBE ir ANTES de verifyJWT
-// ===================================================================
+// Egresos controller (OCR via OpenAI - synchronous)
 const egresosController = require('./controllers/egresos.controller');
-router.post('/intakes/:id/ocr-result', egresosController.ocrResultCallback);
 
 // Todas las rutas siguientes requieren autenticación
 router.use(verifyJWT);
