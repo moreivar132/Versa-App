@@ -4,7 +4,15 @@
  */
 
 const service = require('../../application/services/contabilidad.service');
-const { getEffectiveTenant } = require('../../../../middleware/rbac');
+const { getEffectiveTenant } = require('../../../../../middleware/rbac');
+
+/**
+ * Helper para obtener empresa ID del context
+ */
+function getEmpresaId(req) {
+    const val = req.headers['x-empresa-id'] || req.query.empresaId || req.empresaId;
+    return val === '' ? null : val;
+}
 
 /**
  * GET /api/contabilidad/dashboard
@@ -22,7 +30,12 @@ async function getDashboard(req, res) {
         const anio = parseInt(req.query.anio) || now.getFullYear();
         const trimestre = parseInt(req.query.trimestre) || Math.ceil((now.getMonth() + 1) / 3);
 
-        const kpis = await service.getDashboard(tenantId, anio, trimestre);
+        const empresaId = getEmpresaId(req);
+        if (!empresaId) {
+            return res.status(400).json({ ok: false, error: 'Empresa no especificada (X-Empresa-Id header)' });
+        }
+
+        const kpis = await service.getDashboard(tenantId, empresaId, anio, trimestre);
 
         res.json({
             ok: true,
@@ -55,7 +68,12 @@ async function getReporteIVA(req, res) {
         const anio = parseInt(req.query.anio) || now.getFullYear();
         const trimestre = parseInt(req.query.trimestre) || Math.ceil((now.getMonth() + 1) / 3);
 
-        const reporte = await service.getReporteIVA(tenantId, anio, trimestre);
+        const empresaId = getEmpresaId(req);
+        if (!empresaId) {
+            return res.status(400).json({ ok: false, error: 'Empresa no especificada' });
+        }
+
+        const reporte = await service.getReporteIVA(tenantId, empresaId, anio, trimestre);
 
         res.json({
             ok: true,
@@ -86,7 +104,12 @@ async function getGastosPorCategoria(req, res) {
         const fechaHasta = req.query.fechaHasta || now.toISOString().split('T')[0];
         const fechaDesde = req.query.fechaDesde || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
-        const reporte = await service.getGastosPorCategoria(tenantId, fechaDesde, fechaHasta);
+        const empresaId = getEmpresaId(req);
+        if (!empresaId) {
+            return res.status(400).json({ ok: false, error: 'Empresa no especificada' });
+        }
+
+        const reporte = await service.getGastosPorCategoria(tenantId, empresaId, fechaDesde, fechaHasta);
 
         res.json({
             ok: true,

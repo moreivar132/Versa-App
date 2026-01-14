@@ -6,8 +6,8 @@
 
 const express = require('express');
 const router = express.Router();
-const verifyJWT = require('../../../middleware/auth');
-const { requirePermission } = require('../../../middleware/rbac');
+const verifyJWT = require('../../../../middleware/auth');
+const { requirePermission } = require('../../../../middleware/rbac');
 
 // Controllers
 const dashboardController = require('./controllers/dashboard.controller');
@@ -16,18 +16,27 @@ const contactosController = require('./controllers/contactos.controller');
 const pagosController = require('./controllers/pagos.controller');
 const trimestresController = require('./controllers/trimestres.controller');
 const categoriasController = require('./controllers/categorias.controller');
+const empresaController = require('./controllers/empresa.controller');
+const tesoreriaController = require('./controllers/tesoreria.controller');
 
-// Todas las rutas requieren autenticación
+// Test route (Sanity check)
+router.get('/ping', (req, res) => res.json({ ok: true, message: 'pong', timestamp: new Date().toISOString() }));
+
+// ===================================================================
+// CALLBACK DE MAKE (SIN AUTH - Usa HMAC signature)
+// IMPORTANTE: Esta ruta DEBE ir ANTES de verifyJWT
+// ===================================================================
+const egresosController = require('./controllers/egresos.controller');
+router.post('/intakes/:id/ocr-result', egresosController.ocrResultCallback);
+
+// Todas las rutas siguientes requieren autenticación
 router.use(verifyJWT);
+
 
 // ===================================================================
 // DASHBOARD
 // ===================================================================
 
-/**
- * GET /api/contabilidad/dashboard
- * Obtiene KPIs del dashboard contable
- */
 router.get('/dashboard',
     requirePermission('contabilidad.read'),
     dashboardController.getDashboard
@@ -37,64 +46,36 @@ router.get('/dashboard',
 // FACTURAS
 // ===================================================================
 
-/**
- * GET /api/contabilidad/facturas
- * Lista facturas con filtros
- */
 router.get('/facturas',
     requirePermission('contabilidad.read'),
     facturasController.list
 );
 
-/**
- * GET /api/contabilidad/facturas/:id
- * Obtiene detalle de factura
- */
 router.get('/facturas/:id',
     requirePermission('contabilidad.read'),
     facturasController.getById
 );
 
-/**
- * POST /api/contabilidad/facturas
- * Crea factura manual
- */
 router.post('/facturas',
     requirePermission('contabilidad.write'),
     facturasController.create
 );
 
-/**
- * PATCH /api/contabilidad/facturas/:id
- * Actualiza factura
- */
 router.patch('/facturas/:id',
     requirePermission('contabilidad.write'),
     facturasController.update
 );
 
-/**
- * DELETE /api/contabilidad/facturas/:id
- * Elimina factura (soft delete)
- */
 router.delete('/facturas/:id',
     requirePermission('contabilidad.write'),
     facturasController.remove
 );
 
-/**
- * POST /api/contabilidad/facturas/:id/archivo
- * Sube archivo adjunto a factura
- */
 router.post('/facturas/:id/archivo',
     requirePermission('contabilidad.write'),
     facturasController.uploadArchivo
 );
 
-/**
- * GET /api/contabilidad/facturas/:id/archivos
- * Lista archivos de una factura
- */
 router.get('/facturas/:id/archivos',
     requirePermission('contabilidad.read'),
     facturasController.listArchivos
@@ -104,28 +85,16 @@ router.get('/facturas/:id/archivos',
 // PAGOS
 // ===================================================================
 
-/**
- * POST /api/contabilidad/facturas/:id/pagos
- * Registra pago contra factura
- */
 router.post('/facturas/:id/pagos',
     requirePermission('contabilidad.write'),
     pagosController.registrarPago
 );
 
-/**
- * GET /api/contabilidad/facturas/:id/pagos
- * Lista pagos de una factura
- */
 router.get('/facturas/:id/pagos',
     requirePermission('contabilidad.read'),
     pagosController.listByFactura
 );
 
-/**
- * DELETE /api/contabilidad/pagos/:id
- * Elimina pago
- */
 router.delete('/pagos/:id',
     requirePermission('contabilidad.approve'),
     pagosController.remove
@@ -135,46 +104,26 @@ router.delete('/pagos/:id',
 // CONTACTOS
 // ===================================================================
 
-/**
- * GET /api/contabilidad/contactos
- * Lista contactos fiscales
- */
 router.get('/contactos',
     requirePermission('contabilidad.read'),
     contactosController.list
 );
 
-/**
- * GET /api/contabilidad/contactos/:id
- * Obtiene detalle de contacto
- */
 router.get('/contactos/:id',
     requirePermission('contabilidad.read'),
     contactosController.getById
 );
 
-/**
- * POST /api/contabilidad/contactos
- * Crea contacto fiscal
- */
 router.post('/contactos',
     requirePermission('contabilidad.write'),
     contactosController.create
 );
 
-/**
- * PATCH /api/contabilidad/contactos/:id
- * Actualiza contacto
- */
 router.patch('/contactos/:id',
     requirePermission('contabilidad.write'),
     contactosController.update
 );
 
-/**
- * DELETE /api/contabilidad/contactos/:id
- * Elimina contacto (soft delete)
- */
 router.delete('/contactos/:id',
     requirePermission('contabilidad.write'),
     contactosController.remove
@@ -184,37 +133,21 @@ router.delete('/contactos/:id',
 // TRIMESTRES
 // ===================================================================
 
-/**
- * GET /api/contabilidad/trimestres
- * Lista trimestres con estado
- */
 router.get('/trimestres',
     requirePermission('contabilidad.read'),
     trimestresController.list
 );
 
-/**
- * GET /api/contabilidad/trimestres/:anio/:q
- * Obtiene detalle de trimestre
- */
 router.get('/trimestres/:anio/:q',
     requirePermission('contabilidad.read'),
     trimestresController.getByPeriod
 );
 
-/**
- * POST /api/contabilidad/trimestres/:anio/:q/cerrar
- * Cierra trimestre
- */
 router.post('/trimestres/:anio/:q/cerrar',
     requirePermission('contabilidad.approve'),
     trimestresController.cerrar
 );
 
-/**
- * POST /api/contabilidad/trimestres/:anio/:q/reabrir
- * Reabre trimestre (solo admin)
- */
 router.post('/trimestres/:anio/:q/reabrir',
     requirePermission('contabilidad.admin'),
     trimestresController.reabrir
@@ -224,37 +157,21 @@ router.post('/trimestres/:anio/:q/reabrir',
 // CATEGORÍAS
 // ===================================================================
 
-/**
- * GET /api/contabilidad/categorias
- * Lista categorías contables
- */
 router.get('/categorias',
     requirePermission('contabilidad.read'),
     categoriasController.list
 );
 
-/**
- * POST /api/contabilidad/categorias
- * Crea categoría
- */
 router.post('/categorias',
     requirePermission('contabilidad.admin'),
     categoriasController.create
 );
 
-/**
- * PATCH /api/contabilidad/categorias/:id
- * Actualiza categoría
- */
 router.patch('/categorias/:id',
     requirePermission('contabilidad.admin'),
     categoriasController.update
 );
 
-/**
- * DELETE /api/contabilidad/categorias/:id
- * Desactiva categoría
- */
 router.delete('/categorias/:id',
     requirePermission('contabilidad.admin'),
     categoriasController.remove
@@ -264,22 +181,127 @@ router.delete('/categorias/:id',
 // REPORTES
 // ===================================================================
 
-/**
- * GET /api/contabilidad/reports/iva
- * Resumen IVA por período
- */
 router.get('/reports/iva',
     requirePermission('contabilidad.read'),
     dashboardController.getReporteIVA
 );
 
-/**
- * GET /api/contabilidad/reports/gastos-categoria
- * Gastos por categoría
- */
 router.get('/reports/gastos-categoria',
     requirePermission('contabilidad.read'),
     dashboardController.getGastosPorCategoria
 );
+
+// ===================================================================
+// EMPRESAS (Multi-Tenant)
+// ===================================================================
+
+router.get('/empresas',
+    requirePermission('contabilidad.empresa.read'),
+    empresaController.list
+);
+
+router.get('/empresas/:id',
+    requirePermission('contabilidad.empresa.read'),
+    empresaController.getById
+);
+
+router.post('/empresas',
+    requirePermission('contabilidad.empresa.write'),
+    empresaController.create
+);
+
+router.patch('/empresas/:id',
+    requirePermission('contabilidad.empresa.write'),
+    empresaController.update
+);
+
+router.delete('/empresas/:id',
+    requirePermission('contabilidad.empresa.write'),
+    empresaController.remove
+);
+
+router.get('/empresas/:id/usuarios',
+    requirePermission('contabilidad.empresa.read'),
+    empresaController.listUsuarios
+);
+
+router.post('/empresas/:id/usuarios',
+    requirePermission('contabilidad.empresa.write'),
+    empresaController.addUsuario
+);
+
+router.delete('/empresas/:id/usuarios/:userId',
+    requirePermission('contabilidad.empresa.write'),
+    empresaController.removeUsuario
+);
+
+// ===================================================================
+// TESORERÍA
+// ===================================================================
+
+router.get('/tesoreria/cuentas',
+    requirePermission('contabilidad.tesoreria.read'),
+    tesoreriaController.listCuentas
+);
+
+router.post('/tesoreria/cuentas',
+    requirePermission('contabilidad.tesoreria.write'),
+    tesoreriaController.createCuenta
+);
+
+router.patch('/tesoreria/cuentas/:id',
+    requirePermission('contabilidad.tesoreria.write'),
+    tesoreriaController.updateCuenta
+);
+
+router.get('/tesoreria/transacciones',
+    requirePermission('contabilidad.tesoreria.read'),
+    tesoreriaController.listTransacciones
+);
+
+router.post('/tesoreria/transacciones',
+    requirePermission('contabilidad.tesoreria.write'),
+    tesoreriaController.createTransaccion
+);
+
+router.delete('/tesoreria/transacciones/:id',
+    requirePermission('contabilidad.tesoreria.write'),
+    tesoreriaController.removeTransaccion
+);
+
+router.get('/tesoreria/cashflow',
+    requirePermission('contabilidad.tesoreria.read'),
+    tesoreriaController.getCashflow
+);
+
+// ===================================================================
+// EGRESOS (Facturas de Gasto con OCR/IA)
+// ===================================================================
+
+
+
+// Intakes - Procesamiento OCR
+router.post('/egresos/intakes',
+    requirePermission('contabilidad.write'),
+    egresosController.createIntake
+);
+
+router.get('/egresos/intakes/:id',
+    requirePermission('contabilidad.read'),
+    egresosController.getIntake
+);
+
+// Gastos
+router.get('/egresos',
+    requirePermission('contabilidad.read'),
+    egresosController.listGastos
+);
+
+router.post('/egresos',
+    requirePermission('contabilidad.write'),
+    egresosController.createGasto
+);
+
+// Callback de Make ya está registrado ANTES del middleware de auth (línea ~28)
 
 module.exports = router;

@@ -4,7 +4,7 @@
  */
 
 const service = require('../../application/services/contabilidad.service');
-const { getEffectiveTenant } = require('../../../../middleware/rbac');
+const { getEffectiveTenant } = require('../../../../../middleware/rbac');
 
 /**
  * POST /api/contabilidad/facturas/:id/pagos

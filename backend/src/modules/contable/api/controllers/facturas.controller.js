@@ -4,10 +4,17 @@
  */
 
 const service = require('../../application/services/contabilidad.service');
-const { getEffectiveTenant } = require('../../../../middleware/rbac');
+const { getEffectiveTenant } = require('../../../../../middleware/rbac');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+
+/**
+ * Helper para obtener empresa ID
+ */
+function getEmpresaId(req) {
+    return req.headers['x-empresa-id'] || req.query.empresaId;
+}
 
 // Configurar multer para uploads
 const uploadDir = path.join(__dirname, '../../../../../uploads/contabilidad');
@@ -56,7 +63,9 @@ async function list(req, res) {
             idContacto: req.query.idContacto ? parseInt(req.query.idContacto) : null,
             idCategoria: req.query.idCategoria ? parseInt(req.query.idCategoria) : null,
             idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
+            idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
             search: req.query.search,
+            idEmpresa: getEmpresaId(req),
             limit: parseInt(req.query.limit) || 50,
             offset: parseInt(req.query.offset) || 0
         };
@@ -118,6 +127,12 @@ async function create(req, res) {
         // Validaciones básicas
         if (!data.tipo || !['GASTO', 'INGRESO'].includes(data.tipo)) {
             return res.status(400).json({ ok: false, error: 'Tipo de factura inválido' });
+        }
+
+        // Asignar empresa si existe en contexto
+        const empresaId = getEmpresaId(req);
+        if (empresaId) {
+            data.id_empresa = empresaId;
         }
 
         if (!data.numero_factura) {

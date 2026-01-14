@@ -273,12 +273,12 @@ class ContabilidadService {
         return repo.listTrimestres(tenantId, filters);
     }
 
-    async getTrimestre(tenantId, anio, trimestre) {
+    async getTrimestre(tenantId, empresaId, anio, trimestre) {
         // Obtener o crear trimestre
         let tri = await repo.getTrimestreByPeriod(tenantId, anio, trimestre);
 
         // Calcular datos en vivo
-        const resumen = await repo.getResumenIVA(tenantId, anio, trimestre);
+        const resumen = await repo.getResumenIVA(tenantId, empresaId, anio, trimestre);
 
         return {
             ...tri,
@@ -337,16 +337,16 @@ class ContabilidadService {
     // DASHBOARD / REPORTS
     // ===================================================================
 
-    async getDashboard(tenantId, anio, trimestre) {
-        return repo.getDashboardKPIs(tenantId, anio, trimestre);
+    async getDashboard(tenantId, empresaId, anio, trimestre) {
+        return repo.getDashboardKPIs(tenantId, empresaId, anio, trimestre);
     }
 
-    async getReporteIVA(tenantId, anio, trimestre) {
-        return repo.getResumenIVA(tenantId, anio, trimestre);
+    async getReporteIVA(tenantId, empresaId, anio, trimestre) {
+        return repo.getResumenIVA(tenantId, empresaId, anio, trimestre);
     }
 
-    async getGastosPorCategoria(tenantId, fechaDesde, fechaHasta) {
-        return repo.getGastosPorCategoria(tenantId, fechaDesde, fechaHasta);
+    async getGastosPorCategoria(tenantId, empresaId, fechaDesde, fechaHasta) {
+        return repo.getGastosPorCategoria(tenantId, empresaId, fechaDesde, fechaHasta);
     }
 }
 

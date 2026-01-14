@@ -6,7 +6,7 @@ const express = require('express');
 const router = express.Router();
 const controller = require('./vehiculos.controller');
 const verifyJWT = require('../../../../middleware/auth');
-const { checkPermission } = require('../../../core/http/middlewares/rbac');
+const { requirePermission: checkPermission } = require('../../../../middleware/rbac');
 
 router.use(verifyJWT);
 

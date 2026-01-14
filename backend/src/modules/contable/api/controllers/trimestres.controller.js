@@ -4,7 +4,15 @@
  */
 
 const service = require('../../application/services/contabilidad.service');
-const { getEffectiveTenant } = require('../../../../middleware/rbac');
+const { getEffectiveTenant } = require('../../../../../middleware/rbac');
+
+/**
+ * Helper para obtener empresa ID del context
+ */
+function getEmpresaId(req) {
+    const val = req.headers['x-empresa-id'] || req.query.empresaId || req.empresaId;
+    return val === '' ? null : val;
+}
 
 /**
  * GET /api/contabilidad/trimestres
@@ -16,8 +24,11 @@ async function list(req, res) {
             return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
         }
 
+        const empresaId = getEmpresaId(req);
+
         const filters = {
-            anio: req.query.anio ? parseInt(req.query.anio) : null
+            anio: req.query.anio ? parseInt(req.query.anio) : null,
+            empresaId: empresaId
         };
 
         const trimestres = await service.listTrimestres(tenantId, filters);
@@ -27,28 +38,53 @@ async function list(req, res) {
         const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
         const result = [];
 
+
         for (let q = 1; q <= 4; q++) {
             const existing = trimestres.find(t => t.anio === currentYear && t.trimestre === q);
             if (existing) {
                 result.push(existing);
             } else {
-                // Trimestre virtual (no cerrado aún)
-                result.push({
-                    id: null,
-                    id_tenant: tenantId,
-                    anio: currentYear,
-                    trimestre: q,
-                    estado: 'ABIERTO',
-                    base_ingresos: null,
-                    iva_repercutido: null,
-                    base_gastos: null,
-                    iva_soportado: null,
-                    resultado_iva: null,
-                    closed_at: null,
-                    is_current: q === currentQuarter
-                });
+                // Cálculo en tiempo real para trimestre abierto
+                try {
+                    const empresaIdParsed = empresaId ? parseInt(empresaId) : null;
+                    const resumen = await service.getResumenIVA(tenantId, empresaIdParsed, currentYear, q);
+
+                    result.push({
+                        id: null,
+                        id_tenant: tenantId,
+                        anio: currentYear,
+                        trimestre: q,
+                        estado: 'ABIERTO',
+                        base_ingresos: resumen.ingresos?.base || 0,
+                        iva_repercutido: resumen.ingresos?.iva || 0,
+                        base_gastos: resumen.gastos?.base || 0,
+                        iva_soportado: resumen.gastos?.iva || 0,
+                        resultado_iva: resumen.resultado || 0,
+                        closed_at: null,
+                        is_current: q === currentQuarter
+                    });
+                } catch (err) {
+                    console.error(`Error calculando trimestre ${q}:`, err);
+                    // Add empty trimestre on error
+                    result.push({
+                        id: null,
+                        id_tenant: tenantId,
+                        anio: currentYear,
+                        trimestre: q,
+                        estado: 'ABIERTO',
+                        base_ingresos: 0,
+                        iva_repercutido: 0,
+                        base_gastos: 0,
+                        iva_soportado: 0,
+                        resultado_iva: 0,
+                        closed_at: null,
+                        is_current: q === currentQuarter,
+                        error: err.message
+                    });
+                }
             }
         }
+
 
         res.json({
             ok: true,
@@ -74,6 +110,7 @@ async function getByPeriod(req, res) {
             return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
         }
 
+        const empresaId = getEmpresaId(req);
         const anio = parseInt(req.params.anio);
         const trimestre = parseInt(req.params.q);
 
@@ -81,7 +118,8 @@ async function getByPeriod(req, res) {
             return res.status(400).json({ ok: false, error: 'Trimestre inválido (1-4)' });
         }
 
-        const data = await service.getTrimestre(tenantId, anio, trimestre);
+        const empresaIdParsed = empresaId ? parseInt(empresaId) : null;
+        const data = await service.getTrimestre(tenantId, empresaIdParsed, anio, trimestre);
 
         res.json({
             ok: true,

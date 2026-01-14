@@ -4,7 +4,15 @@
  */
 
 const service = require('../../application/services/contabilidad.service');
-const { getEffectiveTenant } = require('../../../../middleware/rbac');
+const { getEffectiveTenant } = require('../../../../../middleware/rbac');
+
+/**
+ * Helper para obtener empresa ID
+ */
+function getEmpresaId(req) {
+    const val = req.headers['x-empresa-id'] || req.query.empresaId;
+    return val === '' ? null : val;
+}
 
 /**
  * GET /api/contabilidad/contactos
@@ -20,6 +28,7 @@ async function list(req, res) {
             tipo: req.query.tipo,
             activo: req.query.activo !== 'false',
             search: req.query.search,
+            idEmpresa: getEmpresaId(req),
             limit: parseInt(req.query.limit) || 100,
             offset: parseInt(req.query.offset) || 0
         };
@@ -79,9 +88,20 @@ async function create(req, res) {
         const data = req.body;
 
         // Validaciones básicas
-        if (!data.tipo || !['PROVEEDOR', 'CLIENTE'].includes(data.tipo)) {
+        if (!data.tipo || !['PROVEEDOR', 'CLIENTE', 'AMBOS'].includes(data.tipo)) {
             return res.status(400).json({ ok: false, error: 'Tipo de contacto inválido' });
         }
+
+        // Obtener empresa del contexto (header o query param)
+        const empresaId = getEmpresaId(req);
+
+        // Asignar empresa si existe en contexto
+        if (empresaId) {
+            data.id_empresa = empresaId;
+        }
+
+        // Sanitizar campos numéricos opcionales
+        if (data.id_empresa === '') data.id_empresa = null;
 
         if (!data.nombre) {
             return res.status(400).json({ ok: false, error: 'Nombre requerido' });

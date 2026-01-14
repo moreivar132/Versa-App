@@ -4,7 +4,7 @@
  * Todas las queries usan tenant context obligatorio
  */
 
-const pool = require('../../../../db');
+const pool = require('../../../../../db');
 
 class ContabilidadRepository {
     // ===================================================================
@@ -30,6 +30,7 @@ class ContabilidadRepository {
             offset = 0
         } = filters;
 
+        // Base query
         let query = `
             SELECT 
                 f.*,
@@ -100,6 +101,11 @@ class ContabilidadRepository {
             paramIndex++;
         }
 
+        if (filters.idEmpresa) {
+            query += ` AND f.id_empresa = $${paramIndex++}`;
+            params.push(filters.idEmpresa);
+        }
+
         query += ` ORDER BY f.fecha_devengo DESC, f.created_at DESC`;
         query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
         params.push(limit, offset);
@@ -113,9 +119,11 @@ class ContabilidadRepository {
             WHERE f.id_tenant = $1 AND f.deleted_at IS NULL
         `;
         const countParams = [tenantId];
+        let countParamIndex = 2;
+
         // Add same filters for count (simplified)
         if (tipo) {
-            countQuery += ` AND f.tipo = $2`;
+            countQuery += ` AND f.tipo = $${countParamIndex++}`;
             countParams.push(tipo);
         }
 
@@ -177,15 +185,15 @@ class ContabilidadRepository {
 
         const result = await pool.query(`
             INSERT INTO contabilidad_factura (
-                id_tenant, tipo, id_contacto, id_sucursal, numero_factura,
+                id_tenant, id_empresa, tipo, id_contacto, id_sucursal, numero_factura,
                 fecha_emision, fecha_devengo, fecha_vencimiento, moneda,
                 base_imponible, iva_porcentaje, iva_importe, total,
                 id_categoria, notas, created_by
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
             ) RETURNING *
         `, [
-            tenantId, tipo, id_contacto, id_sucursal, numero_factura,
+            tenantId, data.id_empresa, tipo, id_contacto, id_sucursal, numero_factura,
             fecha_emision, fecha_devengo, fecha_vencimiento, moneda,
             base_imponible, iva_porcentaje, iva_importe, total,
             id_categoria, notas, userId
@@ -326,29 +334,36 @@ class ContabilidadRepository {
         const { tipo, activo = true, search, limit = 100, offset = 0 } = filters;
 
         let query = `
-            SELECT * FROM contabilidad_contacto
-            WHERE id_tenant = $1 AND deleted_at IS NULL
+            SELECT c.*, e.nombre_legal as empresa_nombre 
+            FROM contabilidad_contacto c
+            LEFT JOIN accounting_empresa e ON e.id = c.id_empresa
+            WHERE c.id_tenant = $1 AND c.deleted_at IS NULL
         `;
         const params = [tenantId];
         let paramIndex = 2;
 
         if (activo !== null) {
-            query += ` AND activo = $${paramIndex++}`;
+            query += ` AND c.activo = $${paramIndex++}`;
             params.push(activo);
         }
 
         if (tipo) {
-            query += ` AND tipo = $${paramIndex++}`;
+            query += ` AND c.tipo = $${paramIndex++}`;
             params.push(tipo);
         }
 
         if (search) {
-            query += ` AND (nombre ILIKE $${paramIndex} OR nif_cif ILIKE $${paramIndex})`;
+            query += ` AND (c.nombre ILIKE $${paramIndex} OR c.nif_cif ILIKE $${paramIndex})`;
             params.push(`%${search}%`);
             paramIndex++;
         }
 
-        query += ` ORDER BY nombre ASC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
+        if (filters.idEmpresa) {
+            query += ` AND c.id_empresa = $${paramIndex++}`;
+            params.push(filters.idEmpresa);
+        }
+
+        query += ` ORDER BY c.nombre ASC LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
         params.push(limit, offset);
 
         const result = await pool.query(query, params);
@@ -367,15 +382,17 @@ class ContabilidadRepository {
     async createContacto(tenantId, data, userId) {
         const result = await pool.query(`
             INSERT INTO contabilidad_contacto (
-                id_tenant, tipo, nombre, nif_cif, email, telefono,
-                direccion, codigo_postal, ciudad, provincia, pais, notas, created_by
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                id_tenant, id_empresa, tipo, nombre, nif_cif, email, telefono,
+                direccion, codigo_postal, ciudad, provincia, pais, 
+                condiciones_pago, iban, notas, created_by
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             RETURNING *
         `, [
-            tenantId, data.tipo, data.nombre, data.nif_cif,
+            tenantId, data.id_empresa, data.tipo, data.nombre, data.nif_cif,
             data.email, data.telefono, data.direccion,
             data.codigo_postal, data.ciudad, data.provincia,
-            data.pais || 'ES', data.notas, userId
+            data.pais || 'ES', data.condiciones_pago, data.iban,
+            data.notas, userId
         ]);
 
         return result.rows[0];
@@ -385,7 +402,7 @@ class ContabilidadRepository {
         const allowedFields = [
             'tipo', 'nombre', 'nif_cif', 'email', 'telefono',
             'direccion', 'codigo_postal', 'ciudad', 'provincia',
-            'pais', 'activo', 'notas'
+            'pais', 'condiciones_pago', 'iban', 'activo', 'notas'
         ];
 
         const updates = [];
@@ -436,14 +453,16 @@ class ContabilidadRepository {
     async listTrimestres(tenantId, filters = {}) {
         const { anio } = filters;
 
+        // Base query
         let query = `
             SELECT * FROM contabilidad_trimestre
             WHERE id_tenant = $1
         `;
         const params = [tenantId];
+        let paramIndex = 2; // Fixed
 
         if (anio) {
-            query += ` AND anio = $2`;
+            query += ` AND anio = $${paramIndex++}`;
             params.push(anio);
         }
 
@@ -529,6 +548,11 @@ class ContabilidadRepository {
             params.push(tipo);
         }
 
+        if (filters.idEmpresa) {
+            query += ` AND id_empresa = $${paramIndex++}`;
+            params.push(filters.idEmpresa);
+        }
+
         query += ` ORDER BY tipo, nombre`;
 
         const result = await pool.query(query, params);
@@ -538,10 +562,10 @@ class ContabilidadRepository {
     async createCategoria(tenantId, data, userId) {
         const result = await pool.query(`
             INSERT INTO contable_category (
-                id_tenant, codigo, nombre, tipo, descripcion, created_by
-            ) VALUES ($1, $2, $3, $4, $5, $6)
+                id_tenant, id_empresa, codigo, nombre, tipo, descripcion, created_by
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
-        `, [tenantId, data.codigo, data.nombre, data.tipo, data.descripcion, userId]);
+        `, [tenantId, data.id_empresa, data.codigo, data.nombre, data.tipo, data.descripcion, userId]);
 
         return result.rows[0];
     }
@@ -577,11 +601,11 @@ class ContabilidadRepository {
     /**
      * Obtiene resumen IVA por período
      */
-    async getResumenIVA(tenantId, anio, trimestre) {
+    async getResumenIVA(tenantId, empresaId, anio, trimestre) {
         const fechaInicio = new Date(anio, (trimestre - 1) * 3, 1);
         const fechaFin = new Date(anio, trimestre * 3, 0);
 
-        const result = await pool.query(`
+        let query = `
             SELECT 
                 tipo,
                 COUNT(*) as cantidad,
@@ -594,8 +618,17 @@ class ContabilidadRepository {
               AND fecha_devengo <= $3
               AND deleted_at IS NULL
               AND estado != 'ANULADA'
-            GROUP BY tipo
-        `, [tenantId, fechaInicio, fechaFin]);
+        `;
+        const params = [tenantId, fechaInicio, fechaFin];
+
+        if (empresaId) {
+            query += ` AND id_empresa = $4`;
+            params.push(empresaId);
+        }
+
+        query += ` GROUP BY tipo`;
+
+        const result = await pool.query(query, params);
 
         let ingresos = { cantidad: 0, base: 0, iva: 0, total: 0 };
         let gastos = { cantidad: 0, base: 0, iva: 0, total: 0 };
@@ -626,9 +659,9 @@ class ContabilidadRepository {
     }
 
     /**
-     * Obtiene KPIs del dashboard
+     * Obtiene KPIs del dashboard por empresa
      */
-    async getDashboardKPIs(tenantId, anio, trimestre) {
+    async getDashboardKPIs(tenantId, empresaId, anio, trimestre) {
         const now = new Date();
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
@@ -636,27 +669,35 @@ class ContabilidadRepository {
         const mesFin = new Date(currentYear, currentMonth + 1, 0);
 
         // IVA del trimestre
-        const ivaResumen = await this.getResumenIVA(tenantId, anio, trimestre);
+        const ivaResumen = await this.getResumenIVA(tenantId, empresaId, anio, trimestre);
 
-        // Pendiente por cobrar (ingresos pendientes)
+        // Build empresa filter
+        const empresaFilter = empresaId ? ' AND id_empresa = $2' : '';
+        const empresaParams = empresaId ? [tenantId, empresaId] : [tenantId];
+
+        // Pendiente por cobrar (AR - Accounts Receivable)
         const pendienteCobrar = await pool.query(`
-            SELECT COALESCE(SUM(total - total_pagado), 0) as total
+            SELECT COALESCE(SUM(total - total_pagado), 0) as total,
+                   COUNT(*) as count
             FROM contabilidad_factura
             WHERE id_tenant = $1 AND tipo = 'INGRESO' 
               AND estado IN ('PENDIENTE', 'PARCIAL') 
               AND deleted_at IS NULL
-        `, [tenantId]);
+              ${empresaFilter}
+        `, empresaParams);
 
-        // Pendiente por pagar (gastos pendientes)
+        // Pendiente por pagar (AP - Accounts Payable)
         const pendientePagar = await pool.query(`
-            SELECT COALESCE(SUM(total - total_pagado), 0) as total
+            SELECT COALESCE(SUM(total - total_pagado), 0) as total,
+                   COUNT(*) as count
             FROM contabilidad_factura
             WHERE id_tenant = $1 AND tipo = 'GASTO' 
               AND estado IN ('PENDIENTE', 'PARCIAL') 
               AND deleted_at IS NULL
-        `, [tenantId]);
+              ${empresaFilter}
+        `, empresaParams);
 
-        // Facturas vencidas
+        // Facturas vencidas (AR + AP)
         const vencidas = await pool.query(`
             SELECT COUNT(*) as count, COALESCE(SUM(total - total_pagado), 0) as total
             FROM contabilidad_factura
@@ -664,16 +705,39 @@ class ContabilidadRepository {
               AND fecha_vencimiento < CURRENT_DATE
               AND estado IN ('PENDIENTE', 'PARCIAL')
               AND deleted_at IS NULL
-        `, [tenantId]);
+              ${empresaFilter}
+        `, empresaParams);
+
+        // Ingreso mensual (mes actual)
+        const ingresoMensual = await pool.query(`
+            SELECT COALESCE(SUM(total), 0) as total
+            FROM contabilidad_factura
+            WHERE id_tenant = $1 AND tipo = 'INGRESO'
+              AND fecha_devengo >= $${empresaId ? 3 : 2} AND fecha_devengo <= $${empresaId ? 4 : 3}
+              AND deleted_at IS NULL
+              ${empresaFilter}
+        `, empresaId ? [tenantId, empresaId, mesInicio, mesFin] : [tenantId, mesInicio, mesFin]);
 
         // Gasto mensual (mes actual)
         const gastoMensual = await pool.query(`
             SELECT COALESCE(SUM(total), 0) as total
             FROM contabilidad_factura
             WHERE id_tenant = $1 AND tipo = 'GASTO'
-              AND fecha_devengo >= $2 AND fecha_devengo <= $3
+              AND fecha_devengo >= $${empresaId ? 3 : 2} AND fecha_devengo <= $${empresaId ? 4 : 3}
               AND deleted_at IS NULL
-        `, [tenantId, mesInicio, mesFin]);
+              ${empresaFilter}
+        `, empresaId ? [tenantId, empresaId, mesInicio, mesFin] : [tenantId, mesInicio, mesFin]);
+
+        // Saldo de caja (cuentas de tesorería)
+        let saldoCaja = 0;
+        if (empresaId) {
+            const cajaResult = await pool.query(`
+                SELECT COALESCE(SUM(saldo_actual), 0) as total
+                FROM accounting_cuenta_tesoreria
+                WHERE id_empresa = $1 AND activo = true
+            `, [empresaId]);
+            saldoCaja = parseFloat(cajaResult.rows[0].total);
+        }
 
         return {
             iva_trimestre: {
@@ -681,21 +745,33 @@ class ContabilidadRepository {
                 repercutido: ivaResumen.iva_repercutido,
                 soportado: ivaResumen.iva_soportado
             },
-            pendiente_cobrar: parseFloat(pendienteCobrar.rows[0].total),
-            pendiente_pagar: parseFloat(pendientePagar.rows[0].total),
+            pendiente_cobrar: {
+                total: parseFloat(pendienteCobrar.rows[0].total),
+                count: parseInt(pendienteCobrar.rows[0].count)
+            },
+            pendiente_pagar: {
+                total: parseFloat(pendientePagar.rows[0].total),
+                count: parseInt(pendientePagar.rows[0].count)
+            },
             vencidas: {
                 count: parseInt(vencidas.rows[0].count),
                 total: parseFloat(vencidas.rows[0].total)
             },
-            gasto_mensual: parseFloat(gastoMensual.rows[0].total)
+            ingreso_mensual: parseFloat(ingresoMensual.rows[0].total),
+            gasto_mensual: parseFloat(gastoMensual.rows[0].total),
+            saldo_caja: saldoCaja,
+            periodo: {
+                mes: currentMonth + 1,
+                anio: currentYear
+            }
         };
     }
 
     /**
-     * Gastos por categoría
+     * Gastos por categoría (filtrado por empresa)
      */
-    async getGastosPorCategoria(tenantId, fechaDesde, fechaHasta) {
-        const result = await pool.query(`
+    async getGastosPorCategoria(tenantId, empresaId, fechaDesde, fechaHasta) {
+        let query = `
             SELECT 
                 cat.id,
                 cat.codigo,
@@ -708,11 +784,21 @@ class ContabilidadRepository {
                 AND f.deleted_at IS NULL
                 AND f.fecha_devengo >= $2
                 AND f.fecha_devengo <= $3
+        `;
+        const params = [tenantId, fechaDesde, fechaHasta];
+
+        if (empresaId) {
+            query += ` AND f.id_empresa = $4`;
+            params.push(empresaId);
+        }
+
+        query += `
             WHERE cat.id_tenant = $1 AND cat.tipo = 'GASTO' AND cat.activo = true
             GROUP BY cat.id, cat.codigo, cat.nombre
             ORDER BY total DESC
-        `, [tenantId, fechaDesde, fechaHasta]);
+        `;
 
+        const result = await pool.query(query, params);
         return result.rows;
     }
 }

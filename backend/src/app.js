@@ -87,6 +87,10 @@ function createApp() {
     // --- Rutas principales ---
     app.use('/api/auth', authRouter);
     app.use('/api/admin', superAdminRouter);
+
+    // Módulo Contable V2 (NEW - Priority)
+    console.log('[App] Registrando módulo contable en /api/contabilidad');
+    app.use('/api/contabilidad', require('./modules/contable/api/contabilidad.routes'));
     app.use('/api/access', require('../routes/accessRoutes'));
     app.use('/api/proveedores', proveedoresRouter);
     app.use('/api/clientes', clientesRouter);
@@ -114,6 +118,8 @@ function createApp() {
 
     // Módulo Ventas (MIGRADO)
     app.use('/api/ventas', require('./modules/ventas/api/ventas.routes'));
+
+    // Módulo Contable V2 - MOVED UP
 
     app.use('/api/income-events', privateRoute, require('../routes/incomeEvents'));
     app.use('/api/dashboard', privateRoute, require('../routes/dashboardPrefs'));
