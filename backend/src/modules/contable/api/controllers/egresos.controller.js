@@ -203,11 +203,19 @@ async function getIntake(req, res) {
     try {
         const tenantId = getEffectiveTenant(req);
         const intakeId = parseInt(req.params.id);
+
+        console.log('[getIntake] Request for intake:', intakeId, 'tenant:', tenantId);
+
         const result = await pool.query(`SELECT * FROM accounting_intake WHERE id = $1 AND id_tenant = $2`, [intakeId, tenantId]);
 
-        if (result.rows.length === 0) return res.status(404).json({ ok: false, error: 'Not found' });
+        if (result.rows.length === 0) {
+            console.log('[getIntake] Not found:', intakeId);
+            return res.status(404).json({ ok: false, error: 'Not found' });
+        }
 
         const intake = result.rows[0];
+        console.log('[getIntake] Found intake with status:', intake.status);
+
         let gastoId = null;
         if (intake.status !== 'processing') {
             const draft = await pool.query(
@@ -217,7 +225,7 @@ async function getIntake(req, res) {
             if (draft.rows.length > 0) gastoId = draft.rows[0].id;
         }
 
-        res.json({
+        const response = {
             ok: true,
             data: {
                 id: intake.id,
@@ -227,8 +235,12 @@ async function getIntake(req, res) {
                 file_url: intake.file_url,
                 gasto_id: gastoId
             }
-        });
+        };
+
+        console.log('[getIntake] Returning:', JSON.stringify(response).substring(0, 200));
+        res.json(response);
     } catch (error) {
+        console.error('[getIntake] Error:', error);
         res.status(500).json({ ok: false, error: error.message });
     }
 }
@@ -241,7 +253,87 @@ async function ocrResultCallback(req, res) {
     const client = await pool.connect();
     try {
         const intakeId = parseInt(req.params.id);
-        const { status, extracted, validation, trace_id, error_code, error_message } = req.body;
+        let { status, extracted, validation, trace_id, error_code, error_message, file_url } = req.body;
+
+        console.log('[OCR Callback] Received for intake:', intakeId);
+        console.log('[OCR Callback] Raw status:', status);
+        console.log('[OCR Callback] Extracted:', extracted ? 'YES' : 'NO');
+
+        // ===================================================================
+        // ROBUST DATA PARSING - Fix datos de Make.com
+        // ===================================================================
+
+        if (extracted) {
+            // 1. Parsear LINEAS (puede venir como string JSON o array)
+            if (extracted.lineas) {
+                if (typeof extracted.lineas === 'string') {
+                    try {
+                        console.log('[OCR] Parsing lineas from string:', extracted.lineas.substring(0, 100));
+                        // Limpiar y parsear: "{...}, {...}" -> [{...}, {...}]
+                        const cleaned = extracted.lineas.replace(/\n/g, '').replace(/\r/g, '').trim();
+                        extracted.lineas = JSON.parse(`[${cleaned}]`);
+                        console.log('[OCR] Lineas parsed successfully:', extracted.lineas.length, 'items');
+                    } catch (e) {
+                        console.error('[OCR] Error parsing lineas, setting to empty array:', e.message);
+                        extracted.lineas = [];
+                    }
+                } else if (!Array.isArray(extracted.lineas)) {
+                    console.warn('[OCR] Lineas is not string or array, converting to array');
+                    extracted.lineas = [extracted.lineas];
+                }
+            }
+
+            // 2. Convertir números que vienen como strings
+            const parseNum = (val) => {
+                if (typeof val === 'number') return val;
+                if (typeof val === 'string') {
+                    const cleaned = val.replace(',', '.').trim();
+                    const parsed = parseFloat(cleaned);
+                    return isNaN(parsed) ? 0 : parsed;
+                }
+                return 0;
+            };
+
+            ['total', 'base_imponible', 'iva_porcentaje', 'iva_importe'].forEach(field => {
+                if (extracted[field] !== undefined) {
+                    extracted[field] = parseNum(extracted[field]);
+                }
+            });
+
+            if (validation) {
+                ['total_esperado', 'iva_calculado'].forEach(field => {
+                    if (validation[field] !== undefined) {
+                        validation[field] = parseNum(validation[field]);
+                    }
+                });
+
+                // Convertir booleans que vienen como strings
+                if (typeof validation.check_total === 'string') {
+                    validation.check_total = validation.check_total === 'true';
+                }
+                if (typeof validation.check_iva === 'string') {
+                    validation.check_iva = validation.check_iva === 'true';
+                }
+            }
+        }
+
+        // 3. Determinar STATUS si viene vacío
+        if (!status || status.trim() === '') {
+            if (extracted) {
+                // Si tiene validation checks, usarlos para determinar status
+                if (validation?.check_total && validation?.check_iva) {
+                    status = 'extracted';
+                } else {
+                    status = 'needs_review';
+                }
+                console.log('[OCR] Status was empty, auto-determined:', status);
+            } else {
+                status = 'failed';
+            }
+        }
+
+        console.log('[OCR] Final status:', status);
+        console.log('[OCR] Final extracted:', JSON.stringify(extracted).substring(0, 200));
 
         await client.query('BEGIN');
 
@@ -252,18 +344,32 @@ async function ocrResultCallback(req, res) {
         }
         const intake = intakeCheck.rows[0];
 
-        // Mapear status con resiliencia: Si hay extraction, es ready/needs_review
-        let dbStatus = 'failed';
+        // Determinar dbStatus basado en el status ya parseado
+        let dbStatus = 'processing';
         if (extracted) {
-            dbStatus = (status === 'needs_review' || (validation && validation.score < 0.8)) ? 'needs_review' : 'ready';
-        } else if (status === 'failed') {
-            dbStatus = 'failed';
+            // Mapear status de Make a nuestros estados internos
+            if (status === 'extracted') {
+                dbStatus = 'ready';  // OCR exitoso, datos validados
+            } else if (status === 'needs_review') {
+                dbStatus = 'needs_review';  // OCR completado pero necesita revisión
+            } else if (status === 'failed') {
+                dbStatus = 'failed';
+            } else {
+                // Fallback: usar validation para determinar
+                dbStatus = (validation?.check_total && validation?.check_iva) ? 'ready' : 'needs_review';
+            }
+        } else {
+            dbStatus = 'failed';  // Sin extracted data = failed
         }
+
+        console.log('[OCR] Final dbStatus for DB:', dbStatus);
 
         let gastoId = null;
 
         // Crear borrador automático si es exitoso
         if ((dbStatus === 'ready' || dbStatus === 'needs_review') && extracted) {
+            // Use SAVEPOINT to isolate borrador creation errors
+            await client.query('SAVEPOINT borrador_creation');
             try {
                 const provNombre = extracted.proveedor_nombre || extracted.proveedor || extracted.supplier_name;
                 const provNif = extracted.proveedor_nif || extracted.cif_nif || extracted.supplier_nif;
@@ -288,18 +394,34 @@ async function ocrResultCallback(req, res) {
                 }
 
                 if (!contactoId && provNombre) {
-                    const newContact = await client.query(`
-                        INSERT INTO contabilidad_contacto (id_tenant, id_empresa, tipo, nombre, nif_cif, created_by)
-                        VALUES ($1, $2, 'PROVEEDOR', $3, $4, $5)
-                        ON CONFLICT (id_tenant, nif_cif) WHERE deleted_at IS NULL DO NOTHING
-                        RETURNING id
-                    `, [intake.id_tenant, intake.id_empresa, provNombre, provNif, intake.created_by]);
-                    if (newContact.rows.length > 0) contactoId = newContact.rows[0].id;
-                    else if (provNif) {
-                        const cRows = await client.query(`SELECT id FROM contabilidad_contacto WHERE id_tenant=$1 AND nif_cif=$2`, [intake.id_tenant, provNif]);
-                        if (cRows.rows.length > 0) contactoId = cRows.rows[0].id;
+                    // First try to find existing
+                    if (provNif) {
+                        const existingContact = await client.query(
+                            `SELECT id FROM contabilidad_contacto WHERE id_tenant=$1 AND nif_cif=$2 AND deleted_at IS NULL`,
+                            [intake.id_tenant, provNif]
+                        );
+                        if (existingContact.rows.length > 0) {
+                            contactoId = existingContact.rows[0].id;
+                        }
+                    }
+
+                    // Create new if not found
+                    if (!contactoId) {
+                        const newContact = await client.query(`
+                            INSERT INTO contabilidad_contacto (id_tenant, id_empresa, tipo, nombre, nif_cif, created_by)
+                            VALUES ($1, $2, 'PROVEEDOR', $3, $4, $5)
+                            RETURNING id
+                        `, [intake.id_tenant, intake.id_empresa, provNombre, provNif, intake.created_by]);
+                        if (newContact.rows.length > 0) contactoId = newContact.rows[0].id;
                     }
                 }
+
+                console.log('[OCR] Creating factura with:', {
+                    proveedor: provNombre,
+                    nif: provNif,
+                    numero: numFactura,
+                    total, baseImp, ivaPct, ivaImp
+                });
 
                 const facturaRes = await client.query(`
                     INSERT INTO contabilidad_factura (
@@ -317,22 +439,44 @@ async function ocrResultCallback(req, res) {
                 ]);
                 gastoId = facturaRes.rows[0].id;
 
+                console.log('[OCR] ✅ Factura created with ID:', gastoId);
+
                 if (intake.file_url) {
+                    console.log('[OCR] Attaching file:', intake.file_url);
                     await client.query(`
                         INSERT INTO contabilidad_factura_archivo (id_factura, file_url, storage_key, mime_type, size_bytes, original_name, created_by)
                         VALUES ($1, $2, $3, $4, $5, $6, $7)
                     `, [gastoId, intake.file_url, intake.file_storage_key, intake.file_mime, intake.file_size_bytes, intake.file_original_name, intake.created_by]);
+                    console.log('[OCR] ✅ File attached');
                 }
+                // Release savepoint on success
+                await client.query('RELEASE SAVEPOINT borrador_creation');
             } catch (err) {
-                console.error('[Egresos] Error borrador:', err);
+                // Rollback to savepoint - this recovers the transaction to a good state
+                await client.query('ROLLBACK TO SAVEPOINT borrador_creation');
+                console.error('[Egresos] ⚠️ Error creating borrador (recovered):', err.message);
+                gastoId = null;
             }
         }
 
-        await client.query(`
-            UPDATE accounting_intake SET status = $1, extracted_json = $2, validation_json = $3, trace_id = $4,
+        // Update intake con file_url si Make lo proporciona
+        const updateQuery = file_url
+            ? `UPDATE accounting_intake SET status = $1, extracted_json = $2, validation_json = $3, trace_id = $4,
+                error_code = $5, error_message = $6, file_url = $7, updated_at = NOW()
+                WHERE id = $8`
+            : `UPDATE accounting_intake SET status = $1, extracted_json = $2, validation_json = $3, trace_id = $4,
                 error_code = $5, error_message = $6, updated_at = NOW()
-            WHERE id = $7
-        `, [dbStatus, extracted ? JSON.stringify(extracted) : null, validation ? JSON.stringify(validation) : null, trace_id, error_code, error_message, intakeId]);
+                WHERE id = $7`;
+
+        const updateParams = file_url
+            ? [dbStatus, extracted ? JSON.stringify(extracted) : null, validation ? JSON.stringify(validation) : null,
+                trace_id, error_code, error_message, file_url, intakeId]
+            : [dbStatus, extracted ? JSON.stringify(extracted) : null, validation ? JSON.stringify(validation) : null,
+                trace_id, error_code, error_message, intakeId];
+
+        await client.query(updateQuery, updateParams);
+
+        console.log('[OCR] Intake updated. Status:', dbStatus, 'Gasto ID:', gastoId);
 
         await client.query('COMMIT');
         res.json({ ok: true, received: true, gasto_id: gastoId });

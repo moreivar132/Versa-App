@@ -522,7 +522,9 @@
         // --- Polling Logic ---
         function startPolling(intakeId) {
             let attempts = 0;
-            const maxAttempts = 20;
+            const maxAttempts = 15; // 30 segundos max (15 * 2s), luego mostrar formulario manual
+
+            console.log('[Polling] Starting for intake:', intakeId);
 
             pollingInterval = setInterval(async () => {
                 attempts++;
@@ -531,26 +533,53 @@
                         headers: { 'X-Empresa-Id': selectedEmpresaId }
                     });
 
-                    const intake = res.data;
-                    document.getElementById('polling-debug').textContent = `Attempt ${attempts}: ${intake.status}`;
+                    console.log('[Polling] Raw response:', res);
+
+                    // Handle both {data: {...}} and direct {...} response formats
+                    const intake = res?.data || res;
+                    const status = intake?.status || 'processing';
+
+                    console.log(`[Polling] Attempt ${attempts}/${maxAttempts} - Status: "${status}"`);
+                    document.getElementById('polling-debug').textContent = `Intento ${attempts}/${maxAttempts}: ${status}`;
                     document.getElementById('polling-debug').classList.remove('hidden');
 
-                    if (intake.status === 'ready' || intake.status === 'needs_review' || intake.status === 'failed') {
+                    // Detectar finalización
+                    const completedStatuses = ['ready', 'needs_review', 'failed', 'extracted'];
+                    if (completedStatuses.includes(status)) {
+                        console.log('[Polling] ✅ COMPLETED! Status:', status);
                         clearInterval(pollingInterval);
-                        showReview(intake);
+                        setTimeout(() => showReview(intake), 500);
+                        return;
                     }
 
+                    // Después de 15 intentos, mostrar formulario manual automáticamente
                     if (attempts >= maxAttempts) {
+                        console.warn('[Polling] ⏱️ TIMEOUT - Mostrando formulario manual');
                         clearInterval(pollingInterval);
-                        alert('El análisis está tardando demasiado. Puedes rellenarlo manualmente.');
-                        showReview(intake, true);
+
+                        // Mostrar formulario manual con datos vacíos
+                        showReview({
+                            id: intakeId,
+                            status: 'processing',
+                            file_url: lastUploadedFileUrl || ''
+                        }, true);
                     }
 
                 } catch (e) {
-                    console.error('Polling error', e);
+                    console.error('[Polling] Error:', e);
+                    document.getElementById('polling-debug').textContent = `Intento ${attempts}: Error`;
+
+                    // Después de 3 errores seguidos, mostrar formulario manual
+                    if (attempts >= 3) {
+                        clearInterval(pollingInterval);
+                        showReview({ id: intakeId, status: 'error' }, true);
+                    }
                 }
             }, 2000);
         }
+
+        // Variable para guardar la URL del archivo subido
+        let lastUploadedFileUrl = '';
 
         // --- Review & Edit Logic ---
         let currentGastoId = null;
@@ -564,18 +593,24 @@
             const previewPlaceholder = document.getElementById('file-preview-placeholder');
             const downloadLink = document.getElementById('file-download-link');
 
-            const fileUrl = intake.file_url;
-            downloadLink.href = fileUrl;
+            const fileUrl = intake?.file_url || lastUploadedFileUrl || '';
+
+            if (fileUrl) {
+                downloadLink.href = fileUrl;
+                downloadLink.classList.remove('hidden');
+            } else {
+                downloadLink.classList.add('hidden');
+            }
 
             // Capture draft ID if exists
-            currentGastoId = intake.gasto_id || null;
+            currentGastoId = intake?.gasto_id || null;
 
-            if (fileUrl.toLowerCase().endsWith('.pdf')) {
+            if (fileUrl && fileUrl.toLowerCase().endsWith('.pdf')) {
                 previewFrame.src = fileUrl;
                 previewFrame.classList.remove('hidden');
                 previewImg.classList.add('hidden');
                 previewPlaceholder.classList.add('hidden');
-            } else if (fileUrl.match(/\.(jpeg|jpg|png|heic)$/i)) {
+            } else if (fileUrl && fileUrl.match(/\.(jpeg|jpg|png|heic)$/i)) {
                 previewImg.src = fileUrl;
                 previewImg.classList.remove('hidden');
                 previewFrame.classList.add('hidden');
@@ -587,11 +622,12 @@
             }
 
             const idProof = document.getElementById('intake-id');
-            idProof.value = intake.id;
+            idProof.value = intake?.id || '';
 
-            if (intake.status === 'failed' || forceManual) {
+            // Modo manual - mostrar banner informativo
+            if (intake?.status === 'failed' || intake?.status === 'error' || forceManual) {
                 document.getElementById('validation-banner').classList.remove('hidden');
-                document.getElementById('validation-list').innerHTML = '<li>La IA no pudo procesar este documento. Rellena los datos manualmente.</li>';
+                document.getElementById('validation-list').innerHTML = '<li>Rellena los datos de la factura manualmente.</li>';
                 return;
             }
 
