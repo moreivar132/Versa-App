@@ -47,7 +47,8 @@ async function list(req, res) {
                 // Cálculo en tiempo real para trimestre abierto
                 try {
                     const empresaIdParsed = empresaId ? parseInt(empresaId) : null;
-                    const resumen = await service.getResumenIVA(tenantId, empresaIdParsed, currentYear, q);
+                    const triData = await service.getTrimestre(tenantId, empresaIdParsed, currentYear, q);
+                    const resumen = triData.resumen_actual || {};
 
                     result.push({
                         id: null,
