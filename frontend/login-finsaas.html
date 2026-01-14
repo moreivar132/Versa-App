@@ -288,14 +288,42 @@
 
     <script type="module">
         // Import auth helpers from the ROOT auth.js which we know exists
-        import { login, setSession, getApiBaseUrl, getSession } from '/auth.js';
+        import { login, setSession, getApiBaseUrl, getSession, clearSession } from '/auth.js';
 
         const API_BASE_URL = getApiBaseUrl();
 
-        // Check if already logged in
+        // Check for debug/force parameters to bypass auto-redirect
+        const urlParams = new URLSearchParams(window.location.search);
+        const isDebugMode = urlParams.get('debug') === 'true' || urlParams.get('force') === 'true';
+        const shouldLogout = urlParams.get('logout') === 'true';
+
+        // Handle logout parameter
+        if (shouldLogout) {
+            clearSession();
+            // Remove the logout param from URL to prevent loop
+            urlParams.delete('logout');
+            const newUrl = urlParams.toString()
+                ? `${window.location.pathname}?${urlParams.toString()}`
+                : window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        // Show debug indicator if in debug mode
+        if (isDebugMode) {
+            const debugBadge = document.createElement('div');
+            debugBadge.className = 'fixed top-4 right-4 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold z-50';
+            debugBadge.innerHTML = '🛠️ DEBUG MODE';
+            document.body.appendChild(debugBadge);
+            console.log('[FinSaaS Login] Debug mode enabled - auto-redirect disabled');
+        }
+
+        // Check if already logged in (skip if debug mode)
         const session = getSession();
-        if (session && session.token) {
+        if (session && session.token && !isDebugMode) {
             window.location.href = '/src/verticals/finsaas/pages/dashboard.html';
+        } else if (session && session.token && isDebugMode) {
+            console.log('[FinSaaS Login] Session exists but debug mode is active. Staying on login page.');
+            console.log('[FinSaaS Login] Session user:', session.user?.email);
         }
 
         // Form submit
