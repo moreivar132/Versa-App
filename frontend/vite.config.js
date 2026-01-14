@@ -48,6 +48,9 @@ export default defineConfig({
                 finsaasEmpresas: 'src/verticals/finsaas/pages/empresas.html',
                 finsaasTrimestres: 'src/verticals/finsaas/pages/trimestres.html',
                 finsaasGastosNuevo: 'src/verticals/finsaas/pages/gastos-nuevo.html',
+                finsaasDocumentos: 'src/verticals/finsaas/pages/documentos.html',
+                finsaasPlantillaFactura: 'src/verticals/finsaas/pages/plantilla-factura.html',
+                finsaasConfigFactura: 'src/verticals/finsaas/pages/configuracion-factura.html',
 
                 // Fidelización
                 managerTallerFidelizacion: 'manager-taller-fidelizacion.html',

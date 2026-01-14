@@ -1,4 +1,5 @@
 import { finSaaSNav } from '/src/verticals/finsaas/nav/finsaas.nav.js';
+import { logout } from '/auth.js';
 
 export class FinSaaSLayout {
     constructor(containerId = 'app-shell') {
@@ -166,8 +167,7 @@ export class FinSaaSLayout {
         });
 
         document.getElementById('btn-logout')?.addEventListener('click', () => {
-            localStorage.removeItem('versa_session_v1');
-            window.location.href = '/login.html';
+            logout();
         });
     }
 }

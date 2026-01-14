@@ -582,6 +582,9 @@
             await requireAuth();
             session = getSession();
 
+            const layout = new FinSaaSLayout('app-shell');
+            layout.init();
+
             initYearSelector();
             initQuarterTabs();
             initFilters();

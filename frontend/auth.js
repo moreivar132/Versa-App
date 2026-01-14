@@ -59,7 +59,7 @@ export function redirectIfLoggedIn() {
   const session = getSession();
   if (session && session.token) {
     // Redirigir según el tipo de usuario o página por defecto
-    // Si estamos en login-finsaas, ir al dashboard de finsaas
+    // Si estamos en login-finsaas o contexto finsaas, ir al dashboard de finsaas
     if (window.location.pathname.includes('finsaas')) {
       window.location.href = '/src/verticals/finsaas/pages/dashboard.html';
       return;

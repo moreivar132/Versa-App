@@ -156,10 +156,16 @@
     </div>
 
     <script type="module">
-        import { getSession, getApiBaseUrl } from '/auth.js';
+        import { getSession, getApiBaseUrl, requireAuth } from '/auth.js';
 
         const API_BASE = getApiBaseUrl();
-        const session = getSession();
+        let session = getSession();
+
+        async function init() {
+            await requireAuth();
+            session = getSession();
+            await loadInvoice();
+        }
 
         // Load config from localStorage
         function applyConfig() {
@@ -312,7 +318,7 @@
             } catch (e) { console.error(e); }
         }
 
-        loadInvoice().then(applyConfig);
+        init().then(applyConfig);
     </script>
 </body>
 
