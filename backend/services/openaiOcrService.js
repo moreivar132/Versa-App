@@ -1,11 +1,12 @@
 /**
  * OpenAI OCR Service
- * Analyzes invoices using GPT-4 Vision API
+ * Analyzes invoices using GPT-4 Vision API or Text Extraction
  */
 
 const fs = require('fs');
 const path = require('path');
 const OpenAI = require('openai');
+const pdfParse = require('pdf-parse');
 
 // Helper to get OpenAI client (lazy initialization)
 let _openai;
@@ -58,7 +59,7 @@ Notas importantes:
 - Extrae todas las líneas de detalle que puedas identificar`;
 
 /**
- * Analyze an invoice image/PDF using GPT-4 Vision
+ * Analyze an invoice image/PDF using GPT-4 Vision or Text
  * @param {string} filePath - Absolute path to the file
  * @param {string} mimeType - MIME type of the file
  * @returns {Promise<{extracted: object, validation: object, error: string|null}>}
@@ -68,33 +69,49 @@ async function analyzeInvoice(filePath, mimeType) {
     console.log('[OpenAI OCR] MIME type:', mimeType);
 
     try {
-        // Check if OpenAI API key is configured
         if (!process.env.OPENAI_API_KEY) {
             throw new Error('OPENAI_API_KEY not configured');
         }
 
-        // Read file and convert to base64
         const fileBuffer = fs.readFileSync(filePath);
-        const base64Image = fileBuffer.toString('base64');
+        let apiMessages = [];
 
-        // Determine media type for OpenAI
-        let mediaType = mimeType;
         if (mimeType === 'application/pdf') {
-            // For PDFs, we'll try to send as-is (GPT-4 Vision can handle some PDFs)
-            // If this doesn't work well, we'd need pdf-to-image conversion
-            mediaType = 'application/pdf';
-        }
+            console.log('[OpenAI OCR] PDF detected, extracting text with pdf-parse...');
+            try {
+                const pdfData = await pdfParse(fileBuffer);
+                const pdfText = pdfData.text;
 
-        console.log('[OpenAI OCR] Sending to GPT-4 Vision...');
-        const startTime = Date.now();
+                if (!pdfText || pdfText.trim().length < 50) {
+                    throw new Error('PDF appears to be scanned/image-only (no text found)');
+                }
 
-        // Get OpenAI client
-        const openai = getOpenAIClient();
+                console.log('[OpenAI OCR] Text extracted from PDF, length:', pdfText.length);
 
-        // Call OpenAI API
-        const response = await openai.chat.completions.create({
-            model: 'gpt-4o',  // GPT-4 Omni with vision capabilities
-            messages: [
+                apiMessages = [
+                    {
+                        role: 'user',
+                        content: `${INVOICE_PROMPT}\n\nAquí está el contenido extraído del PDF:\n\n${pdfText.substring(0, 15000)}`
+                    }
+                ];
+            } catch (pdfError) {
+                console.error('[OpenAI OCR] PDF parsing failed:', pdfError.message);
+                throw new Error('No se pudo leer el PDF. Asegúrate de que no sea un escaneo o imagen convertida.');
+            }
+        } else {
+            // It's an image
+            const base64Image = fileBuffer.toString('base64');
+            const mediaType = mimeType; // e.g., image/jpeg, image/png
+
+            // Validate supported image types
+            const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+            if (!supportedTypes.includes(mediaType)) {
+                // Fallback: try to just send it if it claims to be an image but be careful
+                console.warn('[OpenAI OCR] Warning: MIME type might not be fully supported:', mediaType);
+            }
+
+            console.log('[OpenAI OCR] Sending Image to GPT-4 Vision...');
+            apiMessages = [
                 {
                     role: 'user',
                     content: [
@@ -111,9 +128,18 @@ async function analyzeInvoice(filePath, mimeType) {
                         }
                     ]
                 }
-            ],
+            ];
+        }
+
+        const startTime = Date.now();
+        const openai = getOpenAIClient();
+
+        // Call OpenAI API
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o',
+            messages: apiMessages,
             max_tokens: 2000,
-            temperature: 0.1  // Low temperature for more consistent extraction
+            temperature: 0.1
         });
 
         const elapsed = Date.now() - startTime;

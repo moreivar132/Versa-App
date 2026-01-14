@@ -354,6 +354,21 @@ async function createGasto(req, res) {
                 concepto, normalizedEstado, userId, finalId, tenantId
             ]);
         } else {
+            // CHECK DUPLICATES: Prevent creating if exists same provider + number + empresa (and it's not a draft update)
+            const dupCheck = await client.query(`
+                SELECT id FROM contabilidad_factura 
+                WHERE id_tenant=$1 AND id_empresa=$2 AND id_contacto=$3 AND numero_factura=$4 AND tipo='GASTO'
+                LIMIT 1
+            `, [tenantId, empresaId, contactoId, numero_factura]);
+
+            if (dupCheck.rows.length > 0) {
+                await client.query('ROLLBACK');
+                return res.status(409).json({
+                    ok: false,
+                    error: `Ya existe la factura ${numero_factura} para este proveedor.`
+                });
+            }
+
             // Create new
             const ins = await client.query(`
                 INSERT INTO contabilidad_factura (
