@@ -488,12 +488,12 @@
 
             stepUpload.classList.add('hidden');
             stepProcessing.classList.remove('hidden');
+            document.getElementById('process-status-text').textContent = 'Analizando factura con IA... Esto tarda unos segundos.';
 
             const formData = new FormData();
             formData.append('archivo', file);
             formData.append('categoria_ui', document.getElementById('upload-categoria').value);
             formData.append('metodo_pago_hint', document.getElementById('upload-pago').value);
-            formData.append('contiene_factura', 'true');
 
             try {
                 const token = getToken();
@@ -507,24 +507,48 @@
                 });
 
                 const data = await res.json();
+                console.log('[Upload] Response:', data);
 
                 if (!data.ok) throw new Error(data.error || 'Error subiendo archivo');
 
                 currentIntakeId = data.intake_id;
-                startPolling(currentIntakeId);
+
+                // NEW: Response is now synchronous with extracted data
+                if (data.status === 'ready' || data.status === 'needs_review') {
+                    // Show review immediately with extracted data
+                    showReview({
+                        id: data.intake_id,
+                        status: data.status,
+                        extracted: data.extracted,
+                        validation: data.validation,
+                        file_url: data.extracted?.file_url || `/uploads/egresos/${file.name}`,
+                        gasto_id: data.gasto_id
+                    });
+                } else if (data.status === 'failed') {
+                    // OCR failed, show manual form
+                    showReview({
+                        id: data.intake_id,
+                        status: 'failed',
+                        file_url: `/uploads/egresos/${file.name}`
+                    }, true);
+                } else {
+                    // Fallback: start polling (shouldn't happen with new flow)
+                    startPolling(currentIntakeId);
+                }
 
             } catch (e) {
+                console.error('[Upload] Error:', e);
                 alert('Error: ' + e.message);
                 cancelProcess();
             }
         }
 
-        // --- Polling Logic ---
+        // --- Polling Logic (Fallback, should rarely be needed) ---
         function startPolling(intakeId) {
             let attempts = 0;
-            const maxAttempts = 15; // 30 segundos max (15 * 2s), luego mostrar formulario manual
+            const maxAttempts = 10;
 
-            console.log('[Polling] Starting for intake:', intakeId);
+            console.log('[Polling] Starting fallback polling for intake:', intakeId);
 
             pollingInterval = setInterval(async () => {
                 attempts++;
@@ -533,43 +557,25 @@
                         headers: { 'X-Empresa-Id': selectedEmpresaId }
                     });
 
-                    console.log('[Polling] Raw response:', res);
-
-                    // Handle both {data: {...}} and direct {...} response formats
                     const intake = res?.data || res;
                     const status = intake?.status || 'processing';
 
                     console.log(`[Polling] Attempt ${attempts}/${maxAttempts} - Status: "${status}"`);
-                    document.getElementById('polling-debug').textContent = `Intento ${attempts}/${maxAttempts}: ${status}`;
-                    document.getElementById('polling-debug').classList.remove('hidden');
 
-                    // Detectar finalización
-                    const completedStatuses = ['ready', 'needs_review', 'failed', 'extracted'];
+                    const completedStatuses = ['ready', 'needs_review', 'failed'];
                     if (completedStatuses.includes(status)) {
-                        console.log('[Polling] ✅ COMPLETED! Status:', status);
                         clearInterval(pollingInterval);
-                        setTimeout(() => showReview(intake), 500);
+                        showReview(intake);
                         return;
                     }
 
-                    // Después de 15 intentos, mostrar formulario manual automáticamente
                     if (attempts >= maxAttempts) {
-                        console.warn('[Polling] ⏱️ TIMEOUT - Mostrando formulario manual');
                         clearInterval(pollingInterval);
-
-                        // Mostrar formulario manual con datos vacíos
-                        showReview({
-                            id: intakeId,
-                            status: 'processing',
-                            file_url: lastUploadedFileUrl || ''
-                        }, true);
+                        showReview({ id: intakeId, status: 'processing' }, true);
                     }
 
                 } catch (e) {
                     console.error('[Polling] Error:', e);
-                    document.getElementById('polling-debug').textContent = `Intento ${attempts}: Error`;
-
-                    // Después de 3 errores seguidos, mostrar formulario manual
                     if (attempts >= 3) {
                         clearInterval(pollingInterval);
                         showReview({ id: intakeId, status: 'error' }, true);
