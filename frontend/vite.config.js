@@ -40,6 +40,7 @@ export default defineConfig({
                 managerTallerMarketplace: 'manager-taller-marketplace.html',
 
                 // FinSaaS Vertical (New Shell)
+                loginFinsaas: 'login-finsaas.html',
                 finsaasDashboard: 'src/verticals/finsaas/pages/dashboard.html',
                 finsaasFacturas: 'src/verticals/finsaas/pages/facturas.html',
                 finsaasCaja: 'src/verticals/finsaas/pages/caja.html',
