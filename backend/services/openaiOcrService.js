@@ -7,10 +7,19 @@ const fs = require('fs');
 const path = require('path');
 const OpenAI = require('openai');
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+// Helper to get OpenAI client (lazy initialization)
+let _openai;
+function getOpenAIClient() {
+    if (!_openai) {
+        if (!process.env.OPENAI_API_KEY) {
+            throw new Error('OPENAI_API_KEY environment variable is not defined');
+        }
+        _openai = new OpenAI({
+            apiKey: process.env.OPENAI_API_KEY
+        });
+    }
+    return _openai;
+}
 
 // Structured prompt for invoice extraction
 const INVOICE_PROMPT = `Analiza esta factura/ticket y extrae los siguientes datos en formato JSON estricto.
@@ -78,6 +87,9 @@ async function analyzeInvoice(filePath, mimeType) {
 
         console.log('[OpenAI OCR] Sending to GPT-4 Vision...');
         const startTime = Date.now();
+
+        // Get OpenAI client
+        const openai = getOpenAIClient();
 
         // Call OpenAI API
         const response = await openai.chat.completions.create({
