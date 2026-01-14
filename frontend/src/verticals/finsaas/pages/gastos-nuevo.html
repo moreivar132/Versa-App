@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Nuevo Gasto (IA) | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                        "brand-orange": "#46ec13",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        /* Custom file upload dash border */
+        .upload-area {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%23CBD5E1FF' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+
+        .dark .upload-area {
+            background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='12' ry='12' stroke='%2325381e' stroke-width='2' stroke-dasharray='8%2c 8' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+        }
+
+        .upload-area.dragging {
+            background-color: rgba(70, 236, 19, 0.05);
+            /* primary color transparent */
+            border-color: #46ec13;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white h-screen flex flex-col overflow-hidden font-main">
+
+    <div id="app-shell" class="h-full w-full">
+        <!-- Layout injected by FinSaaSLayout -->
+        <div id="finsaas-content" class="h-full flex flex-col p-6 max-w-5xl mx-auto w-full">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-8">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Subir Gasto (OCR)</h1>
+                    <p class="text-gray-500 dark:text-gray-400">Analiza facturas automáticamente con IA</p>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="window.history.back()"
+                        class="px-4 py-2 border border-gray-200 dark:border-[#25381e] rounded-lg hover:bg-gray-100 dark:hover:bg-surface-dark-light transition-colors text-slate-900 dark:text-white">
+                        Cancelar
+                    </button>
+                    <!-- Selector de Empresa Global -->
+                    <select id="header-empresa-select"
+                        class="px-3 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary outline-none">
+                        <option value="">Cargando empresas...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- STEP 1: UPLOAD AREA -->
+            <div id="step-upload" class="flex-1 flex flex-col justify-center items-center anime-fade-in">
+                <div class="w-full max-w-2xl">
+                    <div id="drop-zone"
+                        class="upload-area w-full h-80 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-gray-50 dark:hover:bg-surface-dark/30">
+                        <input type="file" id="file-input" class="hidden" accept=".pdf,image/jpeg,image/png,image/heic">
+
+                        <div class="bg-primary/10 p-4 rounded-full mb-4">
+                            <span class="material-symbols-outlined text-4xl text-primary">cloud_upload</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2 text-slate-900 dark:text-white">Arrastra tu factura aquí</h3>
+                        <p class="text-gray-500 mb-6 text-center">Soporta PDF, JPG, PNG, HEIC<br>Máx. 15MB</p>
+                        <button onclick="document.getElementById('file-input').click()"
+                            class="bg-primary text-background-dark px-6 py-2 rounded-lg font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                            Seleccionar archivo
+                        </button>
+                        <p class="mt-4 text-xs text-gray-400">La IA extraerá proveedor, fecha, totales e impuestos.</p>
+                    </div>
+
+                    <!-- Configuración rápida -->
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Categoría
+                                sugerida</label>
+                            <select id="upload-categoria"
+                                class="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg p-2.5 outline-none focus:border-primary">
+                                <option value="otros">Otros</option>
+                                <option value="repuestos">Repuestos / Material</option>
+                                <option value="combustible">Combustible</option>
+                                <option value="alquiler">Alquiler</option>
+                                <option value="gestoria">Gestoría / Legal</option>
+                                <option value="marketing">Marketing</option>
+                                <option value="suministros">Suministros (Luz/Agua)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Método pago
+                                habitual</label>
+                            <select id="upload-pago"
+                                class="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg p-2.5 outline-none focus:border-primary">
+                                <option value="transferencia">Transferencia</option>
+                                <option value="tarjeta">Tarjeta</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="domiciliacion">Domiciliación</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: PROCESSING -->
+            <div id="step-processing" class="flex-1 flex flex-col justify-center items-center anime-fade-in hidden">
+                <div class="text-center">
+                    <div class="relative w-24 h-24 mx-auto mb-6">
+                        <div class="absolute inset-0 border-4 border-gray-200 dark:border-[#25381e] rounded-full"></div>
+                        <div
+                            class="absolute inset-0 border-4 border-primary rounded-full border-t-transparent animate-spin">
+                        </div>
+                        <span
+                            class="material-symbols-outlined absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-3xl text-primary animate-pulse">smart_toy</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2 text-slate-900 dark:text-white">Analizando documento...</h3>
+                    <p class="text-gray-500 max-w-md mx-auto" id="process-status-text">Extrayendo datos con IA. Esto
+                        suele tardar unos segundos.</p>
+                    <button onclick="stopPollingAndManual()"
+                        class="text-primary hover:underline text-sm font-medium mt-4">
+                        ¿Tarda demasiado? Rellenar manualmente
+                    </button>
+                </div>
+                <!-- Debug info for polling -->
+                <div id="polling-debug" class="mt-8 text-xs text-gray-400 font-mono hidden"></div>
+            </div>
+
+            <!-- STEP 3: REVIEW & SAVE -->
+            <div id="step-review" class="hidden h-full flex flex-col animate-fade-in">
+
+                <!-- Validation Banner -->
+                <div id="validation-banner"
+                    class="hidden mb-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 flex items-start gap-3">
+                    <span class="material-symbols-outlined text-amber-600 dark:text-amber-400">warning</span>
+                    <div>
+                        <h4 class="font-bold text-amber-800 dark:text-amber-300">Revisión necesaria</h4>
+                        <ul id="validation-list" class="text-sm text-amber-700 dark:text-amber-400 list-disc pl-4 mt-1">
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flex flex-col lg:flex-row gap-6 h-full overflow-hidden">
+                    <!-- PDF Preview -->
+                    <div
+                        class="w-full lg:w-1/2 bg-gray-100 dark:bg-surface-dark rounded-xl overflow-hidden border border-gray-200 dark:border-[#25381e] flex flex-col">
+                        <div
+                            class="bg-white dark:bg-surface-dark border-b border-gray-200 dark:border-[#25381e] p-2 flex justify-between items-center">
+                            <span class="text-xs font-bold text-gray-500 uppercase px-2">Documento Original</span>
+                            <a id="file-download-link" href="#" target="_blank"
+                                class="text-primary hover:underline text-xs flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">open_in_new</span> Abrir
+                            </a>
+                        </div>
+                        <div
+                            class="flex-1 relative bg-gray-200 dark:bg-surface-dark-light flex items-center justify-center overflow-hidden">
+                            <iframe id="file-preview-frame" class="w-full h-full object-contain" src=""></iframe>
+                            <img id="file-preview-img" class="w-full h-full object-contain hidden" src="">
+                            <div id="file-preview-placeholder" class="text-gray-400 flex flex-col items-center">
+                                <span class="material-symbols-outlined text-4xl">description</span>
+                                <span class="text-sm mt-2">Vista previa no disponible</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <div class="w-full lg:w-1/2 flex flex-col h-full overflow-hidden">
+                        <form id="review-form" class="flex-1 overflow-y-auto pr-2 space-y-4">
+                            <input type="hidden" id="intake-id">
+                            <input type="hidden" id="proveedor-id">
+
+                            <!-- Proveedor -->
+                            <div
+                                class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] p-4 rounded-xl shadow-sm">
+                                <h3 class="text-sm font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">store</span> Proveedor
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="col-span-2 relative">
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Nombre
+                                            / Razón Social *</label>
+                                        <input type="text" id="prov-nombre"
+                                            class="w-full p-2 border rounded bg-gray-50 dark:bg-surface-dark-light dark:border-[#25381e] focus:ring-1 focus:ring-primary outline-none"
+                                            required>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">NIF
+                                            / CIF</label>
+                                        <input type="text" id="prov-nif"
+                                            class="w-full p-2 border rounded bg-gray-50 dark:bg-surface-dark-light dark:border-[#25381e] focus:ring-1 focus:ring-primary outline-none uppercase">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Código
+                                            Postal</label>
+                                        <input type="text" id="prov-cp"
+                                            class="w-full p-2 border rounded bg-gray-50 dark:bg-surface-dark-light dark:border-[#25381e] focus:ring-1 focus:ring-primary outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Factura Data -->
+                            <div
+                                class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] p-4 rounded-xl shadow-sm">
+                                <h3 class="text-sm font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">receipt_long</span> Datos Factura
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Nº
+                                            Factura</label>
+                                        <input type="text" id="fac-numero"
+                                            class="w-full p-2 border rounded bg-gray-50 dark:bg-surface-dark-light dark:border-[#25381e] focus:ring-1 focus:ring-primary outline-none font-mono">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Fecha
+                                            Emisión *</label>
+                                        <input type="date" id="fac-fecha"
+                                            class="w-full p-2 border rounded bg-gray-50 dark:bg-surface-dark-light dark:border-[#25381e] focus:ring-1 focus:ring-primary outline-none"
+                                            required>
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="grid grid-cols-3 gap-3 mb-4 p-3 bg-gray-50 dark:bg-surface-dark-light/50 rounded-lg">
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Base</label>
+                                        <input type="number" step="0.01" id="fac-base"
+                                            class="w-full p-2 text-right border rounded outline-none font-mono bg-white dark:bg-surface-dark border-gray-200 dark:border-[#25381e]"
+                                            oninput="recalcTotal()">
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">IVA
+                                            %</label>
+                                        <input type="number" step="1" id="fac-iva-pct"
+                                            class="w-full p-2 text-center border rounded outline-none font-mono bg-white dark:bg-surface-dark border-gray-200 dark:border-[#25381e]"
+                                            value="21" oninput="recalcTotal()">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-primary mb-1">Total *</label>
+                                        <input type="number" step="0.01" id="fac-total"
+                                            class="w-full p-2 text-right border-2 border-primary/20 rounded outline-none font-bold font-mono text-primary bg-white dark:bg-surface-dark"
+                                            required>
+                                    </div>
+                                    <div class="col-span-3 text-right">
+                                        <span class="text-xs text-gray-400" id="calc-preview">IVA calc: 0.00 €</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Concepto
+                                        / Descripción</label>
+                                    <input type="text" id="fac-concepto"
+                                        class="w-full p-2 border rounded bg-gray-50 dark:bg-surface-dark-light dark:border-[#25381e] focus:ring-1 focus:ring-primary outline-none">
+                                </div>
+                            </div>
+
+                            <!-- Classification -->
+                            <div
+                                class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] p-4 rounded-xl shadow-sm">
+                                <h3 class="text-sm font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-lg">category</span> Clasificación
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Categoría
+                                            *</label>
+                                        <select id="fac-categoria"
+                                            class="w-full p-2 border rounded bg-gray-50 dark:bg-surface-dark-light dark:border-[#25381e] outline-none"
+                                            required>
+                                            <option value="">-- Seleccionar --</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Estado
+                                            Pago</label>
+                                        <select id="fac-estado"
+                                            class="w-full p-2 border rounded bg-gray-50 dark:bg-surface-dark-light dark:border-[#25381e] outline-none">
+                                            <option value="pendiente">Pendiente</option>
+                                            <option value="pagada">Pagada</option>
+                                            <option value="vencida">Declarada Impagada</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Action Bar -->
+                        <div
+                            class="pt-4 mt-2 border-t border-gray-200 dark:border-[#25381e] flex justify-between items-center bg-white dark:bg-background-dark z-10">
+                            <button type="button" onclick="cancelProcess()"
+                                class="text-gray-500 hover:text-red-500 text-sm font-medium px-4 py-2">
+                                Cancelar
+                            </button>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="saveGasto('draft')"
+                                    class="px-4 py-2 text-primary bg-primary/10 hover:bg-primary/20 rounded-lg font-medium transition-colors">
+                                    Guardar Borrador
+                                </button>
+                                <button type="button" onclick="saveGasto('final')"
+                                    class="px-6 py-2 bg-primary text-background-dark hover:brightness-110 rounded-lg font-bold shadow-lg shadow-primary/20 transition-all flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">check</span> Confirmar Gasto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODULES -->
+    <script type="module">
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        // Initialize Layout
+        const layout = new FinSaaSLayout('app-shell');
+        layout.init();
+        requireAuth();
+
+        const session = getSession();
+        const API_BASE = '/api/contabilidad';
+
+        // State
+        let currentIntakeId = null;
+        let pollingInterval = null;
+        let selectedEmpresaId = null;
+
+        // --- DOM Elements ---
+        const stepUpload = document.getElementById('step-upload');
+        const stepProcessing = document.getElementById('step-processing');
+        const stepReview = document.getElementById('step-review');
+        const empresaSelect = document.getElementById('header-empresa-select');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        // --- Init ---
+        async function init() {
+            await loadEmpresas();
+            setupDragAndDrop();
+        }
+
+        async function loadEmpresas() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE}/empresas`);
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+                const res = await response.json();
+
+                // Adapt to API structure: res.data.items if paginated, or res.data is array
+                let items = [];
+                if (res.data && Array.isArray(res.data.items)) {
+                    items = res.data.items;
+                } else if (Array.isArray(res.data)) {
+                    items = res.data;
+                } else if (Array.isArray(res)) {
+                    items = res;
+                }
+
+                empresaSelect.innerHTML = '';
+                if (!items || items.length === 0) {
+                    empresaSelect.innerHTML = '<option value="">Sin empresas</option>';
+                    return;
+                }
+
+                items.forEach(emp => {
+                    const opt = document.createElement('option');
+                    opt.value = emp.id;
+                    opt.textContent = emp.nombre_legal || emp.nombre_comercial || emp.nombre || 'Sin nombre';
+                    empresaSelect.appendChild(opt);
+                });
+
+                // Auto-select
+                const stored = localStorage.getItem('finsaas_last_empresa');
+                if (stored && items.find(e => e.id == stored)) {
+                    empresaSelect.value = stored;
+                } else {
+                    empresaSelect.value = items[0].id;
+                }
+                selectedEmpresaId = empresaSelect.value;
+                loadCategorias();
+
+                empresaSelect.addEventListener('change', (e) => {
+                    selectedEmpresaId = e.target.value;
+                    localStorage.setItem('finsaas_last_empresa', selectedEmpresaId);
+                    loadCategorias();
+                });
+
+            } catch (e) {
+                console.error('Error loading empresas', e);
+                empresaSelect.innerHTML = '<option value="">Error carga</option>';
+            }
+        }
+
+        async function loadCategorias() {
+            const catSelect = document.getElementById('fac-categoria');
+            const uploadCat = document.getElementById('upload-categoria');
+
+            const cats = Array.from(uploadCat.options).map(o => ({ v: o.value, t: o.text }));
+
+            catSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+            cats.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.v;
+                opt.textContent = c.t;
+                catSelect.appendChild(opt);
+            });
+        }
+
+        // --- Upload Logic ---
+        function setupDragAndDrop() {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('dragging'), false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragging'), false);
+            });
+
+            dropZone.addEventListener('drop', handleDrop, false);
+            fileInput.addEventListener('change', (e) => handleFiles(e.target.files), false);
+        }
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                uploadFile(files[0]);
+            }
+        }
+
+        async function uploadFile(file) {
+            if (!selectedEmpresaId) {
+                alert('Selecciona una empresa primero');
+                return;
+            }
+
+            stepUpload.classList.add('hidden');
+            stepProcessing.classList.remove('hidden');
+
+            const formData = new FormData();
+            formData.append('archivo', file);
+            formData.append('categoria_ui', document.getElementById('upload-categoria').value);
+            formData.append('metodo_pago_hint', document.getElementById('upload-pago').value);
+            formData.append('contiene_factura', 'true');
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/egresos/intakes`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-Empresa-Id': selectedEmpresaId
+                    },
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (!data.ok) throw new Error(data.error || 'Error subiendo archivo');
+
+                currentIntakeId = data.intake_id;
+                startPolling(currentIntakeId);
+
+            } catch (e) {
+                alert('Error: ' + e.message);
+                cancelProcess();
+            }
+        }
+
+        // --- Polling Logic ---
+        function startPolling(intakeId) {
+            let attempts = 0;
+            const maxAttempts = 15; // 30 segundos max (15 * 2s), luego mostrar formulario manual
+
+            console.log('[Polling] Starting for intake:', intakeId);
+
+            pollingInterval = setInterval(async () => {
+                attempts++;
+                try {
+                    const res = await fetchWithAuth(`${API_BASE}/egresos/intakes/${intakeId}`, {
+                        headers: { 'X-Empresa-Id': selectedEmpresaId }
+                    });
+
+                    console.log('[Polling] Raw response:', res);
+
+                    // Handle both {data: {...}} and direct {...} response formats
+                    const intake = res?.data || res;
+                    const status = intake?.status || 'processing';
+
+                    console.log(`[Polling] Attempt ${attempts}/${maxAttempts} - Status: "${status}"`);
+                    document.getElementById('polling-debug').textContent = `Intento ${attempts}/${maxAttempts}: ${status}`;
+                    document.getElementById('polling-debug').classList.remove('hidden');
+
+                    // Detectar finalización
+                    const completedStatuses = ['ready', 'needs_review', 'failed', 'extracted'];
+                    if (completedStatuses.includes(status)) {
+                        console.log('[Polling] ✅ COMPLETED! Status:', status);
+                        clearInterval(pollingInterval);
+                        setTimeout(() => showReview(intake), 500);
+                        return;
+                    }
+
+                    // Después de 15 intentos, mostrar formulario manual automáticamente
+                    if (attempts >= maxAttempts) {
+                        console.warn('[Polling] ⏱️ TIMEOUT - Mostrando formulario manual');
+                        clearInterval(pollingInterval);
+
+                        // Mostrar formulario manual con datos vacíos
+                        showReview({
+                            id: intakeId,
+                            status: 'processing',
+                            file_url: lastUploadedFileUrl || ''
+                        }, true);
+                    }
+
+                } catch (e) {
+                    console.error('[Polling] Error:', e);
+                    document.getElementById('polling-debug').textContent = `Intento ${attempts}: Error`;
+
+                    // Después de 3 errores seguidos, mostrar formulario manual
+                    if (attempts >= 3) {
+                        clearInterval(pollingInterval);
+                        showReview({ id: intakeId, status: 'error' }, true);
+                    }
+                }
+            }, 2000);
+        }
+
+        // Variable para guardar la URL del archivo subido
+        let lastUploadedFileUrl = '';
+
+        // --- Review & Edit Logic ---
+        let currentGastoId = null;
+
+        function showReview(intake, forceManual = false) {
+            stepProcessing.classList.add('hidden');
+            stepReview.classList.remove('hidden');
+
+            const previewFrame = document.getElementById('file-preview-frame');
+            const previewImg = document.getElementById('file-preview-img');
+            const previewPlaceholder = document.getElementById('file-preview-placeholder');
+            const downloadLink = document.getElementById('file-download-link');
+
+            const fileUrl = intake?.file_url || lastUploadedFileUrl || '';
+
+            if (fileUrl) {
+                downloadLink.href = fileUrl;
+                downloadLink.classList.remove('hidden');
+            } else {
+                downloadLink.classList.add('hidden');
+            }
+
+            // Capture draft ID if exists
+            currentGastoId = intake?.gasto_id || null;
+
+            if (fileUrl && fileUrl.toLowerCase().endsWith('.pdf')) {
+                previewFrame.src = fileUrl;
+                previewFrame.classList.remove('hidden');
+                previewImg.classList.add('hidden');
+                previewPlaceholder.classList.add('hidden');
+            } else if (fileUrl && fileUrl.match(/\.(jpeg|jpg|png|heic)$/i)) {
+                previewImg.src = fileUrl;
+                previewImg.classList.remove('hidden');
+                previewFrame.classList.add('hidden');
+                previewPlaceholder.classList.add('hidden');
+            } else {
+                previewPlaceholder.classList.remove('hidden');
+                previewFrame.classList.add('hidden');
+                previewImg.classList.add('hidden');
+            }
+
+            const idProof = document.getElementById('intake-id');
+            idProof.value = intake?.id || '';
+
+            // Modo manual - mostrar banner informativo
+            if (intake?.status === 'failed' || intake?.status === 'error' || forceManual) {
+                document.getElementById('validation-banner').classList.remove('hidden');
+                document.getElementById('validation-list').innerHTML = '<li>Rellena los datos de la factura manualmente.</li>';
+                return;
+            }
+
+            const data = intake.extracted || {};
+            const validation = intake.validation || {};
+
+            if (data.proveedor_nombre || data.proveedor || data.supplier_name) document.getElementById('prov-nombre').value = data.proveedor_nombre || data.proveedor || data.supplier_name;
+            if (data.proveedor_nif || data.cif_nif || data.supplier_nif) document.getElementById('prov-nif').value = data.proveedor_nif || data.cif_nif || data.supplier_nif;
+            if (data.proveedor_cp) document.getElementById('prov-cp').value = data.proveedor_cp;
+
+            if (data.numero_factura || data.invoice_number) document.getElementById('fac-numero').value = data.numero_factura || data.invoice_number;
+
+            const dateVal = data.fecha_emision || data.date;
+            if (dateVal) document.getElementById('fac-fecha').value = formatDateForInput(dateVal);
+
+            if (data.base_imponible) document.getElementById('fac-base').value = data.base_imponible;
+            if (data.iva_porcentaje) document.getElementById('fac-iva-pct').value = data.iva_porcentaje;
+            if (data.total) document.getElementById('fac-total').value = data.total;
+            if (data.concepto) document.getElementById('fac-concepto').value = data.concepto;
+
+            if (intake.categoria_ui) {
+                const catSelect = document.getElementById('fac-categoria');
+                catSelect.value = intake.categoria_ui;
+            }
+
+            if (intake.status === 'needs_review' || validation.check_total === false || validation.check_iva === false) {
+                const banner = document.getElementById('validation-banner');
+                const list = document.getElementById('validation-list');
+                banner.classList.remove('hidden');
+                list.innerHTML = '';
+
+                if (validation.check_total === false) list.innerHTML += '<li>El total no coincide con la suma de base + IVA.</li>';
+                if (validation.check_iva === false) list.innerHTML += '<li>El porcentaje de IVA parece incorrecto.</li>';
+                if (!data.proveedor_nif) list.innerHTML += '<li>No se detectó el NIF del proveedor.</li>';
+            }
+
+            recalcTotal();
+        }
+
+        // --- Helpers ---
+        window.recalcTotal = function () {
+            const base = parseFloat(document.getElementById('fac-base').value) || 0;
+            const ivaPct = parseFloat(document.getElementById('fac-iva-pct').value) || 0;
+            const ivaAmount = base * (ivaPct / 100);
+
+            document.getElementById('calc-preview').textContent = `IVA calc: ${ivaAmount.toFixed(2)} €`;
+
+            if (!document.getElementById('fac-total').value) {
+                document.getElementById('fac-total').value = (base + ivaAmount).toFixed(2);
+            }
+        };
+
+        window.stopPollingAndManual = async function () {
+            if (pollingInterval) clearInterval(pollingInterval);
+            document.getElementById('process-status-text').textContent = "Cancelando espera...";
+
+            try {
+                // Fetch latest state to get file_url
+                const res = await fetchWithAuth(`${API_BASE}/egresos/intakes/${currentIntakeId}`, {
+                    headers: { 'X-Empresa-Id': selectedEmpresaId }
+                });
+                const intake = res.data;
+                showReview(intake, true);
+            } catch (e) {
+                console.error(e);
+                // Fallback minimal object
+                showReview({ id: currentIntakeId, file_url: '', status: 'manual' }, true);
+            }
+        };
+
+        window.cancelProcess = function () {
+            if (confirm("¿Cancelar este gasto? Se perderán los datos extraídos.")) {
+                window.location.reload();
+            }
+        };
+
+        window.saveGasto = async function (mode) {
+            const form = document.getElementById('review-form');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const payload = {
+                intake_id: document.getElementById('intake-id').value,
+                gasto_id: currentGastoId, // Enviar ID borrador
+                proveedor_nombre: document.getElementById('prov-nombre').value,
+                proveedor_nif: document.getElementById('prov-nif').value,
+                numero_factura: document.getElementById('fac-numero').value,
+                fecha_emision: document.getElementById('fac-fecha').value,
+                base_imponible: parseFloat(document.getElementById('fac-base').value) || 0,
+                iva_porcentaje: parseFloat(document.getElementById('fac-iva-pct').value) || 0,
+                total: parseFloat(document.getElementById('fac-total').value) || 0,
+                concepto: document.getElementById('fac-concepto').value,
+                categoria: document.getElementById('fac-categoria').value,
+                estado: mode === 'draft' ? 'draft' : document.getElementById('fac-estado').value
+            };
+
+            try {
+                const token = getToken();
+                const res = await fetch(`${API_BASE}/egresos`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-Empresa-Id': selectedEmpresaId,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const response = await res.json();
+                if (response.ok) {
+                    // Success feedback
+                    const btn = document.querySelector('button[onclick*="saveGasto"]');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-check mr-2"></i>¡Guardado!';
+                    btn.classList.replace('bg-indigo-600', 'bg-green-600');
+
+                    setTimeout(() => {
+                        window.location.href = '/src/verticals/finsaas/pages/facturas.html';
+                    }, 1000);
+                } else {
+                    alert('Error guardando: ' + (response.error || 'Unknown'));
+                }
+            } catch (e) {
+                alert('Error de conexión: ' + e.message);
+            }
+        };
+
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return '';
+            if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return dateStr.split('T')[0];
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,24 @@
+name: "✨ Solicitud de Funcionalidad"
+description: "Propón una nueva idea para el proyecto."
+title: "[FEAT]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Problema que resuelve"
+      description: "¿Qué problema quieres solucionar con esta funcionalidad?"
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: "Descripción de la solución"
+      description: "Una descripción clara de lo que quieres que suceda."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternativas consideradas"
+      description: "Otras formas que hayas pensado para resolverlo."

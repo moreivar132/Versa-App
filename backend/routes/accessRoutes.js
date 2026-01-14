@@ -206,7 +206,20 @@ router.put('/users/:id', requirePermission('users.update'), async (req, res) => 
         const before = { ...targetUser };
         delete before.password_hash;
 
-        const updatedUser = await userModel.updateUser(id, req.body);
+        // Prepare update data
+        const updateData = { ...req.body };
+        let passwordUpdated = false;
+
+        // If password is provided, hash it
+        if (req.body.password && req.body.password.trim() !== '') {
+            updateData.password_hash = await bcrypt.hash(req.body.password, 10);
+            passwordUpdated = true;
+            console.log(`Password updated for user ${id} by admin ${req.user.id}`);
+        }
+        // Remove plaintext password from updateData
+        delete updateData.password;
+
+        const updatedUser = await userModel.updateUser(id, updateData);
 
         // Audit log
         const ctx = getAuditContext(req);
@@ -216,13 +229,13 @@ router.put('/users/:id', requirePermission('users.update'), async (req, res) => 
             entityType: 'user',
             entityId: id,
             before,
-            after: { ...req.body, sucursal_ids }
+            after: { ...req.body, sucursal_ids, passwordUpdated }
         });
 
         // Get current sucursales
         const assignedSucursales = await sucursalModel.getUserSucursales(id);
         const { password_hash, ...safeUser } = updatedUser;
-        res.json({ ...safeUser, sucursales: assignedSucursales });
+        res.json({ ...safeUser, sucursales: assignedSucursales, passwordUpdated });
     } catch (error) {
         console.error('Error updating user:', error);
         res.status(500).json({ error: 'Error al actualizar usuario' });

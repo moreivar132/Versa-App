@@ -295,7 +295,7 @@
         // Check if already logged in
         const session = getSession();
         if (session && session.token) {
-            window.location.href = '/finsaas-dashboard.html';
+            window.location.href = '/src/verticals/finsaas/pages/dashboard.html';
         }
 
         // Form submit
@@ -323,7 +323,7 @@
                 const user = await login(email, password);
 
                 // Redirect to FinSaaS Dashboard
-                window.location.href = '/finsaas-dashboard.html';
+                window.location.href = '/src/verticals/finsaas/pages/dashboard.html';
 
             } catch (error) {
                 console.error('Login error:', error);

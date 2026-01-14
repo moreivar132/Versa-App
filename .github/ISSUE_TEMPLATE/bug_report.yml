@@ -1,0 +1,33 @@
+name: "🐛 Reporte de Bug"
+description: "Reporta un error para ayudarnos a mejorar."
+title: "[BUG]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: "Descripción del Bug"
+      description: "Una descripción clara y concisa de lo que sucede."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: "Pasos para Reproducir"
+      description: "Explica cómo llegas al error paso a paso."
+      placeholder: |
+        1. Ir a '...'
+        2. Hacer click en '....'
+        3. Ver error '....'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Comportamiento Esperado"
+      description: "Qué es lo que debería haber sucedido."
+  - type: textarea
+    id: environment
+    attributes:
+      label: "Entorno"
+      description: "Versión de Node, navegador, SO, etc."

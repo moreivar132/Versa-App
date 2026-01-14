@@ -796,6 +796,64 @@
     </div>
     </div>
 
+    <!-- Modal Nueva Serie -->
+    <div id="modal-nueva-serie"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div
+            class="bg-[#1a1a1e] rounded-2xl border border-[rgba(255,255,255,0.1)] w-full max-w-md overflow-hidden shadow-2xl">
+            <div class="p-6 border-b border-[rgba(255,255,255,0.1)]">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold text-white">
+                        <i class="fas fa-plus-circle text-[var(--brand-orange)] mr-2"></i>Nueva Serie de Facturación
+                    </h3>
+                    <button onclick="cerrarModalSerie()" class="text-gray-400 hover:text-white transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <form id="form-nueva-serie" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Nombre de la Serie *</label>
+                    <input type="text" id="serie-nombre" class="form-input"
+                        placeholder="Ej: Serie Principal, Rectificativas..." required>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Prefijo *</label>
+                        <input type="text" id="serie-prefijo" class="form-input" placeholder="Ej: FAC-" required>
+                        <p class="text-xs text-gray-500 mt-1">Se añade antes del número</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Sufijo</label>
+                        <input type="text" id="serie-sufijo" class="form-input" placeholder="Ej: -2024">
+                        <p class="text-xs text-gray-500 mt-1">Se añade después del número</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Tipo de Documento</label>
+                    <select id="serie-tipo" class="form-input">
+                        <option value="FACTURA">Factura</option>
+                        <option value="RECTIFICATIVA">Factura Rectificativa</option>
+                        <option value="PROFORMA">Proforma</option>
+                    </select>
+                </div>
+                <div class="checkbox-container border-none pt-0">
+                    <input type="checkbox" id="serie-por-defecto">
+                    <label for="serie-por-defecto" class="text-sm text-gray-300">Establecer como serie por
+                        defecto</label>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="cerrarModalSerie()" class="btn btn-secondary flex-1">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary flex-1">
+                        <i class="fas fa-save mr-2"></i>Crear Serie
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script type="module">
         import { fetchWithAuth, getSession, clearSession, redirectToLogin } from '/auth.js';
         import { initSucursalSelector } from '/services/sucursal-selector.js';
@@ -803,10 +861,19 @@
         const API_BASE_URL = '/api';
         let userData = null;
         let configActual = null;
+        let currentSucursalId = null;
 
         // Inicializar selector de sucursal
         (async () => {
-            await initSucursalSelector('sucursal-selector-container');
+            currentSucursalId = await initSucursalSelector('sucursal-selector-container', {
+                onChange: (sucursalId) => {
+                    currentSucursalId = sucursalId;
+                    // Recargar series cuando cambie la sucursal
+                    if (document.getElementById('panel-series').classList.contains('active')) {
+                        cargarSeries();
+                    }
+                }
+            });
         })();
 
         // --- SIDEBAR LOGIC ---
@@ -1077,7 +1144,9 @@
             tabla.innerHTML = '';
 
             try {
-                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/series?id_sucursal=${userData.id_sucursal || 1}`);
+                // Usar la sucursal seleccionada en el dropdown
+                const sucursalId = currentSucursalId || userData.id_sucursal || 1;
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/series?id_sucursal=${sucursalId}`);
                 const data = await response.json();
 
                 loading.classList.add('hidden');
@@ -1122,8 +1191,63 @@
 
         // Mostrar formulario de nueva serie
         window.mostrarFormularioNuevaSerie = function () {
-            alert('Funcionalidad de crear nueva serie disponible próximamente');
+            const modal = document.getElementById('modal-nueva-serie');
+            modal.classList.remove('hidden');
+            // Reset form
+            document.getElementById('form-nueva-serie').reset();
         }
+
+        // Cerrar modal de serie
+        window.cerrarModalSerie = function () {
+            const modal = document.getElementById('modal-nueva-serie');
+            modal.classList.add('hidden');
+        }
+
+        // Manejar submit del formulario de nueva serie
+        document.getElementById('form-nueva-serie')?.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const nombre = document.getElementById('serie-nombre').value.trim();
+            const prefijo = document.getElementById('serie-prefijo').value.trim();
+            const sufijo = document.getElementById('serie-sufijo').value.trim();
+            const tipo = document.getElementById('serie-tipo').value;
+            const esPorDefecto = document.getElementById('serie-por-defecto').checked;
+
+            if (!nombre || !prefijo) {
+                showToast('Por favor, completa los campos obligatorios', true);
+                return;
+            }
+
+            try {
+                // Usar la sucursal seleccionada en el dropdown
+                const sucursalId = currentSucursalId || userData.id_sucursal || 1;
+                const response = await fetchWithAuth(`${API_BASE_URL}/facturas/series`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id_sucursal: sucursalId,
+                        nombre_serie: nombre,
+                        prefijo: prefijo,
+                        sufijo: sufijo || null,
+                        tipo_documento: tipo,
+                        es_por_defecto: esPorDefecto,
+                        id_usuario: userData.id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ Serie creada correctamente');
+                    cerrarModalSerie();
+                    cargarSeries(); // Recargar la tabla
+                } else {
+                    showToast('❌ Error: ' + (data.error || 'No se pudo crear la serie'), true);
+                }
+            } catch (error) {
+                console.error('Error al crear serie:', error);
+                showToast('❌ Error de conexión al crear la serie', true);
+            }
+        });
 
         // --- VISTA PREVIA EN TIEMPO REAL ---
         function actualizarVistaPrevia() {

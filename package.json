@@ -10,6 +10,9 @@
     "scripts": {
         "install:frontend": "npm install --workspace=frontend",
         "install:backend": "npm install --workspace=backend",
+        "lint:frontend": "npm run lint --workspace=frontend",
+        "lint:backend": "npm run lint --workspace=backend",
+        "lint": "npm run lint:frontend && npm run lint:backend",
         "build:frontend": "npm run build --workspace=frontend",
         "build": "npm run install:frontend && npm run build:frontend && npm run install:backend",
         "start": "npm start --workspace=backend",
@@ -28,5 +31,10 @@
         "npm": ">=9.0.0"
     },
     "author": "VERSA Team",
-    "license": "UNLICENSED"
+    "license": "UNLICENSED",
+    "devDependencies": {
+        "@eslint/js": "^9.39.2",
+        "eslint": "^9.39.2",
+        "globals": "^17.0.0"
+    }
 }

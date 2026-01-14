@@ -10,3 +10,7 @@ backend/node_modules/
 
 # Build output
 frontend/dist/
+
+# macOS system files
+.DS_Store
+**/.DS_Store
