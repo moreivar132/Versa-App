@@ -62,70 +62,42 @@ function showPageLoader() {
 }
 
 // =============================================
-// SUCURSAL SELECTOR
-// =============================================
 
+/**
+ * Integración con el selector de sucursales estándar
+ * Este módulo usa el servicio estándar /services/sucursal-selector.js
+ * que ya está inicializado en el HTML.
+ */
 async function loadSucursalSelector() {
-    const container = document.getElementById('sucursal-container');
+    // Obtener sucursal actual del servicio estándar (guardado en localStorage)
+    const savedSucursalId = localStorage.getItem('versa_selected_sucursal');
 
-    try {
-        // Try to use the centralized API client to fetch sucursales
-        // This handles the token correctly from versa_session_v1
-        const response = await api.get('/api/sucursales');
+    if (savedSucursalId) {
+        currentSucursalId = parseInt(savedSucursalId, 10);
+        console.log('[Marketplace Manager] Sucursal actual:', currentSucursalId);
+    } else {
+        console.warn('[Marketplace Manager] No hay sucursal seleccionada aún');
+    }
 
-        // api-client returns the response object, data is in response.data
-        const data = response.data;
-        const sucursales = data.data || data.sucursales || (Array.isArray(data) ? data : []);
-
-        if (!sucursales || sucursales.length === 0) {
-            container.innerHTML = '<span class="text-[#9da6b9]">No hay sucursales disponibles</span>';
-            return;
-        }
-
-        // Create select
-        const select = document.createElement('select');
-        select.id = 'sucursal-select';
-        select.className = 'bg-[#111318] text-white border-none font-medium text-sm cursor-pointer focus:outline-none';
-
-        sucursales.forEach(suc => {
-            const option = document.createElement('option');
-            option.value = suc.id || suc.id_sucursal;
-            option.textContent = suc.nombre;
-            select.appendChild(option);
-        });
-
-        container.innerHTML = '';
-        const icon = document.createElement('span');
-        icon.className = 'material-symbols-outlined text-[var(--brand-orange)]';
-        icon.textContent = 'store';
-        container.appendChild(icon);
-        container.appendChild(select);
-
-        // Set current sucursal
-        currentSucursalId = select.value;
-
-        // On change, reload data
-        select.addEventListener('change', async (e) => {
-            currentSucursalId = e.target.value;
+    // Escuchar cambios de sucursal del selector estándar
+    window.addEventListener('sucursalChanged', async (e) => {
+        const nuevaSucursalId = e.detail?.sucursalId;
+        if (nuevaSucursalId && nuevaSucursalId !== currentSucursalId) {
+            console.log('[Marketplace Manager] Sucursal cambiada a:', nuevaSucursalId);
+            currentSucursalId = nuevaSucursalId;
             await loadMarketplaceData();
-        });
+        }
+    });
 
-        // Load initial data
+    // Si tenemos sucursal, cargar datos
+    if (currentSucursalId) {
         await loadMarketplaceData();
-
         // Setup drag & drop for photos
         setupDragAndDrop();
-
-    } catch (error) {
-        console.error('Error loading sucursal selector:', error);
-
-        // If unauthorized, api-client might handle it, but just in case:
-        if (error.response && error.response.status === 401) {
-            redirectToLogin();
-            return;
-        }
-
-        container.innerHTML = '<span class="text-red-500">Error cargando sucursales</span>';
+    } else {
+        // Esperar a que el selector estándar cargue y seleccione una sucursal
+        // El HTML ya tiene un script que hace reload en onchange, así que solo mostrar mensaje
+        console.log('[Marketplace Manager] Esperando selección de sucursal...');
     }
 }
 

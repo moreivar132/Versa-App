@@ -52,6 +52,12 @@ export default defineConfig({
                 finsaasPlantillaFactura: 'src/verticals/finsaas/pages/plantilla-factura.html',
                 finsaasConfigFactura: 'src/verticals/finsaas/pages/configuracion-factura.html',
 
+                // Copiloto IA
+                finsaasCopilotoResumen: 'src/verticals/finsaas/pages/copiloto-resumen.html',
+                finsaasCopilotoChat: 'src/verticals/finsaas/pages/copiloto-chat.html',
+                finsaasCopilotoAlertas: 'src/verticals/finsaas/pages/copiloto-alertas.html',
+                finsaasCopilotoAjustes: 'src/verticals/finsaas/pages/copiloto-ajustes.html',
+
                 // Fidelización
                 managerTallerFidelizacion: 'manager-taller-fidelizacion.html',
                 card: 'card.html',
