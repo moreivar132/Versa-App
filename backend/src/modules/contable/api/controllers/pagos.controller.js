@@ -29,7 +29,7 @@ async function registrarPago(req, res) {
             return res.status(400).json({ ok: false, error: 'Importe de pago inválido' });
         }
 
-        const pago = await service.registrarPago(tenantId, facturaId, data, userId);
+        const pago = await service.registrarPago({ tenantId }, facturaId, data, userId);
 
         res.status(201).json({
             ok: true,
@@ -56,7 +56,7 @@ async function listByFactura(req, res) {
         }
 
         const facturaId = parseInt(req.params.id);
-        const pagos = await service.listPagos(tenantId, facturaId);
+        const pagos = await service.listPagos({ tenantId }, facturaId);
 
         res.json({
             ok: true,

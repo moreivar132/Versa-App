@@ -36,8 +36,10 @@ function isPublicRoute(path) {
     return PUBLIC_ROUTES.some(prefix => path.startsWith(prefix));
 }
 
+const { resolveTenantContext } = require('../../security/tenant-context');
+
 /**
- * Middleware que establece el contexto de tenant en req.context
+ * Middleware que establece el contexto de tenant en req.ctx
  * DEBE usarse DESPUÉS de verifyJWT (auth middleware)
  * 
  * @param {Object} options - Opciones de configuración
@@ -47,9 +49,12 @@ function tenantContextMiddleware(options = {}) {
     const { required = true } = options;
 
     return (req, res, next) => {
-        // Inicializar req.context si no existe (por si request-id no lo hizo)
-        if (!req.context) {
-            req.context = {};
+        // Inicializar req.ctx si no existe
+        if (!req.ctx) {
+            req.ctx = {
+                requestId: req.requestId,
+                timestamp: new Date().toISOString()
+            };
         }
 
         // Si es ruta pública, continuar sin verificar tenant
@@ -57,38 +62,32 @@ function tenantContextMiddleware(options = {}) {
             return next();
         }
 
-        // Si no hay usuario autenticado, el auth middleware ya debió bloquear
-        // pero por seguridad, verificamos
         if (!req.user) {
-            // Si required es false, continuar (ruta semipública)
-            if (!required) {
-                return next();
-            }
+            if (!required) return next();
             return res.status(401).json({
                 ok: false,
                 error: 'Autenticación requerida',
-                code: 'AUTH_REQUIRED',
-                requestId: req.requestId || req.context?.requestId
+                requestId: req.requestId
             });
         }
 
-        // Obtener tenantId usando la lógica existente de rbac.js
-        const tenantId = getEffectiveTenant(req);
+        // Resolver tenant usando el componente de seguridad
+        const { tenantId, isImpersonating, source } = resolveTenantContext(req);
 
-        // Si no hay tenantId y es requerido, bloquear
         if (!tenantId && required) {
             return res.status(403).json({
                 ok: false,
                 error: 'Contexto de tenant no encontrado',
-                code: 'TENANT_REQUIRED',
-                requestId: req.requestId || req.context?.requestId
+                requestId: req.requestId
             });
         }
 
-        // Establecer contexto con toda la información del usuario
-        req.context.tenantId = tenantId;
-        req.context.userId = req.user?.id;
-        req.context.isSuperAdmin = req.user?.is_super_admin || req.isSuperAdmin || false;
+        // Asignar al contexto único req.ctx
+        req.ctx.tenantId = tenantId;
+        req.ctx.userId = req.user.id;
+        req.ctx.isSuperAdmin = req.user.is_super_admin === true;
+        req.ctx.isImpersonating = isImpersonating;
+        req.ctx.tenantSource = source;
 
         next();
     };
@@ -100,7 +99,7 @@ function tenantContextMiddleware(options = {}) {
  * @returns {number|null}
  */
 function getTenantId(req) {
-    return req.context?.tenantId || req.user?.id_tenant || null;
+    return req.ctx?.tenantId || req.user?.id_tenant || null;
 }
 
 /**
@@ -109,7 +108,7 @@ function getTenantId(req) {
  * @returns {number|null}
  */
 function getUserId(req) {
-    return req.context?.userId || req.user?.id || null;
+    return req.ctx?.userId || req.user?.id || null;
 }
 
 module.exports = {

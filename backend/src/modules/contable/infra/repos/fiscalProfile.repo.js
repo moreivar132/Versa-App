@@ -3,17 +3,18 @@
  * Data access for fiscal profiles and tax rules
  */
 
-const pool = require('../../../../../db');
+const { getTenantDb } = require('../../../../core/db/tenant-db');
 
 class FiscalProfileRepository {
     /**
      * Get fiscal profile by ID
      */
-    async getById(tenantId, id) {
-        const result = await pool.query(`
+    async getById(ctx, id) {
+        const db = getTenantDb(ctx);
+        const result = await db.query(`
             SELECT * FROM fiscal_profile
-            WHERE id = $1 AND id_tenant = $2
-        `, [id, tenantId]);
+            WHERE id = $1
+        `, [id]);
 
         return result.rows[0] || null;
     }
@@ -21,11 +22,12 @@ class FiscalProfileRepository {
     /**
      * Get fiscal profile by Empresa and Year
      */
-    async getByEmpresaAndYear(tenantId, empresaId, year) {
-        const result = await pool.query(`
+    async getByEmpresaAndYear(ctx, empresaId, year) {
+        const db = getTenantDb(ctx);
+        const result = await db.query(`
             SELECT * FROM fiscal_profile
-            WHERE id_tenant = $1 AND id_empresa = $2 AND fiscal_year = $3
-        `, [tenantId, empresaId, year]);
+            WHERE id_empresa = $1 AND fiscal_year = $2
+        `, [empresaId, year]);
 
         return result.rows[0] || null;
     }
@@ -34,11 +36,11 @@ class FiscalProfileRepository {
      * Create or Update Fiscal Profile (Upsert)
      * For a given empresa and year, there is only one profile.
      */
-    async upsert(tenantId, empresaId, year, data, userId) {
-        // We use ON CONFLICT to handle upsert based on (id_empresa, fiscal_year)
-        // Note: id_tenant is also checked via WHERE clause logic indirectly but in insert needs to be consistent
+    async upsert(ctx, empresaId, year, data) {
+        const db = getTenantDb(ctx);
+        const userId = ctx.userId;
 
-        const result = await pool.query(`
+        const result = await db.query(`
             INSERT INTO fiscal_profile (
                 id_tenant, id_empresa, fiscal_year, legal_form, 
                 irpf_regime, vat_regime, is_new_company, turnover_prev_year,
@@ -62,7 +64,7 @@ class FiscalProfileRepository {
                 updated_by = $13
             RETURNING *
         `, [
-            tenantId, empresaId, year, data.legal_form,
+            ctx.tenantId, empresaId, year, data.legal_form,
             data.irpf_regime, data.vat_regime, data.is_new_company,
             data.turnover_prev_year, data.professional_activity,
             data.withholding_applicable, data.iae_epigrafe,
@@ -75,8 +77,9 @@ class FiscalProfileRepository {
     /**
      * Get active tax rules for a given year
      */
-    async getTaxRules(year, countryCode = 'ES') {
-        const result = await pool.query(`
+    async getTaxRules(ctx, year, countryCode = 'ES') {
+        const db = getTenantDb(ctx);
+        const result = await db.query(`
             SELECT * FROM tax_rules_es
             WHERE fiscal_year = $1 AND country_code = $2 AND active = true
         `, [year, countryCode]);

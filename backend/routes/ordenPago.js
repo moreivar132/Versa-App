@@ -3,19 +3,33 @@ const router = express.Router();
 const ordenPagoService = require('../services/ordenPagoService');
 const ordenPagoRepository = require('../repositories/ordenPagoRepository');
 const verifyJWT = require('../middleware/auth');
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
+
+// Inyectar db en req
+router.use((req, res, next) => {
+    if (req.ctx) {
+        req.db = getTenantDb(req.ctx);
+    }
+    next();
+});
+
+const pool = {
+    query: (sql, params) => {
+        throw new Error('Uso directo de pool detectado en ordenPago.js. Usa req.db.query instead.');
+    }
+};
 
 // Helper: Obtener caja abierta para una sucursal
-async function getCajaAbierta(idSucursal) {
+async function getCajaAbierta(db, idSucursal) {
     if (!idSucursal) return null;
-    const result = await pool.query(
+    const result = await db.query(
         `SELECT id FROM caja WHERE id_sucursal = $1 AND estado = 'ABIERTA' ORDER BY created_at DESC LIMIT 1`,
         [idSucursal]
     );
     if (result.rows.length > 0) return result.rows[0].id;
 
     // Crear caja si no existe
-    const insertResult = await pool.query(
+    const insertResult = await db.query(
         `INSERT INTO caja (id_sucursal, nombre, estado, created_at, updated_at)
          VALUES ($1, 'Caja Principal', 'ABIERTA', NOW(), NOW()) RETURNING id`,
         [idSucursal]
@@ -24,8 +38,8 @@ async function getCajaAbierta(idSucursal) {
 }
 
 // Helper: Obtener sucursal de una orden
-async function getSucursalOrden(idOrden) {
-    const result = await pool.query('SELECT id_sucursal FROM orden WHERE id = $1', [idOrden]);
+async function getSucursalOrden(db, idOrden) {
+    const result = await db.query('SELECT id_sucursal FROM orden WHERE id = $1', [idOrden]);
     return result.rows[0]?.id_sucursal || null;
 }
 
@@ -44,14 +58,14 @@ router.post('/', verifyJWT, async (req, res) => {
 
         // SIEMPRE resolver id_caja desde la sucursal de la orden (ignorar idCaja del frontend)
         let cajaId = null;
-        const sucursalOrden = await getSucursalOrden(idOrden);
+        const sucursalOrden = await getSucursalOrden(req.db, idOrden);
         console.log('[ordenPago] Orden:', idOrden, '-> Sucursal:', sucursalOrden);
 
         if (sucursalOrden) {
-            cajaId = await getCajaAbierta(sucursalOrden);
+            cajaId = await getCajaAbierta(req.db, sucursalOrden);
             console.log('[ordenPago] Caja obtenida:', cajaId);
         } else if (req.user.id_sucursal) {
-            cajaId = await getCajaAbierta(req.user.id_sucursal);
+            cajaId = await getCajaAbierta(req.db, req.user.id_sucursal);
             console.log('[ordenPago] Caja de usuario:', cajaId);
         }
 
@@ -64,7 +78,7 @@ router.post('/', verifyJWT, async (req, res) => {
             createdBy: userId
         };
 
-        const resultado = await ordenPagoService.registrarPago(parseInt(idOrden), datosPago);
+        const resultado = await ordenPagoService.registrarPago(req.ctx, parseInt(idOrden), datosPago);
 
         res.status(201).json({
             success: true,
@@ -83,7 +97,7 @@ router.get('/orden/:idOrden', verifyJWT, async (req, res) => {
     try {
         const { idOrden } = req.params;
 
-        const pagos = await ordenPagoRepository.obtenerPagosPorOrden(parseInt(idOrden));
+        const pagos = await ordenPagoRepository.obtenerPagosPorOrden(req.db, parseInt(idOrden));
 
         res.json({ success: true, pagos });
     } catch (error) {
@@ -94,57 +108,56 @@ router.get('/orden/:idOrden', verifyJWT, async (req, res) => {
 
 // DELETE /api/ordenpago/:id - Eliminar un pago y su movimiento de caja
 router.delete('/:id', verifyJWT, async (req, res) => {
-    const client = await pool.connect();
     try {
         const { id } = req.params;
         const idPago = parseInt(id);
 
-        await client.query('BEGIN');
+        const result = await req.db.txWithRLS(async (tx) => {
+            // Obtener información del pago antes de eliminar
+            const pagoResult = await tx.query(
+                'SELECT op.*, o.id_sucursal FROM ordenpago op JOIN orden o ON op.id_orden = o.id WHERE op.id = $1',
+                [idPago]
+            );
 
-        // Obtener información del pago antes de eliminar
-        const pagoResult = await client.query(
-            'SELECT op.*, o.id_sucursal FROM ordenpago op JOIN orden o ON op.id_orden = o.id WHERE op.id = $1',
-            [idPago]
-        );
+            if (pagoResult.rows.length === 0) {
+                throw { status: 404, message: 'Pago no encontrado' };
+            }
 
-        if (pagoResult.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ success: false, mensaje: 'Pago no encontrado' });
-        }
+            const pago = pagoResult.rows[0];
+            const idOrden = pago.id_orden;
 
-        const pago = pagoResult.rows[0];
-        const idOrden = pago.id_orden;
+            // Eliminar movimiento de caja asociado (si existe)
+            const movDeleted = await tx.query(`
+                DELETE FROM cajamovimiento 
+                WHERE origen_tipo = 'ORDEN_PAGO' 
+                  AND origen_id = $1 
+                  AND monto = $2
+                RETURNING id
+            `, [idOrden, pago.importe]);
 
-        // Eliminar movimiento de caja asociado (si existe)
-        const movDeleted = await client.query(`
-            DELETE FROM cajamovimiento 
-            WHERE origen_tipo = 'ORDEN_PAGO' 
-              AND origen_id = $1 
-              AND monto = $2
-            RETURNING id
-        `, [idOrden, pago.importe]);
+            console.log(`[DELETE ordenpago] Movimientos de caja eliminados: ${movDeleted.rowCount}`);
 
-        console.log(`[DELETE ordenpago] Movimientos de caja eliminados: ${movDeleted.rowCount}`);
+            // Eliminar el pago
+            await tx.query('DELETE FROM ordenpago WHERE id = $1', [idPago]);
 
-        // Eliminar el pago
-        await client.query('DELETE FROM ordenpago WHERE id = $1', [idPago]);
+            console.log(`[DELETE ordenpago] Pago ${idPago} eliminado correctamente (${pago.importe}€)`);
 
-        await client.query('COMMIT');
-
-        console.log(`[DELETE ordenpago] Pago ${idPago} eliminado correctamente (${pago.importe}€)`);
+            return {
+                importe: pago.importe,
+                movimientosEliminados: movDeleted.rowCount
+            };
+        });
 
         res.json({
             success: true,
             mensaje: 'Pago eliminado correctamente',
-            importe: pago.importe,
-            movimientosEliminados: movDeleted.rowCount
+            importe: result.importe,
+            movimientosEliminados: result.movimientosEliminados
         });
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error eliminando pago:', error);
-        res.status(500).json({ success: false, mensaje: error.message });
-    } finally {
-        client.release();
+        const status = error.status || 500;
+        res.status(status).json({ success: false, mensaje: error.message });
     }
 });
 
@@ -197,7 +210,7 @@ router.get('/estadisticas/semanal', verifyJWT, async (req, res) => {
         }
 
         console.log('[estadisticas/semanal] Desde:', fechaInicio, 'Sucursal:', sucursal || 'todas');
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         // Inicializar array con 7 días (lunes=0 a domingo=6)
         const pagosPorDia = [0, 0, 0, 0, 0, 0, 0];
@@ -271,12 +284,12 @@ router.get('/estadisticas/ticket-medio', verifyJWT, async (req, res) => {
         // Consulta mes actual
         const paramsActual = [];
         const queryActual = buildQuery(inicioMesActual, finMesActual, paramsActual, 1);
-        const resultActual = await pool.query(queryActual, paramsActual);
+        const resultActual = await req.db.query(queryActual, paramsActual);
 
         // Consulta mes anterior
         const paramsAnterior = [];
         const queryAnterior = buildQuery(inicioMesAnterior, finMesAnterior, paramsAnterior, 1);
-        const resultAnterior = await pool.query(queryAnterior, paramsAnterior);
+        const resultAnterior = await req.db.query(queryAnterior, paramsAnterior);
 
         // Calcular ticket medio
         const datosActual = resultActual.rows[0];
@@ -374,7 +387,7 @@ router.get('/estadisticas/ticket-medio/historico', verifyJWT, async (req, res) =
 
         query += ` GROUP BY DATE_TRUNC('month', o.updated_at) ORDER BY mes ASC`;
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         // Crear un mapa con los datos existentes
         const datosMap = new Map();

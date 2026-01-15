@@ -72,39 +72,39 @@ app.use('/api/cliente/payment-methods', require('./routes/customerPaymentMethods
 
 // --- Rutas principales / Módulos V2 ---
 app.use('/api/auth', authRouter);
-app.use('/api/admin', superAdminRouter);
-app.use('/api/access', require('./routes/accessRoutes'));
-app.use('/api/proveedores', proveedoresRouter);
+app.use('/api/admin', privateRoute, superAdminRouter);
+app.use('/api/access', privateRoute, require('./routes/accessRoutes'));
+app.use('/api/proveedores', privateRoute, proveedoresRouter);
 
 // Módulos Migrados
-app.use('/api/clientes', require('./src/modules/clientes/api/clientes.routes'));
-app.use('/api/vehiculos', require('./src/modules/vehiculos/api/vehiculos.routes'));
-app.use('/api/ventas', require('./src/modules/ventas/api/ventas.routes'));
+app.use('/api/clientes', privateRoute, require('./src/modules/clientes/api/clientes.routes'));
+app.use('/api/vehiculos', privateRoute, require('./src/modules/vehiculos/api/vehiculos.routes'));
+app.use('/api/ventas', privateRoute, require('./src/modules/ventas/api/ventas.routes'));
 
 // Contabilidad Module V2
-app.use('/api/contabilidad', require('./src/modules/contable/api/contabilidad.routes'));
+app.use('/api/contabilidad', privateRoute, require('./src/modules/contable/api/contabilidad.routes'));
 
 // Otras rutas legacy / utilidades
-app.use('/api/citas', require('./routes/citas'));
-app.use('/api/inventory', require('./routes/inventory'));
-app.use('/api/sucursales', require('./routes/sucursales'));
-app.use('/api/compras', require('./routes/compras'));
-app.use('/api/chat', require('./routes/chat'));
-app.use('/api/crm/chat', require('./routes/crm_chat'));
-app.use('/api/upload', require('./routes/upload'));
-app.use('/api/whatsapp', require('./routes/whatsapp'));
-app.use('/api/stripe', require('./routes/stripe'));
-app.use('/api/subscriptions', require('./routes/subscriptions'));
-app.use('/api/billing', require('./routes/billingRoutes'));
-app.use('/api/ordenes', require('./routes/ordenes'));
-app.use('/api/ordenpago', require('./routes/ordenPago'));
-app.use('/api/medio-pago', require('./routes/medioPago'));
-app.use('/api/impuestos', require('./routes/impuestos'));
-app.use('/api/caja', require('./routes/caja'));
-app.use('/api/tecnicos', require('./routes/tecnicos'));
-app.use('/api/trabajadores', require('./routes/trabajadores'));
-app.use('/api/facturas', require('./routes/facturas'));
-app.use('/api/cuentas-corrientes', require('./routes/cuentasCorrientes'));
+app.use('/api/citas', privateRoute, require('./routes/citas'));
+app.use('/api/inventory', privateRoute, require('./routes/inventory'));
+app.use('/api/sucursales', privateRoute, require('./routes/sucursales'));
+app.use('/api/compras', privateRoute, require('./routes/compras'));
+app.use('/api/chat', privateRoute, require('./routes/chat'));
+app.use('/api/crm/chat', privateRoute, require('./routes/crm_chat'));
+app.use('/api/upload', privateRoute, require('./routes/upload'));
+app.use('/api/whatsapp', privateRoute, require('./routes/whatsapp'));
+app.use('/api/stripe', privateRoute, require('./routes/stripe'));
+app.use('/api/subscriptions', privateRoute, require('./routes/subscriptions'));
+app.use('/api/billing', privateRoute, require('./routes/billingRoutes'));
+app.use('/api/ordenes', privateRoute, require('./routes/ordenes'));
+app.use('/api/ordenpago', privateRoute, require('./routes/ordenPago'));
+app.use('/api/medio-pago', privateRoute, require('./routes/medioPago'));
+app.use('/api/impuestos', privateRoute, require('./routes/impuestos'));
+app.use('/api/caja', privateRoute, require('./routes/caja'));
+app.use('/api/tecnicos', privateRoute, require('./routes/tecnicos'));
+app.use('/api/trabajadores', privateRoute, require('./routes/trabajadores'));
+app.use('/api/facturas', privateRoute, require('./routes/facturas'));
+app.use('/api/cuentas-corrientes', privateRoute, require('./routes/cuentasCorrientes'));
 app.use('/api/income-events', privateRoute, require('./routes/incomeEvents'));
 app.use('/api/dashboard', privateRoute, require('./routes/dashboardPrefs'));
 

@@ -5,7 +5,7 @@
  * garantizando numeración correlativa continua mediante transacciones.
  */
 
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
 class FacturacionService {
 
@@ -28,19 +28,18 @@ class FacturacionService {
     /**
      * Emite una factura desde una orden de taller
      * 
+     * @param {Object} ctx - Contexto de la request
      * @param {number} idOrden - ID de la orden
-     * @param {number} idUsuario - ID del usuario que emite la factura
+     * @param {number} idUsuario - ID del usuario que emite la factura (opcional, se usa ctx.userId si no viene)
      * @param {object} opciones - Opciones adicionales (idSerie, fechaEmision, etc.)
      * @returns {Promise<object>} Factura creada con sus líneas y pagos
      * @throws {Error} Si la orden no es válida o no se puede emitir la factura
      */
-    async emitirFacturaDesdeOrden(idOrden, idUsuario, opciones = {}) {
-        const client = await pool.connect();
+    async emitirFacturaDesdeOrden(ctx, idOrden, idUsuario, opciones = {}) {
+        const db = getTenantDb(ctx);
+        const userId = idUsuario || ctx.userId;
 
-        try {
-            // INICIAR TRANSACCIÓN
-            await client.query('BEGIN');
-
+        return db.txWithRLS(async (tx) => {
             // 1. BUSCAR LA ORDEN CON TODOS SUS DATOS
             const ordenQuery = `
         SELECT 
@@ -62,7 +61,7 @@ class FacturacionService {
         WHERE o.id = $1
       `;
 
-            const ordenResult = await client.query(ordenQuery, [idOrden]);
+            const ordenResult = await tx.query(ordenQuery, [idOrden]);
 
             if (ordenResult.rows.length === 0) {
                 throw new Error('Orden no encontrada');
@@ -78,7 +77,6 @@ class FacturacionService {
             }
 
             // Validar estado de la orden (debe estar finalizada/cerrada)
-            // Ajusta estos estados según tu lógica de negocio
             const estadosValidos = ['FINALIZADA', 'CERRADA', 'COMPLETADA', 'ENTREGADA'];
             const estadoActual = orden.estado_nombre?.toUpperCase() || 'DESCONOCIDO';
 
@@ -100,7 +98,7 @@ class FacturacionService {
         ORDER BY ol.id
       `;
 
-            const lineasResult = await client.query(lineasQuery, [idOrden]);
+            const lineasResult = await tx.query(lineasQuery, [idOrden]);
 
             if (lineasResult.rows.length === 0) {
                 throw new Error('La orden no tiene líneas para facturar');
@@ -118,7 +116,7 @@ class FacturacionService {
         WHERE op.id_orden = $1
       `;
 
-            const pagosResult = await client.query(pagosQuery, [idOrden]);
+            const pagosResult = await tx.query(pagosQuery, [idOrden]);
             const pagosOrden = pagosResult.rows;
 
             // 4. DETERMINAR LA SERIE DE FACTURA A USAR
@@ -135,7 +133,7 @@ class FacturacionService {
           LIMIT 1
         `;
 
-                const serieResult = await client.query(serieQuery, [orden.sucursal_id]);
+                const serieResult = await tx.query(serieQuery, [orden.sucursal_id]);
 
                 if (serieResult.rows.length === 0) {
                     throw new Error('No hay serie de facturación configurada para esta sucursal');
@@ -151,7 +149,7 @@ class FacturacionService {
         FOR UPDATE
       `;
 
-            const serieResult = await client.query(serieBloqueoQuery, [idSerie]);
+            const serieResult = await tx.query(serieBloqueoQuery, [idSerie]);
 
             if (serieResult.rows.length === 0) {
                 throw new Error('Serie de facturación no encontrada');
@@ -159,7 +157,7 @@ class FacturacionService {
 
             const serie = serieResult.rows[0];
 
-            // Calcular el nuevo número correlativo (asegurar que es número, no string)
+            // Calcular el nuevo número correlativo
             const nuevoCorrelativo = parseInt(serie.ultimo_numero, 10) + 1;
 
             // Generar el número de factura formateado
@@ -170,7 +168,7 @@ class FacturacionService {
             );
 
             // Actualizar el último número de la serie
-            await client.query(
+            await tx.query(
                 `UPDATE facturaserie SET ultimo_numero = $1 WHERE id = $2`,
                 [nuevoCorrelativo, idSerie]
             );
@@ -181,12 +179,10 @@ class FacturacionService {
             let totalFactura = 0;
 
             const lineasFactura = lineasOrden.map((linea, index) => {
-                // Usar los campos correctos de ordenlinea: precio, descuento, subtotal, iva
                 const cantidad = parseFloat(linea.cantidad || 0);
-                const precioUnitario = parseFloat(linea.precio || 0); // 'precio' no 'precio_unitario'
-                const porcentajeDescuento = parseFloat(linea.descuento || 0); // 'descuento' no 'porcentaje_descuento'
+                const precioUnitario = parseFloat(linea.precio || 0);
+                const porcentajeDescuento = parseFloat(linea.descuento || 0);
 
-                // Usar subtotal de la orden si está disponible, sino calcular
                 let baseImponible = parseFloat(linea.subtotal || 0);
                 if (baseImponible === 0 && precioUnitario > 0) {
                     const subtotal = cantidad * precioUnitario;
@@ -194,13 +190,9 @@ class FacturacionService {
                     baseImponible = subtotal - descuento;
                 }
 
-                // Usar IVA de la orden si está disponible
                 const importeIVA = parseFloat(linea.iva || 0);
-                const porcentajeIVA = parseFloat(linea.impuesto_porcentaje || 0);
-
                 const totalLinea = baseImponible + importeIVA;
 
-                // Acumular totales
                 totalBaseImponible += baseImponible;
                 totalImpuestoIVA += importeIVA;
                 totalFactura += totalLinea;
@@ -219,7 +211,6 @@ class FacturacionService {
                 };
             });
 
-            // Redondear totales a 2 decimales
             totalBaseImponible = Math.round(totalBaseImponible * 100) / 100;
             totalImpuestoIVA = Math.round(totalImpuestoIVA * 100) / 100;
             totalFactura = Math.round(totalFactura * 100) / 100;
@@ -231,13 +222,12 @@ class FacturacionService {
         LIMIT 1
       `;
 
-            const configResult = await client.query(configQuery, [orden.id_tenant]);
+            const configResult = await tx.query(configQuery, [orden.id_tenant]);
             let facturaConfig = null;
             let configSnapshot = null;
 
             if (configResult.rows.length > 0) {
                 facturaConfig = configResult.rows[0];
-                // Crear snapshot de la configuración
                 configSnapshot = {
                     logo_url: facturaConfig.logo_url,
                     color_primario: facturaConfig.color_primario,
@@ -255,12 +245,11 @@ class FacturacionService {
             // 8. INSERTAR LA CABECERA DE LA FACTURA
             const fechaEmision = opciones.fechaEmision || new Date().toISOString().split('T')[0];
 
-            // Validar que el usuario existe
             let idUsuarioValidado = null;
-            if (idUsuario) {
-                const userCheck = await client.query('SELECT id FROM usuario WHERE id = $1', [idUsuario]);
+            if (userId) {
+                const userCheck = await tx.query('SELECT id FROM usuario WHERE id = $1', [userId]);
                 if (userCheck.rows.length > 0) {
-                    idUsuarioValidado = idUsuario;
+                    idUsuarioValidado = userId;
                 }
             }
 
@@ -285,7 +274,7 @@ class FacturacionService {
         RETURNING *
       `;
 
-            const facturaResult = await client.query(insertFacturaQuery, [
+            const facturaResult = await tx.query(insertFacturaQuery, [
                 orden.sucursal_id,
                 orden.cliente_id,
                 idOrden,
@@ -325,7 +314,7 @@ class FacturacionService {
 
             const lineasInsertadas = [];
             for (const linea of lineasFactura) {
-                const lineaResult = await client.query(insertLineaQuery, [
+                const lineaResult = await tx.query(insertLineaQuery, [
                     factura.id,
                     linea.id_producto,
                     linea.descripcion,
@@ -341,7 +330,7 @@ class FacturacionService {
                 lineasInsertadas.push(lineaResult.rows[0]);
             }
 
-            // 10. INSERTAR LOS PAGOS DE LA FACTURA (si existen)
+            // 10. INSERTAR LOS PAGOS DE LA FACTURA
             const pagosInsertados = [];
             if (pagosOrden.length > 0) {
                 const insertPagoQuery = `
@@ -357,7 +346,7 @@ class FacturacionService {
         `;
 
                 for (const pago of pagosOrden) {
-                    const pagoResult = await client.query(insertPagoQuery, [
+                    const pagoResult = await tx.query(insertPagoQuery, [
                         factura.id,
                         pago.id,
                         pago.id_medio_pago,
@@ -370,15 +359,11 @@ class FacturacionService {
             }
 
             // 11. ACTUALIZAR LA ORDEN CON EL ID DE LA FACTURA
-            await client.query(
+            await tx.query(
                 `UPDATE orden SET id_factura = $1 WHERE id = $2`,
                 [factura.id, idOrden]
             );
 
-            // CONFIRMAR TRANSACCIÓN
-            await client.query('COMMIT');
-
-            // Devolver la factura completa
             return {
                 factura,
                 lineas: lineasInsertadas,
@@ -390,14 +375,7 @@ class FacturacionService {
                     vehiculo: orden.vehiculo_matricula
                 }
             };
-
-        } catch (error) {
-            // ROLLBACK en caso de error
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 
     /**
@@ -405,12 +383,11 @@ class FacturacionService {
      * @param {number} idFactura - ID de la factura
      * @returns {Promise<object>} Factura completa
      */
-    async obtenerFacturaCompleta(idFactura) {
-        const client = await pool.connect();
+    async obtenerFacturaCompleta(ctx, idFactura) {
+        const db = getTenantDb(ctx);
 
-        try {
-            // Obtener cabecera de la factura
-            const facturaQuery = `
+        // Obtener cabecera de la factura
+        const facturaQuery = `
         SELECT 
           fc.*,
           s.nombre as sucursal_nombre,
@@ -435,16 +412,16 @@ class FacturacionService {
         WHERE fc.id = $1
       `;
 
-            const facturaResult = await client.query(facturaQuery, [idFactura]);
+        const facturaResult = await db.query(facturaQuery, [idFactura]);
 
-            if (facturaResult.rows.length === 0) {
-                throw new Error('Factura no encontrada');
-            }
+        if (facturaResult.rows.length === 0) {
+            throw new Error('Factura no encontrada');
+        }
 
-            const factura = facturaResult.rows[0];
+        const factura = facturaResult.rows[0];
 
-            // Obtener líneas
-            const lineasQuery = `
+        // Obtener líneas
+        const lineasQuery = `
         SELECT 
           fl.*,
           p.nombre as producto_nombre,
@@ -457,10 +434,10 @@ class FacturacionService {
         ORDER BY fl.posicion
       `;
 
-            const lineasResult = await client.query(lineasQuery, [idFactura]);
+        const lineasResult = await db.query(lineasQuery, [idFactura]);
 
-            // Obtener pagos
-            const pagosQuery = `
+        // Obtener pagos
+        const pagosQuery = `
         SELECT 
           fp.*,
           mp.nombre as medio_pago_nombre
@@ -469,50 +446,38 @@ class FacturacionService {
         WHERE fp.id_factura = $1
       `;
 
-            const pagosResult = await client.query(pagosQuery, [idFactura]);
+        const pagosResult = await db.query(pagosQuery, [idFactura]);
 
-            // Si no hay config_snapshot, obtener la configuración actual del tenant
-            let configSnapshot = factura.config_snapshot;
-            if (!configSnapshot || Object.keys(configSnapshot).length === 0) {
-                // Obtener id_tenant desde la sucursal
-                const tenantQuery = await client.query(
-                    'SELECT s.id_tenant FROM sucursal s WHERE s.id = $1',
-                    [factura.id_sucursal]
-                );
-                if (tenantQuery.rows.length > 0) {
-                    const tenantId = tenantQuery.rows[0].id_tenant;
-                    const configQuery = await client.query(
-                        'SELECT * FROM facturaconfigtenant WHERE id_tenant = $1 AND es_por_defecto = true LIMIT 1',
-                        [tenantId]
-                    );
-                    if (configQuery.rows.length > 0) {
-                        const cfg = configQuery.rows[0];
-                        configSnapshot = {
-                            logo_url: cfg.logo_url,
-                            color_primario: cfg.color_primario,
-                            cabecera_html: cfg.cabecera_html,
-                            pie_html: cfg.pie_html,
-                            texto_legal: cfg.texto_legal,
-                            mostrar_columna_iva: cfg.mostrar_columna_iva,
-                            mostrar_columna_descuento: cfg.mostrar_columna_descuento,
-                            mostrar_domicilio_cliente: cfg.mostrar_domicilio_cliente,
-                            mostrar_matricula_vehiculo: cfg.mostrar_matricula_vehiculo,
-                            config_json: cfg.config_json
-                        };
-                    }
-                }
+        // Si no hay config_snapshot, obtener la configuración actual del tenant
+        let configSnapshot = factura.config_snapshot;
+        if (!configSnapshot || Object.keys(configSnapshot).length === 0) {
+            // Con RLS, podemos consultar facturaconfigtenant directamente si existe una por defecto
+            const configQuery = await db.query(
+                'SELECT * FROM facturaconfigtenant WHERE es_por_defecto = true LIMIT 1'
+            );
+            if (configQuery.rows.length > 0) {
+                const cfg = configQuery.rows[0];
+                configSnapshot = {
+                    logo_url: cfg.logo_url,
+                    color_primario: cfg.color_primario,
+                    cabecera_html: cfg.cabecera_html,
+                    pie_html: cfg.pie_html,
+                    texto_legal: cfg.texto_legal,
+                    mostrar_columna_iva: cfg.mostrar_columna_iva,
+                    mostrar_columna_descuento: cfg.mostrar_columna_descuento,
+                    mostrar_domicilio_cliente: cfg.mostrar_domicilio_cliente,
+                    mostrar_matricula_vehiculo: cfg.mostrar_matricula_vehiculo,
+                    config_json: cfg.config_json
+                };
             }
-
-            return {
-                ...factura,
-                config_snapshot: configSnapshot,
-                lineas: lineasResult.rows,
-                pagos: pagosResult.rows
-            };
-
-        } finally {
-            client.release();
         }
+
+        return {
+            ...factura,
+            config_snapshot: configSnapshot,
+            lineas: lineasResult.rows,
+            pagos: pagosResult.rows
+        };
     }
 
     /**
@@ -520,60 +485,53 @@ class FacturacionService {
      * @param {object} filtros - Filtros de búsqueda
      * @returns {Promise<Array>} Lista de facturas
      */
-    async listarFacturas(filtros = {}) {
-        const client = await pool.connect();
+    async listarFacturas(ctx, filtros = {}) {
+        const db = getTenantDb(ctx);
 
-        try {
-            const condiciones = ['1=1'];
-            const valores = [];
-            let paramIndex = 1;
+        const condiciones = ['1=1'];
+        const valores = [];
+        let paramIndex = 1;
 
-            if (filtros.tenantId) {
-                condiciones.push(`s.id_tenant = $${paramIndex}`);
-                valores.push(filtros.tenantId);
-                paramIndex++;
-            }
+        if (filtros.id_sucursal) {
+            condiciones.push(`fc.id_sucursal = $${paramIndex}`);
+            valores.push(filtros.id_sucursal);
+            paramIndex++;
+        }
 
-            if (filtros.id_sucursal) {
-                condiciones.push(`fc.id_sucursal = $${paramIndex}`);
-                valores.push(filtros.id_sucursal);
-                paramIndex++;
-            }
+        if (filtros.estado) {
+            condiciones.push(`fc.estado = $${paramIndex}`);
+            valores.push(filtros.estado);
+            paramIndex++;
+        }
 
-            if (filtros.estado) {
-                condiciones.push(`fc.estado = $${paramIndex}`);
-                valores.push(filtros.estado);
-                paramIndex++;
-            }
+        if (filtros.fecha_desde) {
+            condiciones.push(`fc.fecha_emision >= $${paramIndex}`);
+            valores.push(filtros.fecha_desde);
+            paramIndex++;
+        }
 
-            if (filtros.fecha_desde) {
-                condiciones.push(`fc.fecha_emision >= $${paramIndex}`);
-                valores.push(filtros.fecha_desde);
-                paramIndex++;
-            }
+        if (filtros.fecha_hasta) {
+            condiciones.push(`fc.fecha_emision <= $${paramIndex}`);
+            valores.push(filtros.fecha_hasta);
+            paramIndex++;
+        }
 
-            if (filtros.fecha_hasta) {
-                condiciones.push(`fc.fecha_emision <= $${paramIndex}`);
-                valores.push(filtros.fecha_hasta);
-                paramIndex++;
-            }
-
-            if (filtros.texto) {
-                condiciones.push(`(
+        if (filtros.texto) {
+            condiciones.push(`(
           fc.numero_factura ILIKE $${paramIndex} OR
           cf.nombre ILIKE $${paramIndex} OR
           v.matricula ILIKE $${paramIndex}
         )`);
-                valores.push(`%${filtros.texto}%`);
-                paramIndex++;
-            }
+            valores.push(`%${filtros.texto}%`);
+            paramIndex++;
+        }
 
-            const query = `
+        const query = `
         SELECT 
           fc.*,
           s.nombre as sucursal_nombre,
           cf.nombre as cliente_nombre,
-          v.matricula as vehiculo_matricula,
+          v.matricula as vehicular_matricula,
           CASE WHEN fc.pdf_url IS NOT NULL THEN true ELSE false END as tiene_pdf
         FROM facturacabecera fc
         INNER JOIN sucursal s ON fc.id_sucursal = s.id
@@ -586,12 +544,8 @@ class FacturacionService {
         OFFSET ${filtros.offset || 0}
       `;
 
-            const result = await client.query(query, valores);
-            return result.rows;
-
-        } finally {
-            client.release();
-        }
+        const result = await db.query(query, valores);
+        return result.rows;
     }
 
     /**
@@ -599,32 +553,23 @@ class FacturacionService {
      * @param {object} filtros - Filtros de búsqueda
      * @returns {Promise<Array>} Lista de órdenes
      */
-    async listarOrdenesPendientesFactura(filtros = {}) {
-        const client = await pool.connect();
+    async listarOrdenesPendientesFactura(ctx, filtros = {}) {
+        const db = getTenantDb(ctx);
 
-        try {
-            const condiciones = [
-                // Eliminamos requiere_factura = true estricto porque el usuario quiere ver todo lo pendiente
-                // 'o.requiere_factura = true', 
-                'o.id_factura IS NULL',
-                "eo.nombre IN ('Completada', 'Entregada', 'COMPLETADA', 'ENTREGADA', 'CERRADA', 'Cerrada')"
-            ];
-            const valores = [];
-            let paramIndex = 1;
+        const condiciones = [
+            'o.id_factura IS NULL',
+            "eo.nombre IN ('Completada', 'Entregada', 'COMPLETADA', 'ENTREGADA', 'CERRADA', 'Cerrada')"
+        ];
+        const valores = [];
+        let paramIndex = 1;
 
-            if (filtros.tenantId) {
-                condiciones.push(`s.id_tenant = $${paramIndex}`);
-                valores.push(filtros.tenantId);
-                paramIndex++;
-            }
+        if (filtros.id_sucursal) {
+            condiciones.push(`o.id_sucursal = $${paramIndex}`);
+            valores.push(filtros.id_sucursal);
+            paramIndex++;
+        }
 
-            if (filtros.id_sucursal) {
-                condiciones.push(`o.id_sucursal = $${paramIndex}`);
-                valores.push(filtros.id_sucursal);
-                paramIndex++;
-            }
-
-            const query = `
+        const query = `
         SELECT 
           o.id,
           o.numero_orden,
@@ -647,91 +592,67 @@ class FacturacionService {
         OFFSET ${filtros.offset || 0}
       `;
 
-            const result = await client.query(query, valores);
-            return result.rows;
-
-        } finally {
-            client.release();
-        }
+        const result = await db.query(query, valores);
+        return result.rows;
     }
     /**
     * Obtiene estadísticas generales de facturación
     */
-    async obtenerEstadisticasGeneral(tenantId, idSucursal = null) {
-        const client = await pool.connect();
-        try {
-            const params = [tenantId];
-            let sucursalFiltro = '';
-            if (idSucursal) {
-                params.push(idSucursal);
-                sucursalFiltro = `AND fc.id_sucursal = $${params.length}`;
-            }
-
-            // 1. Total Facturado (Facturas Emitidas, no anuladas)
-            // IMPORTANTE: facturacabecera NO tiene id_tenant, debe hacer JOIN con sucursal
-            const facturadoQuery = `
-                SELECT 
-                    COUNT(*) as cantidad, 
-                    COALESCE(SUM(fc.total), 0) as total 
-                FROM facturacabecera fc
-                INNER JOIN sucursal s ON fc.id_sucursal = s.id
-                WHERE s.id_tenant = $1 
-                AND fc.estado = 'EMITIDA'
-                ${sucursalFiltro}
-            `;
-            const facturadoResult = await client.query(facturadoQuery, params);
-
-            // 2. Pendiente de Facturar (Órdenes Completadas/Entregadas sin factura)
-            const pendientesParams = [tenantId];
-            let pendientesSucursalFiltro = '';
-            if (idSucursal) {
-                pendientesParams.push(idSucursal);
-                pendientesSucursalFiltro = `AND o.id_sucursal = $${pendientesParams.length}`;
-            }
-            const pendientesQuery = `
-                SELECT 
-                    COUNT(*) as cantidad, 
-                    COALESCE(SUM(o.total_neto), 0) as total 
-                FROM orden o
-                JOIN estadoorden eo ON o.id_estado_orden = eo.id
-                JOIN sucursal s ON o.id_sucursal = s.id
-                WHERE s.id_tenant = $1 
-                AND o.id_factura IS NULL 
-                AND eo.nombre IN ('Completada', 'Entregada', 'COMPLETADA', 'ENTREGADA', 'CERRADA', 'Cerrada')
-                ${pendientesSucursalFiltro}
-            `;
-            const pendientesResult = await client.query(pendientesQuery, pendientesParams);
-
-            // 3. Facturas del mes actual
-            const mesParams = [tenantId];
-            let mesSucursalFiltro = '';
-            if (idSucursal) {
-                mesParams.push(idSucursal);
-                mesSucursalFiltro = `AND fc.id_sucursal = $${mesParams.length}`;
-            }
-            const mesQuery = `
-                SELECT COUNT(*) as cantidad
-                FROM facturacabecera fc
-                INNER JOIN sucursal s ON fc.id_sucursal = s.id
-                WHERE s.id_tenant = $1 
-                AND fc.estado = 'EMITIDA'
-                AND EXTRACT(MONTH FROM fc.fecha_emision) = EXTRACT(MONTH FROM CURRENT_DATE)
-                AND EXTRACT(YEAR FROM fc.fecha_emision) = EXTRACT(YEAR FROM CURRENT_DATE)
-                ${mesSucursalFiltro}
-            `;
-            const mesResult = await client.query(mesQuery, mesParams);
-
-            return {
-                total_facturado: parseFloat(facturadoResult.rows[0].total),
-                cantidad_facturas: parseInt(facturadoResult.rows[0].cantidad),
-                total_pendiente: parseFloat(pendientesResult.rows[0].total),
-                cantidad_pendientes: parseInt(pendientesResult.rows[0].cantidad),
-                facturas_mes: parseInt(mesResult.rows[0].cantidad)
-            };
-
-        } finally {
-            client.release();
+    async obtenerEstadisticasGeneral(ctx, idSucursal = null) {
+        const db = getTenantDb(ctx);
+        const params = [];
+        let sucursalFiltro = '';
+        if (idSucursal) {
+            params.push(idSucursal);
+            sucursalFiltro = `AND fc.id_sucursal = $1`;
         }
+
+        // 1. Total Facturado (Facturas Emitidas, no anuladas)
+        const facturadoQuery = `
+            SELECT 
+                COUNT(*) as cantidad, 
+                COALESCE(SUM(fc.total), 0) as total 
+            FROM facturacabecera fc
+            WHERE fc.estado = 'EMITIDA'
+            ${sucursalFiltro}
+        `;
+        const facturadoResult = await db.query(facturadoQuery, params);
+
+        // 2. Pendiente de Facturar
+        let pendientesSucursalFiltro = '';
+        if (idSucursal) {
+            pendientesSucursalFiltro = `AND o.id_sucursal = $1`;
+        }
+        const pendientesQuery = `
+            SELECT 
+                COUNT(*) as cantidad, 
+                COALESCE(SUM(o.total_neto), 0) as total 
+            FROM orden o
+            JOIN estadoorden eo ON o.id_estado_orden = eo.id
+            WHERE o.id_factura IS NULL 
+            AND eo.nombre IN ('Completada', 'Entregada', 'COMPLETADA', 'ENTREGADA', 'CERRADA', 'Cerrada')
+            ${pendientesSucursalFiltro}
+        `;
+        const pendientesResult = await db.query(pendientesQuery, params);
+
+        // 3. Facturas del mes actual
+        const mesQuery = `
+            SELECT COUNT(*) as cantidad
+            FROM facturacabecera fc
+            WHERE fc.estado = 'EMITIDA'
+            AND EXTRACT(MONTH FROM fc.fecha_emision) = EXTRACT(MONTH FROM CURRENT_DATE)
+            AND EXTRACT(YEAR FROM fc.fecha_emision) = EXTRACT(YEAR FROM CURRENT_DATE)
+            ${sucursalFiltro}
+        `;
+        const mesResult = await db.query(mesQuery, params);
+
+        return {
+            total_facturado: parseFloat(facturadoResult.rows[0].total),
+            cantidad_facturas: parseInt(facturadoResult.rows[0].cantidad),
+            total_pendiente: parseFloat(pendientesResult.rows[0].total),
+            cantidad_pendientes: parseInt(pendientesResult.rows[0].cantidad),
+            facturas_mes: parseInt(mesResult.rows[0].cantidad)
+        };
     }
 }
 

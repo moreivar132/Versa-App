@@ -31,7 +31,7 @@ async function list(req, res) {
             empresaId: empresaId
         };
 
-        const trimestres = await service.listTrimestres(tenantId, filters);
+        const trimestres = await service.listTrimestres({ tenantId }, filters);
 
         // Añadir trimestres del año actual si no existen
         const currentYear = new Date().getFullYear();
@@ -47,7 +47,7 @@ async function list(req, res) {
                 // Cálculo en tiempo real para trimestre abierto
                 try {
                     const empresaIdParsed = empresaId ? parseInt(empresaId) : null;
-                    const triData = await service.getTrimestre(tenantId, empresaIdParsed, currentYear, q);
+                    const triData = await service.getTrimestre({ tenantId }, empresaIdParsed, currentYear, q);
                     const resumen = triData.resumen_actual || {};
 
                     result.push({
@@ -120,7 +120,7 @@ async function getByPeriod(req, res) {
         }
 
         const empresaIdParsed = empresaId ? parseInt(empresaId) : null;
-        const data = await service.getTrimestre(tenantId, empresaIdParsed, anio, trimestre);
+        const data = await service.getTrimestre({ tenantId }, empresaIdParsed, anio, trimestre);
 
         res.json({
             ok: true,
@@ -153,7 +153,7 @@ async function cerrar(req, res) {
             return res.status(400).json({ ok: false, error: 'Trimestre inválido (1-4)' });
         }
 
-        const result = await service.cerrarTrimestre(tenantId, anio, trimestre, userId);
+        const result = await service.cerrarTrimestre({ tenantId }, anio, trimestre, userId);
 
         res.json({
             ok: true,
@@ -188,7 +188,7 @@ async function reabrir(req, res) {
             return res.status(400).json({ ok: false, error: 'Trimestre inválido (1-4)' });
         }
 
-        const result = await service.reabrirTrimestre(tenantId, anio, trimestre, reason, userId);
+        const result = await service.reabrirTrimestre({ tenantId }, anio, trimestre, reason, userId);
 
         res.json({
             ok: true,

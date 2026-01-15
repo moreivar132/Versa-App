@@ -19,6 +19,7 @@ const categoriasController = require('./controllers/categorias.controller');
 const empresaController = require('./controllers/empresa.controller');
 const tesoreriaController = require('./controllers/tesoreria.controller');
 const fiscalProfileController = require('./controllers/fiscalProfile.controller');
+const copilotoController = require('./controllers/copiloto.controller');
 
 // Test route (Sanity check)
 router.get('/ping', (req, res) => res.json({ ok: true, message: 'pong', timestamp: new Date().toISOString() }));
@@ -330,6 +331,49 @@ router.get('/egresos',
 router.post('/egresos',
     requirePermission('contabilidad.write'),
     egresosController.createGasto
+);
+
+// ===================================================================
+// COPILOTO IA
+// ===================================================================
+
+// Chat con copiloto
+router.post('/copiloto/chat',
+    requirePermission('copiloto.read'),
+    copilotoController.chat
+);
+
+// Insights automáticos
+router.get('/copiloto/insights',
+    requirePermission('copiloto.read'),
+    copilotoController.getInsights
+);
+
+// Alertas
+router.get('/copiloto/alerts',
+    requirePermission('copiloto.read'),
+    copilotoController.listAlerts
+);
+
+router.post('/copiloto/alerts',
+    requirePermission('copiloto.write'),
+    copilotoController.createAlertRule
+);
+
+router.patch('/copiloto/alerts/:id',
+    requirePermission('copiloto.write'),
+    copilotoController.updateAlert
+);
+
+// Sesiones de chat
+router.get('/copiloto/sessions',
+    requirePermission('copiloto.read'),
+    copilotoController.listSessions
+);
+
+router.get('/copiloto/sessions/:id/messages',
+    requirePermission('copiloto.read'),
+    copilotoController.getSessionMessages
 );
 
 // Callback de Make ya está registrado ANTES del middleware de auth (línea ~28)

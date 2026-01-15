@@ -33,7 +33,7 @@ async function list(req, res) {
             offset: parseInt(req.query.offset) || 0
         };
 
-        const contactos = await service.listContactos(tenantId, filters);
+        const contactos = await service.listContactos({ tenantId }, filters);
 
         res.json({
             ok: true,
@@ -59,7 +59,7 @@ async function getById(req, res) {
         }
 
         const id = parseInt(req.params.id);
-        const contacto = await service.getContacto(tenantId, id);
+        const contacto = await service.getContacto({ tenantId }, id);
 
         res.json({
             ok: true,
@@ -107,7 +107,7 @@ async function create(req, res) {
             return res.status(400).json({ ok: false, error: 'Nombre requerido' });
         }
 
-        const contacto = await service.createContacto(tenantId, data, userId);
+        const contacto = await service.createContacto({ tenantId }, data, userId);
 
         res.status(201).json({
             ok: true,
@@ -146,7 +146,7 @@ async function update(req, res) {
         const userId = req.user?.id;
         const data = req.body;
 
-        const contacto = await service.updateContacto(tenantId, id, data, userId);
+        const contacto = await service.updateContacto({ tenantId }, id, data, userId);
 
         res.json({
             ok: true,
@@ -175,7 +175,7 @@ async function remove(req, res) {
         const id = parseInt(req.params.id);
         const userId = req.user?.id;
 
-        await service.deleteContacto(tenantId, id, userId);
+        await service.deleteContacto({ tenantId }, id, userId);
 
         res.json({
             ok: true,
