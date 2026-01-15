@@ -41,16 +41,32 @@ router.get('/', async (req, res) => {
             offset = '0'
         } = req.query;
 
-        const limitNum = Math.min(parseInt(limit) || 50, 100);
-        const offsetNum = parseInt(offset) || 0;
+        // Validación de parámetros
+        const limitNum = Math.min(Math.max(parseInt(limit) || 50, 1), 100);
+        const offsetNum = Math.max(parseInt(offset) || 0, 0);
+
+        // Validar estado permitido
+        const estadosPermitidos = ['activo', 'inactivo', 'todos'];
+        const estadoNorm = estadosPermitidos.includes(estado) ? estado : 'activo';
+
+        // Obtener tenant_id del contexto de autenticación (si existe)
+        const tenantId = req.user?.tenant_id || req.user?.id_tenant || null;
 
         // Construir query dinámica
         const params = [];
         let whereClause = 'WHERE 1=1';
 
+        // Filtrar por tenant (si está autenticado)
+        if (tenantId) {
+            params.push(tenantId);
+            whereClause += ` AND s.tenant_id = $${params.length}`;
+        }
+
         // Filtrar por estado activo
-        if (estado === 'activo') {
+        if (estadoNorm === 'activo') {
             whereClause += ` AND ml.activo = true AND s.activa = true`;
+        } else if (estadoNorm === 'inactivo') {
+            whereClause += ` AND (ml.activo = false OR s.activa = false)`;
         }
 
         // Filtrar por sucursal
@@ -104,23 +120,42 @@ router.get('/', async (req, res) => {
             pool.query(countQuery, params)
         ]);
 
-        // Normalizar resultados
-        const items = (itemsResult.rows || []).map(row => ({
-            id: row.id,
-            id_sucursal: row.id_sucursal,
-            sucursal_nombre: row.sucursal_nombre,
-            nombre: row.nombre,
-            titulo_publico: row.nombre,
-            direccion: row.direccion || null,
-            lat: normalizeCoord(row.lat),
-            lng: normalizeCoord(row.lng),
-            rating: parseFloat(row.rating) || null,
-            reviews_count: parseInt(row.reviews_count) || 0,
-            fotos_json: row.fotos_json,
-            activo: row.activo
-        }));
+        // Normalizar resultados y tracking de observabilidad
+        let itemsSinCoords = 0;
+        let itemsCoordsHeredadas = 0;
+
+        const items = (itemsResult.rows || []).map(row => {
+            const lat = normalizeCoord(row.lat);
+            const lng = normalizeCoord(row.lng);
+
+            // Observabilidad: detectar items sin coords o con coords heredadas
+            if (lat === null || lng === null) {
+                itemsSinCoords++;
+            }
+            // Nota: no podemos distinguir heredadas vs propias sin campos adicionales
+
+            return {
+                id: row.id,
+                id_sucursal: row.id_sucursal,
+                sucursal_nombre: row.sucursal_nombre,
+                nombre: row.nombre,
+                titulo_publico: row.nombre,
+                direccion: row.direccion || null,
+                lat,
+                lng,
+                rating: parseFloat(row.rating) || null,
+                reviews_count: parseInt(row.reviews_count) || 0,
+                fotos_json: row.fotos_json,
+                activo: row.activo
+            };
+        });
 
         const total = parseInt(countResult.rows?.[0]?.total) || 0;
+
+        // Log observabilidad
+        if (itemsSinCoords > 0) {
+            console.warn(`[Marketplace/busqueda] ${itemsSinCoords}/${items.length} items sin coordenadas válidas${tenantId ? ` (tenant=${tenantId})` : ''} [q=${q || '*'}]`);
+        }
 
         res.json({
             ok: true,
