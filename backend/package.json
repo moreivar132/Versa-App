@@ -20,7 +20,8 @@
     "migrate:make": "knex migrate:make",
     "migrate:up": "knex migrate:up",
     "migrate:down": "knex migrate:down",
-    "seed:run": "knex seed:run"
+    "seed:run": "knex seed:run",
+    "check:db-guardrails": "node scripts/check-no-pool-query.js"
   },
   "repository": {
     "type": "git",

@@ -31,6 +31,9 @@ jobs:
       - name: Run Lint
         run: npm run lint
 
+      - name: Check DB Guardrails
+        run: cd backend && npm run check:db-guardrails
+        
       - name: Run Tests (Backend)
         run: npm test
         env:

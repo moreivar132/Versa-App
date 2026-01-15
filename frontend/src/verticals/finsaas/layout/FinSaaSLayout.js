@@ -104,10 +104,13 @@ export class FinSaaSLayout {
             }
             return `
                 <a href="${item.route}" 
-                   class="nav-link flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-dark-light hover:text-slate-900 dark:hover:text-white transition-all group"
+                   class="nav-link flex items-center justify-between px-4 py-3 rounded-lg text-slate-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-dark-light hover:text-slate-900 dark:hover:text-white transition-all group"
                    data-route="${item.route}">
-                    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">${item.icon}</span>
-                    <span class="text-sm font-medium">${item.label}</span>
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined group-hover:scale-110 transition-transform">${item.icon}</span>
+                        <span class="text-sm font-medium">${item.label}</span>
+                    </div>
+                    ${item.badge ? `<span class="px-1.5 py-0.5 text-[10px] font-bold bg-primary text-background-dark rounded-md">${item.badge}</span>` : ''}
                 </a>
             `;
         }).join('');

@@ -9,7 +9,21 @@ const express = require('express');
 const router = express.Router();
 const facturacionService = require('../services/facturacionService');
 const facturaPDFService = require('../services/facturaPDFService');
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
+
+// Inyectar db en req desde el contexto
+router.use((req, res, next) => {
+    if (req.ctx) {
+        req.db = getTenantDb(req.ctx);
+    }
+    next();
+});
+
+const pool = {
+    query: (sql, params) => {
+        throw new Error('Uso directo de pool detectado en facturas.js. Usa req.db.query instead.');
+    }
+};
 
 // =====================================================
 // ENDPOINTS DE FACTURAS
@@ -23,10 +37,10 @@ router.get('/debug-pendientes', async (req, res) => {
         const tenantId = req.query.tenantId || 1;
 
         // 1. Ver todos los estados disponibles
-        const estados = await pool.query('SELECT * FROM estadoorden');
+        const estados = await req.db.query('SELECT * FROM estadoorden');
 
         // 2. Ver conteo de órdenes sin factura por estado
-        const conteo = await pool.query(`
+        const conteo = await req.db.query(`
             SELECT eo.nombre as estado, eo.id as id_estado, COUNT(*) as cantidad
             FROM orden o
             INNER JOIN sucursal s ON o.id_sucursal = s.id
@@ -36,7 +50,7 @@ router.get('/debug-pendientes', async (req, res) => {
         `, [tenantId]);
 
         // 3. Ver 5 ejemplos de órdenes recientes sin factura
-        const ejemplos = await pool.query(`
+        const ejemplos = await req.db.query(`
             SELECT o.id, o.numero_orden, o.id_estado_orden, eo.nombre as estado, o.requiere_factura 
             FROM orden o
             INNER JOIN sucursal s ON o.id_sucursal = s.id
@@ -78,6 +92,7 @@ router.post('/ordenes/:id/emitir', async (req, res) => {
         };
 
         const resultado = await facturacionService.emitirFacturaDesdeOrden(
+            req.ctx,
             idOrden,
             idUsuario,
             opciones
@@ -115,7 +130,7 @@ router.get('/', async (req, res) => {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const facturas = await facturacionService.listarFacturas(filtros);
+        const facturas = await facturacionService.listarFacturas(req.ctx, filtros);
 
         res.json({
             success: true,
@@ -145,7 +160,7 @@ router.get('/ordenes/pendientes', async (req, res) => {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const ordenes = await facturacionService.listarOrdenesPendientesFactura(filtros);
+        const ordenes = await facturacionService.listarOrdenesPendientesFactura(req.ctx, filtros);
 
         res.json({
             success: true,
@@ -175,7 +190,7 @@ router.get('/stats/general', async (req, res) => {
             return res.status(400).json({ success: false, error: 'Tenant ID requerido' });
         }
 
-        const stats = await facturacionService.obtenerEstadisticasGeneral(tenantId, idSucursal);
+        const stats = await facturacionService.obtenerEstadisticasGeneral(req.ctx, idSucursal);
 
         res.json({
             success: true,
@@ -196,7 +211,7 @@ router.get('/:id/pdf', async (req, res) => {
         const idFactura = parseInt(req.params.id);
 
         // Obtener factura completa
-        const facturaCompleta = await facturacionService.obtenerFacturaCompleta(idFactura);
+        const facturaCompleta = await facturacionService.obtenerFacturaCompleta(req.ctx, idFactura);
 
         // Generar HTML
         const html = facturaPDFService.generarHTMLFactura(facturaCompleta);
@@ -250,7 +265,7 @@ router.get('/:id/download', async (req, res) => {
 router.post('/:id/regenerar-pdf', async (req, res) => {
     try {
         const idFactura = parseInt(req.params.id);
-        const pdfUrl = await facturaPDFService.generarPDF(idFactura);
+        const pdfUrl = await facturaPDFService.generarPDF(req.ctx, idFactura);
 
         res.json({
             success: true,
@@ -291,7 +306,7 @@ router.get('/series', async (req, res) => {
 
         query += ' ORDER BY nombre_serie';
 
-        const result = await pool.query(query, valores);
+        const result = await req.db.query(query, valores);
 
         res.json({
             success: true,
@@ -345,7 +360,7 @@ router.post('/series', async (req, res) => {
       RETURNING *
     `;
 
-        const result = await pool.query(query, [
+        const result = await req.db.query(query, [
             id_sucursal,
             nombre_serie,
             prefijo,
@@ -445,7 +460,7 @@ router.put('/series/:id', async (req, res) => {
       RETURNING *
     `;
 
-        const result = await pool.query(query, valores);
+        const result = await req.db.query(query, valores);
 
         if (result.rows.length === 0) {
             return res.status(404).json({
@@ -494,7 +509,7 @@ router.get('/config-tenant', async (req, res) => {
       LIMIT 1
     `;
 
-        const result = await pool.query(query, [tenantId]);
+        const result = await req.db.query(query, [tenantId]);
 
         // console.log('GET /config-tenant result:', result.rows[0]); // DEBUG
 
@@ -510,7 +525,7 @@ router.get('/config-tenant', async (req, res) => {
         RETURNING *
       `;
 
-            const insertResult = await pool.query(insertQuery, [
+            const insertResult = await req.db.query(insertQuery, [
                 tenantId,
                 'Por defecto',
                 '#ff4400',
@@ -574,7 +589,7 @@ router.put('/config-tenant', async (req, res) => {
       LIMIT 1
     `;
 
-        const checkResult = await pool.query(checkQuery, [tenantId]);
+        const checkResult = await req.db.query(checkQuery, [tenantId]);
 
         if (checkResult.rows.length === 0) {
             // Crear nueva configuración
@@ -597,7 +612,7 @@ router.put('/config-tenant', async (req, res) => {
         RETURNING *
       `;
 
-            const result = await pool.query(insertQuery, [
+            const result = await req.db.query(insertQuery, [
                 tenantId,
                 logo_url || null,
                 color_primario || '#ff4400',
@@ -694,7 +709,7 @@ router.put('/config-tenant', async (req, res) => {
       RETURNING *
     `;
 
-        const result = await pool.query(updateQuery, valores);
+        const result = await req.db.query(updateQuery, valores);
 
         res.json({
             success: true,
@@ -732,7 +747,7 @@ router.get('/:id', async (req, res) => {
             });
         }
 
-        const factura = await facturacionService.obtenerFacturaCompleta(idFactura);
+        const factura = await facturacionService.obtenerFacturaCompleta(req.ctx, idFactura);
 
         res.json({
             success: true,

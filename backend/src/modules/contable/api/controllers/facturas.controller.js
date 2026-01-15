@@ -4,17 +4,9 @@
  */
 
 const service = require('../../application/services/contabilidad.service');
-const { getEffectiveTenant } = require('../../../../../middleware/rbac');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-
-/**
- * Helper para obtener empresa ID
- */
-function getEmpresaId(req) {
-    return req.headers['x-empresa-id'] || req.query.empresaId;
-}
 
 // Configurar multer para uploads
 const uploadDir = path.join(__dirname, '../../../../../uploads/contabilidad');
@@ -48,9 +40,9 @@ const upload = multer({
  */
 async function list(req, res) {
     try {
-        const tenantId = getEffectiveTenant(req);
-        if (!tenantId) {
-            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
+        const ctx = req.ctx;
+        if (!ctx?.tenantId) {
+            return res.status(403).json({ ok: false, error: 'Contexto de tenant requerido', requestId: req.requestId });
         }
 
         const filters = {
@@ -63,14 +55,13 @@ async function list(req, res) {
             idContacto: req.query.idContacto ? parseInt(req.query.idContacto) : null,
             idCategoria: req.query.idCategoria ? parseInt(req.query.idCategoria) : null,
             idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
-            idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
             search: req.query.search,
-            idEmpresa: getEmpresaId(req),
+            idEmpresa: ctx.empresaId, // Ya viene validado del middleware
             limit: parseInt(req.query.limit) || 50,
             offset: parseInt(req.query.offset) || 0
         };
 
-        const result = await service.listFacturas(tenantId, filters);
+        const result = await service.listFacturas(ctx, filters);
 
         res.json({
             ok: true,
@@ -80,7 +71,8 @@ async function list(req, res) {
         console.error('Error en list facturas:', error);
         res.status(error.status || 500).json({
             ok: false,
-            error: error.message
+            error: error.message,
+            requestId: req.requestId
         });
     }
 }
@@ -90,13 +82,9 @@ async function list(req, res) {
  */
 async function getById(req, res) {
     try {
-        const tenantId = getEffectiveTenant(req);
-        if (!tenantId) {
-            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
-        }
-
+        const ctx = req.ctx;
         const id = parseInt(req.params.id);
-        const factura = await service.getFactura(tenantId, id);
+        const factura = await service.getFactura(ctx, id);
 
         res.json({
             ok: true,
@@ -106,7 +94,8 @@ async function getById(req, res) {
         console.error('Error en getById factura:', error);
         res.status(error.status || 500).json({
             ok: false,
-            error: error.message
+            error: error.message,
+            requestId: req.requestId
         });
     }
 }
@@ -116,12 +105,7 @@ async function getById(req, res) {
  */
 async function create(req, res) {
     try {
-        const tenantId = getEffectiveTenant(req);
-        if (!tenantId) {
-            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
-        }
-
-        const userId = req.user?.id;
+        const ctx = req.ctx;
         const data = req.body;
 
         // Validaciones básicas
@@ -130,9 +114,8 @@ async function create(req, res) {
         }
 
         // Asignar empresa si existe en contexto
-        const empresaId = getEmpresaId(req);
-        if (empresaId) {
-            data.id_empresa = empresaId;
+        if (ctx.empresaId) {
+            data.id_empresa = ctx.empresaId;
         }
 
         if (!data.numero_factura) {
@@ -147,7 +130,7 @@ async function create(req, res) {
             return res.status(400).json({ ok: false, error: 'Base imponible inválida' });
         }
 
-        const factura = await service.createFactura(tenantId, data, userId);
+        const factura = await service.createFactura(ctx, data);
 
         res.status(201).json({
             ok: true,
@@ -158,7 +141,8 @@ async function create(req, res) {
         console.error('Error en create factura:', error);
         res.status(error.status || 500).json({
             ok: false,
-            error: error.message
+            error: error.message,
+            requestId: req.requestId
         });
     }
 }
@@ -168,16 +152,11 @@ async function create(req, res) {
  */
 async function update(req, res) {
     try {
-        const tenantId = getEffectiveTenant(req);
-        if (!tenantId) {
-            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
-        }
-
+        const ctx = req.ctx;
         const id = parseInt(req.params.id);
-        const userId = req.user?.id;
         const data = req.body;
 
-        const factura = await service.updateFactura(tenantId, id, data, userId);
+        const factura = await service.updateFactura(ctx, id, data);
 
         res.json({
             ok: true,
@@ -188,7 +167,8 @@ async function update(req, res) {
         console.error('Error en update factura:', error);
         res.status(error.status || 500).json({
             ok: false,
-            error: error.message
+            error: error.message,
+            requestId: req.requestId
         });
     }
 }
@@ -198,15 +178,10 @@ async function update(req, res) {
  */
 async function remove(req, res) {
     try {
-        const tenantId = getEffectiveTenant(req);
-        if (!tenantId) {
-            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
-        }
-
+        const ctx = req.ctx;
         const id = parseInt(req.params.id);
-        const userId = req.user?.id;
 
-        await service.deleteFactura(tenantId, id, userId);
+        await service.deleteFactura(ctx, id);
 
         res.json({
             ok: true,
@@ -216,7 +191,8 @@ async function remove(req, res) {
         console.error('Error en remove factura:', error);
         res.status(error.status || 500).json({
             ok: false,
-            error: error.message
+            error: error.message,
+            requestId: req.requestId
         });
     }
 }
@@ -231,17 +207,12 @@ async function uploadArchivo(req, res) {
         }
 
         try {
-            const tenantId = getEffectiveTenant(req);
-            if (!tenantId) {
-                return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
-            }
-
+            const ctx = req.ctx;
             if (!req.file) {
                 return res.status(400).json({ ok: false, error: 'No se recibió archivo' });
             }
 
             const facturaId = parseInt(req.params.id);
-            const userId = req.user?.id;
 
             const fileData = {
                 file_url: `/uploads/contabilidad/${req.file.filename}`,
@@ -251,7 +222,7 @@ async function uploadArchivo(req, res) {
                 original_name: req.file.originalname
             };
 
-            const archivo = await service.addArchivo(tenantId, facturaId, fileData, userId);
+            const archivo = await service.addArchivo(ctx, facturaId, fileData);
 
             res.status(201).json({
                 ok: true,
@@ -262,7 +233,8 @@ async function uploadArchivo(req, res) {
             console.error('Error en uploadArchivo:', error);
             res.status(error.status || 500).json({
                 ok: false,
-                error: error.message
+                error: error.message,
+                requestId: req.requestId
             });
         }
     });
@@ -273,13 +245,9 @@ async function uploadArchivo(req, res) {
  */
 async function listArchivos(req, res) {
     try {
-        const tenantId = getEffectiveTenant(req);
-        if (!tenantId) {
-            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
-        }
-
+        const ctx = req.ctx;
         const facturaId = parseInt(req.params.id);
-        const archivos = await service.listArchivos(tenantId, facturaId);
+        const archivos = await service.listArchivos(ctx, facturaId);
 
         res.json({
             ok: true,
@@ -289,7 +257,8 @@ async function listArchivos(req, res) {
         console.error('Error en listArchivos:', error);
         res.status(error.status || 500).json({
             ok: false,
-            error: error.message
+            error: error.message,
+            requestId: req.requestId
         });
     }
 }

@@ -31,11 +31,25 @@ async function getDashboard(req, res) {
         const trimestre = parseInt(req.query.trimestre) || Math.ceil((now.getMonth() + 1) / 3);
 
         const empresaId = getEmpresaId(req);
+
+        // If no empresa specified, return empty/default KPIs
         if (!empresaId) {
-            return res.status(400).json({ ok: false, error: 'Empresa no especificada (X-Empresa-Id header)' });
+            return res.json({
+                ok: true,
+                data: {
+                    iva_trimestre: { resultado: 0, repercutido: 0, soportado: 0 },
+                    pendiente_cobrar: { total: 0, count: 0 },
+                    pendiente_pagar: { total: 0, count: 0 },
+                    vencidas: { count: 0, total: 0 },
+                    ingreso_mensual: 0,
+                    gasto_mensual: 0,
+                    saldo_caja: 0,
+                    periodo: { anio, trimestre }
+                }
+            });
         }
 
-        const kpis = await service.getDashboard(tenantId, empresaId, anio, trimestre);
+        const kpis = await service.getDashboard({ tenantId }, empresaId, anio, trimestre);
 
         res.json({
             ok: true,
@@ -70,10 +84,19 @@ async function getReporteIVA(req, res) {
 
         const empresaId = getEmpresaId(req);
         if (!empresaId) {
-            return res.status(400).json({ ok: false, error: 'Empresa no especificada' });
+            return res.json({
+                ok: true,
+                data: {
+                    ingresos: { base: 0, iva: 0 },
+                    gastos: { base: 0, iva: 0 },
+                    iva_repercutido: 0,
+                    iva_soportado: 0,
+                    resultado: 0
+                }
+            });
         }
 
-        const reporte = await service.getReporteIVA(tenantId, empresaId, anio, trimestre);
+        const reporte = await service.getReporteIVA({ tenantId }, empresaId, anio, trimestre);
 
         res.json({
             ok: true,
@@ -106,10 +129,14 @@ async function getGastosPorCategoria(req, res) {
 
         const empresaId = getEmpresaId(req);
         if (!empresaId) {
-            return res.status(400).json({ ok: false, error: 'Empresa no especificada' });
+            return res.json({
+                ok: true,
+                data: [],
+                periodo: { fechaDesde, fechaHasta }
+            });
         }
 
-        const reporte = await service.getGastosPorCategoria(tenantId, empresaId, fechaDesde, fechaHasta);
+        const reporte = await service.getGastosPorCategoria({ tenantId }, empresaId, fechaDesde, fechaHasta);
 
         res.json({
             ok: true,

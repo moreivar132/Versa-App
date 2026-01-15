@@ -46,15 +46,15 @@ class ContabilidadService {
     /**
      * Lista facturas con filtros
      */
-    async listFacturas(tenantId, filters) {
-        return repo.listFacturas(tenantId, filters);
+    async listFacturas(ctx, filters) {
+        return repo.listFacturas(ctx, filters);
     }
 
     /**
      * Obtiene factura por ID
      */
-    async getFactura(tenantId, id) {
-        const factura = await repo.getFacturaById(tenantId, id);
+    async getFactura(ctx, id) {
+        const factura = await repo.getFacturaById(ctx, id);
         if (!factura) {
             const error = new Error('Factura no encontrada');
             error.status = 404;
@@ -62,8 +62,8 @@ class ContabilidadService {
         }
 
         // Obtener archivos y pagos
-        factura.archivos = await repo.listArchivosByFactura(id);
-        factura.pagos = await repo.listPagosByFactura(id);
+        factura.archivos = await repo.listArchivosByFactura(ctx, id);
+        factura.pagos = await repo.listPagosByFactura(ctx, id);
 
         return factura;
     }
@@ -71,7 +71,7 @@ class ContabilidadService {
     /**
      * Crea factura manual
      */
-    async createFactura(tenantId, data, userId) {
+    async createFactura(ctx, data) {
         // Auto-calcular IVA si no viene completo
         if (data.base_imponible && data.iva_porcentaje && !data.iva_importe) {
             const calc = this.calcularIVA(data.base_imponible, data.iva_porcentaje);
@@ -91,15 +91,15 @@ class ContabilidadService {
             data.fecha_devengo = data.fecha_emision;
         }
 
-        return repo.createFactura(tenantId, data, userId);
+        return repo.createFactura(ctx, data);
     }
 
     /**
      * Actualiza factura
      */
-    async updateFactura(tenantId, id, data, userId) {
+    async updateFactura(ctx, id, data) {
         // Verificar que existe
-        const existing = await repo.getFacturaById(tenantId, id);
+        const existing = await repo.getFacturaById(ctx, id);
         if (!existing) {
             const error = new Error('Factura no encontrada');
             error.status = 404;
@@ -122,14 +122,14 @@ class ContabilidadService {
             data.total = calc.total;
         }
 
-        return repo.updateFactura(tenantId, id, data, userId);
+        return repo.updateFactura(ctx, id, data);
     }
 
     /**
      * Elimina factura (soft delete)
      */
-    async deleteFactura(tenantId, id, userId) {
-        const existing = await repo.getFacturaById(tenantId, id);
+    async deleteFactura(ctx, id) {
+        const existing = await repo.getFacturaById(ctx, id);
         if (!existing) {
             const error = new Error('Factura no encontrada');
             error.status = 404;
@@ -142,43 +142,43 @@ class ContabilidadService {
             throw error;
         }
 
-        return repo.deleteFactura(tenantId, id, userId);
+        return repo.deleteFactura(ctx, id);
     }
 
     // ===================================================================
     // ARCHIVOS
     // ===================================================================
 
-    async addArchivo(tenantId, facturaId, fileData, userId) {
+    async addArchivo(ctx, facturaId, fileData) {
         // Verificar factura existe
-        const factura = await repo.getFacturaById(tenantId, facturaId);
+        const factura = await repo.getFacturaById(ctx, facturaId);
         if (!factura) {
             const error = new Error('Factura no encontrada');
             error.status = 404;
             throw error;
         }
 
-        return repo.createArchivo(facturaId, fileData, userId);
+        return repo.createArchivo(ctx, facturaId, fileData);
     }
 
-    async listArchivos(tenantId, facturaId) {
+    async listArchivos(ctx, facturaId) {
         // Verificar factura existe
-        const factura = await repo.getFacturaById(tenantId, facturaId);
+        const factura = await repo.getFacturaById(ctx, facturaId);
         if (!factura) {
             const error = new Error('Factura no encontrada');
             error.status = 404;
             throw error;
         }
 
-        return repo.listArchivosByFactura(facturaId);
+        return repo.listArchivosByFactura(ctx, facturaId);
     }
 
     // ===================================================================
     // PAGOS
     // ===================================================================
 
-    async registrarPago(tenantId, facturaId, data, userId) {
-        const factura = await repo.getFacturaById(tenantId, facturaId);
+    async registrarPago(ctx, facturaId, data) {
+        const factura = await repo.getFacturaById(ctx, facturaId);
         if (!factura) {
             const error = new Error('Factura no encontrada');
             error.status = 404;
@@ -205,22 +205,22 @@ class ContabilidadService {
             throw error;
         }
 
-        return repo.createPago(facturaId, data, userId);
+        return repo.createPago(ctx, facturaId, data);
     }
 
-    async listPagos(tenantId, facturaId) {
-        const factura = await repo.getFacturaById(tenantId, facturaId);
+    async listPagos(ctx, facturaId) {
+        const factura = await repo.getFacturaById(ctx, facturaId);
         if (!factura) {
             const error = new Error('Factura no encontrada');
             error.status = 404;
             throw error;
         }
 
-        return repo.listPagosByFactura(facturaId);
+        return repo.listPagosByFactura(ctx, facturaId);
     }
 
-    async eliminarPago(pagoId) {
-        const result = await repo.deletePago(pagoId);
+    async eliminarPago(ctx, pagoId) {
+        const result = await repo.deletePago(ctx, pagoId);
         if (!result) {
             const error = new Error('Pago no encontrado');
             error.status = 404;
@@ -233,52 +233,52 @@ class ContabilidadService {
     // CONTACTOS
     // ===================================================================
 
-    async listContactos(tenantId, filters) {
-        return repo.listContactos(tenantId, filters);
+    async listContactos(ctx, filters) {
+        return repo.listContactos(ctx, filters);
     }
 
-    async getContacto(tenantId, id) {
-        const contacto = await repo.getContactoById(tenantId, id);
+    async getContacto(ctx, id) {
+        const contacto = await repo.getContactoById(ctx, id);
         if (!contacto) {
-            const error = new Error('Contacto no encontrado');
+            const error = new Error('Contacto no encontrada');
             error.status = 404;
             throw error;
         }
         return contacto;
     }
 
-    async createContacto(tenantId, data, userId) {
-        return repo.createContacto(tenantId, data, userId);
+    async createContacto(ctx, data) {
+        return repo.createContacto(ctx, data);
     }
 
-    async updateContacto(tenantId, id, data, userId) {
-        const existing = await repo.getContactoById(tenantId, id);
+    async updateContacto(ctx, id, data) {
+        const existing = await repo.getContactoById(ctx, id);
         if (!existing) {
             const error = new Error('Contacto no encontrado');
             error.status = 404;
             throw error;
         }
-        return repo.updateContacto(tenantId, id, data, userId);
+        return repo.updateContacto(ctx, id, data);
     }
 
-    async deleteContacto(tenantId, id, userId) {
-        return repo.deleteContacto(tenantId, id, userId);
+    async deleteContacto(ctx, id) {
+        return repo.deleteContacto(ctx, id);
     }
 
     // ===================================================================
     // TRIMESTRES
     // ===================================================================
 
-    async listTrimestres(tenantId, filters) {
-        return repo.listTrimestres(tenantId, filters);
+    async listTrimestres(ctx, filters) {
+        return repo.listTrimestres(ctx, filters);
     }
 
-    async getTrimestre(tenantId, empresaId, anio, trimestre) {
+    async getTrimestre(ctx, empresaId, anio, trimestre) {
         // Obtener o crear trimestre
-        let tri = await repo.getTrimestreByPeriod(tenantId, anio, trimestre);
+        let tri = await repo.getTrimestreByPeriod(ctx, anio, trimestre);
 
         // Calcular datos en vivo
-        const resumen = await repo.getResumenIVA(tenantId, empresaId, anio, trimestre);
+        const resumen = await repo.getResumenIVA(ctx, empresaId, anio, trimestre);
 
         return {
             ...tri,
@@ -286,9 +286,9 @@ class ContabilidadService {
         };
     }
 
-    async cerrarTrimestre(tenantId, anio, trimestre, userId) {
+    async cerrarTrimestre(ctx, anio, trimestre) {
         // Calcular resumen
-        const resumen = await repo.getResumenIVA(tenantId, anio, trimestre);
+        const resumen = await repo.getResumenIVA(ctx, null, anio, trimestre);
 
         const data = {
             estado: 'CERRADO',
@@ -299,54 +299,54 @@ class ContabilidadService {
             resultado_iva: resumen.resultado
         };
 
-        return repo.createOrUpdateTrimestre(tenantId, anio, trimestre, data, userId);
+        return repo.createOrUpdateTrimestre(ctx, anio, trimestre, data);
     }
 
-    async reabrirTrimestre(tenantId, anio, trimestre, reason, userId) {
-        const existing = await repo.getTrimestreByPeriod(tenantId, anio, trimestre);
+    async reabrirTrimestre(ctx, anio, trimestre, reason) {
+        const existing = await repo.getTrimestreByPeriod(ctx, anio, trimestre);
         if (!existing || existing.estado === 'ABIERTO') {
             const error = new Error('El trimestre no está cerrado');
             error.status = 400;
             throw error;
         }
 
-        return repo.reabrirTrimestre(tenantId, anio, trimestre, reason, userId);
+        return repo.reabrirTrimestre(ctx, anio, trimestre, reason);
     }
 
     // ===================================================================
     // CATEGORÍAS
     // ===================================================================
 
-    async listCategorias(tenantId, filters) {
-        return repo.listCategorias(tenantId, filters);
+    async listCategorias(ctx, filters) {
+        return repo.listCategorias(ctx, filters);
     }
 
-    async createCategoria(tenantId, data, userId) {
-        return repo.createCategoria(tenantId, data, userId);
+    async createCategoria(ctx, data) {
+        return repo.createCategoria(ctx, data);
     }
 
-    async updateCategoria(tenantId, id, data) {
-        return repo.updateCategoria(tenantId, id, data);
+    async updateCategoria(ctx, id, data) {
+        return repo.updateCategoria(ctx, id, data);
     }
 
-    async deleteCategoria(tenantId, id) {
-        return repo.deleteCategoria(tenantId, id);
+    async deleteCategoria(ctx, id) {
+        return repo.deleteCategoria(ctx, id);
     }
 
     // ===================================================================
     // DASHBOARD / REPORTS
     // ===================================================================
 
-    async getDashboard(tenantId, empresaId, anio, trimestre) {
-        return repo.getDashboardKPIs(tenantId, empresaId, anio, trimestre);
+    async getDashboard(ctx, empresaId, anio, trimestre) {
+        return repo.getDashboardKPIs(ctx, empresaId, anio, trimestre);
     }
 
-    async getReporteIVA(tenantId, empresaId, anio, trimestre) {
-        return repo.getResumenIVA(tenantId, empresaId, anio, trimestre);
+    async getReporteIVA(ctx, empresaId, anio, trimestre) {
+        return repo.getResumenIVA(ctx, empresaId, anio, trimestre);
     }
 
-    async getGastosPorCategoria(tenantId, empresaId, fechaDesde, fechaHasta) {
-        return repo.getGastosPorCategoria(tenantId, empresaId, fechaDesde, fechaHasta);
+    async getGastosPorCategoria(ctx, empresaId, fechaDesde, fechaHasta) {
+        return repo.getGastosPorCategoria(ctx, empresaId, fechaDesde, fechaHasta);
     }
 }
 

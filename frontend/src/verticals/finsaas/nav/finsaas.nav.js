@@ -16,6 +16,14 @@ export const finSaaSNav = [
         order: 1
     },
     {
+        id: 'copiloto-ia',
+        label: 'Copiloto IA',
+        route: '/src/verticals/finsaas/pages/copiloto-resumen.html',
+        icon: 'psychology',
+        order: 1.5,
+        badge: 'IA'
+    },
+    {
         id: 'operaciones',
         label: 'Operaciones',
         type: 'section'

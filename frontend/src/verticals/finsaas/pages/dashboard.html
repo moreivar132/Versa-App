@@ -245,7 +245,7 @@
                 const res = await apiGet('/api/contabilidad/empresas');
                 const select = document.getElementById('empresa-selector');
                 select.innerHTML = '';
-                if (res.data && res.data.items) {
+                if (res.data && res.data.items && res.data.items.length > 0) {
                     res.data.items.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.id;
@@ -253,23 +253,37 @@
                         select.appendChild(opt);
                     });
 
-                    const stored = localStorage.getItem('filsaas_current_empresa');
+                    const stored = localStorage.getItem('finsaas_current_empresa');
                     if (stored && res.data.items.find(e => e.id == stored)) {
                         currentEmpresaId = stored;
                         select.value = stored;
                     } else if (res.data.items.length > 0) {
                         currentEmpresaId = res.data.items[0].id;
                         select.value = currentEmpresaId;
+                        localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
                     }
 
-                    loadDashboardStats();
+                    // Only load dashboard if we have a valid empresa
+                    if (currentEmpresaId) {
+                        loadDashboardStats();
+                    }
+                    
                     select.addEventListener('change', (e) => {
                         currentEmpresaId = e.target.value;
-                        localStorage.setItem('filsaas_current_empresa', currentEmpresaId);
+                        if (currentEmpresaId) {
+                            localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
+                        }
                         loadDashboardStats();
                     });
-                } else select.innerHTML = '<option value="">Sin empresas</option>';
-            } catch (e) { }
+                } else {
+                    select.innerHTML = '<option value="">Sin empresas</option>';
+                    // Show empty state
+                    loadDashboardStats(); // This will show zeros
+                }
+            } catch (e) {
+                console.error('[FinSaaS] Error loading empresas:', e);
+                document.getElementById('empresa-selector').innerHTML = '<option value="">Error cargando empresas</option>';
+            }
         }
 
         async function loadDashboardStats() {

@@ -4,17 +4,27 @@
  */
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
-const verifyJWT = require('../middleware/auth');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
-router.use(verifyJWT);
+// Middleware para inyectar db en req
+router.use((req, res, next) => {
+    if (req.ctx) {
+        req.db = getTenantDb(req.ctx);
+    }
+    next();
+});
+
+const pool = {
+    query: (sql, params) => {
+        throw new Error('Uso directo de pool detectado en caja.js. Usa req.db.query instead.');
+    }
+};
 
 const formatCurrency = (value) => parseFloat(value || 0).toFixed(2);
 
 // Obtener o crear caja abierta para sucursal
-async function getCajaAbierta(idSucursal, idUsuario, client = null) {
-    const executor = client || pool;
-    let result = await executor.query(
+async function getCajaAbierta(db, idSucursal, idUsuario) {
+    let result = await db.query(
         `SELECT c.*, u.nombre as usuario_apertura_nombre 
          FROM caja c 
          LEFT JOIN usuario u ON c.id_usuario_apertura = u.id 
@@ -24,25 +34,24 @@ async function getCajaAbierta(idSucursal, idUsuario, client = null) {
     );
     if (result.rows.length > 0) return result.rows[0];
     // Crear nueva caja abierta
-    const insertResult = await executor.query(
+    const insertResult = await db.query(
         `INSERT INTO caja (id_sucursal, nombre, estado, id_usuario_apertura, created_by, created_at, updated_at)
          VALUES ($1, 'Caja Principal', 'ABIERTA', $2, $2, NOW(), NOW()) RETURNING *`,
         [idSucursal, idUsuario]
     );
     // Obtener nombre del usuario
     if (idUsuario) {
-        const userResult = await executor.query('SELECT nombre FROM usuario WHERE id = $1', [idUsuario]);
+        const userResult = await db.query('SELECT nombre FROM usuario WHERE id = $1', [idUsuario]);
         insertResult.rows[0].usuario_apertura_nombre = userResult.rows[0]?.nombre || 'Usuario';
     }
     return insertResult.rows[0];
 }
 
 // Obtener o crear caja chica para sucursal
-async function getCajaChica(idSucursal, client = null) {
-    const executor = client || pool;
-    let result = await executor.query(`SELECT * FROM cajachica WHERE id_sucursal = $1 LIMIT 1`, [idSucursal]);
+async function getCajaChica(db, idSucursal) {
+    let result = await db.query(`SELECT * FROM cajachica WHERE id_sucursal = $1 LIMIT 1`, [idSucursal]);
     if (result.rows.length > 0) return result.rows[0];
-    const insertResult = await executor.query(
+    const insertResult = await db.query(
         `INSERT INTO cajachica (id_sucursal, nombre, saldo_actual, created_at, updated_at) 
          VALUES ($1, 'Caja Chica', 0, NOW(), NOW()) RETURNING *`,
         [idSucursal]
@@ -61,7 +70,7 @@ function puedeSeleccionarSucursal(user) {
 }
 
 // Helper: Resolver id_sucursal según permisos del usuario
-async function resolverSucursal(req) {
+async function resolverSucursal(db, req) {
     // EMPLEADOS/MECÁNICOS: siempre usar su sucursal asignada, ignorar query/body
     if (req.user.id_sucursal && !req.user.is_super_admin) {
         return req.user.id_sucursal;
@@ -78,16 +87,16 @@ async function resolverSucursal(req) {
         return req.user.id_sucursal;
     }
 
-    // Super admin: buscar primera sucursal disponible
+    // Super admin: buscar primera sucursal disponible (o la del tenant si hay contexto)
     if (req.user.is_super_admin) {
-        const result = await pool.query('SELECT id FROM sucursal ORDER BY id LIMIT 1');
+        const result = await db.query('SELECT id FROM sucursal ORDER BY id LIMIT 1');
         if (result.rows.length > 0) return result.rows[0].id;
         return null;
     }
 
     // Usuario de tenant: buscar primera sucursal de su tenant
     if (req.user.id_tenant) {
-        const result = await pool.query('SELECT id FROM sucursal WHERE id_tenant = $1 ORDER BY id LIMIT 1', [req.user.id_tenant]);
+        const result = await db.query('SELECT id FROM sucursal WHERE id_tenant = $1 ORDER BY id LIMIT 1', [req.user.id_tenant]);
         if (result.rows.length > 0) return result.rows[0].id;
         return null;
     }
@@ -104,16 +113,16 @@ router.get('/sucursales', async (req, res) => {
 
         if (req.user.is_super_admin) {
             // Super admin: todas las sucursales
-            const result = await pool.query('SELECT s.id, s.nombre, t.nombre as tenant_nombre FROM sucursal s LEFT JOIN tenant t ON s.id_tenant = t.id ORDER BY t.nombre, s.nombre');
+            const result = await req.db.query('SELECT s.id, s.nombre, t.nombre as tenant_nombre FROM sucursal s LEFT JOIN tenant t ON s.id_tenant = t.id ORDER BY t.nombre, s.nombre');
             sucursales = result.rows;
         } else if (req.user.id_sucursal) {
             // Empleado con sucursal fija: solo su sucursal
-            const result = await pool.query('SELECT s.id, s.nombre, t.nombre as tenant_nombre FROM sucursal s LEFT JOIN tenant t ON s.id_tenant = t.id WHERE s.id = $1', [req.user.id_sucursal]);
+            const result = await req.db.query('SELECT s.id, s.nombre, t.nombre as tenant_nombre FROM sucursal s LEFT JOIN tenant t ON s.id_tenant = t.id WHERE s.id = $1', [req.user.id_sucursal]);
             sucursales = result.rows;
             sucursalActual = req.user.id_sucursal;
         } else if (req.user.id_tenant) {
             // Admin de tenant: sucursales de su tenant
-            const result = await pool.query('SELECT s.id, s.nombre, t.nombre as tenant_nombre FROM sucursal s LEFT JOIN tenant t ON s.id_tenant = t.id WHERE s.id_tenant = $1 ORDER BY s.nombre', [req.user.id_tenant]);
+            const result = await req.db.query('SELECT s.id, s.nombre, t.nombre as tenant_nombre FROM sucursal s LEFT JOIN tenant t ON s.id_tenant = t.id WHERE s.id_tenant = $1 ORDER BY s.nombre', [req.user.id_tenant]);
             sucursales = result.rows;
             // Si solo hay una, no puede seleccionar
             if (sucursales.length <= 1) puedeSeleccionar = false;
@@ -140,7 +149,7 @@ router.get('/sucursales', async (req, res) => {
 router.get('/verificar-fondos', async (req, res) => {
     try {
         const { monto, idsucursal } = req.query;
-        const idSucursal = idsucursal || await resolverSucursal(req);
+        const idSucursal = idsucursal || await resolverSucursal(req.db, req);
 
         if (!idSucursal) {
             return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
@@ -149,7 +158,7 @@ router.get('/verificar-fondos', async (req, res) => {
         const montoRequerido = parseFloat(monto) || 0;
 
         // Obtener caja abierta
-        const cajaResult = await pool.query(
+        const cajaResult = await req.db.query(
             `SELECT * FROM caja WHERE id_sucursal = $1 AND estado = 'ABIERTA' LIMIT 1`,
             [idSucursal]
         );
@@ -168,7 +177,7 @@ router.get('/verificar-fondos', async (req, res) => {
         const caja = cajaResult.rows[0];
 
         // Calcular efectivo disponible (igual que en estado-actual)
-        const totalesPagoResult = await pool.query(`
+        const totalesPagoResult = await req.db.query(`
             SELECT mp.codigo, COALESCE(SUM(op.importe), 0) as total
             FROM ordenpago op 
             JOIN mediopago mp ON op.id_medio_pago = mp.id
@@ -178,7 +187,7 @@ router.get('/verificar-fondos', async (req, res) => {
         const efectivoPagos = parseFloat(totalesPagoResult.rows[0]?.total) || 0;
 
         // Movimientos manuales
-        const movResult = await pool.query(`
+        const movResult = await req.db.query(`
             SELECT tipo, COALESCE(SUM(monto), 0) as total 
             FROM cajamovimiento WHERE id_caja = $1 GROUP BY tipo
         `, [caja.id]);
@@ -191,7 +200,7 @@ router.get('/verificar-fondos', async (req, res) => {
         // Compras en efectivo ya realizadas
         let comprasEfectivo = 0;
         try {
-            const comprasResult = await pool.query(`
+            const comprasResult = await req.db.query(`
                 SELECT COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo
                 FROM compracabecera 
                 WHERE id_sucursal = $1 AND created_at >= $2
@@ -200,7 +209,7 @@ router.get('/verificar-fondos', async (req, res) => {
         } catch (e) { /* tabla puede no existir */ }
 
         // Saldo inicial del último cierre
-        const ultimoCierreResult = await pool.query(
+        const ultimoCierreResult = await req.db.query(
             `SELECT saldo_real FROM cajacierre WHERE id_caja = $1 ORDER BY fecha DESC LIMIT 1`,
             [caja.id]
         );
@@ -236,13 +245,13 @@ router.get('/verificar-fondos', async (req, res) => {
 // GET /api/caja/estado-actual
 router.get('/estado-actual', async (req, res) => {
     try {
-        const idSucursal = await resolverSucursal(req);
+        const idSucursal = await resolverSucursal(req.db, req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'No se encontró sucursal asignada. Configure una sucursal para el usuario.' });
 
-        const caja = await getCajaAbierta(idSucursal, req.user.id);
+        const caja = await getCajaAbierta(req.db, idSucursal, req.user.id);
 
         // Totales por método de pago desde ordenpago
-        const totalesPagoResult = await pool.query(`
+        const totalesPagoResult = await req.db.query(`
             SELECT mp.codigo, mp.nombre, COALESCE(SUM(op.importe), 0) as total
             FROM ordenpago op 
             JOIN mediopago mp ON op.id_medio_pago = mp.id
@@ -252,7 +261,7 @@ router.get('/estado-actual', async (req, res) => {
 
         // Movimientos de caja - separados por método de pago
         // EXCLUIR origen_tipo = 'ORDEN_PAGO' porque esos ya se cuentan en efectivoPagos
-        const movimientosResult = await pool.query(`
+        const movimientosResult = await req.db.query(`
             SELECT 
                 cm.tipo,
                 COALESCE(SUM(CASE WHEN mp.codigo = 'CASH' OR mp.codigo IS NULL THEN cm.monto ELSE 0 END), 0) as total_efectivo,
@@ -280,7 +289,7 @@ router.get('/estado-actual', async (req, res) => {
         const tarjetaPagos = totalesPagoResult.rows.filter(r => r.codigo !== 'CASH').reduce((s, r) => s + parseFloat(r.total), 0);
 
         // El saldo de apertura viene del último cierre o es 0
-        const ultimoCierreResult = await pool.query(
+        const ultimoCierreResult = await req.db.query(
             `SELECT saldo_real FROM cajacierre WHERE id_caja = $1 ORDER BY fecha DESC LIMIT 1`,
             [caja.id]
         );
@@ -290,7 +299,7 @@ router.get('/estado-actual', async (req, res) => {
         // Movida ANTES del cálculo del efectivo esperado
         let comprasData = { efectivo: 0, tarjeta: 0, total: 0 };
         try {
-            const comprasResult = await pool.query(`
+            const comprasResult = await req.db.query(`
                 SELECT 
                     COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo,
                     COALESCE(SUM(CASE WHEN LOWER(metodo_pago) NOT IN ('efectivo', 'cash') AND metodo_pago IS NOT NULL THEN total ELSE 0 END), 0) as tarjeta,
@@ -315,7 +324,7 @@ router.get('/estado-actual', async (req, res) => {
         const efectivoEsperado = parseFloat(saldoApertura) + efectivoPagos + totalIngresosEfectivo - egresosEfectivoTotal;
 
         // Detalle de operaciones - Total de ÓRDENES (sin agrupar por tipo)
-        const ordenesTotalResult = await pool.query(`
+        const ordenesTotalResult = await req.db.query(`
             SELECT 
                 COALESCE(SUM(CASE WHEN mp.codigo = 'CASH' THEN op.importe ELSE 0 END), 0) as efectivo,
                 COALESCE(SUM(CASE WHEN mp.codigo != 'CASH' THEN op.importe ELSE 0 END), 0) as tarjeta,
@@ -328,7 +337,7 @@ router.get('/estado-actual', async (req, res) => {
         const ordenesData = ordenesTotalResult.rows[0] || { efectivo: 0, tarjeta: 0, total: 0 };
 
         // Movimientos manuales de caja (ingresos/egresos)
-        const movimientosCajaDetalle = await pool.query(`
+        const movimientosCajaDetalle = await req.db.query(`
             SELECT 
                 tipo,
                 COALESCE(SUM(monto), 0) as total
@@ -366,7 +375,7 @@ router.get('/estado-actual', async (req, res) => {
 
         // Cobros de Cuentas Corrientes - movimientos con origen_tipo = 'CUENTA_CORRIENTE'
         // Ahora separamos por método de pago (efectivo vs tarjeta/transferencia)
-        const cuentasCorrientesResult = await pool.query(`
+        const cuentasCorrientesResult = await req.db.query(`
             SELECT 
                 COALESCE(SUM(CASE WHEN tipo = 'INGRESO' AND (mp.codigo = 'CASH' OR mp.codigo IS NULL) THEN cm.monto ELSE 0 END), 0) as ingresos_efectivo,
                 COALESCE(SUM(CASE WHEN tipo = 'INGRESO' AND mp.codigo IN ('CARD', 'TRANSFER') THEN cm.monto ELSE 0 END), 0) as ingresos_tarjeta,
@@ -392,7 +401,7 @@ router.get('/estado-actual', async (req, res) => {
         }
 
         // Agregar movimientos manuales (excluyendo CC, Pago Trabajadores y otros orígenes especiales)
-        const movimientosManualesResult = await pool.query(`
+        const movimientosManualesResult = await req.db.query(`
             SELECT 
                 tipo,
                 COALESCE(SUM(monto), 0) as total
@@ -426,7 +435,7 @@ router.get('/estado-actual', async (req, res) => {
         }
 
         // Pagos a trabajadores - Obtener desde cajamovimiento con origen_tipo = 'PAGO_TRABAJADOR'
-        const pagosTrabajadoresResult = await pool.query(`
+        const pagosTrabajadoresResult = await req.db.query(`
             SELECT COALESCE(SUM(monto), 0) as total
             FROM cajamovimiento 
             WHERE id_caja = $1 AND origen_tipo = 'PAGO_TRABAJADOR'
@@ -443,10 +452,10 @@ router.get('/estado-actual', async (req, res) => {
             });
         }
 
-        const cajaChica = await getCajaChica(idSucursal);
+        const cajaChica = await getCajaChica(req.db, idSucursal);
 
         // Obtener nombre de sucursal y calcular código de caja
-        const sucursalResult = await pool.query('SELECT nombre FROM sucursal WHERE id = $1', [idSucursal]);
+        const sucursalResult = await req.db.query('SELECT nombre FROM sucursal WHERE id = $1', [idSucursal]);
         const nombreSucursal = sucursalResult.rows[0]?.nombre || 'Principal';
 
         // Generar código corto de sucursal (primeras letras de cada palabra, máx 3 caracteres)
@@ -457,7 +466,7 @@ router.get('/estado-actual', async (req, res) => {
             .substring(0, 4);
 
         // Calcular número secuencial de caja para esta sucursal
-        const secuencialResult = await pool.query(
+        const secuencialResult = await req.db.query(
             'SELECT COUNT(*) as total FROM caja WHERE id_sucursal = $1 AND id <= $2',
             [idSucursal, caja.id]
         );
@@ -466,11 +475,11 @@ router.get('/estado-actual', async (req, res) => {
 
         // === INFORMACIÓN DE AUDITORÍA ===
         // Obtener nombre del usuario actual (el que está consultando)
-        const usuarioActualResult = await pool.query('SELECT nombre FROM usuario WHERE id = $1', [req.user.id]);
+        const usuarioActualResult = await req.db.query('SELECT nombre FROM usuario WHERE id = $1', [req.user.id]);
         const usuarioActualNombre = usuarioActualResult.rows[0]?.nombre || 'Usuario';
 
         // Último movimiento de caja (ingreso/egreso manual)
-        const ultimoMovResult = await pool.query(`
+        const ultimoMovResult = await req.db.query(`
             SELECT cm.*, u.nombre as usuario_nombre 
             FROM cajamovimiento cm 
             LEFT JOIN usuario u ON cm.id_usuario = u.id 
@@ -480,7 +489,7 @@ router.get('/estado-actual', async (req, res) => {
         const ultimoMovimiento = ultimoMovResult.rows[0] || null;
 
         // Último pago registrado (de órdenes)
-        const ultimoPagoResult = await pool.query(`
+        const ultimoPagoResult = await req.db.query(`
             SELECT op.*, u.nombre as usuario_nombre, mp.nombre as medio_pago_nombre
             FROM ordenpago op 
             LEFT JOIN usuario u ON op.created_by = u.id 
@@ -549,7 +558,7 @@ router.get('/estado-actual', async (req, res) => {
 router.get('/movimientos', async (req, res) => {
     try {
         const { tipo, fecha_desde, fecha_hasta, buscar, page = 1, limit = 20 } = req.query;
-        const idSucursal = await resolverSucursal(req);
+        const idSucursal = await resolverSucursal(req.db, req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
         const offset = (page - 1) * limit;
 
@@ -571,13 +580,13 @@ router.get('/movimientos', async (req, res) => {
             pi++;
         }
 
-        const countResult = await pool.query(
+        const countResult = await req.db.query(
             query.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM'),
             params
         );
         query += ` ORDER BY cm.fecha DESC LIMIT $${pi++} OFFSET $${pi++}`;
         params.push(parseInt(limit), parseInt(offset));
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         res.json({
             ok: true,
@@ -629,13 +638,13 @@ router.post('/movimientos', async (req, res) => {
         const montoNum = parseFloat(monto);
 
         // Obtener caja abierta
-        const caja = await getCajaAbierta(idSucursal, idUsuario);
+        const caja = await getCajaAbierta(req.db, idSucursal, idUsuario);
         if (!caja) {
             return res.status(400).json({ ok: false, error: 'No hay caja abierta para esta sucursal' });
         }
 
         // Insertar movimiento
-        const result = await pool.query(`
+        const result = await req.db.query(`
             INSERT INTO cajamovimiento (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, concepto, descripcion, created_at)
             VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, NOW())
             RETURNING *
@@ -662,7 +671,7 @@ router.post('/movimientos', async (req, res) => {
 router.get('/cierres', async (req, res) => {
     try {
         const { fecha_desde, fecha_hasta, buscar, page = 1, limit = 20 } = req.query;
-        const idSucursal = await resolverSucursal(req);
+        const idSucursal = await resolverSucursal(req.db, req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
 
         // Construir query con filtros
@@ -687,7 +696,7 @@ router.get('/cierres', async (req, res) => {
         }
 
         // Obtener cierres con el total facturado (suma de pagos en ordenpago)
-        const result = await pool.query(`
+        const result = await req.db.query(`
             SELECT cc.id, cc.fecha, cc.saldo_inicial, cc.saldo_teorico, cc.saldo_real, cc.diferencia,
                    c.nombre as caja_nombre, u.nombre as usuario_cierre,
                    COALESCE((SELECT SUM(op.importe) FROM ordenpago op WHERE op.id_caja = c.id), 0) as total_facturado
@@ -699,7 +708,7 @@ router.get('/cierres', async (req, res) => {
             LIMIT $${pi++} OFFSET $${pi++}
         `, [...params, parseInt(limit), (page - 1) * limit]);
 
-        const countResult = await pool.query(
+        const countResult = await req.db.query(
             `SELECT COUNT(*) as total FROM cajacierre cc JOIN caja c ON cc.id_caja = c.id ${whereClause}`,
             params
         );
@@ -734,7 +743,7 @@ router.get('/cierres', async (req, res) => {
 router.get('/cierres/:id', async (req, res) => {
     try {
         // Obtener cierre con información de caja y usuarios
-        const result = await pool.query(`
+        const result = await req.db.query(`
             SELECT cc.*, 
                    c.nombre as caja_nombre, 
                    c.id_sucursal,
@@ -753,12 +762,12 @@ router.get('/cierres/:id', async (req, res) => {
         const cierre = result.rows[0];
 
         // Obtener la caja asociada para consultar la fecha de apertura
-        const cajaResult = await pool.query('SELECT created_at, id_sucursal FROM caja WHERE id = $1', [cierre.id_caja]);
+        const cajaResult = await req.db.query('SELECT created_at, id_sucursal FROM caja WHERE id = $1', [cierre.id_caja]);
         const cajaData = cajaResult.rows[0] || {};
 
         // Obtener totales de ingresos y egresos del periodo (movimientos manuales)
         // EXCLUIR ORDEN_PAGO porque esos ya se cuentan en el desglose de pagos
-        const movimientosResult = await pool.query(`
+        const movimientosResult = await req.db.query(`
             SELECT 
                 COALESCE(SUM(CASE WHEN tipo = 'INGRESO' THEN monto ELSE 0 END), 0) as total_ingresos,
                 COALESCE(SUM(CASE WHEN tipo = 'EGRESO' THEN monto ELSE 0 END), 0) as total_egresos
@@ -770,7 +779,7 @@ router.get('/cierres/:id', async (req, res) => {
         // Obtener compras en efectivo del periodo (CRUCIAL - esto faltaba en el detalle)
         let comprasEfectivo = 0;
         try {
-            const comprasResult = await pool.query(`
+            const comprasResult = await req.db.query(`
                 SELECT COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo
                 FROM compracabecera 
                 WHERE id_sucursal = $1 AND created_at >= $2 AND created_at <= $3
@@ -781,7 +790,7 @@ router.get('/cierres/:id', async (req, res) => {
         }
 
         // Obtener desglose por forma de pago (pagos de órdenes en este cierre)
-        const desglosePagoResult = await pool.query(`
+        const desglosePagoResult = await req.db.query(`
             SELECT 
                 mp.nombre,
                 COALESCE(SUM(op.importe), 0) as total
@@ -793,7 +802,7 @@ router.get('/cierres/:id', async (req, res) => {
         `, [cierre.id_caja]);
 
         // Buscar si hubo envío a caja chica en este cierre
-        const cajaChicaMovResult = await pool.query(`
+        const cajaChicaMovResult = await req.db.query(`
             SELECT cm.monto, ccm.id as id_movimiento_caja_chica
             FROM cajamovimiento cm
             LEFT JOIN cajachicamovimiento ccm ON ccm.id_cajamovimiento = cm.id
@@ -846,189 +855,186 @@ router.get('/cierres/:id', async (req, res) => {
 
 // POST /api/caja/cerrar
 router.post('/cerrar', async (req, res) => {
-    const client = await pool.connect();
     try {
         const { saldo_real, a_caja_chica, apertura_siguiente, descripcion } = req.body;
-        const idSucursal = await resolverSucursal(req);
-        if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
         const idUsuario = req.user.id;
 
         if (saldo_real == null) return res.status(400).json({ ok: false, error: 'Saldo real (contado) es requerido' });
 
-        await client.query('BEGIN');
+        const result = await req.db.txWithRLS(async (tx) => {
+            const idSucursal = await resolverSucursal(tx, req);
+            if (!idSucursal) throw new Error('Sucursal no especificada');
 
-        const cajaResult = await client.query(
-            `SELECT * FROM caja WHERE id_sucursal = $1 AND estado = 'ABIERTA' LIMIT 1`,
-            [idSucursal]
-        );
-        if (cajaResult.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ ok: false, error: 'No hay caja abierta' });
-        }
-        const caja = cajaResult.rows[0];
+            const cajaResult = await tx.query(
+                `SELECT * FROM caja WHERE id_sucursal = $1 AND estado = 'ABIERTA' LIMIT 1`,
+                [idSucursal]
+            );
+            if (cajaResult.rows.length === 0) {
+                throw new Error('No hay caja abierta');
+            }
+            const caja = cajaResult.rows[0];
 
-        // Calcular saldo teórico
-        // EXCLUIR origen_tipo = 'ORDEN_PAGO' porque esos ya se cuentan en efectivoPagos
-        const movResult = await client.query(
-            `SELECT tipo, COALESCE(SUM(monto), 0) as total 
-             FROM cajamovimiento 
-             WHERE id_caja = $1 AND (origen_tipo IS NULL OR origen_tipo != 'ORDEN_PAGO')
-             GROUP BY tipo`,
-            [caja.id]
-        );
-        let totalIngresos = 0, totalEgresos = 0;
-        movResult.rows.forEach(r => {
-            if (r.tipo === 'INGRESO') totalIngresos += parseFloat(r.total);
-            else if (r.tipo === 'EGRESO') totalEgresos += parseFloat(r.total);
-        });
+            // Calcular saldo teórico
+            const movResult = await tx.query(
+                `SELECT tipo, COALESCE(SUM(monto), 0) as total 
+                 FROM cajamovimiento 
+                 WHERE id_caja = $1 AND (origen_tipo IS NULL OR origen_tipo != 'ORDEN_PAGO')
+                 GROUP BY tipo`,
+                [caja.id]
+            );
+            let totalIngresos = 0, totalEgresos = 0;
+            movResult.rows.forEach(r => {
+                if (r.tipo === 'INGRESO') totalIngresos += parseFloat(r.total);
+                else if (r.tipo === 'EGRESO') totalEgresos += parseFloat(r.total);
+            });
 
-        const efPagosResult = await client.query(`
-            SELECT COALESCE(SUM(op.importe), 0) as total 
-            FROM ordenpago op 
-            JOIN mediopago mp ON op.id_medio_pago = mp.id 
-            WHERE op.id_caja = $1 AND mp.codigo = 'CASH'
-        `, [caja.id]);
-        const efectivoPagos = parseFloat(efPagosResult.rows[0].total);
+            const efPagosResult = await tx.query(`
+                SELECT COALESCE(SUM(op.importe), 0) as total 
+                FROM ordenpago op 
+                JOIN mediopago mp ON op.id_medio_pago = mp.id 
+                WHERE op.id_caja = $1 AND mp.codigo = 'CASH'
+            `, [caja.id]);
+            const efectivoPagos = parseFloat(efPagosResult.rows[0].total);
 
-        // Obtener compras en efectivo del periodo
-        let comprasEfectivo = 0;
-        try {
-            const comprasResult = await client.query(`
-                SELECT COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo
-                FROM compracabecera 
-                WHERE id_sucursal = $1 AND created_at >= $2
-            `, [idSucursal, caja.created_at]);
-            comprasEfectivo = parseFloat(comprasResult.rows[0]?.efectivo) || 0;
-        } catch (e) {
-            console.warn('Error consultando compras en cierre:', e.message);
-        }
+            // Obtener compras en efectivo del periodo
+            let comprasEfectivo = 0;
+            try {
+                const comprasResult = await tx.query(`
+                    SELECT COALESCE(SUM(CASE WHEN LOWER(metodo_pago) IN ('efectivo', 'cash') THEN total ELSE 0 END), 0) as efectivo
+                    FROM compracabecera 
+                    WHERE id_sucursal = $1 AND created_at >= $2
+                `, [idSucursal, caja.created_at]);
+                comprasEfectivo = parseFloat(comprasResult.rows[0]?.efectivo) || 0;
+            } catch (e) {
+                console.warn('Error consultando compras en cierre:', e.message);
+            }
 
-        // Obtener saldo inicial del último cierre
-        const ultimoCierreResult = await client.query(
-            `SELECT saldo_real FROM cajacierre WHERE id_caja = $1 ORDER BY fecha DESC LIMIT 1`,
-            [caja.id]
-        );
-        const saldoInicial = parseFloat(ultimoCierreResult.rows[0]?.saldo_real || 0);
+            // Obtener saldo inicial del último cierre
+            const ultimoCierreResult = await tx.query(
+                `SELECT saldo_real FROM cajacierre WHERE id_caja = $1 ORDER BY fecha DESC LIMIT 1`,
+                [caja.id]
+            );
+            const saldoInicial = parseFloat(ultimoCierreResult.rows[0]?.saldo_real || 0);
 
-        // Saldo teórico = saldo inicial + ingresos en efectivo (pagos + movimientos) - egresos (movimientos + compras en efectivo)
-        const saldoTeorico = saldoInicial + efectivoPagos + totalIngresos - totalEgresos - comprasEfectivo;
-        const saldoRealNum = parseFloat(saldo_real);
-        const diferencia = saldoRealNum - saldoTeorico;
+            // Saldo teórico
+            const saldoTeorico = saldoInicial + efectivoPagos + totalIngresos - totalEgresos - comprasEfectivo;
+            const saldoRealNum = parseFloat(saldo_real);
+            const diferencia = saldoRealNum - saldoTeorico;
 
-        // Crear cierre
-        const cierreResult = await client.query(`
-            INSERT INTO cajacierre (id_caja, id_usuario, fecha, saldo_inicial, saldo_teorico, saldo_real, diferencia, created_at)
-            VALUES ($1, $2, NOW(), $3, $4, $5, $6, NOW()) RETURNING *
-        `, [caja.id, idUsuario, saldoInicial, saldoTeorico, saldoRealNum, diferencia]);
-
-        // Si hay envío a caja chica
-        const montoACajaChica = parseFloat(a_caja_chica) || 0;
-        if (montoACajaChica > 0) {
-            // Movimiento de egreso en caja
-            const movCaja = await client.query(`
-                INSERT INTO cajamovimiento (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, origen_id, created_at, created_by) 
-                VALUES ($1, $2, 'EGRESO', $3, NOW(), 'CIERRE', $4, NOW(), $2) RETURNING id
-            `, [caja.id, idUsuario, montoACajaChica, cierreResult.rows[0].id]);
-
-            // Movimiento en caja chica
-            const cajaChica = await getCajaChica(idSucursal, client);
-            await client.query(`
-                INSERT INTO cajachicamovimiento (id_cajachica, id_usuario, tipo, monto, fecha, descripcion, origen_tipo, origen_id, id_cajamovimiento, created_at, created_by) 
-                VALUES ($1, $2, 'INTERNO', $3, NOW(), $4, 'CIERRE', $5, $6, NOW(), $2)
-            `, [cajaChica.id, idUsuario, montoACajaChica, descripcion || 'Desde cierre de caja', cierreResult.rows[0].id, movCaja.rows[0].id]);
-
-            await client.query(`UPDATE cajachica SET saldo_actual = saldo_actual + $1, updated_at = NOW() WHERE id = $2`, [montoACajaChica, cajaChica.id]);
-        }
-
-        // Cerrar caja actual
-        await client.query(`UPDATE caja SET estado = 'CERRADA', updated_at = NOW() WHERE id = $1`, [caja.id]);
-
-        // Crear nueva caja abierta con saldo de apertura
-        const saldoAperturaNueva = parseFloat(apertura_siguiente) || 0;
-        const nuevaCajaResult = await client.query(`
-            INSERT INTO caja (id_sucursal, nombre, estado, id_usuario_apertura, created_at, created_by, updated_at) 
-            VALUES ($1, 'Caja Principal', 'ABIERTA', $2, NOW(), $2, NOW()) RETURNING id
-        `, [idSucursal, idUsuario]);
-
-        // Si hay saldo de apertura, registrar como cierre anterior con ese saldo
-        if (saldoAperturaNueva > 0) {
-            // Insertar un cierre "virtual" para la nueva caja con el saldo de apertura
-            await client.query(`
+            // Crear cierre
+            const cierreResult = await tx.query(`
                 INSERT INTO cajacierre (id_caja, id_usuario, fecha, saldo_inicial, saldo_teorico, saldo_real, diferencia, created_at)
-                VALUES ($1, $2, NOW(), 0, $3, $3, 0, NOW())
-            `, [nuevaCajaResult.rows[0].id, idUsuario, saldoAperturaNueva]);
-        }
+                VALUES ($1, $2, NOW(), $3, $4, $5, $6, NOW()) RETURNING *
+            `, [caja.id, idUsuario, saldoInicial, saldoTeorico, saldoRealNum, diferencia]);
 
-        await client.query('COMMIT');
-        res.json({
-            ok: true,
-            message: 'Caja cerrada correctamente',
-            cierre: {
+            // Si hay envío a caja chica
+            const montoACajaChica = parseFloat(a_caja_chica) || 0;
+            if (montoACajaChica > 0) {
+                const movCaja = await tx.query(`
+                    INSERT INTO cajamovimiento (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, origen_id, created_at, created_by) 
+                    VALUES ($1, $2, 'EGRESO', $3, NOW(), 'CIERRE', $4, NOW(), $2) RETURNING id
+                `, [caja.id, idUsuario, montoACajaChica, cierreResult.rows[0].id]);
+
+                const cajaChica = await getCajaChica(tx, idSucursal);
+                await tx.query(`
+                    INSERT INTO cajachicamovimiento (id_cajachica, id_usuario, tipo, monto, fecha, descripcion, origen_tipo, origen_id, id_cajamovimiento, created_at, created_by) 
+                    VALUES ($1, $2, 'INTERNO', $3, NOW(), $4, 'CIERRE', $5, $6, NOW(), $2)
+                `, [cajaChica.id, idUsuario, montoACajaChica, descripcion || 'Desde cierre de caja', cierreResult.rows[0].id, movCaja.rows[0].id]);
+
+                await tx.query(`UPDATE cajachica SET saldo_actual = saldo_actual + $1, updated_at = NOW() WHERE id = $2`, [montoACajaChica, cajaChica.id]);
+            }
+
+            // Cerrar caja actual
+            await tx.query(`UPDATE caja SET estado = 'CERRADA', updated_at = NOW() WHERE id = $1`, [caja.id]);
+
+            // Crear nueva caja
+            const saldoAperturaNueva = parseFloat(apertura_siguiente) || 0;
+            const nuevaCajaResult = await tx.query(`
+                INSERT INTO caja (id_sucursal, nombre, estado, id_usuario_apertura, created_at, created_by, updated_at) 
+                VALUES ($1, 'Caja Principal', 'ABIERTA', $2, NOW(), $2, NOW()) RETURNING id
+            `, [idSucursal, idUsuario]);
+
+            if (saldoAperturaNueva > 0) {
+                await tx.query(`
+                    INSERT INTO cajacierre (id_caja, id_usuario, fecha, saldo_inicial, saldo_teorico, saldo_real, diferencia, created_at)
+                    VALUES ($1, $2, NOW(), 0, $3, $3, 0, NOW())
+                `, [nuevaCajaResult.rows[0].id, idUsuario, saldoAperturaNueva]);
+            }
+
+            return {
                 id: cierreResult.rows[0].id,
                 saldo_teorico: formatCurrency(saldoTeorico),
                 saldo_real: formatCurrency(saldoRealNum),
                 diferencia: formatCurrency(diferencia)
-            }
+            };
+        });
+
+        res.json({
+            ok: true,
+            message: 'Caja cerrada correctamente',
+            cierre: result
         });
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error:', error);
-        res.status(500).json({ ok: false, error: 'Error interno', details: error.message });
-    } finally { client.release(); }
+        console.error('Error en cerrar caja:', error);
+        res.status(500).json({ ok: false, error: 'Error al cerrar caja', details: error.message });
+    }
 });
 
 // POST /api/caja/enviar-caja-chica
 router.post('/enviar-caja-chica', async (req, res) => {
-    const client = await pool.connect();
     try {
         const { monto, descripcion } = req.body;
-        const idSucursal = await resolverSucursal(req);
-        if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
         const idUsuario = req.user.id;
 
         if (!monto || parseFloat(monto) <= 0) return res.status(400).json({ ok: false, error: 'Monto debe ser mayor a 0' });
 
-        await client.query('BEGIN');
-        const caja = await getCajaAbierta(idSucursal, idUsuario, client);
-        const montoNum = parseFloat(monto);
+        const result = await req.db.txWithRLS(async (tx) => {
+            const idSucursal = await resolverSucursal(tx, req);
+            if (!idSucursal) throw new Error('Sucursal no especificada');
 
-        // Movimiento egreso en caja principal
-        const movCajaResult = await client.query(`
-            INSERT INTO cajamovimiento (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, created_at, created_by) 
-            VALUES ($1, $2, 'EGRESO', $3, NOW(), 'CAJA_CHICA', NOW(), $2) RETURNING id
-        `, [caja.id, idUsuario, montoNum]);
+            const caja = await getCajaAbierta(tx, idSucursal, idUsuario);
+            const montoNum = parseFloat(monto);
 
-        // Movimiento ingreso en caja chica
-        const cajaChica = await getCajaChica(idSucursal, client);
-        await client.query(`
-            INSERT INTO cajachicamovimiento (id_cajachica, id_usuario, tipo, monto, fecha, descripcion, origen_tipo, id_cajamovimiento, created_at, created_by) 
-            VALUES ($1, $2, 'INTERNO', $3, NOW(), $4, 'CAJA_PRINCIPAL', $5, NOW(), $2)
-        `, [cajaChica.id, idUsuario, montoNum, descripcion || 'Transferencia desde caja', movCajaResult.rows[0].id]);
+            // Movimiento egreso en caja principal
+            const movCajaResult = await tx.query(`
+                INSERT INTO cajamovimiento (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, created_at, created_by) 
+                VALUES ($1, $2, 'EGRESO', $3, NOW(), 'CAJA_CHICA', NOW(), $2) RETURNING id
+            `, [caja.id, idUsuario, montoNum]);
 
-        await client.query(`UPDATE cajachica SET saldo_actual = saldo_actual + $1, updated_at = NOW() WHERE id = $2`, [montoNum, cajaChica.id]);
+            // Movimiento ingreso en caja chica
+            const cajaChica = await getCajaChica(tx, idSucursal);
+            await tx.query(`
+                INSERT INTO cajachicamovimiento (id_cajachica, id_usuario, tipo, monto, fecha, descripcion, origen_tipo, id_cajamovimiento, created_at, created_by) 
+                VALUES ($1, $2, 'INTERNO', $3, NOW(), $4, 'CAJA_PRINCIPAL', $5, NOW(), $2)
+            `, [cajaChica.id, idUsuario, montoNum, descripcion || 'Transferencia desde caja', movCajaResult.rows[0].id]);
 
-        await client.query('COMMIT');
+            await tx.query(`UPDATE cajachica SET saldo_actual = saldo_actual + $1, updated_at = NOW() WHERE id = $2`, [montoNum, cajaChica.id]);
+
+            return {
+                monto: formatCurrency(montoNum),
+                nuevo_saldo: formatCurrency(parseFloat(cajaChica.saldo_actual) + montoNum)
+            };
+        });
+
         res.json({
             ok: true,
             message: 'Transferencia realizada',
-            monto: formatCurrency(montoNum),
-            nuevo_saldo: formatCurrency(parseFloat(cajaChica.saldo_actual) + montoNum)
+            ...result
         });
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error:', error);
-        res.status(500).json({ ok: false, error: 'Error interno' });
-    } finally { client.release(); }
+        console.error('Error en enviar-caja-chica:', error);
+        res.status(500).json({ ok: false, error: 'Error interno', details: error.message });
+    }
 });
 
 // GET /api/caja/chica/estado
 router.get('/chica/estado', async (req, res) => {
     try {
-        const idSucursal = await resolverSucursal(req);
+        const idSucursal = await resolverSucursal(req.db, req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
-        const cajaChica = await getCajaChica(idSucursal);
+        const cajaChica = await getCajaChica(req.db, idSucursal);
 
-        const ultimoMovResult = await pool.query(`
+        const ultimoMovResult = await req.db.query(`
             SELECT ccm.*, u.nombre as usuario 
             FROM cajachicamovimiento ccm 
             LEFT JOIN usuario u ON ccm.id_usuario = u.id 
@@ -1055,9 +1061,9 @@ router.get('/chica/estado', async (req, res) => {
 router.get('/chica/movimientos', async (req, res) => {
     try {
         const { tipo, fecha_desde, fecha_hasta, buscar, page = 1, limit = 20 } = req.query;
-        const idSucursal = await resolverSucursal(req);
+        const idSucursal = await resolverSucursal(req.db, req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
-        const cajaChica = await getCajaChica(idSucursal);
+        const cajaChica = await getCajaChica(req.db, idSucursal);
 
         let query = `
             SELECT ccm.id, ccm.tipo, ccm.monto, ccm.fecha, ccm.descripcion, ccm.origen_tipo, u.nombre as usuario 
@@ -1076,13 +1082,13 @@ router.get('/chica/movimientos', async (req, res) => {
             pi++;
         }
 
-        const countResult = await pool.query(
+        const countResult = await req.db.query(
             query.replace(/SELECT[\s\S]*?FROM/, 'SELECT COUNT(*) as total FROM'),
             params
         );
         query += ` ORDER BY ccm.fecha DESC LIMIT $${pi++} OFFSET $${pi++}`;
         params.push(parseInt(limit), (page - 1) * limit);
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         res.json({
             ok: true,
@@ -1108,43 +1114,48 @@ router.get('/chica/movimientos', async (req, res) => {
 
 // POST /api/caja/chica/movimientos
 router.post('/chica/movimientos', async (req, res) => {
-    const client = await pool.connect();
     try {
         const { tipo, monto, descripcion } = req.body;
-        const idSucursal = await resolverSucursal(req);
-        if (!idSucursal) return res.status(400).json({ ok: false, error: 'Sucursal no especificada' });
         const idUsuario = req.user.id;
 
         if (!tipo || !['INGRESO', 'EGRESO'].includes(tipo)) return res.status(400).json({ ok: false, error: 'Tipo inválido' });
         if (!monto || parseFloat(monto) <= 0) return res.status(400).json({ ok: false, error: 'Monto debe ser mayor a 0' });
         if (tipo === 'EGRESO' && !descripcion) return res.status(400).json({ ok: false, error: 'Descripción obligatoria para egresos' });
 
-        await client.query('BEGIN');
-        const cajaChica = await getCajaChica(idSucursal, client);
-        const montoNum = parseFloat(monto);
+        const result = await req.db.txWithRLS(async (tx) => {
+            const idSucursal = await resolverSucursal(tx, req);
+            if (!idSucursal) throw new Error('Sucursal no especificada');
 
-        if (tipo === 'EGRESO' && montoNum > parseFloat(cajaChica.saldo_actual)) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({ ok: false, error: 'Saldo insuficiente' });
-        }
+            const cajaChica = await getCajaChica(tx, idSucursal);
+            const montoNum = parseFloat(monto);
 
-        await client.query(`
-            INSERT INTO cajachicamovimiento (id_cajachica, id_usuario, tipo, monto, fecha, descripcion, origen_tipo, created_at, created_by) 
-            VALUES ($1, $2, $3, $4, NOW(), $5, 'MANUAL', NOW(), $2)
-        `, [cajaChica.id, idUsuario, tipo, montoNum, descripcion]);
+            if (tipo === 'EGRESO' && montoNum > parseFloat(cajaChica.saldo_actual)) {
+                throw new Error('Saldo insuficiente en caja chica');
+            }
 
-        const nuevoSaldo = tipo === 'INGRESO'
-            ? parseFloat(cajaChica.saldo_actual) + montoNum
-            : parseFloat(cajaChica.saldo_actual) - montoNum;
-        await client.query(`UPDATE cajachica SET saldo_actual = $1, updated_at = NOW() WHERE id = $2`, [nuevoSaldo, cajaChica.id]);
+            await tx.query(`
+                INSERT INTO cajachicamovimiento (id_cajachica, id_usuario, tipo, monto, fecha, descripcion, origen_tipo, created_at, created_by) 
+                VALUES ($1, $2, $3, $4, NOW(), $5, 'MANUAL', NOW(), $2)
+            `, [cajaChica.id, idUsuario, tipo, montoNum, descripcion]);
 
-        await client.query('COMMIT');
-        res.json({ ok: true, message: 'Movimiento registrado', nuevo_saldo: formatCurrency(nuevoSaldo) });
+            const nuevoSaldo = tipo === 'INGRESO'
+                ? parseFloat(cajaChica.saldo_actual) + montoNum
+                : parseFloat(cajaChica.saldo_actual) - montoNum;
+
+            await tx.query(`UPDATE cajachica SET saldo_actual = $1, updated_at = NOW() WHERE id = $2`, [nuevoSaldo, cajaChica.id]);
+
+            return { nuevoSaldo };
+        });
+
+        res.json({
+            ok: true,
+            message: 'Movimiento registrado',
+            nuevo_saldo: formatCurrency(result.nuevoSaldo)
+        });
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error:', error);
-        res.status(500).json({ ok: false, error: 'Error interno' });
-    } finally { client.release(); }
+        console.error('Error en movimientos caja chica:', error);
+        res.status(500).json({ ok: false, error: 'Error interno', details: error.message });
+    }
 });
 
 module.exports = router;

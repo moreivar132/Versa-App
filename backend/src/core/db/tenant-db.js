@@ -139,8 +139,8 @@ function getTenantDb(ctx, options = {}) {
     }
 
     /**
-     * Ejecuta query simple (sin transacción explícita).
-     * NOTA: Para operaciones críticas, usar txWithRLS() que garantiza SET LOCAL.
+     * Ejecuta query simple con aislamiento de tenant.
+     * Automáticamente setea el contexto RLS para esta consulta.
      * 
      * @param {string} sql - Query SQL
      * @param {Array} params - Parámetros
@@ -151,14 +151,14 @@ function getTenantDb(ctx, options = {}) {
             assertTenant();
         }
 
-        if (IS_DEV) {
-            console.debug(`[TenantDb] Query | tenant=${tenantId} | user=${userId} | req=${requestId}`);
+        const client = await pool.connect();
+        try {
+            // Seteamos el contexto RLS para este cliente antes de la query
+            await setRLSContext(client, ctx);
+            return await client.query(sql, params);
+        } finally {
+            client.release();
         }
-
-        // Para queries simples, usamos el pool directamente
-        // RLS protege incluso sin SET LOCAL gracias a FORCE ROW LEVEL SECURITY
-        // Pero para máxima seguridad, usar txWithRLS()
-        return pool.query(sql, params);
     }
 
     /**
@@ -256,6 +256,7 @@ function getTenantDb(ctx, options = {}) {
         queryRaw,
         tx,
         txWithRLS,
+        withTenantTx: txWithRLS, // Alias solicitado en CRIT-FIX-02
         assertTenant
     };
 }

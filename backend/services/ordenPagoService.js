@@ -1,15 +1,17 @@
 const ordenPagoRepository = require('../repositories/ordenPagoRepository');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
 class OrdenPagoService {
     /**
      * Registra un pago para una orden específica.
+     * @param {object} ctx - Contexto de la request
      * @param {number} idOrden - ID de la orden
      * @param {object} datosPago - Datos del pago (medioPago, importe, referencia, idCaja, createdBy)
      * @returns {Promise<object>} - El registro de pago creado y resumen actualizado
      */
-    async registrarPago(idOrden, datosPago) {
+    async registrarPago(ctx, idOrden, datosPago) {
         const ordenesRepository = require('../repositories/ordenesRepository');
-        const pool = require('../db');
+        const db = getTenantDb(ctx);
         const { medioPago, importe, referencia, idCaja, createdBy } = datosPago;
 
         // 1. Validar inputs básicos
@@ -20,30 +22,27 @@ class OrdenPagoService {
         if (isNaN(importeNumerico) || importeNumerico <= 0) throw { status: 400, message: 'El importe debe ser un número mayor a 0.' };
         if (!medioPago) throw { status: 400, message: 'El medio de pago es requerido.' };
 
-        // 2. Validar que la orden existe Y obtener sucursal
-        const orden = await ordenPagoRepository.obtenerDatosOrden(idOrden);
-        if (!orden) throw { status: 404, message: `La orden con ID ${idOrden} no existe.` };
+        return db.txWithRLS(async (tx) => {
+            // 2. Validar que la orden existe Y obtener sucursal
+            const orden = await ordenPagoRepository.obtenerDatosOrden(tx, idOrden);
+            if (!orden) throw { status: 404, message: `La orden con ID ${idOrden} no existe.` };
 
-        // 3. Resolver medio de pago
-        const medioPagoEntidad = await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(medioPago);
-        if (!medioPagoEntidad) throw { status: 404, message: `El medio de pago '${medioPago}' no existe.` };
-
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+            // 3. Resolver medio de pago
+            const medioPagoEntidad = await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(tx, medioPago);
+            if (!medioPagoEntidad) throw { status: 404, message: `El medio de pago '${medioPago}' no existe.` };
 
             // 4. Resolver Caja
             let idCajaFinal = idCaja;
             if (idCajaFinal) {
-                const cajaExiste = await ordenPagoRepository.existeCaja(idCajaFinal);
+                const cajaExiste = await ordenPagoRepository.existeCaja(tx, idCajaFinal);
                 if (!cajaExiste) throw { status: 400, message: `La caja con ID ${idCajaFinal} no existe.` };
             } else {
                 // Auto-detectar caja abierta
-                const cajaAbierta = await ordenesRepository.getOpenCaja(client, orden.id_sucursal);
+                const cajaAbierta = await ordenesRepository.getOpenCaja(tx, orden.id_sucursal);
                 if (cajaAbierta) {
                     idCajaFinal = cajaAbierta.id;
                 } else {
-                    const nuevaCaja = await ordenesRepository.createOpenCaja(client, orden.id_sucursal, createdBy);
+                    const nuevaCaja = await ordenesRepository.createOpenCaja(tx, orden.id_sucursal, createdBy || ctx.userId);
                     idCajaFinal = nuevaCaja.id;
                 }
             }
@@ -55,37 +54,27 @@ class OrdenPagoService {
                 importe: importeNumerico,
                 referencia: referencia || null,
                 id_caja: idCajaFinal,
-                created_by: createdBy || null
+                created_by: createdBy || ctx.userId
             };
 
             // 6. Insertar pago
-            const pagoCreado = await ordenPagoRepository.insertarPagoOrden(nuevoPago, client);
+            const pagoCreado = await ordenPagoRepository.insertarPagoOrden(tx, nuevoPago);
 
             // 7. Registrar movimiento de caja para pagos reales (excepto cuenta corriente)
             const codigoMedio = (medioPagoEntidad.codigo || '').toUpperCase();
             const mediosSinCaja = ['CUENTA_CORRIENTE'];
-            console.log(`[ordenPagoService] Pago ${importeNumerico}€ - Medio: ${codigoMedio} - Caja: ${idCajaFinal}`);
 
             if (!mediosSinCaja.includes(codigoMedio) && idCajaFinal) {
-                await client.query(`
+                await tx.query(`
                     INSERT INTO cajamovimiento 
                     (id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, fecha, created_at, created_by)
                     VALUES ($1, $2, 'INGRESO', $3, 'ORDEN_PAGO', $4, NOW(), NOW(), $2)
-                `, [idCajaFinal, createdBy, importeNumerico, idOrden]);
-                console.log(`[ordenPagoService] Movimiento de caja creado: ${importeNumerico}€ en caja ${idCajaFinal}`);
+                `, [idCajaFinal, createdBy || ctx.userId, importeNumerico, idOrden]);
             }
 
-            await client.query('COMMIT');
             return { pago: pagoCreado };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 }
-
 
 module.exports = new OrdenPagoService();

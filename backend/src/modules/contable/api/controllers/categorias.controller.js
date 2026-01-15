@@ -21,7 +21,7 @@ async function list(req, res) {
             activo: req.query.activo !== 'false'
         };
 
-        const categorias = await service.listCategorias(tenantId, filters);
+        const categorias = await service.listCategorias({ tenantId }, filters);
 
         res.json({
             ok: true,
@@ -62,7 +62,7 @@ async function create(req, res) {
             return res.status(400).json({ ok: false, error: 'Tipo inválido (INGRESO/GASTO)' });
         }
 
-        const categoria = await service.createCategoria(tenantId, data, userId);
+        const categoria = await service.createCategoria({ tenantId }, data, userId);
 
         res.status(201).json({
             ok: true,
@@ -99,7 +99,7 @@ async function update(req, res) {
         const id = parseInt(req.params.id);
         const data = req.body;
 
-        const categoria = await service.updateCategoria(tenantId, id, data);
+        const categoria = await service.updateCategoria({ tenantId }, id, data);
 
         if (!categoria) {
             return res.status(404).json({ ok: false, error: 'Categoría no encontrada' });
@@ -131,7 +131,7 @@ async function remove(req, res) {
 
         const id = parseInt(req.params.id);
 
-        await service.deleteCategoria(tenantId, id);
+        await service.deleteCategoria({ tenantId }, id);
 
         res.json({
             ok: true,

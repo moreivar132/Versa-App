@@ -16,9 +16,15 @@ const { getEffectiveTenant } = require('../../../../middleware/rbac');
  */
 async function requireEmpresa(req, res, next) {
     try {
-        const tenantId = getEffectiveTenant(req);
+        // req.ctx ya debe estar poblado por el tenantContextMiddleware previo
+        const tenantId = req.ctx?.tenantId;
+
         if (!tenantId) {
-            return res.status(400).json({ ok: false, error: 'Tenant context required' });
+            return res.status(403).json({
+                ok: false,
+                error: 'Tenant context required. Check auth and tenant-context middleware chain.',
+                requestId: req.requestId
+            });
         }
 
         const empresaId = req.headers['x-empresa-id'] || req.query.empresaId;
@@ -26,44 +32,47 @@ async function requireEmpresa(req, res, next) {
         if (!empresaId) {
             return res.status(400).json({
                 ok: false,
-                error: 'Empresa context required (x-empresa-id header or empresaId query)'
+                error: 'Empresa context required (x-empresa-id header or empresaId query)',
+                requestId: req.requestId
             });
         }
 
-        // 1. Verificar existencia de la empresa en el tenant
+        // Usar pool directamente para validación de infraestructura si es necesario,
+        // pero idealmente pasar por getTenantDb para asegurar RLS incluso aquí.
         const empresaResult = await pool.query(
             'SELECT id, activo FROM accounting_empresa WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL',
             [empresaId, tenantId]
         );
 
         if (empresaResult.rows.length === 0) {
-            return res.status(404).json({ ok: false, error: 'Empresa not found or access denied' });
+            return res.status(404).json({
+                ok: false,
+                error: 'Empresa not found or access denied for this tenant',
+                requestId: req.requestId
+            });
         }
 
         if (!empresaResult.rows[0].activo) {
             return res.status(403).json({ ok: false, error: 'Empresa is inactive' });
         }
 
-        // 2. Verificar permisos del usuario
-        // Si es superadmin o tiene rol de admin global, pasa
-        if (req.user?.es_super_admin || req.user?.rol === 'admin') {
-            req.empresaId = empresaId;
-            return next();
+        // Asignar al contexto unificado
+        req.ctx.empresaId = empresaId;
+
+        // Verificar permisos específicos de empresa si no es superadmin
+        if (!req.ctx.isSuperAdmin) {
+            const accessResult = await pool.query(
+                'SELECT rol_empresa FROM accounting_usuario_empresa WHERE id_usuario = $1 AND id_empresa = $2',
+                [req.ctx.userId, empresaId]
+            );
+
+            if (accessResult.rows.length === 0) {
+                return res.status(403).json({ ok: false, error: 'User does not have access to this empresa' });
+            }
+            req.ctx.rolEmpresa = accessResult.rows[0].rol_empresa;
+        } else {
+            req.ctx.rolEmpresa = 'admin'; // SuperAdmin tiene rol admin en cualquier empresa
         }
-
-        // Verificar asignación directa
-        const accessResult = await pool.query(
-            'SELECT rol_empresa FROM accounting_usuario_empresa WHERE id_usuario = $1 AND id_empresa = $2',
-            [req.user.id, empresaId]
-        );
-
-        if (accessResult.rows.length === 0) {
-            return res.status(403).json({ ok: false, error: 'User does not have access to this empresa' });
-        }
-
-        // Adjuntar contexto al request
-        req.empresaId = empresaId;
-        req.rolEmpresa = accessResult.rows[0].rol_empresa;
 
         next();
     } catch (error) {

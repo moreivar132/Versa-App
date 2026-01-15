@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Copiloto IA - Ajustes | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                    },
+                },
+            },
+        }
+    </script>
+
+    <link href="/src/verticals/finsaas/layout/FinSaaSLayout.css" rel="stylesheet" />
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+    <div id="app-shell" class="flex h-screen w-full overflow-hidden">
+        <div class="max-w-7xl mx-auto flex flex-col gap-6 w-full px-4 md:px-0 h-screen py-6 overflow-hidden">
+
+            <!-- Header -->
+            <div class="mt-6">
+                <h1 class="text-3xl font-extrabold tracking-tight">Ajustes del Copiloto</h1>
+                <p class="text-gray-500 dark:text-gray-400">Configura el comportamiento de tu asesor inteligente</p>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex border-b border-gray-200 dark:border-[#25381e]">
+                <a href="copiloto-resumen.html"
+                    class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-white transition-colors">Resumen</a>
+                <a href="copiloto-chat.html"
+                    class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-white transition-colors">Chat</a>
+                <a href="copiloto-alertas.html"
+                    class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-white transition-colors">Alertas</a>
+                <a href="#" class="px-6 py-3 text-sm font-bold border-b-2 border-primary text-primary">Ajustes</a>
+            </div>
+
+            <!-- Settings Content -->
+            <div class="flex-1 overflow-y-auto pr-2 pb-20 space-y-8 mt-4">
+
+                <!-- AI Sensitivity -->
+                <section
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] p-6 rounded-2xl shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined text-primary">speed</span>
+                        <h2 class="font-bold text-lg">Sensibilidad de Detección</h2>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-sm font-bold mb-2">Umbral de anomalías (Gasto)</p>
+                            <p class="text-xs text-gray-500 mb-4">Define qué tan estricto debe ser el copiloto al
+                                detectar picos de gasto.</p>
+                            <div class="flex gap-4">
+                                <label
+                                    class="flex-1 p-4 border border-[#25381e] rounded-xl cursor-pointer hover:bg-surface-dark-light transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="threshold" value="1.5" class="hidden" checked />
+                                    <p class="font-bold text-center">Conservador (1.5x)</p>
+                                </label>
+                                <label
+                                    class="flex-1 p-4 border border-[#25381e] rounded-xl cursor-pointer hover:bg-surface-dark-light transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="threshold" value="2.0" class="hidden" />
+                                    <p class="font-bold text-center">Standard (2.0x)</p>
+                                </label>
+                                <label
+                                    class="flex-1 p-4 border border-[#25381e] rounded-xl cursor-pointer hover:bg-surface-dark-light transition-all has-[:checked]:border-primary has-[:checked]:bg-primary/5">
+                                    <input type="radio" name="threshold" value="3.0" class="hidden" />
+                                    <p class="font-bold text-center">Relajado (3.0x)</p>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Privacy & Data -->
+                <section
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] p-6 rounded-2xl shadow-sm">
+                    <div class="flex items-center gap-3 mb-6">
+                        <span class="material-symbols-outlined text-blue-500">lock</span>
+                        <h2 class="font-bold text-lg">Privacidad y Datos</h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div
+                            class="flex items-center justify-between p-4 bg-gray-50 dark:bg-background-dark rounded-xl">
+                            <div>
+                                <p class="text-sm font-bold text-white">Modo Auditoría Estricta</p>
+                                <p class="text-[10px] text-gray-500">La IA siempre pedirá evidencia de facturas
+                                    adjuntas.</p>
+                            </div>
+                            <div class="w-10 h-5 bg-primary rounded-full relative">
+                                <div class="absolute right-1 top-1 size-3 bg-black rounded-full"></div>
+                            </div>
+                        </div>
+                        <div
+                            class="flex items-center justify-between p-4 bg-gray-50 dark:bg-background-dark rounded-xl">
+                            <div>
+                                <p class="text-sm font-bold text-white">Auto-resumen Mensual</p>
+                                <p class="text-[10px] text-gray-500">Recibir un reporte de insights al terminar cada
+                                    mes.</p>
+                            </div>
+                            <div class="w-10 h-5 bg-gray-700 rounded-full relative">
+                                <div class="absolute left-1 top-1 size-3 bg-gray-400 rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="flex justify-end gap-4 mt-10">
+                    <button class="px-6 py-2 text-sm font-bold text-gray-500">Restaurar valores</button>
+                    <button id="save-settings"
+                        class="px-10 py-3 bg-primary text-black font-extrabold rounded-xl hover:scale-105 transition-all shadow-lg shadow-primary/20">Guardar
+                        Cambios</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module">
+        import { requireAuth } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        async function init() {
+            await requireAuth();
+            const layout = new FinSaaSLayout('app-shell');
+            layout.init();
+
+            document.getElementById('save-settings').onclick = () => {
+                const btn = document.getElementById('save-settings');
+                btn.innerText = 'Guardado ✓';
+                btn.classList.add('bg-green-500');
+                setTimeout(() => {
+                    btn.innerText = 'Guardar Cambios';
+                    btn.classList.remove('bg-green-500');
+                }, 2000);
+            };
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
