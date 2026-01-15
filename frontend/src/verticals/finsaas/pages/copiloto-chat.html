@@ -36,6 +36,7 @@
 
     <link href="/src/verticals/finsaas/layout/FinSaaSLayout.css" rel="stylesheet" />
     <style>
+        /* Scrollbar */
         .chat-container::-webkit-scrollbar {
             width: 6px;
         }
@@ -45,159 +46,109 @@
             border-radius: 10px;
         }
 
-        .message-user {
-            align-self: flex-end;
-            background: #e2fcd9;
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        /* User bubble - right side, light green */
+        .bubble-user {
+            background: #d4f5c7;
             color: #142210;
-            border-radius: 20px 20px 4px 20px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 80%;
-            margin-left: auto;
+            border-radius: 18px 18px 4px 18px;
+            max-width: 75%;
         }
 
-        .message-ai {
-            align-self: flex-start;
-            background: rgba(26, 44, 21, 0.6);
-            border: 1px solid rgba(70, 236, 19, 0.15);
-            color: white;
-            border-radius: 20px 20px 20px 4px;
-            backdrop-filter: blur(12px);
-            max-width: 80%;
-            margin-right: auto;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .evidence-panel {
-            background: rgba(70, 236, 19, 0.05);
+        /* AI bubble - left side, dark green */
+        .bubble-ai {
+            background: #1f3319;
             border: 1px solid rgba(70, 236, 19, 0.2);
-            border-left-width: 4px;
-            border-left-color: #46ec13;
+            color: #e0e0e0;
+            border-radius: 18px 18px 18px 4px;
+            max-width: 85%;
         }
 
-        /* Markdown Styles Inside Bubbles */
-        .markdown-content h1,
-        .markdown-content h2,
-        .markdown-content h3 {
-            color: #46ec13;
-            font-weight: 800;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.025em;
-        }
-
-        .markdown-content h3 {
-            font-size: 1.1rem;
-        }
-
-        .markdown-content ul {
-            list-style-type: none;
-            padding-left: 0.5rem;
-        }
-
-        .markdown-content li {
-            position: relative;
-            padding-left: 1.25rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .markdown-content li::before {
-            content: "•";
-            position: absolute;
-            left: 0;
-            color: #46ec13;
-            font-weight: bold;
-        }
-
-        .markdown-content p {
-            margin-bottom: 0.75rem;
-            line-height: 1.6;
-        }
-
-        .markdown-content strong {
-            color: #46ec13;
-            font-weight: 700;
-        }
-
-        .message-user .markdown-content strong {
-            color: #142210;
+        /* Evidence panel */
+        .evidence-box {
+            background: rgba(70, 236, 19, 0.08);
+            border: 1px solid rgba(70, 236, 19, 0.25);
+            border-left: 4px solid #46ec13;
         }
     </style>
 </head>
 
-<body
-    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+<body class="font-display bg-background-dark text-white antialiased overflow-hidden">
     <div id="app-shell" class="flex h-screen w-full overflow-hidden">
-        <div class="max-w-7xl mx-auto flex flex-col gap-6 w-full px-4 md:px-0 h-full py-6 overflow-hidden">
+        <div class="max-w-4xl mx-auto flex flex-col w-full px-4 h-full py-6">
 
             <!-- Header -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 flex-none">
-                <div class="flex items-center gap-4">
+            <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                <div class="flex items-center gap-3">
                     <button onclick="window.location.href='copiloto-resumen.html'"
                         class="p-2 hover:bg-surface-dark-light rounded-full transition-all">
                         <span class="material-symbols-outlined">arrow_back</span>
                     </button>
                     <div>
-                        <h1 class="text-2xl font-extrabold tracking-tight">Copiloto IA</h1>
+                        <h1 class="text-xl font-extrabold tracking-tight">Copiloto IA</h1>
                         <p class="text-xs text-gray-500">Asesor Contable Inteligente</p>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <div
-                        class="flex items-center gap-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl px-4 py-2 shadow-sm">
-                        <span class="material-symbols-outlined text-gray-400 text-[18px]">business</span>
-                        <select id="empresa-selector"
-                            class="bg-transparent text-sm font-bold focus:outline-none dark:text-white">
-                            <option value="">Cargando empresas...</option>
-                        </select>
-                    </div>
+                <div class="flex items-center gap-2 bg-surface-dark border border-[#25381e] rounded-xl px-3 py-2">
+                    <span class="material-symbols-outlined text-gray-400 text-[16px]">business</span>
+                    <select id="empresa-selector"
+                        class="bg-transparent text-sm font-bold focus:outline-none text-white min-w-[120px]">
+                        <option value="">Cargando...</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- Chat Tab Navigation (Secondary) -->
-            <div class="flex border-b border-gray-200 dark:border-[#25381e] flex-none">
+            <!-- Tabs -->
+            <div class="flex border-b border-[#25381e] mb-4 flex-shrink-0">
                 <a href="copiloto-resumen.html"
-                    class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-white transition-colors">Resumen</a>
-                <a href="#" class="px-6 py-3 text-sm font-bold border-b-2 border-primary text-primary">Chat</a>
+                    class="px-4 py-2 text-sm text-gray-500 hover:text-white transition-colors">Resumen</a>
+                <a href="#" class="px-4 py-2 text-sm font-bold border-b-2 border-primary text-primary">Chat</a>
             </div>
 
-            <!-- Chat Interface -->
+            <!-- Chat Container -->
             <div
-                class="flex-1 flex flex-col min-h-0 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-2xl overflow-hidden shadow-xl">
+                class="flex-1 flex flex-col min-h-0 bg-surface-dark border border-[#25381e] rounded-2xl overflow-hidden">
 
-                <!-- History Container -->
-                <div id="chat-history" class="flex-1 overflow-y-auto p-6 flex flex-col gap-4 chat-container min-h-0">
+                <!-- Messages -->
+                <div id="chat-history" class="flex-1 overflow-y-auto p-4 space-y-4 chat-container">
+
                     <!-- Welcome Message -->
-                    <div class="message-ai p-4 max-w-[85%] shadow-sm">
-                        <p class="text-sm leading-relaxed">Hola, soy tu Copiloto Contable. Estoy conectado a tus datos
-                            reales para ayudarte a entender tus finanzas. ¿En qué puedo ayudarte hoy?</p>
-                        <div class="mt-4 flex flex-wrap gap-2" id="suggested-questions">
-                            <button
-                                class="suggestion-btn px-3 py-1.5 bg-background-dark rounded-full text-xs font-bold border border-primary/30 hover:bg-primary hover:text-black transition-all">¿En
-                                qué estoy gastando más?</button>
-                            <button
-                                class="suggestion-btn px-3 py-1.5 bg-background-dark rounded-full text-xs font-bold border border-primary/30 hover:bg-primary hover:text-black transition-all">¿Cómo
-                                va mi IVA este trimestre?</button>
-                            <button
-                                class="suggestion-btn px-3 py-1.5 bg-background-dark rounded-full text-xs font-bold border border-primary/30 hover:bg-primary hover:text-black transition-all">¿Tengo
-                                anomalías este mes?</button>
+                    <div class="flex justify-start">
+                        <div class="bubble-ai p-4">
+                            <p class="text-sm leading-relaxed">Hola, soy tu Copiloto Contable. Estoy conectado a tus
+                                datos reales para ayudarte a entender tus finanzas. ¿En qué puedo ayudarte hoy?</p>
+                            <div class="mt-3 flex flex-wrap gap-2" id="suggested-questions">
+                                <button
+                                    class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿En
+                                    qué estoy gastando más?</button>
+                                <button
+                                    class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿Cómo
+                                    va mi IVA este trimestre?</button>
+                                <button
+                                    class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿Tengo
+                                    anomalías este mes?</button>
+                            </div>
                         </div>
                     </div>
+
                 </div>
 
                 <!-- Input Area -->
-                <div
-                    class="p-4 bg-gray-50 dark:bg-surface-dark-light/50 border-t border-gray-100 dark:border-[#25381e]">
+                <div class="p-3 bg-surface-dark-light/50 border-t border-[#25381e] flex-shrink-0">
                     <div
-                        class="flex gap-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-primary/20 p-2 rounded-xl focus-within:border-primary transition-all">
+                        class="flex gap-2 bg-surface-dark border border-primary/20 p-2 rounded-xl focus-within:border-primary transition-all">
                         <input type="text" id="chat-input" placeholder="Haz una pregunta sobre tu empresa..."
-                            class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 dark:text-white" />
+                            class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 text-white placeholder-gray-500" />
                         <button id="send-btn"
-                            class="size-10 bg-primary rounded-lg flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all">
+                            class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all">
                             <span class="material-symbols-outlined">send</span>
                         </button>
                     </div>
-                    <p class="text-[10px] text-center mt-2 opacity-50">Toda respuesta se basa en datos reales de tu
+                    <p class="text-[10px] text-center mt-2 text-gray-500">Toda respuesta se basa en datos reales de tu
                         empresa.</p>
                 </div>
             </div>
@@ -209,19 +160,17 @@
         import { requireAuth, getToken } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
-        let session = null;
         let currentEmpresaId = localStorage.getItem('finsaas_current_empresa');
         let currentSessionId = null;
 
         async function init() {
-            session = await requireAuth();
+            await requireAuth();
             const layout = new FinSaaSLayout('app-shell');
             layout.init();
 
             await loadEmpresas();
             setupEventListeners();
 
-            // Check for pre-filled question from Resumen
             const prefilled = localStorage.getItem('copilot_prefilled_question');
             if (prefilled) {
                 localStorage.removeItem('copilot_prefilled_question');
@@ -246,7 +195,12 @@
                     if (emp.id == currentEmpresaId) opt.selected = true;
                     select.appendChild(opt);
                 });
-            } catch (e) { console.error(e); }
+
+                if (!currentEmpresaId && data.items.length > 0) {
+                    currentEmpresaId = data.items[0].id;
+                    localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
+                }
+            } catch (e) { console.error('Error cargando empresas:', e); }
         }
 
         function setupEventListeners() {
@@ -263,7 +217,6 @@
             document.getElementById('empresa-selector').addEventListener('change', (e) => {
                 currentEmpresaId = e.target.value;
                 localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
-                // Clear chat if company changes?
                 location.reload();
             });
         }
@@ -273,15 +226,14 @@
             const message = input.value.trim();
             if (!message) return;
 
-            addMessageToUI('user', message);
+            appendMessage('user', message);
             input.value = '';
 
-            const loadingMsg = addMessageToUI('ai', '<span class="animate-pulse">Analizando tus datos...</span>');
+            const loadingEl = appendMessage('ai', '<span class="animate-pulse text-primary">Analizando datos...</span>');
 
             try {
                 const now = new Date();
                 const year = now.getFullYear();
-                const quarter = Math.ceil((now.getMonth() + 1) / 3);
 
                 const res = await fetch('/api/contabilidad/copiloto/chat', {
                     method: 'POST',
@@ -293,7 +245,7 @@
                     body: JSON.stringify({
                         session_id: currentSessionId,
                         message: message,
-                        periodo_inicio: `${year}-01-01`, // Default year view
+                        periodo_inicio: `${year}-01-01`,
                         periodo_fin: `${year}-12-31`
                     })
                 });
@@ -301,99 +253,60 @@
                 const response = await res.json();
 
                 if (!res.ok) {
-                    throw new Error(response.error || 'Error en la respuesta del asistente');
+                    throw new Error(response.error || 'Error del servidor');
                 }
 
-                updateMessageInUI(loadingMsg, response.data.content, response.data.evidence);
                 currentSessionId = response.data.session_id;
+                updateMessage(loadingEl, response.data.content, response.data.evidence);
 
             } catch (e) {
                 console.error(e);
-                updateMessageInUI(loadingMsg, `<span class="text-red-500 font-bold">Error: ${e.message}</span><br/><span class="text-[10px] opacity-70">Asegúrate de seleccionar una empresa en el selector superior.</span>`);
+                loadingEl.querySelector('.bubble-ai').innerHTML = `<p class="text-sm text-red-400"><strong>Error:</strong> ${e.message}</p>`;
             }
         }
 
-        function addMessageToUI(role, content) {
+        function appendMessage(role, content) {
             const history = document.getElementById('chat-history');
-            const div = document.createElement('div');
-            div.className = `p-4 max-w-[85%] shadow-sm overflow-hidden ${role === 'user' ? 'message-user' : 'message-ai'}`;
-            div.innerHTML = `<p class="text-sm leading-relaxed">${content}</p>`;
-            history.appendChild(div);
+            const wrapper = document.createElement('div');
+            wrapper.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
+
+            const bubble = document.createElement('div');
+            bubble.className = role === 'user' ? 'bubble-user p-3' : 'bubble-ai p-4';
+            bubble.innerHTML = `<p class="text-sm leading-relaxed">${content}</p>`;
+
+            wrapper.appendChild(bubble);
+            history.appendChild(wrapper);
             history.scrollTop = history.scrollHeight;
-            return div;
+            return wrapper;
         }
 
-        function updateMessageInUI(element, content, evidence) {
-            element.innerHTML = `<div class="markdown-content text-sm leading-relaxed">${formatMarkdown(content)}</div>`;
+        function updateMessage(wrapper, content, evidence) {
+            const bubble = wrapper.querySelector('.bubble-ai');
+            if (!bubble) return;
 
-            if (evidence) {
+            // Simple formatting: newlines to <br>, bold **text**
+            let html = content
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary">$1</strong>')
+                .replace(/\n/g, '<br/>');
+
+            bubble.innerHTML = `<div class="text-sm leading-relaxed">${html}</div>`;
+
+            if (evidence && evidence.empresa) {
                 const evidenceHtml = `
-                    <div class="mt-4 p-3 rounded-lg evidence-panel bg-black/20">
-                        <p class="text-[10px] font-bold text-primary uppercase mb-2">Evidencia de Datos</p>
-                        <ul class="text-[11px] space-y-1 opacity-70">
+                    <div class="mt-4 p-3 rounded-lg evidence-box">
+                        <p class="text-[10px] font-bold text-primary uppercase mb-2">📊 Datos consultados</p>
+                        <ul class="text-[11px] space-y-1 text-gray-400">
                             <li>• Empresa: ${evidence.empresa.nombre}</li>
                             <li>• Periodo: ${evidence.periodo.inicio} a ${evidence.periodo.fin}</li>
-                            ${evidence.tools_used.map(t => `<li class="text-primary/50">• Query: ${t.tool}</li>`).join('')}
+                            ${(evidence.tools_used || []).map(t => `<li class="text-primary/60">• ${t.tool}</li>`).join('')}
                         </ul>
-                        <button onclick="window.location.href='/src/verticals/finsaas/pages/documentos.html'" 
-                            class="mt-3 text-[10px] font-bold text-primary border border-primary/30 px-2 py-1 rounded hover:bg-primary hover:text-black transition-all uppercase">
-                            Abrir lista filtrada
-                        </button>
                     </div>
                 `;
-                element.innerHTML += evidenceHtml;
+                bubble.innerHTML += evidenceHtml;
             }
 
             const history = document.getElementById('chat-history');
             history.scrollTop = history.scrollHeight;
-        }
-
-        function formatMarkdown(text) {
-            if (!text) return '';
-
-            // Bold
-            let html = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-
-            // Headers
-            html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-            html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-            html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-
-            // Horizontal Rule
-            html = html.replace(/^\-\-\-$|^\*\*\*$|^___$/gim, '<hr class="my-4 border-primary/20" />');
-
-            // Lists logic
-            const lines = html.split('\n');
-            let inList = false;
-            let formattedLines = [];
-
-            for (let line of lines) {
-                const trimmed = line.trim();
-                if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-                    if (!inList) {
-                        formattedLines.push('<ul>');
-                        inList = true;
-                    }
-                    formattedLines.push(`<li>${trimmed.substring(2)}</li>`);
-                } else {
-                    if (inList) {
-                        formattedLines.push('</ul>');
-                        inList = false;
-                    }
-                    if (trimmed.length > 0) {
-                        // Protect tags already generated
-                        if (trimmed.startsWith('<h') || trimmed.startsWith('<hr')) {
-                            formattedLines.push(trimmed);
-                        } else {
-                            formattedLines.push(`<p>${trimmed}</p>`);
-                        }
-                    }
-                }
-            }
-
-            if (inList) formattedLines.push('</ul>');
-
-            return formattedLines.join('');
         }
 
         init();
