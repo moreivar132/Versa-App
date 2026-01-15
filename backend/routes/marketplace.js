@@ -71,6 +71,59 @@ router.get('/search', async (req, res) => {
 });
 
 /**
+ * Safely parse a value to float, returning null if invalid
+ */
+function safeParseCoord(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const n = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * GET /api/marketplace/sucursales
+ * Lista todas las sucursales activas para el selector de marketplace
+ * Coords normalizados a number|null
+ */
+router.get('/sucursales', async (req, res) => {
+    try {
+        const pool = require('../db');
+
+        const result = await pool.query(`
+            SELECT DISTINCT
+                s.id,
+                s.nombre,
+                s.direccion,
+                ml.lat,
+                ml.lng,
+                s.id_tenant as tenant_id
+            FROM public.sucursal s
+            LEFT JOIN public.marketplace_listing ml ON ml.id_sucursal = s.id AND ml.activo = true
+            ORDER BY s.nombre ASC
+            LIMIT 100
+        `);
+
+        // Normalizar coordenadas
+        const sucursales = (result.rows || []).map(row => ({
+            id: row.id,
+            nombre: row.nombre,
+            direccion: row.direccion || null,
+            lat: safeParseCoord(row.lat),
+            lng: safeParseCoord(row.lng),
+            tenant_id: row.tenant_id
+        }));
+
+        res.json(sucursales);
+    } catch (error) {
+        console.error('Error en GET /api/marketplace/sucursales:', error);
+        res.status(500).json({
+            ok: false,
+            error: 'Error al obtener sucursales',
+            details: error.message
+        });
+    }
+});
+
+/**
  * GET /api/marketplace/sucursales/:id
  * Obtener detalle completo de un taller
  */
