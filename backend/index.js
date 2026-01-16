@@ -74,6 +74,7 @@ app.use('/api/cliente/payment-methods', require('./routes/customerPaymentMethods
 app.use('/api/auth', authRouter);
 app.use('/api/admin', privateRoute, superAdminRouter);
 app.use('/api/access', privateRoute, require('./routes/accessRoutes'));
+app.use('/api/me', require('./routes/meRoutes'));  // User access info (includes own auth)
 app.use('/api/proveedores', privateRoute, proveedoresRouter);
 
 // Módulos Migrados

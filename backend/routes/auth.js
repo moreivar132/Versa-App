@@ -51,6 +51,7 @@ router.post('/login', async (req, res) => {
   }
 
   try {
+    const pool = require('../db');
     const user = await getUserByEmail(String(email).trim().toLowerCase());
     if (!user) {
       return res.status(401).json({ error: 'Credenciales inválidas.' });
@@ -61,6 +62,19 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas.' });
     }
 
+    // Fetch user roles from database
+    const rolesResult = await pool.query(`
+      SELECT r.nombre, r.display_name
+      FROM usuariorol ur
+      JOIN rol r ON r.id = ur.id_rol
+      WHERE ur.id_usuario = $1
+    `, [user.id]);
+
+    const userRoles = rolesResult.rows.map(r => ({
+      nombre: r.nombre,
+      display_name: r.display_name || r.nombre
+    }));
+
     const payload = {
       id: user.id,
       id_tenant: user.id_tenant,
@@ -68,6 +82,7 @@ router.post('/login', async (req, res) => {
       email: user.email,
       nombre: user.nombre,
       is_super_admin: user.is_super_admin,
+      roles: userRoles.map(r => r.nombre)  // Include roles in JWT too
     };
 
     if (!process.env.JWT_SECRET) {
@@ -77,10 +92,13 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
 
-    return res.json({ token, user: sanitizeUser(user) });
+    // Include roles in the response
+    const safeUser = sanitizeUser(user);
+    safeUser.roles = userRoles;
+
+    return res.json({ token, user: safeUser });
   } catch (error) {
     console.error('Error detallado en login:', error);
-    // Print stack trace if available
     if (error.stack) console.error(error.stack);
     return res.status(500).json({ error: 'No se pudo iniciar sesión. Ver logs del servidor.' });
   }
@@ -88,8 +106,9 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', verifyJWT, async (req, res) => {
   try {
-    // Get user with tenant name
     const pool = require('../db');
+
+    // Get user with tenant name
     const result = await pool.query(`
       SELECT u.*, t.nombre as tenant_nombre
       FROM usuario u
@@ -101,7 +120,22 @@ router.get('/me', verifyJWT, async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'Usuario no encontrado.' });
     }
-    return res.json(sanitizeUser(user));
+
+    // Fetch user roles
+    const rolesResult = await pool.query(`
+      SELECT r.nombre, r.display_name
+      FROM usuariorol ur
+      JOIN rol r ON r.id = ur.id_rol
+      WHERE ur.id_usuario = $1
+    `, [req.user.id]);
+
+    const safeUser = sanitizeUser(user);
+    safeUser.roles = rolesResult.rows.map(r => ({
+      nombre: r.nombre,
+      display_name: r.display_name || r.nombre
+    }));
+
+    return res.json(safeUser);
   } catch (error) {
     console.error('Error en /me:', error);
     return res.status(500).json({ error: 'No se pudo obtener el usuario.' });
