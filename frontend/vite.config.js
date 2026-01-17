@@ -66,6 +66,9 @@ export default defineConfig({
                 finsaasCopilotoAlertas: 'src/verticals/finsaas/pages/copiloto-alertas.html',
                 finsaasCopilotoAjustes: 'src/verticals/finsaas/pages/copiloto-ajustes.html',
 
+                // Usuarios / Invitaciones
+                finsaasUsuarios: 'src/verticals/finsaas/pages/usuarios.html',
+
                 // Fidelización
                 managerTallerFidelizacion: 'manager-taller-fidelizacion.html',
                 card: 'card.html',
@@ -93,12 +96,12 @@ export default defineConfig({
         port: 5173,
         proxy: {
             '/api': {
-                target: 'http://localhost:3000',
+                target: 'http://localhost:4000',
                 changeOrigin: true,
                 secure: false,
             },
             '/uploads': {
-                target: 'http://localhost:3000',
+                target: 'http://localhost:4000',
                 changeOrigin: true,
                 secure: false,
             }

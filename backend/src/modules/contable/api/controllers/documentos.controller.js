@@ -74,6 +74,10 @@ async function list(req, res) {
                 i.file_size_bytes as intake_size_bytes,
                 i.status as intake_status,
                 CASE WHEN f.intake_id IS NOT NULL THEN 'IA' ELSE 'MANUAL' END as origen,
+                f.retencion_porcentaje,
+                f.retencion_importe,
+                f.deducible_status,
+                f.deducible_reason,
                 CASE 
                     WHEN a.id IS NOT NULL THEN true 
                     WHEN i.file_url IS NOT NULL THEN true 
@@ -284,6 +288,10 @@ async function list(req, res) {
                     nif: row.contacto_nif
                 } : null,
                 categoria: row.categoria_nombre,
+                retencion_porcentaje: parseFloat(row.retencion_porcentaje) || 0,
+                retencion_importe: parseFloat(row.retencion_importe) || 0,
+                deducible_status: row.deducible_status || 'pending',
+                deducible_reason: row.deducible_reason,
                 has_attachment: row.has_attachment,
                 archivo: row.has_attachment ? {
                     id: row.archivo_id,

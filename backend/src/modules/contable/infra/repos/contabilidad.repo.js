@@ -107,6 +107,21 @@ class ContabilidadRepository {
             params.push(filters.idEmpresa);
         }
 
+        // Filtro de estado deducible (nuevo)
+        // Filtro de estado deducible (nuevo)
+        if (filters.deducible_status) {
+            if (filters.deducible_status === 'validated') {
+                // Special filter: show validated (not pending)
+                query += ` AND f.deducible_status IN ('deducible', 'no_deducible')`;
+            } else if (filters.deducible_status === 'pending') {
+                // Pending includes explicit 'pending' OR NULL
+                query += ` AND (f.deducible_status = 'pending' OR f.deducible_status IS NULL)`;
+            } else {
+                query += ` AND f.deducible_status = $${paramIndex++}`;
+                params.push(filters.deducible_status);
+            }
+        }
+
         query += ` ORDER BY f.fecha_devengo DESC, f.created_at DESC`;
         query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex++}`;
         params.push(limit, offset);
@@ -117,14 +132,84 @@ class ContabilidadRepository {
         let countQuery = `
             SELECT COUNT(*) as total
             FROM contabilidad_factura f
-            WHERE f.id_tenant = $1 AND f.deleted_at IS NULL
         `;
+
+        // Add joins if search is present (since search uses contact name/nif)
+        if (search) {
+            countQuery += ` LEFT JOIN contabilidad_contacto c ON f.id_contacto = c.id`;
+        }
+
+        countQuery += ` WHERE f.id_tenant = $1 AND f.deleted_at IS NULL`;
+
         const countParams = [ctx.tenantId];
         let countParamIndex = 2;
 
         if (tipo) {
             countQuery += ` AND f.tipo = $${countParamIndex++}`;
             countParams.push(tipo);
+        }
+
+        if (estado) {
+            countQuery += ` AND f.estado = $${countParamIndex++}`;
+            countParams.push(estado);
+        }
+
+        if (fechaDesde) {
+            countQuery += ` AND f.fecha_devengo >= $${countParamIndex++}`;
+            countParams.push(fechaDesde);
+        }
+
+        if (fechaHasta) {
+            countQuery += ` AND f.fecha_devengo <= $${countParamIndex++}`;
+            countParams.push(fechaHasta);
+        }
+
+        if (trimestre && anio) {
+            countQuery += ` AND EXTRACT(QUARTER FROM f.fecha_devengo) = $${countParamIndex++}`;
+            countParams.push(trimestre);
+            countQuery += ` AND EXTRACT(YEAR FROM f.fecha_devengo) = $${countParamIndex++}`;
+            countParams.push(anio);
+        }
+
+        if (idContacto) {
+            countQuery += ` AND f.id_contacto = $${countParamIndex++}`;
+            countParams.push(idContacto);
+        }
+
+        if (idCategoria) {
+            countQuery += ` AND f.id_categoria = $${countParamIndex++}`;
+            countParams.push(idCategoria);
+        }
+
+        if (idSucursal) {
+            countQuery += ` AND f.id_sucursal = $${countParamIndex++}`;
+            countParams.push(idSucursal);
+        }
+
+        if (filters.deducible_status) {
+            if (filters.deducible_status === 'validated') {
+                countQuery += ` AND f.deducible_status IN ('deducible', 'no_deducible')`;
+            } else if (filters.deducible_status === 'pending') {
+                countQuery += ` AND (f.deducible_status = 'pending' OR f.deducible_status IS NULL)`;
+            } else {
+                countQuery += ` AND f.deducible_status = $${countParamIndex++}`;
+                countParams.push(filters.deducible_status);
+            }
+        }
+
+        if (filters.idEmpresa) {
+            countQuery += ` AND f.id_empresa = $${countParamIndex++}`;
+            countParams.push(filters.idEmpresa);
+        }
+
+        if (search) {
+            countQuery += ` AND (
+                f.numero_factura ILIKE $${countParamIndex} OR 
+                c.nombre ILIKE $${countParamIndex} OR
+                c.nif_cif ILIKE $${countParamIndex}
+            )`;
+            countParams.push(`%${search}%`);
+            countParamIndex++;
         }
 
         const countResult = await db.query(countQuery, countParams);
@@ -180,6 +265,8 @@ class ContabilidadRepository {
             base_imponible,
             iva_porcentaje,
             iva_importe,
+            retencion_porcentaje = 0,
+            retencion_importe = 0,
             total,
             id_categoria,
             notas,
@@ -190,15 +277,17 @@ class ContabilidadRepository {
             INSERT INTO contabilidad_factura (
                 id_tenant, id_empresa, tipo, id_contacto, id_sucursal, numero_factura,
                 fecha_emision, fecha_devengo, fecha_vencimiento, moneda,
-                base_imponible, iva_porcentaje, iva_importe, total,
+                base_imponible, iva_porcentaje, iva_importe, 
+                retencion_porcentaje, retencion_importe, total,
                 id_categoria, notas, created_by
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
             ) RETURNING *
         `, [
             ctx.tenantId, id_empresa, tipo, id_contacto, id_sucursal, numero_factura,
             fecha_emision, fecha_devengo, fecha_vencimiento, moneda,
-            base_imponible, iva_porcentaje, iva_importe, total,
+            base_imponible, iva_porcentaje, iva_importe,
+            retencion_porcentaje, retencion_importe, total,
             id_categoria, notas, ctx.userId
         ]);
 
@@ -213,7 +302,8 @@ class ContabilidadRepository {
         const allowedFields = [
             'tipo', 'id_contacto', 'id_sucursal', 'numero_factura',
             'fecha_emision', 'fecha_devengo', 'fecha_vencimiento',
-            'base_imponible', 'iva_porcentaje', 'iva_importe', 'total',
+            'base_imponible', 'iva_porcentaje', 'iva_importe',
+            'retencion_porcentaje', 'retencion_importe', 'total',
             'estado', 'id_categoria', 'notas'
         ];
 
@@ -398,8 +488,41 @@ class ContabilidadRepository {
         return result.rows[0] || null;
     }
 
+    /**
+     * Find contact by NIF/CIF within tenant
+     */
+    async findContactoByNif(ctx, nifCif) {
+        if (!nifCif) return null;
+
+        const db = getTenantDb(ctx);
+        const normalizedNif = nifCif.trim().toUpperCase();
+
+        const result = await db.query(`
+            SELECT * FROM contabilidad_contacto
+            WHERE id_tenant = $1 
+              AND UPPER(TRIM(nif_cif)) = $2
+              AND deleted_at IS NULL
+              AND activo = true
+            LIMIT 1
+        `, [ctx.tenantId, normalizedNif]);
+
+        return result.rows[0] || null;
+    }
+
     async createContacto(ctx, data) {
         const db = getTenantDb(ctx);
+
+        // Check for duplicate NIF/CIF
+        if (data.nif_cif) {
+            const existing = await this.findContactoByNif(ctx, data.nif_cif);
+            if (existing) {
+                const error = new Error(`Ya existe un contacto con NIF/CIF ${data.nif_cif.toUpperCase()}`);
+                error.code = 'DUPLICATE_NIF';
+                error.existingContact = existing;
+                throw error;
+            }
+        }
+
         const result = await db.query(`
             INSERT INTO contabilidad_contacto (
                 id_tenant, id_empresa, tipo, nombre, nif_cif, email, telefono,
@@ -408,7 +531,7 @@ class ContabilidadRepository {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
             RETURNING *
         `, [
-            ctx.tenantId, data.id_empresa, data.tipo, data.nombre, data.nif_cif,
+            ctx.tenantId, data.id_empresa, data.tipo, data.nombre, data.nif_cif?.trim().toUpperCase(),
             data.email, data.telefono, data.direccion,
             data.codigo_postal, data.ciudad, data.provincia,
             data.pais || 'ES', data.condiciones_pago, data.iban,

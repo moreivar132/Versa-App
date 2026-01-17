@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Validación Deducible | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .badge-pending {
+            background-color: rgba(251, 191, 36, 0.1);
+            color: #f59e0b;
+        }
+
+        .badge-deducible {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
+        .badge-no_deducible {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white h-screen flex flex-col overflow-hidden font-main">
+
+    <div id="app-shell" class="h-full w-full">
+        <div id="finsaas-content" class="h-full flex flex-col p-6 w-full">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Validación Deducible
+                    </h1>
+                    <p class="text-gray-500 dark:text-gray-400">Revisa y marca facturas de gasto como deducibles</p>
+                </div>
+                <div class="flex gap-3">
+                    <!-- Empresa Selector -->
+                    <select id="filter-empresa"
+                        class="px-3 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary outline-none">
+                        <option value="">Cargando...</option>
+                    </select>
+                    <!-- Export CSV Button -->
+                    <button id="btn-export-csv"
+                        class="flex items-center gap-2 px-4 py-2 bg-primary text-background-dark rounded-lg font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-[18px]">download</span>
+                        Exportar CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- View Tabs -->
+            <div class="flex gap-2 mb-4">
+                <button id="tab-pendientes" onclick="setViewTab('pending')"
+                    class="px-5 py-2 rounded-lg font-medium text-sm transition-colors bg-amber-500/20 text-amber-500 border border-amber-500/50">
+                    <span class="material-symbols-outlined text-[16px] align-middle mr-1">pending_actions</span>
+                    Pendientes de Validar
+                </button>
+                <button id="tab-validadas" onclick="setViewTab('validated')"
+                    class="px-5 py-2 rounded-lg font-medium text-sm transition-colors bg-gray-100 dark:bg-surface-dark-light text-gray-500 border border-transparent hover:border-gray-300 dark:hover:border-[#25381e]">
+                    <span class="material-symbols-outlined text-[16px] align-middle mr-1">task_alt</span>
+                    Validadas
+                </button>
+            </div>
+
+            <!-- Filters Row -->
+            <div
+                class="flex flex-wrap gap-4 mb-6 p-4 bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-[#25381e]">
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-500">Año:</label>
+                    <select id="filter-year"
+                        class="px-3 py-1.5 bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-lg text-sm outline-none">
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-500">Trimestre:</label>
+                    <select id="filter-quarter"
+                        class="px-3 py-1.5 bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-lg text-sm outline-none">
+                        <option value="">Todos</option>
+                        <option value="1">Q1 (Ene-Mar)</option>
+                        <option value="2">Q2 (Abr-Jun)</option>
+                        <option value="3">Q3 (Jul-Sep)</option>
+                        <option value="4">Q4 (Oct-Dic)</option>
+                    </select>
+                </div>
+                <!-- Status filter only visible in Validadas tab -->
+                <div id="filter-status-container" class="hidden flex items-center gap-2">
+                    <label class="text-sm text-gray-500">Estado:</label>
+                    <select id="filter-status"
+                        class="px-3 py-1.5 bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-lg text-sm outline-none">
+                        <option value="">Todos</option>
+                        <option value="deducible">Deducible</option>
+                        <option value="no_deducible">No Deducible</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                    <label class="text-sm text-gray-500">Buscar:</label>
+                    <input type="text" id="filter-search" placeholder="Proveedor, NIF, Nº factura..."
+                        class="flex-1 px-3 py-1.5 bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-lg text-sm outline-none focus:ring-1 focus:ring-primary">
+                </div>
+                <button id="btn-apply-filters"
+                    class="px-4 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg font-medium text-sm transition-colors">
+                    Aplicar
+                </button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="grid grid-cols-4 gap-4 mb-6">
+                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-gray-200 dark:border-[#25381e]">
+                    <div class="text-sm text-gray-500 mb-1">Total Facturas</div>
+                    <div class="text-2xl font-bold" id="stat-total">-</div>
+                </div>
+                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-gray-200 dark:border-[#25381e]">
+                    <div class="text-sm text-gray-500 mb-1">Pendientes</div>
+                    <div class="text-2xl font-bold text-amber-500" id="stat-pending">-</div>
+                </div>
+                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-gray-200 dark:border-[#25381e]">
+                    <div class="text-sm text-gray-500 mb-1">Deducibles</div>
+                    <div class="text-2xl font-bold text-green-500" id="stat-deducible">-</div>
+                </div>
+                <div class="bg-white dark:bg-surface-dark rounded-xl p-4 border border-gray-200 dark:border-[#25381e]">
+                    <div class="text-sm text-gray-500 mb-1">No Deducibles</div>
+                    <div class="text-2xl font-bold text-red-500" id="stat-no-deducible">-</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div
+                class="flex-1 bg-white dark:bg-surface-dark rounded-xl border border-gray-200 dark:border-[#25381e] overflow-hidden flex flex-col">
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-sm">
+                        <thead
+                            class="bg-gray-50 dark:bg-surface-dark-light border-b border-gray-200 dark:border-[#25381e] text-gray-500 text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Proveedor</th>
+                                <th class="px-4 py-3 text-left">Nº Factura</th>
+                                <th class="px-4 py-3 text-left">Fecha</th>
+                                <th class="px-4 py-3 text-right">Total</th>
+                                <th class="px-4 py-3 text-right">Ret.</th>
+                                <th class="px-4 py-3 text-center">Estado Pago</th>
+                                <th class="px-4 py-3 text-center">Deducible</th>
+                                <th class="px-4 py-3 text-center">Adjunto</th>
+                                <th class="px-4 py-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="facturas-table-body" class="divide-y divide-gray-100 dark:divide-[#25381e]">
+                            <tr>
+                                <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                                    <span class="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
+                                    Cargando facturas...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination -->
+                <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-[#25381e]">
+                    <div class="text-sm text-gray-500">
+                        Mostrando <span id="pagination-info">0</span> resultados
+                    </div>
+                    <div class="flex gap-2">
+                        <button id="btn-prev"
+                            class="px-3 py-1 rounded border border-gray-200 dark:border-[#25381e] text-sm hover:bg-gray-50 dark:hover:bg-surface-dark-light disabled:opacity-50"
+                            disabled>
+                            Anterior
+                        </button>
+                        <button id="btn-next"
+                            class="px-3 py-1 rounded border border-gray-200 dark:border-[#25381e] text-sm hover:bg-gray-50 dark:hover:bg-surface-dark-light disabled:opacity-50"
+                            disabled>
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white dark:bg-surface-dark rounded-xl shadow-2xl border border-gray-200 dark:border-[#25381e] p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold">Revisar Deducibilidad</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <input type="hidden" id="modal-factura-id">
+
+            <!-- Invoice Summary -->
+            <div class="bg-gray-50 dark:bg-surface-dark-light rounded-lg p-4 mb-6">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-500">Proveedor:</span>
+                        <span class="font-medium ml-2" id="modal-proveedor">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Factura:</span>
+                        <span class="font-medium ml-2" id="modal-numero">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Fecha:</span>
+                        <span class="font-medium ml-2" id="modal-fecha">-</span>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Total:</span>
+                        <span class="font-bold ml-2 text-primary" id="modal-total">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Selection -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-3">Estado de Deducibilidad</label>
+                <div class="flex gap-3">
+                    <label
+                        class="flex-1 flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-[#25381e] cursor-pointer hover:border-amber-400 has-[:checked]:border-amber-400 has-[:checked]:bg-amber-50 dark:has-[:checked]:bg-amber-900/20">
+                        <input type="radio" name="deducible-status" value="pending" class="accent-amber-500">
+                        <span class="text-sm font-medium">Pendiente</span>
+                    </label>
+                    <label
+                        class="flex-1 flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-[#25381e] cursor-pointer hover:border-green-500 has-[:checked]:border-green-500 has-[:checked]:bg-green-50 dark:has-[:checked]:bg-green-900/20">
+                        <input type="radio" name="deducible-status" value="deducible" class="accent-green-500">
+                        <span class="text-sm font-medium">Deducible</span>
+                    </label>
+                    <label
+                        class="flex-1 flex items-center gap-2 p-3 rounded-lg border border-gray-200 dark:border-[#25381e] cursor-pointer hover:border-red-500 has-[:checked]:border-red-500 has-[:checked]:bg-red-50 dark:has-[:checked]:bg-red-900/20">
+                        <input type="radio" name="deducible-status" value="no_deducible" class="accent-red-500">
+                        <span class="text-sm font-medium">No Deducible</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Reason -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium mb-2">Motivo / Notas</label>
+                <textarea id="modal-reason" rows="3" placeholder="Justificación de la decisión..."
+                    class="w-full px-4 py-3 bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-lg outline-none focus:ring-2 focus:ring-primary resize-none"></textarea>
+            </div>
+
+            <!-- Last Review Info -->
+            <div id="modal-audit-info"
+                class="hidden mb-6 p-3 bg-gray-100 dark:bg-surface-dark-light rounded-lg text-xs text-gray-500">
+                <span class="material-symbols-outlined text-[14px] align-middle mr-1">history</span>
+                Última revisión: <span id="modal-last-review">-</span>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-500 hover:text-gray-700 font-medium">
+                    Cancelar
+                </button>
+                <button onclick="saveDeducibleStatus()"
+                    class="px-6 py-2 bg-primary text-background-dark rounded-lg font-bold hover:brightness-110 transition-all shadow-lg shadow-primary/20">
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODULES -->
+    <script type="module">
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        // Initialize Layout
+        const layout = new FinSaaSLayout('app-shell');
+        layout.init();
+        requireAuth();
+
+        const API_BASE = '/api/contabilidad';
+
+        // State
+        let currentPage = 0;
+        const pageSize = 50;
+        let selectedEmpresaId = null;
+        let facturasData = [];
+        let currentViewTab = 'pending'; // 'pending' or 'validated'
+
+        // --- DOM Elements ---
+        const empresaSelect = document.getElementById('filter-empresa');
+        const yearSelect = document.getElementById('filter-year');
+        const quarterSelect = document.getElementById('filter-quarter');
+        const statusSelect = document.getElementById('filter-status');
+        const searchInput = document.getElementById('filter-search');
+        const tableBody = document.getElementById('facturas-table-body');
+
+        // --- Tab Management ---
+        window.setViewTab = function (tab) {
+            currentViewTab = tab;
+            currentPage = 0;
+
+            const tabPendientes = document.getElementById('tab-pendientes');
+            const tabValidadas = document.getElementById('tab-validadas');
+            const statusContainer = document.getElementById('filter-status-container');
+
+            if (tab === 'pending') {
+                tabPendientes.className = 'px-5 py-2 rounded-lg font-medium text-sm transition-colors bg-amber-500/20 text-amber-500 border border-amber-500/50';
+                tabValidadas.className = 'px-5 py-2 rounded-lg font-medium text-sm transition-colors bg-gray-100 dark:bg-surface-dark-light text-gray-500 border border-transparent hover:border-gray-300 dark:hover:border-[#25381e]';
+                statusContainer.classList.add('hidden');
+
+                // Auto-clear filters to show all pending
+                yearSelect.value = '';
+                quarterSelect.value = '';
+            } else {
+                tabPendientes.className = 'px-5 py-2 rounded-lg font-medium text-sm transition-colors bg-gray-100 dark:bg-surface-dark-light text-gray-500 border border-transparent hover:border-gray-300 dark:hover:border-[#25381e]';
+                tabValidadas.className = 'px-5 py-2 rounded-lg font-medium text-sm transition-colors bg-green-500/20 text-green-500 border border-green-500/50';
+                statusContainer.classList.remove('hidden');
+            }
+
+            loadFacturas();
+        };
+
+        // --- Init ---
+        async function init() {
+            await loadEmpresas();
+            setupYearOptions();
+
+            // If default tab is pending, clear default filters immediately
+            if (currentViewTab === 'pending') {
+                yearSelect.value = '';
+                quarterSelect.value = '';
+            }
+
+            setupEventListeners();
+            loadFacturas();
+        }
+
+        function setupYearOptions() {
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '<option value="">Todos los años</option>';
+            for (let y = currentYear; y >= currentYear - 5; y--) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if (y === currentYear) opt.selected = true; // Default to current
+                yearSelect.appendChild(opt);
+            }
+
+            // Setup Quarter
+            quarterSelect.innerHTML = `
+                <option value="">Todos los trimestres</option>
+                <option value="1">1T (Ene-Mar)</option>
+                <option value="2">2T (Abr-Jun)</option>
+                <option value="3">3T (Jul-Sep)</option>
+                <option value="4">4T (Oct-Dic)</option>
+            `;
+
+            // Default to current quarter
+            const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
+            quarterSelect.value = currentQuarter;
+        }
+
+        async function loadEmpresas() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE}/empresas`);
+                if (!response.ok) throw new Error(`API Error: ${response.status}`);
+
+                const res = await response.json();
+                let items = res.items || res.data?.items || res.data || res || [];
+
+                empresaSelect.innerHTML = '<option value="">Todas las empresas</option>';
+                items.forEach(emp => {
+                    const opt = document.createElement('option');
+                    opt.value = emp.id;
+                    opt.textContent = emp.nombre_legal || emp.nombre_comercial || emp.nombre || 'Sin nombre';
+                    empresaSelect.appendChild(opt);
+                });
+
+                // Auto-select from localStorage
+                const stored = localStorage.getItem('finsaas_current_empresa');
+                if (stored && items.find(e => e.id == stored)) {
+                    empresaSelect.value = stored;
+                    selectedEmpresaId = stored;
+                }
+
+            } catch (e) {
+                console.error('Error loading empresas', e);
+            }
+        }
+
+        function setupEventListeners() {
+            document.getElementById('btn-apply-filters').addEventListener('click', () => {
+                currentPage = 0;
+                loadFacturas();
+            });
+
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    currentPage = 0;
+                    loadFacturas();
+                }
+            });
+
+            empresaSelect.addEventListener('change', (e) => {
+                selectedEmpresaId = e.target.value;
+                if (selectedEmpresaId) {
+                    localStorage.setItem('finsaas_current_empresa', selectedEmpresaId);
+                }
+                currentPage = 0;
+                loadFacturas();
+            });
+
+            document.getElementById('btn-prev').addEventListener('click', () => {
+                if (currentPage > 0) {
+                    currentPage--;
+                    loadFacturas();
+                }
+            });
+
+            document.getElementById('btn-next').addEventListener('click', () => {
+                currentPage++;
+                loadFacturas();
+            });
+
+            document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
+
+            // Tab Switching Logic moved to setViewTab function for better reliability with inline onclick handlers
+        }
+
+        async function loadFacturas() {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                        <span class="material-symbols-outlined text-4xl mb-2 block animate-spin">progress_activity</span>
+                        Cargando...
+                    </td>
+                </tr>
+            `;
+
+            const params = new URLSearchParams({
+                tipo: 'GASTO',
+                limit: pageSize,
+                offset: currentPage * pageSize
+            });
+
+            const year = yearSelect.value;
+            const quarter = quarterSelect.value;
+            const search = searchInput.value.trim();
+
+            if (year) params.append('anio', year);
+            if (quarter) params.append('trimestre', quarter);
+            if (search) params.append('search', search);
+
+            // Apply tab-based filtering
+            if (currentViewTab === 'pending') {
+                // For pending validation, we usually want to see ALL pending items regardless of date
+                // unless the user strictly selected a filter. 
+                // However, since we now have "All" options, we respect the user's choice.
+                // If they chose "All" (empty values), no date filter is sent.
+
+                params.append('deducible_status', 'pending');
+            } else {
+                // Validated tab: show deducible or no_deducible based on filter
+                const status = statusSelect.value;
+                if (status) {
+                    params.append('deducible_status', status);
+                } else {
+                    // Show all validated (not pending)
+                    params.append('deducible_status', 'validated');
+                }
+            }
+
+            const headers = {};
+            if (selectedEmpresaId) {
+                headers['X-Empresa-Id'] = selectedEmpresaId;
+            }
+
+            try {
+                const response = await fetchWithAuth(`${API_BASE}/facturas?${params.toString()}`, { headers });
+                const res = await response.json();
+
+                if (!res.ok && res.error) throw new Error(res.error);
+
+                facturasData = res.items || [];
+                const total = res.total || facturasData.length;
+
+                updateStats(facturasData);
+                renderTable(facturasData);
+                updatePagination(total);
+
+            } catch (e) {
+                console.error('Error loading facturas', e);
+                tableBody.innerHTML = `
+                    <tr>
+                    <tr>
+                        <td colspan="9" class="px-4 py-8 text-center text-red-400">
+                            <span class="material-symbols-outlined text-4xl mb-2 block">error</span>
+                            Error: ${e.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function updateStats(items) {
+            const total = items.length;
+            const pending = items.filter(i => i.deducible_status === 'pending' || !i.deducible_status).length;
+            const deducible = items.filter(i => i.deducible_status === 'deducible').length;
+            const noDeducible = items.filter(i => i.deducible_status === 'no_deducible').length;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-pending').textContent = pending;
+            document.getElementById('stat-deducible').textContent = deducible;
+            document.getElementById('stat-no-deducible').textContent = noDeducible;
+        }
+
+        function renderTable(items) {
+            if (!items || items.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                            <span class="material-symbols-outlined text-4xl mb-2 block">search_off</span>
+                            No se encontraron facturas
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = items.map(f => {
+                const status = f.deducible_status || 'pending';
+                const statusLabel = status === 'pending' ? 'Pendiente' :
+                    status === 'deducible' ? 'Deducible' : 'No Deducible';
+                const estadoPago = f.estado || 'PENDIENTE';
+                const hasArchivo = f.archivos_count > 0;
+
+                return `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors">
+                        <td class="px-4 py-3">
+                            <div class="font-medium">${f.contacto_nombre || 'Sin proveedor'}</div>
+                            <div class="text-xs text-gray-400">${f.contacto_nif || '-'}</div>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-xs">${f.numero_factura || '-'}</td>
+                        <td class="px-4 py-3 text-sm">${formatDate(f.fecha_devengo || f.fecha_emision)}</td>
+                        <td class="px-4 py-3 text-right font-bold">${formatMoney(f.total)}</td>
+                        <td class="px-4 py-3 text-right text-red-500 font-mono text-xs">
+                            ${f.retencion_importe > 0 ? '-' + formatMoney(f.retencion_importe) : '-'}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded text-xs font-medium ${getEstadoPagoClass(estadoPago)}">${estadoPago}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-2 py-1 rounded text-xs font-medium badge-${status}">${statusLabel}</span>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="viewInvoiceDocument(${f.id}, '${f.numero_factura || ''}')" 
+                                class="text-gray-400 hover:text-primary transition-colors" 
+                                title="${hasArchivo ? 'Ver adjunto' : 'Buscar en documentos'}">
+                                <span class="material-symbols-outlined text-[20px]">${hasArchivo ? 'visibility' : 'search'}</span>
+                            </button>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <button onclick="openReviewModal(${f.id})" 
+                                class="px-3 py-1 text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 rounded-lg transition-colors">
+                                Revisar
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getEstadoPagoClass(estado) {
+            const classes = {
+                'PENDIENTE': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                'PAGADA': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                'PARCIAL': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                'VENCIDA': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                'ANULADA': 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400'
+            };
+            return classes[estado] || classes['PENDIENTE'];
+        }
+
+        function updatePagination(total) {
+            const start = currentPage * pageSize + 1;
+            const end = Math.min((currentPage + 1) * pageSize, total);
+            document.getElementById('pagination-info').textContent = `${start}-${end} de ${total}`;
+
+            document.getElementById('btn-prev').disabled = currentPage === 0;
+            document.getElementById('btn-next').disabled = end >= total;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function formatMoney(val) {
+            return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val || 0);
+        }
+
+        // --- Modal Functions ---
+        window.openReviewModal = function (facturaId) {
+            console.log('[Modal] Opening for factura:', facturaId, 'Available data:', facturasData.length);
+
+            // Use == for loose comparison to handle string/number mismatch
+            const factura = facturasData.find(f => f.id == facturaId);
+            if (!factura) {
+                console.error('[Modal] Factura not found in data:', facturaId);
+                alert('Error: No se encontró la factura en los datos cargados');
+                return;
+            }
+
+            console.log('[Modal] Factura data:', factura);
+
+            document.getElementById('modal-factura-id').value = facturaId;
+            document.getElementById('modal-proveedor').textContent = factura.contacto_nombre || 'Sin proveedor';
+            document.getElementById('modal-numero').textContent = factura.numero_factura || '-';
+            document.getElementById('modal-fecha').textContent = formatDate(factura.fecha_devengo || factura.fecha_emision);
+            document.getElementById('modal-total').textContent = formatMoney(factura.total);
+
+            // Set current status
+            const currentStatus = factura.deducible_status || 'pending';
+            const radio = document.querySelector(`input[name="deducible-status"][value="${currentStatus}"]`);
+            if (radio) radio.checked = true;
+
+            // Set reason
+            document.getElementById('modal-reason').value = factura.deducible_reason || '';
+
+            // Show last review info
+            const auditInfo = document.getElementById('modal-audit-info');
+            if (factura.deducible_checked_at) {
+                auditInfo.classList.remove('hidden');
+                const checkedDate = new Date(factura.deducible_checked_at).toLocaleString('es-ES');
+                document.getElementById('modal-last-review').textContent = checkedDate;
+            } else {
+                auditInfo.classList.add('hidden');
+            }
+
+            document.getElementById('review-modal').classList.remove('hidden');
+        };
+
+        window.closeModal = function () {
+            document.getElementById('review-modal').classList.add('hidden');
+        };
+
+        window.saveDeducibleStatus = async function () {
+            const facturaId = document.getElementById('modal-factura-id').value;
+            const status = document.querySelector('input[name="deducible-status"]:checked')?.value;
+            const reason = document.getElementById('modal-reason').value.trim();
+
+            if (!status) {
+                alert('Selecciona un estado');
+                return;
+            }
+
+            try {
+                const headers = { 'Content-Type': 'application/json' };
+                if (selectedEmpresaId) {
+                    headers['X-Empresa-Id'] = selectedEmpresaId;
+                }
+
+                const response = await fetchWithAuth(`${API_BASE}/facturas/${facturaId}/deducible`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({
+                        deducible_status: status,
+                        deducible_reason: reason
+                    })
+                });
+
+                const res = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(res.error || 'Error al guardar');
+                }
+
+                closeModal();
+                loadFacturas(); // Refresh table
+
+            } catch (e) {
+                console.error('Error saving deducible status', e);
+                alert('Error: ' + e.message);
+            }
+        };
+
+        // --- Export CSV ---
+        async function exportCSV() {
+            const params = new URLSearchParams({
+                tipo: 'GASTO'
+            });
+
+            const year = yearSelect.value;
+            const quarter = quarterSelect.value;
+
+            // Logic must match loadFacturas
+            if (currentViewTab === 'pending') {
+                params.append('deducible_status', 'pending');
+            } else {
+                const status = statusSelect.value;
+                if (status) {
+                    params.append('deducible_status', status);
+                } else {
+                    // Default for Validated tab is 'validated' (excludes pending)
+                    params.append('deducible_status', 'validated');
+                }
+            }
+
+            // Only add empresa_id param if it's a valid number
+            if (selectedEmpresaId && selectedEmpresaId !== '' && !isNaN(parseInt(selectedEmpresaId))) {
+                params.append('empresa_id', selectedEmpresaId);
+            }
+            if (year) params.append('year', year);
+            if (quarter) params.append('quarter', quarter);
+
+            try {
+                const token = getToken();
+                const url = `${API_BASE}/contabilidad/facturas/export.csv?${params.toString()}`;
+
+                // Build headers - only add X-Empresa-Id if it has a valid value
+                const headers = {
+                    'Authorization': `Bearer ${token}`
+                };
+                if (selectedEmpresaId && selectedEmpresaId !== '' && !isNaN(parseInt(selectedEmpresaId))) {
+                    headers['X-Empresa-Id'] = selectedEmpresaId;
+                }
+
+                // Use fetch to get the file
+                const response = await fetch(url, { headers });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Error al exportar');
+                }
+
+                // Get filename from Content-Disposition header or generate one
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'facturas_gasto.csv';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="(.+)"/);
+                    if (match) filename = match[1];
+                }
+
+                // Download the file
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+
+            } catch (e) {
+                console.error('Error exporting CSV', e);
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // --- Document View Logic ---
+        window.viewInvoiceDocument = async function (id, numero) {
+            try {
+                // Try to get files first
+                const response = await fetchWithAuth(`${API_BASE}/facturas/${id}/archivos`);
+                // If 404/500 or plain checks fail, we go to catch
+
+                if (response.ok) {
+                    const res = await response.json();
+                    const files = res.data || res || [];
+
+                    if (files.length > 0) {
+                        // Open the first file
+                        window.open(files[0].file_url, '_blank');
+                        return;
+                    }
+                }
+
+                // If no files or error, redirect to Documentos
+                redirectToDocuments(numero);
+
+            } catch (e) {
+                console.error('Error fetching attached files:', e);
+                // Fallback redirect
+                redirectToDocuments(numero);
+            }
+        };
+
+        function redirectToDocuments(numero) {
+            // Encode the search parameter
+            const searchParam = encodeURIComponent(numero || '');
+            window.location.href = `documentos.html?search=${searchParam}`;
+        }
+
+        // Start
+        init();
+    </script>
+
+</body>
+
+</html>

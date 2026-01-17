@@ -55,6 +55,7 @@ async function list(req, res) {
             idContacto: req.query.idContacto ? parseInt(req.query.idContacto) : null,
             idCategoria: req.query.idCategoria ? parseInt(req.query.idCategoria) : null,
             idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
+            deducible_status: req.query.deducible_status, // nuevo filtro
             search: req.query.search,
             idEmpresa: ctx.empresaId, // Ya viene validado del middleware
             limit: parseInt(req.query.limit) || 50,

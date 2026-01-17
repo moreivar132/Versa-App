@@ -507,6 +507,14 @@
                 <span class="text-gray-500 text-sm">Total:</span>
                 <span id="drawer-total" class="font-bold text-primary">-</span>
             </div>
+            <div id="drawer-retencion-row" class="flex justify-between hidden">
+                <span class="text-gray-500 text-sm">Retención (<span id="drawer-ret-pct">0</span>%):</span>
+                <span id="drawer-ret-importe" class="text-red-400 font-mono">-</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-500 text-sm">Deducible:</span>
+                <span id="drawer-deducible" class="text-xs font-bold px-2 py-0.5 rounded">-</span>
+            </div>
             <div class="flex justify-between items-center">
                 <span class="text-gray-500 text-sm">Tipo:</span>
                 <span id="drawer-tipo" class="type-badge"></span>
@@ -866,6 +874,34 @@
             origenEl.textContent = doc.origen;
             origenEl.className = `origin-badge origin-${doc.origen}`;
 
+            // Retention Logic
+            const retRow = document.getElementById('drawer-retencion-row');
+            if (doc.retencion_importe && doc.retencion_importe > 0) {
+                retRow.classList.remove('hidden');
+                document.getElementById('drawer-ret-pct').textContent = doc.retencion_porcentaje;
+                document.getElementById('drawer-ret-importe').textContent = '-' + formatCurrency(Math.abs(doc.retencion_importe));
+            } else {
+                retRow.classList.add('hidden');
+            }
+
+            // Deducible Logic
+            const deducibleBadge = document.getElementById('drawer-deducible');
+            const status = doc.deducible_status || 'pending';
+
+            // Remove all possible classes first
+            deducibleBadge.className = 'text-xs font-bold px-2 py-0.5 rounded status-badge';
+
+            if (status === 'deducible') {
+                deducibleBadge.classList.add('bg-green-100', 'text-green-700', 'dark:bg-green-900/30', 'dark:text-green-400');
+                deducibleBadge.textContent = 'DDUCIBLE';
+            } else if (status === 'no_deducible') {
+                deducibleBadge.classList.add('bg-red-100', 'text-red-700', 'dark:bg-red-900/30', 'dark:text-red-400');
+                deducibleBadge.textContent = 'NO DEDUCIBLE';
+            } else {
+                deducibleBadge.classList.add('bg-amber-100', 'text-amber-700', 'dark:bg-amber-900/30', 'dark:text-amber-400');
+                deducibleBadge.textContent = 'PENDIENTE';
+            }
+
             // Update preview
             const previewArea = document.getElementById('drawer-preview');
             const downloadBtn = document.getElementById('btn-download');
@@ -945,7 +981,9 @@
                 if (currentDocument.source_type === 'intake') {
                     window.location.href = `gastos-nuevo.html?intakeId=${currentDocument.intake_id}`;
                 } else {
-                    window.location.href = `facturas.html?id=${currentDocument.id}`;
+                    // Redirect to validation page for regular invoices as it's the central hub for review
+                    // Pass the invoice ID in query param if validation page supports it (optional improvement)
+                    window.location.href = `/src/verticals/finsaas/pages/validacion-deducible.html`;
                 }
             }
         };

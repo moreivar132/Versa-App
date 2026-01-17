@@ -9,6 +9,10 @@ const superAdminRouter = require('./routes/superAdminRoutes');
 const proveedoresRouter = require('./routes/proveedores');
 const verifyJWT = require('./middleware/auth');
 
+// --- Google OAuth (Passport.js) ---
+const passport = require('./config/passport');
+const googleAuthRouter = require('./routes/googleAuth');
+
 // --- Core Middlewares (Observabilidad) ---
 const { requestIdMiddleware } = require('./src/core/http/middlewares/request-id');
 const { errorHandler, notFoundHandler } = require('./src/core/http/middlewares/error-handler');
@@ -31,6 +35,9 @@ console.log('---------------------------------------------------');
 
 // --- Middlewares ---
 app.use(cors());
+
+// --- Passport OAuth Initialization ---
+app.use(passport.initialize());
 
 // --- API DOCUMENTATION (Swagger) ---
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -67,11 +74,15 @@ const { customerAuth } = require('./middleware/customerAuth');
 app.use('/api/portal', require('./routes/portalCitas'));
 app.use('/api/portal/notificaciones', require('./routes/portalNotificaciones'));
 app.use('/api/cliente/auth', require('./routes/customerAuth'));
+app.use('/api/cliente/auth', require('./routes/customerGoogleAuth'));  // Customer Google OAuth
 app.use('/api/cliente', customerAuth, require('./routes/customerPortal'));
 app.use('/api/cliente/payment-methods', require('./routes/customerPaymentMethods'));
 
 // --- Rutas principales / Módulos V2 ---
 app.use('/api/auth', authRouter);
+app.use('/api/auth', googleAuthRouter);  // Google OAuth routes
+app.use('/api/saas/invites', require('./routes/saasInvites'));  // SaaS invite management
+app.use('/api/invites', require('./routes/invitePublic'));  // Public invite verify/accept
 app.use('/api/admin', privateRoute, superAdminRouter);
 app.use('/api/access', privateRoute, require('./routes/accessRoutes'));
 app.use('/api/me', require('./routes/meRoutes'));  // User access info (includes own auth)
@@ -126,6 +137,7 @@ app.use('/api/open-banking', require('./routes/openBankingRoutes'));
 
 // Static Uploads
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check / DB status
 app.get('/api/health', (req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));

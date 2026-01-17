@@ -173,6 +173,10 @@
                         class="px-4 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors flex items-center gap-2">
                         <span class="material-symbols-outlined text-[18px]">settings</span> Configurar
                     </button>
+                    <button onclick="downloadCSV()" title="Descargar CSV con retenciones y estructura completa"
+                        class="px-4 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">download_2</span> CSV
+                    </button>
                     <button onclick="openModal('upload')"
                         class="px-4 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors flex items-center gap-2">
                         <span class="material-symbols-outlined text-[18px]">upload_file</span> Subir
@@ -259,15 +263,18 @@
                                 <th>Tipo</th>
                                 <th>Fecha</th>
                                 <th class="text-right">Base</th>
+                                <th class="text-right">Ret.</th>
                                 <th class="text-right">IVA</th>
                                 <th class="text-right">Total</th>
                                 <th>Estado</th>
+                                <th class="w-8 text-center" title="Archivos"><span
+                                        class="material-symbols-outlined text-[16px]">attachment</span></th>
                                 <th></th>
                             </tr>
                         </thead>
                         <tbody id="invoices-list" class="divide-y divide-gray-200 dark:divide-[#25381e]">
                             <tr>
-                                <td colspan="9" class="p-8 text-center text-gray-500">Cargando facturas...</td>
+                                <td colspan="11" class="p-8 text-center text-gray-500">Cargando facturas...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -372,19 +379,37 @@
                     </div>
 
                     <!-- Totals -->
-                    <div class="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 dark:bg-surface-dark-light rounded-lg">
-                        <div>
-                            <label class="form-label">Base Imponible</label>
-                            <input type="text" id="f-base-total"
-                                class="form-input bg-white dark:bg-surface-dark font-bold" readonly value="0,00 €">
+                    <div class="mb-4 p-4 bg-gray-50 dark:bg-surface-dark-light rounded-lg space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Base Imponible</label>
+                                <input type="text" id="f-base-total"
+                                    class="form-input bg-white dark:bg-surface-dark font-bold" readonly value="0,00 €">
+                            </div>
+                            <div>
+                                <label class="form-label">IVA Total</label>
+                                <input type="text" id="f-iva-total"
+                                    class="form-input bg-white dark:bg-surface-dark font-bold" readonly value="0,00 €">
+                            </div>
                         </div>
-                        <div>
-                            <label class="form-label">IVA Total</label>
-                            <input type="text" id="f-iva-total"
-                                class="form-input bg-white dark:bg-surface-dark font-bold" readonly value="0,00 €">
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Retención IRPF %</label>
+                                <input type="number" id="f-retencion-pct"
+                                    class="form-input bg-white dark:bg-surface-dark" placeholder="0" min="0" max="100"
+                                    step="1" oninput="calculateTotals()">
+                            </div>
+                            <div>
+                                <label class="form-label">Retención Importe</label>
+                                <input type="text" id="f-retencion-importe"
+                                    class="form-input bg-white dark:bg-surface-dark font-mono text-red-500" readonly
+                                    value="0,00 €">
+                            </div>
                         </div>
+
                         <div>
-                            <label class="form-label">TOTAL</label>
+                            <label class="form-label">TOTAL A PAGAR</label>
                             <input type="text" id="f-total"
                                 class="form-input bg-primary/10 text-primary font-extrabold text-lg" readonly
                                 value="0,00 €">
@@ -453,6 +478,23 @@
                         class="px-6 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 shadow-lg shadow-primary/20">Guardar</button>
                 </div>
             </form>
+        </div>
+    </div>
+    </div>
+
+    <!-- Attachments Viewer Modal -->
+    <div id="attachments-modal" class="fixed inset-0 z-[70] hidden items-center justify-center modal-overlay">
+        <div
+            class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-[#25381e]">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Archivos Adjuntos</h2>
+                <button onclick="closeAttachmentsModal()" class="text-gray-500 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="attachments-list" class="p-6 overflow-y-auto flex flex-col gap-3">
+                <p class="text-center text-gray-500">Cargando archivos...</p>
+            </div>
         </div>
     </div>
 
@@ -581,7 +623,7 @@
                 const tbody = document.getElementById('invoices-list');
 
                 if (!res.items || res.items.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-gray-500">No hay facturas registradas</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-gray-500">No hay facturas registradas</td></tr>';
                 } else {
                     tbody.innerHTML = res.items.map(f => `
                          <tr class="cursor-pointer hover:bg-gray-50 dark:hover:bg-surface-dark-light/50 transition-colors group" onclick="editInvoice(${f.id})">
@@ -590,6 +632,7 @@
                              <td><span class="type-badge type-${f.tipo}">${f.tipo}</span></td>
                              <td class="text-gray-500 dark:text-gray-400">${formatDate(f.fecha_emision)}</td>
                              <td class="text-right text-gray-500 dark:text-gray-400">${formatCurrency(f.base_imponible)}</td>
+                             <td class="text-right text-red-500/80 font-mono text-xs">${f.retencion_importe > 0 ? '-' + formatCurrency(f.retencion_importe) : '-'}</td>
                              <td class="text-right text-gray-500 dark:text-gray-400">${formatCurrency(f.iva_importe)}</td>
                              <td class="text-right font-bold text-slate-900 dark:text-white">${formatCurrency(f.total)}</td>
                              <td onclick="event.stopPropagation()">
@@ -599,6 +642,13 @@
                                     <option value="PARCIAL" ${f.estado === 'PARCIAL' ? 'selected' : ''}>PARCIAL</option>
                                     <option value="VENCIDA" ${f.estado === 'VENCIDA' ? 'selected' : ''}>VENCIDA</option>
                                 </select>
+                             </td>
+                             <td class="text-center" onclick="event.stopPropagation()">
+                                ${f.archivos_count > 0 ? `
+                                    <button onclick="openAttachments(${f.id})" class="text-primary hover:text-primary/80 transition-colors" title="Ver ${f.archivos_count} archivo(s)">
+                                        <span class="material-symbols-outlined text-[20px]">attachment</span>
+                                    </button>
+                                ` : '<span class="text-gray-300 text-[14px]">-</span>'}
                              </td>
                              <td class="text-right flex items-center justify-end gap-1">
                                  <button onclick="event.stopPropagation(); window.open('plantilla-factura.html?id=${f.id}', '_blank')" class="text-gray-400 hover:text-primary transition-colors p-1" title="Ver PDF / Imprimir">
@@ -695,6 +745,9 @@
                 document.getElementById('invoice-id').value = '';
                 document.getElementById('f-fecha-emision').value = new Date().toISOString().split('T')[0];
 
+                document.getElementById('f-retencion-pct').value = '';
+                document.getElementById('f-retencion-importe').value = '0,00 €';
+
                 // Clear and add one default line item
                 lineItemCounter = 0;
                 document.getElementById('line-items-body').innerHTML = '';
@@ -778,9 +831,17 @@
                 if (subtotalEl) subtotalEl.textContent = formatCurrency(subtotal);
             });
 
+            // Calculate Retention
+            const retPct = parseFloat(document.getElementById('f-retencion-pct').value) || 0;
+            const retAmount = baseTotal * (retPct / 100);
+
             document.getElementById('f-base-total').value = formatCurrency(baseTotal);
             document.getElementById('f-iva-total').value = formatCurrency(ivaTotal);
-            document.getElementById('f-total').value = formatCurrency(baseTotal + ivaTotal);
+            document.getElementById('f-retencion-importe').value = '-' + formatCurrency(retAmount);
+
+            // Total = Base + IVA - Retention
+            const total = baseTotal + ivaTotal - retAmount;
+            document.getElementById('f-total').value = formatCurrency(total);
         };
 
         // Legacy compatibility
@@ -895,7 +956,9 @@
                 base_imponible: baseTotal,
                 iva_porcentaje: avgIvaPct,
                 iva_importe: Math.round(ivaTotal * 100) / 100,
-                total: Math.round((baseTotal + ivaTotal) * 100) / 100,
+                retencion_porcentaje: parseFloat(document.getElementById('f-retencion-pct').value) || 0,
+                retencion_importe: Math.abs(parseFloat(document.getElementById('f-retencion-importe').value.replace(/[^0-9,.-]/g, '').replace(',', '.'))) || 0,
+                total: Math.round((baseTotal + ivaTotal - (parseFloat(document.getElementById('f-retencion-pct').value) || 0) / 100 * baseTotal) * 100) / 100,
                 id_categoria: document.getElementById('f-categoria').value || null,
                 notas: JSON.stringify(notasData)
             };
@@ -928,6 +991,10 @@
                     if (f.fecha_vencimiento) document.getElementById('f-fecha-vencimiento').value = f.fecha_vencimiento.split('T')[0];
                     document.getElementById('f-contacto').value = f.id_contacto || '';
                     document.getElementById('f-categoria').value = f.id_categoria || '';
+
+                    // Load Retention
+                    document.getElementById('f-retencion-pct').value = f.retencion_porcentaje || '';
+                    document.getElementById('f-retencion-importe').value = f.retencion_importe ? '-' + formatCurrency(f.retencion_importe) : '0,00 €';
 
                     // Try to parse structured notas
                     lineItemCounter = 0;
@@ -1011,6 +1078,108 @@
             document.getElementById('btn-prev').addEventListener('click', () => loadInvoices(currentPage - 1));
             document.getElementById('btn-next').addEventListener('click', () => loadInvoices(currentPage + 1));
         });
+
+        // --- CSV Export Logic ---
+        window.downloadCSV = function () {
+            const tipo = document.getElementById('filter-tipo').value;
+            const estado = document.getElementById('filter-estado').value;
+            const search = document.getElementById('search-input').value;
+
+            // Note: Adjust params as needed by the backend export endpoint
+            let url = `/api/contabilidad/facturas/export.csv?t=${Date.now()}`;
+            if (currentEmpresaId) url += `&empresa_id=${currentEmpresaId}`;
+            if (tipo) url += `&tipo=${tipo}`;
+            if (estado) url += `&estado=${estado}`;
+            // Better: use the specific deducible status column if available, else standard filters don't map directly to export params in deducible_controller.
+            // Let's pass the standard list filters if possible, but deducible controller expects specific ones.
+            // For now, let's export ALL or filter by basic things.
+            // The controller supports: empresa_id, year, quarter, deducible_status, tipo.
+
+            // Let's try to infer year/quarter if possible, or just export all recent.
+            const now = new Date();
+            url += `&year=${now.getFullYear()}`;
+
+            // Trigger download
+            window.open(url + (session?.token ? `&token=${session.token}` : ''), '_blank'); // Token usually in header, but for direct link download we might need cookies or param. 
+            // Since we use Bearer auth, window.open won't send headers. 
+            // We need to fetch blob and download.
+
+            downloadFile(url);
+        };
+
+        async function downloadFile(url) {
+            try {
+                const res = await fetch(url, { headers: getAuthHeaders() });
+                if (!res.ok) throw new Error('Error descargando CSV');
+                const blob = await res.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `facturas_export_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (e) {
+                console.error(e);
+                alert('Hubo un error al descargar el reporte CSV');
+            }
+        }
+
+        // --- Attachments Logic ---
+        window.openAttachments = async function (id) {
+            const modal = document.getElementById('attachments-modal');
+            const list = document.getElementById('attachments-list');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            list.innerHTML = '<p class="text-center text-gray-500 py-4"><span class="animate-spin inline-block mr-2">⟳</span> Cargando archivos...</p>';
+
+            try {
+                const res = await apiGet(`/api/contabilidad/facturas/${id}/archivos`);
+                const files = res.data || [];
+
+                if (files.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-500 py-4">No hay archivos adjuntos.</p>';
+                    return;
+                }
+
+                list.innerHTML = files.map(file => {
+                    // Determine icon based on mime
+                    let icon = 'description';
+                    if (file.mime_type?.includes('image')) icon = 'image';
+                    else if (file.mime_type?.includes('pdf')) icon = 'picture_as_pdf';
+
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-surface-dark-light rounded-lg hover:bg-gray-100 dark:hover:bg-[#25381e] transition-colors group">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="bg-primary/10 text-primary p-2 rounded-lg">
+                                    <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                                </div>
+                                <div class="flex flex-col min-w-0">
+                                    <span class="text-sm font-bold text-slate-800 dark:text-gray-200 truncate" title="${file.original_name}">${file.original_name}</span>
+                                    <span class="text-xs text-slate-500">${(file.size_bytes / 1024).toFixed(1)} KB • ${new Date(file.created_at).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a href="${file.file_url}" target="_blank" 
+                                    class="p-2 text-gray-400 hover:text-primary transition-colors rounded-full hover:bg-primary/5" title="Ver / Descargar">
+                                    <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<p class="text-center text-red-500 py-4">Error cargando archivos.</p>';
+            }
+        };
+
+        window.closeAttachmentsModal = function () {
+            const modal = document.getElementById('attachments-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
 
     </script>
 </body>

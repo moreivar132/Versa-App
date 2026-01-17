@@ -16,7 +16,7 @@ async function chat(req, res) {
     const client = await pool.connect();
 
     try {
-        const tenantId = getEffectiveTenant(req);
+        let tenantId = getEffectiveTenant(req);
         const userId = req.user?.id;
         const empresaId = req.headers['x-empresa-id'];
 
@@ -187,6 +187,8 @@ async function getInsights(req, res) {
         }
 
         // Construir periodo con valores por defecto seguros
+        // Construir periodo con valores por defecto seguros
+        const { type, year, quarter, month } = req.query;
         const period = {
             type: type || 'quarter',
             year: parseInt(year) || new Date().getFullYear(),

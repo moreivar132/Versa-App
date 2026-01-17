@@ -63,7 +63,9 @@ Versa maintains **two distinct product lines** that share the same backend but h
 3. **RBAC roles are universal**  
    Role names like `contabilidad`, `contable` exist in the RBAC system for permission control and are NOT modules themselves.
 
-4. **Sidebar navigation is separate**  
+4. **Validación Deducible**: Only `TENANT_ADMIN` can approve deducible status via `contabilidad.deducible.approve` permission. See `docs/modulos/validacion_deducible.md`.
+
+5. **Sidebar navigation is separate**  
    - `sidebar-manager.js` — Manager navigation (no Contabilidad items)
    - FinSaaS pages have their own inline sidebar
 

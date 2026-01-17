@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Aceptar Invitación | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        .gradient-text {
+            background: linear-gradient(135deg, #46ec13 0%, #22c55e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .input-focus:focus {
+            border-color: #46ec13;
+            box-shadow: 0 0 0 3px rgba(70, 236, 19, 0.15);
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-dark text-white antialiased min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <span class="material-symbols-outlined text-primary text-4xl">person_add</span>
+            </div>
+            <h1 class="text-2xl font-bold gradient-text">Aceptar Invitación</h1>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-12">
+            <div class="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4">
+            </div>
+            <p class="text-gray-400">Verificando invitación...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden">
+            <div class="bg-red-500/10 border border-red-500/30 rounded-2xl p-6 text-center">
+                <span class="material-symbols-outlined text-red-500 text-5xl mb-4 block">error</span>
+                <h2 id="errorTitle" class="text-xl font-bold text-red-400 mb-2">Invitación Inválida</h2>
+                <p id="errorMessage" class="text-gray-400 mb-6">Esta invitación no es válida o ha expirado.</p>
+                <a href="/login-finsaas.html"
+                    class="inline-block px-6 py-3 bg-surface-dark-light hover:bg-surface-dark border border-[#25381e] rounded-xl text-white font-medium transition-all">
+                    Ir a Iniciar Sesión
+                </a>
+            </div>
+        </div>
+
+        <!-- Success/Form State -->
+        <div id="formState" class="hidden">
+            <div class="bg-surface-dark border border-[#25381e] rounded-2xl p-6 shadow-xl">
+                <!-- Invite Info -->
+                <div class="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-6">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="material-symbols-outlined text-primary">business</span>
+                        <span id="tenantName" class="font-semibold text-white">Nombre del Tenant</span>
+                    </div>
+                    <div id="empresaInfo" class="hidden flex items-center gap-3 text-gray-400 text-sm">
+                        <span class="material-symbols-outlined text-base">apartment</span>
+                        <span id="empresaName">Empresa</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-gray-400 text-sm mt-1">
+                        <span class="material-symbols-outlined text-base">badge</span>
+                        <span id="roleDisplay">Rol</span>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <form id="acceptForm" class="space-y-4">
+                    <!-- Email (readonly if restricted) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Email</label>
+                        <input type="email" id="emailInput"
+                            class="w-full px-4 py-3 bg-surface-dark-light border border-[#25381e] rounded-xl text-white placeholder-gray-500 input-focus transition-all"
+                            placeholder="tu@email.com" required>
+                    </div>
+
+                    <!-- Name -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Nombre completo</label>
+                        <input type="text" id="nombreInput"
+                            class="w-full px-4 py-3 bg-surface-dark-light border border-[#25381e] rounded-xl text-white placeholder-gray-500 input-focus transition-all"
+                            placeholder="Tu nombre" required minlength="2">
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Contraseña</label>
+                        <input type="password" id="passwordInput"
+                            class="w-full px-4 py-3 bg-surface-dark-light border border-[#25381e] rounded-xl text-white placeholder-gray-500 input-focus transition-all"
+                            placeholder="Mínimo 6 caracteres" required minlength="6">
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Confirmar contraseña</label>
+                        <input type="password" id="confirmPasswordInput"
+                            class="w-full px-4 py-3 bg-surface-dark-light border border-[#25381e] rounded-xl text-white placeholder-gray-500 input-focus transition-all"
+                            placeholder="Repite la contraseña" required minlength="6">
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="formError"
+                        class="hidden bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-sm">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="submitBtn"
+                        class="w-full py-3 bg-primary hover:brightness-110 text-background-dark font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined">check_circle</span>
+                        Crear Cuenta
+                    </button>
+                </form>
+
+                <div class="text-center mt-6 text-gray-500 text-sm">
+                    ¿Ya tienes cuenta? <a href="/login-finsaas.html" class="text-primary hover:underline">Inicia
+                        sesión</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success State (after registration) -->
+        <div id="successState" class="hidden">
+            <div class="bg-green-500/10 border border-green-500/30 rounded-2xl p-6 text-center">
+                <span class="material-symbols-outlined text-green-500 text-5xl mb-4 block">check_circle</span>
+                <h2 class="text-xl font-bold text-green-400 mb-2">¡Cuenta Creada!</h2>
+                <p class="text-gray-400 mb-6">Tu cuenta ha sido creada correctamente. Ya puedes iniciar sesión.</p>
+                <a href="/login-finsaas.html"
+                    class="inline-block px-8 py-3 bg-primary hover:brightness-110 text-background-dark font-bold rounded-xl transition-all shadow-lg shadow-primary/20">
+                    Iniciar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let inviteData = null;
+        let token = null;
+
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        token = urlParams.get('token');
+
+        // States
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const formState = document.getElementById('formState');
+        const successState = document.getElementById('successState');
+
+        function showState(state) {
+            loadingState.classList.add('hidden');
+            errorState.classList.add('hidden');
+            formState.classList.add('hidden');
+            successState.classList.add('hidden');
+            state.classList.remove('hidden');
+        }
+
+        function showError(title, message) {
+            document.getElementById('errorTitle').textContent = title;
+            document.getElementById('errorMessage').textContent = message;
+            showState(errorState);
+        }
+
+        // Verify invite on load
+        async function verifyInvite() {
+            if (!token) {
+                showError('Token Faltante', 'No se proporcionó un token de invitación válido.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/invites/verify?token=${encodeURIComponent(token)}`);
+                const data = await res.json();
+
+                if (!data.ok) {
+                    const errorMessages = {
+                        'NOT_FOUND': 'Esta invitación no existe.',
+                        'ALREADY_USED': 'Esta invitación ya fue utilizada.',
+                        'EXPIRED': 'Esta invitación ha expirado.'
+                    };
+                    showError('Invitación Inválida', errorMessages[data.code] || data.error);
+                    return;
+                }
+
+                inviteData = data.invite;
+
+                // Populate form
+                document.getElementById('tenantName').textContent = inviteData.tenant.nombre;
+
+                if (inviteData.empresa) {
+                    document.getElementById('empresaInfo').classList.remove('hidden');
+                    document.getElementById('empresaName').textContent = inviteData.empresa.nombre;
+                }
+
+                const roleNames = {
+                    'CLIENT_ADMIN': 'Administrador',
+                    'TENANT_ADMIN': 'Admin Tenant',
+                    'ACCOUNTANT': 'Contable',
+                    'VIEWER': 'Solo Lectura'
+                };
+                document.getElementById('roleDisplay').textContent = roleNames[inviteData.role] || inviteData.role;
+
+                // Handle email field
+                const emailInput = document.getElementById('emailInput');
+                if (inviteData.email) {
+                    emailInput.value = inviteData.email;
+                    emailInput.readOnly = true;
+                    emailInput.classList.add('bg-surface-dark', 'text-gray-400');
+                }
+
+                showState(formState);
+
+            } catch (err) {
+                console.error('Verify error:', err);
+                showError('Error de Conexión', 'No se pudo verificar la invitación. Inténtalo de nuevo.');
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('acceptForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formError = document.getElementById('formError');
+            formError.classList.add('hidden');
+
+            const email = document.getElementById('emailInput').value.trim();
+            const nombre = document.getElementById('nombreInput').value.trim();
+            const password = document.getElementById('passwordInput').value;
+            const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+            // Validate
+            if (password !== confirmPassword) {
+                formError.textContent = 'Las contraseñas no coinciden';
+                formError.classList.remove('hidden');
+                return;
+            }
+
+            if (password.length < 6) {
+                formError.textContent = 'La contraseña debe tener al menos 6 caracteres';
+                formError.classList.remove('hidden');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="animate-spin">⏳</span> Creando cuenta...';
+
+            try {
+                const res = await fetch(`${API_BASE}/invites/accept`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        token,
+                        email,
+                        nombre,
+                        password
+                    })
+                });
+
+                const data = await res.json();
+
+                if (!data.ok) {
+                    const errorMessages = {
+                        'EMAIL_EXISTS': 'Ya existe una cuenta con este email. Intenta iniciar sesión.'
+                    };
+                    formError.textContent = errorMessages[data.code] || data.error;
+                    formError.classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Crear Cuenta';
+                    return;
+                }
+
+                // Success!
+                showState(successState);
+
+            } catch (err) {
+                console.error('Accept error:', err);
+                formError.textContent = 'Error de conexión. Inténtalo de nuevo.';
+                formError.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined">check_circle</span> Crear Cuenta';
+            }
+        });
+
+        // Init
+        verifyInvite();
+    </script>
+</body>
+
+</html>

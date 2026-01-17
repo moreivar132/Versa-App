@@ -20,6 +20,7 @@ const empresaController = require('./controllers/empresa.controller');
 const tesoreriaController = require('./controllers/tesoreria.controller');
 const fiscalProfileController = require('./controllers/fiscalProfile.controller');
 const copilotoController = require('./controllers/copiloto.controller');
+const deducibleController = require('./controllers/deducible.controller');
 
 // Test route (Sanity check)
 router.get('/ping', (req, res) => res.json({ ok: true, message: 'pong', timestamp: new Date().toISOString() }));
@@ -52,6 +53,12 @@ router.get('/facturas',
     facturasController.list
 );
 
+// Export invoices to CSV - MUST be before :id route!
+router.get('/facturas/export.csv',
+    requirePermission('contabilidad.export'),
+    deducibleController.exportCSV
+);
+
 router.get('/facturas/:id',
     requirePermission('contabilidad.read'),
     facturasController.getById
@@ -80,6 +87,22 @@ router.post('/facturas/:id/archivo',
 router.get('/facturas/:id/archivos',
     requirePermission('contabilidad.read'),
     facturasController.listArchivos
+);
+
+// ===================================================================
+// DEDUCIBLE VALIDATION (Validación Fiscal)
+// ===================================================================
+
+// Update deducible status - TENANT_ADMIN only
+router.patch('/facturas/:id/deducible',
+    requirePermission('contabilidad.deducible.approve'),
+    deducibleController.updateDeducibleStatus
+);
+
+// Get deducible change history for a specific invoice
+router.get('/facturas/:id/deducible/history',
+    requirePermission('contabilidad.read'),
+    deducibleController.getDeducibleHistory
 );
 
 // ===================================================================
@@ -127,6 +150,12 @@ router.delete('/pagos/:id',
 router.get('/contactos',
     requirePermission('contabilidad.read'),
     contactosController.list
+);
+
+// Find contact by NIF/CIF - MUST be before :id route
+router.get('/contactos/by-nif/:nif',
+    requirePermission('contabilidad.read'),
+    contactosController.findByNif
 );
 
 router.get('/contactos/:id',

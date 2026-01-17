@@ -75,6 +75,45 @@ async function getById(req, res) {
 }
 
 /**
+ * GET /api/contabilidad/contactos/by-nif/:nif
+ * Find contact by NIF/CIF
+ */
+async function findByNif(req, res) {
+    try {
+        const tenantId = getEffectiveTenant(req);
+        if (!tenantId) {
+            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
+        }
+
+        const nif = req.params.nif;
+        if (!nif) {
+            return res.status(400).json({ ok: false, error: 'NIF/CIF requerido' });
+        }
+
+        const contacto = await service.findContactoByNif({ tenantId }, nif);
+
+        if (!contacto) {
+            return res.status(404).json({
+                ok: false,
+                error: 'Contacto no encontrado',
+                code: 'NOT_FOUND'
+            });
+        }
+
+        res.json({
+            ok: true,
+            data: contacto
+        });
+    } catch (error) {
+        console.error('Error en findByNif contacto:', error);
+        res.status(error.status || 500).json({
+            ok: false,
+            error: error.message
+        });
+    }
+}
+
+/**
  * POST /api/contabilidad/contactos
  */
 async function create(req, res) {
@@ -118,10 +157,20 @@ async function create(req, res) {
         console.error('Error en create contacto:', error);
 
         // Handle duplicate NIF error
-        if (error.code === '23505') {
-            return res.status(400).json({
+        if (error.code === 'DUPLICATE_NIF') {
+            return res.status(409).json({
                 ok: false,
-                error: 'Ya existe un contacto con ese NIF/CIF'
+                error: error.message,
+                code: 'DUPLICATE_NIF',
+                existingContact: error.existingContact
+            });
+        }
+
+        if (error.code === '23505') {
+            return res.status(409).json({
+                ok: false,
+                error: 'Ya existe un contacto con ese NIF/CIF',
+                code: 'DUPLICATE_NIF'
             });
         }
 
@@ -193,6 +242,7 @@ async function remove(req, res) {
 module.exports = {
     list,
     getById,
+    findByNif,
     create,
     update,
     remove

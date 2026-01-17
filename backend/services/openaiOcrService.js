@@ -39,6 +39,8 @@ Responde ÚNICAMENTE con un objeto JSON válido (sin markdown, sin texto adicion
   "base_imponible": 0.00,
   "iva_porcentaje": 21,
   "iva_importe": 0.00,
+  "retencion_porcentaje": 0,
+  "retencion_importe": 0.00,
   "total": 0.00,
   "moneda": "EUR",
   "concepto": "Descripción general de la factura",
@@ -56,7 +58,9 @@ Notas importantes:
 - Los importes deben ser números decimales (ej: 123.45), no strings
 - Si hay varios tipos de IVA, usa el principal
 - El NIF español tiene 8 dígitos + 1 letra (personas) o 1 letra + 7 dígitos + 1 letra (empresas)
-- Extrae todas las líneas de detalle que puedas identificar`;
+- Extrae todas las líneas de detalle que puedas identificar
+- RETENCIÓN IRPF: Si la factura tiene retención (común en autónomos/profesionales), extrae el porcentaje e importe. La fórmula es: Total = Base + IVA - Retención
+- Valores típicos de retención: 15% (normal), 7% (nuevo autónomo), 1%, 2%`;
 
 /**
  * Analyze an invoice image/PDF using GPT-4 Vision or Text
@@ -233,6 +237,8 @@ function normalizeExtractedData(data) {
         base_imponible: parseNum(data.base_imponible),
         iva_porcentaje: parseNum(data.iva_porcentaje) || 21,
         iva_importe: parseNum(data.iva_importe),
+        retencion_porcentaje: parseNum(data.retencion_porcentaje) || 0,
+        retencion_importe: parseNum(data.retencion_importe) || 0,
         total: parseNum(data.total),
         moneda: data.moneda || 'EUR',
         concepto: data.concepto || null,
@@ -261,22 +267,33 @@ function validateExtractedData(data) {
     const nifRegex = /^[0-9]{8}[A-Z]$|^[A-Z][0-9]{7}[A-Z0-9]$/;
     const hasValidNif = data.proveedor_nif && nifRegex.test(data.proveedor_nif);
 
-    // Validate totals
+    // Validate totals (accounting for retention)
+    // Formula: Total = Base + IVA - Retención
     let checkTotal = false;
     let checkIva = false;
 
     if (data.base_imponible > 0 && data.iva_importe >= 0) {
-        const expectedTotal = data.base_imponible + data.iva_importe;
-        checkTotal = Math.abs(expectedTotal - data.total) < 0.02; // Allow 2 cent tolerance
+        const retencion = data.retencion_importe || 0;
+        const expectedTotal = data.base_imponible + data.iva_importe - retencion;
+        checkTotal = Math.abs(expectedTotal - data.total) < 0.10; // Allow 10 cent tolerance for rounding
 
         const expectedIva = data.base_imponible * (data.iva_porcentaje / 100);
         checkIva = Math.abs(expectedIva - data.iva_importe) < 0.10; // Allow 10 cent tolerance
+
+        // If retention exists, validate it too
+        if (data.retencion_porcentaje > 0) {
+            const expectedRetencion = data.base_imponible * (data.retencion_porcentaje / 100);
+            if (Math.abs(expectedRetencion - retencion) > 0.10) {
+                issues.push('La retención no coincide con el porcentaje indicado');
+            }
+        }
     }
 
     return {
         check_total: checkTotal,
         check_iva: checkIva,
         check_nif: hasValidNif,
+        has_retencion: (data.retencion_importe || 0) > 0,
         issues,
         confidence: issues.length === 0 ? 'high' : (issues.length <= 2 ? 'medium' : 'low')
     };

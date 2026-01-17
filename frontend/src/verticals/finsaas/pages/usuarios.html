@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Usuarios | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                        "brand-orange": "#46ec13",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <link href="/src/verticals/finsaas/layout/FinSaaSLayout.css" rel="stylesheet" />
+
+    <style>
+        .invite-link {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.75rem;
+        }
+
+        .status-active {
+            color: #46ec13;
+        }
+
+        .status-used {
+            color: #6b7280;
+        }
+
+        .status-expired {
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+
+    <div id="app-shell" class="flex h-screen w-full overflow-hidden">
+
+        <div class="max-w-5xl mx-auto flex flex-col gap-6 pb-10 w-full py-8 px-6">
+
+            <!-- Page Header -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1
+                        class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">group_add</span>
+                        Gestión de Usuarios
+                    </h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1">Invita a nuevos usuarios a tu empresa</p>
+                </div>
+            </div>
+
+            <!-- Create Invite Section -->
+            <div
+                class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-2xl p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">mail</span>
+                            Crear Invitación
+                        </h2>
+                        <p class="text-gray-500 text-sm mt-1">Genera un enlace para invitar nuevos usuarios a tu empresa
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <!-- Role Select -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">Rol del
+                            usuario</label>
+                        <select id="inviteRole"
+                            class="w-full px-4 py-3 bg-white dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-xl text-slate-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                            <option value="CLIENT_ADMIN">Administrador</option>
+                            <option value="ACCOUNTANT">Contable</option>
+                            <option value="VIEWER">Solo lectura</option>
+                        </select>
+                    </div>
+
+                    <!-- Empresa Select (Optional) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">Asignar a empresa
+                            (opcional)</label>
+                        <select id="inviteEmpresa"
+                            class="w-full px-4 py-3 bg-white dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-xl text-slate-900 dark:text-white focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                            <option value="">-- Sin asignar --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <!-- Email Restriction (Optional) -->
+                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">Email específico
+                        (opcional)</label>
+                    <input type="email" id="inviteEmail" placeholder="usuario@ejemplo.com"
+                        class="w-full px-4 py-3 bg-white dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-xl text-slate-900 dark:text-white placeholder-gray-400 focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+                </div>
+
+                <!-- Expiry -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-500 dark:text-gray-300 mb-2">Validez</label>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="setExpiry(24)"
+                            class="expiry-btn px-4 py-2 bg-white dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-lg text-gray-500 hover:text-slate-900 dark:hover:text-white hover:border-primary transition-all text-sm"
+                            data-hours="24">24 horas</button>
+                        <button type="button" onclick="setExpiry(72)"
+                            class="expiry-btn px-4 py-2 bg-white dark:bg-surface-dark-light border border-primary text-primary rounded-lg transition-all text-sm active"
+                            data-hours="72">3 días</button>
+                        <button type="button" onclick="setExpiry(168)"
+                            class="expiry-btn px-4 py-2 bg-white dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-lg text-gray-500 hover:text-slate-900 dark:hover:text-white hover:border-primary transition-all text-sm"
+                            data-hours="168">1 semana</button>
+                    </div>
+                </div>
+
+                <!-- Generate Button -->
+                <button id="generateBtn" onclick="generateInvite()"
+                    class="w-full md:w-auto px-8 py-3 bg-primary hover:brightness-110 text-background-dark font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+                    <span class="material-symbols-outlined">add_link</span>
+                    Generar Enlace de Invitación
+                </button>
+            </div>
+
+            <!-- Generated Link (shown after creation) -->
+            <div id="generatedLinkSection"
+                class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-2xl p-6 shadow-sm hidden">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                        <span class="material-symbols-outlined text-green-500">check_circle</span>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-slate-900 dark:text-white">¡Invitación creada!</h3>
+                        <p class="text-gray-500 text-sm">Comparte este enlace con el usuario</p>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-xl p-4 flex items-center gap-3 mb-4">
+                    <input type="text" id="generatedLink" readonly
+                        class="flex-1 bg-transparent text-primary invite-link outline-none">
+                    <button onclick="copyLink()"
+                        class="px-4 py-2 bg-primary hover:brightness-110 text-background-dark font-medium rounded-lg transition-all flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">content_copy</span>
+                        Copiar
+                    </button>
+                </div>
+
+                <p class="text-gray-500 text-sm">
+                    <span class="material-symbols-outlined text-xs align-middle">schedule</span>
+                    Expira: <span id="generatedExpiry"></span>
+                </p>
+            </div>
+
+            <!-- Existing Invites -->
+            <div
+                class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-2xl p-6 shadow-sm flex-1 overflow-hidden flex flex-col">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">history</span>
+                        Invitaciones Enviadas
+                    </h2>
+                    <button onclick="loadInvites()"
+                        class="text-gray-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                        <span class="material-symbols-outlined">refresh</span>
+                    </button>
+                </div>
+
+                <div id="invitesList" class="space-y-3 overflow-y-auto flex-1">
+                    <div class="text-center py-8 text-gray-500">
+                        <span class="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
+                        Cargando invitaciones...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getSession, requireAuth, getToken } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        let selectedExpiry = 72;
+        let session = null;
+
+        // Expiry selection
+        window.setExpiry = function (hours) {
+            selectedExpiry = hours;
+            document.querySelectorAll('.expiry-btn').forEach(btn => {
+                btn.classList.remove('border-primary', 'text-primary');
+                btn.classList.add('border-[#25381e]', 'text-gray-500');
+            });
+            const activeBtn = document.querySelector(`[data-hours="${hours}"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-[#25381e]', 'text-gray-500');
+                activeBtn.classList.add('border-primary', 'text-primary');
+            }
+        };
+
+        // Generate invite
+        window.generateInvite = async function () {
+            const role = document.getElementById('inviteRole').value;
+            const emailAllowed = document.getElementById('inviteEmail').value.trim() || null;
+            const empresaId = document.getElementById('inviteEmpresa').value || null;
+
+            const btn = document.getElementById('generateBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin">⏳</span> Generando...';
+
+            try {
+                const res = await fetch('/api/saas/invites', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
+                    body: JSON.stringify({
+                        role,
+                        emailAllowed,
+                        empresaId: empresaId ? parseInt(empresaId) : null,
+                        expiryHours: selectedExpiry
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.ok) {
+                    // Show generated link
+                    document.getElementById('generatedLink').value = data.invite.url;
+                    document.getElementById('generatedExpiry').textContent = new Date(data.invite.expiresAt).toLocaleString('es-ES');
+                    document.getElementById('generatedLinkSection').classList.remove('hidden');
+
+                    // Clear fields
+                    document.getElementById('inviteEmail').value = '';
+                    document.getElementById('inviteEmpresa').value = '';
+
+                    // Reload invites list
+                    loadInvites();
+                } else {
+                    alert(data.error || 'Error al crear invitación');
+                }
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Error de conexión');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">add_link</span> Generar Enlace de Invitación';
+            }
+        };
+
+        // Copy link
+        window.copyLink = function () {
+            const input = document.getElementById('generatedLink');
+            input.select();
+            document.execCommand('copy');
+
+            // Show feedback
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined text-sm">check</span> Copiado';
+            setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+        };
+
+        // Load existing invites
+        window.loadInvites = async function () {
+            try {
+                const res = await fetch('/api/saas/invites', {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                const data = await res.json();
+
+                if (data.ok && data.invites) {
+                    renderInvites(data.invites);
+                }
+            } catch (err) {
+                console.error('Error loading invites:', err);
+            }
+        };
+
+        function renderInvites(invites) {
+            const container = document.getElementById('invitesList');
+
+            if (invites.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <span class="material-symbols-outlined text-4xl mb-2 block">mail</span>
+                        No hay invitaciones aún
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = invites.map(invite => {
+                const statusClass = invite.status === 'active' ? 'status-active' :
+                    invite.status === 'used' ? 'status-used' : 'status-expired';
+                const statusText = invite.status === 'active' ? 'Activa' :
+                    invite.status === 'used' ? 'Usada' : 'Expirada';
+                const statusIcon = invite.status === 'active' ? 'schedule' :
+                    invite.status === 'used' ? 'check_circle' : 'cancel';
+
+                return `
+                    <div class="bg-gray-50 dark:bg-surface-dark-light/50 border border-gray-200 dark:border-[#25381e] rounded-xl p-4 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gray-100 dark:bg-surface-dark-light rounded-lg flex items-center justify-center">
+                                <span class="material-symbols-outlined text-gray-400">person_add</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-slate-900 dark:text-white">${invite.role}</span>
+                                    ${invite.empresaNombre ? `<span class="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-400">${invite.empresaNombre}</span>` : ''}
+                                    <span class="text-xs px-2 py-0.5 rounded ${statusClass} bg-current/10 flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-xs">${statusIcon}</span>
+                                        ${statusText}
+                                    </span>
+                                </div>
+                                <p class="text-gray-500 text-sm">
+                                    ${invite.emailAllowed || 'Cualquier email'} · 
+                                    Creada ${new Date(invite.createdAt).toLocaleDateString('es-ES')}
+                                </p>
+                            </div>
+                        </div>
+                        ${invite.status === 'active' ? `
+                            <button onclick="deleteInvite(${invite.id})" class="p-2 text-gray-500 hover:text-red-400 transition-colors">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Delete invite
+        window.deleteInvite = async function (id) {
+            if (!confirm('¿Eliminar esta invitación?')) return;
+
+            try {
+                const res = await fetch(`/api/saas/invites/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (res.ok) {
+                    loadInvites();
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        };
+
+        // Load empresas for selector
+        async function loadEmpresas() {
+            try {
+                const res = await fetch('/api/contabilidad/empresas', {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                const data = await res.json();
+
+                if (data.ok && data.data?.items) {
+                    const select = document.getElementById('inviteEmpresa');
+                    data.data.items.forEach(empresa => {
+                        const option = document.createElement('option');
+                        option.value = empresa.id;
+                        option.textContent = empresa.nombre_legal || empresa.nombre_comercial;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading empresas:', err);
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            session = await requireAuth();
+            const layout = new FinSaaSLayout('app-shell');
+            layout.init();
+            loadInvites();
+            loadEmpresas();
+        });
+    </script>
+</body>
+
+</html>

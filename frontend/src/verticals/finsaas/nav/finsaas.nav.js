@@ -83,9 +83,23 @@ export const finSaaSNav = [
         order: 6
     },
     {
+        id: 'validacion-deducible',
+        label: 'Validación Deducible',
+        route: '/src/verticals/finsaas/pages/validacion-deducible.html',
+        icon: 'fact_check',
+        order: 6.5
+    },
+    {
         id: 'tools',
         label: 'Herramientas',
         type: 'section'
+    },
+    {
+        id: 'usuarios',
+        label: 'Usuarios e Invitaciones',
+        route: '/src/verticals/finsaas/pages/usuarios.html',
+        icon: 'group_add',
+        order: 6.5
     },
     {
         id: 'config-factura',

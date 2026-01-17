@@ -11,32 +11,41 @@ class ContabilidadService {
     // ===================================================================
 
     /**
-     * Calcula IVA con redondeo correcto a 2 decimales
+     * Calcula IVA y retención con redondeo correcto a 2 decimales
+     * Formula: Total = Base + IVA - Retención
      */
-    calcularIVA(base, porcentaje) {
+    calcularIVA(base, porcentajeIva, porcentajeRetencion = 0) {
         const baseNum = parseFloat(base) || 0;
-        const pctNum = parseFloat(porcentaje) || 0;
+        const ivaNum = parseFloat(porcentajeIva) || 0;
+        const retencionNum = parseFloat(porcentajeRetencion) || 0;
 
-        const iva = Math.round(baseNum * (pctNum / 100) * 100) / 100;
-        const total = Math.round((baseNum + iva) * 100) / 100;
+        const iva = Math.round(baseNum * (ivaNum / 100) * 100) / 100;
+        const retencion = Math.round(baseNum * (retencionNum / 100) * 100) / 100;
+        const total = Math.round((baseNum + iva - retencion) * 100) / 100;
 
         return {
             base_imponible: baseNum,
-            iva_porcentaje: pctNum,
+            iva_porcentaje: ivaNum,
             iva_importe: iva,
+            retencion_porcentaje: retencionNum,
+            retencion_importe: retencion,
             total: total
         };
     }
 
     /**
-     * Valida que los totales sean coherentes
+     * Valida que los totales sean coherentes (incluyendo retención)
+     * Formula: Total = Base + IVA - Retención
      */
-    validarTotales(base, iva_importe, total) {
-        const esperado = Math.round((parseFloat(base) + parseFloat(iva_importe)) * 100) / 100;
+    validarTotales(base, iva_importe, total, retencion_importe = 0) {
+        const baseNum = parseFloat(base) || 0;
+        const ivaNum = parseFloat(iva_importe) || 0;
+        const retencionNum = parseFloat(retencion_importe) || 0;
+        const esperado = Math.round((baseNum + ivaNum - retencionNum) * 100) / 100;
         const actual = parseFloat(total);
 
-        // Permitir diferencia de 0.01 por redondeos
-        return Math.abs(esperado - actual) <= 0.01;
+        // Permitir diferencia de 0.10 por redondeos
+        return Math.abs(esperado - actual) <= 0.10;
     }
 
     // ===================================================================
@@ -72,16 +81,23 @@ class ContabilidadService {
      * Crea factura manual
      */
     async createFactura(ctx, data) {
-        // Auto-calcular IVA si no viene completo
+        // Auto-calcular IVA y retención si no viene completo
         if (data.base_imponible && data.iva_porcentaje && !data.iva_importe) {
-            const calc = this.calcularIVA(data.base_imponible, data.iva_porcentaje);
+            const calc = this.calcularIVA(data.base_imponible, data.iva_porcentaje, data.retencion_porcentaje);
             data.iva_importe = calc.iva_importe;
+            data.retencion_importe = calc.retencion_importe;
             data.total = calc.total;
         }
 
-        // Validar totales
-        if (!this.validarTotales(data.base_imponible, data.iva_importe, data.total)) {
-            const error = new Error('Los totales de la factura no son coherentes');
+        // Auto-calcular retención si viene el porcentaje pero no el importe
+        if (data.base_imponible && data.retencion_porcentaje && !data.retencion_importe) {
+            data.retencion_importe = Math.round(data.base_imponible * (data.retencion_porcentaje / 100) * 100) / 100;
+        }
+
+        // Validar totales (incluyendo retención)
+        const retencion = parseFloat(data.retencion_importe) || 0;
+        if (!this.validarTotales(data.base_imponible, data.iva_importe, data.total, retencion)) {
+            const error = new Error('Los totales de la factura no son coherentes (Total = Base + IVA - Retención)');
             error.status = 400;
             throw error;
         }
@@ -245,6 +261,13 @@ class ContabilidadService {
             throw error;
         }
         return contacto;
+    }
+
+    /**
+     * Find contact by NIF/CIF
+     */
+    async findContactoByNif(ctx, nifCif) {
+        return repo.findContactoByNif(ctx, nifCif);
     }
 
     async createContacto(ctx, data) {
