@@ -154,11 +154,17 @@ async function exportCSV(req, res) {
     const {
         empresa_id,
         year,
+        anio,
         quarter,
+        trimestre,
         deducible_status,
         tipo = 'GASTO',
         estado // Payment status
     } = req.query;
+
+    // Normalize params
+    const filterYear = year || anio;
+    const filterQuarter = quarter || trimestre;
 
     // Check if user can export multi-empresa - for now allow all authenticated users
     // The permission is already checked by the route middleware
@@ -215,16 +221,16 @@ async function exportCSV(req, res) {
         }
 
         // Only filter by year if it's a valid number
-        const yearNum = parseInt(year);
-        if (year && !isNaN(yearNum)) {
+        const yearNum = parseInt(filterYear);
+        if (filterYear && !isNaN(yearNum)) {
             query += ` AND EXTRACT(YEAR FROM f.fecha_devengo) = $${paramIndex}`;
             params.push(yearNum);
             paramIndex++;
         }
 
         // Only filter by quarter if it's a valid number
-        const quarterNum = parseInt(quarter);
-        if (quarter && !isNaN(quarterNum)) {
+        const quarterNum = parseInt(filterQuarter);
+        if (filterQuarter && !isNaN(quarterNum)) {
             query += ` AND EXTRACT(QUARTER FROM f.fecha_devengo) = $${paramIndex}`;
             params.push(quarterNum);
             paramIndex++;

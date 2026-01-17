@@ -4,7 +4,7 @@
  */
 
 const pool = require('../../../../../db');
-const { getEffectiveTenant } = require('../../../../../middleware/rbac');
+const { getEffectiveTenant, isSuperAdmin } = require('../../../../../middleware/rbac');
 
 /**
  * GET /api/contabilidad/empresas
@@ -18,9 +18,13 @@ async function list(req, res) {
         }
 
         const userId = req.user?.id;
-        const isSuperAdmin = req.user?.es_super_admin || req.user?.is_super_admin;
+        if (!userId) {
+            return res.status(401).json({ ok: false, error: 'Usuario no identificado' });
+        }
+
+        const isSuper = await isSuperAdmin(userId);
         const userRole = req.user?.rol || req.user?.role || '';
-        const isAdmin = isSuperAdmin ||
+        const isAdmin = isSuper ||
             userRole.toLowerCase() === 'admin' ||
             userRole.toLowerCase() === 'administrador';
 

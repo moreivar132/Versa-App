@@ -287,6 +287,29 @@
             setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
         };
 
+        // Copy invite link from list
+        window.copyInviteLink = function (url) {
+            if (!url) {
+                // Show message that link was only available at creation
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 right-4 bg-amber-500 text-background-dark px-4 py-2 rounded-lg font-medium shadow-lg z-50';
+                toast.textContent = 'El enlace solo está disponible al crear la invitación';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+                return;
+            }
+            navigator.clipboard.writeText(url).then(() => {
+                // Show a quick toast or feedback
+                const toast = document.createElement('div');
+                toast.className = 'fixed bottom-4 right-4 bg-primary text-background-dark px-4 py-2 rounded-lg font-medium shadow-lg z-50';
+                toast.textContent = '✓ Enlace copiado';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 2000);
+            }).catch(() => {
+                alert('No se pudo copiar el enlace');
+            });
+        };
+
         // Load existing invites
         window.loadInvites = async function () {
             try {
@@ -347,9 +370,14 @@
                             </div>
                         </div>
                         ${invite.status === 'active' ? `
-                            <button onclick="deleteInvite(${invite.id})" class="p-2 text-gray-500 hover:text-red-400 transition-colors">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
+                            <div class="flex items-center gap-1">
+                                <button onclick="copyInviteLink('${invite.url || ''}')" class="p-2 text-gray-500 hover:text-primary transition-colors" title="Copiar enlace">
+                                    <span class="material-symbols-outlined">content_copy</span>
+                                </button>
+                                <button onclick="deleteInvite(${invite.id})" class="p-2 text-gray-500 hover:text-red-400 transition-colors" title="Eliminar">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
                         ` : ''}
                     </div>
                 `;

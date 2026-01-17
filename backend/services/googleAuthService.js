@@ -129,7 +129,7 @@ async function processSaaSGoogleAuth(googleProfile, inviteToken = null) {
         );
         const newUser = userResult.rows[0];
 
-        // Assign role from invite
+        // Assign role from invite (with tenant_id for RBAC)
         const roleResult = await client.query(
             `SELECT id FROM rol WHERE nombre = $1`,
             [invite.role]
@@ -137,9 +137,9 @@ async function processSaaSGoogleAuth(googleProfile, inviteToken = null) {
 
         if (roleResult.rows.length > 0) {
             await client.query(
-                `INSERT INTO usuariorol (id_usuario, id_rol) VALUES ($1, $2)
+                `INSERT INTO usuariorol (id_usuario, id_rol, tenant_id) VALUES ($1, $2, $3)
                  ON CONFLICT DO NOTHING`,
-                [newUser.id, roleResult.rows[0].id]
+                [newUser.id, roleResult.rows[0].id, invite.tenantId]
             );
         }
 
@@ -150,10 +150,20 @@ async function processSaaSGoogleAuth(googleProfile, inviteToken = null) {
             [newUser.id, providerId, normalizedEmail, name, avatar]
         );
 
+        // If empresa specified in invite, assign user to empresa
+        if (invite.empresaId) {
+            await client.query(`
+                INSERT INTO accounting_usuario_empresa (id_usuario, id_empresa, rol_empresa, created_by)
+                VALUES ($1, $2, $3, $1)
+                ON CONFLICT (id_usuario, id_empresa) DO NOTHING
+            `, [newUser.id, invite.empresaId, 'empresa_lector']);
+            console.log(`[SaaSAuth] Assigned user ${newUser.id} to empresa ${invite.empresaId}`);
+        }
+
         // Mark invite as used
         await client.query(
-            `UPDATE saas_invite SET used_at = NOW() WHERE id = $1`,
-            [invite.id]
+            `UPDATE saas_invite SET used_at = NOW(), used_by_user_id = $1 WHERE id = $2`,
+            [newUser.id, invite.id]
         );
 
         await client.query('COMMIT');

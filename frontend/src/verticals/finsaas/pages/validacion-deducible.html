@@ -741,7 +741,7 @@
 
             try {
                 const token = getToken();
-                const url = `${API_BASE}/contabilidad/facturas/export.csv?${params.toString()}`;
+                const url = `${API_BASE}/facturas/export.csv?${params.toString()}`;
 
                 // Build headers - only add X-Empresa-Id if it has a valid value
                 const headers = {
@@ -784,33 +784,13 @@
         }
 
         // --- Document View Logic ---
-        window.viewInvoiceDocument = async function (id, numero) {
-            try {
-                // Try to get files first
-                const response = await fetchWithAuth(`${API_BASE}/facturas/${id}/archivos`);
-                // If 404/500 or plain checks fail, we go to catch
-
-                if (response.ok) {
-                    const res = await response.json();
-                    const files = res.data || res || [];
-
-                    if (files.length > 0) {
-                        // Open the first file
-                        window.open(files[0].file_url, '_blank');
-                        return;
-                    }
-                }
-
-                // If no files or error, redirect to Documentos
-                redirectToDocuments(numero);
-
-            } catch (e) {
-                console.error('Error fetching attached files:', e);
-                // Fallback redirect
-                redirectToDocuments(numero);
-            }
+        window.viewInvoiceDocument = function (id) {
+            // Use the robust serveArchivo endpoint from Documentos module
+            // This handles ID lookup, storage key resolution, and authentication
+            const token = getToken();
+            const url = `${API_BASE}/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`;
+            window.open(url, '_blank');
         };
-
         function redirectToDocuments(numero) {
             // Encode the search parameter
             const searchParam = encodeURIComponent(numero || '');

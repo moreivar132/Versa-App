@@ -119,6 +119,7 @@ async function validateInvite(token, email = null) {
         id: invite.id,
         tenantId: invite.tenant_id,
         tenantName: invite.tenant_nombre,
+        empresaId: invite.id_empresa || null,  // Include empresa assignment
         role: invite.role,
         emailAllowed: invite.email_allowed,
         expiresAt: invite.expires_at

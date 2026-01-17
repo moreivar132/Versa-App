@@ -141,7 +141,7 @@ router.post('/accept', async (req, res) => {
             JOIN tenant t ON si.tenant_id = t.id
             LEFT JOIN accounting_empresa e ON si.id_empresa = e.id
             WHERE si.token_hash = $1
-            FOR UPDATE
+            FOR UPDATE OF si
         `, [tokenHash]);
 
         if (inviteResult.rows.length === 0) {
@@ -209,7 +209,7 @@ router.post('/accept', async (req, res) => {
 
         const newUser = userResult.rows[0];
 
-        // Assign role from invite
+        // Assign role from invite (with tenant_id for RBAC)
         const roleResult = await client.query(
             'SELECT id FROM rol WHERE nombre = $1',
             [invite.role]
@@ -217,8 +217,8 @@ router.post('/accept', async (req, res) => {
 
         if (roleResult.rows.length > 0) {
             await client.query(
-                'INSERT INTO usuariorol (id_usuario, id_rol) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-                [newUser.id, roleResult.rows[0].id]
+                'INSERT INTO usuariorol (id_usuario, id_rol, tenant_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+                [newUser.id, roleResult.rows[0].id, invite.tenant_id]
             );
         }
 
