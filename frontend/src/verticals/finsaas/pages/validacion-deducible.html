@@ -299,31 +299,6 @@
 
         // Initialize Layout
         const layout = new FinSaaSLayout('app-shell');
-        layout.init();
-        const session = await requireAuth();
-
-        // Check Access Control
-        if (!layout.hasPermission('finsaas.deducible.manage', layout.getUserPermissions())) {
-            document.body.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-screen bg-background-light dark:bg-background-dark">
-                    <div class="text-center p-8 bg-white dark:bg-surface-dark rounded-2xl shadow-xl border border-gray-200 dark:border-[#25381e] max-w-md mx-4">
-                        <div class="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <span class="material-symbols-outlined text-4xl text-red-500">lock</span>
-                        </div>
-                        <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Acceso Restringido</h1>
-                        <p class="text-gray-500 dark:text-gray-400 mb-6">
-                            Esta sección es exclusiva para administradores de la organización.
-                        </p>
-                        <a href="dashboard.html" class="inline-flex items-center justify-center px-6 py-3 bg-primary text-background-dark font-bold rounded-xl transition-transform hover:scale-105">
-                            <span class="material-symbols-outlined mr-2">arrow_back</span>
-                            Volver al Dashboard
-                        </a>
-                    </div>
-                </div>
-            `;
-            throw new Error('Access denied');
-        }
-
         const API_BASE = '/api/contabilidad';
 
         // State
@@ -369,6 +344,36 @@
 
         // --- Init ---
         async function init() {
+            layout.init();
+            try {
+                const session = await requireAuth();
+
+                // Check Access Control
+                if (!layout.hasPermission('finsaas.deducible.manage', layout.getUserPermissions())) {
+                    document.body.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-screen bg-background-light dark:bg-background-dark">
+                            <div class="text-center p-8 bg-white dark:bg-surface-dark rounded-2xl shadow-xl border border-gray-200 dark:border-[#25381e] max-w-md mx-4">
+                                <div class="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <span class="material-symbols-outlined text-4xl text-red-500">lock</span>
+                                </div>
+                                <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Acceso Restringido</h1>
+                                <p class="text-gray-500 dark:text-gray-400 mb-6">
+                                    Esta sección es exclusiva para administradores de la organización.
+                                </p>
+                                <a href="dashboard.html" class="inline-flex items-center justify-center px-6 py-3 bg-primary text-background-dark font-bold rounded-xl transition-transform hover:scale-105">
+                                    <span class="material-symbols-outlined mr-2">arrow_back</span>
+                                    Volver al Dashboard
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+            } catch (e) {
+                console.error('Auth check failed', e);
+                return;
+            }
+
             await loadEmpresas();
             setupYearOptions();
 

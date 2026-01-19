@@ -152,8 +152,39 @@ async function getGastosPorCategoria(req, res) {
     }
 }
 
+/**
+ * GET /api/contabilidad/reports/evolucion
+ */
+async function getEvolucionFinanciera(req, res) {
+    try {
+        const tenantId = getEffectiveTenant(req);
+        if (!tenantId) {
+            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
+        }
+
+        const empresaId = getEmpresaId(req);
+        if (!empresaId) {
+            return res.json({ ok: true, data: [] });
+        }
+
+        const data = await service.getEvolucionFinanciera({ tenantId }, empresaId);
+
+        res.json({
+            ok: true,
+            data
+        });
+    } catch (error) {
+        console.error('Error en getEvolucionFinanciera:', error);
+        res.status(error.status || 500).json({
+            ok: false,
+            error: error.message
+        });
+    }
+}
+
 module.exports = {
     getDashboard,
     getReporteIVA,
-    getGastosPorCategoria
+    getGastosPorCategoria,
+    getEvolucionFinanciera
 };

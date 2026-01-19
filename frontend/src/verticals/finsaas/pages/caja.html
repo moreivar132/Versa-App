@@ -450,7 +450,7 @@
             alert('Funcionalidad de exportar próximamente');
         };
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function init() {
             await requireAuth();
             const layout = new FinSaaSLayout('app-shell');
             layout.init();
@@ -461,7 +461,9 @@
 
             document.getElementById('btn-prev').addEventListener('click', () => loadMovimientos(currentPage - 1));
             document.getElementById('btn-next').addEventListener('click', () => loadMovimientos(currentPage + 1));
-        });
+        }
+
+        init();
 
     </script>
 </body>
