@@ -55,6 +55,7 @@ async function list(req, res) {
             idContacto: req.query.idContacto ? parseInt(req.query.idContacto) : null,
             idCategoria: req.query.idCategoria ? parseInt(req.query.idCategoria) : null,
             idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
+            deducible_status: req.query.deducible_status, // nuevo filtro
             search: req.query.search,
             idEmpresa: ctx.empresaId, // Ya viene validado del middleware
             limit: parseInt(req.query.limit) || 50,
@@ -113,10 +114,14 @@ async function create(req, res) {
             return res.status(400).json({ ok: false, error: 'Tipo de factura inválido' });
         }
 
-        // Asignar empresa si existe en contexto
+        // Asignar empresa: priorizar contexto, fallback a body
         if (ctx.empresaId) {
             data.id_empresa = ctx.empresaId;
+        } else if (!data.id_empresa) {
+            // If no empresa in context or body, log warning (optional empresa mode)
+            console.warn('[Facturas] No empresa context - invoice will have null id_empresa');
         }
+        // Note: if data.id_empresa is already set from body, keep it
 
         if (!data.numero_factura) {
             return res.status(400).json({ ok: false, error: 'Número de factura requerido' });

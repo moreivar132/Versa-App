@@ -275,8 +275,37 @@
                                             class="w-full p-2 text-right border-2 border-primary/20 rounded outline-none font-bold font-mono text-primary bg-white dark:bg-surface-dark"
                                             required>
                                     </div>
-                                    <div class="col-span-3 text-right">
+                                    <div class="col-span-3 text-right mb-2">
                                         <span class="text-xs text-gray-400" id="calc-preview">IVA calc: 0.00 €</span>
+                                    </div>
+
+                                    <!-- Retenciones Section -->
+                                    <div
+                                        class="col-span-3 grid grid-cols-3 gap-3 border-t border-dashed border-gray-200 dark:border-gray-700 pt-3">
+                                        <div>
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Retención
+                                                %</label>
+                                            <input type="number" step="0.5" id="fac-ret-pct"
+                                                class="w-full p-2 text-center border rounded outline-none font-mono bg-white dark:bg-surface-dark border-gray-200 dark:border-[#25381e]"
+                                                value="0" oninput="recalcTotal()">
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-400 mb-1">Imp.
+                                                Ret.</label>
+                                            <input type="number" step="0.01" id="fac-ret-importe"
+                                                class="w-full p-2 text-right border rounded outline-none font-mono bg-white dark:bg-surface-dark border-gray-200 dark:border-[#25381e] text-red-400"
+                                                readonly>
+                                        </div>
+                                        <div class="flex items-end justify-end">
+                                            <button type="button" onclick="setRetencion(15)"
+                                                class="text-xs text-primary hover:underline mr-2">15%</button>
+                                            <button type="button" onclick="setRetencion(7)"
+                                                class="text-xs text-primary hover:underline mr-2">7%</button>
+                                            <button type="button" onclick="setRetencion(1)"
+                                                class="text-xs text-primary hover:underline">1%</button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -729,6 +758,7 @@
 
             if (data.base_imponible) document.getElementById('fac-base').value = data.base_imponible;
             if (data.iva_porcentaje) document.getElementById('fac-iva-pct').value = data.iva_porcentaje;
+            if (data.retencion_porcentaje) document.getElementById('fac-ret-pct').value = data.retencion_porcentaje;
             if (data.total) document.getElementById('fac-total').value = data.total;
             if (data.concepto) document.getElementById('fac-concepto').value = data.concepto;
 
@@ -755,13 +785,24 @@
         window.recalcTotal = function () {
             const base = parseFloat(document.getElementById('fac-base').value) || 0;
             const ivaPct = parseFloat(document.getElementById('fac-iva-pct').value) || 0;
-            const ivaAmount = base * (ivaPct / 100);
+            const retPct = parseFloat(document.getElementById('fac-ret-pct').value) || 0;
 
+            const ivaAmount = base * (ivaPct / 100);
+            const retAmount = base * (retPct / 100);
+
+            // Update readonly inputs
+            document.getElementById('fac-ret-importe').value = retAmount.toFixed(2);
             document.getElementById('calc-preview').textContent = `IVA calc: ${ivaAmount.toFixed(2)} €`;
 
-            if (!document.getElementById('fac-total').value) {
-                document.getElementById('fac-total').value = (base + ivaAmount).toFixed(2);
+            if (!document.getElementById('fac-total').value || document.activeElement.id !== 'fac-total') {
+                const total = Math.round((base + ivaAmount - retAmount) * 100) / 100;
+                document.getElementById('fac-total').value = total.toFixed(2);
             }
+        };
+
+        window.setRetencion = function (pct) {
+            document.getElementById('fac-ret-pct').value = pct;
+            recalcTotal();
         };
 
         window.stopPollingAndManual = async function () {
@@ -804,6 +845,8 @@
                 fecha_emision: document.getElementById('fac-fecha').value,
                 base_imponible: parseFloat(document.getElementById('fac-base').value) || 0,
                 iva_porcentaje: parseFloat(document.getElementById('fac-iva-pct').value) || 0,
+                retencion_porcentaje: parseFloat(document.getElementById('fac-ret-pct').value) || 0,
+                retencion_importe: parseFloat(document.getElementById('fac-ret-importe').value) || 0,
                 total: parseFloat(document.getElementById('fac-total').value) || 0,
                 concepto: document.getElementById('fac-concepto').value,
                 categoria: document.getElementById('fac-categoria').value,

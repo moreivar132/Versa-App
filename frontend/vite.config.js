@@ -1,7 +1,15 @@
 import { defineConfig } from 'vite';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+    resolve: {
+        alias: {
+            '/services': path.resolve(__dirname, 'services'),
+        }
+    },
     build: {
         outDir: 'dist',
         emptyOutDir: true,
@@ -57,6 +65,12 @@ export default defineConfig({
                 finsaasCopilotoChat: 'src/verticals/finsaas/pages/copiloto-chat.html',
                 finsaasCopilotoAlertas: 'src/verticals/finsaas/pages/copiloto-alertas.html',
                 finsaasCopilotoAjustes: 'src/verticals/finsaas/pages/copiloto-ajustes.html',
+
+                // Usuarios / Invitaciones
+                finsaasUsuarios: 'src/verticals/finsaas/pages/usuarios.html',
+                finsaasPermisos: 'src/verticals/finsaas/pages/permisos.html',
+                finsaasValidacionDeducible: 'src/verticals/finsaas/pages/validacion-deducible.html',
+                acceptInvite: 'accept-invite.html',
 
                 // Fidelización
                 managerTallerFidelizacion: 'manager-taller-fidelizacion.html',

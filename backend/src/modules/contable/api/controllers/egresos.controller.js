@@ -183,14 +183,16 @@ async function createIntake(req, res) {
                         INSERT INTO contabilidad_factura (
                             id_tenant, id_empresa, tipo, id_contacto, numero_factura, 
                             fecha_emision, fecha_devengo, fecha_vencimiento,
-                            base_imponible, iva_porcentaje, iva_importe, total,
+                            base_imponible, iva_porcentaje, iva_importe, 
+                            retencion_porcentaje, retencion_importe, total,
                             estado, notas, intake_id, created_by
-                        ) VALUES ($1, $2, 'GASTO', $3, $4, $5, $5, $6, $7, $8, $9, $10, 'PENDIENTE', $11, $12, $13)
+                        ) VALUES ($1, $2, 'GASTO', $3, $4, $5, $5, $6, $7, $8, $9, $10, $11, $12, 'PENDIENTE', $13, $14, $15)
                         RETURNING id
                     `, [
                         tenantId, empresaId,
                         contactoId, numFactura, fecha, extracted.fecha_vencimiento || fecha,
-                        baseImp, ivaPct, ivaImp, total,
+                        baseImp, ivaPct, ivaImp,
+                        extracted.retencion_porcentaje || 0, extracted.retencion_importe || 0, total,
                         `Generado por OCR (Intake ${intakeId})\n${extracted.concepto || ''}`.trim(),
                         intakeId, userId
                     ]);
@@ -300,7 +302,8 @@ async function createGasto(req, res) {
         const {
             intake_id, proveedor_nombre, proveedor_nif, proveedor_id,
             numero_factura, fecha_emision, fecha_vencimiento,
-            base_imponible, iva_porcentaje, iva_importe, total,
+            base_imponible, iva_porcentaje, iva_importe,
+            retencion_porcentaje, retencion_importe, total,
             categoria, concepto, estado = 'PENDIENTE', gasto_id
         } = req.body;
 
@@ -346,13 +349,15 @@ async function createGasto(req, res) {
                 UPDATE contabilidad_factura SET
                     id_contacto=$1, id_empresa=$2, numero_factura=$3, 
                     fecha_emision=$4, fecha_devengo=$4, fecha_vencimiento=$5,
-                    base_imponible=$6, iva_porcentaje=$7, iva_importe=$8, total=$9,
-                    notas=$10, estado=$11, updated_at=NOW(), updated_by=$12
-                WHERE id=$13 AND id_tenant=$14
+                    base_imponible=$6, iva_porcentaje=$7, iva_importe=$8,
+                    retencion_porcentaje=$9, retencion_importe=$10, total=$11,
+                    notas=$12, estado=$13, updated_at=NOW(), updated_by=$14
+                WHERE id=$15 AND id_tenant=$16
             `, [
                 contactoId, empresaId, numero_factura,
                 fecha_emision, fecha_vencimiento || fecha_emision,
-                base_imponible || 0, iva_porcentaje || 0, calcIvaImporte, total || 0,
+                base_imponible || 0, iva_porcentaje || 0, calcIvaImporte,
+                retencion_porcentaje || 0, retencion_importe || 0, total || 0,
                 concepto, normalizedEstado, userId, finalId, tenantId
             ]);
         } else {
@@ -376,14 +381,16 @@ async function createGasto(req, res) {
                 INSERT INTO contabilidad_factura (
                     id_tenant, id_empresa, tipo, id_contacto, numero_factura,
                     fecha_emision, fecha_devengo, fecha_vencimiento,
-                    base_imponible, iva_porcentaje, iva_importe, total,
+                    base_imponible, iva_porcentaje, iva_importe, 
+                    retencion_porcentaje, retencion_importe, total,
                     estado, notas, intake_id, created_by
-                ) VALUES ($1, $2, 'GASTO', $3, $4, $5, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                ) VALUES ($1, $2, 'GASTO', $3, $4, $5, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 RETURNING id
             `, [
                 tenantId, empresaId, contactoId, numero_factura,
                 fecha_emision || new Date(), fecha_vencimiento,
-                base_imponible || 0, iva_porcentaje || 0, calcIvaImporte, total || 0,
+                base_imponible || 0, iva_porcentaje || 0, calcIvaImporte,
+                retencion_porcentaje || 0, retencion_importe || 0, total || 0,
                 normalizedEstado, concepto, intake_id, userId
             ]);
             finalId = ins.rows[0].id;

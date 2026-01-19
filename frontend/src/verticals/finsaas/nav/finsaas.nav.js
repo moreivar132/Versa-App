@@ -1,6 +1,8 @@
 /**
  * FinSaaS Navigation Manifest
  * Central source of truth for the Sidebar
+ * 
+ * Items with requiredPermission will only show to users with that permission
  */
 export const finSaaSNav = [
     {
@@ -83,6 +85,36 @@ export const finSaaSNav = [
         order: 6
     },
     {
+        id: 'validacion-deducible',
+        label: 'Validación Deducible',
+        route: '/src/verticals/finsaas/pages/validacion-deducible.html',
+        icon: 'fact_check',
+        order: 6.5,
+        requiredPermission: 'finsaas.deducible.manage'  // TENANT_ADMIN only
+    },
+    {
+        id: 'admin',
+        label: 'Administración',
+        type: 'section',
+        requiredPermission: 'finsaas.invites.manage'  // Only show section if user has any admin permission
+    },
+    {
+        id: 'usuarios',
+        label: 'Usuarios e Invitaciones',
+        route: '/src/verticals/finsaas/pages/usuarios.html',
+        icon: 'group_add',
+        order: 6.6,
+        requiredPermission: 'finsaas.invites.manage'  // TENANT_ADMIN only
+    },
+    {
+        id: 'permisos',
+        label: 'Permisos y Roles',
+        route: '/src/verticals/finsaas/pages/permisos.html',
+        icon: 'admin_panel_settings',
+        order: 6.7,
+        requiredPermission: 'finsaas.rbac.manage'  // TENANT_ADMIN only
+    },
+    {
         id: 'tools',
         label: 'Herramientas',
         type: 'section'
@@ -103,3 +135,4 @@ export const finSaaSNav = [
         external: true // O fuera del router de finsaas
     }
 ];
+
