@@ -115,6 +115,14 @@ const PERMISSIONS = {
         VIEW: 'email.view',
         CREATE: 'email.create',
         SEND: 'email.send'
+    },
+
+    // === FINSAAS ADMIN (TENANT_ADMIN Only) ===
+    FINSAAS: {
+        DEDUCIBLE_MANAGE: 'finsaas.deducible.manage',
+        INVITES_MANAGE: 'finsaas.invites.manage',
+        RBAC_MANAGE: 'finsaas.rbac.manage',
+        EMPRESA_MANAGE: 'finsaas.empresa.manage'  // Create/delete empresas
     }
 };
 

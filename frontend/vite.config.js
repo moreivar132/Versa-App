@@ -68,6 +68,9 @@ export default defineConfig({
 
                 // Usuarios / Invitaciones
                 finsaasUsuarios: 'src/verticals/finsaas/pages/usuarios.html',
+                finsaasPermisos: 'src/verticals/finsaas/pages/permisos.html',
+                finsaasValidacionDeducible: 'src/verticals/finsaas/pages/validacion-deducible.html',
+                acceptInvite: 'accept-invite.html',
 
                 // Fidelización
                 managerTallerFidelizacion: 'manager-taller-fidelizacion.html',

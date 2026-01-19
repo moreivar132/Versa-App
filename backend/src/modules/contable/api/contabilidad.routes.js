@@ -255,7 +255,7 @@ router.get('/empresas/:id',
 );
 
 router.post('/empresas',
-    requirePermission('contabilidad.empresa.write'),
+    requirePermission('finsaas.empresa.manage'),  // TENANT_ADMIN only
     empresaController.create
 );
 
@@ -265,7 +265,7 @@ router.patch('/empresas/:id',
 );
 
 router.delete('/empresas/:id',
-    requirePermission('contabilidad.empresa.write'),
+    requirePermission('finsaas.empresa.manage'),  // TENANT_ADMIN only
     empresaController.remove
 );
 

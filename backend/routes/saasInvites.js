@@ -2,6 +2,8 @@
  * SaaS Invite Management Routes
  * API for creating and managing invitation tokens
  * 
+ * SECURITY: All routes require TENANT_ADMIN permission (finsaas.invites.manage)
+ * 
  * Routes:
  *   POST   /api/saas/invites      - Create new invite (tenant admin)
  *   GET    /api/saas/invites      - List invites for tenant
@@ -12,14 +14,19 @@
 const express = require('express');
 const router = express.Router();
 const verifyJWT = require('../middleware/auth');
+const { requirePermission } = require('../middleware/rbac');
 const saasInviteService = require('../services/saasInviteService');
+
+// All routes require authentication + tenant admin permission
+router.use(verifyJWT);
+router.use(requirePermission('finsaas.invites.manage'));
 
 /**
  * POST /api/saas/invites
  * Create a new invitation for the current tenant
  * Body: { role?: string, emailAllowed?: string, empresaId?: number, expiryHours?: number }
  */
-router.post('/', verifyJWT, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
         // Must have a tenant
         if (!req.user.id_tenant) {
@@ -62,7 +69,7 @@ router.post('/', verifyJWT, async (req, res) => {
  * List all invites for current tenant
  * Query: ?active=true (only show unused, unexpired)
  */
-router.get('/', verifyJWT, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         if (!req.user.id_tenant) {
             return res.status(403).json({ error: 'Solo usuarios de empresa pueden ver invitaciones' });
@@ -82,7 +89,7 @@ router.get('/', verifyJWT, async (req, res) => {
  * GET /api/saas/invites/:id
  * Get details of a specific invite
  */
-router.get('/:id', verifyJWT, async (req, res) => {
+router.get('/:id', async (req, res) => {
     try {
         if (!req.user.id_tenant) {
             return res.status(403).json({ error: 'No autorizado' });
@@ -110,7 +117,7 @@ router.get('/:id', verifyJWT, async (req, res) => {
  * DELETE /api/saas/invites/:id
  * Delete an unused invite
  */
-router.delete('/:id', verifyJWT, async (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         if (!req.user.id_tenant) {
             return res.status(403).json({ error: 'No autorizado' });

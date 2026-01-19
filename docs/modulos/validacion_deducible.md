@@ -106,9 +106,9 @@ before_json, after_json, performed_by, performed_at
 
 | Permiso | Roles | Descripción |
 |---------|-------|-------------|
-| `contabilidad.deducible.approve` | TENANT_ADMIN, SUPER_ADMIN | Cambiar status deducible |
+| `finsaas.deducible.manage` | TENANT_ADMIN | **REQUERIDO** para acceder al módulo y cambiar status |
 | `contabilidad.export` | TENANT_ADMIN, ACCOUNTING, SUPER_ADMIN | Exportar CSV |
-| `contabilidad.read` | Todos | Ver lista facturas |
+| `contabilidad.read` | Todos | Ver lista facturas (en otras pantallas) |
 
 ---
 
@@ -122,16 +122,22 @@ sequenceDiagram
     participant DB as Database
 
     U->>F: Navega a Validación Deducible
-    F->>B: GET /facturas?tipo=GASTO
-    B-->>F: Lista de facturas con status
-    U->>F: Click "Revisar" en factura
-    F->>F: Abre modal con datos
-    U->>F: Selecciona "Deducible" + motivo
-    U->>F: Click "Guardar"
-    F->>B: PATCH /facturas/123/deducible
-    B->>DB: UPDATE + INSERT audit_log
-    B-->>F: {ok, factura}
-    F->>F: Actualiza tabla
+    F->>F: Check Permission (finsaas.deducible.manage)
+    alt No Permission
+        F-->>U: Muestra "Acceso Restringido"
+    else Has Permission
+        F->>B: GET /facturas?tipo=GASTO
+        B-->>F: Lista de facturas con status
+        U->>F: Click "Revisar" en factura
+        F->>F: Abre modal con datos
+        U->>F: Selecciona "Deducible" + motivo
+        U->>F: Click "Guardar"
+        F->>B: PATCH /facturas/123/deducible
+        B->>B: Check Permission (finsaas.deducible.manage)
+        B->>DB: UPDATE + INSERT audit_log
+        B-->>F: {ok, factura}
+        F->>F: Actualiza tabla
+    end
 ```
 
 ---
@@ -142,6 +148,6 @@ sequenceDiagram
 |---------|-----------|
 | `deducible.controller.js` | Lógica de PATCH y CSV export |
 | `contabilidad.routes.js` | Rutas RBAC protegidas |
-| `validacion-deducible.html` | UI de validación |
-| `finsaas.nav.js` | Link en sidebar |
-| `20260117_deducible_validation.sql` | Migración DB |
+| `validacion-deducible.html` | UI de validación (route guarded) |
+| `finsaas.nav.js` | Link en sidebar (filtered) |
+| `permissions.js` | Definición de permisos FinSaaS |

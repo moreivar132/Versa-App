@@ -31,6 +31,39 @@ export class FinSaaSLayout {
         this.attachEvents();
     }
 
+    /**
+     * Get user permissions from session
+     * @returns {Array<string>} List of permission strings
+     */
+    getUserPermissions() {
+        const SESSION_KEY = 'versa_session_v1';
+        try {
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+            // Permissions can come from session.user.permissions or be empty
+            return session.user?.permissions || [];
+        } catch (e) {
+            console.warn('[FinSaaSLayout] Error reading permissions:', e);
+            return [];
+        }
+    }
+
+    /**
+     * Check if user has a specific permission
+     * @param {string|undefined} requiredPermission - Permission to check (undefined = no restriction)
+     * @param {Array<string>} userPermissions - User's permissions list
+     * @returns {boolean}
+     */
+    hasPermission(requiredPermission, userPermissions) {
+        // No restriction = everyone can see
+        if (!requiredPermission) return true;
+
+        // Super admin bypass (has '*' permission)
+        if (userPermissions.includes('*')) return true;
+
+        // Check specific permission
+        return userPermissions.includes(requiredPermission);
+    }
+
     renderShell(container) {
         // Move existing children to a temporary fragment to re-insert them into the content area
         const contentFragment = document.createDocumentFragment();
@@ -96,9 +129,14 @@ export class FinSaaSLayout {
             <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-10 hidden lg:hidden glass-effect"></div>
         `;
 
-        // Inject Nav Items
+        // Inject Nav Items - filtered by user permissions
         const navList = container.querySelector('#finsaas-nav-list');
-        navList.innerHTML = finSaaSNav.map(item => {
+        const userPermissions = this.getUserPermissions();
+
+        // Filter nav items based on permissions
+        const filteredNav = finSaaSNav.filter(item => this.hasPermission(item.requiredPermission, userPermissions));
+
+        navList.innerHTML = filteredNav.map(item => {
             if (item.type === 'section') {
                 return `<p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2 mt-4">${item.label}</p>`;
             }
@@ -128,7 +166,17 @@ export class FinSaaSLayout {
             const session = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
             if (session.user && session.user.nombre) {
                 container.querySelector('#user-name').textContent = session.user.nombre;
-                container.querySelector('#user-role').textContent = session.user.rol || 'Usuario';
+
+                // Determine best role label
+                let roleLabel = 'Usuario';
+                if (session.user.roles && session.user.roles.length > 0) {
+                    roleLabel = session.user.roles[0].display_name || session.user.roles[0].nombre;
+                } else if (session.user.rol) {
+                    roleLabel = session.user.rol;
+                }
+
+                container.querySelector('#user-role').textContent = roleLabel;
+
                 // Initials
                 const initials = session.user.nombre.substring(0, 2).toUpperCase();
                 container.querySelector('#user-avatar').textContent = initials;

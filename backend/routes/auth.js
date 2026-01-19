@@ -75,6 +75,22 @@ router.post('/login', async (req, res) => {
       display_name: r.display_name || r.nombre
     }));
 
+    // Fetch permissions
+    let permissions = [];
+    if (user.is_super_admin) {
+      permissions = ['*'];
+    } else {
+      const permResult = await pool.query(`
+            SELECT DISTINCT COALESCE(p.key, p.nombre) as permission_key
+            FROM usuariorol ur
+            JOIN rol r ON ur.id_rol = r.id
+            JOIN rolpermiso rp ON rp.id_rol = r.id
+            JOIN permiso p ON p.id = rp.id_permiso
+            WHERE ur.id_usuario = $1
+        `, [user.id]);
+      permissions = permResult.rows.map(r => r.permission_key);
+    }
+
     const payload = {
       id: user.id,
       id_tenant: user.id_tenant,
@@ -95,6 +111,7 @@ router.post('/login', async (req, res) => {
     // Include roles in the response
     const safeUser = sanitizeUser(user);
     safeUser.roles = userRoles;
+    safeUser.permissions = permissions;
 
     return res.json({ token, user: safeUser });
   } catch (error) {
@@ -129,11 +146,30 @@ router.get('/me', verifyJWT, async (req, res) => {
       WHERE ur.id_usuario = $1
     `, [req.user.id]);
 
-    const safeUser = sanitizeUser(user);
-    safeUser.roles = rolesResult.rows.map(r => ({
+    const userRoles = rolesResult.rows.map(r => ({
       nombre: r.nombre,
       display_name: r.display_name || r.nombre
     }));
+
+    // Fetch permissions logic (simplified version of RBAC middleware)
+    let permissions = [];
+    if (user.is_super_admin) {
+      permissions = ['*'];
+    } else {
+      const permResult = await pool.query(`
+            SELECT DISTINCT COALESCE(p.key, p.nombre) as permission_key
+            FROM usuariorol ur
+            JOIN rol r ON ur.id_rol = r.id
+            JOIN rolpermiso rp ON rp.id_rol = r.id
+            JOIN permiso p ON p.id = rp.id_permiso
+            WHERE ur.id_usuario = $1
+        `, [req.user.id]);
+      permissions = permResult.rows.map(r => r.permission_key);
+    }
+
+    const safeUser = sanitizeUser(user);
+    safeUser.roles = userRoles;
+    safeUser.permissions = permissions;
 
     return res.json(safeUser);
   } catch (error) {

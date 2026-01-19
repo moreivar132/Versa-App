@@ -96,6 +96,9 @@ app.use('/api/ventas', privateRoute, require('./src/modules/ventas/api/ventas.ro
 // Contabilidad Module V2
 app.use('/api/contabilidad', privateRoute, require('./src/modules/contable/api/contabilidad.routes'));
 
+// FinSaaS Admin RBAC (Tenant admin only)
+app.use('/api/finsaas/admin/rbac', require('./routes/finsaasRbac.routes'));
+
 // Otras rutas legacy / utilidades
 app.use('/api/citas', privateRoute, require('./routes/citas'));
 app.use('/api/inventory', privateRoute, require('./routes/inventory'));

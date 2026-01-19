@@ -62,6 +62,8 @@ sequenceDiagram
 
 ### Endpoints Autenticados (TENANT_ADMIN)
 
+**Requiere permiso `finsaas.invites.manage`**
+
 #### POST /api/saas/invites
 Crear nueva invitación.
 

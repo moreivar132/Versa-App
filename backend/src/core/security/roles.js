@@ -40,7 +40,9 @@ const SYSTEM_ROLES = {
             ...Object.values(PERMISSIONS.ROLES),
             ...Object.values(PERMISSIONS.CONFIG),
             ...Object.values(PERMISSIONS.MARKETPLACE),
-            ...Object.values(PERMISSIONS.EMAIL)
+            ...Object.values(PERMISSIONS.EMAIL),
+            // FinSaaS Admin permissions (TENANT_ADMIN only)
+            ...Object.values(PERMISSIONS.FINSAAS)
         ]
     },
     GERENTE: {
@@ -106,7 +108,32 @@ function roleHasPermission(roleCode, permission) {
     return role.permissions.includes(permission);
 }
 
+/**
+ * Check if user has tenant admin role
+ * @param {Array|string} userRoles - Array of role objects/strings or single role string
+ * @returns {boolean}
+ */
+function isTenantAdmin(userRoles) {
+    const TENANT_ADMIN_ROLES = ['ADMIN', 'TENANT_ADMIN', 'SUPER_ADMIN', 'ADMINISTRADOR'];
+
+    if (!userRoles) return false;
+
+    // Handle single string
+    if (typeof userRoles === 'string') {
+        return TENANT_ADMIN_ROLES.includes(userRoles.toUpperCase());
+    }
+
+    // Handle array
+    if (!Array.isArray(userRoles)) return false;
+
+    return userRoles.some(r => {
+        const roleName = typeof r === 'string' ? r : (r.nombre || r.name || r.code || '');
+        return TENANT_ADMIN_ROLES.includes(roleName.toUpperCase());
+    });
+}
+
 module.exports = {
     SYSTEM_ROLES,
-    roleHasPermission
+    roleHasPermission,
+    isTenantAdmin
 };
