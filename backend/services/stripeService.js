@@ -393,16 +393,136 @@ async function getPaymentIntent(paymentIntentId) {
 // ============================================================
 
 /**
- * Crea una sesión de checkout de Stripe para suscripciones
+ * Get or create a Stripe customer for a tenant
+ * @param {Object} params - Parameters
+ * @param {number} params.id_tenant - Tenant ID
+ * @param {string} params.email - Email for the customer
+ * @param {string} params.name - Name (optional)
+ * @returns {Promise<string>} Stripe customer ID
+ */
+async function getOrCreateTenantCustomer({ id_tenant, email, name }) {
+    const pool = require('../db');
+
+    try {
+        // Check if tenant already has a Stripe customer
+        const existingResult = await pool.query(
+            `SELECT stripe_customer_id FROM tenant_suscripcion WHERE tenant_id = $1 AND stripe_customer_id IS NOT NULL LIMIT 1`,
+            [id_tenant]
+        );
+
+        if (existingResult.rows.length > 0 && existingResult.rows[0].stripe_customer_id) {
+            const existingCustomerId = existingResult.rows[0].stripe_customer_id;
+            console.log(`[Stripe] Tenant customer found: ${existingCustomerId.substring(0, 10)}...`);
+            return existingCustomerId;
+        }
+
+        // Create new customer in Stripe
+        const customerParams = {
+            metadata: {
+                id_tenant: id_tenant.toString(),
+                source: 'versa_tenant_subscription'
+            }
+        };
+
+        if (email && email.includes('@')) {
+            customerParams.email = email.trim();
+        }
+        if (name) {
+            customerParams.name = name;
+        }
+
+        const customer = await stripe.customers.create(customerParams);
+        console.log(`[Stripe] New tenant customer created: ${customer.id.substring(0, 10)}...`);
+
+        // Update tenant_suscripcion with the customer ID if record exists
+        await pool.query(
+            `UPDATE tenant_suscripcion SET stripe_customer_id = $1 WHERE tenant_id = $2`,
+            [customer.id, id_tenant]
+        );
+
+        return customer.id;
+    } catch (error) {
+        console.error('[Stripe] Error in getOrCreateTenantCustomer:', error.message);
+        throw error;
+    }
+}
+
+/**
+ * Create a Stripe Customer Portal session for subscription management
+ * @param {Object} params - Parameters
+ * @param {string} params.stripe_customer_id - Stripe customer ID
+ * @param {string} params.return_url - URL to return after portal session
+ * @returns {Promise<{portal_url: string}>}
+ */
+async function createPortalSession({ stripe_customer_id, return_url }) {
+    try {
+        const session = await stripe.billingPortal.sessions.create({
+            customer: stripe_customer_id,
+            return_url: return_url,
+        });
+
+        console.log(`[Stripe] Portal session created for customer ${stripe_customer_id.substring(0, 10)}...`);
+
+        return {
+            portal_url: session.url
+        };
+    } catch (error) {
+        console.error('[Stripe] Error creating portal session:', error.message);
+        throw error;
+    }
+}
+
+/**
+ * Infer plan_key from a Stripe price ID by looking up in database
+ * @param {string} priceId - Stripe price ID
+ * @returns {Promise<string|null>} plan_key or null if not found
+ */
+async function inferPlanKeyFromPriceId(priceId) {
+    const pool = require('../db');
+
+    try {
+        const result = await pool.query(`
+            SELECT plan_key FROM plan_suscripcion 
+            WHERE precio_mensual_stripe_price_id = $1 
+               OR precio_anual_stripe_price_id = $1
+            LIMIT 1
+        `, [priceId]);
+
+        if (result.rows.length > 0) {
+            return result.rows[0].plan_key;
+        }
+
+        console.warn(`[Stripe] Could not infer plan_key for price ID: ${priceId}`);
+        return null;
+    } catch (error) {
+        console.error('[Stripe] Error inferring plan_key:', error.message);
+        return null;
+    }
+}
+
+/**
+ * Crea una sesión de checkout de Stripe para suscripciones (enhanced)
  * @param {Object} params - Parámetros de la sesión
  * @param {string} params.priceId - ID del precio de Stripe
  * @param {number} params.tenantId - ID del tenant
+ * @param {string} params.planKey - Plan key (basic, pro, business)
+ * @param {string} params.billingCycle - Billing cycle (monthly, yearly)
  * @param {string} params.email - Email del cliente (opcional)
  * @param {string} params.successUrl - URL de éxito
  * @param {string} params.cancelUrl - URL de cancelación
+ * @param {string} params.stripeCustomerId - Existing Stripe customer ID (opcional)
  * @returns {Promise<Object>} Sesión de checkout de Stripe
  */
-async function createCheckoutSession({ priceId, tenantId, email, successUrl, cancelUrl }) {
+async function createSubscriptionCheckoutSession({
+    priceId,
+    tenantId,
+    planKey,
+    billingCycle,
+    email,
+    successUrl,
+    cancelUrl,
+    stripeCustomerId
+}) {
     try {
         const sessionParams = {
             mode: 'subscription',
@@ -414,34 +534,53 @@ async function createCheckoutSession({ priceId, tenantId, email, successUrl, can
             ],
             success_url: successUrl,
             cancel_url: cancelUrl,
-            // Metadata para poder identificar el tenant en los webhooks
+            // Enhanced metadata for webhooks
             metadata: {
                 type: 'subscription',
                 tenant_id: tenantId.toString(),
+                plan_key: planKey || '',
+                billing_cycle: billingCycle || 'monthly',
             },
-            // Configuración de suscripción automática
+            // Subscription metadata
             subscription_data: {
                 metadata: {
                     tenant_id: tenantId.toString(),
+                    plan_key: planKey || '',
                 },
             },
+            client_reference_id: tenantId.toString(),
         };
 
-        // Si se proporciona email, agregarlo
-        if (email) {
+        // If existing customer, attach to session
+        if (stripeCustomerId) {
+            sessionParams.customer = stripeCustomerId;
+        } else if (email) {
             sessionParams.customer_email = email;
         }
 
         const session = await stripe.checkout.sessions.create(sessionParams);
 
-        // Log sin mostrar claves sensibles
-        console.log(`[Stripe] Subscription checkout session created: ${session.id.substring(0, 10)}...`);
+        console.log(`[Stripe] Subscription checkout created: ${session.id.substring(0, 10)}... for plan ${planKey}`);
 
         return session;
     } catch (error) {
-        console.error('[Stripe] Error creating subscription checkout session:', error.message);
+        console.error('[Stripe] Error creating subscription checkout:', error.message);
         throw error;
     }
+}
+
+/**
+ * Crea una sesión de checkout de Stripe para suscripciones (legacy support)
+ * @deprecated Use createSubscriptionCheckoutSession instead
+ */
+async function createCheckoutSession({ priceId, tenantId, email, successUrl, cancelUrl }) {
+    return createSubscriptionCheckoutSession({
+        priceId,
+        tenantId,
+        email,
+        successUrl,
+        cancelUrl
+    });
 }
 
 /**
@@ -543,6 +682,11 @@ module.exports = {
     detachPaymentMethod,
     getCustomerWithDefaults,
 
+    // Tenant Customer & Portal
+    getOrCreateTenantCustomer,
+    createPortalSession,
+    inferPlanKeyFromPriceId,
+
     // Pagos de reservas (marketplace)
     createCheckoutSessionForBooking,
     getCheckoutSession,
@@ -550,6 +694,7 @@ module.exports = {
 
     // Suscripciones
     createCheckoutSession,
+    createSubscriptionCheckoutSession,
     getSubscription,
     getCustomer,
     cancelSubscription,

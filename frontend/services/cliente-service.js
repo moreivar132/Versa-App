@@ -3,7 +3,11 @@
  * Servicio frontend para el portal cliente
  */
 
-const API_BASE_URL = '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+export function getApiBaseUrl() {
+    return API_BASE_URL;
+}
 
 // Key for localStorage
 const TOKEN_KEY = 'versa_customer_token';

@@ -39,8 +39,12 @@ router.get('/users', requirePermission('users.view'), async (req, res) => {
             users = await userModel.getAllUsers();
         } else {
             // Regular users only see their tenant's users
-            const result = await pool.query(
-                'SELECT * FROM usuario WHERE id_tenant = $1 ORDER BY created_at DESC',
+            const result = await pool.query(`
+                SELECT u.*, t.nombre as tenant_nombre 
+                FROM usuario u
+                LEFT JOIN tenant t ON u.id_tenant = t.id
+                WHERE u.id_tenant = $1 
+                ORDER BY u.created_at DESC`,
                 [tenantId]
             );
             users = result.rows;
@@ -71,7 +75,7 @@ router.get('/users', requirePermission('users.view'), async (req, res) => {
  */
 router.post('/users', requirePermission('users.create'), async (req, res) => {
     try {
-        const { nombre, email, password, id_tenant, is_super_admin, porcentaje_mano_obra } = req.body;
+        const { nombre, email, password, id_tenant, is_super_admin, porcentaje_mano_obra, sucursal_ids, crear_sucursal } = req.body;
 
         // Non-super admins can only create users in their own tenant
         const effectiveTenant = getEffectiveTenant(req);
@@ -90,6 +94,31 @@ router.post('/users', requirePermission('users.create'), async (req, res) => {
             return res.status(400).json({ error: 'El email ya está registrado' });
         }
 
+        // Get tenant sucursales to check if onboarding is needed
+        const tenantSucursales = await sucursalModel.getSucursalesByTenant(id_tenant);
+        let createdSucursalId = null;
+
+        // Handle onboarding flow: create first sucursal if tenant has none
+        if (tenantSucursales.length === 0 && crear_sucursal?.nombre) {
+            const newSucursalResult = await pool.query(`
+                INSERT INTO sucursal (nombre, direccion, id_tenant, created_at, updated_at)
+                VALUES ($1, $2, $3, NOW(), NOW()) RETURNING *
+            `, [crear_sucursal.nombre, crear_sucursal.direccion || null, id_tenant]);
+            createdSucursalId = newSucursalResult.rows[0].id;
+            console.log(`Created first sucursal ${createdSucursalId} for tenant ${id_tenant}`);
+        }
+
+        // Validate sucursal_ids belong to the target tenant
+        if (sucursal_ids && sucursal_ids.length > 0) {
+            const validSucursales = await pool.query(
+                'SELECT id FROM sucursal WHERE id = ANY($1) AND id_tenant = $2',
+                [sucursal_ids, id_tenant]
+            );
+            if (validSucursales.rows.length !== sucursal_ids.length) {
+                return res.status(400).json({ error: 'Una o más sucursales no pertenecen a este tenant' });
+            }
+        }
+
         const passwordHash = await bcrypt.hash(password, 10);
         const newUser = await userModel.createUser({
             id_tenant,
@@ -100,6 +129,15 @@ router.post('/users', requirePermission('users.create'), async (req, res) => {
             porcentaje_mano_obra
         });
 
+        // Assign sucursales
+        const sucursalesToAssign = createdSucursalId
+            ? [createdSucursalId]
+            : (sucursal_ids || []);
+
+        for (const sucursalId of sucursalesToAssign) {
+            await sucursalModel.assignSucursalToUser(newUser.id, sucursalId);
+        }
+
         // Audit log
         const ctx = getAuditContext(req);
         await logAudit({
@@ -107,16 +145,19 @@ router.post('/users', requirePermission('users.create'), async (req, res) => {
             action: AUDIT_ACTIONS.USER_CREATE,
             entityType: 'user',
             entityId: newUser.id,
-            after: { nombre, email, id_tenant, is_super_admin }
+            after: { nombre, email, id_tenant, is_super_admin, sucursales: sucursalesToAssign }
         });
 
+        // Get assigned sucursales for response
+        const assignedSucursales = await sucursalModel.getUserSucursales(newUser.id);
         const { password_hash, ...safeUser } = newUser;
-        res.status(201).json(safeUser);
+        res.status(201).json({ ...safeUser, sucursales: assignedSucursales });
     } catch (error) {
         console.error('Error creating user:', error);
         res.status(500).json({ error: 'Error al crear usuario' });
     }
 });
+
 
 /**
  * PUT /api/access/users/:id
@@ -125,6 +166,7 @@ router.post('/users', requirePermission('users.create'), async (req, res) => {
 router.put('/users/:id', requirePermission('users.update'), async (req, res) => {
     try {
         const { id } = req.params;
+        const { sucursal_ids } = req.body;
         const targetUser = await userModel.getUserById(id);
 
         if (!targetUser) {
@@ -141,10 +183,43 @@ router.put('/users/:id', requirePermission('users.update'), async (req, res) => 
             return res.status(403).json({ error: 'Solo super admins pueden asignar super admin' });
         }
 
+        // Handle tenant change - clear sucursales
+        const newTenantId = req.body.id_tenant || targetUser.id_tenant;
+        const tenantChanged = newTenantId !== targetUser.id_tenant;
+
+        if (tenantChanged) {
+            // Clear existing sucursales when tenant changes
+            await sucursalModel.clearUserSucursales(id);
+        }
+
+        // Validate sucursal_ids belong to the target tenant
+        if (sucursal_ids && sucursal_ids.length > 0) {
+            const validSucursales = await pool.query(
+                'SELECT id FROM sucursal WHERE id = ANY($1) AND id_tenant = $2',
+                [sucursal_ids, newTenantId]
+            );
+            if (validSucursales.rows.length !== sucursal_ids.length) {
+                return res.status(400).json({ error: 'Una o más sucursales no pertenecen a este tenant' });
+            }
+        }
+
         const before = { ...targetUser };
         delete before.password_hash;
 
-        const updatedUser = await userModel.updateUser(id, req.body);
+        // Prepare update data
+        const updateData = { ...req.body };
+        let passwordUpdated = false;
+
+        // If password is provided, hash it
+        if (req.body.password && req.body.password.trim() !== '') {
+            updateData.password_hash = await bcrypt.hash(req.body.password, 10);
+            passwordUpdated = true;
+            console.log(`Password updated for user ${id} by admin ${req.user.id}`);
+        }
+        // Remove plaintext password from updateData
+        delete updateData.password;
+
+        const updatedUser = await userModel.updateUser(id, updateData);
 
         // Audit log
         const ctx = getAuditContext(req);
@@ -154,16 +229,19 @@ router.put('/users/:id', requirePermission('users.update'), async (req, res) => 
             entityType: 'user',
             entityId: id,
             before,
-            after: req.body
+            after: { ...req.body, sucursal_ids, passwordUpdated }
         });
 
+        // Get current sucursales
+        const assignedSucursales = await sucursalModel.getUserSucursales(id);
         const { password_hash, ...safeUser } = updatedUser;
-        res.json(safeUser);
+        res.json({ ...safeUser, sucursales: assignedSucursales, passwordUpdated });
     } catch (error) {
         console.error('Error updating user:', error);
         res.status(500).json({ error: 'Error al actualizar usuario' });
     }
 });
+
 
 /**
  * DELETE /api/access/users/:id

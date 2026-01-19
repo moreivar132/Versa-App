@@ -19,6 +19,7 @@
     <!-- Tailwind & Global Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="manager.css">
+    <link rel="stylesheet" href="styles/sucursal-selector.css">
     <script src="/guard.js"></script>
 
     <style>
@@ -92,6 +93,11 @@
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            <!-- Selector de Sucursal Estandarizado -->
+            <div class="sucursal-selector-wrapper">
+                <div id="sucursal-selector-container"></div>
+            </div>
+
 
             <!-- Mobile Header -->
             <header class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[#282e39]">
@@ -253,6 +259,7 @@
     <script type="module" src="./sidebar-manager.js"></script>
     <script type="module">
         import { fetchWithAuth } from '/auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
         let currentClient = null;
         let currentVehicle = null;
@@ -913,12 +920,25 @@
     </div>
 </body>
 </html>
-            `);
+`);
             win.document.close();
 
             // Wait for fonts to load then print
             setTimeout(() => win.print(), 500);
         }
+    </script>
+
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: async (nuevaSucursalId) => {
+                    console.log('Sucursal cambiada:', nuevaSucursalId);
+                    location.reload();
+                }
+            });
+        })();
     </script>
 </body>
 

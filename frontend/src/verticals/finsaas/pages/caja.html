@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Caja | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                        "brand-orange": "#46ec13",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <link href="/src/verticals/finsaas/layout/FinSaaSLayout.css" rel="stylesheet" />
+
+    <style>
+        .glass-table th {
+            font-weight: 600;
+            color: #9ca3af;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .glass-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #1f2937;
+            font-size: 0.875rem;
+        }
+
+        .dark .glass-table th {
+            border-bottom-color: #25381e;
+            color: #9ca3af;
+        }
+
+        .dark .glass-table td {
+            border-bottom-color: #25381e;
+            color: #e5e7eb;
+        }
+
+        .text-in {
+            color: #4ade80;
+        }
+
+        .text-out {
+            color: #f87171;
+        }
+
+        .form-input {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            color: #111827;
+        }
+
+        .dark .form-input {
+            background: #1a2c15;
+            border-color: #25381e;
+            color: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #46ec13;
+            box-shadow: 0 0 0 1px #46ec13;
+        }
+
+        .form-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .dark .form-label {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+
+    <div id="app-shell" class="flex h-screen w-full overflow-hidden">
+
+        <div class="max-w-7xl mx-auto flex flex-col gap-6 pb-10 h-full">
+
+            <!-- Title & Actions -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Caja Diaria</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1">Control de efectivo y movimientos diarios.</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Empresa Selector -->
+                    <div
+                        class="flex items-center gap-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-3 py-2">
+                        <span class="material-symbols-outlined text-gray-500 text-[18px]">business</span>
+                        <select id="empresa-selector"
+                            class="bg-transparent text-sm text-slate-700 dark:text-white focus:outline-none min-w-[150px]">
+                            <option value="">Cargando...</option>
+                        </select>
+                    </div>
+                    <div
+                        class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl px-5 py-3 flex items-center gap-4 shadow-sm">
+                        <div class="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-blue-500">account_balance_wallet</span>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Saldo en Caja</p>
+                            <p id="saldo-total" class="text-2xl font-bold text-slate-900 dark:text-white">0,00 €</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="exportar()"
+                    class="px-4 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">file_upload</span> Exportar
+                </button>
+                <button onclick="openModal()"
+                    class="px-4 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 transition-all shadow-[0_0_15px_rgba(70,236,19,0.3)] flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">add</span> Nuevo Movimiento
+                </button>
+            </div>
+
+            <!-- Table Container -->
+            <div
+                class="flex-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-sm flex flex-col overflow-hidden">
+                <div class="overflow-auto flex-1">
+                    <table class="w-full glass-table text-left border-collapse">
+                        <thead class="bg-gray-50 dark:bg-surface-dark-light sticky top-0 z-10">
+                            <tr>
+                                <th>Fecha / Hora</th>
+                                <th>Concepto</th>
+                                <th>Tipo</th>
+                                <th>Cuenta</th>
+                                <th class="text-right">Entrada</th>
+                                <th class="text-right">Salida</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cash-list" class="divide-y divide-gray-200 dark:divide-[#25381e]">
+                            <tr>
+                                <td colspan="7" class="p-8 text-center text-gray-500">Cargando movimientos...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div
+                    class="border-t border-gray-200 dark:border-[#25381e] p-4 flex justify-between items-center bg-gray-50 dark:bg-surface-dark-light/50">
+                    <p class="text-xs text-gray-500">Mostrando <span id="showing-count">0</span> de <span
+                            id="total-count">0</span> resultados</p>
+                    <div class="flex gap-2">
+                        <button id="btn-prev"
+                            class="px-3 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded text-xs hover:bg-gray-50 dark:hover:bg-surface-dark-light disabled:opacity-50">Anterior</button>
+                        <button id="btn-next"
+                            class="px-3 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded text-xs hover:bg-gray-50 dark:hover:bg-surface-dark-light disabled:opacity-50">Siguiente</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Create Movement Modal -->
+    <div id="mov-modal" class="fixed inset-0 z-50 hidden items-center justify-center"
+        style="background: rgba(0,0,0,0.8); backdrop-filter: blur(4px);">
+        <div
+            class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-[#25381e]">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Nuevo Movimiento</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="mov-form" onsubmit="saveMovimiento(event)" class="p-6">
+                <div class="mb-4">
+                    <label class="form-label">Tipo *</label>
+                    <select id="m-tipo" class="form-input" required>
+                        <option value="INGRESO_EFECTIVO">Entrada de efectivo</option>
+                        <option value="RETIRO_EFECTIVO">Retirada de efectivo</option>
+                        <option value="PAGO">Salida (Pago)</option>
+                        <option value="COBRO">Cobro de factura</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Concepto *</label>
+                    <input type="text" id="m-concepto" class="form-input" required placeholder="Ej: Venta mostrador">
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="form-label">Fecha *</label>
+                        <input type="date" id="m-fecha" class="form-input" required>
+                    </div>
+                    <div>
+                        <label class="form-label">Importe *</label>
+                        <input type="number" id="m-importe" class="form-input" step="0.01" required placeholder="0.00">
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Cuenta</label>
+                    <select id="m-cuenta" class="form-input">
+                        <option value="">-- Seleccionar cuenta --</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Método de pago</label>
+                    <select id="m-metodo" class="form-input">
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="TARJETA">Tarjeta</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Notas</label>
+                    <textarea id="m-notas" class="form-input" rows="2" placeholder="Observaciones..."></textarea>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-[#25381e]">
+                    <button type="button" onclick="closeModal()"
+                        class="px-4 py-2 text-gray-500 hover:text-slate-900 dark:hover:text-white font-medium">Cancelar</button>
+                    <button type="submit"
+                        class="px-6 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 shadow-lg shadow-primary/20">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { logout, getSession, requireAuth, getApiBaseUrl } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        window.logout = logout;
+        const API_BASE = '';
+        let session = null;
+        let currentEmpresaId = null;
+        let currentPage = 0;
+        const PAGE_SIZE = 50;
+
+        function getAuthHeaders() {
+            if (!session) session = JSON.parse(localStorage.getItem('versa_session_v1') || 'null');
+            const headers = { 'Authorization': `Bearer ${session?.token}`, 'Content-Type': 'application/json' };
+            if (currentEmpresaId) headers['X-Empresa-Id'] = currentEmpresaId;
+            return headers;
+        }
+
+        async function apiGet(endpoint) {
+            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            if (!res.ok) throw new Error('API Error');
+            return res.json();
+        }
+
+        async function apiPost(endpoint, data) {
+            const res = await fetch(API_BASE + endpoint, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) });
+            return res.json();
+        }
+
+        const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val || 0);
+        const formatDateTime = (d) => d ? new Date(d).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+
+        async function loadEmpresas() {
+            try {
+                const res = await apiGet('/api/contabilidad/empresas');
+                const select = document.getElementById('empresa-selector');
+                select.innerHTML = '';
+
+                if (res.data && res.data.items && res.data.items.length > 0) {
+                    res.data.items.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.textContent = emp.nombre_legal || emp.nombre_comercial;
+                        select.appendChild(opt);
+                    });
+
+                    const stored = localStorage.getItem('finsaas_current_empresa');
+                    if (stored && res.data.items.find(e => e.id == stored)) {
+                        currentEmpresaId = stored;
+                        select.value = stored;
+                    } else {
+                        currentEmpresaId = res.data.items[0].id;
+                        select.value = currentEmpresaId;
+                    }
+                } else {
+                    select.innerHTML = '<option value="">No hay empresas</option>';
+                }
+
+                select.addEventListener('change', (e) => {
+                    currentEmpresaId = e.target.value;
+                    localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
+                    loadCashflow();
+                    loadMovimientos(0);
+                    loadCuentas();
+                });
+            } catch (e) { console.error('Error loading empresas:', e); }
+        }
+
+        async function loadCashflow() {
+            try {
+                const res = await apiGet('/api/contabilidad/tesoreria/cashflow');
+                if (res.data) {
+                    document.getElementById('saldo-total').textContent = formatCurrency(res.data.saldo_total);
+                }
+            } catch (e) { console.error('Error loading cashflow:', e); }
+        }
+
+        async function loadCuentas() {
+            try {
+                const res = await apiGet('/api/contabilidad/tesoreria/cuentas');
+                const select = document.getElementById('m-cuenta');
+                select.innerHTML = '<option value="">-- Seleccionar cuenta --</option>';
+                if (res.data) {
+                    res.data.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = `${c.nombre} (${c.tipo})`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error('Error loading cuentas:', e); }
+        }
+
+        async function loadMovimientos(page = 0) {
+            const tbody = document.getElementById('cash-list');
+            try {
+                const res = await apiGet(`/api/contabilidad/tesoreria/transacciones?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`);
+
+                if (!res.data || res.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-500">No hay movimientos registrados</td></tr>';
+                } else {
+                    tbody.innerHTML = res.data.map(t => {
+                        const isIn = t.tipo === 'COBRO' || t.tipo === 'INGRESO_EFECTIVO';
+                        return `
+                            <tr class="hover:bg-gray-50 dark:hover:bg-surface-dark-light/50 transition-colors">
+                                <td class="text-gray-500 dark:text-gray-400 text-sm">${formatDateTime(t.fecha)}</td>
+                                <td class="font-medium text-slate-900 dark:text-white">${t.concepto || '-'}</td>
+                                <td><span class="text-xs px-2 py-1 rounded ${isIn ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}">${t.tipo}</span></td>
+                                <td class="text-gray-500 dark:text-gray-400 text-sm">${t.cuenta_nombre || '-'}</td>
+                                <td class="text-right ${isIn ? 'text-in font-bold' : ''}">${isIn ? formatCurrency(t.importe) : ''}</td>
+                                <td class="text-right ${!isIn ? 'text-out font-bold' : ''}">${!isIn ? formatCurrency(t.importe) : ''}</td>
+                                <td class="text-right">
+                                    <button onclick="deleteMovimiento(${t.id})" class="text-gray-400 hover:text-red-500 transition-colors">
+                                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                document.getElementById('showing-count').textContent = res.data?.length || 0;
+                document.getElementById('total-count').textContent = res.total || 0;
+                document.getElementById('btn-prev').disabled = page === 0;
+                document.getElementById('btn-next').disabled = (page + 1) * PAGE_SIZE >= (res.total || 0);
+                currentPage = page;
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-red-500">Error cargando movimientos</td></tr>';
+                console.error('Error loading movimientos:', e);
+            }
+        }
+
+        window.openModal = function () {
+            document.getElementById('mov-modal').classList.remove('hidden');
+            document.getElementById('mov-modal').classList.add('flex');
+            document.getElementById('mov-form').reset();
+            document.getElementById('m-fecha').value = new Date().toISOString().split('T')[0];
+        };
+
+        window.closeModal = function () {
+            document.getElementById('mov-modal').classList.add('hidden');
+            document.getElementById('mov-modal').classList.remove('flex');
+        };
+
+        window.saveMovimiento = async function (e) {
+            e.preventDefault();
+            const data = {
+                tipo: document.getElementById('m-tipo').value,
+                concepto: document.getElementById('m-concepto').value,
+                fecha: document.getElementById('m-fecha').value,
+                importe: parseFloat(document.getElementById('m-importe').value),
+                id_cuenta: document.getElementById('m-cuenta').value || null,
+                metodo: document.getElementById('m-metodo').value,
+                notas: document.getElementById('m-notas').value
+            };
+
+            try {
+                const res = await apiPost('/api/contabilidad/tesoreria/transacciones', data);
+                if (res.ok) {
+                    closeModal();
+                    loadMovimientos(currentPage);
+                    loadCashflow();
+                } else {
+                    alert('Error: ' + (res.error || 'Desconocido'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        };
+
+        window.deleteMovimiento = async function (id) {
+            if (!confirm('¿Eliminar este movimiento?')) return;
+            try {
+                const res = await fetch(API_BASE + `/api/contabilidad/tesoreria/transacciones/${id}`, {
+                    method: 'DELETE',
+                    headers: getAuthHeaders()
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    loadMovimientos(currentPage);
+                    loadCashflow();
+                } else {
+                    alert('Error: ' + (data.error || 'Desconocido'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        };
+
+        window.exportar = function () {
+            alert('Funcionalidad de exportar próximamente');
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            const layout = new FinSaaSLayout('app-shell');
+            layout.init();
+            await loadEmpresas();
+            await loadCuentas();
+            loadCashflow();
+            loadMovimientos(0);
+
+            document.getElementById('btn-prev').addEventListener('click', () => loadMovimientos(currentPage - 1));
+            document.getElementById('btn-next').addEventListener('click', () => loadMovimientos(currentPage + 1));
+        });
+
+    </script>
+</body>
+
+</html>

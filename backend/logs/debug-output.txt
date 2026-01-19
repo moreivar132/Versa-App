@@ -1,0 +1,18 @@
+=== DEBUG CAJA 6 ===
+
+1. PAGOS DE ORDENES:
+  CASH: 153.67
+  => efectivoPagos = 153.67, tarjetaPagos = 0
+
+2. MOVIMIENTOS DE CAJA:
+  INGRESO: efectivo=250, tarjeta=240, total=490
+  => totalIngresosEfectivo=250, totalIngresosTarjeta=240
+  => totalEgresos=0
+
+3. COMPRAS:
+  (omitido en este test)
+
+4. CÁLCULOS:
+  Saldo apertura: 50
+  Ingresos efectivo (cabecera) = efectivoPagos + totalIngresosEfectivo = 153.67 + 250 = 403.66999999999996
+  Tarjeta/Transf (cabecera) = tarjetaPagos + totalIngresosTarjeta = 0 + 240 = 240

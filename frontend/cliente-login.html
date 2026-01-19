@@ -41,38 +41,38 @@
             border-radius: 4px;
         }
 
-        /* Login Switch CSS */
+        /* Login Switch CSS - 3 Options */
         .flip-switch-container {
-            --card-width: 110px;
-            --card-height: 120px;
+            --card-width: 80px;
+            --card-height: 100px;
             --switch-bg: rgba(255, 255, 255, 0.1);
             --switch-border-color: rgba(255, 255, 255, 0.2);
             --text-color: #ffffff;
             --inactive-text-color: rgba(255, 255, 255, 0.6);
             --icon-shadow-color: rgba(0, 0, 0, 0.3);
             --card-bg: linear-gradient(135deg, rgba(255, 95, 0, 0.5), rgba(255, 95, 0, 0.2));
+            --card-bg-finsaas: linear-gradient(135deg, rgba(70, 236, 19, 0.5), rgba(70, 236, 19, 0.2));
             --highlight-color: #ff5f00;
+            --highlight-finsaas: #46ec13;
 
             display: grid;
             place-content: center;
             min-height: auto;
             margin-bottom: 2rem;
-            font-family: "Poppins", sans-serif;
+            font-family: "Montserrat", sans-serif;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
         .flip-switch {
             display: flex;
             position: relative;
-            width: calc(var(--card-width) * 2);
+            width: calc(var(--card-width) * 3);
             height: var(--card-height);
             background: var(--switch-bg);
             border-radius: 20px;
             border: 1px solid var(--switch-border-color);
             box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37), inset 0 4px 8px rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
             perspective: 1000px;
         }
 
@@ -118,14 +118,14 @@
         }
 
         .flip-switch #switch-opt-1:checked~[for="switch-opt-1"],
-        .flip-switch #switch-opt-2:checked~[for="switch-opt-2"] {
+        .flip-switch #switch-opt-2:checked~[for="switch-opt-2"],
+        .flip-switch #switch-opt-3:checked~[for="switch-opt-3"] {
             color: var(--text-color);
             text-shadow: 0 0 8px rgba(255, 95, 0, 0.5);
         }
 
-        .flip-switch #switch-opt-1:checked~[for="switch-opt-2"],
-        .flip-switch #switch-opt-2:checked~[for="switch-opt-1"] {
-            color: var(--inactive-text-color);
+        .flip-switch #switch-opt-3:checked~[for="switch-opt-3"] {
+            text-shadow: 0 0 8px rgba(70, 236, 19, 0.5);
         }
 
         .flip-switch .switch-card {
@@ -135,59 +135,43 @@
             width: var(--card-width);
             height: var(--card-height);
             z-index: 1;
-            transform-style: preserve-3d;
-        }
-
-        .flip-switch .card-face {
-            position: absolute;
-            width: 100%;
-            height: 100%;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
             border-radius: 20px;
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.15);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
-            backface-visibility: hidden;
-            -webkit-backface-visibility: hidden;
-        }
-
-        .flip-switch .card-back {
-            transform: rotateY(180deg);
-        }
-
-        .flip-switch #switch-opt-2:checked~.switch-card {
-            animation: flipRight 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
         }
 
         .flip-switch #switch-opt-1:checked~.switch-card {
-            animation: flipLeft 0.6s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+            transform: translateX(0%);
+            background: var(--card-bg);
         }
 
-        @keyframes flipRight {
-            0% {
-                transform: translateX(0%) rotateY(0deg);
-            }
-
-            50% {
-                transform: translateX(50%) rotateY(90deg) scale(1.05);
-            }
-
-            100% {
-                transform: translateX(100%) rotateY(180deg) scale(1);
-            }
+        .flip-switch #switch-opt-2:checked~.switch-card {
+            transform: translateX(100%);
+            background: var(--card-bg);
         }
 
-        @keyframes flipLeft {
-            0% {
-                transform: translateX(100%) rotateY(180deg);
-            }
+        .flip-switch #switch-opt-3:checked~.switch-card {
+            transform: translateX(200%);
+            background: var(--card-bg-finsaas);
+        }
 
-            50% {
-                transform: translateX(50%) rotateY(90deg) scale(1.05);
-            }
+        .flip-switch #switch-opt-1:checked~[for="switch-opt-1"]::after,
+        .flip-switch #switch-opt-2:checked~[for="switch-opt-2"]::after,
+        .flip-switch #switch-opt-3:checked~[for="switch-opt-3"]::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            width: 30px;
+            height: 3px;
+            background: var(--highlight-color);
+            border-radius: 2px;
+            animation: glow 1.5s infinite alternate;
+        }
 
-            100% {
-                transform: translateX(0%) rotateY(0deg) scale(1);
-            }
+        .flip-switch #switch-opt-3:checked~[for="switch-opt-3"]::after {
+            background: var(--highlight-finsaas);
         }
 
         .flip-switch #switch-opt-1:checked~[for="switch-opt-1"]::after,
@@ -276,6 +260,7 @@
                 <div class="flip-switch">
                     <input type="radio" name="login-type" id="switch-opt-1" checked>
                     <input type="radio" name="login-type" id="switch-opt-2">
+                    <input type="radio" name="login-type" id="switch-opt-3">
 
                     <label for="switch-opt-1" class="switch-button">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -296,10 +281,16 @@
                         <span>Taller</span>
                     </label>
 
-                    <div class="switch-card">
-                        <div class="card-face card-front"></div>
-                        <div class="card-face card-back"></div>
-                    </div>
+                    <label for="switch-opt-3" class="switch-button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                            <line x1="1" y1="10" x2="23" y2="10"></line>
+                        </svg>
+                        <span>FinSaaS</span>
+                    </label>
+
+                    <div class="switch-card"></div>
                 </div>
             </div>
 
@@ -351,11 +342,27 @@
             </form>
 
             <!-- Divider -->
-            <div class="flex items-center gap-4 my-6">
+            <div class="flex items-center my-6">
                 <div class="flex-1 border-t border-[#282e39]"></div>
-                <span class="text-gray-500 text-sm">o</span>
+                <span class="px-4 text-gray-500 text-sm">o continúa con</span>
                 <div class="flex-1 border-t border-[#282e39]"></div>
             </div>
+
+            <!-- Google Login Button -->
+            <button id="googleLoginBtn" type="button"
+                class="w-full px-6 py-4 bg-white hover:bg-gray-100 text-gray-800 font-semibold text-base rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 transform hover:-translate-y-0.5 mb-6">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                <span>Continuar con Google</span>
+            </button>
 
             <!-- Register Link -->
             <p class="text-center text-gray-400 text-sm">
@@ -404,7 +411,7 @@
     </div>
 
     <script type="module">
-        import { login, forgotPassword, redirectIfLoggedIn } from './services/cliente-service.js';
+        import { login, forgotPassword, redirectIfLoggedIn, getApiBaseUrl, setToken } from './services/cliente-service.js';
 
         // Redirect if already logged in
         redirectIfLoggedIn();
@@ -536,6 +543,66 @@
                     window.location.href = '/login.html';
                 }, 300);
             }
+        });
+
+        document.getElementById('switch-opt-3').addEventListener('change', function () {
+            if (this.checked) {
+                setTimeout(() => {
+                    window.location.href = '/login-finsaas.html';
+                }, 300);
+            }
+        });
+
+        // =====================================================================
+        // Google OAuth Handling
+        // =====================================================================
+
+        const API_BASE_URL = getApiBaseUrl();
+
+        // Handle OAuth callback - check if we have a token in URL
+        (function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const oauthProvider = urlParams.get('oauth');
+            const error = urlParams.get('error');
+            const isNewUser = urlParams.get('new_user') === 'true';
+
+            // Show error if OAuth failed
+            if (error) {
+                const errorMessages = {
+                    'google_auth_failed': 'Error al autenticar con Google. Intenta de nuevo.',
+                    'auth_error': 'Error de autenticación. Intenta de nuevo.',
+                    'invalid_state': 'La sesión de autenticación expiró. Intenta de nuevo.',
+                    'server_error': 'Error del servidor. Intenta más tarde.'
+                };
+                showAlert(errorMessages[error] || 'Error de autenticación', 'error');
+                window.history.replaceState({}, '', window.location.pathname);
+                return;
+            }
+
+            // Process successful OAuth
+            if (token && oauthProvider === 'google') {
+                console.log('[ClienteLogin] Google OAuth token received');
+
+                // Store token using cliente-service
+                setToken(token);
+                console.log('[ClienteLogin] Token stored');
+
+                // Show welcome message for new users
+                if (isNewUser) {
+                    console.log('[ClienteLogin] New customer created via Google OAuth');
+                }
+
+                // Redirect to dashboard
+                const redirect = urlParams.get('redirect') || '/cliente-dashboard.html';
+                window.location.href = redirect;
+            }
+        })();
+
+        // Google Login Button Click Handler
+        document.getElementById('googleLoginBtn').addEventListener('click', function () {
+            const redirectTo = encodeURIComponent('/cliente-dashboard.html');
+            window.location.href = `${API_BASE_URL}/api/cliente/auth/google?redirect=${redirectTo}`;
         });
     </script>
 </body>

@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Facturas | FinSaaS</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                        "brand-orange": "#46ec13",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <link href="/src/verticals/finsaas/layout/FinSaaSLayout.css" rel="stylesheet" />
+
+    <style>
+        /* Shared Table Styles */
+        .glass-table th {
+            font-weight: 600;
+            color: #9ca3af;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #1f2937;
+        }
+
+        .glass-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #1f2937;
+            font-size: 0.875rem;
+        }
+
+        .dark .glass-table th {
+            border-bottom-color: #25381e;
+            color: #9ca3af;
+        }
+
+        .dark .glass-table td {
+            border-bottom-color: #25381e;
+            color: #e5e7eb;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-PAGADA {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .status-PENDIENTE {
+            background: rgba(250, 204, 21, 0.15);
+            color: #facc15;
+        }
+
+        .status-PARCIAL {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+        }
+
+        .status-VENCIDA {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        .type-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .type-INGRESO {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+        }
+
+        .type-GASTO {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        /* Modal Overrides */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+
+        .form-input {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            color: #111827;
+        }
+
+        .dark .form-input {
+            background: #1a2c15;
+            border-color: #25381e;
+            color: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #46ec13;
+            box-shadow: 0 0 0 1px #46ec13;
+        }
+
+
+        .form-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .dark .form-label {
+            color: #9ca3af;
+        }
+    </style>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+
+    <div id="app-shell" class="flex h-screen w-full overflow-hidden">
+
+        <!-- Main Content Slot -->
+        <div class="max-w-7xl mx-auto flex flex-col gap-6 pb-10 h-full">
+
+            <!-- Title & Actions Row -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Facturas</h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1">Gestiona ingresos, gastos y control de IVA.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="window.location.href='configuracion-factura.html'"
+                        class="px-4 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">settings</span> Configurar
+                    </button>
+                    <button onclick="downloadCSV()" title="Descargar CSV con retenciones y estructura completa"
+                        class="px-4 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">download_2</span> CSV
+                    </button>
+                    <button onclick="openModal('upload')"
+                        class="px-4 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">upload_file</span> Subir
+                    </button>
+                    <button onclick="openModal('create')"
+                        class="px-4 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 transition-all shadow-[0_0_15px_rgba(70,236,19,0.3)] flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">add</span> Nueva Factura
+                    </button>
+                </div>
+            </div>
+
+            <!-- KPIs Row -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-4 flex flex-col">
+                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Por Cobrar</p>
+                    <p id="kpi-cobrar" class="text-2xl font-bold text-green-500 mt-1">€0.00</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-4 flex flex-col">
+                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">Por Pagar</p>
+                    <p id="kpi-pagar" class="text-2xl font-bold text-red-500 mt-1">€0.00</p>
+                </div>
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-4 flex flex-col">
+                    <p class="text-xs text-gray-500 font-bold uppercase tracking-wider">IVA Trimestre</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <p id="kpi-iva" class="text-2xl font-bold text-yellow-500">€0.00</p>
+                        <span
+                            class="text-xs bg-yellow-500/10 text-yellow-500 px-2 py-0.5 rounded-full font-bold">Q1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters & Table Container -->
+            <div
+                class="flex-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-sm flex flex-col overflow-hidden">
+
+                <!-- Filters Toolbar -->
+                <div class="p-4 border-b border-gray-200 dark:border-[#25381e] flex flex-wrap items-center gap-4">
+                    <!-- Empresa Selector -->
+                    <div
+                        class="flex items-center gap-2 bg-gray-50 dark:bg-surface-dark-light px-3 py-2 rounded-lg border border-gray-200 dark:border-transparent">
+                        <span class="material-symbols-outlined text-gray-500 text-[18px]">business</span>
+                        <select id="empresa-selector"
+                            class="bg-transparent text-sm text-slate-700 dark:text-white focus:outline-none min-w-[150px]">
+                            <option value="">Cargando...</option>
+                        </select>
+                    </div>
+
+                    <div class="h-6 w-px bg-gray-200 dark:bg-[#25381e]"></div>
+
+                    <div class="relative flex-1 min-w-[200px]">
+                        <span
+                            class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-[18px]">search</span>
+                        <input type="text" id="search-input" placeholder="Buscar factura..."
+                            class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent rounded-lg text-sm focus:ring-1 focus:ring-primary focus:outline-none">
+                    </div>
+
+                    <select id="filter-tipo"
+                        class="bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent text-slate-700 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none">
+                        <option value="">Todos los tipos</option>
+                        <option value="INGRESO">Ingresos</option>
+                        <option value="GASTO">Gastos</option>
+                    </select>
+
+                    <select id="filter-estado"
+                        class="bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent text-slate-700 dark:text-white text-sm rounded-lg px-3 py-2 focus:outline-none">
+                        <option value="">Todos los estados</option>
+                        <option value="PENDIENTE">Pendiente</option>
+                        <option value="PAGADA">Pagada</option>
+                        <option value="PARCIAL">Parcial</option>
+                        <option value="VENCIDA">Vencida</option>
+                    </select>
+                </div>
+
+                <!-- Table -->
+                <div class="overflow-auto flex-1">
+                    <table class="w-full glass-table text-left border-collapse">
+                        <thead class="bg-gray-50 dark:bg-surface-dark-light sticky top-0 z-10">
+                            <tr>
+                                <th>Número</th>
+                                <th>Contacto</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th class="text-right">Base</th>
+                                <th class="text-right">Ret.</th>
+                                <th class="text-right">IVA</th>
+                                <th class="text-right">Total</th>
+                                <th>Estado</th>
+                                <th class="w-8 text-center" title="Archivos"><span
+                                        class="material-symbols-outlined text-[16px]">attachment</span></th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="invoices-list" class="divide-y divide-gray-200 dark:divide-[#25381e]">
+                            <tr>
+                                <td colspan="11" class="p-8 text-center text-gray-500">Cargando facturas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div
+                    class="border-t border-gray-200 dark:border-[#25381e] p-4 flex justify-between items-center bg-gray-50 dark:bg-surface-dark-light/50">
+                    <p class="text-xs text-gray-500">Mostrando <span id="showing-count">0</span> de <span
+                            id="total-count">0</span></p>
+                    <div class="flex gap-2">
+                        <button id="btn-prev"
+                            class="px-3 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded text-xs hover:bg-gray-50 dark:hover:bg-surface-dark-light disabled:opacity-50">Anterior</button>
+                        <button id="btn-next"
+                            class="px-3 py-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded text-xs hover:bg-gray-50 dark:hover:bg-surface-dark-light disabled:opacity-50">Siguiente</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Create/Edit Invoice Modal -->
+    <div id="invoice-modal" class="fixed inset-0 z-50 hidden items-center justify-center modal-overlay">
+        <div
+            class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-[#25381e]">
+                <h2 id="modal-title" class="text-xl font-bold text-slate-900 dark:text-white">Nueva Factura</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="overflow-y-auto p-6">
+                <form id="invoice-form" onsubmit="saveInvoice(event)">
+                    <input type="hidden" id="invoice-id">
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="form-label">Tipo *</label>
+                            <select id="f-tipo" class="form-input" required>
+                                <option value="GASTO">Gasto (Factura Recibida)</option>
+                                <option value="INGRESO">Ingreso (Factura Emitida)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">Número Factura *</label>
+                            <input type="text" id="f-numero" class="form-input" required placeholder="FA-2026-001">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="form-label">Fecha Emisión *</label>
+                            <input type="date" id="f-fecha-emision" class="form-input" required>
+                        </div>
+                        <div>
+                            <label class="form-label">Fecha Vencimiento</label>
+                            <input type="date" id="f-fecha-vencimiento" class="form-input">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="form-label mb-0">Contacto</label>
+                            <button type="button" onclick="openContactModal()"
+                                class="text-xs text-primary hover:underline font-bold flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">add_circle</span> Crear Nuevo
+                            </button>
+                        </div>
+                        <select id="f-contacto" class="form-input">
+                            <option value="">-- Seleccionar --</option>
+                        </select>
+                    </div>
+
+                    <!-- Line Items Section -->
+                    <div class="mb-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="form-label mb-0">Conceptos / Servicios</label>
+                            <button type="button" onclick="addLineItem()"
+                                class="text-xs bg-primary/10 text-primary px-2 py-1 rounded font-bold hover:bg-primary/20 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">add</span> Añadir línea
+                            </button>
+                        </div>
+                        <div class="border border-gray-200 dark:border-[#25381e] rounded-lg overflow-hidden">
+                            <table class="w-full text-sm">
+                                <thead class="bg-gray-50 dark:bg-surface-dark-light">
+                                    <tr>
+                                        <th class="text-left p-2 text-xs font-bold text-gray-500">Concepto</th>
+                                        <th class="text-center p-2 text-xs font-bold text-gray-500 w-16">Cant.</th>
+                                        <th class="text-right p-2 text-xs font-bold text-gray-500 w-24">Precio</th>
+                                        <th class="text-center p-2 text-xs font-bold text-gray-500 w-20">IVA %</th>
+                                        <th class="text-right p-2 text-xs font-bold text-gray-500 w-24">Subtotal</th>
+                                        <th class="w-8"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="line-items-body">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="mb-4 p-4 bg-gray-50 dark:bg-surface-dark-light rounded-lg space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Base Imponible</label>
+                                <input type="text" id="f-base-total"
+                                    class="form-input bg-white dark:bg-surface-dark font-bold" readonly value="0,00 €">
+                            </div>
+                            <div>
+                                <label class="form-label">IVA Total</label>
+                                <input type="text" id="f-iva-total"
+                                    class="form-input bg-white dark:bg-surface-dark font-bold" readonly value="0,00 €">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="form-label">Retención IRPF %</label>
+                                <input type="number" id="f-retencion-pct"
+                                    class="form-input bg-white dark:bg-surface-dark" placeholder="0" min="0" max="100"
+                                    step="1" oninput="calculateTotals()">
+                            </div>
+                            <div>
+                                <label class="form-label">Retención Importe</label>
+                                <input type="text" id="f-retencion-importe"
+                                    class="form-input bg-white dark:bg-surface-dark font-mono text-red-500" readonly
+                                    value="0,00 €">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="form-label">TOTAL A PAGAR</label>
+                            <input type="text" id="f-total"
+                                class="form-input bg-primary/10 text-primary font-extrabold text-lg" readonly
+                                value="0,00 €">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Categoría Contable</label>
+                        <select id="f-categoria" class="form-input">
+                            <option value="">-- Sin categoría --</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="form-label">Notas Públicas</label>
+                        <textarea id="f-notas" class="form-input" rows="2"
+                            placeholder="Observaciones que aparecerán en la factura..."></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div
+                class="p-6 border-t border-gray-200 dark:border-[#25381e] flex justify-end gap-3 bg-gray-50 dark:bg-surface-dark-light/30">
+                <button type="button" onclick="closeModal()"
+                    class="px-4 py-2 text-gray-500 hover:text-slate-900 dark:hover:text-white font-medium">Cancelar</button>
+                <button
+                    onclick="document.getElementById('invoice-form').dispatchEvent(new Event('submit', {cancelable: true, bubbles: true}))"
+                    class="px-6 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 shadow-lg shadow-primary/20">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Quick Contact Modal -->
+    <div id="contact-modal" class="fixed inset-0 z-[60] hidden items-center justify-center modal-overlay">
+        <div
+            class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-[#25381e]">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Nuevo Contacto</h2>
+                <button onclick="closeContactModal()" class="text-gray-500 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="contact-form" onsubmit="saveQuickContact(event)" class="p-6">
+                <div class="mb-4">
+                    <label class="form-label">Nombre / Razón Social *</label>
+                    <input type="text" id="c-nombre" class="form-input" required placeholder="Ej. Cliente VIP">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">NIF / CIF</label>
+                    <input type="text" id="c-nif" class="form-input" placeholder="B12345678">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label">Tipo</label>
+                    <select id="c-tipo" class="form-input">
+                        <option value="CLIENTE">Cliente</option>
+                        <option value="PROVEEDOR">Proveedor</option>
+                        <option value="AMBOS">Ambos</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeContactModal()"
+                        class="px-4 py-2 text-gray-500 hover:text-slate-900 dark:text-gray-300 dark:hover:text-white font-medium">Cancelar</button>
+                    <button type="submit"
+                        class="px-6 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 shadow-lg shadow-primary/20">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    </div>
+
+    <!-- Attachments Viewer Modal -->
+    <div id="attachments-modal" class="fixed inset-0 z-[70] hidden items-center justify-center modal-overlay">
+        <div
+            class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-[#25381e]">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Archivos Adjuntos</h2>
+                <button onclick="closeAttachmentsModal()" class="text-gray-500 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div id="attachments-list" class="p-6 overflow-y-auto flex flex-col gap-3">
+                <p class="text-center text-gray-500">Cargando archivos...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic -->
+    <script type="module">
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        window.logout = logout;
+        const API_BASE = '';
+        let session = getSession(); // Initialize session properly using getSession()
+
+        let currentPage = 0;
+        const PAGE_SIZE = 20;
+        let currentEmpresaId = null;
+
+        // --- AUTH & HELPERS ---
+        function getAuthHeaders() {
+            const token = session?.token || getToken();
+
+            if (!token) {
+                console.warn('[FinSaaS] No session token found');
+            }
+
+            const headers = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+            if (currentEmpresaId) headers['X-Empresa-Id'] = currentEmpresaId;
+            return headers;
+        }
+
+
+        async function apiGet(endpoint) {
+            console.log('[FinSaaS] API GET:', endpoint);
+            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            if (!res.ok) {
+                console.error('[FinSaaS] API Error:', res.status, await res.text());
+                throw new Error(`API Error ${res.status}`);
+            }
+            return res.json();
+        }
+
+
+        async function apiPost(endpoint, data) {
+            const res = await fetch(API_BASE + endpoint, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        }
+
+        async function apiPatch(endpoint, data) {
+            const res = await fetch(API_BASE + endpoint, {
+                method: 'PATCH',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        }
+
+        const formatCurrency = (val) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(val || 0);
+        const formatDate = (d) => d ? new Date(d).toLocaleDateString('es-ES') : '-';
+        function debounce(fn, ms) { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); }; }
+
+
+        // --- MAIN LOGIC ---
+        async function loadEmpresas() {
+            try {
+                const res = await apiGet('/api/contabilidad/empresas');
+                const select = document.getElementById('empresa-selector');
+                select.innerHTML = '';
+
+                if (res.data && res.data.items) {
+                    res.data.items.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.textContent = emp.nombre_legal || emp.nombre_comercial || 'Sin nombre';
+                        select.appendChild(opt);
+                    });
+
+                    if (res.data.items.length > 0) {
+                        const stored = localStorage.getItem('filsaas_current_empresa');
+                        if (stored && res.data.items.find(e => e.id == stored)) {
+                            currentEmpresaId = stored;
+                            select.value = stored;
+                        } else {
+                            currentEmpresaId = res.data.items[0].id;
+                            select.value = res.data.items[0].id;
+                        }
+                    }
+                    // Trigger load
+                    loadInvoices(0);
+                    loadKPIs();
+                    loadContactos();
+                    loadCategorias();
+
+                    select.addEventListener('change', (e) => {
+                        currentEmpresaId = e.target.value;
+                        localStorage.setItem('filsaas_current_empresa', currentEmpresaId);
+                        loadInvoices(0);
+                        loadKPIs();
+                        // Reload contacts/categories if they depend on empresa? Usually global or scoped. Assuming scoped.
+                        loadContactos();
+                        loadCategorias();
+                    });
+                } else {
+                    select.innerHTML = '<option value="">Sin empresas</option>';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadInvoices(page = 0) {
+            const tipo = document.getElementById('filter-tipo').value;
+            const estado = document.getElementById('filter-estado').value;
+            const search = document.getElementById('search-input').value;
+
+            let url = `/api/contabilidad/facturas?limit=${PAGE_SIZE}&offset=${page * PAGE_SIZE}`;
+            if (tipo) url += `&tipo=${tipo}`;
+            if (estado) url += `&estado=${estado}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+
+            try {
+                const res = await apiGet(url);
+                const tbody = document.getElementById('invoices-list');
+
+                if (!res.items || res.items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-gray-500">No hay facturas registradas</td></tr>';
+                } else {
+                    tbody.innerHTML = res.items.map(f => `
+                         <tr class="cursor-pointer hover:bg-gray-50 dark:hover:bg-surface-dark-light/50 transition-colors group" onclick="editInvoice(${f.id})">
+                            <td class="font-bold text-slate-900 dark:text-white">${f.numero_factura}</td>
+                            <td class="text-gray-500 dark:text-gray-400">${f.contacto_nombre || '-'}</td>
+                             <td><span class="type-badge type-${f.tipo}">${f.tipo}</span></td>
+                             <td class="text-gray-500 dark:text-gray-400">${formatDate(f.fecha_emision)}</td>
+                             <td class="text-right text-gray-500 dark:text-gray-400">${formatCurrency(f.base_imponible)}</td>
+                             <td class="text-right text-red-500/80 font-mono text-xs">${f.retencion_importe > 0 ? '-' + formatCurrency(f.retencion_importe) : '-'}</td>
+                             <td class="text-right text-gray-500 dark:text-gray-400">${formatCurrency(f.iva_importe)}</td>
+                             <td class="text-right font-bold text-slate-900 dark:text-white">${formatCurrency(f.total)}</td>
+                             <td onclick="event.stopPropagation()">
+                                <select onchange="updateStatus(${f.id}, this.value)" class="text-xs rounded-full px-2 py-1 border-0 font-bold focus:ring-1 focus:ring-primary bg-opacity-15 cursor-pointer status-${f.estado}" style="background-color: transparent;">
+                                    <option value="PENDIENTE" ${f.estado === 'PENDIENTE' ? 'selected' : ''}>PENDIENTE</option>
+                                    <option value="PAGADA" ${f.estado === 'PAGADA' ? 'selected' : ''}>PAGADA</option>
+                                    <option value="PARCIAL" ${f.estado === 'PARCIAL' ? 'selected' : ''}>PARCIAL</option>
+                                    <option value="VENCIDA" ${f.estado === 'VENCIDA' ? 'selected' : ''}>VENCIDA</option>
+                                </select>
+                             </td>
+                             <td class="text-center" onclick="event.stopPropagation()">
+                                ${f.archivos_count > 0 ? `
+                                    <button onclick="openAttachments(${f.id})" class="text-primary hover:text-primary/80 transition-colors" title="Ver ${f.archivos_count} archivo(s)">
+                                        <span class="material-symbols-outlined text-[20px]">attachment</span>
+                                    </button>
+                                ` : '<span class="text-gray-300 text-[14px]">-</span>'}
+                             </td>
+                             <td class="text-right flex items-center justify-end gap-1">
+                                 <button onclick="event.stopPropagation(); window.open('plantilla-factura.html?id=${f.id}', '_blank')" class="text-gray-400 hover:text-primary transition-colors p-1" title="Ver PDF / Imprimir">
+                                     <span class="material-symbols-outlined text-[18px]">print</span>
+                                 </button>
+                                 <button onclick="event.stopPropagation(); editInvoice(${f.id})" class="text-gray-400 hover:text-primary transition-colors p-1" title="Editar">
+                                     <span class="material-symbols-outlined text-[18px]">edit</span>
+                                 </button>
+                             </td>
+                        </tr>
+                    `).join('');
+                }
+                document.getElementById('showing-count').textContent = res.items?.length || 0;
+                document.getElementById('total-count').textContent = res.total || 0;
+                document.getElementById('btn-prev').disabled = page === 0;
+                document.getElementById('btn-next').disabled = (page + 1) * PAGE_SIZE >= (res.total || 0);
+                currentPage = page;
+
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadKPIs() {
+            try {
+                const now = new Date();
+                const res = await apiGet(`/api/contabilidad/dashboard?anio=${now.getFullYear()}&trimestre=${Math.ceil((now.getMonth() + 1) / 3)}`);
+                if (res.data) {
+                    // Handle both object {total, count} and plain number formats
+                    const cobrar = res.data.pendiente_cobrar?.total ?? res.data.pendiente_cobrar ?? 0;
+                    const pagar = res.data.pendiente_pagar?.total ?? res.data.pendiente_pagar ?? 0;
+                    const iva = res.data.iva_trimestre?.resultado ?? 0;
+
+                    document.getElementById('kpi-cobrar').textContent = formatCurrency(cobrar);
+                    document.getElementById('kpi-pagar').textContent = formatCurrency(pagar);
+                    document.getElementById('kpi-iva').textContent = formatCurrency(iva);
+                }
+            } catch (e) { console.error('[Facturas] Error loading KPIs:', e); }
+        }
+
+        async function loadContactos() {
+            try {
+                // Add empresa ID header for filtering
+                const headers = getAuthHeaders();
+                if (currentEmpresaId) {
+                    headers['X-Empresa-Id'] = currentEmpresaId;
+                }
+                const response = await fetch(API_BASE + '/api/contabilidad/contactos', { headers });
+                const res = await response.json();
+                const select = document.getElementById('f-contacto');
+                select.innerHTML = '<option value="">-- Seleccionar --</option>';
+
+                // Handle both array and {items:[]} formats
+                const contacts = res.data?.items || res.data || res.items || [];
+                if (Array.isArray(contacts)) {
+                    contacts.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = `${c.nombre} (${c.tipo})`;
+                        select.appendChild(opt);
+                    });
+                }
+                console.log('[Facturas] Contactos loaded:', contacts.length);
+            } catch (e) {
+                console.error('[Facturas] Error loading contactos:', e);
+            }
+        }
+
+        async function loadCategorias() {
+            try {
+                const res = await apiGet('/api/contabilidad/categorias');
+                const select = document.getElementById('f-categoria');
+                select.innerHTML = '<option value="">-- Sin categoría --</option>';
+                if (res.data) {
+                    res.data.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.nombre;
+                        select.appendChild(opt);
+                    })
+                }
+            } catch (e) { }
+        }
+
+        // Window Globals for HTML calls
+        let lineItemCounter = 0;
+
+        window.openModal = function (mode) {
+            const modal = document.getElementById('invoice-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (mode === 'create') {
+                document.getElementById('modal-title').textContent = 'Nueva Factura';
+                document.getElementById('invoice-form').reset();
+                document.getElementById('invoice-id').value = '';
+                document.getElementById('f-fecha-emision').value = new Date().toISOString().split('T')[0];
+
+                document.getElementById('f-retencion-pct').value = '';
+                document.getElementById('f-retencion-importe').value = '0,00 €';
+
+                // Clear and add one default line item
+                lineItemCounter = 0;
+                document.getElementById('line-items-body').innerHTML = '';
+                addLineItem();
+
+                calculateTotals();
+            }
+        };
+
+        window.closeModal = function () {
+            const modal = document.getElementById('invoice-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.addLineItem = function () {
+            const tbody = document.getElementById('line-items-body');
+            const rowId = `line-${lineItemCounter++}`;
+
+            const row = document.createElement('tr');
+            row.id = rowId;
+            row.className = 'border-t border-gray-100 dark:border-[#25381e]';
+            row.innerHTML = `
+                <td class="p-2">
+                    <input type="text" class="line-concepto w-full bg-transparent border-0 focus:ring-1 focus:ring-primary rounded p-1 text-sm" 
+                        placeholder="Ej: Traslado de mercancía" oninput="calculateTotals()">
+                </td>
+                <td class="p-2">
+                    <input type="number" class="line-cantidad w-full text-center bg-transparent border-0 focus:ring-1 focus:ring-primary rounded p-1 text-sm"
+                        value="1" min="1" step="1" oninput="calculateTotals()">
+                </td>
+                <td class="p-2">
+                    <input type="number" class="line-precio w-full text-right bg-transparent border-0 focus:ring-1 focus:ring-primary rounded p-1 text-sm"
+                        placeholder="0.00" step="0.01" oninput="calculateTotals()">
+                </td>
+                <td class="p-2">
+                    <select class="line-iva w-full text-center bg-transparent border-0 focus:ring-1 focus:ring-primary rounded p-1 text-sm" onchange="calculateTotals()">
+                        <option value="21">21%</option>
+                        <option value="10">10%</option>
+                        <option value="4">4%</option>
+                        <option value="0">0%</option>
+                    </select>
+                </td>
+                <td class="p-2 text-right font-medium line-subtotal text-slate-700 dark:text-gray-300">0,00 €</td>
+                <td class="p-1">
+                    <button type="button" onclick="removeLineItem('${rowId}')" class="text-gray-400 hover:text-red-500 p-1">
+                        <span class="material-symbols-outlined text-[16px]">close</span>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+            row.querySelector('.line-concepto').focus();
+        };
+
+        window.removeLineItem = function (rowId) {
+            const row = document.getElementById(rowId);
+            if (row && document.querySelectorAll('#line-items-body tr').length > 1) {
+                row.remove();
+                calculateTotals();
+            }
+        };
+
+        window.calculateTotals = function () {
+            const rows = document.querySelectorAll('#line-items-body tr');
+            let baseTotal = 0;
+            let ivaTotal = 0;
+
+            rows.forEach(row => {
+                const cantidad = parseFloat(row.querySelector('.line-cantidad')?.value) || 0;
+                const precio = parseFloat(row.querySelector('.line-precio')?.value) || 0;
+                const ivaPct = parseFloat(row.querySelector('.line-iva')?.value) || 0;
+
+                const subtotalBase = cantidad * precio;
+                const subtotalIva = subtotalBase * (ivaPct / 100);
+                const subtotal = subtotalBase + subtotalIva;
+
+                baseTotal += subtotalBase;
+                ivaTotal += subtotalIva;
+
+                const subtotalEl = row.querySelector('.line-subtotal');
+                if (subtotalEl) subtotalEl.textContent = formatCurrency(subtotal);
+            });
+
+            // Calculate Retention
+            const retPct = parseFloat(document.getElementById('f-retencion-pct').value) || 0;
+            const retAmount = baseTotal * (retPct / 100);
+
+            document.getElementById('f-base-total').value = formatCurrency(baseTotal);
+            document.getElementById('f-iva-total').value = formatCurrency(ivaTotal);
+            document.getElementById('f-retencion-importe').value = '-' + formatCurrency(retAmount);
+
+            // Total = Base + IVA - Retention
+            const total = baseTotal + ivaTotal - retAmount;
+            document.getElementById('f-total').value = formatCurrency(total);
+        };
+
+        // Legacy compatibility
+        window.calculateTotal = window.calculateTotals;
+
+        // --- Quick Contact Logic ---
+        window.openContactModal = function () {
+            document.getElementById('contact-modal').classList.remove('hidden');
+            document.getElementById('contact-modal').classList.add('flex');
+            document.getElementById('contact-form').reset();
+
+            // Auto-select type based on Invoice Type
+            const invType = document.getElementById('f-tipo').value;
+            if (invType === 'GASTO') document.getElementById('c-tipo').value = 'PROVEEDOR';
+            else document.getElementById('c-tipo').value = 'CLIENTE';
+        };
+
+        window.closeContactModal = function () {
+            document.getElementById('contact-modal').classList.add('hidden');
+            document.getElementById('contact-modal').classList.remove('flex');
+        };
+
+        window.saveQuickContact = async function (e) {
+            e.preventDefault();
+            const data = {
+                nombre: document.getElementById('c-nombre').value,
+                nif: document.getElementById('c-nif').value,
+                tipo: document.getElementById('c-tipo').value,
+                // Defaults
+                email: '',
+                telefono: '',
+                direccion: ''
+            };
+
+            try {
+                const res = await apiPost('/api/contabilidad/contactos', data);
+                if (res.ok || res.id || res.data?.id) {
+                    const newId = res.id || res.data?.id || res.data?.insertId; // Adapt based on actual API response
+
+                    // Reload contacts and select the new one
+                    await loadContactos();
+
+                    // Try to find and select
+                    const select = document.getElementById('f-contacto');
+                    /* 
+                       Since loadContactos re-populates, we just set value.
+                       If API returns the ID properly, we use it. 
+                    */
+                    if (newId) select.value = newId;
+                    else {
+                        // Fallback: select last option ? or just leave it
+                        // Better: try to match by name if ID unclear
+                        // safely assuming loadContactos worked
+                    }
+
+                    closeContactModal();
+                } else {
+                    alert('Error creando contacto: ' + (res.error || 'Desconocido'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error: ' + e.message);
+            }
+        };
+
+
+        window.saveInvoice = async function (e) {
+            e.preventDefault();
+
+            // Collect line items
+            const rows = document.querySelectorAll('#line-items-body tr');
+            const items = [];
+            let baseTotal = 0;
+            let ivaTotal = 0;
+
+            rows.forEach(row => {
+                const concepto = row.querySelector('.line-concepto')?.value || '';
+                const cantidad = parseFloat(row.querySelector('.line-cantidad')?.value) || 0;
+                const precio = parseFloat(row.querySelector('.line-precio')?.value) || 0;
+                const ivaPct = parseFloat(row.querySelector('.line-iva')?.value) || 0;
+
+                if (concepto && precio > 0) {
+                    const subtotalBase = cantidad * precio;
+                    const subtotalIva = subtotalBase * (ivaPct / 100);
+
+                    items.push({ concepto, cantidad, precio, iva_pct: ivaPct, subtotal: subtotalBase + subtotalIva });
+                    baseTotal += subtotalBase;
+                    ivaTotal += subtotalIva;
+                }
+            });
+
+            if (items.length === 0) {
+                alert('Añade al menos un concepto con precio');
+                return;
+            }
+
+            // Determine average IVA percentage for legacy field
+            const avgIvaPct = baseTotal > 0 ? Math.round((ivaTotal / baseTotal) * 100) : 21;
+
+            // Store items and public notes as structured JSON in notas field
+            const notasData = {
+                public_notes: document.getElementById('f-notas').value,
+                items: items
+            };
+
+            const data = {
+                tipo: document.getElementById('f-tipo').value,
+                numero_factura: document.getElementById('f-numero').value,
+                fecha_emision: document.getElementById('f-fecha-emision').value,
+                fecha_vencimiento: document.getElementById('f-fecha-vencimiento').value || null,
+                id_contacto: document.getElementById('f-contacto').value || null,
+                id_empresa: currentEmpresaId || null,  // <-- Critical: assign invoice to selected empresa
+                base_imponible: baseTotal,
+                iva_porcentaje: avgIvaPct,
+                iva_importe: Math.round(ivaTotal * 100) / 100,
+                retencion_porcentaje: parseFloat(document.getElementById('f-retencion-pct').value) || 0,
+                retencion_importe: Math.abs(parseFloat(document.getElementById('f-retencion-importe').value.replace(/[^0-9,.-]/g, '').replace(',', '.'))) || 0,
+                total: Math.round((baseTotal + ivaTotal - (parseFloat(document.getElementById('f-retencion-pct').value) || 0) / 100 * baseTotal) * 100) / 100,
+                id_categoria: document.getElementById('f-categoria').value || null,
+                notas: JSON.stringify(notasData)
+            };
+
+            const id = document.getElementById('invoice-id').value;
+            try {
+                let res;
+                if (id) res = await apiPatch(`/api/contabilidad/facturas/${id}`, data);
+                else res = await apiPost('/api/contabilidad/facturas', data);
+
+                if (res.ok || res.id) {
+                    closeModal();
+                    loadInvoices(currentPage);
+                    loadKPIs();
+                } else {
+                    alert('Error: ' + (res.error || 'Desconocido'));
+                }
+            } catch (e) { alert('Error: ' + e.message); }
+        };
+
+        window.editInvoice = async function (id) {
+            try {
+                const res = await apiGet(`/api/contabilidad/facturas/${id}`);
+                const f = res.data || res;
+                if (f) {
+                    document.getElementById('invoice-id').value = f.id;
+                    document.getElementById('f-tipo').value = f.tipo;
+                    document.getElementById('f-numero').value = f.numero_factura;
+                    document.getElementById('f-fecha-emision').value = f.fecha_emision?.split('T')[0];
+                    if (f.fecha_vencimiento) document.getElementById('f-fecha-vencimiento').value = f.fecha_vencimiento.split('T')[0];
+                    document.getElementById('f-contacto').value = f.id_contacto || '';
+                    document.getElementById('f-categoria').value = f.id_categoria || '';
+
+                    // Load Retention
+                    document.getElementById('f-retencion-pct').value = f.retencion_porcentaje || '';
+                    document.getElementById('f-retencion-importe').value = f.retencion_importe ? '-' + formatCurrency(f.retencion_importe) : '0,00 €';
+
+                    // Try to parse structured notas
+                    lineItemCounter = 0;
+                    document.getElementById('line-items-body').innerHTML = '';
+
+                    let notasData = null;
+                    try {
+                        notasData = typeof f.notas === 'string' ? JSON.parse(f.notas) : f.notas;
+                    } catch (e) {
+                        notasData = null;
+                    }
+
+                    if (notasData && notasData.items && notasData.items.length > 0) {
+                        // Load line items
+                        notasData.items.forEach(item => {
+                            addLineItem();
+                            const rows = document.querySelectorAll('#line-items-body tr');
+                            const row = rows[rows.length - 1];
+                            row.querySelector('.line-concepto').value = item.concepto || '';
+                            row.querySelector('.line-cantidad').value = item.cantidad || 1;
+                            row.querySelector('.line-precio').value = item.precio || 0;
+                            row.querySelector('.line-iva').value = item.iva_pct || 21;
+                        });
+                        document.getElementById('f-notas').value = notasData.public_notes || '';
+                    } else {
+                        // Legacy: single line with base_imponible
+                        addLineItem();
+                        const row = document.querySelector('#line-items-body tr');
+                        row.querySelector('.line-concepto').value = 'Servicios profesionales';
+                        row.querySelector('.line-cantidad').value = 1;
+                        row.querySelector('.line-precio').value = f.base_imponible || 0;
+                        row.querySelector('.line-iva').value = f.iva_porcentaje || 21;
+                        document.getElementById('f-notas').value = typeof f.notas === 'string' ? f.notas : '';
+                    }
+
+                    calculateTotals();
+
+                    document.getElementById('modal-title').textContent = 'Editar Factura';
+                    const modal = document.getElementById('invoice-modal');
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        window.updateStatus = async function (id, newStatus) {
+            if (!confirm(`¿Cambiar estado a ${newStatus}?`)) {
+                loadInvoices(currentPage); // Revert UI if cancelled
+                return;
+            }
+            try {
+                const res = await apiPatch(`/api/contabilidad/facturas/${id}`, { estado: newStatus });
+                if (res.ok || res.id) {
+                    // Update UI class color
+                    loadInvoices(currentPage);
+                    loadKPIs();
+                } else {
+                    alert('Error actualizando estado');
+                    loadInvoices(currentPage);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error de conexión');
+                loadInvoices(currentPage);
+            }
+        };
+
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+            const layout = new FinSaaSLayout('app-shell');
+            layout.init();
+
+            // Initialize page
+            await loadEmpresas(); // Triggers other loads
+
+            // Events
+            document.getElementById('filter-tipo').addEventListener('change', () => loadInvoices(0));
+            document.getElementById('filter-estado').addEventListener('change', () => loadInvoices(0));
+            document.getElementById('search-input').addEventListener('input', debounce(() => loadInvoices(0), 400));
+            document.getElementById('btn-prev').addEventListener('click', () => loadInvoices(currentPage - 1));
+            document.getElementById('btn-next').addEventListener('click', () => loadInvoices(currentPage + 1));
+        });
+
+        // --- CSV Export Logic ---
+        window.downloadCSV = function () {
+            const tipo = document.getElementById('filter-tipo').value;
+            const estado = document.getElementById('filter-estado').value;
+            const search = document.getElementById('search-input').value;
+
+            // Note: Adjust params as needed by the backend export endpoint
+            let url = `/api/contabilidad/facturas/export.csv?t=${Date.now()}`;
+            if (currentEmpresaId) url += `&empresa_id=${currentEmpresaId}`;
+            if (tipo) url += `&tipo=${tipo}`;
+            if (estado) url += `&estado=${estado}`;
+            // Better: use the specific deducible status column if available, else standard filters don't map directly to export params in deducible_controller.
+            // Let's pass the standard list filters if possible, but deducible controller expects specific ones.
+            // For now, let's export ALL or filter by basic things.
+            // The controller supports: empresa_id, year, quarter, deducible_status, tipo.
+
+            // Let's try to infer year/quarter if possible, or just export all recent.
+            const now = new Date();
+            url += `&year=${now.getFullYear()}`;
+
+            // Trigger download
+            window.open(url + (session?.token ? `&token=${session.token}` : ''), '_blank'); // Token usually in header, but for direct link download we might need cookies or param. 
+            // Since we use Bearer auth, window.open won't send headers. 
+            // We need to fetch blob and download.
+
+            downloadFile(url);
+        };
+
+        async function downloadFile(url) {
+            try {
+                const res = await fetch(url, { headers: getAuthHeaders() });
+                if (!res.ok) throw new Error('Error descargando CSV');
+                const blob = await res.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `facturas_export_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (e) {
+                console.error(e);
+                alert('Hubo un error al descargar el reporte CSV');
+            }
+        }
+
+        // --- Attachments Logic ---
+        window.openAttachments = async function (id) {
+            const modal = document.getElementById('attachments-modal');
+            const list = document.getElementById('attachments-list');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            list.innerHTML = '<p class="text-center text-gray-500 py-4"><span class="animate-spin inline-block mr-2">⟳</span> Cargando archivos...</p>';
+
+            try {
+                const res = await apiGet(`/api/contabilidad/facturas/${id}/archivos`);
+                const files = res.data || [];
+
+                if (files.length === 0) {
+                    list.innerHTML = '<p class="text-center text-gray-500 py-4">No hay archivos adjuntos.</p>';
+                    return;
+                }
+
+                list.innerHTML = files.map(file => {
+                    // Determine icon based on mime
+                    let icon = 'description';
+                    if (file.mime_type?.includes('image')) icon = 'image';
+                    else if (file.mime_type?.includes('pdf')) icon = 'picture_as_pdf';
+
+                    return `
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-surface-dark-light rounded-lg hover:bg-gray-100 dark:hover:bg-[#25381e] transition-colors group">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="bg-primary/10 text-primary p-2 rounded-lg">
+                                    <span class="material-symbols-outlined text-[20px]">${icon}</span>
+                                </div>
+                                <div class="flex flex-col min-w-0">
+                                    <span class="text-sm font-bold text-slate-800 dark:text-gray-200 truncate" title="${file.original_name}">${file.original_name}</span>
+                                    <span class="text-xs text-slate-500">${(file.size_bytes / 1024).toFixed(1)} KB • ${new Date(file.created_at).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a href="${file.file_url}" target="_blank" 
+                                    class="p-2 text-gray-400 hover:text-primary transition-colors rounded-full hover:bg-primary/5" title="Ver / Descargar">
+                                    <span class="material-symbols-outlined text-[20px]">visibility</span>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<p class="text-center text-red-500 py-4">Error cargando archivos.</p>';
+            }
+        };
+
+        window.closeAttachmentsModal = function () {
+            const modal = document.getElementById('attachments-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+    </script>
+</body>
+
+</html>

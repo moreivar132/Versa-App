@@ -1,4 +1,4 @@
-import { getApiBaseUrl } from '/auth.js';
+import { getApiBaseUrl, fetchWithAuth } from '/auth.js';
 import {
     formatFecha,
     formatHora,
@@ -6,12 +6,15 @@ import {
     ESTADOS_CONFIG
 } from './components/citas-ui.js';
 import { initSucursalSelector } from '/services/sucursal-selector.js';
+import { initDatePicker, initTimePicker } from './components/datetime-picker.js';
 
 const API_BASE_URL = getApiBaseUrl();
 let currentCitas = [];
 let currentWeekStart = new Date();
 let globalConfig = { sucursales: [], tecnicos: [] };
 const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+let searchTimeout = null;
+let selectedClienteId = null;
 
 // sidebar toggle logic
 window.toggleSubmenu = function (id) {
@@ -74,13 +77,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Listeners
     document.getElementById('cita-fecha')?.addEventListener('change', checkAvailability);
-    document.getElementById('cita-sucursal')?.addEventListener('change', checkAvailability);
+    document.getElementById('cita-sucursal')?.addEventListener('change', () => {
+        updateMecanicosBySucursal();
+        checkAvailability();
+    });
     document.getElementById('cita-mecanico')?.addEventListener('change', checkAvailability);
     document.getElementById('table-search-input')?.addEventListener('input', applyFilters);
     document.getElementById('status-filter')?.addEventListener('change', applyFilters);
 
     // Form submit
     document.getElementById('cita-form')?.addEventListener('submit', handleFormSubmit);
+
+    // Init datetime pickers
+    initDatePicker('cita-fecha');
+    initTimePicker('cita-hora');
+
+    // Init client search autocomplete
+    initClienteSearch();
 
     // Init sucursal selector
     initSucursalSelector('sucursal-selector-container', {
@@ -120,7 +133,7 @@ window.loadCitas = async function () {
     const endStr = endOfWeek.toISOString();
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/citas?start_date=${startStr}&end_date=${endStr}`);
+        const response = await fetchWithAuth(`/api/citas?start_date=${startStr}&end_date=${endStr}`);
         const data = await response.json();
 
         if (data.ok && data.citas) {
@@ -382,12 +395,11 @@ function renderChart(citas) {
 // Config Load
 async function loadConfig() {
     try {
-        const res = await fetch(`${API_BASE_URL}/api/citas/config`);
+        const res = await fetchWithAuth('/api/citas/config');
         const data = await res.json();
         if (data.ok) {
             globalConfig = data;
             const sucursalSelect = document.getElementById('cita-sucursal');
-            const mecanicoSelect = document.getElementById('cita-mecanico');
 
             const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
             if (sucursalSelect) {
@@ -396,22 +408,138 @@ async function loadConfig() {
                     return `<option value="${s.id}"${selected}>${s.nombre}</option>`;
                 }).join('');
             }
-            if (mecanicoSelect) {
-                mecanicoSelect.innerHTML = '<option value="">Cualquiera</option>' + data.tecnicos.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
-            }
+            // Update mecanicos based on selected sucursal
+            updateMecanicosBySucursal();
         }
     } catch (e) { console.error(e); }
 }
 
+// Filter mecanicos by selected sucursal
+function updateMecanicosBySucursal() {
+    const sucursalSelect = document.getElementById('cita-sucursal');
+    const mecanicoSelect = document.getElementById('cita-mecanico');
+    if (!sucursalSelect || !mecanicoSelect) return;
+
+    const selectedSucursalId = sucursalSelect.value;
+    const currentMecanicoValue = mecanicoSelect.value;
+
+    // Filter tecnicos by sucursal
+    const filteredTecnicos = globalConfig.tecnicos.filter(t =>
+        !selectedSucursalId || t.id_sucursal == selectedSucursalId
+    );
+
+    mecanicoSelect.innerHTML = '<option value="">Cualquiera</option>' +
+        filteredTecnicos.map(t => `<option value="${t.id}">${t.nombre}</option>`).join('');
+
+    // Restore previous selection if still valid
+    if (filteredTecnicos.some(t => t.id == currentMecanicoValue)) {
+        mecanicoSelect.value = currentMecanicoValue;
+    }
+}
+
+// =============================================
+// CLIENT SEARCH AUTOCOMPLETE
+// =============================================
+function initClienteSearch() {
+    const input = document.getElementById('cita-cliente');
+    const suggestionsContainer = document.getElementById('cliente-suggestions');
+    if (!input || !suggestionsContainer) return;
+
+    input.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        selectedClienteId = null;
+        document.getElementById('cita-cliente-id').value = '';
+
+        if (query.length < 2) {
+            suggestionsContainer.classList.add('hidden');
+            return;
+        }
+
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => searchClientes(query), 300);
+    });
+
+    input.addEventListener('blur', () => {
+        // Delay to allow click on suggestions
+        setTimeout(() => suggestionsContainer.classList.add('hidden'), 200);
+    });
+
+    input.addEventListener('focus', () => {
+        if (input.value.length >= 2 && suggestionsContainer.children.length > 0) {
+            suggestionsContainer.classList.remove('hidden');
+        }
+    });
+}
+
+async function searchClientes(query) {
+    const suggestionsContainer = document.getElementById('cliente-suggestions');
+
+    try {
+        const res = await fetchWithAuth(`/api/clientes/search?q=${encodeURIComponent(query)}`);
+        const clientes = await res.json();
+
+        if (clientes.length === 0) {
+            suggestionsContainer.innerHTML = `
+                <div class="p-3 text-sm text-[#a0a0a0] flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base">person_add</span>
+                    No encontrado - Se creará cliente nuevo
+                </div>
+            `;
+            suggestionsContainer.classList.remove('hidden');
+            return;
+        }
+
+        suggestionsContainer.innerHTML = clientes.map(c => `
+            <div class="cliente-suggestion p-3 hover:bg-[#2a2a2a] cursor-pointer transition-colors border-b border-[#2a2a2a] last:border-b-0"
+                 data-id="${c.id}" data-nombre="${c.nombre}" data-email="${c.email || ''}" data-telefono="${c.telefono || ''}">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-[var(--brand-orange)] flex items-center justify-center text-white text-xs font-bold">
+                        ${(c.nombre || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <div class="text-sm text-white font-medium">${c.nombre}</div>
+                        <div class="text-xs text-[#a0a0a0]">${c.email || c.telefono || 'Sin contacto'}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Add click handlers
+        suggestionsContainer.querySelectorAll('.cliente-suggestion').forEach(el => {
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                selectCliente(el.dataset);
+            });
+        });
+
+        suggestionsContainer.classList.remove('hidden');
+    } catch (e) {
+        console.error('Error searching clientes:', e);
+        suggestionsContainer.classList.add('hidden');
+    }
+}
+
+function selectCliente(clienteData) {
+    document.getElementById('cita-cliente').value = clienteData.nombre;
+    document.getElementById('cita-cliente-id').value = clienteData.id;
+    document.getElementById('cita-email').value = clienteData.email || '';
+    selectedClienteId = clienteData.id;
+
+    document.getElementById('cliente-suggestions').classList.add('hidden');
+
+    // Focus on next field
+    document.getElementById('cita-email').focus();
+}
+
 // Check Availability
 async function checkAvailability() {
-    const date = document.getElementById('cita-fecha').value;
+    const dateStr = document.getElementById('cita-fecha').value;
     const sucursal = document.getElementById('cita-sucursal').value;
     const mecanico = document.getElementById('cita-mecanico').value;
     const container = document.getElementById('availability-container');
     const slotsContainer = document.getElementById('availability-slots');
 
-    if (!date) {
+    if (!dateStr) {
         container.classList.add('hidden');
         return;
     }
@@ -419,11 +547,21 @@ async function checkAvailability() {
     container.classList.remove('hidden');
     slotsContainer.innerHTML = '<span class="text-[#a0a0a0]">Cargando...</span>';
 
+    // Parse DD/MM/YYYY to Date object
+    let date;
+    if (dateStr.includes('/')) {
+        const [day, month, year] = dateStr.split('/');
+        date = new Date(year, month - 1, day);
+    } else {
+        date = new Date(dateStr);
+    }
+
     const start = new Date(date); start.setHours(0, 0, 0, 0);
     const end = new Date(date); end.setHours(23, 59, 59, 999);
 
     try {
-        const res = await fetch(`${API_BASE_URL}/api/citas?start_date=${start.toISOString()}&end_date=${end.toISOString()}`);
+        const res = await fetchWithAuth(`/api/citas?start_date=${start.toISOString()}&end_date=${end.toISOString()}`);
+
         const data = await res.json();
 
         if (data.ok && data.citas) {
@@ -453,17 +591,28 @@ window.openModal = function (cita = null) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
 
+    // Reset client selection state
+    selectedClienteId = null;
+    document.getElementById('cita-cliente-id').value = '';
+
     if (cita) {
         document.getElementById('modal-title').textContent = 'Editar Cita';
         document.getElementById('cita-id').value = cita.id;
         document.getElementById('cita-cliente').value = cita.cliente_nombre || '';
         document.getElementById('cita-email').value = cita.cliente_email || '';
 
-        if (cita.id_sucursal) document.getElementById('cita-sucursal').value = cita.id_sucursal;
+        if (cita.id_sucursal) {
+            document.getElementById('cita-sucursal').value = cita.id_sucursal;
+            updateMecanicosBySucursal();
+        }
         if (cita.id_mecanico) document.getElementById('cita-mecanico').value = cita.id_mecanico;
 
         const date = new Date(cita.fecha_hora);
-        document.getElementById('cita-fecha').value = date.toISOString().split('T')[0];
+        // Format for VersaDateTimePicker: DD/MM/YYYY
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        document.getElementById('cita-fecha').value = `${day}/${month}/${year}`;
         document.getElementById('cita-hora').value = date.toTimeString().slice(0, 5);
         document.getElementById('cita-motivo').value = cita.motivo || '';
 
@@ -477,7 +626,14 @@ window.openModal = function (cita = null) {
         document.getElementById('modal-title').textContent = 'Nueva Cita';
         document.getElementById('cita-form').reset();
         document.getElementById('cita-id').value = '';
-        document.getElementById('cita-fecha').value = new Date().toISOString().split('T')[0];
+        document.getElementById('cita-cliente-id').value = '';
+
+        // Set today's date in DD/MM/YYYY format
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        document.getElementById('cita-fecha').value = `${day}/${month}/${year}`;
 
         const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
         if (savedSucursal && globalConfig.sucursales.some(s => s.id == savedSucursal)) {
@@ -485,6 +641,7 @@ window.openModal = function (cita = null) {
         } else if (globalConfig.sucursales.length > 0) {
             document.getElementById('cita-sucursal').value = globalConfig.sucursales[0].id;
         }
+        updateMecanicosBySucursal();
         checkAvailability();
     }
 }
@@ -498,8 +655,17 @@ window.closeModal = function () {
 async function handleFormSubmit(e) {
     e.preventDefault();
     const id = document.getElementById('cita-id').value;
-    const fecha = document.getElementById('cita-fecha').value;
+    const fechaStr = document.getElementById('cita-fecha').value; // DD/MM/YYYY format
     const hora = document.getElementById('cita-hora').value;
+
+    // Parse DD/MM/YYYY to YYYY-MM-DD
+    let fecha;
+    if (fechaStr.includes('/')) {
+        const [day, month, year] = fechaStr.split('/');
+        fecha = `${year}-${month}-${day}`;
+    } else {
+        fecha = fechaStr; // Already in YYYY-MM-DD format
+    }
     const fecha_hora = `${fecha}T${hora}:00`;
 
     const data = {
@@ -516,6 +682,12 @@ async function handleFormSubmit(e) {
         duracion_min: 60,
         notas: ''
     };
+
+    // If editing existing client, include client ID
+    const clienteIdInput = document.getElementById('cita-cliente-id');
+    if (clienteIdInput && clienteIdInput.value) {
+        data.cliente.id = clienteIdInput.value;
+    }
 
     try {
         let url = `${API_BASE_URL}/api/citas/crear`;
@@ -535,6 +707,7 @@ async function handleFormSubmit(e) {
         if (result.ok) {
             window.closeModal();
             loadCitas();
+            showToast('Cita guardada correctamente', 'success');
         } else {
             alert('Error: ' + result.error);
         }

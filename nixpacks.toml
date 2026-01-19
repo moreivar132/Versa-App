@@ -1,11 +1,12 @@
 # Nixpacks Configuration for Versa-App Monorepo
+# Force npm install instead of npm ci for workspaces compatibility
 
 [phases.setup]
 nixPkgs = ["nodejs-18_x"]
 
 [phases.install]
 cmds = [
-    "npm install"
+    "npm install --legacy-peer-deps"
 ]
 
 [phases.build]

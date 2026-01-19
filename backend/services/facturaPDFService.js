@@ -11,7 +11,13 @@
 const fs = require('fs');
 const path = require('path');
 const facturacionService = require('./facturacionService');
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
+
+const pool = {
+  query: (sql, params) => {
+    throw new Error('Uso directo de pool detectado en facturaPDFService.js. Usa db.query instead.');
+  }
+};
 
 class FacturaPDFService {
 
@@ -299,10 +305,11 @@ class FacturaPDFService {
    * @param {number} idFactura - ID de la factura
    * @returns {Promise<string>} URL del PDF generado
    */
-  async generarPDF(idFactura) {
+  async generarPDF(ctx, idFactura) {
+    const db = getTenantDb(ctx);
     try {
       // Obtener factura completa
-      const facturaCompleta = await facturacionService.obtenerFacturaCompleta(idFactura);
+      const facturaCompleta = await facturacionService.obtenerFacturaCompleta(ctx, idFactura);
 
       // Generar HTML
       const html = this.generarHTMLFactura(facturaCompleta);
@@ -313,7 +320,7 @@ class FacturaPDFService {
         fs.mkdirSync(pdfsDir, { recursive: true });
       }
 
-      // Guardar HTML temporalmente (puedes usar puppeteer aquí para generar PDF real)
+      // Guardar HTML temporalmente
       const nombreArchivo = `factura_${facturaCompleta.numero_factura.replace(/[^a-zA-Z0-9]/g, '_')}.html`;
       const rutaArchivo = path.join(pdfsDir, nombreArchivo);
 
@@ -323,42 +330,12 @@ class FacturaPDFService {
       const pdfUrl = `/uploads/facturas/${nombreArchivo}`;
 
       // Actualizar la factura con la URL del PDF
-      await pool.query(
+      await db.query(
         'UPDATE facturacabecera SET pdf_url = $1 WHERE id = $2',
         [pdfUrl, idFactura]
       );
 
       return pdfUrl;
-
-      /* 
-      // ALTERNATIVA CON PUPPETEER (descomentar si instalas puppeteer):
-      const puppeteer = require('puppeteer');
-      const browser = await puppeteer.launch({ headless: true });
-      const page = await browser.newPage();
-      await page.setContent(html);
-      
-      const nombreArchivoPDF = `factura_${facturaCompleta.numero_factura.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
-      const rutaPDF = path.join(pdfsDir, nombreArchivoPDF);
-      
-      await page.pdf({
-        path: rutaPDF,
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
-      });
-      
-      await browser.close();
-      
-      const pdfUrl = `/uploads/facturas/${nombreArchivoPDF}`;
-      
-      await pool.query(
-        'UPDATE facturacabecera SET pdf_url = $1 WHERE id = $2',
-        [pdfUrl, idFactura]
-      );
-      
-      return pdfUrl;
-      */
-
     } catch (error) {
       console.error('Error al generar PDF:', error);
       throw error;
@@ -370,9 +347,10 @@ class FacturaPDFService {
    * @param {number} idFactura - ID de la factura
    * @returns {Promise<string>} URL del PDF
    */
-  async obtenerOGenerarPDF(idFactura) {
+  async obtenerOGenerarPDF(ctx, idFactura) {
+    const db = getTenantDb(ctx);
     // Verificar si ya existe PDF
-    const result = await pool.query(
+    const result = await db.query(
       'SELECT pdf_url FROM facturacabecera WHERE id = $1',
       [idFactura]
     );
@@ -389,7 +367,7 @@ class FacturaPDFService {
     }
 
     // Si no existe, generarlo
-    return await this.generarPDF(idFactura);
+    return await this.generarPDF(ctx, idFactura);
   }
 }
 

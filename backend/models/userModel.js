@@ -40,20 +40,38 @@ async function getAllUsers() {
   return result.rows;
 }
 
-async function updateUser(id, { nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra }) {
-  const updateQuery = `
-    UPDATE usuario 
-    SET nombre = $1, 
-        email = $2, 
-        id_tenant = $3, 
-        is_super_admin = $4, 
-        porcentaje_mano_obra = $5
-    WHERE id = $6
-    RETURNING *
-  `;
-  const values = [nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra, id];
-  const result = await pool.query(updateQuery, values);
-  return result.rows[0];
+async function updateUser(id, { nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra, password_hash }) {
+  // Build dynamic query based on whether password is being updated
+  if (password_hash) {
+    const updateQuery = `
+      UPDATE usuario 
+      SET nombre = $1, 
+          email = $2, 
+          id_tenant = $3, 
+          is_super_admin = $4, 
+          porcentaje_mano_obra = $5,
+          password_hash = $6
+      WHERE id = $7
+      RETURNING *
+    `;
+    const values = [nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra, password_hash, id];
+    const result = await pool.query(updateQuery, values);
+    return result.rows[0];
+  } else {
+    const updateQuery = `
+      UPDATE usuario 
+      SET nombre = $1, 
+          email = $2, 
+          id_tenant = $3, 
+          is_super_admin = $4, 
+          porcentaje_mano_obra = $5
+      WHERE id = $6
+      RETURNING *
+    `;
+    const values = [nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra, id];
+    const result = await pool.query(updateQuery, values);
+    return result.rows[0];
+  }
 }
 
 async function deleteUser(id) {

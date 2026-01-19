@@ -1,6 +1,15 @@
 const marketplaceRepo = require('../repositories/marketplaceRepository');
 const pool = require('../db');
 
+/**
+ * Safely parse a value to float, returning null if invalid
+ */
+function safeParseFloat(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const n = typeof value === 'string' ? parseFloat(value.replace(',', '.')) : Number(value);
+    return Number.isFinite(n) ? n : null;
+}
+
 class MarketplaceService {
 
     /**
@@ -10,15 +19,15 @@ class MarketplaceService {
         try {
             const talleres = await marketplaceRepo.searchSucursales(filters);
 
-            // Formatear respuesta
+            // Formatear respuesta con coords normalizadas
             return talleres.map(taller => ({
                 id_sucursal: taller.id_sucursal,
                 nombre: taller.titulo_publico || taller.sucursal_nombre,
                 direccion: taller.direccion,
                 zona: taller.zona,
-                lat: parseFloat(taller.lat),
-                lng: parseFloat(taller.lng),
-                rating: parseFloat(taller.rating) || 0,
+                lat: safeParseFloat(taller.lat),  // ✅ number | null (never NaN)
+                lng: safeParseFloat(taller.lng),  // ✅ number | null (never NaN)
+                rating: safeParseFloat(taller.rating) || 0,
                 reviews_count: parseInt(taller.reviews_count) || 0,
                 fotos: taller.fotos_json || [],
                 telefono: taller.telefono_publico,
@@ -62,15 +71,15 @@ class MarketplaceService {
                 zona: taller.zona,
                 provincia: taller.provincia,
                 pais: taller.pais,
-                lat: parseFloat(taller.lat),
-                lng: parseFloat(taller.lng),
+                lat: safeParseFloat(taller.lat),  // ✅ number | null
+                lng: safeParseFloat(taller.lng),  // ✅ number | null
                 telefono: taller.telefono_publico,
                 email: taller.email_publico,
                 whatsapp: taller.whatsapp_publico,
                 fotos: taller.fotos_json || [],
                 horario: taller.horario_json,
                 politica_cancelacion: taller.politica_cancelacion,
-                rating: parseFloat(taller.rating) || 0,
+                rating: safeParseFloat(taller.rating) || 0,
                 reviews_count: parseInt(taller.reviews_count) || 0,
                 servicios_completos: servicios.map(s => ({
                     id: s.id_servicio,

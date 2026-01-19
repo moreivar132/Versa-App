@@ -303,9 +303,9 @@
     .filters-section {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding: 12px 0;
-      margin-bottom: 8px;
+      gap: 8px;
+      padding: 8px 0;
+      margin-bottom: 4px;
     }
 
     /* Barra de búsqueda - usa estilos globales de animated-search-form */
@@ -352,13 +352,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      padding: 10px 16px;
-      border-radius: 8px;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 6px;
       background: transparent;
       border: none;
       color: #9da6b9;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -423,10 +423,10 @@
     .secondary-filters {
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      padding: 12px;
+      gap: 8px;
+      padding: 8px 10px;
       background: #111318;
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid #282e39;
     }
 
@@ -454,9 +454,9 @@
       appearance: none;
       background: #1a1d24;
       border: 1px solid #282e39;
-      border-radius: 8px;
-      padding: 10px 36px 10px 12px;
-      font-size: 13px;
+      border-radius: 6px;
+      padding: 6px 32px 6px 10px;
+      font-size: 12px;
       color: #fff;
       cursor: pointer;
       transition: border-color 0.2s, box-shadow 0.2s;
@@ -490,8 +490,8 @@
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding-top: 12px;
+      gap: 8px;
+      padding-top: 8px;
       border-top: 1px solid #282e39;
     }
 
@@ -555,6 +555,108 @@
         padding: 8px 12px;
         font-size: 12px;
       }
+    }
+
+    /* ============================================
+       LAYOUT PRINCIPAL - Lista y Detalle
+       ============================================ */
+
+    /* Contenedor principal de la lista de órdenes */
+    .orders-list-panel {
+      flex: 2;
+      min-width: 0;
+      /* Permite que flexbox reduzca el tamaño */
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+      overflow-y: auto;
+      border-right: 1px solid #282e39;
+    }
+
+    /* Panel de detalle lateral */
+    .order-detail-panel {
+      flex: 1;
+      min-width: 320px;
+      max-width: 420px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background-color: #111318;
+      border-left: 1px solid #282e39;
+      padding: 24px;
+      overflow-y: auto;
+      z-index: 10;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Pantallas medianas (tablets, laptops pequeños) */
+    @media (min-width: 1024px) {
+      .orders-list-panel {
+        flex: 2.5;
+      }
+
+      .order-detail-panel {
+        flex: 1;
+        min-width: 340px;
+        max-width: 400px;
+      }
+    }
+
+    /* Pantallas grandes */
+    @media (min-width: 1280px) {
+      .orders-list-panel {
+        flex: 3;
+      }
+
+      .order-detail-panel {
+        flex: 1;
+        min-width: 360px;
+        max-width: 420px;
+      }
+    }
+
+    /* Pantallas extra grandes */
+    @media (min-width: 1536px) {
+      .order-detail-panel {
+        min-width: 380px;
+        max-width: 450px;
+      }
+    }
+
+    /* Pantallas pequeñas - Apilar verticalmente */
+    @media (max-width: 1023px) {
+      .main-content-container {
+        flex-direction: column;
+      }
+
+      .orders-list-panel {
+        flex: 1;
+        border-right: none;
+        border-bottom: 1px solid #282e39;
+        max-height: 60vh;
+      }
+
+      .order-detail-panel {
+        flex: 1;
+        max-width: 100%;
+        min-width: 100%;
+        border-left: none;
+        border-top: 1px solid #282e39;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        max-height: 40vh;
+      }
+    }
+
+    /* Ajuste de la tabla para que use bien el espacio */
+    .orders-table-container {
+      flex: 1;
+      overflow: hidden;
+      min-height: 300px;
+    }
+
+    .orders-table-container .overflow-x-auto {
+      height: 100%;
     }
   </style>
 
@@ -732,24 +834,23 @@
         <button id="mobile-menu-btn" class="text-white"><i class="fas fa-bars"></i></button>
       </header>
 
-      <main class="flex flex-1 overflow-hidden">
+      <main class="flex flex-1 overflow-hidden main-content-container">
         <!-- Lista de órdenes -->
-        <div class="flex-grow-[2] flex flex-col p-6 overflow-y-auto border-r border-[#282e39]">
+        <div class="orders-list-panel">
 
-          <div class="flex flex-wrap justify-between items-center gap-3 pb-4 border-b border-[#282e39] mb-4">
+          <div class="flex flex-wrap justify-between items-center gap-2 pb-2 border-b border-[#282e39] mb-2">
             <div>
-              <h1 class="text-white text-2xl font-bold leading-tight">Órdenes de Trabajo</h1>
-              <p class="text-[#9da6b9] text-sm mt-1">Gestión y seguimiento de reparaciones</p>
+              <h1 class="text-white text-xl font-bold leading-tight">Órdenes de Trabajo</h1>
             </div>
             <a href="manager-taller-ordenes.html"
-              class="flex items-center justify-center rounded-lg h-10 px-5 bg-[var(--brand-orange)] text-white text-sm font-bold hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">
-              <span class="material-symbols-outlined mr-2 text-xl">add_circle</span>
+              class="flex items-center justify-center rounded-lg h-9 px-4 bg-[var(--brand-orange)] text-white text-sm font-bold hover:bg-[#e05300] transition-colors shadow-lg shadow-orange-900/20">
+              <span class="material-symbols-outlined mr-1 text-lg">add_circle</span>
               <span>Nueva Orden</span>
             </a>
           </div>
 
           <!-- Selector de Sucursal Centrado -->
-          <div class="flex justify-center mb-4">
+          <div class="flex justify-center mb-2">
             <div id="sucursal-selector-container"></div>
           </div>
 
@@ -827,31 +928,31 @@
           </div>
 
           <!-- TABLA -->
-          <div class="py-2 flex-1 overflow-hidden">
+          <div class="orders-table-container">
             <div class="overflow-x-auto rounded-xl border border-[#282e39] bg-[#111318] h-full">
               <table class="w-full text-left border-collapse">
                 <thead class="bg-[#1c1f27] sticky top-0 z-10">
                   <tr>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       N° Orden</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Cliente</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Vehículo</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Entrada</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Estado</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39]">
                       Pago</th>
                     <th
-                      class="px-5 py-4 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39] text-right">
+                      class="px-4 py-2 text-[#9da6b9] text-xs font-bold uppercase tracking-wider border-b border-[#282e39] text-right">
                       Total</th>
                     <th class="px-2 py-4 border-b border-[#282e39]"></th>
                   </tr>
@@ -869,8 +970,7 @@
         </div>
 
         <!-- Panel de detalle -->
-        <aside
-          class="flex-grow-[1] max-w-md w-full flex flex-col h-full bg-[#111318] border-l border-[#282e39] p-6 overflow-y-auto z-10 shadow-2xl">
+        <aside class="order-detail-panel">
           <div class="flex justify-between items-center pb-6 border-b border-[#282e39]">
             <div>
               <h2 class="text-2xl font-bold text-white" id="detail-order-id">Selecciona una orden</h2>
@@ -1138,8 +1238,8 @@
   </script>
 
   <script type="module">
-    import { getOrdenes, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
-    import { registrarPago } from '/services/pagos-service.js';
+    import { getOrdenes, getOrdenById, updateEstadoOrden, getEstadosOrden } from '/services/ordenes-service.js';
+    import { registrarPago, eliminarPago } from '/services/pagos-service.js';
     import { requireAuth, clearSession, redirectToLogin, fetchWithAuth, getSession } from '/auth.js';
     import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
@@ -1354,7 +1454,7 @@
       // --- CARGAR ÓRDENES ---
       async function cargarOrdenes(filtros = {}) {
         const tbody = document.getElementById('orders-table-body');
-        tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-[#9da6b9]"><i class="fas fa-spinner fa-spin mr-2"></i> Cargando órdenes...</td></tr>';
 
         try {
           // Usar la sucursal del selector (que ya lee de localStorage si no hay selección)
@@ -1369,7 +1469,7 @@
           renderOrdenes();
         } catch (error) {
           console.error('Error cargando órdenes:', error);
-          tbody.innerHTML = `<tr><td colspan="8" class="px-5 py-8 text-center text-red-400"><i class="fas fa-exclamation-circle mr-2"></i> Error: ${error.message}</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-4 text-center text-red-400"><i class="fas fa-exclamation-circle mr-2"></i> Error: ${error.message}</td></tr>`;
         }
       }
 
@@ -1396,7 +1496,7 @@
           : `${ordenes.length} orden(es)`;
 
         if (ordenesVisibles.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="8" class="px-5 py-8 text-center text-[#9da6b9]">No hay órdenes que coincidan con los filtros</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-4 text-center text-[#9da6b9]">No hay órdenes que coincidan con los filtros</td></tr>';
           return;
         }
 
@@ -1417,28 +1517,28 @@
 
           return `
           <tr class="order-row hover:bg-[#1a1d24] cursor-pointer transition-colors ${index === 0 ? 'active' : ''}" data-id="${orden.id}">
-            <td class="px-5 py-4 text-[var(--brand-orange)] font-bold">#${orden.id}</td>
-            <td class="px-5 py-4 text-white font-medium">
+            <td class="px-3 py-2 text-[var(--brand-orange)] font-bold text-sm">#${orden.id}</td>
+            <td class="px-3 py-2 text-white font-medium text-sm">
               <div>${orden.cliente_nombre || '-'}</div>
               <div class="text-xs text-[#9da6b9]">${orden.cliente_telefono || ''}</div>
             </td>
-            <td class="px-5 py-4 text-[#9da6b9]">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} <span class="text-xs border border-[#282e39] px-1 rounded ml-1">${orden.vehiculo_matricula || ''}</span></td>
-            <td class="px-5 py-4 text-[#9da6b9]">${fecha}</td>
-            <td class="px-5 py-4">
+            <td class="px-3 py-2 text-[#9da6b9] text-sm">${orden.vehiculo_marca || ''} ${orden.vehiculo_modelo || ''} <span class="text-xs border border-[#282e39] px-1 rounded ml-1">${orden.vehiculo_matricula || ''}</span></td>
+            <td class="px-3 py-2 text-[#9da6b9] text-sm">${fecha}</td>
+            <td class="px-3 py-2">
               <div class="estado-dropdown-container" data-orden-id="${orden.id}">
-                <div class="estado-badge inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border" style="${estadoBgStyle}" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
+                <div class="estado-badge inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border" style="${estadoBgStyle}" data-estado-codigo="${orden.estado_codigo || 'ABIERTA'}">
                   <span class="w-1.5 h-1.5 rounded-full" style="${dotStyle}"></span> ${estadoNombre}
-                  <span class="material-symbols-outlined" style="font-size: 14px;">expand_more</span>
+                  <span class="material-symbols-outlined" style="font-size: 12px;">expand_more</span>
                 </div>
                 <div class="estado-dropdown" id="dropdown-${orden.id}"></div>
               </div>
             </td>
-            <td class="px-5 py-4">
-              <div class="${estadoPagoClass} font-medium">${estadoPagoLabel}</div>
+            <td class="px-3 py-2">
+              <div class="${estadoPagoClass} font-medium text-sm">${estadoPagoLabel}</div>
               <div class="text-xs text-[#9da6b9]">${orden.ultimo_medio_pago || 'Sin pagos'}</div>
             </td>
-            <td class="px-5 py-4 text-right font-medium text-green-400">${parseFloat(orden.total_neto || 0).toFixed(2)}€</td>
-            <td class="px-2 py-4 text-right">
+            <td class="px-3 py-2 text-right font-medium text-green-400 text-sm">${parseFloat(orden.total_neto || 0).toFixed(2)}€</td>
+            <td class="px-2 py-2 text-right">
               <div class="acciones-dropdown-container" data-orden-id="${orden.id}" data-estado-pago="${orden.estado_pago}" data-tiene-factura="${orden.id_factura || orden.numero_factura ? 'true' : 'false'}">
                 <button class="btn-acciones text-[#9da6b9] hover:text-white cursor-pointer p-1 rounded hover:bg-[#282e39] transition-colors" data-id="${orden.id}">
                   <span class="material-symbols-outlined">more_vert</span>
@@ -1703,7 +1803,7 @@
       });
 
       // --- MODAL PAGOS ---
-      function abrirModalPagos() {
+      async function abrirModalPagos() {
         if (!ordenSeleccionada) return;
 
         const modal = document.getElementById('modal-pagos');
@@ -1720,6 +1820,78 @@
         document.getElementById('modal-pendiente').textContent = `${pendiente.toFixed(2)}€`;
         document.getElementById('modal-progress').style.width = `${Math.min(100, progreso)}%`;
         document.getElementById('modal-importe').value = pendiente > 0 ? pendiente.toFixed(2) : '';
+
+        // Cargar pagos existentes de la orden
+        const listaPagos = document.getElementById('modal-lista-pagos');
+        listaPagos.innerHTML = '<p class="text-sm text-[#9da6b9] italic">Cargando...</p>';
+
+        try {
+          const response = await fetchWithAuth(`/api/ordenpago/orden/${ordenSeleccionada.id}`);
+          const data = await response.json();
+
+          if (data.success && data.pagos && data.pagos.length > 0) {
+            listaPagos.innerHTML = data.pagos.map(pago => `
+              <div class="flex items-center justify-between py-2 px-3 bg-[#1a1d24] rounded-lg">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-green-400 text-sm">payments</span>
+                  <span class="text-sm text-white">${pago.medio_pago_nombre || 'Pago'}</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span class="text-sm font-bold text-green-400">${parseFloat(pago.importe).toFixed(2)}€</span>
+                  <button type="button" class="btn-eliminar-pago text-red-400 hover:text-red-300 transition-colors" data-pago-id="${pago.id}" data-importe="${pago.importe}">
+                    <span class="material-symbols-outlined text-lg">close</span>
+                  </button>
+                </div>
+              </div>
+            `).join('');
+
+            // Event listeners para eliminar pagos
+            listaPagos.querySelectorAll('.btn-eliminar-pago').forEach(btn => {
+              btn.addEventListener('click', async (e) => {
+                const pagoId = btn.dataset.pagoId;
+                const importe = btn.dataset.importe;
+
+                if (!confirm(`¿Eliminar pago de ${importe}€? Esto también eliminará el movimiento de caja asociado.`)) {
+                  return;
+                }
+
+                try {
+                  const deleteResponse = await fetchWithAuth(`/api/ordenpago/${pagoId}`, {
+                    method: 'DELETE'
+                  });
+                  const deleteData = await deleteResponse.json();
+
+                  if (deleteData.success) {
+                    showToast(`Pago de ${importe}€ eliminado correctamente`);
+                    // Recargar las órdenes para actualizar totales
+                    await cargarOrdenes();
+                    // Actualizar orden seleccionada con los nuevos datos
+                    const ordenActualizada = ordenes.find(o => o.id === ordenSeleccionada.id);
+                    if (ordenActualizada) {
+                      ordenSeleccionada = ordenActualizada;
+                      // Actualizar el panel de detalle si existe la función
+                      if (typeof mostrarDetalleOrden === 'function') {
+                        mostrarDetalleOrden(ordenActualizada);
+                      }
+                    }
+                    // Recargar el modal con los pagos actualizados
+                    await abrirModalPagos();
+                  } else {
+                    showToast(deleteData.mensaje || 'Error al eliminar pago', true);
+                  }
+                } catch (error) {
+                  console.error('Error eliminando pago:', error);
+                  showToast('Error al eliminar el pago', true);
+                }
+              });
+            });
+          } else {
+            listaPagos.innerHTML = '<p class="text-sm text-[#9da6b9] italic">No hay pagos registrados</p>';
+          }
+        } catch (error) {
+          console.error('Error cargando pagos:', error);
+          listaPagos.innerHTML = '<p class="text-sm text-red-400 italic">Error al cargar pagos</p>';
+        }
 
         // Mostrar sección de cuenta corriente solo si hay pendiente y no está ya en cuenta corriente
         const seccionCC = document.getElementById('seccion-cuenta-corriente');

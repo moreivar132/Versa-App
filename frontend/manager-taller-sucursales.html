@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Sucursales - Goversa</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/guard.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="manager.css">
+
+    <style>
+        .card {
+            background: rgba(26, 26, 30, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .btn-primary {
+            background: var(--brand-orange);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #e05300;
+            transform: translateY(-1px);
+        }
+
+        .sucursal-card {
+            background: rgba(30, 30, 35, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .sucursal-card:hover {
+            border-color: var(--brand-orange);
+            transform: translateY(-2px);
+        }
+
+        .sucursal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 4px;
+        }
+
+        .sucursal-info {
+            color: #9da6b9;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sucursal-info i {
+            width: 20px;
+            text-align: center;
+            color: var(--brand-orange);
+            opacity: 0.8;
+        }
+
+        .action-btn {
+            padding: 8px;
+            border-radius: 6px;
+            color: #9da6b9;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .action-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50"></div>
+
+    <div class="flex h-screen w-full">
+        <!-- Sidebar -->
+        <aside id="sidebar"
+            class="flex h-full w-64 flex-col bg-[#111318] p-4 shrink-0 transition-all duration-300 ease-in-out border-r border-[var(--surface-border)]">
+            <!-- Sidebar will be loaded by sidebar-manager.js -->
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[var(--dark-bg)]">
+            <header
+                class="md:hidden flex items-center justify-between p-4 bg-[#111318] border-b border-[var(--surface-border)]">
+                <div class="logo-badge p-2">
+                    <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
+                </div>
+                <button id="mobile-menu-btn" class="text-white">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </header>
+
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="max-w-6xl mx-auto">
+                    <!-- Header -->
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">Gestión de Sucursales</h1>
+                            <p class="text-gray-400">Administra las ubicaciones físicas de tu taller</p>
+                        </div>
+                        <button onclick="openModal()" class="btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Nueva Sucursal
+                        </button>
+                    </div>
+
+                    <!-- Sucursales Grid -->
+                    <div id="sucursales-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Loading State -->
+                        <div class="col-span-full text-center py-12 text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-3xl mb-4"></i>
+                            <p>Cargando sucursales...</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="modal-sucursal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-[#1a1d24] border border-[#282e39] rounded-2xl w-full max-w-md p-6 relative shadow-2xl">
+            <h3 id="modal-title" class="text-xl font-bold text-white mb-6">Nueva Sucursal</h3>
+
+            <form id="form-sucursal" onsubmit="handleSave(event)">
+                <input type="hidden" id="sucursal-id">
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Nombre de la Sucursal <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" id="nombre" required
+                        class="w-full bg-[#111318] border border-[#282e39] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[var(--brand-orange)]">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Dirección</label>
+                    <input type="text" id="direccion"
+                        class="w-full bg-[#111318] border border-[#282e39] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[var(--brand-orange)]">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Teléfono</label>
+                    <input type="text" id="telefono"
+                        class="w-full bg-[#111318] border border-[#282e39] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[var(--brand-orange)]">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Email</label>
+                    <input type="email" id="email"
+                        class="w-full bg-[#111318] border border-[#282e39] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[var(--brand-orange)]">
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()"
+                        class="px-4 py-2 text-gray-400 hover:text-white transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="btn-save"
+                        class="px-6 py-2 bg-[var(--brand-orange)] text-white rounded-lg hover:bg-[#e05300] transition-colors font-medium">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="./sidebar-manager.js"></script>
+    <script type="module">
+        import { getApiBaseUrl, fetchWithAuth } from './auth.js';
+
+        const API_BASE = getApiBaseUrl();
+        let sucursales = [];
+
+        // Global functions for HTML access
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.handleSave = handleSave;
+        window.editSucursal = editSucursal;
+        window.deleteSucursal = deleteSucursal;
+
+        async function loadSucursales() {
+            try {
+                const response = await fetchWithAuth(`${API_BASE}/api/sucursales`);
+                if (response.ok) {
+                    sucursales = await response.json();
+                    renderGrid();
+                } else {
+                    throw new Error('Error cargando sucursales');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error cargando sucursales', 'error');
+                document.getElementById('sucursales-grid').innerHTML = `
+                    <div class="col-span-full text-center py-12 text-red-400">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                        <p>No se pudieron cargar las sucursales</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('sucursales-grid');
+
+            if (sucursales.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500 bg-[#1a1d24] rounded-xl border border-[#282e39]">
+                        <i class="fas fa-store-slash text-4xl mb-4 opacity-50"></i>
+                        <p class="text-lg font-medium mb-2">No hay sucursales registradas</p>
+                        <p class="text-sm mb-6">Crea tu primera sucursal para comenzar a operar</p>
+                        <button onclick="openModal()" class="btn-primary">
+                            Crear Sucursal
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = sucursales.map(s => `
+                <div class="sucursal-card group relative">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="sucursal-title">${s.nombre}</h3>
+                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editSucursal(${s.id})" class="action-btn" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button onclick="deleteSucursal(${s.id})" class="action-btn delete" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="sucursal-info">
+                        ${s.direccion ? `<div><i class="fas fa-map-marker-alt"></i> ${s.direccion}</div>` : ''}
+                        ${s.telefono ? `<div><i class="fas fa-phone"></i> ${s.telefono}</div>` : ''}
+                        ${s.email ? `<div><i class="fas fa-envelope"></i> ${s.email}</div>` : ''}
+                        ${(!s.direccion && !s.telefono && !s.email) ? '<span class="italic opacity-50">Sin detalles de contacto</span>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openModal(id = null) {
+            const modal = document.getElementById('modal-sucursal');
+            const form = document.getElementById('form-sucursal');
+            const title = document.getElementById('modal-title');
+
+            form.reset();
+            document.getElementById('sucursal-id').value = '';
+
+            if (id) {
+                const s = sucursales.find(x => x.id === id);
+                if (s) {
+                    title.textContent = 'Editar Sucursal';
+                    document.getElementById('sucursal-id').value = s.id;
+                    document.getElementById('nombre').value = s.nombre;
+                    document.getElementById('direccion').value = s.direccion || '';
+                    document.getElementById('telefono').value = s.telefono || '';
+                    document.getElementById('email').value = s.email || '';
+                }
+            } else {
+                title.textContent = 'Nueva Sucursal';
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-sucursal').classList.add('hidden');
+            document.getElementById('modal-sucursal').classList.remove('flex');
+        }
+
+        function editSucursal(id) {
+            openModal(id);
+        }
+
+        async function deleteSucursal(id) {
+            if (!confirm('¿Estás seguro de eliminar esta sucursal? Esta acción no se puede deshacer.')) return;
+
+            try {
+                const response = await fetchWithAuth(`${API_BASE}/api/sucursales/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('Sucursal eliminada correctamente');
+                    loadSucursales();
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Error al eliminar');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast(error.message, 'error');
+            }
+        }
+
+        async function handleSave(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btn-save');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Guardando...';
+
+            const id = document.getElementById('sucursal-id').value;
+            const data = {
+                nombre: document.getElementById('nombre').value,
+                direccion: document.getElementById('direccion').value,
+                telefono: document.getElementById('telefono').value,
+                email: document.getElementById('email').value
+            };
+
+            try {
+                const url = id ? `${API_BASE}/api/sucursales/${id}` : `${API_BASE}/api/sucursales`;
+                const method = id ? 'PUT' : 'POST';
+
+                const response = await fetchWithAuth(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showToast(`Sucursal ${id ? 'actualizada' : 'creada'} correctamente`);
+                    closeModal();
+                    loadSucursales();
+                } else {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Error al guardar');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${type === 'error' ? 'bg-red-500/90' : 'bg-green-500/90'} text-white mb-2 transform transition-all duration-300 translate-y-2 opacity-0`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Initialize
+        loadSucursales();
+    </script>
+</body>
+
+</html>

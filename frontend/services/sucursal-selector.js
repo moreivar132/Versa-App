@@ -88,7 +88,7 @@ export async function initSucursalSelector(containerId, options = {}) {
         return null;
     }
 
-    onChangeCallback = options.onchange || null;
+    onChangeCallback = options.onChange || options.onchange || null;
 
     try {
         await loadSucursales();

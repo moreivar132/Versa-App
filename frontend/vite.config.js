@@ -1,7 +1,15 @@
 import { defineConfig } from 'vite';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+    resolve: {
+        alias: {
+            '/services': path.resolve(__dirname, 'services'),
+        }
+    },
     build: {
         outDir: 'dist',
         emptyOutDir: true,
@@ -38,6 +46,32 @@ export default defineConfig({
                 marketplaceBusqueda: 'marketplace-busqueda.html',
                 marketplaceTaller: 'marketplace-taller.html',
                 managerTallerMarketplace: 'manager-taller-marketplace.html',
+
+                // FinSaaS Vertical (New Shell)
+                loginFinsaas: 'login-finsaas.html',
+                finsaasDashboard: 'src/verticals/finsaas/pages/dashboard.html',
+                finsaasFacturas: 'src/verticals/finsaas/pages/facturas.html',
+                finsaasCaja: 'src/verticals/finsaas/pages/caja.html',
+                finsaasContactos: 'src/verticals/finsaas/pages/contactos.html',
+                finsaasEmpresas: 'src/verticals/finsaas/pages/empresas.html',
+                finsaasTrimestres: 'src/verticals/finsaas/pages/trimestres.html',
+                finsaasGastosNuevo: 'src/verticals/finsaas/pages/gastos-nuevo.html',
+                finsaasDocumentos: 'src/verticals/finsaas/pages/documentos.html',
+                finsaasPlantillaFactura: 'src/verticals/finsaas/pages/plantilla-factura.html',
+                finsaasConfigFactura: 'src/verticals/finsaas/pages/configuracion-factura.html',
+
+                // Copiloto IA
+                finsaasCopilotoResumen: 'src/verticals/finsaas/pages/copiloto-resumen.html',
+                finsaasCopilotoChat: 'src/verticals/finsaas/pages/copiloto-chat.html',
+                finsaasCopilotoAlertas: 'src/verticals/finsaas/pages/copiloto-alertas.html',
+                finsaasCopilotoAjustes: 'src/verticals/finsaas/pages/copiloto-ajustes.html',
+
+                // Usuarios / Invitaciones
+                finsaasUsuarios: 'src/verticals/finsaas/pages/usuarios.html',
+                finsaasPermisos: 'src/verticals/finsaas/pages/permisos.html',
+                finsaasValidacionDeducible: 'src/verticals/finsaas/pages/validacion-deducible.html',
+                acceptInvite: 'accept-invite.html',
+
                 // Fidelización
                 managerTallerFidelizacion: 'manager-taller-fidelizacion.html',
                 card: 'card.html',
@@ -55,6 +89,8 @@ export default defineConfig({
                 cancel: 'cancel.html',
                 stripeSuccess: 'stripe-success.html',
                 stripeCancel: 'stripe-cancel.html',
+                // Billing
+                managerTallerBilling: 'manager-taller-billing.html',
             }
         }
     },

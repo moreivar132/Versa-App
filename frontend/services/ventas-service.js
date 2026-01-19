@@ -127,3 +127,31 @@ export async function anularVenta(idVenta) {
         throw error;
     }
 }
+
+/**
+ * Actualizar una venta existente
+ * @param {number} idVenta - ID de la venta a actualizar
+ * @param {Object} ventaData - Datos actualizados de la venta
+ * @returns {Promise<Object>}
+ */
+export async function updateVenta(idVenta, ventaData) {
+    const API_URL = `${API_BASE_URL}/api/ventas/${idVenta}`;
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify(ventaData)
+        });
+
+        const data = await response.json();
+        if (!response.ok || data.ok === false) {
+            throw new Error(data.error || 'Error al actualizar venta');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error actualizando venta:', error);
+        throw error;
+    }
+}

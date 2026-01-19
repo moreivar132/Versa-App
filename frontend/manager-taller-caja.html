@@ -41,7 +41,6 @@
             vertical-align: middle;
         }
 
-
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -282,6 +281,11 @@
         </aside>
 
         <main class="flex-1 overflow-y-auto bg-[#0b0d11]">
+            <!-- Selector de Sucursal Estandarizado -->
+            <div class="sucursal-selector-wrapper">
+                <div id="sucursal-selector-container"></div>
+            </div>
+
             <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
                 <header class="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-[#282e39]">
                     <img src="https://i.imgur.com/Mjw4or5.png" alt="Logo" class="h-6 w-auto">
@@ -340,8 +344,6 @@
                                 Caja</span><span id="info-id"
                                 class="text-white font-semibold text-sm font-mono">#-</span></div>
                     </div>
-
-
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 space-y-6">
                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -767,6 +769,7 @@
 
     <script type="module">
         import { requireAuth, clearSession, redirectToLogin, getToken } from '/auth.js';
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
 
         const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -799,9 +802,6 @@
 
         let currentTab = 'estado';
         let cajaData = null;
-        let currentSucursalId = null;
-        let puedeSeleccionarSucursal = false;
-
         // Posicionar tooltips en tablas (position: fixed)
         document.addEventListener('mouseover', function (e) {
             const trigger = e.target.closest('.tooltip-trigger');
@@ -817,55 +817,21 @@
 
         // Constante para la clave de localStorage
         const SUCURSAL_STORAGE_KEY = 'versa_selected_sucursal';
+        // Obtener la sucursal actual del localStorage (función local)
+        function getSucursalIdFromStorage() {
+            const saved = localStorage.getItem(SUCURSAL_STORAGE_KEY);
+            return saved ? parseInt(saved) : null;
+        }
+        // Variable para compatibilidad con código existente
+        let currentSucursalId = getSucursalIdFromStorage();
+
+        // Escuchar cambios de sucursal
+        window.addEventListener('sucursalChanged', (e) => {
+            currentSucursalId = e.detail.sucursalId;
+        });
 
         // Cargar sucursales disponibles y mostrar selector/label
-        async function loadSucursales() {
-            try {
-                const data = await apiGet('/api/caja/sucursales');
-                if (!data.ok) throw new Error(data.error);
-                puedeSeleccionarSucursal = data.puede_seleccionar;
-
-                // Verificar si hay una sucursal guardada en localStorage
-                const savedSucursal = localStorage.getItem(SUCURSAL_STORAGE_KEY);
-                // Usar la guardada si existe y es válida, sino usar la actual del backend
-                currentSucursalId = savedSucursal && data.sucursales.some(s => s.id == savedSucursal)
-                    ? parseInt(savedSucursal)
-                    : data.sucursal_actual;
-
-                const cajaStatus = document.getElementById('caja-status');
-                if (!cajaStatus) return;
-                const existingSucursal = document.getElementById('sucursal-container');
-                if (existingSucursal) existingSucursal.remove();
-                const sucursalContainer = document.createElement('div');
-                sucursalContainer.id = 'sucursal-container';
-                sucursalContainer.className = 'flex items-center gap-2 bg-[#111318] px-4 py-2 rounded-xl border border-[#282e39]';
-                if (data.puede_seleccionar && data.sucursales.length > 1) {
-                    let options = data.sucursales.map(function (s) {
-                        const label = s.tenant_nombre ? s.tenant_nombre + ' - ' + s.nombre : s.nombre;
-                        return '<option value="' + s.id + '"' + (s.id == currentSucursalId ? ' selected' : '') + '>' + label + '</option>';
-                    }).join('');
-                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><select id="sucursal-select" class="bg-transparent text-white text-sm font-medium border-none focus:outline-none cursor-pointer">' + options + '</select>';
-                    setTimeout(function () {
-                        const sel = document.getElementById('sucursal-select');
-                        if (sel) sel.addEventListener('change', function (e) {
-                            currentSucursalId = parseInt(e.target.value);
-                            // Guardar selección en localStorage para persistencia
-                            localStorage.setItem(SUCURSAL_STORAGE_KEY, currentSucursalId);
-                            reloadAllData();
-                        });
-                    }, 0);
-                } else {
-                    const sucursal = data.sucursales.find(function (s) { return s.id == currentSucursalId; }) || data.sucursales[0];
-                    const label = sucursal ? (sucursal.tenant_nombre ? sucursal.tenant_nombre + ' - ' + sucursal.nombre : sucursal.nombre) : 'Sin sucursal';
-                    sucursalContainer.innerHTML = '<span class="material-symbols-outlined text-[var(--brand-orange)]">store</span><span class="text-white font-medium text-sm">' + label + '</span>';
-                    // Si solo hay una sucursal, guardarla también
-                    if (sucursal) {
-                        localStorage.setItem(SUCURSAL_STORAGE_KEY, sucursal.id);
-                    }
-                }
-                cajaStatus.parentNode.insertBefore(sucursalContainer, cajaStatus);
-            } catch (e) { console.error('Error loading sucursales:', e); }
-        }
+        // Sucursal gestionada por initSucursalSelector
         function reloadAllData() { loadEstadoCaja(); if (currentTab !== 'estado') loadTabData(currentTab); }
 
         // Tab switching
@@ -1779,13 +1745,24 @@
             document.getElementById('user-name').textContent = user.nombre || 'Usuario';
             document.getElementById('user-role').textContent = user.rol ? user.rol.nombre : '-';
             document.getElementById('user-avatar').textContent = (user.nombre || 'U').substring(0, 2).toUpperCase();
-            await loadSucursales();
             loadEstadoCaja();
         })();
     </script>
 
     <!-- Sidebar Manager - Genera el sidebar dinámicamente -->
     <script type="module" src="./sidebar-manager.js"></script>
+    <script type="module">
+        import { initSucursalSelector, getCurrentSucursalId } from '/services/sucursal-selector.js';
+
+        (async () => {
+            await initSucursalSelector('sucursal-selector-container', {
+                onchange: async (nuevaSucursalId) => {
+                    console.log('Sucursal cambiada:', nuevaSucursalId);
+                    location.reload();
+                }
+            });
+        })();
+    </script>
 </body>
 
 </html>

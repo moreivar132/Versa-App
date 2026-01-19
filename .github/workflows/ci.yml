@@ -1,0 +1,44 @@
+name: VERSA CI
+
+on:
+  push:
+    branches: [ main, dev, develop ]
+  pull_request:
+    branches: [ main, dev, develop ]
+
+jobs:
+  quality-check:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Check DB Guardrails
+        run: cd backend && npm run check:db-guardrails
+        
+      - name: Run Tests (Backend)
+        run: npm test
+        env:
+          JWT_SECRET: test-jwt-secret-for-ci
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/versa_test
+
+      - name: Build Frontend
+        run: npm run build:frontend

@@ -230,6 +230,21 @@ function renderPermisosTable() {
                     <th>Acciones</th>
                 </tr>
             </thead>
+            <tbody>
+                ${state.permisos.map(permiso => `
+                    <tr>
+                        <td><strong>${escapeHTML(permiso.nombre)}</strong></td>
+                        <td>
+                            <div class="flex gap-2">
+                                <button class="btn-icon" onclick="editPermiso(${permiso.id})" title="Editar">✏️</button>
+                                <button class="btn-icon" onclick="deletePermiso(${permiso.id})" title="Eliminar">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    `;
     container.innerHTML = tableHTML;
 }
 
@@ -239,20 +254,20 @@ function renderTenantsTable() {
 
     if (state.tenants.length === 0) {
         container.innerHTML = `
-        < div class="empty-state" >
+        <div class="empty-state">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
                 <h3>No hay tenants registrados</h3>
                 <p>Crea el primer tenant usando el botón "Crear Tenant"</p>
-            </div >
+            </div>
         `;
         return;
     }
 
     const tableHTML = `
-        < table >
+        <table >
             <thead>
                 <tr>
                     <th>Nombre del Tenant</th>
@@ -281,7 +296,7 @@ function renderTenantsTable() {
                     `;
     }).join('')}
             </tbody>
-        </table >
+        </table>
         `;
 
     container.innerHTML = tableHTML;
@@ -293,7 +308,7 @@ function renderSucursalesTable() {
 
     if (state.sucursales.length === 0) {
         container.innerHTML = `
-        < div class="empty-state" >
+        <div class="empty-state">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                           d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -302,13 +317,13 @@ function renderSucursalesTable() {
                 </svg>
                 <h3>No hay sucursales registradas</h3>
                 <p>Crea la primera sucursal usando el botón "Crear Sucursal"</p>
-            </div >
+            </div>
         `;
         return;
     }
 
     const tableHTML = `
-        < table >
+        <table >
             <thead>
                 <tr>
                     <th>Nombre de la Sucursal</th>
@@ -334,7 +349,7 @@ function renderSucursalesTable() {
                     `;
     }).join('')}
             </tbody>
-        </table >
+        </table>
         `;
 
     container.innerHTML = tableHTML;
@@ -410,7 +425,7 @@ function populateTenantsSelects() {
         const currentValue = select.value;
         select.innerHTML = '<option value="">Seleccionar tenant...</option>' +
             state.tenants.map(tenant =>
-                `< option value = "${tenant.id}" > ${ escapeHTML(tenant.nombre) }</option > `
+                `<option value="${tenant.id}"> ${escapeHTML(tenant.nombre)}</option> `
             ).join('');
         if (currentValue) select.value = currentValue;
     });
@@ -422,12 +437,12 @@ function populateRolesSelects() {
 
     const currentValues = Array.from(select.selectedOptions).map(opt => opt.value);
     select.innerHTML = state.roles.map(role =>
-        `< option value = "${role.id}" > ${ escapeHTML(role.nombre) }</option > `
+        `<option value="${role.id}"> ${escapeHTML(role.nombre)}</option> `
     ).join('');
 
     // Restaurar selección
     currentValues.forEach(value => {
-        const option = select.querySelector(`option[value = "${value}"]`);
+        const option = select.querySelector(`option[value="${value}"]`);
         if (option) option.selected = true;
     });
 }
@@ -453,7 +468,7 @@ function populateSucursalesSelects() {
 
     select.disabled = false;
     select.innerHTML = filteredSucursales.map(sucursal =>
-        `< option value = "${sucursal.id}" > ${ escapeHTML(sucursal.nombre) }</option > `
+        `<option value="${sucursal.id}"> ${escapeHTML(sucursal.nombre)}</option> `
     ).join('');
 }
 
@@ -923,7 +938,7 @@ function initEventListeners() {
 
             // Actualizar contenido
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(`tab - ${ tab } `)?.classList.add('active');
+            document.getElementById(`tab - ${tab} `)?.classList.add('active');
 
             state.currentTab = tab;
         });
@@ -943,7 +958,7 @@ function initEventListeners() {
     document.getElementById('generatePasswordBtn')?.addEventListener('click', () => {
         const password = generateSecurePassword();
         document.getElementById('userPassword').value = password;
-        showToast(`Contraseña generada: ${ password } `, 'info');
+        showToast(`Contraseña generada: ${password} `, 'info');
     });
 
     // Cambio de tenant en formulario de usuario

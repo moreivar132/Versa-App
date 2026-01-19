@@ -38,13 +38,35 @@ export function getCurrentUser() {
 }
 
 export function redirectToLogin() {
-  if (window.location.pathname.endsWith('login.html')) return;
-  window.location.replace('login.html');
+  const path = window.location.pathname;
+  if (path.endsWith('login.html') || path.endsWith('login-finsaas.html') || path.endsWith('cliente-login.html')) return;
+
+  // Si venimos de un contexto finsaas, ir al login de finsaas
+  if (path.includes('finsaas')) {
+    window.location.replace('/login-finsaas.html');
+    return;
+  }
+
+  window.location.replace('/login.html');
 }
 
 export function logout() {
   clearSession();
   redirectToLogin();
+}
+
+export function redirectIfLoggedIn() {
+  const session = getSession();
+  if (session && session.token) {
+    // Redirigir según el tipo de usuario o página por defecto
+    // Si estamos en login-finsaas o contexto finsaas, ir al dashboard de finsaas
+    if (window.location.pathname.includes('finsaas')) {
+      window.location.href = '/src/verticals/finsaas/pages/dashboard.html';
+      return;
+    }
+    // Por defecto al manager
+    window.location.href = '/manager-taller-inicio.html';
+  }
 }
 
 export async function requireAuth() {

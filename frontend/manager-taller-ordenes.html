@@ -249,6 +249,39 @@
       gap: 40px;
     }
 
+    /* Inputs editables dentro de la tabla de items */
+    .items-table .form-input,
+    .items-table .form-select {
+      padding: 8px 10px;
+      font-size: 13px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+
+    .items-table .form-input:focus,
+    .items-table .form-select:focus {
+      border-color: var(--brand-orange);
+      box-shadow: 0 0 0 2px rgba(255, 95, 0, 0.15);
+    }
+
+    .items-table .edit-tipo {
+      padding: 8px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .items-table .order-row:hover {
+      background-color: rgba(255, 95, 0, 0.05);
+    }
+
+    .items-table .subtotal-cell {
+      color: var(--brand-orange);
+    }
+
     .summary-table {
       width: 100%;
     }
@@ -790,7 +823,9 @@
       <main class="flex-1 overflow-y-auto p-6 relative z-10">
         <!-- Selector de Sucursal Centrado -->
         <div class="flex justify-center mb-6">
-          <div id="sucursal-selector-container"></div>
+          <div class="sucursal-selector-wrapper">
+            <div id="sucursal-selector-container"></div>
+          </div>
         </div>
 
         <form id="order-form" class="manager-panel">
@@ -803,8 +838,8 @@
           <div class="form-header">
             <h2 class="form-main-title">Orden de Reparación</h2>
             <div class="form-header-actions">
-              <button type="button" class="btn btn-outline">Volver</button>
-              <button type="button" class="btn btn-secondary">Cancelar</button>
+              <button type="button" id="btn-volver" class="btn btn-outline">Volver</button>
+              <button type="button" id="btn-cancelar" class="btn btn-secondary">Cancelar</button>
               <button type="submit" class="btn">Confirmar</button>
             </div>
           </div>
@@ -833,14 +868,7 @@
                   <option value="">Seleccionar técnico</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="taller">Taller *</label>
-                <select id="taller" name="taller" class="form-select" required>
-                  <option value="" disabled selected>Seleccionar Taller</option>
-                  <option value="1">SUCURSAL PRINCIPAL</option>
-                  <option value="2">SUCURSAL CENTRO</option>
-                </select>
-              </div>
+              <!-- Campo Taller ELIMINADO - La sucursal se hereda del selector global superior -->
             </div>
           </div>
 
@@ -1308,8 +1336,8 @@
   </div>
 
   <script type="module">
-    import { loadSucursales } from '/loadSucursales.js';
-    import { searchTecnicos } from '/services/tecnicos-service.js';
+    import { initSucursalSelector, getCurrentSucursalId, onSucursalChange } from '/services/sucursal-selector.js';
+    import { getTecnicosBySucursal } from '/services/tecnicos-service.js';
     import { searchClientes } from '/services/clientes-service.js';
     import { searchVehiculos, createVehicle } from '/services/vehiculos-service.js';
     import { createClient } from '/services/clientes-service.js';
@@ -1322,6 +1350,8 @@
     let modoEdicion = false;
     let ordenIdEdicion = null;
 
+    // Variable global para la sucursal activa (del selector superior)
+    let sucursalActivaId = null;
 
     // --- LÓGICA DE INTERFAZ (UI) ---
     // (Sidebar, Menús, Pestañas - Sin backend)
@@ -1389,6 +1419,49 @@
 
       loadSucursales();
       loadTecnicosSelect();
+
+      // --- Botones Volver y Cancelar ---
+      const btnVolver = document.getElementById('btn-volver');
+      const btnCancelar = document.getElementById('btn-cancelar');
+
+      if (btnVolver) {
+        btnVolver.addEventListener('click', () => {
+          // Redirigir a la lista de órdenes
+          window.location.href = 'manager-taller-ordenes-lista.html';
+        });
+      }
+
+      if (btnCancelar) {
+        btnCancelar.addEventListener('click', () => {
+          // Confirmar antes de cancelar y limpiar el formulario
+          if (confirm('¿Estás seguro de que deseas cancelar? Se perderán todos los datos ingresados.')) {
+            const orderForm = document.getElementById('order-form');
+            if (orderForm) {
+              orderForm.reset();
+              // Limpiar campos ocultos
+              document.getElementById('id-cliente-hidden').value = '';
+              document.getElementById('id-vehiculo-hidden').value = '';
+              document.getElementById('id-tecnico-hidden').value = '';
+              document.getElementById('id-tipo-orden-hidden').value = '';
+              // Limpiar displays de info
+              document.getElementById('cliente-info').textContent = '';
+              document.getElementById('vehiculo-info').textContent = '';
+              // Limpiar lista de items
+              document.getElementById('order-items-list').innerHTML = '';
+              // Resetear resumen
+              document.getElementById('summary-repuestos').textContent = '0.00€';
+              document.getElementById('summary-mano-obra').textContent = '0.00€';
+              document.getElementById('summary-neto').textContent = '0.00€';
+              document.getElementById('summary-iva').textContent = '0.00€';
+              document.getElementById('summary-total').textContent = '0.00€';
+              // Deshabilitar selector de vehículo
+              document.getElementById('buscar-vehiculo').disabled = true;
+              document.getElementById('buscar-vehiculo').placeholder = 'Seleccione un cliente primero';
+              showToast('Formulario limpiado');
+            }
+          }
+        });
+      }
       // Variable global para almacenar los impuestos cargados del backend
       let impuestosDisponibles = [];
 
@@ -1446,10 +1519,8 @@
 
       loadImpuestos();
 
-      const tallerSelect = document.getElementById('taller');
-      tallerSelect.addEventListener('change', () => {
-        document.getElementById('id-taller-hidden').value = tallerSelect.value;
-      });
+      // La sucursal ahora se toma del selector global (sucursalActivaId)
+      // No hay campo "taller" en el formulario
 
       const tecnicoSelect = document.getElementById('tecnico-select');
       tecnicoSelect.addEventListener('change', () => {
@@ -1528,8 +1599,19 @@
         const submitBtn = document.querySelector('#order-form button[type="submit"]');
         if (submitBtn) submitBtn.textContent = 'Actualizar Orden';
 
-        // Cargar datos de la orden
-        cargarOrdenParaEdicion(ordenIdEdicion);
+        // Esperar a que los impuestos estén cargados antes de cargar la orden
+        // para que impuestosDisponibles esté poblado y podamos resolver idImpuesto
+        (async () => {
+          // Pequeña espera para asegurar que loadImpuestos() haya terminado
+          // ya que se llamó de forma asíncrona sin await
+          let intentos = 0;
+          while (impuestosDisponibles.length === 0 && intentos < 20) {
+            await new Promise(r => setTimeout(r, 100));
+            intentos++;
+          }
+          // Cargar datos de la orden
+          await cargarOrdenParaEdicion(ordenIdEdicion);
+        })();
       }
 
       // Función para cargar orden existente
@@ -1548,11 +1630,13 @@
           const pagos = data.pagos || [];
 
           // Rellenar campos de cabecera - usando verificaciones null-safe
+          // La sucursal de la orden se usa como sucursal activa para edición
           if (orden.id_sucursal) {
-            const tallerEl = document.getElementById('taller');
-            if (tallerEl) tallerEl.value = orden.id_sucursal;
+            sucursalActivaId = orden.id_sucursal;
             const tallerHidden = document.getElementById('id-taller-hidden');
             if (tallerHidden) tallerHidden.value = orden.id_sucursal;
+            // Recargar técnicos con la sucursal de la orden
+            await loadTecnicosSelect();
           }
 
           if (orden.id_mecanico) {
@@ -1632,17 +1716,48 @@
 
           // Cargar líneas de la orden
           lineas.forEach(linea => {
+            // Calcular porcentaje de IVA:
+            // 1. Primero intentar usar impuesto_porcentaje del JOIN
+            // 2. Si no existe, calcular desde el monto de IVA guardado y el subtotal
+            let ivaPorcentaje = 0;
+            let idImpuestoResuelto = linea.id_impuesto || null;
+
+            if (linea.impuesto_porcentaje !== null && linea.impuesto_porcentaje !== undefined) {
+              ivaPorcentaje = parseFloat(linea.impuesto_porcentaje);
+            } else if (linea.subtotal && parseFloat(linea.subtotal) > 0 && linea.iva) {
+              // Calcular porcentaje: (montoIva / subtotal) * 100
+              const montoIva = parseFloat(linea.iva) || 0;
+              const subtotal = parseFloat(linea.subtotal);
+              ivaPorcentaje = (montoIva / subtotal) * 100;
+              // Redondear a valores comunes de IVA (0, 4, 10, 21)
+              const valoresIvaComunes = [0, 4, 10, 21];
+              const ivaRedondeado = valoresIvaComunes.find(v => Math.abs(v - ivaPorcentaje) < 0.5);
+              if (ivaRedondeado !== undefined) {
+                ivaPorcentaje = ivaRedondeado;
+              }
+            }
+
+            // Si no tenemos id_impuesto, buscar el que corresponde al porcentaje calculado
+            if (!idImpuestoResuelto && ivaPorcentaje > 0 && impuestosDisponibles.length > 0) {
+              const impuestoEncontrado = impuestosDisponibles.find(imp =>
+                Math.abs(parseFloat(imp.porcentaje) - ivaPorcentaje) < 0.01
+              );
+              if (impuestoEncontrado && impuestoEncontrado.id) {
+                idImpuestoResuelto = impuestoEncontrado.id;
+              }
+            }
+
             orderItems.push({
               id: linea.id, // ID de la línea para actualizaciones
               idProducto: linea.id_producto ? parseInt(linea.id_producto) : null,
-              idImpuesto: linea.id_impuesto || null,
+              idImpuesto: idImpuestoResuelto,
               descripcion: linea.descripcion || linea.producto_nombre || 'Item',
               precio: parseFloat(linea.precio) || 0,
               cantidad: parseInt(linea.cantidad) || 1,
               tipoItem: linea.tipo_item || 'PRODUCTO',
               tipoItemLabel: linea.tipo_item === 'SERVICIO' ? 'Servicio' : 'Repuesto',
               descuento: parseFloat(linea.descuento) || 0,
-              iva: parseFloat(linea.impuesto_porcentaje) || 0
+              iva: ivaPorcentaje
             });
           });
 
@@ -1652,16 +1767,23 @@
 
           // Cargar pagos existentes (si los hay)
           if (pagos.length > 0) {
+            // Resetear array de pagos eliminados al cargar una orden
+            window.pagosEliminados = [];
             window.orderPayments = pagos.map(pago => ({
+              id: pago.id, // ID del pago existente para distinguir de nuevos
               idMedioPago: pago.id_medio_pago,
               codigoMedioPago: pago.medio_pago_codigo,
-              nombreMedioPago: pago.medio_pago_nombre,
-              importe: parseFloat(pago.importe),
+              metodoNombre: pago.medio_pago_nombre, // Usar metodoNombre para consistencia con pagos-logic.js
+              importe: parseFloat(pago.importe) || 0,
               referencia: pago.referencia
             }));
-            // Si existe función de renderizar pagos
+            // Renderizar pagos existentes
             if (typeof window.renderPayments === 'function') {
               window.renderPayments();
+            }
+            // Actualizar resumen de pagos (Total Pagado y Saldo Pendiente)
+            if (typeof window.updatePaymentSummary === 'function') {
+              window.updatePaymentSummary();
             }
           }
 
@@ -1723,19 +1845,42 @@
         const select = document.getElementById('tecnico-select');
         if (!select) return;
 
+        // Guardar técnico seleccionado previo
+        const prevValue = select.value;
+
         select.innerHTML = '<option value="">Seleccionar técnico</option>';
+
+        // Verificar que hay sucursal activa
+        if (!sucursalActivaId) {
+          console.warn('[loadTecnicosSelect] No hay sucursal activa, no se cargan técnicos');
+          const option = document.createElement('option');
+          option.textContent = 'Seleccione una sucursal primero';
+          option.disabled = true;
+          select.appendChild(option);
+          return;
+        }
+
         try {
-          const tecnicos = await searchTecnicos('');
+          console.log(`[loadTecnicosSelect] Cargando técnicos para sucursal ${sucursalActivaId}`);
+          const tecnicos = await getTecnicosBySucursal(sucursalActivaId);
+
           tecnicos.forEach(tec => {
             const option = document.createElement('option');
             option.value = tec.id;
             option.textContent = tec.nombre;
             select.appendChild(option);
           });
+
+          // Restaurar selección si el técnico sigue existiendo
+          if (prevValue && tecnicos.find(t => t.id == prevValue)) {
+            select.value = prevValue;
+          }
+
+          console.log(`[loadTecnicosSelect] ${tecnicos.length} técnicos cargados`);
         } catch (error) {
           console.error('Error cargando técnicos:', error);
           const option = document.createElement('option');
-          option.textContent = 'No se pudieron cargar técnicos';
+          option.textContent = 'Error cargando técnicos';
           select.appendChild(option);
         }
       }
@@ -1947,14 +2092,14 @@
         inputId: 'new-item-name',
         optionsId: 'product-options',
         searchFunction: async (query, params) => {
-          const sucursalId = params?.idSucursal || document.getElementById('taller').value;
+          const sucursalId = params?.idSucursal || sucursalActivaId;
           if (!sucursalId) {
-            showToast('Selecciona un taller para buscar en el inventario', true);
+            showToast('Selecciona una sucursal para buscar en el inventario', true);
             return [];
           }
           return searchInventario(query, sucursalId);
         },
-        getSearchParams: () => ({ idSucursal: document.getElementById('taller').value }),
+        getSearchParams: () => ({ idSucursal: sucursalActivaId }),
         renderOption: item => {
           const rawPrice = item.precio ?? item.precio_venta ?? item.precio_venta_bruto ?? 0;
           const price = parseFloat(rawPrice);
@@ -2006,7 +2151,9 @@
         const id = document.getElementById('new-item-id-hidden').value;
         const ivaSelect = document.getElementById('new-item-iva');
         const ivaPercentage = parseFloat(ivaSelect.value) || 0;
-        const ivaId = null; // Ya no usamos id de impuesto, solo porcentaje
+        // Obtener el ID del impuesto del data-id del option seleccionado
+        const selectedOption = ivaSelect.options[ivaSelect.selectedIndex];
+        const ivaId = selectedOption && selectedOption.dataset.id ? parseInt(selectedOption.dataset.id) : null;
 
         if (!name || price < 0) {
           showToast("Selecciona un item y precio válido.", true);
@@ -2046,16 +2193,11 @@
         orderItems.forEach((item, index) => {
           const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
 
-          // Badges para Tipo
-          const typeLabel = item.tipoItemLabel || (item.tipoItem === 'SERVICIO' ? 'Servicio' : 'Repuesto');
-          let typeBadge = '';
-          if (item.tipoItem === 'PRODUCTO') {
-            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-blue-900 text-blue-200 border border-blue-700">Repuesto</span>';
-          } else if (item.tipoItem === 'SERVICIO') {
-            typeBadge = '<span class="px-2 py-1 rounded text-xs font-semibold bg-orange-900 text-orange-200 border border-orange-700">Servicio</span>';
-          } else {
-            typeBadge = `<span class="px-2 py-1 rounded text-xs font-semibold bg-gray-800 text-gray-300 border border-gray-600">${typeLabel}</span>`;
-          }
+          // Generar opciones de Tipo
+          const tipoOptions = `
+            <option value="PRODUCTO" ${item.tipoItem === 'PRODUCTO' ? 'selected' : ''}>Repuesto</option>
+            <option value="SERVICIO" ${item.tipoItem === 'SERVICIO' ? 'selected' : ''}>Servicio</option>
+          `;
 
           // Generar opciones de IVA dinámicamente
           const itemIva = parseFloat(item.iva) || 0;
@@ -2064,7 +2206,7 @@
             ivaOptionsHtml = impuestosDisponibles.map(imp => {
               const impPct = parseFloat(imp.porcentaje);
               const isSelected = Math.abs(itemIva - impPct) < 0.01; // Comparación con tolerancia
-              return `<option value="${impPct}" ${isSelected ? 'selected' : ''}>${impPct}%</option>`;
+              return `<option value="${impPct}" data-id="${imp.id || ''}" ${isSelected ? 'selected' : ''}>${impPct}%</option>`;
             }).join('');
           } else {
             // Fallback si no hay impuestos cargados
@@ -2076,19 +2218,32 @@
           }
 
           const tr = document.createElement('tr');
+          tr.className = 'order-row';
           tr.innerHTML = `
-            <td>${item.descripcion}</td>
-            <td>${item.precio.toFixed(2)}€</td>
-            <td>${item.cantidad}</td>
-            <td>${typeBadge}</td>
-            <td>${(item.descuento || 0).toFixed(2)}€</td>
-            <td>${subtotal.toFixed(2)}€</td>
+            <td>
+              <input type="text" class="form-input edit-descripcion" data-index="${index}" value="${item.descripcion}" style="min-width: 150px;" />
+            </td>
+            <td>
+              <input type="number" class="form-input edit-precio" data-index="${index}" value="${item.precio.toFixed(2)}" step="0.01" min="0" style="width: 90px; text-align: right;" />
+            </td>
+            <td>
+              <input type="number" class="form-input edit-cantidad" data-index="${index}" value="${item.cantidad}" min="1" style="width: 70px; text-align: center;" />
+            </td>
+            <td>
+              <select class="form-select edit-tipo" data-index="${index}" style="min-width: 100px;">
+                ${tipoOptions}
+              </select>
+            </td>
+            <td>
+              <input type="number" class="form-input edit-descuento" data-index="${index}" value="${(item.descuento || 0).toFixed(2)}" step="0.01" min="0" style="width: 80px; text-align: right;" />
+            </td>
+            <td class="subtotal-cell" style="font-weight: 600;">${subtotal.toFixed(2)}€</td>
             <td>
               <select class="iva-select edit-iva-select" data-index="${index}">
                 ${ivaOptionsHtml}
               </select>
             </td>
-            <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold" data-index="${index}">&times;</button></td>
+            <td><button type="button" class="remove-item-btn text-red-500 hover:text-red-400 font-bold text-xl" data-index="${index}">&times;</button></td>
           `;
           tbody.appendChild(tr);
         });
@@ -2103,17 +2258,117 @@
         }
       });
 
-      // Event listener para cambiar el IVA de líneas ya agregadas
+      // Event listener para cambios en los campos editables de items
       document.getElementById('order-items-list').addEventListener('change', (e) => {
-        if (e.target.classList.contains('edit-iva-select')) {
+        const target = e.target;
+        const index = parseInt(target.dataset.index);
+
+        if (isNaN(index) || !orderItems[index]) return;
+
+        // Actualizar según el tipo de campo editado
+        if (target.classList.contains('edit-descripcion')) {
+          orderItems[index].descripcion = target.value;
+        } else if (target.classList.contains('edit-precio')) {
+          orderItems[index].precio = parseFloat(target.value) || 0;
+          updateSubtotalCell(index);
+          calculateNetTotals();
+        } else if (target.classList.contains('edit-cantidad')) {
+          orderItems[index].cantidad = parseInt(target.value) || 1;
+          updateSubtotalCell(index);
+          calculateNetTotals();
+        } else if (target.classList.contains('edit-tipo')) {
+          orderItems[index].tipoItem = target.value;
+          calculateNetTotals();
+        } else if (target.classList.contains('edit-descuento')) {
+          orderItems[index].descuento = parseFloat(target.value) || 0;
+          updateSubtotalCell(index);
+          calculateNetTotals();
+        } else if (target.classList.contains('edit-iva-select')) {
+          orderItems[index].iva = parseFloat(target.value) || 0;
+          calculateNetTotals();
+        }
+      });
+
+      // También escuchar 'input' para actualización en tiempo real
+      document.getElementById('order-items-list').addEventListener('input', (e) => {
+        const target = e.target;
+        const index = parseInt(target.dataset.index);
+
+        if (isNaN(index) || !orderItems[index]) return;
+
+        if (target.classList.contains('edit-precio') ||
+          target.classList.contains('edit-cantidad') ||
+          target.classList.contains('edit-descuento')) {
+
+          // Actualizar valores temporalmente para mostrar el subtotal correcto
+          if (target.classList.contains('edit-precio')) {
+            orderItems[index].precio = parseFloat(target.value) || 0;
+          } else if (target.classList.contains('edit-cantidad')) {
+            orderItems[index].cantidad = parseInt(target.value) || 1;
+          } else if (target.classList.contains('edit-descuento')) {
+            orderItems[index].descuento = parseFloat(target.value) || 0;
+          }
+
+          updateSubtotalCell(index);
+          calculateNetTotals();
+        }
+
+        // Cambio de Tipo (Repuesto/Servicio)
+        if (e.target.classList.contains('edit-tipo-select')) {
           const index = parseInt(e.target.dataset.index);
-          const newIva = parseFloat(e.target.value) || 0;
+          const newTipo = e.target.value;
           if (orderItems[index]) {
-            orderItems[index].iva = newIva;
+            orderItems[index].tipoItem = newTipo;
+            orderItems[index].tipoItemLabel = newTipo === 'SERVICIO' ? 'Servicio' : 'Repuesto';
             calculateNetTotals();
           }
         }
       });
+
+      // Event listener para editar precio, cantidad y bonificación (usa 'input' para actualización en tiempo real)
+      document.getElementById('order-items-list').addEventListener('input', (e) => {
+        const index = parseInt(e.target.dataset.index);
+        if (isNaN(index) || !orderItems[index]) return;
+
+        // Cambio de Precio
+        if (e.target.classList.contains('edit-precio-input')) {
+          const newPrecio = parseFloat(e.target.value) || 0;
+          orderItems[index].precio = newPrecio;
+          updateRowSubtotal(index);
+          calculateNetTotals();
+        }
+
+        // Cambio de Cantidad
+        if (e.target.classList.contains('edit-cantidad-input')) {
+          const newCantidad = parseInt(e.target.value) || 1;
+          orderItems[index].cantidad = Math.max(1, newCantidad);
+          updateRowSubtotal(index);
+          calculateNetTotals();
+        }
+
+        // Cambio de Bonificación
+        if (e.target.classList.contains('edit-bonif-input')) {
+          const newBonif = parseFloat(e.target.value) || 0;
+          orderItems[index].descuento = Math.max(0, newBonif);
+          updateRowSubtotal(index);
+          calculateNetTotals();
+        }
+      });
+
+      // Función auxiliar para actualizar la celda de subtotal
+      function updateSubtotalCell(index) {
+        const item = orderItems[index];
+        if (!item) return;
+
+        const subtotal = (item.precio * item.cantidad) - (item.descuento || 0);
+        const rows = document.getElementById('order-items-list').querySelectorAll('tr');
+        if (rows[index]) {
+          const subtotalCell = rows[index].querySelector('.subtotal-cell');
+          if (subtotalCell) {
+            subtotalCell.textContent = subtotal.toFixed(2) + '€';
+          }
+        }
+      }
 
       // --- CÁLCULOS FINANCIEROS ---
       function calculateNetTotals() {
@@ -2189,22 +2444,26 @@
       orderForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Asignar manualmente los valores de los selects si no se han seteado por cambio
-        const idTaller = document.getElementById('taller').value;
-        document.getElementById('id-taller-hidden').value = idTaller;
+        // Usar sucursal activa del selector global
+        if (!sucursalActivaId) {
+          showToast('Debes seleccionar una sucursal.', true);
+          return;
+        }
+        document.getElementById('id-taller-hidden').value = sucursalActivaId;
 
         const idTipoOrden = document.getElementById('concepto').value;
         document.getElementById('id-tipo-orden-hidden').value = idTipoOrden;
 
         const idCliente = document.getElementById('id-cliente-hidden').value;
         const idVehiculo = document.getElementById('id-vehiculo-hidden').value;
+        const idTecnico = document.getElementById('id-tecnico-hidden').value;
 
-        if (!idTaller) {
-          showToast('Debes seleccionar un taller.', true);
-          return;
-        }
         if (!idCliente) {
           showToast('Debes seleccionar un cliente.', true);
+          return;
+        }
+        if (!idTecnico) {
+          showToast('Debes seleccionar un técnico.', true);
           return;
         }
         if (orderItems.length === 0) {
@@ -2212,11 +2471,18 @@
           return;
         }
 
+        // Validación de kilometraje obligatorio
         const kmValue = document.getElementById('kilometraje').value;
-        const kmNumber = kmValue !== '' ? Number(kmValue) : 0;
-
-        if (Number.isNaN(kmNumber) || kmNumber < 0) {
-          return showToast('Kilometraje inválido', true);
+        if (!kmValue || kmValue === '') {
+          showToast('Los kilómetros son obligatorios para registrar la orden.', true);
+          document.getElementById('kilometraje').focus();
+          return;
+        }
+        const kmNumber = Number(kmValue);
+        if (Number.isNaN(kmNumber) || kmNumber < 1) {
+          showToast('El kilometraje debe ser un número mayor o igual a 1.', true);
+          document.getElementById('kilometraje').focus();
+          return;
         }
 
         const lineasPayload = orderItems.map(item => ({
@@ -2233,7 +2499,7 @@
 
         // RECOPILACIÓN DE DATOS (LISTO PARA API)
         const payload = {
-          idSucursal: Number(document.getElementById('taller').value),
+          idSucursal: Number(sucursalActivaId),
           idCliente: Number(document.getElementById('id-cliente-hidden').value),
           idVehiculo: Number(document.getElementById('id-vehiculo-hidden').value),
           idMecanico: Number(document.getElementById('id-tecnico-hidden').value),
@@ -2243,16 +2509,22 @@
           descripcion: document.getElementById('observaciones').value || '',
           comentarioInterno: document.getElementById('comentario-interno').value || '',
           lineas: lineasPayload,
-          pagos: (window.orderPayments || []).map(p => ({
-            idMedioPago: p.idMedioPago,
-            codigoMedioPago: p.codigoMedioPago,
-            importe: p.importe,
-            referencia: p.referencia || null,
-            idCaja: p.idCaja || 1
-          }))
+          pagos: (window.orderPayments || [])
+            .filter(p => !p.id) // Solo enviar pagos NUEVOS (sin id del backend)
+            .map(p => ({
+              idMedioPago: p.idMedioPago,
+              codigoMedioPago: p.codigoMedioPago,
+              importe: p.importe,
+              referencia: p.referencia || null,
+              idCaja: p.idCaja || 1
+            })),
+          pagosEliminados: window.pagosEliminados || [] // IDs de pagos a eliminar
         };
 
         console.log("Payload JSON de la Orden:", payload);
+        console.log("[DEBUG] orderPayments completo:", window.orderPayments);
+        console.log("[DEBUG] Pagos a enviar (nuevos sin id):", payload.pagos);
+        console.log("[DEBUG] Pagos a eliminar:", payload.pagosEliminados);
 
         try {
           let response;
@@ -2267,6 +2539,8 @@
             console.log("--- ORDEN CREADA ---", response);
             showToast('Orden creada con éxito');
           }
+          // Limpiar array de pagos eliminados después de guardar
+          window.pagosEliminados = [];
           showSuccessModal();
         } catch (error) {
           console.error('Error al guardar orden', error);
@@ -2376,26 +2650,21 @@
     // Inicializar selector de sucursal
     (async () => {
       const sucursalId = await initSucursalSelector('sucursal-selector-container', {
-        onchange: (sucursalId) => {
-          // Actualizar el selector de taller en el formulario
-          const tallerSelect = document.getElementById('taller');
-          if (tallerSelect && sucursalId) {
-            tallerSelect.value = sucursalId;
-            tallerSelect.dispatchEvent(new Event('change'));
-          }
+        onchange: async (newSucursalId) => {
+          // Actualizar la variable global de sucursal activa
+          sucursalActivaId = newSucursalId;
+          console.log('[Orden] Sucursal cambiada via selector:', sucursalActivaId);
+          // Recargar técnicos para la nueva sucursal
+          await loadTecnicosSelect();
         }
       });
 
-      // Pre-seleccionar el taller si hay sucursal guardada
+      // Guardar sucursal inicial
       if (sucursalId) {
-        const tallerSelect = document.getElementById('taller');
-        if (tallerSelect) {
-          // Esperar a que se carguen las opciones
-          setTimeout(() => {
-            tallerSelect.value = sucursalId;
-            tallerSelect.dispatchEvent(new Event('change'));
-          }, 500);
-        }
+        sucursalActivaId = sucursalId;
+        console.log('[Orden] Sucursal inicial:', sucursalActivaId);
+        // Cargar técnicos con la sucursal inicial
+        await loadTecnicosSelect();
       }
     })();
   </script>

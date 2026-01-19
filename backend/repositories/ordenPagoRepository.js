@@ -1,27 +1,27 @@
-const pool = require('../db');
-
 class OrdenPagoRepository {
     /**
      * Verifica si una orden existe por su ID.
+     * @param {object} db - Conexión a la base de datos
      * @param {number} idOrden 
      * @returns {Promise<boolean>}
      */
-    async existeOrden(idOrden) {
-        const result = await pool.query('SELECT 1 FROM orden WHERE id = $1', [idOrden]);
+    async existeOrden(db, idOrden) {
+        const result = await db.query('SELECT 1 FROM orden WHERE id = $1', [idOrden]);
         return result.rowCount > 0;
     }
 
-    async obtenerDatosOrden(idOrden) {
-        const result = await pool.query('SELECT id, id_sucursal FROM orden WHERE id = $1', [idOrden]);
+    async obtenerDatosOrden(db, idOrden) {
+        const result = await db.query('SELECT id, id_sucursal FROM orden WHERE id = $1', [idOrden]);
         return result.rows[0];
     }
 
     /**
      * Obtiene un medio de pago por su ID o por su Código.
+     * @param {object} db - Conexión a la base de datos
      * @param {string|number} identificador 
      * @returns {Promise<object|null>}
      */
-    async obtenerMedioPagoPorCodigoOId(identificador) {
+    async obtenerMedioPagoPorCodigoOId(db, identificador) {
         let query;
         let values;
 
@@ -35,27 +35,28 @@ class OrdenPagoRepository {
             values = [identificador];
         }
 
-        const result = await pool.query(query, values);
+        const result = await db.query(query, values);
         return result.rows[0] || null;
     }
 
     /**
      * Verifica si una caja existe por su ID.
+     * @param {object} db - Conexión a la base de datos
      * @param {number} idCaja 
      * @returns {Promise<boolean>}
      */
-    async existeCaja(idCaja) {
-        const result = await pool.query('SELECT 1 FROM caja WHERE id = $1', [idCaja]);
+    async existeCaja(db, idCaja) {
+        const result = await db.query('SELECT 1 FROM caja WHERE id = $1', [idCaja]);
         return result.rowCount > 0;
     }
 
     /**
      * Inserta un nuevo registro en ordenpago.
+     * @param {object} db - Conexión a la base de datos
      * @param {object} pagoData 
-     * @param {object} [client] - Cliente de base de datos opcional para transacciones
      * @returns {Promise<object>}
      */
-    async insertarPagoOrden(pagoData, client = pool) {
+    async insertarPagoOrden(db, pagoData) {
         const { id_orden, id_medio_pago, importe, referencia, id_caja, created_by } = pagoData;
 
         const query = `
@@ -75,16 +76,17 @@ class OrdenPagoRepository {
 
         const values = [id_orden, id_medio_pago, importe, referencia, id_caja, created_by];
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         return result.rows[0];
     }
 
     /**
      * Obtiene todos los pagos de una orden.
+     * @param {object} db - Conexión a la base de datos
      * @param {number} idOrden 
      * @returns {Promise<Array>}
      */
-    async obtenerPagosPorOrden(idOrden) {
+    async obtenerPagosPorOrden(db, idOrden) {
         const query = `
             SELECT op.*, mp.nombre as medio_pago_nombre, mp.codigo as medio_pago_codigo
             FROM ordenpago op
@@ -92,17 +94,34 @@ class OrdenPagoRepository {
             WHERE op.id_orden = $1
             ORDER BY op.created_at DESC
         `;
-        const result = await pool.query(query, [idOrden]);
+        const result = await db.query(query, [idOrden]);
         return result.rows;
     }
 
     /**
+     * Elimina un pago de una orden.
+     * @param {object} db - Conexión a la base de datos
+     * @param {number} idPago - ID del pago a eliminar
+     * @returns {Promise<object>} - Pago eliminado
+     */
+    async eliminarPago(db, idPago) {
+        const query = `
+            DELETE FROM ordenpago 
+            WHERE id = $1
+            RETURNING *
+        `;
+        const result = await db.query(query, [idPago]);
+        return result.rows[0];
+    }
+
+    /**
      * Obtiene todos los medios de pago disponibles.
+     * @param {object} db - Conexión a la base de datos
      * @returns {Promise<Array>}
      */
-    async obtenerTodosMediosPago() {
+    async obtenerTodosMediosPago(db) {
         const query = 'SELECT * FROM mediopago ORDER BY id ASC';
-        const result = await pool.query(query);
+        const result = await db.query(query);
         return result.rows;
     }
 }

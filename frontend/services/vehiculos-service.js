@@ -10,7 +10,7 @@ export async function searchVehiculos(query, clientId = null) {
         if (!sessionRaw) throw new Error("No autenticado");
         const token = JSON.parse(sessionRaw).token;
 
-        const url = new URL(API_URL);
+        const url = new URL(API_URL, window.location.origin);
         if (query) url.searchParams.set('q', query);
         if (clientId) url.searchParams.set('id_cliente', clientId);
 
