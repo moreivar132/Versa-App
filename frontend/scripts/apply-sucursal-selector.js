@@ -80,7 +80,7 @@ function procesarPagina(filename) {
     // 7. Reemplazar referencias a currentSucursalId (si aún existen)
     // Esto es más delicado, solo lo hacemos en contextos seguros
     content = content.replace(/if \(currentSucursalId\)/g, 'const _sucId = getCurrentSucursalId(); if (_sucId)');
-    content = content.replace(/currentSucursalId(?=[,\s\)])/g, 'getCurrentSucursalId()');
+    content = content.replace(/currentSucursalId(?=[,\s)])/g, 'getCurrentSucursalId()');
 
     if (cambios > 0) {
         fs.writeFileSync(filepath, content, 'utf8');
