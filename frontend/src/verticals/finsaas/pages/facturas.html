@@ -1064,7 +1064,8 @@
         };
 
         // --- INIT ---
-        document.addEventListener('DOMContentLoaded', async () => {
+        // --- INIT ---
+        async function init() {
             await requireAuth();
             const layout = new FinSaaSLayout('app-shell');
             layout.init();
@@ -1078,7 +1079,9 @@
             document.getElementById('search-input').addEventListener('input', debounce(() => loadInvoices(0), 400));
             document.getElementById('btn-prev').addEventListener('click', () => loadInvoices(currentPage - 1));
             document.getElementById('btn-next').addEventListener('click', () => loadInvoices(currentPage + 1));
-        });
+        }
+
+        init();
 
         // --- CSV Export Logic ---
         window.downloadCSV = function () {

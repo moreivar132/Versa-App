@@ -371,6 +371,10 @@ class ContabilidadService {
     async getGastosPorCategoria(ctx, empresaId, fechaDesde, fechaHasta) {
         return repo.getGastosPorCategoria(ctx, empresaId, fechaDesde, fechaHasta);
     }
+
+    async getEvolucionFinanciera(ctx, empresaId) {
+        return repo.getEvolucionFinanciera(ctx, empresaId);
+    }
 }
 
 module.exports = new ContabilidadService();

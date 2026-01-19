@@ -91,12 +91,14 @@
         import { requireAuth } from '/auth.js';
 
         // Load settings
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function init() {
             await requireAuth();
             const config = JSON.parse(localStorage.getItem('finsaas_invoice_config') || '{}');
             if (config.color) document.getElementById('cfg-color').value = config.color;
             if (config.footerText) document.getElementById('cfg-footer').value = config.footerText;
-        });
+        }
+
+        init();
 
         window.saveConfig = function (e) {
             e.preventDefault();

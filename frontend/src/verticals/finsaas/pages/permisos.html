@@ -213,6 +213,8 @@
             loadUsers();
         }
 
+        init();
+
         async function loadRoles() {
             try {
                 const res = await fetchWithAuth('/api/finsaas/admin/rbac/roles');
@@ -409,7 +411,7 @@
             }
         };
 
-        document.addEventListener('DOMContentLoaded', init);
+
     </script>
 </body>
 

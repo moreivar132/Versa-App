@@ -58,9 +58,12 @@ async function list(req, res) {
                         estado: 'ABIERTO',
                         base_ingresos: resumen.ingresos?.base || 0,
                         iva_repercutido: resumen.ingresos?.iva || 0,
+                        retenciones_ingresos: resumen.ingresos?.retenciones || 0,
                         base_gastos: resumen.gastos?.base || 0,
                         iva_soportado: resumen.gastos?.iva || 0,
+                        retenciones_gastos: resumen.gastos?.retenciones || 0,
                         resultado_iva: resumen.resultado || 0,
+                        resultado_retenciones: resumen.resultado_retenciones || 0,
                         closed_at: null,
                         is_current: q === currentQuarter
                     });
