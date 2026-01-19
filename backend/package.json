@@ -21,6 +21,7 @@
     "migrate:up": "knex migrate:up",
     "migrate:down": "knex migrate:down",
     "seed:run": "knex seed:run",
+    "db:verify": "knex migrate:status && echo '✅ DB connection verified'",
     "check:db-guardrails": "node scripts/check-no-pool-query.js"
   },
   "repository": {

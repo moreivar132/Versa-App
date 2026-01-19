@@ -953,6 +953,7 @@
                 fecha_emision: document.getElementById('f-fecha-emision').value,
                 fecha_vencimiento: document.getElementById('f-fecha-vencimiento').value || null,
                 id_contacto: document.getElementById('f-contacto').value || null,
+                id_empresa: currentEmpresaId || null,  // <-- Critical: assign invoice to selected empresa
                 base_imponible: baseTotal,
                 iva_porcentaje: avgIvaPct,
                 iva_importe: Math.round(ivaTotal * 100) / 100,

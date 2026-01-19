@@ -65,7 +65,7 @@ async function listUsers(req, res) {
 
     } catch (error) {
         console.error('[FinSaaSRBAC] listUsers error:', error);
-        res.status(500).json({ error: 'Error al obtener usuarios' });
+        res.status(500).json({ error: 'Error al obtener usuarios', details: error.message });
     }
 }
 
@@ -91,7 +91,7 @@ async function listRoles(req, res) {
 
     } catch (error) {
         console.error('[FinSaaSRBAC] listRoles error:', error);
-        res.status(500).json({ error: 'Error al obtener roles' });
+        res.status(500).json({ error: 'Error al obtener roles', details: error.message });
     }
 }
 

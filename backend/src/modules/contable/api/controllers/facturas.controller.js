@@ -114,10 +114,14 @@ async function create(req, res) {
             return res.status(400).json({ ok: false, error: 'Tipo de factura inválido' });
         }
 
-        // Asignar empresa si existe en contexto
+        // Asignar empresa: priorizar contexto, fallback a body
         if (ctx.empresaId) {
             data.id_empresa = ctx.empresaId;
+        } else if (!data.id_empresa) {
+            // If no empresa in context or body, log warning (optional empresa mode)
+            console.warn('[Facturas] No empresa context - invoice will have null id_empresa');
         }
+        // Note: if data.id_empresa is already set from body, keep it
 
         if (!data.numero_factura) {
             return res.status(400).json({ ok: false, error: 'Número de factura requerido' });
