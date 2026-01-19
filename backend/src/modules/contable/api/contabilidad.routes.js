@@ -240,6 +240,11 @@ router.get('/reports/gastos-categoria',
     dashboardController.getGastosPorCategoria
 );
 
+router.get('/reports/evolucion',
+    requirePermission('contabilidad.read'),
+    dashboardController.getEvolucionFinanciera
+);
+
 // ===================================================================
 // EMPRESAS (Multi-Tenant)
 // ===================================================================

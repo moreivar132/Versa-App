@@ -39,6 +39,8 @@
 
     <link href="/src/verticals/finsaas/layout/FinSaaSLayout.css" rel="stylesheet" />
 
+    <!-- Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body
@@ -111,7 +113,9 @@
                         <div class="p-2 bg-yellow-500/10 rounded-lg">
                             <span class="material-symbols-outlined text-yellow-500">pending_actions</span>
                         </div>
-                        <span class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-full">4
+                        <span
+                            class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-full text-center"
+                            id="stat-alerts-count">4
                             Alertas</span>
                     </div>
                     <p class="text-sm font-medium text-gray-500 dark:text-gray-400">IVA Estimado</p>
@@ -127,18 +131,18 @@
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="font-bold text-lg">Evolución Financiera</h3>
                         <div class="flex gap-2">
-                            <button
-                                class="px-3 py-1 text-xs font-bold bg-gray-100 dark:bg-surface-dark-light rounded-lg">Semana</button>
-                            <button
-                                class="px-3 py-1 text-xs font-bold bg-primary text-background-dark rounded-lg">Mes</button>
+                            <span class="text-xs text-slate-400">Últimos 6 meses</span>
                         </div>
                     </div>
-                    <!-- Placeholder for Chart -->
-                    <div
-                        class="flex-1 bg-gray-50 dark:bg-surface-dark-light/30 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center">
-                        <div class="text-center">
-                            <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">monitoring</span>
-                            <p class="text-sm text-gray-500">Gráfico de ingresos vs gastos en desarrollo</p>
+                    <div class="flex-1 relative min-h-[300px]">
+                        <canvas id="evolutionChart"></canvas>
+                        <div id="chart-loader"
+                            class="absolute inset-0 flex items-center justify-center bg-surface-dark/50 rounded-xl z-20">
+                            <div class="text-center">
+                                <span
+                                    class="material-symbols-outlined text-4xl text-primary animate-spin mb-2">refresh</span>
+                                <p class="text-xs text-gray-400">Cargando gráfico...</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -267,7 +271,7 @@
                     if (currentEmpresaId) {
                         loadDashboardStats();
                     }
-                    
+
                     select.addEventListener('change', (e) => {
                         currentEmpresaId = e.target.value;
                         if (currentEmpresaId) {
@@ -286,6 +290,114 @@
             }
         }
 
+        let evolutionChart = null;
+
+        async function loadEvolutionChart() {
+            const chartEl = document.getElementById('evolutionChart');
+            const loader = document.getElementById('chart-loader');
+            if (!chartEl) return;
+
+            try {
+                const res = await apiGet('/api/contabilidad/reports/evolucion');
+                if (!res.ok) throw new Error('Failed to fetch evolution');
+
+                // Process data for Chart.js
+                // Group by mes, separate Ingresos/Egresos
+                const rawData = res.data || [];
+                const months = [...new Set(rawData.map(d => d.mes_nombre))];
+
+                const ingresosByMonth = {};
+                const egresosByMonth = {};
+
+                rawData.forEach(d => {
+                    if (d.tipo === 'INGRESO') ingresosByMonth[d.mes_nombre] = parseFloat(d.total);
+                    else egresosByMonth[d.mes_nombre] = parseFloat(d.total);
+                });
+
+                const datasetIngresos = months.map(m => ingresosByMonth[m] || 0);
+                const datasetEgresos = months.map(m => egresosByMonth[m] || 0);
+
+                if (evolutionChart) {
+                    evolutionChart.destroy();
+                }
+
+                evolutionChart = new Chart(chartEl, {
+                    type: 'line',
+                    data: {
+                        labels: months.map(m => m.trim()),
+                        datasets: [
+                            {
+                                label: 'Ingresos',
+                                data: datasetIngresos,
+                                borderColor: '#46ec13',
+                                backgroundColor: 'rgba(70, 236, 19, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#46ec13'
+                            },
+                            {
+                                label: 'Gastos',
+                                data: datasetEgresos,
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointRadius: 4,
+                                pointBackgroundColor: '#ef4444'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: { color: '#9ca3af', font: { family: 'Manrope', weight: 'bold' }, usePointStyle: true }
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: '#1a2c15',
+                                titleColor: '#fff',
+                                bodyColor: '#9ca3af',
+                                borderColor: '#25381e',
+                                borderWidth: 1,
+                                padding: 12,
+                                displayColors: true,
+                                callbacks: {
+                                    label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#6b7280', font: { size: 10 } }
+                            },
+                            y: {
+                                grid: { color: 'rgba(75, 85, 99, 0.1)' },
+                                ticks: {
+                                    color: '#6b7280',
+                                    font: { size: 10 },
+                                    callback: (value) => value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value
+                                }
+                            }
+                        }
+                    }
+                });
+
+                loader.classList.add('hidden');
+            } catch (e) {
+                console.error('Error loading evolution chart:', e);
+                loader.innerHTML = '<p class="text-xs text-red-400">Error al cargar datos</p>';
+            }
+        }
+
         async function loadDashboardStats() {
             if (!currentEmpresaId) {
                 document.getElementById('stat-ingresos').textContent = '-- €';
@@ -297,6 +409,9 @@
             }
 
             try {
+                // Load parallelly
+                loadEvolutionChart();
+
                 // Fetch real stats from API
                 const res = await apiGet('/api/contabilidad/dashboard');
 
@@ -311,7 +426,9 @@
 
                     // Resultado = Ingresos - Gastos
                     const resultado = (data.ingreso_mensual || 0) - (data.gasto_mensual || 0);
-                    document.getElementById('stat-resultado').textContent = formatCurrency(resultado);
+                    const resEl = document.getElementById('stat-resultado');
+                    resEl.textContent = formatCurrency(resultado);
+                    resEl.className = `text-2xl font-bold mt-1 ${resultado >= 0 ? 'text-green-500' : 'text-red-500'}`;
 
                     // IVA del trimestre
                     const ivaEstimado = data.iva_trimestre?.resultado || 0;
@@ -319,8 +436,12 @@
 
                     // Update badges with counts if available
                     if (data.vencidas?.count > 0) {
-                        const badge = document.querySelector('#stat-iva').closest('div').querySelector('span.text-yellow-500');
-                        if (badge) badge.textContent = `${data.vencidas.count} Vencidas`;
+                        const alertBadge = document.getElementById('stat-alerts-count');
+                        if (alertBadge) {
+                            alertBadge.textContent = `${data.vencidas.count} Vencidas`;
+                            alertBadge.classList.replace('text-yellow-500', 'text-red-500');
+                            alertBadge.classList.replace('bg-yellow-500/10', 'bg-red-500/10');
+                        }
                     }
                 }
 
@@ -394,16 +515,19 @@
             } catch (e) { }
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function init() {
             session = await requireAuth();
             if (session) {
-                document.getElementById('welcome-message').textContent = `Hola, ${session.nombre}. Aquí tienes un resumen de hoy.`;
+                const welcomeEl = document.getElementById('welcome-message');
+                if (welcomeEl) welcomeEl.textContent = `Hola, ${session.nombre}. Aquí tienes un resumen de hoy.`;
             }
             const layout = new FinSaaSLayout('app-shell');
             layout.init();
-            loadEmpresas();
+            await loadEmpresas();
             checkBankingStatus();
-        });
+        }
+
+        init();
 
     </script>
 </body>

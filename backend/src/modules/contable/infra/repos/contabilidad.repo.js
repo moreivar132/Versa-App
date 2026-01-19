@@ -765,6 +765,7 @@ class ContabilidadRepository {
                 COUNT(*) as cantidad,
                 COALESCE(SUM(base_imponible), 0) as base_total,
                 COALESCE(SUM(iva_importe), 0) as iva_total,
+                COALESCE(SUM(retencion_importe), 0) as retencion_total,
                 COALESCE(SUM(total), 0) as total_total
             FROM contabilidad_factura
             WHERE id_tenant = $1 
@@ -784,14 +785,15 @@ class ContabilidadRepository {
 
         const result = await db.query(query, params);
 
-        let ingresos = { cantidad: 0, base: 0, iva: 0, total: 0 };
-        let gastos = { cantidad: 0, base: 0, iva: 0, total: 0 };
+        let ingresos = { cantidad: 0, base: 0, iva: 0, retenciones: 0, total: 0 };
+        let gastos = { cantidad: 0, base: 0, iva: 0, retenciones: 0, total: 0 };
 
         for (const row of result.rows) {
             const data = {
                 cantidad: parseInt(row.cantidad),
                 base: parseFloat(row.base_total),
                 iva: parseFloat(row.iva_total),
+                retenciones: parseFloat(row.retencion_total),
                 total: parseFloat(row.total_total)
             };
 
@@ -808,7 +810,10 @@ class ContabilidadRepository {
             gastos,
             iva_repercutido: ingresos.iva,
             iva_soportado: gastos.iva,
-            resultado: ingresos.iva - gastos.iva
+            retenciones_ingresos: ingresos.retenciones,
+            retenciones_gastos: gastos.retenciones,
+            resultado: ingresos.iva - gastos.iva,
+            resultado_retenciones: ingresos.retenciones - gastos.retenciones
         };
     }
 
@@ -953,6 +958,30 @@ class ContabilidadRepository {
                    ORDER BY total DESC`;
 
         const result = await db.query(query, params);
+        return result.rows;
+    }
+
+    /**
+     * Obtiene evolución de ingresos y gastos (últimos 6 meses)
+     */
+    async getEvolucionFinanciera(ctx, empresaId) {
+        const db = getTenantDb(ctx);
+        const query = `
+            SELECT 
+                TO_CHAR(fecha_devengo, 'Month') as mes_nombre,
+                TO_CHAR(fecha_devengo, 'YYYY-MM') as mes,
+                tipo,
+                COALESCE(SUM(total), 0) as total
+            FROM contabilidad_factura
+            WHERE id_tenant = $1 
+              AND id_empresa = $2
+              AND fecha_devengo >= CURRENT_DATE - INTERVAL '6 months'
+              AND deleted_at IS NULL
+              AND estado != 'ANULADA'
+            GROUP BY mes, mes_nombre, tipo
+            ORDER BY mes ASC
+        `;
+        const result = await db.query(query, [ctx.tenantId, empresaId]);
         return result.rows;
     }
 }

@@ -426,7 +426,7 @@
         }
 
         // Init
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function init() {
             session = await requireAuth();
             const layout = new FinSaaSLayout('app-shell');
             layout.init();
@@ -453,9 +453,11 @@
                 return;
             }
 
-            loadInvites();
-            loadEmpresas();
-        });
+            await loadInvites();
+            await loadEmpresas();
+        }
+
+        init();
     </script>
 </body>
 

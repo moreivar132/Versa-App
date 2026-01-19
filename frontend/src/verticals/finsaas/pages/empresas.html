@@ -645,12 +645,14 @@
             } catch (e) { alert('Error: ' + e.message); }
         };
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function init() {
             await requireAuth();
             const layout = new FinSaaSLayout('app-shell');
             layout.init();
             loadEmpresas();
-        });
+        }
+
+        init();
 
     </script>
 </body>

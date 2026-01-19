@@ -587,7 +587,7 @@
             } catch (e) { }
         };
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function init() {
             await requireAuth();
             const layout = new FinSaaSLayout('app-shell');
             layout.init();
@@ -597,7 +597,9 @@
             document.getElementById('search-input').addEventListener('input', debounce(() => loadContactos(0), 300));
             document.getElementById('btn-prev').addEventListener('click', () => loadContactos(currentPage - 1));
             document.getElementById('btn-next').addEventListener('click', () => loadContactos(currentPage + 1));
-        });
+        }
+
+        init();
 
     </script>
 </body>
