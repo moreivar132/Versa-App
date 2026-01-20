@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Importar Movimientos - FinSaaS</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#46ec13",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#142210",
+                        "surface-dark": "#1a2c15",
+                        "surface-dark-light": "#25381e",
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <script src="/guard.js"></script>
+    <style>
+        ::-webkit-scrollbar-thumb:hover {
+            background: #46ec13;
+        }
+    </style>
+</head>
+
+<body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden">
+    <div id="app-shell" class="flex h-screen w-full overflow-hidden">
+        <!-- Main Content (Simplified for Layout Injection) -->
+        <div class="max-w-4xl mx-auto flex flex-col gap-8 w-full">
+            <!-- Header -->
+            <div class="flex flex-col gap-2">
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Importar Movimientos
+                </h1>
+                <p class="text-gray-500">Sube tus extractos bancarios manualmente para conciliar tus cuentas.</p>
+            </div>
+
+            <!-- Supported Formats Info -->
+            <div class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6 flex gap-4">
+                <div class="p-2 bg-blue-500/10 rounded-lg h-fit">
+                    <span class="material-symbols-outlined text-blue-500">info</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-blue-500 mb-2">Formatos Soportados</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <p class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">csv</span> Caixa (CSV)
+                                </p>
+                                <ul class="list-disc list-inside text-gray-400 space-y-1 ml-1">
+                                    <li>Separador: Punto y coma (;)</li>
+                                    <li>Columnas: <code class="bg-surface-dark-light px-1 rounded">Fecha</code>, <code
+                                            class="bg-surface-dark-light px-1 rounded">Concepto</code>, <code
+                                            class="bg-surface-dark-light px-1 rounded">Importe</code></li>
+                                </ul>
+                            </div>
+                            <img src="/Users/admin/.gemini/antigravity/brain/737e1f31-a31d-4301-b029-eccda148cbde/csv_example_caixa_1768921747534.png"
+                                alt="Ejemplo CSV Caixa"
+                                class="w-full rounded-xl border border-gray-200 dark:border-white/10 shadow-sm opacity-80 hover:opacity-100 transition-opacity cursor-zoom-in">
+                        </div>
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <p class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">table_chart</span> Estandar /
+                                    Jasper (XLS/XLSX)
+                                </p>
+                                <ul class="list-disc list-inside text-gray-400 space-y-1 ml-1">
+                                    <li>Debe contener cabecera: <code
+                                            class="bg-surface-dark-light px-1 rounded">F. VALOR</code></li>
+                                    <li>Columnas: <code class="bg-surface-dark-light px-1 rounded">DESCRIPCIÓN</code>,
+                                        <code class="bg-surface-dark-light px-1 rounded">IMPORTE (€)</code>
+                                    </li>
+                                </ul>
+                            </div>
+                            <img src="/Users/admin/.gemini/antigravity/brain/737e1f31-a31d-4301-b029-eccda148cbde/xls_example_jasper_standard_1768921767573.png"
+                                alt="Ejemplo XLS Jasper"
+                                class="w-full rounded-xl border border-gray-200 dark:border-white/10 shadow-sm opacity-80 hover:opacity-100 transition-opacity cursor-zoom-in">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 1: Upload -->
+            <div id="step-upload"
+                class="bg-white dark:bg-surface-dark p-8 rounded-2xl border border-gray-200 dark:border-[#25381e] shadow-sm">
+                <h2 class="text-lg font-bold mb-4">1. Subir Archivo</h2>
+                <div id="dropzone"
+                    class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-12 text-center hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined text-4xl text-gray-400 mb-2">upload_file</span>
+                    <p class="text-gray-500">Arrastra tu archivo CSV o XLS aquí</p>
+                    <input type="file" id="file-input" class="hidden" accept=".csv,.xls,.xlsx">
+                </div>
+            </div>
+
+            <!-- Step 2: Preview & Map (Hidden initially) -->
+            <div id="step-preview" class="hidden flex flex-col gap-6">
+
+                <!-- Account Selector -->
+                <div
+                    class="bg-white dark:bg-surface-dark p-6 rounded-2xl border border-gray-200 dark:border-[#25381e] shadow-sm">
+                    <h2 class="text-lg font-bold mb-4">2. Configuración</h2>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Empresa
+                            Destino</label>
+                        <select id="empresa-selector"
+                            class="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+                            <option value="">Cargando empresas...</option>
+                        </select>
+                        <p class="text-[10px] text-gray-500 mt-1">Los movimientos se verán en la Caja de esta empresa.
+                        </p>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cuenta Bancaria
+                            Destino</label>
+                        <div class="flex gap-2">
+                            <select id="account-select"
+                                class="flex-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+                                <option value="">Selecciona una cuenta...</option>
+                            </select>
+                            <button id="btn-new-account"
+                                class="px-3 py-2 bg-gray-100 dark:bg-surface-dark-light hover:bg-gray-200 dark:hover:bg-surface-dark-light/80 rounded-lg text-sm font-bold flex items-center gap-1 transition-all">
+                                <span class="material-symbols-outlined text-[18px]">add</span> Nueva
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Los movimientos se insertarán en esta cuenta.</p>
+                    </div>
+                    <!-- Preview Table -->
+                    <div
+                        class="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-[#25381e] shadow-sm overflow-hidden flex flex-col mt-6">
+                        <div
+                            class="p-6 border-b border-gray-200 dark:border-[#25381e] flex justify-between items-center">
+                            <h3 class="font-bold">Vista Previa (<span id="rows-count">0</span> filas)</h3>
+                            <div class="text-xs text-gray-400">Mostrando primeras 50 filas</div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 dark:bg-surface-dark-light text-gray-500">
+                                    <tr>
+                                        <th class="px-6 py-4">Fecha</th>
+                                        <th class="px-6 py-4">Descripción</th>
+                                        <th class="px-6 py-4 text-right">Importe</th>
+                                        <th class="px-6 py-4">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="preview-tbody" class="divide-y divide-gray-200 dark:divide-[#25381e]">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex justify-end gap-3 mt-6 pb-10">
+                        <button id="btn-cancel"
+                            class="px-6 py-3 border border-gray-200 dark:border-[#25381e] rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-all">Cancelar</button>
+                        <button id="btn-commit"
+                            class="px-8 py-3 bg-primary text-background-dark font-extrabold rounded-xl hover:brightness-110 shadow-lg shadow-primary/20 transition-all">
+                            Confirmar Importación
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Nueva Cuenta -->
+    <div id="modal-account"
+        class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div
+            class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="p-6 border-b border-gray-200 dark:border-[#25381e] flex justify-between items-center">
+                <h3 class="text-xl font-bold">Nueva Cuenta Manual</h3>
+                <button onclick="document.getElementById('modal-account').classList.add('hidden')"
+                    class="text-gray-500 hover:text-red-500 transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="mb-4">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Empresa</label>
+                    <select id="acc-empresa"
+                        class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 outline-none">
+                        <option value="">Seleccionar empresa...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Nombre de la
+                        Cuenta *</label>
+                    <input type="text" id="acc-name" placeholder="Ej: BBVA Operativa"
+                        class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary outline-none">
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="col-span-1">
+                        <label
+                            class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Moneda</label>
+                        <select id="acc-currency"
+                            class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-3 py-2 outline-none">
+                            <option value="EUR">EUR</option>
+                            <option value="USD">USD</option>
+                            <option value="GBP">GBP</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">IBAN
+                            (opcional)</label>
+                        <input type="text" id="acc-iban" placeholder="ES00 0000..."
+                            class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 outline-none">
+                    </div>
+                </div>
+            </div>
+            <div
+                class="p-6 bg-gray-50 dark:bg-surface-dark-light/30 border-t border-gray-200 dark:border-[#25381e] flex justify-end gap-3">
+                <button onclick="document.getElementById('modal-account').classList.add('hidden')"
+                    class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-slate-900 dark:hover:text-white">Cancelar</button>
+                <button id="btn-save-account"
+                    class="px-6 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 shadow-lg shadow-primary/20 transition-all">Crear
+                    Cuenta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logic -->
+    <script type="module">
+        import { getToken, requireAuth } from '/auth.js';
+        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+        let currentImportId = null;
+
+        // --- Helpers ---
+        const api = async (url, method = 'GET', body = null) => {
+            const token = getToken();
+            const opts = {
+                method,
+                headers: { 'Authorization': `Bearer ${token}` }
+            };
+            if (body && !(body instanceof FormData)) {
+                opts.headers['Content-Type'] = 'application/json';
+                opts.body = JSON.stringify(body);
+            } else if (body instanceof FormData) {
+                opts.body = body;
+            }
+
+            const res = await fetch(API_BASE_URL + url, opts);
+            const json = await res.json();
+            if (!json.ok) throw new Error(json.error || 'API Error');
+            return json;
+        };
+
+        const formatCurrency = (val, cur = 'EUR') => new Intl.NumberFormat('es-ES', { style: 'currency', currency: cur }).format(val);
+
+        // --- Flows ---
+
+        async function handleUpload(file) {
+            const fd = new FormData();
+            fd.append('file', file);
+
+            try {
+                const res = await api('/api/banking/imports', 'POST', fd);
+                currentImportId = res.importId;
+
+                // Trigger Parse
+                const parseRes = await api(`/api/banking/imports/${currentImportId}/parse`, 'POST');
+
+                renderPreview(parseRes);
+                document.getElementById('step-upload').classList.add('hidden');
+                document.getElementById('step-preview').classList.remove('hidden');
+
+            } catch (e) {
+                alert('Error subiendo archivo: ' + e.message);
+            }
+        }
+
+        async function renderPreview(data) {
+            document.getElementById('rows-count').textContent = data.stats?.rows_total || 0;
+            const tbody = document.getElementById('preview-tbody');
+            tbody.innerHTML = '';
+
+            data.preview.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = row.status === 'error' ? 'bg-red-500/10' : '';
+                tr.innerHTML = `
+                    <td class="px-6 py-3 whitespace-nowrap">${row.booking_date || '-'}</td>
+                    <td class="px-6 py-3">${row.description || '-'}</td>
+                    <td class="px-6 py-3 text-right font-mono ${row.amount >= 0 ? 'text-primary' : 'text-red-400'}">${formatCurrency(row.amount)}</td>
+                    <td class="px-6 py-3">
+                        ${row.status === 'ok'
+                        ? '<span class="text-green-500 text-xs font-bold">OK</span>'
+                        : `<span class="text-red-500 text-xs" title="${row.errors?.join(',')}">ERROR</span>`}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function loadAccounts() {
+            try {
+                const res = await api('/api/open-banking/accounts');
+                const sel = document.getElementById('account-select');
+                const empId = document.getElementById('empresa-selector').value;
+
+                sel.innerHTML = '<option value="">Selecciona una cuenta...</option>';
+
+                res.accounts?.forEach(acc => {
+                    // Si hay empresa seleccionada, filtrar
+                    if (empId && acc.id_empresa && acc.id_empresa != empId) return;
+
+                    const opt = document.createElement('option');
+                    opt.value = acc.id;
+                    opt.textContent = `${acc.display_name || acc.label || 'Cuenta'} (${acc.currency}) - ${acc.source}`;
+                    sel.appendChild(opt);
+                });
+            } catch (e) {
+                console.error('Error loading accounts:', e);
+            }
+        }
+
+        async function loadEmpresas() {
+            try {
+                const res = await api('/api/contabilidad/empresas');
+                const sel = document.getElementById('empresa-selector');
+                const accEmpSel = document.getElementById('acc-empresa');
+
+                sel.innerHTML = '<option value="">Cualquier empresa</option>';
+                accEmpSel.innerHTML = '<option value="">-- Seleccionar --</option>';
+
+                if (res.data && res.data.items) {
+                    res.data.items.forEach(emp => {
+                        const opt = `<option value="${emp.id}">${emp.nombre_legal}</option>`;
+                        sel.innerHTML += opt;
+                        accEmpSel.innerHTML += opt;
+                    });
+
+                    // Auto-select from localStorage if exists
+                    const stored = localStorage.getItem('finsaas_current_empresa');
+                    if (stored) {
+                        sel.value = stored;
+                        accEmpSel.value = stored;
+                    }
+                }
+            } catch (e) { console.error('Error loading empresas:', e); }
+        }
+
+        async function handleSaveAccount() {
+            const name = document.getElementById('acc-name').value;
+            const currency = document.getElementById('acc-currency').value;
+            const iban = document.getElementById('acc-iban').value;
+            const id_empresa = document.getElementById('acc-empresa').value;
+
+            if (!name) return alert('El nombre es obligatorio');
+
+            try {
+                const res = await api('/api/open-banking/accounts', 'POST', {
+                    display_name: name,
+                    currency,
+                    iban_masked: iban,
+                    id_empresa
+                });
+
+                document.getElementById('modal-account').classList.add('hidden');
+                await loadAccounts();
+                document.getElementById('account-select').value = res.account.id;
+                alert('Cuenta creada con éxito');
+            } catch (e) {
+                alert('Error al crear cuenta: ' + e.message);
+            }
+        }
+
+        async function handleCommit() {
+            console.log('handleCommit started, currentImportId:', currentImportId);
+            const accountId = document.getElementById('account-select').value;
+            if (!accountId) return alert('Selecciona una cuenta destino');
+
+            if (!currentImportId) return alert('Error: No hay una importación activa. Por favor, sube el archivo de nuevo.');
+
+            if (!confirm('¿Confirmar importación?')) return;
+
+            try {
+                console.log('Sending commit request...');
+                const res = await api(`/api/banking/imports/${currentImportId}/commit`, 'POST', {
+                    bank_account_id: accountId
+                });
+                console.log('Commit response:', res);
+
+                alert(`Importación completada.\nInsertados: ${res.inserted}\nDuplicados: ${res.duplicated}`);
+                window.location.reload();
+            } catch (e) {
+                console.error('Commit error:', e);
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            await requireAuth();
+
+            const layout = new FinSaaSLayout('app-shell');
+            layout.init();
+
+            await loadEmpresas();
+            await loadAccounts();
+
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('file-input');
+
+            dropzone.onclick = () => fileInput.click();
+            fileInput.onchange = (e) => {
+                if (e.target.files[0]) handleUpload(e.target.files[0]);
+            };
+
+            // Drag & Drop
+            dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('bg-gray-100', 'dark:bg-surface-dark-light'); };
+            dropzone.ondragleave = () => dropzone.classList.remove('bg-gray-100', 'dark:bg-surface-dark-light');
+            dropzone.ondrop = (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('bg-gray-100', 'dark:bg-surface-dark-light');
+                if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
+            };
+
+            document.getElementById('btn-commit').onclick = handleCommit;
+            document.getElementById('btn-cancel').onclick = () => window.location.reload();
+
+            document.getElementById('btn-new-account').onclick = () => {
+                document.getElementById('modal-account').classList.remove('hidden');
+                document.getElementById('modal-account').classList.add('flex');
+            };
+            document.getElementById('btn-save-account').onclick = handleSaveAccount;
+
+            document.getElementById('empresa-selector').onchange = () => {
+                const val = document.getElementById('empresa-selector').value;
+                localStorage.setItem('finsaas_current_empresa', val);
+                loadAccounts();
+            };
+        });
+    </script>
+</body>
+
+</html>

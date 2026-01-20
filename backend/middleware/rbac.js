@@ -233,6 +233,58 @@ function requireSucursalScope(paramName = 'id_sucursal') {
 }
 
 /**
+ * Get user's allowed empresas from accounting_usuario_empresa
+ */
+async function getUserAllowedEmpresas(userId) {
+    const result = await pool.query(`
+        SELECT id_empresa as id
+        FROM accounting_usuario_empresa
+        WHERE id_usuario = $1
+    `, [userId]);
+    return result.rows.map(r => parseInt(r.id));
+}
+
+/**
+ * Express middleware factory - requires access to a specific empresa
+ */
+function requireEmpresaAccess(paramName = 'id_empresa') {
+    return async (req, res, next) => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) return res.status(401).json({ error: 'Autenticación requerida' });
+
+            // Super admins bypass
+            if (await isSuperAdmin(userId)) return next();
+
+            // Get target empresa ID from request
+            const targetEmpresaId = parseInt(
+                req.headers['x-empresa-id'] ||
+                req.params[paramName] ||
+                req.body[paramName] ||
+                req.query[paramName] ||
+                req.query?.id_empresa
+            );
+
+            if (!targetEmpresaId) return next();
+
+            const allowedIds = await getUserAllowedEmpresas(userId);
+            if (!allowedIds.includes(targetEmpresaId)) {
+                return res.status(403).json({
+                    ok: false,
+                    error: 'Acceso denegado a esta empresa',
+                    required_empresa: targetEmpresaId
+                });
+            }
+
+            next();
+        } catch (error) {
+            console.error('Empresa scope check error:', error);
+            res.status(500).json({ error: 'Error al verificar acceso a empresa' });
+        }
+    };
+}
+
+/**
  * Simple authorization middleware factory
  * Returns verifyJWT middleware for basic auth without specific permission check
  * Use this when you just need to verify the user is logged in
@@ -262,6 +314,8 @@ module.exports = {
     getEffectiveTenant,
     validateTenantAccess,
     getUserAllowedSucursales,
-    requireSucursalScope
+    requireSucursalScope,
+    getUserAllowedEmpresas,
+    requireEmpresaAccess
 };
 

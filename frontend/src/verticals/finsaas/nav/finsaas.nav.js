@@ -59,6 +59,13 @@ export const finSaaSNav = [
         order: 3
     },
     {
+        id: 'bancos',
+        label: 'Bancos',
+        route: '/src/verticals/finsaas/pages/bancos.html',
+        icon: 'account_balance',
+        order: 3.5
+    },
+    {
         id: 'contactos',
         label: 'Contactos',
         route: '/src/verticals/finsaas/pages/contactos.html',
