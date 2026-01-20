@@ -61,9 +61,9 @@
             <!-- Header -->
             <div class="flex items-center justify-between mb-6">
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Validación Deducible
+                    <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Validación Fiscal
                     </h1>
-                    <p class="text-gray-500 dark:text-gray-400">Revisa y marca facturas de gasto como deducibles</p>
+                    <p class="text-gray-500 dark:text-gray-400">Revisa y marca facturas como deducibles</p>
                 </div>
                 <div class="flex gap-3">
                     <!-- Empresa Selector -->
@@ -164,6 +164,7 @@
                             class="bg-gray-50 dark:bg-surface-dark-light border-b border-gray-200 dark:border-[#25381e] text-gray-500 text-xs uppercase">
                             <tr>
                                 <th class="px-4 py-3 text-left">Proveedor</th>
+                                <th class="px-4 py-3 text-center">Tipo</th>
                                 <th class="px-4 py-3 text-left">Nº Factura</th>
                                 <th class="px-4 py-3 text-left">Fecha</th>
                                 <th class="px-4 py-3 text-right">Total</th>
@@ -176,7 +177,7 @@
                         </thead>
                         <tbody id="facturas-table-body" class="divide-y divide-gray-100 dark:divide-[#25381e]">
                             <tr>
-                                <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                                <td colspan="10" class="px-4 py-8 text-center text-gray-400">
                                     <span class="material-symbols-outlined text-4xl mb-2 block">hourglass_empty</span>
                                     Cargando facturas...
                                 </td>
@@ -482,7 +483,7 @@
         async function loadFacturas() {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                    <td colspan="10" class="px-4 py-8 text-center text-gray-400">
                         <span class="material-symbols-outlined text-4xl mb-2 block animate-spin">progress_activity</span>
                         Cargando...
                     </td>
@@ -490,7 +491,6 @@
             `;
 
             const params = new URLSearchParams({
-                tipo: 'GASTO',
                 limit: pageSize,
                 offset: currentPage * pageSize
             });
@@ -545,7 +545,7 @@
                 tableBody.innerHTML = `
                     <tr>
                     <tr>
-                        <td colspan="9" class="px-4 py-8 text-center text-red-400">
+                        <td colspan="10" class="px-4 py-8 text-center text-red-400">
                             <span class="material-symbols-outlined text-4xl mb-2 block">error</span>
                             Error: ${e.message}
                         </td>
@@ -570,7 +570,7 @@
             if (!items || items.length === 0) {
                 tableBody.innerHTML = `
                     <tr>
-                        <td colspan="9" class="px-4 py-8 text-center text-gray-400">
+                        <td colspan="10" class="px-4 py-8 text-center text-gray-400">
                             <span class="material-symbols-outlined text-4xl mb-2 block">search_off</span>
                             No se encontraron facturas
                         </td>
@@ -591,6 +591,9 @@
                         <td class="px-4 py-3">
                             <div class="font-medium">${f.contacto_nombre || 'Sin proveedor'}</div>
                             <div class="text-xs text-gray-400">${f.contacto_nif || '-'}</div>
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                             <span class="px-2 py-1 rounded text-xs font-bold ${f.tipo === 'INGRESO' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}">${f.tipo}</span>
                         </td>
                         <td class="px-4 py-3 font-mono text-xs">${f.numero_factura || '-'}</td>
                         <td class="px-4 py-3 text-sm">${formatDate(f.fecha_devengo || f.fecha_emision)}</td>
@@ -739,9 +742,7 @@
 
         // --- Export CSV ---
         async function exportCSV() {
-            const params = new URLSearchParams({
-                tipo: 'GASTO'
-            });
+            const params = new URLSearchParams({});
 
             const year = yearSelect.value;
             const quarter = quarterSelect.value;

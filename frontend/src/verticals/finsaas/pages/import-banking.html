@@ -50,46 +50,48 @@
             </div>
 
             <!-- Supported Formats Info -->
-            <div class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6 flex gap-4">
-                <div class="p-2 bg-blue-500/10 rounded-lg h-fit">
-                    <span class="material-symbols-outlined text-blue-500">info</span>
+            <div class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6 flex flex-col gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-blue-500/10 rounded-lg h-fit">
+                        <span class="material-symbols-outlined text-blue-500">info</span>
+                    </div>
+                    <h3 class="font-bold text-blue-500 text-lg">Guía de Formatos Soportados</h3>
                 </div>
-                <div>
-                    <h3 class="font-bold text-blue-500 mb-2">Formatos Soportados</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
-                        <div class="space-y-4">
-                            <div class="space-y-2">
-                                <p class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-[18px]">csv</span> Caixa (CSV)
-                                </p>
-                                <ul class="list-disc list-inside text-gray-400 space-y-1 ml-1">
-                                    <li>Separador: Punto y coma (;)</li>
-                                    <li>Columnas: <code class="bg-surface-dark-light px-1 rounded">Fecha</code>, <code
-                                            class="bg-surface-dark-light px-1 rounded">Concepto</code>, <code
-                                            class="bg-surface-dark-light px-1 rounded">Importe</code></li>
-                                </ul>
-                            </div>
-                            <img src="/Users/admin/.gemini/antigravity/brain/737e1f31-a31d-4301-b029-eccda148cbde/csv_example_caixa_1768921747534.png"
-                                alt="Ejemplo CSV Caixa"
-                                class="w-full rounded-xl border border-gray-200 dark:border-white/10 shadow-sm opacity-80 hover:opacity-100 transition-opacity cursor-zoom-in">
+
+                <div class="w-full">
+                    <img src="/banking_import_guide.png" alt="Guía de Importación Bancaria (Caixa y Estándar)"
+                        class="w-full rounded-xl border border-gray-200 dark:border-white/10 shadow-md hover:shadow-lg transition-all cursor-zoom-in"
+                        onclick="window.open(this.src, '_blank')">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 text-sm text-gray-500">
+                        <div
+                            class="p-4 bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-white/5 shadow-sm">
+                            <strong class="text-slate-900 dark:text-white block mb-2 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">csv</span> Caixa (CSV)
+                            </strong>
+                            <ul class="list-disc list-inside space-y-1 ml-1 text-xs">
+                                <li>Separador: Punto y coma (;)</li>
+                                <li>Columnas: <code
+                                        class="bg-gray-100 dark:bg-surface-dark-light px-1 rounded">Fecha</code>,
+                                    <code class="bg-gray-100 dark:bg-surface-dark-light px-1 rounded">Concepto</code>,
+                                    <code class="bg-gray-100 dark:bg-surface-dark-light px-1 rounded">Importe</code>
+                                </li>
+                            </ul>
                         </div>
-                        <div class="space-y-4">
-                            <div class="space-y-2">
-                                <p class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                                    <span class="material-symbols-outlined text-[18px]">table_chart</span> Estandar /
-                                    Jasper (XLS/XLSX)
-                                </p>
-                                <ul class="list-disc list-inside text-gray-400 space-y-1 ml-1">
-                                    <li>Debe contener cabecera: <code
-                                            class="bg-surface-dark-light px-1 rounded">F. VALOR</code></li>
-                                    <li>Columnas: <code class="bg-surface-dark-light px-1 rounded">DESCRIPCIÓN</code>,
-                                        <code class="bg-surface-dark-light px-1 rounded">IMPORTE (€)</code>
-                                    </li>
-                                </ul>
-                            </div>
-                            <img src="/Users/admin/.gemini/antigravity/brain/737e1f31-a31d-4301-b029-eccda148cbde/xls_example_jasper_standard_1768921767573.png"
-                                alt="Ejemplo XLS Jasper"
-                                class="w-full rounded-xl border border-gray-200 dark:border-white/10 shadow-sm opacity-80 hover:opacity-100 transition-opacity cursor-zoom-in">
+                        <div
+                            class="p-4 bg-white dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-white/5 shadow-sm">
+                            <strong class="text-slate-900 dark:text-white block mb-2 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">table_chart</span> Estándar /
+                                Excel
+                            </strong>
+                            <ul class="list-disc list-inside space-y-1 ml-1 text-xs">
+                                <li>Cabecera obligatoria: <code
+                                        class="bg-gray-100 dark:bg-surface-dark-light px-1 rounded">F. VALOR</code></li>
+                                <li>Columnas: <code
+                                        class="bg-gray-100 dark:bg-surface-dark-light px-1 rounded">DESCRIPCIÓN</code>,
+                                    <code class="bg-gray-100 dark:bg-surface-dark-light px-1 rounded">IMPORTE (€)</code>
+                                </li>
+                            </ul>
                         </div>
                     </div>
                 </div>

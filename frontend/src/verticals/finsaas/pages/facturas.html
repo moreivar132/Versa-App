@@ -498,6 +498,36 @@
         </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-[80] hidden items-center justify-center modal-overlay">
+        <div
+            class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col p-6 text-center transform scale-100 transition-all">
+
+            <div
+                class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 mb-4">
+                <span class="material-symbols-outlined text-red-600 dark:text-red-500 text-[28px]">warning</span>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">Eliminar Factura</h3>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+                ¿Estás seguro de que quieres eliminar esta factura? <br>
+                <span class="font-bold text-red-500 block mt-2">Esta acción es IRREVERSIBLE y no podrá
+                    deshacerse.</span>
+            </p>
+
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeDeleteModal()"
+                    class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-surface-dark-light rounded-lg font-medium transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirm-delete-btn" onclick="confirmDeleteInvoice()"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold shadow-lg shadow-red-500/20 transition-all">
+                    Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Logic -->
     <script type="module">
         import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
@@ -626,7 +656,7 @@
                     tbody.innerHTML = '<tr><td colspan="11" class="p-8 text-center text-gray-500">No hay facturas registradas</td></tr>';
                 } else {
                     tbody.innerHTML = res.items.map(f => `
-                         <tr class="cursor-pointer hover:bg-gray-50 dark:hover:bg-surface-dark-light/50 transition-colors group" onclick="editInvoice(${f.id})">
+                        <tr class="cursor-pointer hover:bg-gray-50 dark:hover:bg-surface-dark-light/50 transition-colors group" onclick="editInvoice(${f.id})">
                             <td class="font-bold text-slate-900 dark:text-white">${f.numero_factura}</td>
                             <td class="text-gray-500 dark:text-gray-400">${f.contacto_nombre || '-'}</td>
                              <td><span class="type-badge type-${f.tipo}">${f.tipo}</span></td>
@@ -657,6 +687,9 @@
                                  <button onclick="event.stopPropagation(); editInvoice(${f.id})" class="text-gray-400 hover:text-primary transition-colors p-1" title="Editar">
                                      <span class="material-symbols-outlined text-[18px]">edit</span>
                                  </button>
+                                 <button onclick="event.stopPropagation(); deleteInvoice(${f.id})" class="text-gray-400 hover:text-red-500 transition-colors p-1" title="Eliminar">
+                                     <span class="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
                              </td>
                         </tr>
                     `).join('');
@@ -1060,6 +1093,59 @@
                 console.error(e);
                 alert('Error de conexión');
                 loadInvoices(currentPage);
+            }
+        };
+
+
+        async function apiDelete(endpoint) {
+            const res = await fetch(API_BASE + endpoint, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+            return res.json();
+        }
+
+        let invoiceToDeleteId = null;
+
+        window.deleteInvoice = function (id) {
+            invoiceToDeleteId = id;
+            const modal = document.getElementById('delete-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeDeleteModal = function () {
+            invoiceToDeleteId = null;
+            const modal = document.getElementById('delete-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        window.confirmDeleteInvoice = async function () {
+            if (!invoiceToDeleteId) return;
+
+            // Disable button to prevent double clicks
+            const btn = document.getElementById('confirm-delete-btn');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin inline-block mr-2">⟳</span> Eliminando...';
+
+            try {
+                const res = await apiDelete(`/api/contabilidad/facturas/${invoiceToDeleteId}`);
+                if (res.ok) {
+                    closeDeleteModal();
+                    loadInvoices(currentPage);
+                    loadKPIs();
+                    // Optional: Show success toast
+                } else {
+                    alert('Error eliminando factura: ' + (res.error || res.message || 'Desconocido'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Error de conexión al eliminar');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         };
 
