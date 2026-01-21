@@ -44,6 +44,15 @@
                 class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-8 shadow-sm">
                 <form id="config-form" onsubmit="saveConfig(event)">
 
+                    <div
+                        class="mb-8 p-4 bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg">
+                        <label class="block text-sm font-bold mb-2">Configurar para:</label>
+                        <select id="empresa-selector" onchange="loadConfig()"
+                            class="w-full bg-white dark:bg-surface-dark border border-gray-300 dark:border-[#25381e] rounded-lg p-2.5 text-sm">
+                            <option value="">Configuración General (Por defecto)</option>
+                        </select>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
                             <label class="block text-sm font-bold mb-2">Color Corporativo</label>
@@ -57,11 +66,13 @@
 
                         <div>
                             <label class="block text-sm font-bold mb-2">Logo</label>
-                            <div
-                                class="border-2 border-dashed border-gray-300 dark:border-[#25381e] rounded-lg p-6 text-center">
-                                <p class="text-xs text-gray-500 mb-2">Subida de logo próximamente.</p>
-                                <p class="text-xs text-green-500 font-medium">Se usará el logo de la empresa.</p>
+                            <div id="logo-container" onclick="triggerUpload()"
+                                class="border-2 border-dashed border-gray-300 dark:border-[#25381e] rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1a2c15] transition-colors">
+                                <p class="text-xs text-gray-500 mb-2">Subida de logo (PNG, JPG)</p>
+                                <p class="text-xs text-green-500 font-medium">Click para subir</p>
                             </div>
+                            <input type="file" id="logo-input" class="hidden" accept="image/*"
+                                onchange="handleFileSelect(this)">
                         </div>
                     </div>
 
@@ -88,25 +99,196 @@
     </div>
 
     <script type="module">
-        import { requireAuth } from '/auth.js';
+        import { requireAuth, getApiBaseUrl } from '/auth.js';
+
+        let currentUser = null;
+        let logoUrl = null;
 
         // Load settings
         async function init() {
-            await requireAuth();
-            const config = JSON.parse(localStorage.getItem('finsaas_invoice_config') || '{}');
-            if (config.color) document.getElementById('cfg-color').value = config.color;
-            if (config.footerText) document.getElementById('cfg-footer').value = config.footerText;
+            currentUser = await requireAuth();
+            if (!currentUser) return;
+
+            await loadCompanies();
+            await loadConfig();
+        }
+
+        async function loadCompanies() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/api/contabilidad/empresas?tenantId=${currentUser.id_tenant}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('versa_session_v1') ? JSON.parse(localStorage.getItem('versa_session_v1')).token : ''}`
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const items = result.data?.items || result.data || [];
+                    const selector = document.getElementById('empresa-selector');
+
+                    items.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.textContent = emp.nombre_legal || emp.nombre_comercial || `Empresa #${emp.id}`;
+                        selector.appendChild(opt);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading companies:', error);
+            }
+        }
+
+        window.loadConfig = async function () {
+            const selector = document.getElementById('empresa-selector');
+            const empresaId = selector ? selector.value : '';
+
+            // Reset fields
+            document.getElementById('cfg-color').value = '#46ec13'; // default
+            document.getElementById('cfg-footer').value = '';
+            logoUrl = null;
+            updateLogoPreview(null);
+
+            try {
+                let url = `${getApiBaseUrl()}/api/facturas/config-tenant?tenantId=${currentUser.id_tenant}`;
+                if (empresaId) {
+                    url += `&empresaId=${empresaId}`;
+                }
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('versa_session_v1') ? JSON.parse(localStorage.getItem('versa_session_v1')).token : ''}`
+                    }
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success && result.data) {
+                        const config = result.data;
+
+                        // Set values
+                        if (config.color_primario) document.getElementById('cfg-color').value = config.color_primario;
+                        if (config.pie_html) document.getElementById('cfg-footer').value = config.pie_html;
+
+                        // Handle logo
+                        if (config.logo_url) {
+                            logoUrl = config.logo_url;
+                            updateLogoPreview(logoUrl);
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading config:', error);
+            }
+        }
+
+        function updateLogoPreview(url) {
+            const container = document.getElementById('logo-container');
+            if (url) {
+                const fullUrl = url.startsWith('http') ? url : `${getApiBaseUrl()}${url}`;
+                container.innerHTML = `
+                    <div class="relative group">
+                        <img src="${fullUrl}" alt="Logo Empresa" class="h-32 object-contain mx-auto">
+                        <button type="button" onclick="removeLogo()" class="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <p class="text-xs text-gray-500 mb-2">Sube tu logo corporativo (PNG, JPG)</p>
+                    <p class="text-xs text-green-500 font-medium cursor-pointer hover:underline" onclick="document.getElementById('logo-input').click()">Seleccionar archivo</p>
+                `;
+            }
+        }
+
+        window.triggerUpload = function () {
+            document.getElementById('logo-input').click();
+        }
+
+        window.handleFileSelect = async function (input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Show loading state
+                const container = document.getElementById('logo-container');
+                container.innerHTML = `<p class="text-xs text-gray-500">Subiendo...</p>`;
+
+                try {
+                    const response = await fetch(`${getApiBaseUrl()}/api/upload`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('versa_session_v1') ? JSON.parse(localStorage.getItem('versa_session_v1')).token : ''}`
+                        },
+                        body: formData
+                    });
+
+                    const result = await response.json();
+                    if (result.ok) {
+                        logoUrl = result.url;
+                        updateLogoPreview(logoUrl);
+                    } else {
+                        alert('Error al subir imagen: ' + result.error);
+                        updateLogoPreview(null);
+                    }
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    alert('Error de conexión al subir imagen');
+                    updateLogoPreview(null);
+                }
+            }
+        }
+
+        window.removeLogo = function () {
+            logoUrl = null;
+            updateLogoPreview(null);
+            document.getElementById('logo-input').value = '';
         }
 
         init();
 
-        window.saveConfig = function (e) {
+        window.saveConfig = async function (e) {
             e.preventDefault();
+            if (!currentUser) return;
+
             const color = document.getElementById('cfg-color').value;
             const footerText = document.getElementById('cfg-footer').value;
+            const empresaId = document.getElementById('empresa-selector').value;
 
-            localStorage.setItem('finsaas_invoice_config', JSON.stringify({ color, footerText }));
-            alert('Configuración guardada correctamente.');
+            const payload = {
+                tenantId: currentUser.id_tenant,
+                id_empresa: empresaId || null, // Optional specific company
+                color_primario: color,
+                pie_html: footerText,
+                logo_url: logoUrl,
+                // defaults
+                mostrar_columna_iva: true,
+                mostrar_columna_descuento: true
+            };
+
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/api/facturas/config-tenant`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('versa_session_v1') ? JSON.parse(localStorage.getItem('versa_session_v1')).token : ''}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Configuración guardada correctamente.');
+                    // Reload to ensure sync
+                    await loadConfig();
+                } else {
+                    alert('Error al guardar: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Save error:', error);
+                alert('Error al conectar con el servidor');
+            }
         };
 
         window.preview = function () {

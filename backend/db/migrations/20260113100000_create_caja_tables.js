@@ -99,6 +99,7 @@ exports.up = async function (knex) {
         -- =====================================================
         -- 5. TABLA: cajachicamovimiento
         -- =====================================================
+        DROP TABLE IF EXISTS cajachicamovimiento CASCADE;
         CREATE TABLE IF NOT EXISTS cajachicamovimiento (
             id SERIAL PRIMARY KEY,
             id_caja_chica INTEGER NOT NULL REFERENCES cajachica(id),

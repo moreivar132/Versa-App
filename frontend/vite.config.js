@@ -91,6 +91,8 @@ export default defineConfig({
                 stripeCancel: 'stripe-cancel.html',
                 // Billing
                 managerTallerBilling: 'manager-taller-billing.html',
+                // Banking Import
+                finsaasImportBanking: 'src/verticals/finsaas/pages/import-banking.html',
             }
         }
     },

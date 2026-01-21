@@ -244,16 +244,44 @@ async function listAccounts(connectionId, tenantId) {
  * @param {number} tenantId
  * @returns {Array}
  */
-async function listAllAccounts(tenantId) {
-    const result = await pool.query(`
-        SELECT ba.*, bc.provider, bc.status as connection_status
+async function listAllAccounts(tenantId, idEmpresa = null) {
+    let query = `
+        SELECT ba.*, bc.provider, bc.status as connection_status,
+               (SELECT COALESCE(SUM(amount), 0) FROM bank_transaction WHERE bank_account_id = ba.id) as balance
         FROM bank_account ba
-        JOIN bank_connection bc ON bc.id = ba.bank_connection_id
+        LEFT JOIN bank_connection bc ON bc.id = ba.bank_connection_id
         WHERE ba.tenant_id = $1
-        ORDER BY ba.display_name
-    `, [tenantId]);
+    `;
+    const params = [tenantId];
 
+    if (idEmpresa) {
+        query += ` AND ba.id_empresa = $2`;
+        params.push(idEmpresa);
+    }
+
+    query += ` ORDER BY ba.display_name`;
+
+    const result = await pool.query(query, params);
     return result.rows;
+}
+
+/**
+ * Crea una cuenta manual sin conexión provider
+ * @param {Object} params
+ * @returns {Object} Cuenta creada
+ */
+async function createManualAccount({ tenantId, display_name, currency, iban_masked, id_empresa }) {
+    const providerAccountId = `manual_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+    const result = await pool.query(`
+        INSERT INTO bank_account (
+            tenant_id, bank_connection_id, provider_account_id,
+            account_type, currency, iban_masked, display_name, source, id_empresa
+        ) VALUES ($1, NULL, $2, 'checking', $3, $4, $5, 'manual', $6)
+        RETURNING *
+    `, [tenantId, providerAccountId, currency, iban_masked, display_name, id_empresa]);
+
+    return result.rows[0];
 }
 
 // ================================================================
@@ -268,6 +296,7 @@ async function listAllAccounts(tenantId) {
 async function listTransactions({
     tenantId,
     accountId = null,
+    idEmpresa = null,
     from = null,
     to = null,
     limit = 50,
@@ -280,6 +309,11 @@ async function listTransactions({
     if (accountId) {
         conditions.push(`bank_account_id = $${paramIndex++}`);
         params.push(accountId);
+    }
+
+    if (idEmpresa) {
+        conditions.push(`ba.id_empresa = $${paramIndex++}`);
+        params.push(idEmpresa);
     }
 
     if (from) {
@@ -296,7 +330,10 @@ async function listTransactions({
 
     // Obtener total
     const countResult = await pool.query(`
-        SELECT COUNT(*) as total FROM bank_transaction WHERE ${whereClause}
+        SELECT COUNT(*) as total 
+        FROM bank_transaction bt
+        JOIN bank_account ba ON ba.id = bt.bank_account_id
+        WHERE ${whereClause.replace(/tenant_id/g, 'bt.tenant_id')}
     `, params);
     const total = parseInt(countResult.rows[0].total);
 
@@ -545,6 +582,94 @@ function cleanupOldStates() {
     }
 }
 
+// ================================================================
+// CONCILIACIÓN
+// ================================================================
+
+/**
+ * Concilia una transacción bancaria con una o varias facturas
+ */
+async function reconcileTransaction(tenantId, transactionId, invoiceIds, idEmpresa = null) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Obtener transacción y verificar
+        const txRes = await client.query(`
+            SELECT bt.*, ba.id_empresa 
+            FROM bank_transaction bt
+            JOIN bank_account ba ON ba.id = bt.bank_account_id
+            WHERE bt.id = $1 AND bt.tenant_id = $2
+            FOR UPDATE
+        `, [transactionId, tenantId]);
+
+        const tx = txRes.rows[0];
+        if (!tx) throw new Error('Transacción no encontrada');
+        if (tx.status === 'RECONCILED') throw new Error('Transacción ya conciliada');
+
+        // Enforce Company Isolation
+        if (idEmpresa && tx.id_empresa && String(tx.id_empresa) !== String(idEmpresa)) {
+            throw new Error(`La transacción pertenece a la empresa ${tx.id_empresa}, pero se solicita desde ${idEmpresa}`);
+        }
+
+        // 2. Procesar facturas
+        for (const invId of invoiceIds) {
+            // Verificar factura
+            const invRes = await client.query(`
+                SELECT * FROM contabilidad_factura 
+                WHERE id = $1 AND id_empresa = $2
+            `, [invId, tx.id_empresa]);
+
+            const invoice = invRes.rows[0];
+            if (!invoice) throw new Error(`Factura ${invId} no válida para esta empresa`);
+            if (invoice.estado === 'PAGADA') throw new Error(`Factura ${invoice.numero_factura} ya está pagada`);
+
+            // Crear movimiento contable (Cobro o Pago)
+            const tipo = tx.amount >= 0 ? 'COBRO' : 'PAGO';
+
+            await client.query(`
+                INSERT INTO accounting_transaccion 
+                (id_empresa, tipo, importe, fecha, concepto, metodo, id_factura, bank_transaction_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            `, [
+                tx.id_empresa,
+                tipo,
+                invoice.total,
+                tx.booking_date,
+                `Conciliación: ${tx.description}`,
+                'TRANSFERENCIA',
+                invoice.id,
+                tx.id
+            ]);
+
+            // Actualizar estado factura
+            await client.query(`
+                UPDATE contabilidad_factura 
+                SET estado = 'PAGADA', 
+                    total_pagado = total 
+                WHERE id = $1
+            `, [invId]);
+        }
+
+        // 3. Actualizar estado transacción bancaria
+        await client.query(`
+            UPDATE bank_transaction 
+            SET status = 'RECONCILED', 
+                reconciled_at = NOW() 
+            WHERE id = $1
+        `, [transactionId]);
+
+        await client.query('COMMIT');
+        return { ok: true };
+
+    } catch (e) {
+        await client.query('ROLLBACK');
+        throw e;
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
     // OAuth
     initiateOAuthFlow,
@@ -558,9 +683,11 @@ module.exports = {
     // Cuentas
     listAccounts,
     listAllAccounts,
+    createManualAccount,
 
     // Transacciones
     listTransactions,
+    reconcileTransaction,
 
     // Sync
     syncConnection,

@@ -45,6 +45,8 @@ async function list(req, res) {
             return res.status(403).json({ ok: false, error: 'Contexto de tenant requerido', requestId: req.requestId });
         }
 
+        const idEmpresa = req.headers['x-empresa-id'] || req.query.idEmpresa || ctx.empresaId;
+
         const filters = {
             tipo: req.query.tipo,
             estado: req.query.estado,
@@ -55,9 +57,9 @@ async function list(req, res) {
             idContacto: req.query.idContacto ? parseInt(req.query.idContacto) : null,
             idCategoria: req.query.idCategoria ? parseInt(req.query.idCategoria) : null,
             idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
-            deducible_status: req.query.deducible_status, // nuevo filtro
+            deducible_status: req.query.deducible_status,
             search: req.query.search,
-            idEmpresa: ctx.empresaId, // Ya viene validado del middleware
+            idEmpresa: idEmpresa,
             limit: parseInt(req.query.limit) || 50,
             offset: parseInt(req.query.offset) || 0
         };

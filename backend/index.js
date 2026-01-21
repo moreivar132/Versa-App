@@ -88,6 +88,10 @@ app.use('/api/access', privateRoute, require('./routes/accessRoutes'));
 app.use('/api/me', require('./routes/meRoutes'));  // User access info (includes own auth)
 app.use('/api/proveedores', privateRoute, proveedoresRouter);
 
+// Open Banking & Banking
+app.use('/api/open-banking', require('./routes/openBankingRoutes'));
+app.use('/api/banking', require('./modules/banking/routes/import.routes'));
+
 // Módulos Migrados
 app.use('/api/clientes', privateRoute, require('./src/modules/clientes/api/clientes.routes'));
 app.use('/api/vehiculos', privateRoute, require('./src/modules/vehiculos/api/vehiculos.routes'));
@@ -134,9 +138,6 @@ app.use('/api/marketing/campaigns', privateRoute, require('./routes/emailCampaig
 // Fidelización
 app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
 app.use('/api/admin/fidelizacion', privateRoute, require('./routes/fidelizacionAdmin'));
-
-// Open Banking
-app.use('/api/open-banking', require('./routes/openBankingRoutes'));
 
 // Static Uploads
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
