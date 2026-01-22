@@ -40,7 +40,7 @@ exports.up = async function (knex) {
         CREATE TABLE IF NOT EXISTS saas_invite (
             id SERIAL PRIMARY KEY,
             token_hash VARCHAR(128) NOT NULL UNIQUE,
-            tenant_id INTEGER NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            id_tenant INTEGER NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             role VARCHAR(50) NOT NULL DEFAULT 'CLIENT_ADMIN',
             email_allowed VARCHAR(255),
             expires_at TIMESTAMPTZ NOT NULL,
@@ -52,7 +52,7 @@ exports.up = async function (knex) {
 
     // 6. Create indexes for saas_invite
     await knex.raw(`CREATE INDEX IF NOT EXISTS idx_saas_invite_token ON saas_invite(token_hash);`);
-    await knex.raw(`CREATE INDEX IF NOT EXISTS idx_saas_invite_tenant ON saas_invite(tenant_id);`);
+    await knex.raw(`CREATE INDEX IF NOT EXISTS idx_saas_invite_tenant ON saas_invite(id_tenant);`);
     await knex.raw(`CREATE INDEX IF NOT EXISTS idx_saas_invite_expires ON saas_invite(expires_at) WHERE used_at IS NULL;`);
     await knex.raw(`COMMENT ON TABLE saas_invite IS 'Invitation tokens for SaaS B2B user onboarding';`);
 

@@ -25,17 +25,17 @@ exports.up = async function (knex) {
     // 2. Create tenant-vertical relationship table
     await knex.raw(`
         CREATE TABLE IF NOT EXISTS tenant_vertical (
-            tenant_id INTEGER NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            id_tenant INTEGER NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             vertical_id INTEGER NOT NULL REFERENCES vertical(id) ON DELETE CASCADE,
             is_enabled BOOLEAN DEFAULT true,
             enabled_at TIMESTAMPTZ DEFAULT NOW(),
             disabled_at TIMESTAMPTZ,
             notes TEXT,
-            PRIMARY KEY (tenant_id, vertical_id)
+            PRIMARY KEY (id_tenant, vertical_id)
         );
     `);
 
-    await knex.raw(`CREATE INDEX IF NOT EXISTS idx_tenant_vertical_tenant ON tenant_vertical(tenant_id);`);
+    await knex.raw(`CREATE INDEX IF NOT EXISTS idx_tenant_vertical_tenant ON tenant_vertical(id_tenant);`);
     await knex.raw(`CREATE INDEX IF NOT EXISTS idx_tenant_vertical_vertical ON tenant_vertical(vertical_id);`);
     await knex.raw(`CREATE INDEX IF NOT EXISTS idx_tenant_vertical_enabled ON tenant_vertical(is_enabled) WHERE is_enabled = true;`);
 
@@ -48,19 +48,19 @@ exports.up = async function (knex) {
         CREATE TABLE IF NOT EXISTS user_permission_override (
             id SERIAL PRIMARY KEY,
             user_id INTEGER NOT NULL REFERENCES usuario(id) ON DELETE CASCADE,
-            tenant_id INTEGER NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            id_tenant INTEGER NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
             permission_id INTEGER NOT NULL REFERENCES permiso(id) ON DELETE CASCADE,
             effect VARCHAR(10) NOT NULL CHECK (effect IN ('allow', 'deny')),
             reason TEXT,
             created_by INTEGER REFERENCES usuario(id),
             created_at TIMESTAMPTZ DEFAULT NOW(),
             expires_at TIMESTAMPTZ,
-            UNIQUE (user_id, tenant_id, permission_id)
+            UNIQUE (user_id, id_tenant, permission_id)
         );
     `);
 
     await knex.raw(`CREATE INDEX IF NOT EXISTS idx_user_perm_override_user ON user_permission_override(user_id);`);
-    await knex.raw(`CREATE INDEX IF NOT EXISTS idx_user_perm_override_tenant ON user_permission_override(tenant_id);`);
+    await knex.raw(`CREATE INDEX IF NOT EXISTS idx_user_perm_override_tenant ON user_permission_override(id_tenant);`);
     await knex.raw(`CREATE INDEX IF NOT EXISTS idx_user_perm_override_effect ON user_permission_override(effect);`);
 
     // 5. Seed default verticals
