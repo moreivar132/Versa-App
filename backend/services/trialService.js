@@ -8,14 +8,15 @@
  * - getTrialPlan() - Returns the trial plan configuration
  */
 
-const pool = require('../db');
+const { getSystemDb } = require('../src/core/db/tenant-db');
 
 /**
  * Get the trial plan from database
  * @returns {Promise<Object|null>} Trial plan or null
  */
 async function getTrialPlan() {
-    const result = await pool.query(
+    const db = getSystemDb();
+    const result = await db.query(
         `SELECT * FROM plan_suscripcion WHERE plan_key = 'trial_full_15d' AND activo = true LIMIT 1`
     );
     return result.rows[0] || null;
@@ -29,7 +30,8 @@ async function getTrialPlan() {
  * @returns {Promise<boolean>} True if eligible for trial
  */
 async function isEligibleForTrial(idTenant) {
-    const result = await pool.query(
+    const db = getSystemDb();
+    const result = await db.query(
         `SELECT id FROM tenant_suscripcion WHERE tenant_id = $1 LIMIT 1`,
         [idTenant]
     );
@@ -44,11 +46,12 @@ async function isEligibleForTrial(idTenant) {
  * @returns {Promise<Object>} { created: boolean, subscription: object, reason: string }
  */
 async function ensureTrial15DaysIfEligible(idTenant) {
+    const db = getSystemDb();
     try {
         console.log(`[Trial] Checking trial eligibility for tenant ${idTenant}`);
 
         // Check if tenant exists
-        const tenantCheck = await pool.query(
+        const tenantCheck = await db.query(
             'SELECT id FROM tenant WHERE id = $1',
             [idTenant]
         );
@@ -68,7 +71,7 @@ async function ensureTrial15DaysIfEligible(idTenant) {
             console.log(`[Trial] Tenant ${idTenant} already has a subscription, skipping trial`);
 
             // Return existing subscription
-            const existingSub = await pool.query(
+            const existingSub = await db.query(
                 `SELECT ts.*, ps.nombre as plan_nombre, ps.plan_key
                  FROM tenant_suscripcion ts
                  JOIN plan_suscripcion ps ON ts.plan_id = ps.id
@@ -102,7 +105,7 @@ async function ensureTrial15DaysIfEligible(idTenant) {
         const trialEnd = new Date(now.getTime() + (15 * 24 * 60 * 60 * 1000)); // 15 days from now
 
         // Create trial subscription
-        const result = await pool.query(`
+        const result = await db.query(`
             INSERT INTO tenant_suscripcion (
                 tenant_id,
                 plan_id,
@@ -150,8 +153,9 @@ async function ensureTrial15DaysIfEligible(idTenant) {
  * @returns {Promise<Object>} { expired: boolean, subscription: object }
  */
 async function checkTrialExpiration(idTenant) {
+    const db = getSystemDb();
     try {
-        const result = await pool.query(`
+        const result = await db.query(`
             SELECT ts.*, ps.plan_key
             FROM tenant_suscripcion ts
             JOIN plan_suscripcion ps ON ts.plan_id = ps.id
@@ -178,11 +182,11 @@ async function checkTrialExpiration(idTenant) {
             console.log(`[Trial] Trial expired for tenant ${idTenant}, updating status to canceled`);
 
             // Update to canceled
-            await pool.query(`
+            await db.query(`
                 UPDATE tenant_suscripcion 
                 SET status = 'canceled',
-                    cancel_at = NOW(),
-                    updated_at = NOW()
+                cancel_at = NOW(),
+                updated_at = NOW()
                 WHERE tenant_id = $1
             `, [idTenant]);
 
@@ -209,7 +213,8 @@ async function checkTrialExpiration(idTenant) {
  * @returns {Promise<number|null>} Days remaining or null if not in trial
  */
 async function getTrialDaysRemaining(idTenant) {
-    const result = await pool.query(`
+    const db = getSystemDb();
+    const result = await db.query(`
         SELECT trial_end_at, status
         FROM tenant_suscripcion 
         WHERE tenant_id = $1 AND status = 'trialing'
@@ -234,7 +239,8 @@ async function getTrialDaysRemaining(idTenant) {
  * @returns {Promise<Object>} Updated subscription
  */
 async function extendTrial(idTenant, additionalDays = 7) {
-    const result = await pool.query(`
+    const db = getSystemDb();
+    const result = await db.query(`
         UPDATE tenant_suscripcion 
         SET trial_end_at = trial_end_at + INTERVAL '${additionalDays} days',
             current_period_end = current_period_end + INTERVAL '${additionalDays} days',

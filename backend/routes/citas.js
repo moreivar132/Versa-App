@@ -1,7 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+// const pool = require('../db'); // REMOVED
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const verifyJWT = require('../middleware/auth');
+
+// Middleware: Inject req.db
+router.use((req, res, next) => {
+    // Some endpoints might be public (portal config), so we allow no tenant initially
+    // Specific routes needing tenant will fail if not present when querying without allowNoTenant override
+    req.db = getTenantDb(req.ctx, { allowNoTenant: true });
+    next();
+});
 
 // GET /api/citas/config - Obtener configuración (sucursales y técnicos)
 // Requires auth to filter by tenant
@@ -21,7 +30,7 @@ router.get('/config', verifyJWT, async (req, res) => {
             sucursalesParams = [id_tenant];
         }
 
-        const sucursalesRes = await pool.query(sucursalesQuery, sucursalesParams);
+        const sucursalesRes = await req.db.query(sucursalesQuery, sucursalesParams);
 
         let tecnicos = [];
         try {
@@ -48,7 +57,7 @@ router.get('/config', verifyJWT, async (req, res) => {
                 tecnicosParams = [id_tenant];
             }
 
-            const tecnicosRes = await pool.query(tecnicosQuery, tecnicosParams);
+            const tecnicosRes = await req.db.query(tecnicosQuery, tecnicosParams);
             tecnicos = tecnicosRes.rows;
         } catch (err) {
             console.warn('Could not fetch technicians (usuariosucursal might be missing):', err.message);
@@ -72,7 +81,7 @@ router.get('/config/public/:sucursalId', async (req, res) => {
         const { sucursalId } = req.params;
 
         // Only fetch the specific sucursal requested
-        const sucursalesRes = await pool.query(
+        const sucursalesRes = await req.db.query(
             'SELECT id, nombre, direccion, direccion_iframe FROM sucursal WHERE id = $1',
             [sucursalId]
         );
@@ -84,7 +93,7 @@ router.get('/config/public/:sucursalId', async (req, res) => {
         // Fetch technicians for this specific sucursal
         let tecnicos = [];
         try {
-            const tecnicosRes = await pool.query(`
+            const tecnicosRes = await req.db.query(`
                 SELECT u.id, u.nombre, us.id_sucursal 
                 FROM usuario u 
                 JOIN usuariosucursal us ON u.id = us.id_usuario
@@ -172,7 +181,7 @@ router.get('/', verifyJWT, async (req, res) => {
             query += ` LIMIT 50`;
         }
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         // 2. Calculate Stats with tenant filtering
         const todayStart = new Date();
@@ -204,7 +213,7 @@ router.get('/', verifyJWT, async (req, res) => {
             statsParams = [todayStart.toISOString(), todayEnd.toISOString()];
         }
 
-        const globalStatsRes = await pool.query(globalStatsQuery, statsParams);
+        const globalStatsRes = await req.db.query(globalStatsQuery, statsParams);
 
         // Billing stats with tenant filter
         let billingQuery;
@@ -225,7 +234,7 @@ router.get('/', verifyJWT, async (req, res) => {
             `;
             billingParams = [todayStart.toISOString(), todayEnd.toISOString()];
         }
-        const billingRes = await pool.query(billingQuery, billingParams);
+        const billingRes = await req.db.query(billingQuery, billingParams);
 
         const finalStats = {
             citas_hoy: parseInt(globalStatsRes.rows[0].citas_hoy || 0),
@@ -250,13 +259,13 @@ router.put('/:id', async (req, res) => {
         // Obtener estado anterior para notificación
         let estadoAnterior = null;
         if (estado) {
-            const citaActual = await pool.query('SELECT estado FROM citataller WHERE id = $1', [id]);
+            const citaActual = await req.db.query('SELECT estado FROM citataller WHERE id = $1', [id]);
             if (citaActual.rows.length > 0) {
                 estadoAnterior = citaActual.rows[0].estado;
             }
         }
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             UPDATE citataller 
             SET estado = COALESCE($1, estado),
                 motivo = COALESCE($2, motivo),
@@ -293,7 +302,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
     try {
-        const result = await pool.query('DELETE FROM citataller WHERE id = $1', [id]);
+        const result = await req.db.query('DELETE FROM citataller WHERE id = $1', [id]);
         if (result.rowCount === 0) {
             return res.status(404).json({ ok: false, error: 'Cita no encontrada' });
         }
@@ -324,86 +333,83 @@ router.post('/crear', async (req, res) => {
         else id_sucursal = 1; // Default
     }
 
-    const client = await pool.connect();
     try {
-        await client.query('BEGIN');
+        // Use txWithRLS for transaction
+        const result = await req.db.txWithRLS(async (tx) => {
+            // 1. Buscar o Crear Cliente
+            let id_cliente;
+            // Intentar buscar por email
+            const existingClient = await tx.query(
+                'SELECT id FROM clientefinal WHERE email = $1 LIMIT 1',
+                [cliente.email]
+            );
 
-        // 1. Buscar o Crear Cliente
-        let id_cliente;
-        // Intentar buscar por email
-        const existingClient = await client.query(
-            'SELECT id FROM clientefinal WHERE email = $1 LIMIT 1',
-            [cliente.email]
-        );
+            if (existingClient.rows.length > 0) {
+                id_cliente = existingClient.rows[0].id;
+            } else {
+                // Crear nuevo cliente
+                // Usamos email como documento si no existe, o generamos uno
+                const documento = cliente.email;
+                // Asumimos id_tenant = 1 para clientes públicos por defecto
+                const id_tenant = 1;
 
-        if (existingClient.rows.length > 0) {
-            id_cliente = existingClient.rows[0].id;
-        } else {
-            // Crear nuevo cliente
-            // Usamos email como documento si no existe, o generamos uno
-            const documento = cliente.email;
-            // Asumimos id_tenant = 1 para clientes públicos por defecto
-            const id_tenant = 1;
+                const insertClient = await tx.query(`
+                    INSERT INTO clientefinal 
+                    (id_tenant, nombre, email, telefono, documento, created_at)
+                    VALUES ($1, $2, $3, $4, $5, NOW())
+                    RETURNING id
+                `, [id_tenant, cliente.nombre, cliente.email, cliente.telefono, documento]);
 
-            const insertClient = await client.query(`
-                INSERT INTO clientefinal 
-                (id_tenant, nombre, email, telefono, documento, created_at)
+                id_cliente = insertClient.rows[0].id;
+            }
+
+            // 2. Crear Vehículo (Placeholder)
+            // Como es una cita rápida, creamos un vehículo asociado a la categoría
+            const matriculaPlaceholder = `TEMP-${Date.now().toString().slice(-6)}`;
+            const insertVehiculo = await tx.query(`
+                INSERT INTO vehiculo
+                (id_cliente, id_sucursal, matricula, marca, modelo, created_at)
                 VALUES ($1, $2, $3, $4, $5, NOW())
                 RETURNING id
-            `, [id_tenant, cliente.nombre, cliente.email, cliente.telefono, documento]);
+            `, [id_cliente, id_sucursal, matriculaPlaceholder, vehiculo_categoria.toUpperCase(), 'Generico']);
 
-            id_cliente = insertClient.rows[0].id;
-        }
+            const id_vehiculo = insertVehiculo.rows[0].id;
 
-        // 2. Crear Vehículo (Placeholder)
-        // Como es una cita rápida, creamos un vehículo asociado a la categoría
-        const matriculaPlaceholder = `TEMP-${Date.now().toString().slice(-6)}`;
-        const insertVehiculo = await client.query(`
-            INSERT INTO vehiculo
-            (id_cliente, id_sucursal, matricula, marca, modelo, created_at)
-            VALUES ($1, $2, $3, $4, $5, NOW())
-            RETURNING id
-        `, [id_cliente, id_sucursal, matriculaPlaceholder, vehiculo_categoria.toUpperCase(), 'Generico']);
+            // 3. Crear Cita
+            const insertCita = await tx.query(`
+                INSERT INTO citataller
+                (id_sucursal, id_cliente, id_vehiculo, fecha_hora, duracion_min, estado, motivo, notas, creado_por, nombre_cliente, telefono_cliente, correo_cliente)
+                VALUES ($1, $2, $3, $4, $5, 'pendiente', $6, $7, NULL, $8, $9, $10)
+                RETURNING id
+            `, [
+                id_sucursal,
+                id_cliente,
+                id_vehiculo,
+                fecha_hora,
+                duracion_min,
+                motivo,
+                notas,
+                cliente.nombre,
+                cliente.telefono,
+                cliente.email
+            ]);
 
-        const id_vehiculo = insertVehiculo.rows[0].id;
-
-        // 3. Crear Cita
-        const insertCita = await client.query(`
-            INSERT INTO citataller
-            (id_sucursal, id_cliente, id_vehiculo, fecha_hora, duracion_min, estado, motivo, notas, creado_por, nombre_cliente, telefono_cliente, correo_cliente)
-            VALUES ($1, $2, $3, $4, $5, 'pendiente', $6, $7, NULL, $8, $9, $10)
-            RETURNING id
-        `, [
-            id_sucursal,
-            id_cliente,
-            id_vehiculo,
-            fecha_hora,
-            duracion_min,
-            motivo,
-            notas,
-            cliente.nombre,
-            cliente.telefono,
-            cliente.email
-        ]);
-
-        await client.query('COMMIT');
+            return insertCita.rows[0].id;
+        });
 
         res.status(201).json({
             ok: true,
             message: 'Cita creada exitosamente',
-            cita_id: insertCita.rows[0].id
+            cita_id: result
         });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error al crear cita:', error);
         res.status(500).json({
             ok: false,
             error: 'Error interno al procesar la cita.',
             details: error.message
         });
-    } finally {
-        client.release();
     }
 });
 
@@ -418,14 +424,14 @@ router.post('/:id/pago', async (req, res) => {
         }
 
         // Obtener datos de la cita
-        const citaRes = await pool.query('SELECT * FROM citataller WHERE id = $1', [id]);
+        const citaRes = await req.db.query('SELECT * FROM citataller WHERE id = $1', [id]);
         if (citaRes.rows.length === 0) {
             return res.status(404).json({ ok: false, error: 'Cita no encontrada' });
         }
         const cita = citaRes.rows[0];
 
         // Verificar si ya existe pago PAID
-        const pagoExistente = await pool.query(
+        const pagoExistente = await req.db.query(
             `SELECT id FROM marketplace_reserva_pago WHERE id_cita = $1 AND status = 'PAID'`,
             [id]
         );
@@ -435,7 +441,7 @@ router.post('/:id/pago', async (req, res) => {
         }
 
         // Registrar pago
-        await pool.query(
+        await req.db.query(
             `INSERT INTO marketplace_reserva_pago 
              (id_tenant, id_sucursal, id_cita, id_cliente, payment_mode, amount, currency, status, metadata_json)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 'PAID', $8)`,

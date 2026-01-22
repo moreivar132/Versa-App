@@ -7,6 +7,7 @@ const express = require('express');
 const router = express.Router();
 const marketplaceService = require('../services/marketplaceService');
 const { customerAuthOptional } = require('../middleware/customerAuth');
+const { getSystemDb } = require('../src/core/db/index'); // Use system DB for public cross-tenant search
 
 /**
  * POST /api/marketplace/search
@@ -86,9 +87,10 @@ function safeParseCoord(value) {
  */
 router.get('/sucursales', async (req, res) => {
     try {
-        const pool = require('../db');
+        // Public search across tenants -> System Context
+        const db = getSystemDb({ source: 'marketplace-public', reason: 'search_sucursales' });
 
-        const result = await pool.query(`
+        const result = await db.query(`
             SELECT DISTINCT
                 s.id,
                 s.nombre,

@@ -1,5 +1,14 @@
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const incomeService = require('./incomeService');
+
+// Helper to build tenant context from userContext
+function buildCtx(userContext) {
+    return {
+        tenantId: userContext.id_tenant,
+        userId: userContext.id_usuario || userContext.id,
+        requestId: userContext.requestId
+    };
+}
 
 class VentasService {
     /**
@@ -62,13 +71,13 @@ class VentasService {
 
         const totalNeto = totalBruto + totalIva;
 
-        // Transacción
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        // Get tenant-safe DB access
+        const db = getTenantDb(buildCtx(userContext));
 
+        // Transacción
+        return await db.txWithRLS(async (tx) => {
             // Crear cabecera de venta
-            const ventaResult = await client.query(`
+            const ventaResult = await tx.query(`
                 INSERT INTO venta (
                     id_tenant, id_sucursal, id_cliente, id_caja,
                     total_bruto, total_descuento, total_iva, total_neto,
@@ -85,7 +94,7 @@ class VentasService {
 
             // Insertar líneas
             for (const linea of lineasProcesadas) {
-                await client.query(`
+                await tx.query(`
                     INSERT INTO ventalinea (
                         id_venta, id_producto, descripcion, cantidad,
                         precio, descuento, iva_porcentaje, iva_monto, subtotal
@@ -97,21 +106,21 @@ class VentasService {
 
                 // Descontar stock si es un producto real
                 if (linea.idProducto) {
-                    await client.query(`
+                    await tx.query(`
                         UPDATE producto 
                         SET stock = COALESCE(stock, 0) - $1, updated_at = NOW()
                         WHERE id = $2
                     `, [linea.cantidad, linea.idProducto]);
 
                     // Registrar movimiento de inventario
-                    const almacenResult = await client.query(
+                    const almacenResult = await tx.query(
                         'SELECT id FROM almacen WHERE id_sucursal = $1 LIMIT 1',
                         [idSucursal]
                     );
                     const idAlmacen = almacenResult.rows[0]?.id;
 
                     if (idAlmacen) {
-                        await client.query(`
+                        await tx.query(`
                             INSERT INTO movimientoinventario 
                             (id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_at, created_by)
                             VALUES ($1, $2, 'SALIDA', $3, 'VENTA', $4, NOW(), $5)
@@ -126,7 +135,7 @@ class VentasService {
                     // Buscar medio de pago por código o ID
                     let medioPagoId = pago.idMedioPago;
                     if (!medioPagoId && pago.codigoMedioPago) {
-                        const mpResult = await client.query(
+                        const mpResult = await tx.query(
                             'SELECT id FROM mediopago WHERE UPPER(codigo) = UPPER($1)',
                             [pago.codigoMedioPago]
                         );
@@ -142,7 +151,7 @@ class VentasService {
                             };
                             const nombre = nombreMap[pago.codigoMedioPago.toUpperCase()] || pago.codigoMedioPago;
 
-                            const insertResult = await client.query(
+                            const insertResult = await tx.query(
                                 'INSERT INTO mediopago (nombre, codigo) VALUES ($1, $2) RETURNING id',
                                 [nombre, pago.codigoMedioPago.toUpperCase()]
                             );
@@ -154,7 +163,7 @@ class VentasService {
                         throw new Error(`Medio de pago ${pago.codigoMedioPago || pago.idMedioPago} no encontrado`);
                     }
 
-                    await client.query(`
+                    await tx.query(`
                         INSERT INTO ventapago (
                             id_venta, id_medio_pago, id_caja, importe, referencia, created_by
                         ) VALUES ($1, $2, $3, $4, $5, $6)
@@ -166,7 +175,7 @@ class VentasService {
                     // Registrar movimiento de caja si hay caja asociada
                     const cajaId = pago.idCaja || idCaja;
                     if (cajaId) {
-                        await client.query(`
+                        await tx.query(`
                             INSERT INTO cajamovimiento 
                             (id_caja, id_usuario, tipo, monto, fecha, origen_tipo, origen_id, created_at, created_by)
                             VALUES ($1, $2, 'INGRESO', $3, NOW(), 'VENTA', $4, NOW(), $5)
@@ -196,8 +205,6 @@ class VentasService {
                 }
             }
 
-            await client.query('COMMIT');
-
             return {
                 ok: true,
                 id: idVenta,
@@ -207,13 +214,7 @@ class VentasService {
                 lineas: lineasProcesadas.length,
                 pagos: pagos?.length || 0
             };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 
     /**
@@ -276,14 +277,16 @@ class VentasService {
         query += ` ORDER BY v.fecha DESC`;
         query += ` LIMIT $${paramIndex++} OFFSET $${paramIndex}`;
         values.push(limit, offset);
+        // Get tenant-safe DB access
+        const db = getTenantDb(buildCtx(userContext));
 
-        const result = await pool.query(query, values);
+        const result = await db.query(query, values);
 
         // Contar total
         const countQuery = `
             SELECT COUNT(*) as total FROM venta v WHERE v.id_tenant = $1
         `;
-        const countResult = await pool.query(countQuery, [id_tenant]);
+        const countResult = await db.query(countQuery, [id_tenant]);
 
         return {
             ventas: result.rows,
@@ -299,6 +302,9 @@ class VentasService {
     async getVentaById(idVenta, userContext) {
         const { id_tenant } = userContext;
 
+        // Get tenant-safe DB access
+        const db = getTenantDb(buildCtx(userContext));
+
         const ventaQuery = `
             SELECT 
                 v.*,
@@ -311,7 +317,7 @@ class VentasService {
             JOIN sucursal s ON v.id_sucursal = s.id
             WHERE v.id = $1 AND v.id_tenant = $2
         `;
-        const ventaResult = await pool.query(ventaQuery, [idVenta, id_tenant]);
+        const ventaResult = await db.query(ventaQuery, [idVenta, id_tenant]);
 
         if (ventaResult.rows.length === 0) {
             throw new Error('Venta no encontrada');
@@ -323,7 +329,7 @@ class VentasService {
             LEFT JOIN producto p ON vl.id_producto = p.id
             WHERE vl.id_venta = $1
         `;
-        const lineasResult = await pool.query(lineasQuery, [idVenta]);
+        const lineasResult = await db.query(lineasQuery, [idVenta]);
 
         const pagosQuery = `
             SELECT vp.*, mp.nombre as medio_pago_nombre, mp.codigo as medio_pago_codigo
@@ -331,7 +337,7 @@ class VentasService {
             JOIN mediopago mp ON vp.id_medio_pago = mp.id
             WHERE vp.id_venta = $1
         `;
-        const pagosResult = await pool.query(pagosQuery, [idVenta]);
+        const pagosResult = await db.query(pagosQuery, [idVenta]);
 
         return {
             venta: ventaResult.rows[0],
@@ -346,12 +352,12 @@ class VentasService {
     async anularVenta(idVenta, userContext) {
         const { id_tenant, id_usuario } = userContext;
 
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        // Get tenant-safe DB access
+        const db = getTenantDb(buildCtx(userContext));
 
+        return await db.txWithRLS(async (tx) => {
             // Verificar que existe y pertenece al tenant
-            const ventaResult = await client.query(
+            const ventaResult = await tx.query(
                 'SELECT * FROM venta WHERE id = $1 AND id_tenant = $2',
                 [idVenta, id_tenant]
             );
@@ -365,14 +371,14 @@ class VentasService {
             }
 
             // Devolver stock
-            const lineasResult = await client.query(
+            const lineasResult = await tx.query(
                 'SELECT * FROM ventalinea WHERE id_venta = $1',
                 [idVenta]
             );
 
             for (const linea of lineasResult.rows) {
                 if (linea.id_producto) {
-                    await client.query(`
+                    await tx.query(`
                         UPDATE producto 
                         SET stock = COALESCE(stock, 0) + $1, updated_at = NOW()
                         WHERE id = $2
@@ -381,22 +387,14 @@ class VentasService {
             }
 
             // Marcar como anulada
-            await client.query(`
+            await tx.query(`
                 UPDATE venta 
                 SET estado = 'ANULADA', updated_at = NOW(), updated_by = $1
                 WHERE id = $2
             `, [id_usuario, idVenta]);
 
-            await client.query('COMMIT');
-
             return { ok: true, message: 'Venta anulada correctamente' };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 
     /**
@@ -413,12 +411,12 @@ class VentasService {
             pagos
         } = data;
 
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        // Get tenant-safe DB access
+        const db = getTenantDb(buildCtx(userContext));
 
+        return await db.txWithRLS(async (tx) => {
             // Verificar que existe y pertenece al tenant
-            const ventaResult = await client.query(
+            const ventaResult = await tx.query(
                 'SELECT * FROM venta WHERE id = $1 AND id_tenant = $2',
                 [idVenta, id_tenant]
             );
@@ -432,14 +430,14 @@ class VentasService {
             }
 
             // 1. Revertir stock de líneas anteriores
-            const oldLineas = await client.query(
+            const oldLineas = await tx.query(
                 'SELECT id_producto, cantidad FROM ventalinea WHERE id_venta = $1',
                 [idVenta]
             );
 
             for (const linea of oldLineas.rows) {
                 if (linea.id_producto) {
-                    await client.query(`
+                    await tx.query(`
                         UPDATE producto 
                         SET stock = COALESCE(stock, 0) + $1, updated_at = NOW()
                         WHERE id = $2
@@ -448,8 +446,8 @@ class VentasService {
             }
 
             // 2. Eliminar líneas y pagos antiguos
-            await client.query('DELETE FROM ventalinea WHERE id_venta = $1', [idVenta]);
-            await client.query('DELETE FROM ventapago WHERE id_venta = $1', [idVenta]);
+            await tx.query('DELETE FROM ventalinea WHERE id_venta = $1', [idVenta]);
+            await tx.query('DELETE FROM ventapago WHERE id_venta = $1', [idVenta]);
 
             // 3. Recalcular totales con las nuevas líneas
             let totalBruto = 0;
@@ -468,7 +466,7 @@ class VentasService {
                 const montoIva = subtotal * (ivaPorcentaje / 100);
 
                 // Insertar nueva línea
-                await client.query(`
+                await tx.query(`
                     INSERT INTO ventalinea (
                         id_venta, id_producto, descripcion, cantidad,
                         precio, descuento, iva_porcentaje, iva_monto, subtotal
@@ -480,7 +478,7 @@ class VentasService {
 
                 // Descontar stock
                 if (linea.idProducto) {
-                    await client.query(`
+                    await tx.query(`
                         UPDATE producto 
                         SET stock = COALESCE(stock, 0) - $1, updated_at = NOW()
                         WHERE id = $2
@@ -495,7 +493,7 @@ class VentasService {
             const totalNeto = totalBruto + totalIva;
 
             // 4. Actualizar cabecera
-            await client.query(`
+            await tx.query(`
                 UPDATE venta SET
                     id_sucursal = $1, id_cliente = $2, id_caja = $3,
                     total_bruto = $4, total_descuento = $5, total_iva = $6, total_neto = $7,
@@ -512,7 +510,7 @@ class VentasService {
                 for (const pago of pagos) {
                     let medioPagoId = pago.idMedioPago;
                     if (!medioPagoId && pago.codigoMedioPago) {
-                        const mpResult = await client.query(
+                        const mpResult = await tx.query(
                             'SELECT id FROM mediopago WHERE UPPER(codigo) = UPPER($1)',
                             [pago.codigoMedioPago]
                         );
@@ -520,7 +518,7 @@ class VentasService {
                     }
 
                     if (medioPagoId) {
-                        await client.query(`
+                        await tx.query(`
                             INSERT INTO ventapago (
                                 id_venta, id_medio_pago, id_caja, importe, referencia, created_by
                             ) VALUES ($1, $2, $3, $4, $5, $6)
@@ -529,16 +527,8 @@ class VentasService {
                 }
             }
 
-            await client.query('COMMIT');
-
             return { ok: true, idVenta, message: 'Venta actualizada correctamente' };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 
     /**
@@ -547,12 +537,12 @@ class VentasService {
     async deleteVenta(idVenta, userContext) {
         const { id_tenant, id_usuario } = userContext;
 
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        // Get tenant-safe DB access
+        const db = getTenantDb(buildCtx(userContext));
 
+        return await db.txWithRLS(async (tx) => {
             // Verificar que existe y pertenece al tenant
-            const ventaResult = await client.query(
+            const ventaResult = await tx.query(
                 'SELECT * FROM venta WHERE id = $1 AND id_tenant = $2',
                 [idVenta, id_tenant]
             );
@@ -562,14 +552,14 @@ class VentasService {
             }
 
             // Revertir stock
-            const lineasResult = await client.query(
+            const lineasResult = await tx.query(
                 'SELECT id_producto, cantidad FROM ventalinea WHERE id_venta = $1',
                 [idVenta]
             );
 
             for (const linea of lineasResult.rows) {
                 if (linea.id_producto) {
-                    await client.query(`
+                    await tx.query(`
                         UPDATE producto 
                         SET stock = COALESCE(stock, 0) + $1, updated_at = NOW()
                         WHERE id = $2
@@ -578,24 +568,16 @@ class VentasService {
             }
 
             // Eliminar pagos
-            await client.query('DELETE FROM ventapago WHERE id_venta = $1', [idVenta]);
+            await tx.query('DELETE FROM ventapago WHERE id_venta = $1', [idVenta]);
 
             // Eliminar líneas
-            await client.query('DELETE FROM ventalinea WHERE id_venta = $1', [idVenta]);
+            await tx.query('DELETE FROM ventalinea WHERE id_venta = $1', [idVenta]);
 
             // Eliminar cabecera
-            await client.query('DELETE FROM venta WHERE id = $1', [idVenta]);
-
-            await client.query('COMMIT');
+            await tx.query('DELETE FROM venta WHERE id = $1', [idVenta]);
 
             return { ok: true, message: 'Venta eliminada correctamente' };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 }
 

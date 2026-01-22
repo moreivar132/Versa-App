@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const verifyJWT = require('../middleware/auth');
+
+router.use((req, res, next) => {
+    req.db = getTenantDb(req.ctx);
+    next();
+});
 
 // GET /api/inventory - List products (with optional search/filter)
 router.get('/', verifyJWT, async (req, res) => {
@@ -45,7 +50,7 @@ router.get('/', verifyJWT, async (req, res) => {
         query += ` ORDER BY p.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
         params.push(limit, offset);
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error al listar inventario:', error);
@@ -123,7 +128,7 @@ router.get('/resumen', verifyJWT, async (req, res) => {
 
         params.push(limit, offset);
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error al obtener resumen de inventario:', error);
@@ -147,17 +152,17 @@ router.get('/stats', verifyJWT, async (req, res) => {
 
         // Most Stock
         const mostStockQuery = `SELECT nombre, stock FROM producto ${whereClause} ORDER BY stock DESC LIMIT 1`;
-        const mostStockRes = await pool.query(mostStockQuery, params);
+        const mostStockRes = await req.db.query(mostStockQuery, params);
 
         // Least Stock (Greater than 0 preferably, or just lowest including 0?) 
         // Usually "Least Stock" implies things we have but are running low on, but technically 0 is least.
         // Let's get the absolute lowest.
         const leastStockQuery = `SELECT nombre, stock FROM producto ${whereClause} ORDER BY stock ASC LIMIT 1`;
-        const leastStockRes = await pool.query(leastStockQuery, params);
+        const leastStockRes = await req.db.query(leastStockQuery, params);
 
         // Risk of OOS (Low Stock)
         const riskQuery = `SELECT COUNT(*) as count FROM producto ${whereClause} AND stock <= stock_minimo`;
-        const riskRes = await pool.query(riskQuery, params);
+        const riskRes = await req.db.query(riskQuery, params);
 
         res.json({
             most_stock: mostStockRes.rows[0] || null,
@@ -175,7 +180,7 @@ router.get('/stats', verifyJWT, async (req, res) => {
 router.get('/stock-bajo', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     try {
-        const result = await pool.query(
+        const result = await req.db.query(
             'SELECT COUNT(*) FROM producto WHERE id_tenant = $1 AND stock <= stock_minimo',
             [id_tenant]
         );
@@ -190,7 +195,7 @@ router.get('/stock-bajo', verifyJWT, async (req, res) => {
 router.get('/categories', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     try {
-        const result = await pool.query(
+        const result = await req.db.query(
             'SELECT DISTINCT categoria FROM producto WHERE id_tenant = $1 AND categoria IS NOT NULL ORDER BY categoria',
             [id_tenant]
         );
@@ -205,7 +210,7 @@ router.get('/categories', verifyJWT, async (req, res) => {
 router.get('/brands', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     try {
-        const result = await pool.query(
+        const result = await req.db.query(
             'SELECT DISTINCT marca FROM producto WHERE id_tenant = $1 AND marca IS NOT NULL AND marca != \'\' ORDER BY marca',
             [id_tenant]
         );
@@ -248,7 +253,7 @@ router.get('/export', verifyJWT, async (req, res) => {
 
         query += ` ORDER BY p.created_at DESC`;
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         // Generate CSV
         const headers = ['Código', 'Nombre', 'Marca', 'Modelo', 'Categoría', 'Proveedor', 'Sucursal', 'Stock Min', 'Unidad', 'Costo', 'Precio'];
@@ -298,7 +303,7 @@ router.get('/search', verifyJWT, async (req, res) => {
     }
 
     try {
-        const sucursalValida = await pool.query('SELECT id FROM sucursal WHERE id = $1 AND id_tenant = $2', [sucursalId, id_tenant]);
+        const sucursalValida = await req.db.query('SELECT id FROM sucursal WHERE id = $1 AND id_tenant = $2', [sucursalId, id_tenant]);
         if (sucursalValida.rows.length === 0) {
             return res.status(404).json({ error: 'Sucursal no válida para el tenant' });
         }
@@ -328,7 +333,7 @@ router.get('/search', verifyJWT, async (req, res) => {
             LIMIT 20
         `;
 
-        const result = await pool.query(query, [id_tenant, sucursalId, searchTerm]);
+        const result = await req.db.query(query, [id_tenant, sucursalId, searchTerm]);
         res.json(result.rows);
     } catch (error) {
         console.error('Error en búsqueda de inventario:', error);
@@ -365,11 +370,7 @@ router.post('/', verifyJWT, async (req, res) => {
 
     const codigoFinal = codigo_barras_articulo;
 
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
-
         // Normalize numeric fields
         const parsedCosto = parseFloat(costo_compra) || 0;
         const parsedRecargo = parseFloat(recargo) || 0;
@@ -377,92 +378,91 @@ router.post('/', verifyJWT, async (req, res) => {
         const parsedStock = parseFloat(stock) || 0;
         const parsedStockMinimo = parseFloat(stock_minimo) || 0;
 
-        // 1. Resolve Sucursal ID
-        let id_sucursal = null;
-        if (taller) {
-            const sucursalRes = await client.query('SELECT id FROM sucursal WHERE nombre = $1 AND id_tenant = $2', [taller, id_tenant]);
-            if (sucursalRes.rows.length > 0) {
-                id_sucursal = sucursalRes.rows[0].id;
+        const product = await req.db.txWithRLS(async (tx) => {
+            // 1. Resolve Sucursal ID
+            let id_sucursal = null;
+            if (taller) {
+                const sucursalRes = await tx.query('SELECT id FROM sucursal WHERE nombre = $1 AND id_tenant = $2', [taller, id_tenant]);
+                if (sucursalRes.rows.length > 0) {
+                    id_sucursal = sucursalRes.rows[0].id;
+                }
             }
-        }
 
-        // 2. Resolve Proveedor ID (Find or Create)
-        let id_proveedor = null;
-        if (proveedor) {
-            const provRes = await client.query('SELECT id FROM proveedor WHERE nombre = $1 AND id_tenant = $2', [proveedor, id_tenant]);
-            if (provRes.rows.length > 0) {
-                id_proveedor = provRes.rows[0].id;
+            // 2. Resolve Proveedor ID (Find or Create)
+            let id_proveedor = null;
+            if (proveedor) {
+                const provRes = await tx.query('SELECT id FROM proveedor WHERE nombre = $1 AND id_tenant = $2', [proveedor, id_tenant]);
+                if (provRes.rows.length > 0) {
+                    id_proveedor = provRes.rows[0].id;
+                } else {
+                    // Create new provider automatically
+                    const createProvRes = await tx.query(
+                        'INSERT INTO proveedor (nombre, id_tenant, created_at, created_by) VALUES ($1, $2, NOW(), $3) RETURNING id',
+                        [proveedor, id_tenant, req.user.id]
+                    );
+                    id_proveedor = createProvRes.rows[0].id;
+                }
+            }
+
+            // 3. Check if product exists (by barcode + tenant - ignore sucursal for uniqueness)
+            // Un código de barras debe ser único por tenant, sin importar la sucursal
+            const checkQuery = `
+                SELECT id, stock, id_sucursal FROM producto 
+                WHERE codigo_barras = $1 AND id_tenant = $2
+            `;
+            const checkRes = await tx.query(checkQuery, [codigoFinal, id_tenant]);
+
+            let result;
+            if (checkRes.rows.length > 0) {
+                // UPDATE
+                const updateQuery = `
+                    UPDATE producto
+                    SET nombre = $3, modelo = $4, descripcion = $5, marca = $6, categoria = $7, 
+                        id_proveedor = $8, id_sucursal = $9, costo = $10, recargo = $11, precio = $12, 
+                        id_impuesto = $13, stock_minimo = $14, unidad_medida = $15, activo = $16,
+                        stock = $17,
+                        updated_at = NOW(), updated_by = $18
+                    WHERE id = $1 AND id_tenant = $2
+                    RETURNING *
+                `;
+
+                result = await tx.query(updateQuery, [
+                    checkRes.rows[0].id, id_tenant,
+                    nombre, modelo, descripcion, marca, categoria,
+                    id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
+                    null, // id_impuesto
+                    parsedStockMinimo, unidad_medida, activo,
+                    parsedStock, // Update stock
+                    req.user.id
+                ]);
+
             } else {
-                // Create new provider automatically
-                const createProvRes = await client.query(
-                    'INSERT INTO proveedor (nombre, id_tenant, created_at, created_by) VALUES ($1, $2, NOW(), $3) RETURNING id',
-                    [proveedor, id_tenant, req.user.id]
-                );
-                id_proveedor = createProvRes.rows[0].id;
+                // INSERT
+                const insertQuery = `
+                    INSERT INTO producto
+                    (id_tenant, codigo_barras, nombre, modelo, descripcion, marca, categoria, 
+                     id_proveedor, id_sucursal, costo, recargo, precio, stock_minimo, unidad_medida, activo,
+                     tipo, stock, created_at, created_by)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), $18)
+                    RETURNING *
+                `;
+                result = await tx.query(insertQuery, [
+                    id_tenant, codigo_barras_articulo, nombre, modelo, descripcion, marca, categoria,
+                    id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
+                    parsedStockMinimo, unidad_medida, activo,
+                    'Producto', // Default tipo
+                    parsedStock, // Initial stock
+                    req.user.id
+                ]);
             }
-        }
+            return result.rows[0];
+        });
 
-        // 3. Check if product exists (by barcode + tenant - ignore sucursal for uniqueness)
-        // Un código de barras debe ser único por tenant, sin importar la sucursal
-        const checkQuery = `
-            SELECT id, stock, id_sucursal FROM producto 
-            WHERE codigo_barras = $1 AND id_tenant = $2
-        `;
-        const checkRes = await client.query(checkQuery, [codigoFinal, id_tenant]);
-
-        let result;
-        if (checkRes.rows.length > 0) {
-            // UPDATE
-            const updateQuery = `
-                UPDATE producto
-                SET nombre = $3, modelo = $4, descripcion = $5, marca = $6, categoria = $7, 
-                    id_proveedor = $8, id_sucursal = $9, costo = $10, recargo = $11, precio = $12, 
-                    id_impuesto = $13, stock_minimo = $14, unidad_medida = $15, activo = $16,
-                    stock = $17,
-                    updated_at = NOW(), updated_by = $18
-                WHERE id = $1 AND id_tenant = $2
-                RETURNING *
-            `;
-
-            result = await client.query(updateQuery, [
-                checkRes.rows[0].id, id_tenant,
-                nombre, modelo, descripcion, marca, categoria,
-                id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
-                null, // id_impuesto
-                parsedStockMinimo, unidad_medida, activo,
-                parsedStock, // Update stock
-                req.user.id
-            ]);
-
-        } else {
-            // INSERT
-            const insertQuery = `
-                INSERT INTO producto
-                (id_tenant, codigo_barras, nombre, modelo, descripcion, marca, categoria, 
-                 id_proveedor, id_sucursal, costo, recargo, precio, stock_minimo, unidad_medida, activo,
-                 tipo, stock, created_at, created_by)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW(), $18)
-                RETURNING *
-            `;
-            result = await client.query(insertQuery, [
-                id_tenant, codigo_barras_articulo, nombre, modelo, descripcion, marca, categoria,
-                id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
-                parsedStockMinimo, unidad_medida, activo,
-                'Producto', // Default tipo
-                parsedStock, // Initial stock
-                req.user.id
-            ]);
-        }
-
-        await client.query('COMMIT');
-        res.json({ ok: true, product: result.rows[0] });
+        res.json({ ok: true, product });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error al guardar producto:', error);
         res.status(500).json({ error: 'Error al guardar producto' });
-    } finally {
-        client.release();
     }
 });
 
@@ -479,7 +479,7 @@ router.get('/:id', verifyJWT, async (req, res) => {
             LEFT JOIN sucursal s ON p.id_sucursal = s.id
             WHERE p.id = $1 AND p.id_tenant = $2
         `;
-        const result = await pool.query(query, [id, id_tenant]);
+        const result = await req.db.query(query, [id, id_tenant]);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
@@ -514,72 +514,66 @@ router.put('/:id', verifyJWT, async (req, res) => {
 
     const id_tenant = req.user.id_tenant;
 
-
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
-
         const parsedCosto = parseFloat(costo_compra) || 0;
         const parsedRecargo = parseFloat(recargo) || 0;
         const parsedPrecio = parseFloat(precio_venta_bruto) || 0;
         const parsedStockMinimo = parseFloat(stock_minimo) || 0;
         const parsedStock = parseFloat(stock) || 0;
 
-        // 1. Resolve Sucursal ID
-        let id_sucursal = null;
-        if (taller) {
-            const sucursalRes = await client.query('SELECT id FROM sucursal WHERE nombre = $1 AND id_tenant = $2', [taller, id_tenant]);
-            if (sucursalRes.rows.length > 0) id_sucursal = sucursalRes.rows[0].id;
-        }
-
-        // 2. Resolve Proveedor ID
-        let id_proveedor = null;
-        if (proveedor) {
-            const provRes = await client.query('SELECT id FROM proveedor WHERE nombre = $1 AND id_tenant = $2', [proveedor, id_tenant]);
-            if (provRes.rows.length > 0) {
-                id_proveedor = provRes.rows[0].id;
-            } else {
-                const createProvRes = await client.query(
-                    'INSERT INTO proveedor (nombre, id_tenant, created_at, created_by) VALUES ($1, $2, NOW(), $3) RETURNING id',
-                    [proveedor, id_tenant, req.user.id]
-                );
-                id_proveedor = createProvRes.rows[0].id;
+        const product = await req.db.txWithRLS(async (tx) => {
+            // 1. Resolve Sucursal ID
+            let id_sucursal = null;
+            if (taller) {
+                const sucursalRes = await tx.query('SELECT id FROM sucursal WHERE nombre = $1 AND id_tenant = $2', [taller, id_tenant]);
+                if (sucursalRes.rows.length > 0) id_sucursal = sucursalRes.rows[0].id;
             }
-        }
 
-        const updateQuery = `
-            UPDATE producto
-            SET nombre = $1, modelo = $2, descripcion = $3, marca = $4, categoria = $5,
-                id_proveedor = $6, id_sucursal = $7, costo = $8, recargo = $9, precio = $10,
-                stock_minimo = $11, unidad_medida = $12, activo = $13, codigo_barras = $14,
-                stock = $15,
-                updated_at = NOW(), updated_by = $16
-            WHERE id = $17 AND id_tenant = $18
-            RETURNING *
-        `;
+            // 2. Resolve Proveedor ID
+            let id_proveedor = null;
+            if (proveedor) {
+                const provRes = await tx.query('SELECT id FROM proveedor WHERE nombre = $1 AND id_tenant = $2', [proveedor, id_tenant]);
+                if (provRes.rows.length > 0) {
+                    id_proveedor = provRes.rows[0].id;
+                } else {
+                    const createProvRes = await tx.query(
+                        'INSERT INTO proveedor (nombre, id_tenant, created_at, created_by) VALUES ($1, $2, NOW(), $3) RETURNING id',
+                        [proveedor, id_tenant, req.user.id]
+                    );
+                    id_proveedor = createProvRes.rows[0].id;
+                }
+            }
 
-        const result = await client.query(updateQuery, [
-            nombre, modelo, descripcion, marca, categoria,
-            id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
-            parsedStockMinimo, unidad_medida, activo, codigo_barras_articulo,
-            parsedStock, // Add stock from body
-            req.user.id, id, id_tenant
-        ]);
+            const updateQuery = `
+                UPDATE producto
+                SET nombre = $1, modelo = $2, descripcion = $3, marca = $4, categoria = $5,
+                    id_proveedor = $6, id_sucursal = $7, costo = $8, recargo = $9, precio = $10,
+                    stock_minimo = $11, unidad_medida = $12, activo = $13, codigo_barras = $14,
+                    stock = $15,
+                    updated_at = NOW(), updated_by = $16
+                WHERE id = $17 AND id_tenant = $18
+                RETURNING *
+            `;
 
-        if (result.rows.length === 0) {
-            throw new Error('Producto no encontrado o no autorizado');
-        }
+            const result = await tx.query(updateQuery, [
+                nombre, modelo, descripcion, marca, categoria,
+                id_proveedor, id_sucursal, parsedCosto, parsedRecargo, parsedPrecio,
+                parsedStockMinimo, unidad_medida, activo, codigo_barras_articulo,
+                parsedStock, // Add stock from body
+                req.user.id, id, id_tenant
+            ]);
 
-        await client.query('COMMIT');
-        res.json({ ok: true, product: result.rows[0] });
+            if (result.rows.length === 0) {
+                throw new Error('Producto no encontrado o no autorizado');
+            }
+            return result.rows[0];
+        });
+
+        res.json({ ok: true, product });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error al actualizar producto:', error);
         res.status(500).json({ error: 'Error al actualizar producto: ' + error.message });
-    } finally {
-        client.release();
     }
 });
 

@@ -11,7 +11,7 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getSystemDb, getTenantDb } = require('../src/core/db/tenant-db');
 const stripeService = require('../services/stripeService');
 
 // ============================================================
@@ -42,8 +42,11 @@ router.post('/create-checkout-session', async (req, res) => {
             });
         }
 
+        // Use tenant-specific DB connection
+        const db = getTenantDb({ tenantId });
+
         // Verificar que el tenant existe
-        const tenantCheck = await pool.query('SELECT id FROM tenant WHERE id = $1', [tenantId]);
+        const tenantCheck = await db.query('SELECT id FROM tenant WHERE id = $1', [tenantId]);
         if (tenantCheck.rows.length === 0) {
             return res.status(404).json({
                 ok: false,
@@ -52,7 +55,8 @@ router.post('/create-checkout-session', async (req, res) => {
         }
 
         // Obtener el plan de suscripción de la base de datos
-        const planQuery = await pool.query(
+        // Plans are usually global, but accessible via tenant DB (public schema)
+        const planQuery = await db.query(
             'SELECT * FROM plan_suscripcion WHERE LOWER(nombre) = LOWER($1) AND activo = true',
             [plan]
         );
@@ -133,9 +137,20 @@ router.get('/session-status', async (req, res) => {
         // Obtener la sesión de Stripe
         const session = await stripeService.getCheckoutSession(session_id);
 
+        // Resolve tenant from session metadata or system lookup
+        let db;
+        const tenantId = session.metadata?.id_tenant || session.metadata?.tenant_id;
+
+        if (tenantId) {
+            db = getTenantDb({ tenantId: parseInt(tenantId) });
+        } else {
+            // Fallback to system lookup if metadata missing (rare)
+            db = getSystemDb();
+        }
+
         // Sincronización de estado (Recuperación ante fallos de Webhook)
         if (session.payment_status === 'paid') {
-            const dbPagoCheck = await pool.query(
+            const dbPagoCheck = await db.query(
                 `SELECT id, status FROM marketplace_reserva_pago WHERE stripe_checkout_session_id = $1`,
                 [session_id]
             );
@@ -143,7 +158,7 @@ router.get('/session-status', async (req, res) => {
             if (dbPagoCheck.rows.length > 0 && dbPagoCheck.rows[0].status !== 'PAID') {
                 console.log(`[Stripe] Recuperación: Marcando pago ${dbPagoCheck.rows[0].id} como PAID desde session-status`);
 
-                await pool.query(
+                await db.query(
                     `UPDATE marketplace_reserva_pago 
                      SET status = 'PAID',
                          stripe_payment_intent_id = $1,
@@ -164,7 +179,7 @@ router.get('/session-status', async (req, res) => {
         }
 
         // Volver a consultar la DB actualizada
-        const dbResult = await pool.query(
+        const dbResult = await db.query(
             `SELECT mrp.*, c.motivo as servicio_nombre, 
                     COALESCE(c.nombre_cliente, cf.nombre) as cliente_nombre
              FROM marketplace_reserva_pago mrp
@@ -224,8 +239,11 @@ router.get('/payment-status/:citaId', async (req, res) => {
             });
         }
 
+        // We don't know the tenant, so use System DB to search globally
+        const db = getSystemDb();
+
         // Buscar pagos de esta cita
-        const result = await pool.query(
+        const result = await db.query(
             `SELECT mrp.*, c.motivo as servicio_nombre, c.fecha_hora,
                     COALESCE(c.nombre_cliente, cf.nombre) as cliente_nombre,
                     s.nombre as sucursal_nombre
@@ -300,8 +318,11 @@ router.post('/regenerate-payment', async (req, res) => {
             });
         }
 
+        // Use System DB to find the payment and resolve tenant
+        const systemDb = getSystemDb();
+
         // Obtener el pago expirado
-        const pagoResult = await pool.query(
+        const pagoResult = await systemDb.query(
             `SELECT mrp.*, c.motivo as servicio_nombre, c.correo_cliente, c.telefono_cliente,
                     COALESCE(c.nombre_cliente, cf.nombre) as cliente_nombre,
                     ml.titulo_publico as sucursal_nombre
@@ -325,6 +346,9 @@ router.post('/regenerate-payment', async (req, res) => {
         const pagoAnterior = pagoResult.rows[0];
         const finalPaymentMode = payment_mode || pagoAnterior.payment_mode;
 
+        // NOW we have the tenant ID, switch to tenant DB for writes
+        const db = getTenantDb({ tenantId: pagoAnterior.id_tenant });
+
         // Crear nueva sesión de Stripe
         const stripeSession = await stripeService.createCheckoutSessionForBooking({
             id_tenant: pagoAnterior.id_tenant,
@@ -341,7 +365,7 @@ router.post('/regenerate-payment', async (req, res) => {
         });
 
         // Actualizar el registro antiguo a CANCELED (si no lo está)
-        await pool.query(
+        await db.query(
             `UPDATE marketplace_reserva_pago 
              SET status = 'CANCELED', updated_at = NOW()
              WHERE id = $1 AND status != 'CANCELED'`,
@@ -349,7 +373,7 @@ router.post('/regenerate-payment', async (req, res) => {
         );
 
         // Crear nuevo registro de pago
-        await pool.query(
+        await db.query(
             `INSERT INTO marketplace_reserva_pago 
              (id_tenant, id_sucursal, id_cita, id_cliente, payment_mode, amount, currency, status, stripe_checkout_session_id, checkout_url, metadata_json)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', $8, $9, $10)`,

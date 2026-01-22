@@ -1,8 +1,39 @@
 # RLS (Row Level Security) — Plan de Implementación VERSA
 
 **Fecha:** 13 de Enero, 2026  
-**Estado:** 🚧 FASE 1 — En diseño  
+**Última Actualización:** 21 de Enero, 2026  
+**Estado:** 🔴 FASE 0 — Pre-requisitos pendientes  
 **Objetivo:** Eliminar el riesgo de "data leak" entre tenants implementando aislamiento automático a nivel de PostgreSQL.
+
+> [!CAUTION]
+> **AUDITORÍA 2026-01-21:** Se detectaron **195 archivos** que bypassean `getTenantDb(ctx)`.  
+> Antes de habilitar RLS, se debe migrar el código legacy al patrón tenant-safe.  
+> Ver: `docs/AUDITS/TENANT_DB_OUTSIDE_REPORT.md`
+
+---
+
+## CHANGELOG
+
+| Fecha | Cambio |
+|-------|--------|
+| 2026-01-21 |- **Batch A5 (2026-01-21):** Refactored `egresos`, `tesoreria`, `empresa` controllers and Banking services.
+- **Batch A6 (2026-01-21):** Refactored `finsaasRbac`, `deducible`, `copiloto`, `documentos` controllers and `empresa.middleware`. Verified DB Guardrails.
+- **Batch A12**: Refactored `backend/services/notificacionService.js`, `backend/routes/auth.js`, `backend/routes/googleAuth.js`, `backend/routes/customerGoogleAuth.js`, `backend/routes/trabajadores.js`.
+- **Batch A13**: Refactored `backend/routes/marketplace.js`, `backend/routes/marketplaceAdmin.js`, `backend/routes/meRoutes.js`, `backend/services/marketplaceService.js`, `backend/services/customerPortalService.js`. Also fixed widespread import errors in models and services.
+- **Batch A14**: Refactored `documentos.controller.js`, `ventaPDFService.js`, `ordenPDFService.js`, `unifiedNotificationService.js`, `auditService.js`, `makeEmailProvider.js`. **Violations: 0**.
+- **2026-01-22**: Batch A14 completed. **100% Runtime Adoption Achieved.** Zero `pool.query` violations in active code.
+- **2026-01-21**: Batch A13 completed (Marketplace & Systemic Fix).
+- **2026-01-21**: Batch A12 completed (Routes). Guardrails 64→48.
+- **2026-01-21**: Batch A11 completed (Security Core). Guardrails down to 64.
+- **2026-01-21**: Batch A10 completed (Invite/Auth/Services).
+- **2026-01-21**: Batch A9 completed (Payments & Auth). Verified DB Guardrails.
+- **2026-01-21**: Batch A8 completed (Core Models). 
+- **2026-01-21**: Batch A7 completed (Banking & Copilot Services).
+- **2026-01-21**: Batch A6 completed (FinSaaS Controllers). and 2 services. Verified DB Guardrails. |
+| 2026-01-21 | Batch A4: Refactored 3 routes and 2 services. Verified DB Guardrails. |
+| 2026-01-21 | Batch A3: Refactorizado WhatsApp/Chat/Citas para eliminar `pool`. |
+| 2026-01-21 | Estado cambiado de FASE 1 a FASE 0. Auditoría reveló 195 archivos con bypass. |
+| 2026-01-13 | Documento inicial creado. |
 
 ---
 

@@ -78,10 +78,11 @@ router.get('/access', verifyJWT, async (req, res) => {
  */
 router.get('/profile', verifyJWT, async (req, res) => {
     try {
-        const pool = require('../db');
+        const { getTenantDb } = require('../src/core/db/index');
         const userId = req.user?.id;
+        const db = getTenantDb(req.user);
 
-        const result = await pool.query(`
+        const result = await db.query(`
             SELECT 
                 u.id,
                 u.email,

@@ -7,11 +7,22 @@
  */
 
 const crypto = require('crypto');
-const pool = require('../db');
+const { getSystemDb, getTenantDb } = require('../src/core/db/tenant-db');
 
 // Invite token configuration
 const INVITE_TOKEN_BYTES = 32; // 256-bit token
 const DEFAULT_EXPIRY_HOURS = 72; // 3 days
+
+/**
+ * Helper to resolve DB connection from context or DB client
+ * Defaults to System DB if no context provided (for global invite lookups)
+ */
+function resolveDb(ctxOrDb) {
+    if (!ctxOrDb) return getSystemDb();
+    if (ctxOrDb.query && typeof ctxOrDb.query === 'function') return ctxOrDb; // It's a DB client
+    if (ctxOrDb.tenantId) return getTenantDb(ctxOrDb); // It's a context
+    return getSystemDb();
+}
 
 /**
  * Generate a cryptographically secure invite token
@@ -39,18 +50,21 @@ function hashInviteToken(token) {
  * @param {number} [params.empresaId] - Optional: assign to specific empresa
  * @param {number} [params.expiryHours] - Hours until expiration (default: 72)
  * @param {number} [params.createdByUserId] - User creating the invite
+ * @param {Object} [ctxOrDb] - Transaction client or Context
  * @returns {Object} { inviteId, token, expiresAt }
  */
-async function createInvite({ tenantId, role = 'CLIENT_ADMIN', emailAllowed = null, empresaId = null, expiryHours = DEFAULT_EXPIRY_HOURS, createdByUserId = null }) {
+async function createInvite({ tenantId, role = 'CLIENT_ADMIN', emailAllowed = null, empresaId = null, expiryHours = DEFAULT_EXPIRY_HOURS, createdByUserId = null }, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
+
     // Validate tenant exists
-    const tenantCheck = await pool.query('SELECT id FROM tenant WHERE id = $1', [tenantId]);
+    const tenantCheck = await db.query('SELECT id FROM tenant WHERE id = $1', [tenantId]);
     if (tenantCheck.rows.length === 0) {
         throw new Error('Tenant not found');
     }
 
     // Validate empresa belongs to tenant if specified
     if (empresaId) {
-        const empresaCheck = await pool.query(
+        const empresaCheck = await db.query(
             'SELECT id FROM accounting_empresa WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL',
             [empresaId, tenantId]
         );
@@ -63,7 +77,7 @@ async function createInvite({ tenantId, role = 'CLIENT_ADMIN', emailAllowed = nu
     const tokenHash = hashInviteToken(token);
     const expiresAt = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
 
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO saas_invite (token_hash, tenant_id, id_empresa, role, email_allowed, expires_at, created_by_user_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING id, expires_at`,
@@ -89,8 +103,9 @@ async function createInvite({ tenantId, role = 'CLIENT_ADMIN', emailAllowed = nu
  */
 async function validateInvite(token, email = null) {
     const tokenHash = hashInviteToken(token);
+    const db = getSystemDb(); // Validate is usually public/global lookup
 
-    const result = await pool.query(
+    const result = await db.query(
         `SELECT si.*, t.nombre as tenant_nombre
          FROM saas_invite si
          JOIN tenant t ON si.tenant_id = t.id
@@ -129,10 +144,12 @@ async function validateInvite(token, email = null) {
 /**
  * Mark an invite as used
  * @param {number} inviteId - Invite ID
+ * @param {Object} [ctxOrDb] - Transaction client or Context
  * @returns {boolean} Success
  */
-async function consumeInvite(inviteId) {
-    const result = await pool.query(
+async function consumeInvite(inviteId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
+    const result = await db.query(
         `UPDATE saas_invite 
          SET used_at = NOW()
          WHERE id = $1 AND used_at IS NULL
@@ -151,10 +168,12 @@ async function consumeInvite(inviteId) {
 /**
  * Get invite by ID (for display purposes)
  * @param {number} inviteId
+ * @param {Object} [ctxOrDb] - Transaction client or Context
  * @returns {Object|null}
  */
-async function getInviteById(inviteId) {
-    const result = await pool.query(
+async function getInviteById(inviteId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
+    const result = await db.query(
         `SELECT si.*, t.nombre as tenant_nombre
          FROM saas_invite si
          JOIN tenant t ON si.tenant_id = t.id
@@ -181,9 +200,11 @@ async function getInviteById(inviteId) {
  * List invites for a tenant
  * @param {number} tenantId
  * @param {boolean} activeOnly - Only show unused, unexpired invites
+ * @param {Object} [ctxOrDb] - Transaction client or Context
  * @returns {Array}
  */
-async function listInvitesByTenant(tenantId, activeOnly = false) {
+async function listInvitesByTenant(tenantId, activeOnly = false, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     let query = `
         SELECT si.*, 
                e.nombre_legal as empresa_nombre,
@@ -201,7 +222,7 @@ async function listInvitesByTenant(tenantId, activeOnly = false) {
 
     query += ` ORDER BY si.created_at DESC`;
 
-    const result = await pool.query(query, [tenantId]);
+    const result = await db.query(query, [tenantId]);
 
     return result.rows.map(invite => ({
         id: invite.id,
@@ -219,10 +240,12 @@ async function listInvitesByTenant(tenantId, activeOnly = false) {
 /**
  * Delete an invite (only if not used)
  * @param {number} inviteId
+ * @param {Object} [ctxOrDb] - Transaction client or Context
  * @returns {boolean}
  */
-async function deleteInvite(inviteId) {
-    const result = await pool.query(
+async function deleteInvite(inviteId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
+    const result = await db.query(
         `DELETE FROM saas_invite WHERE id = $1 AND used_at IS NULL`,
         [inviteId]
     );

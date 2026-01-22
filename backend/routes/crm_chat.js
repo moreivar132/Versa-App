@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+// const pool = require('../db'); // REMOVED
+const { getTenantDb } = require('../src/core/db/tenant-db');
 // const verifyJWT = require('../middleware/auth'); // Middleware de auth para usuarios CRM
 
 // Middleware wrapper for dev
@@ -33,6 +34,22 @@ const devVerifyJWT = (req, res, next) => {
 
 // Aplicar middleware de autenticación a todas las rutas
 router.use(devVerifyJWT);
+
+// Inject req.db middleware
+router.use((req, res, next) => {
+    // Ensure req.ctx exists (if not set by global middleware)
+    if (!req.ctx && req.user) {
+        req.ctx = {
+            tenantId: req.user.id_tenant,
+            userId: req.user.id,
+            userEmail: req.user.email,
+            isSuperAdmin: req.user.is_super_admin
+        };
+    }
+    // Inject tenant-safe db
+    req.db = getTenantDb(req.ctx);
+    next();
+});
 
 // 2.1. Listar conversaciones del tenant
 router.get('/conversaciones', async (req, res) => {
@@ -77,7 +94,7 @@ router.get('/conversaciones', async (req, res) => {
 
         query += ` ORDER BY c.ultimo_mensaje_at DESC NULLS LAST`;
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         res.json({
             conversaciones: result.rows
@@ -107,7 +124,7 @@ router.get('/conversaciones/:id/mensajes', async (req, res) => {
             LEFT JOIN clientefinal cf ON cf.id = c.id_cliente
             WHERE c.id = $1 AND c.id_tenant = $2
         `;
-        const resultConversacion = await pool.query(queryConversacion, [idConversacion, idTenant]);
+        const resultConversacion = await req.db.query(queryConversacion, [idConversacion, idTenant]);
 
         if (resultConversacion.rows.length === 0) {
             return res.status(403).json({ ok: false, error: 'Conversación no encontrada o no autorizada' });
@@ -130,7 +147,7 @@ router.get('/conversaciones/:id/mensajes', async (req, res) => {
             WHERE m.id_conversacion = $1
             ORDER BY m.created_at ASC
         `;
-        const resultMensajes = await pool.query(queryMensajes, [idConversacion]);
+        const resultMensajes = await req.db.query(queryMensajes, [idConversacion]);
 
         res.json({
             conversacion,
@@ -153,7 +170,7 @@ router.post('/conversaciones/:id/mensajes', async (req, res) => {
 
         // Validar acceso
         const queryValidar = `SELECT id FROM chat_conversacion WHERE id = $1 AND id_tenant = $2`;
-        const resultValidar = await pool.query(queryValidar, [idConversacion, idTenant]);
+        const resultValidar = await req.db.query(queryValidar, [idConversacion, idTenant]);
 
         if (resultValidar.rows.length === 0) {
             return res.status(403).json({ ok: false, error: 'Conversación no encontrada o no autorizada' });
@@ -172,11 +189,11 @@ router.post('/conversaciones/:id/mensajes', async (req, res) => {
         const tipo = tipoMensaje || 'TEXTO';
         const url = urlAdjunto || null;
 
-        const resultInsert = await pool.query(queryInsert, [idConversacion, idUsuario, texto || '', tipo, url]);
+        const resultInsert = await req.db.query(queryInsert, [idConversacion, idUsuario, texto || '', tipo, url]);
         const nuevoMensaje = resultInsert.rows[0];
 
         // Actualizar conversación
-        await pool.query(`
+        await req.db.query(`
             UPDATE chat_conversacion
             SET ultimo_mensaje_at = NOW(), updated_at = NOW()
             WHERE id = $1
@@ -210,7 +227,7 @@ router.patch('/conversaciones/:id/cerrar', async (req, res) => {
 
         // Validar acceso
         const queryValidar = `SELECT id, estado FROM chat_conversacion WHERE id = $1 AND id_tenant = $2`;
-        const resultValidar = await pool.query(queryValidar, [idConversacion, idTenant]);
+        const resultValidar = await req.db.query(queryValidar, [idConversacion, idTenant]);
 
         if (resultValidar.rows.length === 0) {
             return res.status(403).json({ ok: false, error: 'Conversación no encontrada o no autorizada' });
@@ -219,7 +236,7 @@ router.patch('/conversaciones/:id/cerrar', async (req, res) => {
         // Enviar mensaje automático de cierre al cliente
         const mensajeCierre = `✅ Gracias por contactarnos. Esperamos haber resuelto tus dudas. Esta conversación ha sido cerrada. Si necesitas ayuda adicional, no dudes en escribirnos nuevamente. ¡Hasta pronto!`;
 
-        await pool.query(`
+        await req.db.query(`
             INSERT INTO chat_mensaje (
                 id_conversacion, id_usuario, emisor_tipo, texto, tipo_mensaje, created_at
             ) VALUES (
@@ -234,7 +251,7 @@ router.patch('/conversaciones/:id/cerrar', async (req, res) => {
             WHERE id = $1 AND id_tenant = $2
             RETURNING id, estado
         `;
-        const resultUpdate = await pool.query(queryUpdate, [idConversacion, idTenant]);
+        const resultUpdate = await req.db.query(queryUpdate, [idConversacion, idTenant]);
 
         res.json({
             ok: true,
@@ -261,7 +278,7 @@ router.patch('/conversaciones/:id/reabrir', async (req, res) => {
             WHERE id = $1 AND id_tenant = $2
             RETURNING id, estado
         `;
-        const resultUpdate = await pool.query(queryUpdate, [idConversacion, idTenant]);
+        const resultUpdate = await req.db.query(queryUpdate, [idConversacion, idTenant]);
 
         if (resultUpdate.rows.length === 0) {
             return res.status(403).json({ ok: false, error: 'Conversación no encontrada o no autorizada' });

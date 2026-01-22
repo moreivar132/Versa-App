@@ -1,7 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+// const pool = require('../db'); // REMOVED
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const verifyJWT = require('../middleware/auth');
+
+// Inject Tenant DB
+router.use((req, res, next) => {
+    try {
+        req.db = getTenantDb(req.user); // req.user acts as context (has id_tenant)
+        next();
+    } catch (err) {
+        console.error('Error injecting Tenant DB:', err);
+        res.status(500).json({ error: 'Database context error' });
+    }
+});
 
 // POST /api/proveedores - Crear un nuevo proveedor
 router.post('/', verifyJWT, async (req, res) => {
@@ -27,7 +39,7 @@ router.post('/', verifyJWT, async (req, res) => {
 
     try {
         // Verificar si ya existe el proveedor en este tenant
-        const existing = await pool.query(
+        const existing = await req.db.query(
             'SELECT id FROM proveedor WHERE cif = $1 AND id_tenant = $2',
             [cif, id_tenant]
         );
@@ -40,6 +52,7 @@ router.post('/', verifyJWT, async (req, res) => {
         }
 
         // Insertar proveedor
+        // Note: req.db.query already validates tenant logic, but we keep explicit checks for safety/logic matching
         const insertQuery = `
       INSERT INTO proveedor 
       (id_tenant, nombre, cif, telefono, "Correo", "Domicilio_fiscal", "Comentarios", "Nombre_contacto", "Sitio_web_b2b", "Proviancia", cp_localidad, created_at)
@@ -47,7 +60,7 @@ router.post('/', verifyJWT, async (req, res) => {
       RETURNING *
     `;
 
-        const result = await pool.query(insertQuery, [
+        const result = await req.db.query(insertQuery, [
             id_tenant,
             nombre,
             cif,
@@ -93,6 +106,13 @@ router.get('/', verifyJWT, async (req, res) => {
                 ORDER BY created_at DESC 
                 LIMIT $1
             `;
+            // For super admin, we typically use queryRaw if accessing cross-tenant, or just standard query if RLS policies allow.
+            // But req.db by default enforces tenant check unless we are superadmin allowing implementation detail changes.
+            // In A1-A3 we just used req.db.query. If isSuperAdmin, the context passed to getTenantDb has isSuperAdmin=true
+            // so the query should be fine or we might need to be careful if the wrapper enforces tenantId filter in sql.
+            // The wrapper usually doesn't inject SQL, it just validates context.
+            // If the SQL doesn't have WHERE id_tenant, RLS (when enabled) handles it.
+            // Here the SQL *is* explicit.
             params = [limit];
         } else {
             query = `
@@ -104,7 +124,7 @@ router.get('/', verifyJWT, async (req, res) => {
             params = [id_tenant, limit];
         }
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error al obtener proveedores:', error);
@@ -129,7 +149,7 @@ router.get('/count', verifyJWT, async (req, res) => {
             params = [id_tenant];
         }
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
         res.json({ count: parseInt(result.rows[0].count) });
     } catch (error) {
         console.error('Error al contar proveedores:', error);
@@ -154,7 +174,7 @@ router.put('/:id', verifyJWT, async (req, res) => {
     try {
         // Verificar que el proveedor pertenezca al tenant
         const checkQuery = 'SELECT id FROM proveedor WHERE id = $1 AND id_tenant = $2';
-        const checkResult = await pool.query(checkQuery, [id, id_tenant]);
+        const checkResult = await req.db.query(checkQuery, [id, id_tenant]);
 
         if (checkResult.rows.length === 0) {
             return res.status(404).json({
@@ -173,7 +193,7 @@ router.put('/:id', verifyJWT, async (req, res) => {
             RETURNING *
         `;
 
-        const result = await pool.query(updateQuery, [
+        const result = await req.db.query(updateQuery, [
             nombre,
             cif,
             telefono || null,
@@ -235,7 +255,7 @@ router.get('/search', verifyJWT, async (req, res) => {
             params = [id_tenant, searchTerm];
         }
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error en búsqueda de proveedores:', error);

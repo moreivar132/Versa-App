@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getSystemDb } = require('../src/core/db/tenant-db');
 const { canTenantUseApp } = require('../middleware/subscriptionCheck');
 const verifyJWT = require('../middleware/auth');
 
@@ -44,11 +44,12 @@ router.get('/status', verifyJWT, async (req, res) => {
 
 /**
  * GET /api/subscriptions/plans
- * Obtiene los planes de suscripción disponibles
+ * Obtiene los planes de suscripción disponibles (public catalog)
  */
 router.get('/plans', async (req, res) => {
     try {
-        const result = await pool.query(
+        const systemDb = getSystemDb();
+        const result = await systemDb.query(
             `SELECT id, nombre, descripcion, trial_dias_default, activo
        FROM plan_suscripcion
        WHERE activo = true
@@ -75,9 +76,10 @@ router.get('/plans', async (req, res) => {
  */
 router.get('/my-subscription', verifyJWT, async (req, res) => {
     try {
+        const db = req.db;
         const tenantId = req.user.tenant_id;
 
-        const result = await pool.query(
+        const result = await db.query(
             `SELECT 
         ts.*,
         ps.nombre as plan_nombre,

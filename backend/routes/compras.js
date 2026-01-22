@@ -1,9 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const verifyJWT = require('../middleware/auth');
 
-async function registrarEntradaInventario(client, {
+// Middleware to inject tenant-safe DB wrapper
+router.use((req, _res, next) => {
+    req.db = getTenantDb(req.ctx);
+    next();
+});
+
+async function registrarEntradaInventario(tx, {
     productId,
     quantity,
     idAlmacen,
@@ -16,13 +22,13 @@ async function registrarEntradaInventario(client, {
         throw new Error('La cantidad del item es inválida para actualizar stock.');
     }
 
-    await client.query(`
+    await tx.query(`
         INSERT INTO movimientoinventario
         (id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_at, created_by)
         VALUES ($1, $2, 'ENTRADA', $3, 'COMPRA', $4, NOW(), $5)
     `, [productId, idAlmacen, parsedQuantity, idCompra, idUsuario]);
 
-    await client.query(
+    await tx.query(
         'UPDATE producto SET stock = COALESCE(stock, 0) + $1 WHERE id = $2',
         [parsedQuantity, productId]
     );
@@ -54,7 +60,7 @@ router.get('/', verifyJWT, async (req, res) => {
         query += ` ORDER BY c.fecha_emision DESC LIMIT $${params.length + 1}`;
         params.push(parseInt(limit));
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
         console.log(`[DEBUG GET /api/compras] Devolviendo ${result.rows.length} compras`);
         res.json(result.rows);
     } catch (error) {
@@ -86,243 +92,239 @@ router.post('/', verifyJWT, async (req, res) => {
         return res.status(400).json({ error: 'La compra debe tener al menos un item.' });
     }
 
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
-
-        // 1. Resolver Proveedor y Sucursal (Validación estricta)
-        if (!id_sucursal) {
-            throw new Error('El ID de sucursal es obligatorio.');
-        }
-
-        // Verificar existencia de sucursal
-        const sucursalCheck = await client.query('SELECT id FROM sucursal WHERE id = $1', [id_sucursal]);
-        if (sucursalCheck.rows.length === 0) {
-            throw new Error('La sucursal especificada no existe.');
-        }
-
-        let finalProveedorId = id_proveedor;
-        if (!finalProveedorId && nombre_proveedor) {
-            // Intentar buscar por nombre o crear
-            const provRes = await client.query('SELECT id FROM proveedor WHERE nombre = $1 AND id_tenant = $2', [nombre_proveedor, id_tenant]);
-            if (provRes.rows.length > 0) {
-                finalProveedorId = provRes.rows[0].id;
-            } else {
-                const createProv = await client.query(
-                    'INSERT INTO proveedor (id_tenant, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id',
-                    [id_tenant, nombre_proveedor]
-                );
-                finalProveedorId = createProv.rows[0].id;
-            }
-        }
-
-        if (!finalProveedorId) {
-            throw new Error('Debe especificar un proveedor válido o un nombre para crearlo.');
-        }
-
-        // 1.1 Resolver Almacén (Si no viene, buscar uno de la sucursal o crear uno por defecto)
-        let finalAlmacenId = id_almacen;
-        if (!finalAlmacenId) {
-            const almacenRes = await client.query('SELECT id FROM almacen WHERE id_sucursal = $1 LIMIT 1', [id_sucursal]);
-            if (almacenRes.rows.length > 0) {
-                finalAlmacenId = almacenRes.rows[0].id;
-            } else {
-                // Crear almacén por defecto
-                const sucursalNameRes = await client.query('SELECT nombre FROM sucursal WHERE id = $1', [id_sucursal]);
-                const sucursalName = sucursalNameRes.rows[0]?.nombre || 'Sucursal';
-                const createAlmacen = await client.query(
-                    'INSERT INTO almacen (id_sucursal, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id',
-                    [id_sucursal, `Almacén Principal - ${sucursalName}`]
-                );
-                finalAlmacenId = createAlmacen.rows[0].id;
-            }
-        }
-
-        // 2. Insertar Cabecera (Inicialmente con total 0, se actualizará al final)
-        // Ensure fecha_emision is formatted
-        let fecha = new Date();
-        if (fecha_emision) {
-            const parsed = new Date(fecha_emision);
-            if (!isNaN(parsed)) fecha = parsed;
-        }
-
-        const insertCabeceraQuery = `
-            INSERT INTO compracabecera 
-            (id_tenant, id_proveedor, id_sucursal, id_almacen, fecha_emision, metodo_pago, observaciones, total, created_at, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, NOW(), $8)
-            RETURNING id
-        `;
-
-        const cabeceraRes = await client.query(insertCabeceraQuery, [
-            id_tenant,
-            finalProveedorId,
-            id_sucursal,
-            finalAlmacenId,
-            fecha,
-            metodo_pago,
-            observaciones,
-            id_usuario
-        ]);
-
-        const id_compra = cabeceraRes.rows[0].id;
-
-        // 3. Insertar Líneas y Calcular Totales
-        let calculatedTotal = 0;
-
-        for (const item of items) {
-            let productId = item.id_producto;
-            const quantity = parseFloat(item.quantity);
-            const price = parseFloat(item.price);
-            const bonus = parseFloat(item.bonus) || 0;
-            const iva = parseFloat(item.iva) || 0;
-
-            if (Number.isNaN(quantity) || quantity <= 0) {
-                throw new Error('Cada item debe tener una cantidad válida mayor a cero.');
+        const result = await req.db.txWithRLS(async (tx) => {
+            // 1. Resolver Proveedor y Sucursal (Validación estricta)
+            if (!id_sucursal) {
+                throw new Error('El ID de sucursal es obligatorio.');
             }
 
-            if (Number.isNaN(price) || price < 0) {
-                throw new Error('Cada item debe tener un precio válido.');
+            // Verificar existencia de sucursal
+            const sucursalCheck = await tx.query('SELECT id FROM sucursal WHERE id = $1', [id_sucursal]);
+            if (sucursalCheck.rows.length === 0) {
+                throw new Error('La sucursal especificada no existe.');
             }
 
-            // Resolver Producto (Buscar o Crear) - Incluye id_sucursal para unicidad
-            // IMPORTANTE: Al crear producto desde compra, incluir proveedor, costo y unidad de medida
-            if (!productId && item.barcode) {
-                const prodRes = await client.query(
-                    'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2 AND id_sucursal = $3',
-                    [item.barcode, id_tenant, id_sucursal]
-                );
-                if (prodRes.rows.length > 0) {
-                    productId = prodRes.rows[0].id;
-                    // Actualizar el producto existente con el proveedor si no lo tiene
-                    await client.query(
-                        `UPDATE producto SET 
-                            id_proveedor = COALESCE(id_proveedor, $1),
-                            costo = $2,
-                            unidad_medida = COALESCE(unidad_medida, 'Unidades'),
-                            updated_at = NOW()
-                        WHERE id = $3`,
-                        [finalProveedorId, price, productId]
-                    );
+            let finalProveedorId = id_proveedor;
+            if (!finalProveedorId && nombre_proveedor) {
+                // Intentar buscar por nombre o crear
+                const provRes = await tx.query('SELECT id FROM proveedor WHERE nombre = $1 AND id_tenant = $2', [nombre_proveedor, id_tenant]);
+                if (provRes.rows.length > 0) {
+                    finalProveedorId = provRes.rows[0].id;
                 } else {
-                    // Crear producto básico vinculado a la sucursal de la compra CON PROVEEDOR
-                    const createProd = await client.query(
-                        `INSERT INTO producto 
-                            (id_tenant, codigo_barras, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, NOW()) RETURNING id`,
-                        [id_tenant, item.barcode, item.name, item.price, price, id_sucursal, finalProveedorId, item.type || 'Producto', item.unidad || 'Unidades']
+                    const createProv = await tx.query(
+                        'INSERT INTO proveedor (id_tenant, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id',
+                        [id_tenant, nombre_proveedor]
                     );
-                    productId = createProd.rows[0].id;
+                    finalProveedorId = createProv.rows[0].id;
                 }
-            } else if (!productId) {
-                // Producto sin código, buscar por nombre exacto y sucursal o crear
-                const prodRes = await client.query(
-                    'SELECT id FROM producto WHERE nombre = $1 AND id_tenant = $2 AND id_sucursal = $3',
-                    [item.name, id_tenant, id_sucursal]
-                );
-                if (prodRes.rows.length > 0) {
-                    productId = prodRes.rows[0].id;
-                    // Actualizar el producto existente con el proveedor si no lo tiene
-                    await client.query(
-                        `UPDATE producto SET 
-                            id_proveedor = COALESCE(id_proveedor, $1),
-                            costo = $2,
-                            unidad_medida = COALESCE(unidad_medida, 'Unidades'),
-                            updated_at = NOW()
-                        WHERE id = $3`,
-                        [finalProveedorId, price, productId]
-                    );
+            }
+
+            if (!finalProveedorId) {
+                throw new Error('Debe especificar un proveedor válido o un nombre para crearlo.');
+            }
+
+            // 1.1 Resolver Almacén (Si no viene, buscar uno de la sucursal o crear uno por defecto)
+            let finalAlmacenId = id_almacen;
+            if (!finalAlmacenId) {
+                const almacenRes = await tx.query('SELECT id FROM almacen WHERE id_sucursal = $1 LIMIT 1', [id_sucursal]);
+                if (almacenRes.rows.length > 0) {
+                    finalAlmacenId = almacenRes.rows[0].id;
                 } else {
-                    const createProd = await client.query(
-                        `INSERT INTO producto 
-                            (id_tenant, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, NOW()) RETURNING id`,
-                        [id_tenant, item.name, item.price, price, id_sucursal, finalProveedorId, item.type || 'Producto', item.unidad || 'Unidades']
+                    // Crear almacén por defecto
+                    const sucursalNameRes = await tx.query('SELECT nombre FROM sucursal WHERE id = $1', [id_sucursal]);
+                    const sucursalName = sucursalNameRes.rows[0]?.nombre || 'Sucursal';
+                    const createAlmacen = await tx.query(
+                        'INSERT INTO almacen (id_sucursal, nombre, created_at) VALUES ($1, $2, NOW()) RETURNING id',
+                        [id_sucursal, `Almacén Principal - ${sucursalName}`]
                     );
-                    productId = createProd.rows[0].id;
+                    finalAlmacenId = createAlmacen.rows[0].id;
                 }
             }
 
-
-            if (!productId) {
-                throw new Error(`No se pudo resolver el producto para el item: ${item.name}`);
+            // 2. Insertar Cabecera (Inicialmente con total 0, se actualizará al final)
+            // Ensure fecha_emision is formatted
+            let fecha = new Date();
+            if (fecha_emision) {
+                const parsed = new Date(fecha_emision);
+                if (!isNaN(parsed)) fecha = parsed;
             }
 
-            // Obtener el porcentaje de IVA desde la tabla impuesto
-            let ivaPorcentaje = 0;
-
-            // Prioridad: 1) id_impuesto del item, 2) id_impuesto del producto en BD
-            let idImpuesto = item.id_impuesto;
-
-            if (!idImpuesto && productId) {
-                // Buscar el id_impuesto del producto
-                const prodImpuestoRes = await client.query(
-                    'SELECT id_impuesto FROM producto WHERE id = $1',
-                    [productId]
-                );
-                if (prodImpuestoRes.rows.length > 0 && prodImpuestoRes.rows[0].id_impuesto) {
-                    idImpuesto = prodImpuestoRes.rows[0].id_impuesto;
-                }
-            }
-
-            // Buscar el porcentaje del impuesto en la tabla impuesto
-            if (idImpuesto) {
-                const impuestoRes = await client.query(
-                    'SELECT porcentaje FROM impuesto WHERE id = $1',
-                    [idImpuesto]
-                );
-                if (impuestoRes.rows.length > 0) {
-                    ivaPorcentaje = parseFloat(impuestoRes.rows[0].porcentaje) || 0;
-                }
-            }
-
-            const insertLineaQuery = `
-                INSERT INTO compralinea
-                (id_compra, id_producto, descripcion, cantidad, precio_unitario, iva, total_linea)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+            const insertCabeceraQuery = `
+                INSERT INTO compracabecera 
+                (id_tenant, id_proveedor, id_sucursal, id_almacen, fecha_emision, metodo_pago, observaciones, total, created_at, created_by)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, 0, NOW(), $8)
+                RETURNING id
             `;
 
-            // Calcular total línea: (precio * cantidad - bonus) * (1 + iva/100)
-            // El IVA se aplica sobre el subtotal (precio * cantidad - bonus)
-            const subtotal = (price * quantity) - bonus;
-            const ivaAmount = subtotal * (ivaPorcentaje / 100);
-            const lineTotal = subtotal + ivaAmount;
-            calculatedTotal += lineTotal;
-
-            await client.query(insertLineaQuery, [
-                id_compra,
-                productId,
-                item.name,
-                quantity,
-                price,
-                ivaPorcentaje, // Guardar el porcentaje del impuesto
-                lineTotal
+            const cabeceraRes = await tx.query(insertCabeceraQuery, [
+                id_tenant,
+                finalProveedorId,
+                id_sucursal,
+                finalAlmacenId,
+                fecha,
+                metodo_pago,
+                observaciones,
+                id_usuario
             ]);
 
-            await registrarEntradaInventario(client, {
-                productId,
-                quantity,
-                idAlmacen: finalAlmacenId,
-                idCompra: id_compra,
-                idUsuario: id_usuario
-            });
-        }
+            const id_compra = cabeceraRes.rows[0].id;
 
-        // 4. Actualizar Total en Cabecera
-        await client.query(
-            'UPDATE compracabecera SET total = $1 WHERE id = $2',
-            [calculatedTotal, id_compra]
-        );
+            // 3. Insertar Líneas y Calcular Totales
+            let calculatedTotal = 0;
 
-        await client.query('COMMIT');
-        res.json({ ok: true, id_compra, message: 'Compra registrada exitosamente', total: calculatedTotal });
+            for (const item of items) {
+                let productId = item.id_producto;
+                const quantity = parseFloat(item.quantity);
+                const price = parseFloat(item.price);
+                const bonus = parseFloat(item.bonus) || 0;
+                const iva = parseFloat(item.iva) || 0;
+
+                if (Number.isNaN(quantity) || quantity <= 0) {
+                    throw new Error('Cada item debe tener una cantidad válida mayor a cero.');
+                }
+
+                if (Number.isNaN(price) || price < 0) {
+                    throw new Error('Cada item debe tener un precio válido.');
+                }
+
+                // Resolver Producto (Buscar o Crear) - Incluye id_sucursal para unicidad
+                // IMPORTANTE: Al crear producto desde compra, incluir proveedor, costo y unidad de medida
+                if (!productId && item.barcode) {
+                    const prodRes = await tx.query(
+                        'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2 AND id_sucursal = $3',
+                        [item.barcode, id_tenant, id_sucursal]
+                    );
+                    if (prodRes.rows.length > 0) {
+                        productId = prodRes.rows[0].id;
+                        // Actualizar el producto existente con el proveedor si no lo tiene
+                        await tx.query(
+                            `UPDATE producto SET 
+                                id_proveedor = COALESCE(id_proveedor, $1),
+                                costo = $2,
+                                unidad_medida = COALESCE(unidad_medida, 'Unidades'),
+                                updated_at = NOW()
+                            WHERE id = $3`,
+                            [finalProveedorId, price, productId]
+                        );
+                    } else {
+                        // Crear producto básico vinculado a la sucursal de la compra CON PROVEEDOR
+                        const createProd = await tx.query(
+                            `INSERT INTO producto 
+                                (id_tenant, codigo_barras, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, NOW()) RETURNING id`,
+                            [id_tenant, item.barcode, item.name, item.price, price, id_sucursal, finalProveedorId, item.type || 'Producto', item.unidad || 'Unidades']
+                        );
+                        productId = createProd.rows[0].id;
+                    }
+                } else if (!productId) {
+                    // Producto sin código, buscar por nombre exacto y sucursal o crear
+                    const prodRes = await tx.query(
+                        'SELECT id FROM producto WHERE nombre = $1 AND id_tenant = $2 AND id_sucursal = $3',
+                        [item.name, id_tenant, id_sucursal]
+                    );
+                    if (prodRes.rows.length > 0) {
+                        productId = prodRes.rows[0].id;
+                        // Actualizar el producto existente con el proveedor si no lo tiene
+                        await tx.query(
+                            `UPDATE producto SET 
+                                id_proveedor = COALESCE(id_proveedor, $1),
+                                costo = $2,
+                                unidad_medida = COALESCE(unidad_medida, 'Unidades'),
+                                updated_at = NOW()
+                            WHERE id = $3`,
+                            [finalProveedorId, price, productId]
+                        );
+                    } else {
+                        const createProd = await tx.query(
+                            `INSERT INTO producto 
+                                (id_tenant, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, NOW()) RETURNING id`,
+                            [id_tenant, item.name, item.price, price, id_sucursal, finalProveedorId, item.type || 'Producto', item.unidad || 'Unidades']
+                        );
+                        productId = createProd.rows[0].id;
+                    }
+                }
+
+
+                if (!productId) {
+                    throw new Error(`No se pudo resolver el producto para el item: ${item.name}`);
+                }
+
+                // Obtener el porcentaje de IVA desde la tabla impuesto
+                let ivaPorcentaje = 0;
+
+                // Prioridad: 1) id_impuesto del item, 2) id_impuesto del producto en BD
+                let idImpuesto = item.id_impuesto;
+
+                if (!idImpuesto && productId) {
+                    // Buscar el id_impuesto del producto
+                    const prodImpuestoRes = await tx.query(
+                        'SELECT id_impuesto FROM producto WHERE id = $1',
+                        [productId]
+                    );
+                    if (prodImpuestoRes.rows.length > 0 && prodImpuestoRes.rows[0].id_impuesto) {
+                        idImpuesto = prodImpuestoRes.rows[0].id_impuesto;
+                    }
+                }
+
+                // Buscar el porcentaje del impuesto en la tabla impuesto
+                if (idImpuesto) {
+                    const impuestoRes = await tx.query(
+                        'SELECT porcentaje FROM impuesto WHERE id = $1',
+                        [idImpuesto]
+                    );
+                    if (impuestoRes.rows.length > 0) {
+                        ivaPorcentaje = parseFloat(impuestoRes.rows[0].porcentaje) || 0;
+                    }
+                }
+
+                const insertLineaQuery = `
+                    INSERT INTO compralinea
+                    (id_compra, id_producto, descripcion, cantidad, precio_unitario, iva, total_linea)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `;
+
+                // Calcular total línea: (precio * cantidad - bonus) * (1 + iva/100)
+                // El IVA se aplica sobre el subtotal (precio * cantidad - bonus)
+                const subtotal = (price * quantity) - bonus;
+                const ivaAmount = subtotal * (ivaPorcentaje / 100);
+                const lineTotal = subtotal + ivaAmount;
+                calculatedTotal += lineTotal;
+
+                await tx.query(insertLineaQuery, [
+                    id_compra,
+                    productId,
+                    item.name,
+                    quantity,
+                    price,
+                    ivaPorcentaje, // Guardar el porcentaje del impuesto
+                    lineTotal
+                ]);
+
+                await registrarEntradaInventario(tx, {
+                    productId,
+                    quantity,
+                    idAlmacen: finalAlmacenId,
+                    idCompra: id_compra,
+                    idUsuario: id_usuario
+                });
+            }
+
+            // 4. Actualizar Total en Cabecera
+            await tx.query(
+                'UPDATE compracabecera SET total = $1 WHERE id = $2',
+                [calculatedTotal, id_compra]
+            );
+
+            return { id_compra, calculatedTotal };
+        });
+
+        res.json({ ok: true, id_compra: result.id_compra, message: 'Compra registrada exitosamente', total: result.calculatedTotal });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error al registrar compra:', error);
         res.status(500).json({ error: 'Error al registrar la compra: ' + error.message });
-    } finally {
-        client.release();
     }
 });
 
@@ -350,7 +352,7 @@ router.get('/:id/pdf', verifyJWT, async (req, res) => {
             params.push(id_tenant);
         }
 
-        const cabeceraRes = await pool.query(query, params);
+        const cabeceraRes = await req.db.query(query, params);
 
         if (cabeceraRes.rows.length === 0) {
             return res.status(404).json({ error: 'Compra no encontrada' });
@@ -359,7 +361,7 @@ router.get('/:id/pdf', verifyJWT, async (req, res) => {
         const compra = cabeceraRes.rows[0];
 
         // Obtener líneas
-        const lineasRes = await pool.query(`
+        const lineasRes = await req.db.query(`
             SELECT cl.*, pr.nombre as producto_nombre, pr.codigo_barras
             FROM compralinea cl
             LEFT JOIN producto pr ON cl.id_producto = pr.id
@@ -516,7 +518,7 @@ router.get('/:id', verifyJWT, async (req, res) => {
             params.push(id_tenant);
         }
 
-        const cabeceraRes = await pool.query(query, params);
+        const cabeceraRes = await req.db.query(query, params);
 
         if (cabeceraRes.rows.length === 0) {
             console.log(`[DEBUG] Compra ${id} no encontrada o acceso denegado para tenant ${id_tenant}`);
@@ -524,7 +526,7 @@ router.get('/:id', verifyJWT, async (req, res) => {
         }
 
         // Obtener líneas de la compra
-        const lineasRes = await pool.query(`
+        const lineasRes = await req.db.query(`
             SELECT cl.*, pr.nombre as producto_nombre, pr.codigo_barras
             FROM compralinea cl
             LEFT JOIN producto pr ON cl.id_producto = pr.id
@@ -549,7 +551,6 @@ router.get('/:id', verifyJWT, async (req, res) => {
     }
 });
 
-// PUT /api/compras/:id - Actualizar compra existente
 router.put('/:id', verifyJWT, async (req, res) => {
     console.log(`PUT /api/compras/${req.params.id} request received`);
     const { id } = req.params;
@@ -568,145 +569,139 @@ router.put('/:id', verifyJWT, async (req, res) => {
     const id_usuario = req.user.id;
     const isSuperAdmin = req.user.is_super_admin;
 
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
-
-        // 1. Verificar existencia y permisos
-        let checkQuery = 'SELECT id FROM compracabecera WHERE id = $1';
-        let checkParams = [id];
-        if (!isSuperAdmin) {
-            checkQuery += ' AND id_tenant = $2';
-            checkParams.push(id_tenant);
-        }
-        const checkRes = await client.query(checkQuery, checkParams);
-        if (checkRes.rows.length === 0) {
-            // Si es admin, permitir editar aunque no sea de su tenant (caso borde o error de permisos legacy)
-            // PERO SOLO SI EL TENANT COINCIDE O ES SUPER ADMIN.
-            // Si el check falló con el tenant, probamos sin tenant para loguear
-            const checkExist = await client.query('SELECT id, id_tenant FROM compracabecera WHERE id = $1', [id]);
-            if (checkExist.rows.length === 0) {
-                throw new Error('Compra no encontrada.');
-            } else {
-                const realTenant = checkExist.rows[0].id_tenant;
-                if (!isSuperAdmin && String(realTenant) !== String(id_tenant)) {
-                    throw new Error(`Permiso denegado. La compra pertenece al tenant ${realTenant} y tú eres ${id_tenant}`);
-                }
+        await req.db.txWithRLS(async (tx) => {
+            // 1. Verificar existencia y permisos
+            let checkQuery = 'SELECT id FROM compracabecera WHERE id = $1';
+            let checkParams = [id];
+            if (!isSuperAdmin) {
+                checkQuery += ' AND id_tenant = $2';
+                checkParams.push(id_tenant);
             }
-        }
-
-        // 2. Actualizar Cabecera
-        let fecha = new Date();
-        if (fecha_emision) fecha = new Date(fecha_emision);
-
-        await client.query(`
-            UPDATE compracabecera 
-            SET id_proveedor = $1, id_sucursal = $2, fecha_emision = $3, metodo_pago = $4, observaciones = $5, total = $6
-            WHERE id = $7
-        `, [id_proveedor, id_sucursal, fecha, metodo_pago, observaciones, 0, id]); // Total update later
-
-        // 3. Reemplazar Líneas (Estrategia: Eliminar e Insertar)
-
-        // A. REVERTIR STOCK DE LÍNEAS ANTERIORES
-        // Obtener líneas actuales antes de borrar
-        const oldLines = await client.query('SELECT id_producto, cantidad FROM compralinea WHERE id_compra = $1', [id]);
-
-        for (const oldLine of oldLines.rows) {
-            if (oldLine.id_producto && oldLine.cantidad) {
-                await client.query(
-                    'UPDATE producto SET stock = stock - $1 WHERE id = $2',
-                    [oldLine.cantidad, oldLine.id_producto]
-                );
-            }
-        }
-
-        // B. BORRAR REGISTROS PREVIOS
-        await client.query("DELETE FROM movimientoinventario WHERE origen_tipo = 'COMPRA' AND origen_id = $1", [id]);
-        await client.query("DELETE FROM compralinea WHERE id_compra = $1", [id]);
-
-        // C. INSERTAR NUEVAS LÍNEAS
-        let calculatedTotal = 0;
-
-        // Resolver Almacén (Reusar existente o default)
-        const almacenRes = await client.query('SELECT id FROM almacen WHERE id_sucursal = $1 LIMIT 1', [id_sucursal]);
-        const finalAlmacenId = almacenRes.rows[0]?.id;
-
-        for (const item of items) {
-            let productId = item.id_producto;
-            const quantity = parseFloat(item.quantity) || 0;
-            const price = parseFloat(item.price) || 0;
-            const bonus = parseFloat(item.bonus) || 0;
-
-            // Resolver/Actualizar Producto (Igual que en POST)
-            if (!productId && item.barcode) {
-                const prodRes = await client.query(
-                    'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2 AND id_sucursal = $3',
-                    [item.barcode, id_tenant, id_sucursal]
-                );
-                if (prodRes.rows.length > 0) {
-                    productId = prodRes.rows[0].id;
+            const checkRes = await tx.query(checkQuery, checkParams);
+            if (checkRes.rows.length === 0) {
+                // Si es admin, permitir editar aunque no sea de su tenant (caso borde o error de permisos legacy)
+                // PERO SOLO SI EL TENANT COINCIDE O ES SUPER ADMIN.
+                // Si el check falló con el tenant, probamos sin tenant para loguear
+                const checkExist = await tx.query('SELECT id, id_tenant FROM compracabecera WHERE id = $1', [id]);
+                if (checkExist.rows.length === 0) {
+                    throw new Error('Compra no encontrada.');
                 } else {
-                    // Crear producto si no existe
-                    const createProd = await client.query(
-                        `INSERT INTO producto 
-                             (id_tenant, codigo_barras, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
-                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, NOW()) RETURNING id`,
-                        [id_tenant, item.barcode, item.name, price, price, id_sucursal, id_proveedor, item.type || 'Producto', 'Unidades']
-                    );
-                    productId = createProd.rows[0].id;
-                }
-            } else if (!productId) {
-                // Buscar por nombre
-                const prodRes = await client.query(
-                    'SELECT id FROM producto WHERE nombre = $1 AND id_tenant = $2 AND id_sucursal = $3',
-                    [item.name, id_tenant, id_sucursal]
-                );
-                if (prodRes.rows.length > 0) {
-                    productId = prodRes.rows[0].id;
-                } else {
-                    const createProd = await client.query(
-                        `INSERT INTO producto 
-                             (id_tenant, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
-                         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, NOW()) RETURNING id`,
-                        [id_tenant, item.name, price, price, id_sucursal, id_proveedor, item.type || 'Producto', 'Unidades']
-                    );
-                    productId = createProd.rows[0].id;
+                    const realTenant = checkExist.rows[0].id_tenant;
+                    if (!isSuperAdmin && String(realTenant) !== String(id_tenant)) {
+                        throw new Error(`Permiso denegado. La compra pertenece al tenant ${realTenant} y tú eres ${id_tenant}`);
+                    }
                 }
             }
 
-            if (productId) {
-                // Recuperar IVA real si id_impuesto existe (logic simple)
-                const iva = parseFloat(item.iva) || 0;
-                const subtotal = (price * quantity) - bonus;
-                const lineTotal = subtotal * (1 + (iva / 100));
-                calculatedTotal += lineTotal;
+            // 2. Actualizar Cabecera
+            let fecha = new Date();
+            if (fecha_emision) fecha = new Date(fecha_emision);
 
-                await client.query(`
-                    INSERT INTO compralinea (id_compra, id_producto, descripcion, cantidad, precio_unitario, iva, total_linea)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7)
-                 `, [id, productId, item.name, quantity, price, iva, lineTotal]);
+            await tx.query(`
+                UPDATE compracabecera 
+                SET id_proveedor = $1, id_sucursal = $2, fecha_emision = $3, metodo_pago = $4, observaciones = $5, total = $6
+                WHERE id = $7
+            `, [id_proveedor, id_sucursal, fecha, metodo_pago, observaciones, 0, id]); // Total update later
 
-                if (finalAlmacenId) {
-                    await registrarEntradaInventario(client, {
-                        productId, quantity, idAlmacen: finalAlmacenId, idCompra: id, idUsuario: id_usuario
-                    });
+            // 3. Reemplazar Líneas (Estrategia: Eliminar e Insertar)
+
+            // A. REVERTIR STOCK DE LÍNEAS ANTERIORES
+            // Obtener líneas actuales antes de borrar
+            const oldLines = await tx.query('SELECT id_producto, cantidad FROM compralinea WHERE id_compra = $1', [id]);
+
+            for (const oldLine of oldLines.rows) {
+                if (oldLine.id_producto && oldLine.cantidad) {
+                    await tx.query(
+                        'UPDATE producto SET stock = stock - $1 WHERE id = $2',
+                        [oldLine.cantidad, oldLine.id_producto]
+                    );
                 }
             }
-        }
 
-        // Actualizar total
-        await client.query('UPDATE compracabecera SET total = $1 WHERE id = $2', [calculatedTotal, id]);
+            // B. BORRAR REGISTROS PREVIOS
+            await tx.query("DELETE FROM movimientoinventario WHERE origen_tipo = 'COMPRA' AND origen_id = $1", [id]);
+            await tx.query("DELETE FROM compralinea WHERE id_compra = $1", [id]);
 
-        await client.query('COMMIT');
+            // C. INSERTAR NUEVAS LÍNEAS
+            let calculatedTotal = 0;
+
+            // Resolver Almacén (Reusar existente o default)
+            const almacenRes = await tx.query('SELECT id FROM almacen WHERE id_sucursal = $1 LIMIT 1', [id_sucursal]);
+            const finalAlmacenId = almacenRes.rows[0]?.id;
+
+            for (const item of items) {
+                let productId = item.id_producto;
+                const quantity = parseFloat(item.quantity) || 0;
+                const price = parseFloat(item.price) || 0;
+                const bonus = parseFloat(item.bonus) || 0;
+
+                // Resolver/Actualizar Producto (Igual que en POST)
+                if (!productId && item.barcode) {
+                    const prodRes = await tx.query(
+                        'SELECT id FROM producto WHERE codigo_barras = $1 AND id_tenant = $2 AND id_sucursal = $3',
+                        [item.barcode, id_tenant, id_sucursal]
+                    );
+                    if (prodRes.rows.length > 0) {
+                        productId = prodRes.rows[0].id;
+                    } else {
+                        // Crear producto si no existe
+                        const createProd = await tx.query(
+                            `INSERT INTO producto 
+                                 (id_tenant, codigo_barras, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
+                             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 0, $9, NOW()) RETURNING id`,
+                            [id_tenant, item.barcode, item.name, price, price, id_sucursal, id_proveedor, item.type || 'Producto', 'Unidades']
+                        );
+                        productId = createProd.rows[0].id;
+                    }
+                } else if (!productId) {
+                    // Buscar por nombre
+                    const prodRes = await tx.query(
+                        'SELECT id FROM producto WHERE nombre = $1 AND id_tenant = $2 AND id_sucursal = $3',
+                        [item.name, id_tenant, id_sucursal]
+                    );
+                    if (prodRes.rows.length > 0) {
+                        productId = prodRes.rows[0].id;
+                    } else {
+                        const createProd = await tx.query(
+                            `INSERT INTO producto 
+                                 (id_tenant, nombre, precio, costo, id_sucursal, id_proveedor, tipo, stock, unidad_medida, created_at) 
+                             VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, NOW()) RETURNING id`,
+                            [id_tenant, item.name, price, price, id_sucursal, id_proveedor, item.type || 'Producto', 'Unidades']
+                        );
+                        productId = createProd.rows[0].id;
+                    }
+                }
+
+                if (productId) {
+                    // Recuperar IVA real si id_impuesto existe (logic simple)
+                    const iva = parseFloat(item.iva) || 0;
+                    const subtotal = (price * quantity) - bonus;
+                    const lineTotal = subtotal * (1 + (iva / 100));
+                    calculatedTotal += lineTotal;
+
+                    await tx.query(`
+                        INSERT INTO compralinea (id_compra, id_producto, descripcion, cantidad, precio_unitario, iva, total_linea)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7)
+                     `, [id, productId, item.name, quantity, price, iva, lineTotal]);
+
+                    if (finalAlmacenId) {
+                        await registrarEntradaInventario(tx, {
+                            productId, quantity, idAlmacen: finalAlmacenId, idCompra: id, idUsuario: id_usuario
+                        });
+                    }
+                }
+            }
+
+            // Actualizar total
+            await tx.query('UPDATE compracabecera SET total = $1 WHERE id = $2', [calculatedTotal, id]);
+        });
+
         res.json({ ok: true });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error PUT /compras:', error);
         res.status(500).json({ error: error.message });
-    } finally {
-        client.release();
     }
 });
 
@@ -716,48 +711,44 @@ router.delete('/:id', verifyJWT, async (req, res) => {
     const id_tenant = req.user.id_tenant;
     const isSuperAdmin = req.user.is_super_admin;
 
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
+        await req.db.txWithRLS(async (tx) => {
+            // Verificar que la compra existe y pertenece al tenant
+            let checkQuery = 'SELECT id FROM compracabecera WHERE id = $1';
+            let checkParams = [id];
 
-        // Verificar que la compra existe y pertenece al tenant
-        let checkQuery = 'SELECT id FROM compracabecera WHERE id = $1';
-        let checkParams = [id];
+            if (!isSuperAdmin) {
+                checkQuery += ' AND id_tenant = $2';
+                checkParams.push(id_tenant);
+            }
 
-        if (!isSuperAdmin) {
-            checkQuery += ' AND id_tenant = $2';
-            checkParams.push(id_tenant);
-        }
+            const checkRes = await tx.query(checkQuery, checkParams);
 
-        const checkRes = await client.query(checkQuery, checkParams);
+            if (checkRes.rows.length === 0) {
+                throw new Error('Compra no encontrada');
+            }
 
-        if (checkRes.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ error: 'Compra no encontrada' });
-        }
+            // Eliminar movimientos de inventario relacionados
+            await tx.query(
+                `DELETE FROM movimientoinventario WHERE origen_tipo = 'COMPRA' AND origen_id = $1`,
+                [id]
+            );
 
-        // Eliminar movimientos de inventario relacionados
-        await client.query(
-            `DELETE FROM movimientoinventario WHERE origen_tipo = 'COMPRA' AND origen_id = $1`,
-            [id]
-        );
+            // Eliminar líneas de compra
+            await tx.query('DELETE FROM compralinea WHERE id_compra = $1', [id]);
 
-        // Eliminar líneas de compra
-        await client.query('DELETE FROM compralinea WHERE id_compra = $1', [id]);
+            // Eliminar cabecera
+            await tx.query('DELETE FROM compracabecera WHERE id = $1', [id]);
+        });
 
-        // Eliminar cabecera
-        await client.query('DELETE FROM compracabecera WHERE id = $1', [id]);
-
-        await client.query('COMMIT');
         res.json({ ok: true, message: 'Compra eliminada correctamente' });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error al eliminar compra:', error);
+        if (error.message === 'Compra no encontrada') {
+            return res.status(404).json({ error: error.message });
+        }
         res.status(500).json({ error: 'Error al eliminar la compra' });
-    } finally {
-        client.release();
     }
 });
 

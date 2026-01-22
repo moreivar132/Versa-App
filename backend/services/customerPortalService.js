@@ -5,14 +5,21 @@
 
 const customerRepo = require('../repositories/customerRepository');
 const marketplaceService = require('./marketplaceService');
+const { getTenantDb } = require('../src/core/db/index');
+
+function resolveDb(ctxOrDb) {
+    if (!ctxOrDb) return getTenantDb({}, { allowNoTenant: true });
+    if (typeof ctxOrDb.query === 'function') return ctxOrDb;
+    return getTenantDb(ctxOrDb);
+}
 
 class CustomerPortalService {
 
     /**
      * Obtener citas del cliente
      */
-    async getCitas(idCliente, scope = 'all') {
-        const citas = await customerRepo.getClienteCitas(idCliente, scope);
+    async getCitas(idCliente, scope = 'all', ctxOrDb) {
+        const citas = await customerRepo.getClienteCitas(idCliente, scope, ctxOrDb);
 
         return citas.map(cita => ({
             id: cita.id,
@@ -56,11 +63,11 @@ class CustomerPortalService {
      * Si la cita tenía un pago PAID, se crea un crédito a favor del cliente
      * (NO se hace refund automático de Stripe)
      */
-    async cancelarCita(idCliente, idCita) {
-        const pool = require('../db');
+    async cancelarCita(idCliente, idCita, ctxOrDb) {
+        const db = resolveDb(ctxOrDb);
 
         // Obtener cita
-        const cita = await customerRepo.getClienteCitaById(idCliente, idCita);
+        const cita = await customerRepo.getClienteCitaById(idCliente, idCita, db);
 
         if (!cita) {
             throw { status: 403, message: 'No tienes permiso para cancelar esta cita' };
@@ -85,7 +92,7 @@ class CustomerPortalService {
         }
 
         // Cancelar la cita
-        const citaCancelada = await customerRepo.cancelarCita(idCita, idCliente);
+        const citaCancelada = await customerRepo.cancelarCita(idCita, idCliente, db);
 
         // =====================================================
         // PROCESAR SALDO A FAVOR si había pago PAID
@@ -93,48 +100,50 @@ class CustomerPortalService {
         let saldoAFavor = null;
 
         try {
-            // Buscar si existe un pago PAID para esta cita
-            const pagoResult = await pool.query(
-                `SELECT * FROM marketplace_reserva_pago 
+            await db.txWithRLS(async (tx) => {
+                // Buscar si existe un pago PAID para esta cita
+                const pagoResult = await tx.query(
+                    `SELECT * FROM marketplace_reserva_pago 
                  WHERE id_cita = $1 AND status = 'PAID' 
                  LIMIT 1`,
-                [idCita]
-            );
+                    [idCita]
+                );
 
-            if (pagoResult.rows.length > 0) {
-                const pago = pagoResult.rows[0];
+                if (pagoResult.rows.length > 0) {
+                    const pago = pagoResult.rows[0];
 
-                // 1. Crear movimiento de crédito en el ledger
-                await pool.query(
-                    `INSERT INTO clientefinal_credito_mov 
+                    // 1. Crear movimiento de crédito en el ledger
+                    await tx.query(
+                        `INSERT INTO clientefinal_credito_mov 
                      (id_tenant, id_cliente, id_cita_origen, tipo, concepto, amount, currency)
                      VALUES ($1, $2, $3, 'CREDITO', $4, $5, $6)`,
-                    [
-                        pago.id_tenant,
-                        idCliente,
-                        idCita,
-                        `Cancelación de reserva #${idCita} - Saldo a favor`,
-                        pago.amount,
-                        pago.currency
-                    ]
-                );
+                        [
+                            pago.id_tenant,
+                            idCliente,
+                            idCita,
+                            `Cancelación de reserva #${idCita} - Saldo a favor`,
+                            pago.amount,
+                            pago.currency
+                        ]
+                    );
 
-                // 2. Actualizar el pago a CREDITED
-                await pool.query(
-                    `UPDATE marketplace_reserva_pago 
+                    // 2. Actualizar el pago a CREDITED
+                    await tx.query(
+                        `UPDATE marketplace_reserva_pago 
                      SET status = 'CREDITED', updated_at = NOW()
                      WHERE id = $1`,
-                    [pago.id]
-                );
+                        [pago.id]
+                    );
 
-                saldoAFavor = {
-                    amount: parseFloat(pago.amount),
-                    currency: pago.currency,
-                    mensaje: `Se ha añadido ${pago.amount}€ a tu saldo a favor`
-                };
+                    saldoAFavor = {
+                        amount: parseFloat(pago.amount),
+                        currency: pago.currency,
+                        mensaje: `Se ha añadido ${pago.amount}€ a tu saldo a favor`
+                    };
 
-                console.log(`[Portal] Creado saldo a favor: ${pago.amount}€ para cliente ${idCliente} (cita ${idCita})`);
-            }
+                    console.log(`[Portal] Creado saldo a favor: ${pago.amount}€ para cliente ${idCliente} (cita ${idCita})`);
+                }
+            });
         } catch (creditError) {
             // No fallar la cancelación por error en crédito
             console.error('[Portal] Error procesando saldo a favor:', creditError);
@@ -151,9 +160,9 @@ class CustomerPortalService {
     /**
      * Reprogramar una cita
      */
-    async reprogramarCita(idCliente, idCita, nuevaFecha, nuevaHora) {
+    async reprogramarCita(idCliente, idCita, nuevaFecha, nuevaHora, ctxOrDb) {
         // Obtener cita actual
-        const cita = await customerRepo.getClienteCitaById(idCliente, idCita);
+        const cita = await customerRepo.getClienteCitaById(idCliente, idCita, ctxOrDb);
 
         if (!cita) {
             throw { status: 403, message: 'No tienes permiso para reprogramar esta cita' };
@@ -183,7 +192,7 @@ class CustomerPortalService {
 
         // Verificar disponibilidad del nuevo slot
         try {
-            const slots = await marketplaceService.getAvailability(cita.id_sucursal, nuevaFecha);
+            const slots = await marketplaceService.getAvailability(cita.id_sucursal, nuevaFecha, null, ctxOrDb);
             const slotDisponible = slots.find(s => s.hora === nuevaHora && s.disponible);
 
             if (!slotDisponible) {
@@ -193,7 +202,7 @@ class CustomerPortalService {
             if (error.status) throw error;
             // Si el marketplace no está configurado, verificar directamente
             const nuevaFechaHora = new Date(`${nuevaFecha}T${nuevaHora}:00`);
-            const disponible = await customerRepo.checkSlotDisponible(cita.id_sucursal, nuevaFechaHora);
+            const disponible = await customerRepo.checkSlotDisponible(cita.id_sucursal, nuevaFechaHora, ctxOrDb);
 
             if (!disponible) {
                 throw { status: 409, message: 'El horario seleccionado no está disponible' };
@@ -209,7 +218,7 @@ class CustomerPortalService {
         }
 
         // Reprogramar
-        const citaReprogramada = await customerRepo.reprogramarCita(idCita, idCliente, nuevaFechaHora);
+        const citaReprogramada = await customerRepo.reprogramarCita(idCita, idCliente, nuevaFechaHora, ctxOrDb);
 
         return {
             id: citaReprogramada.id,
@@ -222,9 +231,9 @@ class CustomerPortalService {
     /**
      * Obtener pagos del cliente
      */
-    async getPagos(idCliente) {
+    async getPagos(idCliente, ctxOrDb) {
         try {
-            const pagos = await customerRepo.getClientePagos(idCliente);
+            const pagos = await customerRepo.getClientePagos(idCliente, ctxOrDb);
 
             return pagos.map(pago => ({
                 tipo: pago.tipo,
@@ -245,9 +254,9 @@ class CustomerPortalService {
     /**
      * Obtener disponibilidad para reprogramar
      */
-    async getDisponibilidadReprogramar(idCliente, idCita, fecha) {
+    async getDisponibilidadReprogramar(idCliente, idCita, fecha, ctxOrDb) {
         // Verificar que la cita pertenece al cliente
-        const cita = await customerRepo.getClienteCitaById(idCliente, idCita);
+        const cita = await customerRepo.getClienteCitaById(idCliente, idCita, ctxOrDb);
 
         if (!cita) {
             throw { status: 403, message: 'No tienes permiso para ver esta cita' };
@@ -255,7 +264,7 @@ class CustomerPortalService {
 
         // Obtener disponibilidad del marketplace
         try {
-            const slots = await marketplaceService.getAvailability(cita.id_sucursal, fecha);
+            const slots = await marketplaceService.getAvailability(cita.id_sucursal, fecha, null, ctxOrDb);
             return slots;
         } catch (error) {
             console.error('Error obteniendo disponibilidad:', error);
@@ -270,9 +279,9 @@ class CustomerPortalService {
     /**
      * Crear reseña para una cita
      */
-    async crearResena(idCliente, idCita, puntuacion, comentario, fotos = []) {
+    async crearResena(idCliente, idCita, puntuacion, comentario, fotos = [], ctxOrDb) {
         // Verificar que la cita pertenece al cliente
-        const cita = await customerRepo.getClienteCitaById(idCliente, idCita);
+        const cita = await customerRepo.getClienteCitaById(idCliente, idCita, ctxOrDb);
 
         if (!cita) {
             throw { status: 403, message: 'No tienes permiso para esta cita' };
@@ -284,12 +293,12 @@ class CustomerPortalService {
         }
 
         // Verificar que no exista ya una reseña
-        const existente = await customerRepo.getResenaPorCita(idCliente, idCita);
+        const existente = await customerRepo.getResenaPorCita(idCliente, idCita, ctxOrDb);
         if (existente) {
             throw { status: 409, message: 'Ya existe una reseña para esta cita' };
         }
 
-        const resena = await customerRepo.createResena(idCita, puntuacion, comentario, fotos);
+        const resena = await customerRepo.createResena(idCita, puntuacion, comentario, fotos, ctxOrDb);
 
         return {
             id: resena.id,
@@ -303,8 +312,8 @@ class CustomerPortalService {
     /**
      * Obtener reseña de una cita
      */
-    async getResenaPorCita(idCliente, idCita) {
-        const resena = await customerRepo.getResenaPorCita(idCliente, idCita);
+    async getResenaPorCita(idCliente, idCita, ctxOrDb) {
+        const resena = await customerRepo.getResenaPorCita(idCliente, idCita, ctxOrDb);
 
         if (!resena) {
             return null;
@@ -325,14 +334,14 @@ class CustomerPortalService {
     /**
      * Actualizar reseña de una cita
      */
-    async actualizarResena(idCliente, idCita, data) {
+    async actualizarResena(idCliente, idCita, data, ctxOrDb) {
         // Verificar que existe la reseña
-        const existente = await customerRepo.getResenaPorCita(idCliente, idCita);
+        const existente = await customerRepo.getResenaPorCita(idCliente, idCita, ctxOrDb);
         if (!existente) {
             throw { status: 404, message: 'No tienes una reseña para esta cita' };
         }
 
-        const resena = await customerRepo.updateResena(idCliente, idCita, data);
+        const resena = await customerRepo.updateResena(idCliente, idCita, data, ctxOrDb);
 
         return {
             id: resena.id,
@@ -346,16 +355,16 @@ class CustomerPortalService {
     /**
      * Eliminar reseña de una cita
      */
-    async eliminarResena(idCliente, idCita) {
-        await customerRepo.deleteResena(idCliente, idCita);
+    async eliminarResena(idCliente, idCita, ctxOrDb) {
+        await customerRepo.deleteResena(idCliente, idCita, ctxOrDb);
         return true;
     }
 
     /**
      * Obtener todas las reseñas del cliente
      */
-    async getResenasCliente(idCliente) {
-        const resenas = await customerRepo.getAllResenasCliente(idCliente);
+    async getResenasCliente(idCliente, ctxOrDb) {
+        const resenas = await customerRepo.getAllResenasCliente(idCliente, ctxOrDb);
 
         return resenas.map(r => ({
             id: r.id,

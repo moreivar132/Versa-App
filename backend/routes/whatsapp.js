@@ -1,8 +1,17 @@
 // routes/whatsapp.js
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const timelinesService = require('../services/timelinesService');
+
+// Middleware: Inject req.db with loose tenant requirement (Webhooks/Public)
+router.use((req, res, next) => {
+    // WhatsApp webhooks and public endpoints might not have tenant context
+    // We allow no tenant to simulate the previous 'pool' behavior (raw access)
+    // If specific routes need strict tenant, they should check req.user or similar
+    req.db = getTenantDb(req.ctx, { allowNoTenant: true });
+    next();
+});
 
 /**
  * POST /api/whatsapp/contact
@@ -41,7 +50,7 @@ router.post('/contact', async (req, res) => {
         const chatId = timelinesResponse.chat_id || timelinesResponse.id || `whatsapp_${telefono_cliente}`;
 
         // 3. Guardar el chat en nuestra base de datos
-        const chatResult = await pool.query(
+        const chatResult = await req.db.query(
             `INSERT INTO whatsapp_chats (chat_id, phone, nombre, label, origen)
        VALUES ($1, $2, $3, $4, $5)
        ON CONFLICT (chat_id) 
@@ -53,14 +62,14 @@ router.post('/contact', async (req, res) => {
         );
 
         // 4. Guardar el mensaje inicial del cliente en la BD
-        await pool.query(
+        await req.db.query(
             `INSERT INTO whatsapp_messages (chat_id, phone, message_text, sender_type, sender_name)
        VALUES ($1, $2, $3, $4, $5)`,
             [chatId, telefono_cliente, mensaje_cliente, 'client', nombre || 'Cliente']
         );
 
         // 5. Guardar nuestra respuesta automática
-        await pool.query(
+        await req.db.query(
             `INSERT INTO whatsapp_messages (chat_id, phone, message_text, sender_type, sender_name)
        VALUES ($1, $2, $3, $4, $5)`,
             [
@@ -107,7 +116,7 @@ router.post('/webhook', async (req, res) => {
             }
 
             // 1. Asegurar que el chat existe en nuestra BD
-            await pool.query(
+            await req.db.query(
                 `INSERT INTO whatsapp_chats (chat_id, phone, nombre, label, origen)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (chat_id) 
@@ -117,7 +126,7 @@ router.post('/webhook', async (req, res) => {
             );
 
             // 2. Guardar el mensaje recibido
-            await pool.query(
+            await req.db.query(
                 `INSERT INTO whatsapp_messages (chat_id, phone, message_text, sender_type, sender_name, timelines_message_id, metadata)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
                 [
@@ -169,7 +178,7 @@ router.post('/send', async (req, res) => {
         const timelinesResponse = await timelinesService.sendMessage(chat_id, message);
 
         // 2. Obtener el teléfono del chat
-        const chatResult = await pool.query(
+        const chatResult = await req.db.query(
             'SELECT phone FROM whatsapp_chats WHERE chat_id = $1',
             [chat_id]
         );
@@ -181,7 +190,7 @@ router.post('/send', async (req, res) => {
         const phone = chatResult.rows[0].phone;
 
         // 3. Guardar el mensaje en nuestra BD
-        await pool.query(
+        await req.db.query(
             `INSERT INTO whatsapp_messages (chat_id, phone, message_text, sender_type, sender_name, timelines_message_id)
        VALUES ($1, $2, $3, $4, $5, $6)`,
             [
@@ -215,7 +224,7 @@ router.post('/send', async (req, res) => {
  */
 router.get('/chats', async (req, res) => {
     try {
-        const result = await pool.query(
+        const result = await req.db.query(
             `SELECT * FROM whatsapp_chats 
        ORDER BY updated_at DESC`
         );
@@ -242,7 +251,7 @@ router.get('/messages/:chat_id', async (req, res) => {
     const { chat_id } = req.params;
 
     try {
-        const result = await pool.query(
+        const result = await req.db.query(
             `SELECT * FROM whatsapp_messages 
        WHERE chat_id = $1 
        ORDER BY created_at ASC`,

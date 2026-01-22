@@ -8,7 +8,7 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+
 const { authorize } = require('../middleware/rbac');
 
 // =====================================================
@@ -93,7 +93,7 @@ router.get('/prefs', authorize(), async (req, res) => {
             params = [tenantId, userId, page_key];
         }
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         if (result.rows.length > 0) {
             // Devolver preferencias guardadas
@@ -187,7 +187,7 @@ router.post('/prefs', authorize(), async (req, res) => {
             RETURNING id, prefs_json, updated_at
         `;
 
-        const result = await pool.query(query, [
+        const result = await req.db.query(query, [
             tenantId,
             userId,
             branch_id,
@@ -242,7 +242,7 @@ router.delete('/prefs', authorize(), async (req, res) => {
             params = [tenantId, userId, page_key];
         }
 
-        await pool.query(query, params);
+        await req.db.query(query, params);
 
         // Devolver los defaults del rol
         const roleDefaults = DEFAULT_KPIS_BY_ROLE[userRole] || DEFAULT_KPIS_BY_ROLE.admin;

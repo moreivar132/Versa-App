@@ -9,9 +9,11 @@ const toolsService = require('./tools.service');
  * Generar todos los insights para un periodo
  * @param {number} empresaId 
  * @param {object} period - { type: 'month'|'quarter'|'year', year, month?, quarter? }
+ * @param {number} tenantId - Required for RLS
  * @returns {Array} - Array de insight cards
  */
-async function generateInsights(empresaId, period) {
+async function generateInsights(empresaId, period, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for generateInsights');
     const { dateFrom, dateTo } = calculatePeriodDates(period);
     const { dateFrom: prevFrom, dateTo: prevTo } = calculatePreviousPeriod(period);
 
@@ -19,8 +21,8 @@ async function generateInsights(empresaId, period) {
 
     try {
         // Insight 1: Top categorías
-        const categories = await toolsService.getSpendByCategory(empresaId, dateFrom, dateTo, 5);
-        const prevCategories = await toolsService.getSpendByCategory(empresaId, prevFrom, prevTo, 5);
+        const categories = await toolsService.getSpendByCategory(empresaId, dateFrom, dateTo, 5, tenantId);
+        const prevCategories = await toolsService.getSpendByCategory(empresaId, prevFrom, prevTo, 5, tenantId);
 
         insights.push({
             type: 'top_categories',
@@ -37,8 +39,8 @@ async function generateInsights(empresaId, period) {
         });
 
         // Insight 2: Top proveedores
-        const vendors = await toolsService.getSpendByVendor(empresaId, dateFrom, dateTo, 5);
-        const prevVendors = await toolsService.getSpendByVendor(empresaId, prevFrom, prevTo, 5);
+        const vendors = await toolsService.getSpendByVendor(empresaId, dateFrom, dateTo, 5, tenantId);
+        const prevVendors = await toolsService.getSpendByVendor(empresaId, prevFrom, prevTo, 5, tenantId);
 
         insights.push({
             type: 'top_vendors',
@@ -55,7 +57,7 @@ async function generateInsights(empresaId, period) {
         });
 
         // Insight 3: Gastos anómalos
-        const outliers = await toolsService.getOutliers(empresaId, dateFrom, dateTo, 2.0);
+        const outliers = await toolsService.getOutliers(empresaId, dateFrom, dateTo, 2.0, tenantId);
 
         if (outliers.summary.outliers_found > 0) {
             insights.push({
@@ -75,7 +77,7 @@ async function generateInsights(empresaId, period) {
         }
 
         // Insight 4: Higiene contable
-        const hygiene = await toolsService.getHygieneIssues(empresaId);
+        const hygiene = await toolsService.getHygieneIssues(empresaId, tenantId);
 
         if (hygiene.summary.total_issues > 0) {
             insights.push({
@@ -96,8 +98,8 @@ async function generateInsights(empresaId, period) {
         // Insight 5: Resumen IVA (solo si es trimestre o año)
         if (period.type === 'quarter' || period.type === 'year') {
             const ivaData = period.type === 'quarter'
-                ? await toolsService.getIVASummary(empresaId, period.year, period.quarter)
-                : await getIVAForYear(empresaId, period.year);
+                ? await toolsService.getIVASummary(empresaId, period.year, period.quarter, tenantId)
+                : await getIVAForYear(empresaId, period.year, tenantId);
 
             insights.push({
                 type: 'iva_summary',
@@ -111,7 +113,7 @@ async function generateInsights(empresaId, period) {
         }
 
         // Insight 6: Resultado (ingresos - gastos)
-        const profitLoss = await toolsService.getProfitLoss(empresaId, dateFrom, dateTo);
+        const profitLoss = await toolsService.getProfitLoss(empresaId, dateFrom, dateTo, tenantId);
 
         insights.push({
             type: 'profit_loss',
@@ -131,79 +133,72 @@ async function generateInsights(empresaId, period) {
     return insights;
 }
 
-/**
- * Calcular fechas from/to para un periodo
- */
+
 function calculatePeriodDates(period) {
     const { type, year, month, quarter } = period;
+    let dateFrom, dateTo;
 
     if (type === 'month') {
-        const dateFrom = `${year}-${month.toString().padStart(2, '0')}-01`;
-        const lastDay = new Date(year, month, 0).getDate();
-        const dateTo = `${year}-${month.toString().padStart(2, '0')}-${lastDay}`;
-        return { dateFrom, dateTo };
+        const start = new Date(year, month - 1, 1);
+        const end = new Date(year, month, 0);
+        dateFrom = start.toISOString().split('T')[0];
+        dateTo = end.toISOString().split('T')[0];
+    } else if (type === 'quarter') {
+        const startMonth = (quarter - 1) * 3;
+        const start = new Date(year, startMonth, 1);
+        const end = new Date(year, startMonth + 3, 0);
+        dateFrom = start.toISOString().split('T')[0];
+        dateTo = end.toISOString().split('T')[0];
+    } else if (type === 'year') {
+        dateFrom = `${year}-01-01`;
+        dateTo = `${year}-12-31`;
+    } else {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+        dateFrom = start.toISOString().split('T')[0];
+        dateTo = end.toISOString().split('T')[0];
     }
-
-    if (type === 'quarter') {
-        const startMonth = (quarter * 3 - 2);
-        const endMonth = quarter * 3;
-        const dateFrom = `${year}-${startMonth.toString().padStart(2, '0')}-01`;
-        const lastDay = new Date(year, endMonth, 0).getDate();
-        const dateTo = `${year}-${endMonth.toString().padStart(2, '0')}-${lastDay}`;
-        return { dateFrom, dateTo };
-    }
-
-    if (type === 'year') {
-        return {
-            dateFrom: `${year}-01-01`,
-            dateTo: `${year}-12-31`
-        };
-    }
-
-    throw new Error(`Invalid period type: ${type}`);
+    return { dateFrom, dateTo };
 }
 
-/**
- * Calcular periodo anterior
- */
 function calculatePreviousPeriod(period) {
     const { type, year, month, quarter } = period;
+    let prevPeriod;
 
     if (type === 'month') {
-        const prevMonth = month === 1 ? 12 : month - 1;
-        const prevYear = month === 1 ? year - 1 : year;
-        return calculatePeriodDates({ type: 'month', year: prevYear, month: prevMonth });
+        if (month === 1) {
+            prevPeriod = { type, year: year - 1, month: 12 };
+        } else {
+            prevPeriod = { type, year, month: month - 1 };
+        }
+    } else if (type === 'quarter') {
+        if (quarter === 1) {
+            prevPeriod = { type, year: year - 1, quarter: 4 };
+        } else {
+            prevPeriod = { type, year, quarter: quarter - 1 };
+        }
+    } else if (type === 'year') {
+        prevPeriod = { type, year: year - 1 };
+    } else {
+        prevPeriod = period;
     }
-
-    if (type === 'quarter') {
-        const prevQuarter = quarter === 1 ? 4 : quarter - 1;
-        const prevYear = quarter === 1 ? year - 1 : year;
-        return calculatePeriodDates({ type: 'quarter', year: prevYear, quarter: prevQuarter });
-    }
-
-    if (type === 'year') {
-        return calculatePeriodDates({ type: 'year', year: year - 1 });
-    }
-
-    throw new Error(`Invalid period type: ${type}`);
+    return calculatePeriodDates(prevPeriod);
 }
 
-/**
- * Calcular variación porcentual
- */
 function calculateVariation(current, previous) {
     if (!previous || previous === 0) return 0;
-    return (((current - previous) / previous) * 100).toFixed(1);
+    return ((current - previous) / previous) * 100;
 }
 
 /**
  * Obtener IVA acumulado anual
  */
-async function getIVAForYear(empresaId, year) {
-    const q1 = await toolsService.getIVASummary(empresaId, year, 1);
-    const q2 = await toolsService.getIVASummary(empresaId, year, 2);
-    const q3 = await toolsService.getIVASummary(empresaId, year, 3);
-    const q4 = await toolsService.getIVASummary(empresaId, year, 4);
+async function getIVAForYear(empresaId, year, tenantId) {
+    const q1 = await toolsService.getIVASummary(empresaId, year, 1, tenantId);
+    const q2 = await toolsService.getIVASummary(empresaId, year, 2, tenantId);
+    const q3 = await toolsService.getIVASummary(empresaId, year, 3, tenantId);
+    const q4 = await toolsService.getIVASummary(empresaId, year, 4, tenantId);
 
     return {
         summary: {

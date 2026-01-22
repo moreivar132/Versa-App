@@ -1,0 +1,169 @@
+
+> versa-backend@1.0.0 check:db-guardrails
+> node scripts/check-no-pool-query.js
+
+🔍 CRIT-FIX-01 Guardrail: Scanning for pool.query violations...
+
+📁 Scanned 120 files
+
+❌ VIOLATIONS FOUND:
+
+  📄 routes/marketplace.js:91
+     const result = await pool.query(`
+
+  📄 routes/marketplace.js:91
+     const result = await pool.query(`
+
+  📄 routes/marketplaceAdmin.js:425
+     const result = await pool.query(`
+
+  📄 routes/marketplaceAdmin.js:425
+     const result = await pool.query(`
+
+  📄 routes/meRoutes.js:84
+     const result = await pool.query(`
+
+  📄 routes/meRoutes.js:84
+     const result = await pool.query(`
+
+  📄 src/modules/contable/api/controllers/documentos.controller.js:206
+     const intakesResult = await pool.query(intakesQuery, intakesParams);
+
+  📄 src/modules/contable/api/controllers/documentos.controller.js:206
+     const intakesResult = await pool.query(intakesQuery, intakesParams);
+
+  📄 src/modules/contable/api/controllers/documentos.controller.js:216
+     const facturasResult = await pool.query(facturasQuery, facturasParams);
+
+  📄 src/modules/contable/api/controllers/documentos.controller.js:216
+     const facturasResult = await pool.query(facturasQuery, facturasParams);
+
+  📄 src/modules/contable/api/controllers/documentos.controller.js:419
+     const intakeCheck = await pool.query(`
+
+  📄 src/modules/contable/api/controllers/documentos.controller.js:419
+     const intakeCheck = await pool.query(`
+
+  📄 services/auditService.js:33
+     await pool.query(`
+
+  📄 services/auditService.js:33
+     await pool.query(`
+
+  📄 services/auditService.js:116
+     const result = await pool.query(query, params);
+
+  📄 services/auditService.js:116
+     const result = await pool.query(query, params);
+
+  📄 services/customerPortalService.js:97
+     const pagoResult = await pool.query(
+
+  📄 services/customerPortalService.js:97
+     const pagoResult = await pool.query(
+
+  📄 services/customerPortalService.js:108
+     await pool.query(
+
+  📄 services/customerPortalService.js:108
+     await pool.query(
+
+  📄 services/customerPortalService.js:123
+     await pool.query(
+
+  📄 services/customerPortalService.js:123
+     await pool.query(
+
+  📄 services/makeEmailProvider.js:25
+     const result = await pool.query(
+
+  📄 services/makeEmailProvider.js:25
+     const result = await pool.query(
+
+  📄 services/marketplaceService.js:131
+     const listingResult = await pool.query(
+
+  📄 services/marketplaceService.js:131
+     const listingResult = await pool.query(
+
+  📄 services/marketplaceService.js:162
+     const citasResult = await pool.query(
+
+  📄 services/marketplaceService.js:162
+     const citasResult = await pool.query(
+
+  📄 services/ordenPDFService.js:19
+     const result = await pool.query(`
+
+  📄 services/ordenPDFService.js:19
+     const result = await pool.query(`
+
+  📄 services/ordenPDFService.js:58
+     const ordenResult = await pool.query(`
+
+  📄 services/ordenPDFService.js:58
+     const ordenResult = await pool.query(`
+
+  📄 services/ordenPDFService.js:94
+     const lineasResult = await pool.query(`
+
+  📄 services/ordenPDFService.js:94
+     const lineasResult = await pool.query(`
+
+  📄 services/ordenPDFService.js:108
+     const pagosResult = await pool.query(`
+
+  📄 services/ordenPDFService.js:108
+     const pagosResult = await pool.query(`
+
+  📄 services/unifiedNotificationService.js:44
+     const clientResult = await pool.query(
+
+  📄 services/unifiedNotificationService.js:44
+     const clientResult = await pool.query(
+
+  📄 services/unifiedNotificationService.js:133
+     await pool.query(`
+
+  📄 services/unifiedNotificationService.js:133
+     await pool.query(`
+
+  📄 services/unifiedNotificationService.js:155
+     await pool.query(`
+
+  📄 services/unifiedNotificationService.js:155
+     await pool.query(`
+
+  📄 services/ventaPDFService.js:23
+     const ventaResult = await pool.query(ventaQuery, [idVenta, tenantId]);
+
+  📄 services/ventaPDFService.js:23
+     const ventaResult = await pool.query(ventaQuery, [idVenta, tenantId]);
+
+  📄 services/ventaPDFService.js:39
+     const lineasResult = await pool.query(lineasQuery, [idVenta]);
+
+  📄 services/ventaPDFService.js:39
+     const lineasResult = await pool.query(lineasQuery, [idVenta]);
+
+  📄 services/ventaPDFService.js:49
+     const pagosResult = await pool.query(pagosQuery, [idVenta]);
+
+  📄 services/ventaPDFService.js:49
+     const pagosResult = await pool.query(pagosQuery, [idVenta]);
+
+
+🚨 Total violations: 48
+
+📖 To fix:
+   - Replace pool.query with getTenantDb(ctx).query()
+   - Or move SQL logic to a repository in src/modules/*/infra/repos/
+   - See docs/CLEANUP/CRIT_FIX_01_REPORT.md for details
+
+npm error Lifecycle script `check:db-guardrails` failed with error:
+npm error code 1
+npm error path /Users/admin/Library/Mobile Documents/com~apple~CloudDocs/Versa-App/backend
+npm error workspace versa-backend@1.0.0
+npm error location /Users/admin/Library/Mobile Documents/com~apple~CloudDocs/Versa-App/backend
+npm error command failed
+npm error command sh -c node scripts/check-no-pool-query.js

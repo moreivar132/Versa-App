@@ -1,6 +1,12 @@
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
-const getExecutor = (client) => client || pool;
+function resolveDb(ctxOrDb) {
+    if (!ctxOrDb) return getTenantDb({}, { allowNoTenant: true });
+    if (typeof ctxOrDb.query === 'function') return ctxOrDb;
+    return getTenantDb(ctxOrDb);
+}
+
+const getExecutor = resolveDb;
 
 class OrdenesRepository {
     async getEstadoOrdenByCodigoOrId({ codigo, id }, client) {
@@ -121,6 +127,7 @@ class OrdenesRepository {
     }
 
     async createOrden(client, ordenData) {
+        const db = resolveDb(client);
         const {
             id_sucursal,
             id_cliente,
@@ -172,11 +179,12 @@ class OrdenesRepository {
             created_by
         ];
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         return result.rows[0];
     }
 
     async createOrdenLinea(client, lineaData) {
+        const db = resolveDb(client);
         const {
             id_orden,
             id_producto,
@@ -215,11 +223,12 @@ class OrdenesRepository {
             subtotal
         ];
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         return result.rows[0];
     }
 
     async createOrdenPago(client, pagoData) {
+        const db = resolveDb(client);
         const { id_orden, id_medio_pago, importe, referencia, id_caja, created_by } = pagoData;
 
         const query = `
@@ -234,27 +243,29 @@ class OrdenesRepository {
 
         const values = [id_orden, id_medio_pago, importe, referencia, id_caja, created_by];
 
-        const result = await client.query(query, values);
+        const result = await db.query(query, values);
         return result.rows[0];
     }
     async updateOrdenTotales(client, idOrden, totals) {
+        const db = resolveDb(client);
         const { total_bruto, total_iva, total_neto } = totals;
         const query = `
             UPDATE orden
             SET total_bruto = $1, total_iva = $2, total_neto = $3, updated_at = NOW()
             WHERE id = $4
         `;
-        await client.query(query, [total_bruto, total_iva, total_neto, idOrden]);
+        await db.query(query, [total_bruto, total_iva, total_neto, idOrden]);
     }
 
     async decreaseProductoStock(client, idProducto, cantidad) {
+        const db = resolveDb(client);
         const query = `
             UPDATE producto
             SET stock = COALESCE(stock, 0) - $1, updated_at = NOW()
             WHERE id = $2 AND COALESCE(stock, 0) >= $1
             RETURNING stock
         `;
-        const result = await client.query(query, [cantidad, idProducto]);
+        const result = await db.query(query, [cantidad, idProducto]);
 
         if (result.rowCount === 0) {
             throw new Error('Stock insuficiente para el producto seleccionado');
@@ -277,13 +288,14 @@ class OrdenesRepository {
     }
 
     async createMovimientoInventario(client, data) {
+        const db = resolveDb(client);
         const { id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_by } = data;
         const query = `
             INSERT INTO movimientoinventario
             (id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_at, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
         `;
-        await client.query(query, [id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_by]);
+        await db.query(query, [id_producto, id_almacen, tipo, cantidad, origen_tipo, origen_id, created_by]);
     }
 
     /**
@@ -292,6 +304,7 @@ class OrdenesRepository {
      * @param {object} data - Datos del movimiento
      */
     async createCajaMovimiento(client, data) {
+        const db = resolveDb(client);
         const { id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, created_by } = data;
         const query = `
             INSERT INTO cajamovimiento
@@ -299,33 +312,36 @@ class OrdenesRepository {
             VALUES ($1, $2, $3, $4, NOW(), $5, $6, NOW(), $7)
             RETURNING id
         `;
-        const result = await client.query(query, [id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, created_by]);
+        const result = await db.query(query, [id_caja, id_usuario, tipo, monto, origen_tipo, origen_id, created_by]);
         return result.rows[0];
     }
 
     async getOpenCaja(client, idSucursal) {
+        const db = resolveDb(client);
         const query = `
             SELECT * FROM caja 
             WHERE id_sucursal = $1 AND estado = 'ABIERTA' 
             ORDER BY created_at DESC LIMIT 1
         `;
-        const result = await client.query(query, [idSucursal]);
+        const result = await db.query(query, [idSucursal]);
         return result.rows[0];
     }
 
     async createOpenCaja(client, idSucursal, idUsuario) {
+        const db = resolveDb(client);
         const query = `
             INSERT INTO caja (id_sucursal, nombre, estado, id_usuario_apertura, created_by, created_at, updated_at) 
             VALUES ($1, 'Caja Principal', 'ABIERTA', $2, $2, NOW(), NOW()) 
             RETURNING *
         `;
-        const result = await client.query(query, [idSucursal, idUsuario]);
+        const result = await db.query(query, [idSucursal, idUsuario]);
         return result.rows[0];
     }
 
-    async createTipoOrden(codigo, nombre) {
+    async createTipoOrden(codigo, nombre, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
         const query = 'INSERT INTO tipoorden (codigo, nombre) VALUES ($1, $2) RETURNING id, codigo, nombre';
-        const result = await pool.query(query, [codigo, nombre]);
+        const result = await db.query(query, [codigo, nombre]);
         return result.rows[0];
     }
 }

@@ -1,0 +1,55 @@
+path,type,runtime,pattern,pool_count,client_count,total_count,module_or_vertical,risk,notes
+services/ordenPDFService.js,service,A,pool.query,4,0,4,Manager,S2,PDF generation for orders
+services/marketplaceService.js,service,A,pool.query+pool.connect+client.query,4,25,29,Marketplace,S1,Critical - handles reservations and payments
+services/customerPortalService.js,service,A,pool.query,3,0,3,Marketplace,S2,Customer portal payments
+services/unifiedNotificationService.js,service,A,pool.query,3,0,3,Core,S2,Notification system
+services/ventaPDFService.js,service,A,pool.query,3,0,3,Manager,S2,PDF generation for sales
+services/auditService.js,service,A,pool.query,2,0,2,Core,S1,Audit trail - security critical
+services/makeEmailProvider.js,service,A,pool.query,1,0,1,Core,S3,Email provider config
+services/googleAuthService.js,service,A,client.query,0,12,12,Core,S1,OAuth - inside tx wrapper (SAFE pattern)
+routes/meRoutes.js,route,A,pool.query,1,0,1,Core,S1,User profile - tenant sensitive
+routes/marketplace.js,route,A,pool.query,1,0,1,Marketplace,S2,Public marketplace
+routes/marketplaceAdmin.js,route,A,pool.query,1,0,1,Marketplace,S2,Admin marketplace
+routes/customerGoogleAuth.js,route,A,client.query,0,6,6,Marketplace,S1,Google OAuth - inside tx wrapper (SAFE pattern)
+routes/trabajadores.js,route,A,client.query,0,5,5,Manager,S1,Worker payments - inside tx wrapper (SAFE pattern)
+routes/invitePublic.js,route,A,client.query,0,17,17,Core,S1,Invite acceptance - inside tx wrapper (SAFE pattern)
+src/modules/contable/api/controllers/documentos.controller.js,controller,A,pool.query,3,0,3,FinSaaS,S1,Contabilidad documents - S1 critical
+middleware/featureGate.js,middleware,A,pool.query,1,0,1,Core,S2,Feature gating
+middleware/subscriptionCheck.js,middleware,A,pool.query,2,0,2,Core,S1,Subscription check - billing critical
+models/vehiculoModel.js,model,A,pool.query,6,0,6,Manager,S3,Legacy model pattern
+api/marketplace/sucursales.js,route,A,pool.query,1,0,1,Marketplace,S2,Marketplace branches
+api/marketplace/busqueda.js,route,A,pool.query,2,0,2,Marketplace,S2,Marketplace search
+legacy/backend/vehiculos/vehiculos.js,legacy,B,pool.query,5,0,5,Legacy,S3,Legacy - not mounted
+legacy/backend/clientes/clientes.js,legacy,B,pool.query,8,0,8,Legacy,S3,Legacy - not mounted
+migrations/run_b2b_invite_migration.js,script,C,pool.connect+client.query,1,6,7,Core,S3,Migration script
+migrations/populate_planes_suscripcion.js,script,C,pool.query,4,0,4,Core,S3,Migration script
+migrations/run_contabilidad_v3_migration.js,script,C,pool.connect+client.query,1,8,9,FinSaaS,S3,Migration script
+migrations/seed_billing_plans.js,script,C,pool.query,4,0,4,Core,S3,Seed script
+migrations/create_ordenconfigtenant.js,script,C,pool.query,2,0,2,Manager,S3,Migration script
+migrations/ejecutar_migracion_rbac.js,script,C,pool.query,4,0,4,Core,S3,Migration script
+migrations/run_legacy_rbac_migration.js,script,C,pool.connect+client.query,1,5,6,Core,S3,Migration script
+migrations/add_medio_pago_to_cuenta.js,script,C,pool.query,1,0,1,Manager,S3,Migration script
+migrations/seed_email_templates.js,script,C,pool.connect+client.query,1,8,9,Core,S3,Seed script
+migrations/add_concepto_descripcion_cajamovimiento.js,script,C,pool.query,2,0,2,Manager,S3,Migration script
+migrations/seed_verticals.js,script,C,pool.connect+client.query,1,12,13,Core,S3,Seed script
+migrations/seed_rbac_roles.js,script,C,pool.connect+client.query,2,13,15,Core,S3,Seed script
+migrations/run_oauth_migration.js,script,C,pool.query,2,0,2,Core,S3,Migration script
+migrations/create_whatsapp_timelines_tables.js,script,C,pool.query,3,0,3,Manager,S3,Migration script
+migrations/run_vertical_access_migration.js,script,C,pool.connect+client.query,1,6,7,Core,S3,Migration script
+migrations/run_accounting_empresa_migration.js,script,C,pool.connect+client.query,1,5,6,FinSaaS,S3,Migration script
+migrations/run_deducible_validation_migration.js,script,C,pool.connect+client.query,1,9,10,FinSaaS,S3,Migration script
+migrations/run_contable_v2_migration.js,script,C,pool.connect+client.query,1,7,8,FinSaaS,S3,Migration script
+migrations/ejecutar_migracion_billing.js,script,C,pool.query,4,0,4,Core,S3,Migration script
+migrations/seed_rbac_permissions.js,script,C,pool.connect+client.query,1,6,7,Core,S3,Seed script
+scripts/migrations_legacy/*,script,C,various,20,30,50,Core,S3,Legacy migration scripts (consolidated)
+scripts/maintenance/*,script,C,pool.query+client.query,8,18,26,Core,S3,Maintenance scripts
+scripts/debug/*,script,C,pool.query+client.query,12,10,22,Core,S3,Debug scripts
+scripts/seed_*.js,script,C,pool.connect+client.query,2,40,42,Core,S3,Seed scripts (QA)
+scripts/asignar-*.js,script,C,pool.connect+client.query,2,20,22,Manager,S3,Assignment scripts
+scripts/fix-*.js,script,C,pool.connect+client.query,3,5,8,Core,S3,Fix scripts
+scripts/check-*.js,script,C,pool.query,4,0,4,Core,S3,Check scripts
+scripts/migrate-*.js,script,C,pool.connect+client.query,1,4,5,Core,S3,Migration helper
+scripts/repair_*.js,script,C,pool.connect+client.query,1,10,11,Marketplace,S3,Repair script
+scripts/verificar-*.js,script,C,pool.connect+client.query,1,3,4,Manager,S3,Verification scripts
+tests/unit/*,test,C,pool.query,12,0,12,Core,S3,Unit tests (mocks)
+tests/integration/*,test,C,pool.connect+client.query,2,16,18,Core,S3,Integration tests

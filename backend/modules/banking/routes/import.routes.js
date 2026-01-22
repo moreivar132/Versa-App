@@ -10,6 +10,18 @@ const fs = require('fs');
 router.use(verifyJWT);
 router.use(requireEmpresaAccess());
 
+// Inject Tenant DB
+const { getTenantDb } = require('../../../src/core/db/tenant-db');
+router.use((req, res, next) => {
+    try {
+        req.db = getTenantDb(req.user);
+        next();
+    } catch (err) {
+        console.error('Error injecting Tenant DB:', err);
+        res.status(500).json({ error: 'Database context error' });
+    }
+});
+
 // Configure multer
 const uploadDir = path.join(__dirname, '../../../uploads');
 if (!fs.existsSync(uploadDir)) {

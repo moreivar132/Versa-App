@@ -15,7 +15,7 @@ const passport = require('passport');
 const crypto = require('crypto');
 const router = express.Router();
 const { generateCustomerToken } = require('../middleware/customerAuth');
-const pool = require('../db');
+const { getSystemDb } = require('../src/core/db/tenant-db');
 
 // State tokens store (in-memory, short-lived)
 const stateTokens = new Map();
@@ -65,6 +65,7 @@ function consumeStateToken(token) {
  */
 async function findOrCreateMarketplaceCustomer(googleProfile) {
     const { providerId, email, name, avatar } = googleProfile;
+    const systemDb = getSystemDb();
 
     if (!email) {
         throw new Error('Google profile must include email');
@@ -73,7 +74,7 @@ async function findOrCreateMarketplaceCustomer(googleProfile) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // 1. Check if OAuth identity already exists
-    const existingIdentity = await pool.query(
+    const existingIdentity = await systemDb.query(
         `SELECT mai.*, cf.id as cliente_id, cf.nombre, cfa.id as auth_id
          FROM marketplace_auth_identity mai
          JOIN clientefinal cf ON mai.customer_id = cf.id
@@ -95,7 +96,7 @@ async function findOrCreateMarketplaceCustomer(googleProfile) {
     }
 
     // 2. Check if customer auth exists by email
-    const existingAuth = await pool.query(
+    const existingAuth = await systemDb.query(
         `SELECT cfa.*, cf.nombre
          FROM clientefinal_auth cfa
          JOIN clientefinal cf ON cfa.id_cliente = cf.id
@@ -108,7 +109,7 @@ async function findOrCreateMarketplaceCustomer(googleProfile) {
         const customer = existingAuth.rows[0];
 
         // Create marketplace_auth_identity link
-        await pool.query(
+        await systemDb.query(
             `INSERT INTO marketplace_auth_identity 
              (customer_id, provider, provider_subject, email, name, avatar_url)
              VALUES ($1, 'google', $2, $3, $4, $5)
@@ -128,7 +129,7 @@ async function findOrCreateMarketplaceCustomer(googleProfile) {
     }
 
     // 3. Create new global customer (NO TENANT - B2C)
-    const client = await pool.connect();
+    const client = await systemDb.connect();
     try {
         await client.query('BEGIN');
 
@@ -242,8 +243,9 @@ router.get('/google/callback', (req, res, next) => {
             });
 
             // Log the OAuth event
+            const systemDb = getSystemDb();
             try {
-                await pool.query(
+                await systemDb.query(
                     `INSERT INTO audit_logs (action, entity_type, entity_id, after_json, ip_address, user_agent)
                      VALUES ($1, 'clientefinal', $2, $3, $4, $5)`,
                     [

@@ -402,9 +402,9 @@ router.get('/resenas', async (req, res) => {
 router.get('/fidelizacion/promos', async (req, res) => {
     try {
         const idTenant = req.customer.id_tenant || 1;
-        const pool = require('../db');
+        const db = req.db;
 
-        const result = await pool.query(`
+        const result = await db.query(`
             SELECT id, titulo, descripcion, starts_at, ends_at
             FROM fidelizacion_promo 
             WHERE id_tenant = $1 

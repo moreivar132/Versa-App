@@ -1,0 +1,282 @@
+backend/run_enhance_templates_migration.js:17:    const client = await pool.connect();
+backend/middleware/featureGate.js:35:        const result = await pool.query(`
+backend/middleware/subscriptionCheck.js:22:        const result = await pool.query(
+backend/middleware/subscriptionCheck.js:41:        const result = await pool.query(
+backend/migrations/run_b2b_invite_migration.js:17:        const client = await pool.connect();
+backend/migrations/populate_planes_suscripcion.js:17:        await pool.query(
+backend/migrations/populate_planes_suscripcion.js:45:        await pool.query(
+backend/migrations/populate_planes_suscripcion.js:73:        await pool.query(
+backend/migrations/populate_planes_suscripcion.js:111:        const result = await pool.query('SELECT * FROM plan_suscripcion ORDER BY id');
+backend/migrations/run_contabilidad_v3_migration.js:15:    const client = await pool.connect();
+backend/migrations/seed_billing_plans.js:160:            const existingPlan = await pool.query(
+backend/migrations/seed_billing_plans.js:167:                await pool.query(`
+backend/migrations/seed_billing_plans.js:193:                await pool.query(`
+backend/migrations/seed_billing_plans.js:230:    const result = await pool.query(`
+backend/migrations/create_ordenconfigtenant.js:6:        await pool.query(`
+backend/migrations/create_ordenconfigtenant.js:31:        await pool.query(`
+backend/migrations/ejecutar_migracion_rbac.js:19:        await pool.query(sql);
+backend/migrations/ejecutar_migracion_rbac.js:33:        const rolCols = await pool.query(`
+backend/migrations/ejecutar_migracion_rbac.js:39:        const auditExists = await pool.query(`
+backend/migrations/ejecutar_migracion_rbac.js:44:        const funcExists = await pool.query(`
+backend/migrations/run_legacy_rbac_migration.js:18:        const client = await pool.connect();
+backend/migrations/add_medio_pago_to_cuenta.js:7:        await pool.query(`
+backend/migrations/seed_email_templates.js:329:    const client = await pool.connect();
+backend/migrations/add_concepto_descripcion_cajamovimiento.js:12:        await pool.query(`
+backend/migrations/add_concepto_descripcion_cajamovimiento.js:19:        await pool.query(`
+backend/migrations/seed_verticals.js:366:    const client = await pool.connect();
+backend/migrations/seed_rbac_roles.js:207:    const client = await pool.connect();
+backend/migrations/seed_rbac_roles.js:298:        const roles = await pool.query('SELECT nombre, display_name, scope, level FROM rol WHERE is_system = true ORDER BY level');
+backend/migrations/run_oauth_migration.js:18:        await pool.query(sql);
+backend/migrations/run_oauth_migration.js:22:        const result = await pool.query(`
+backend/migrations/create_whatsapp_timelines_tables.js:8:        await pool.query(`
+backend/migrations/create_whatsapp_timelines_tables.js:22:        await pool.query(`
+backend/migrations/create_whatsapp_timelines_tables.js:39:        await pool.query(`
+backend/migrations/run_vertical_access_migration.js:23:    const client = await pool.connect();
+backend/migrations/run_accounting_empresa_migration.js:15:    const client = await pool.connect();
+backend/migrations/run_deducible_validation_migration.js:16:    const client = await pool.connect();
+backend/migrations/run_contable_v2_migration.js:20:    const client = await pool.connect();
+backend/migrations/ejecutar_migracion_billing.js:30:            await pool.query(sql);
+backend/migrations/ejecutar_migracion_billing.js:50:                        await pool.query(statement);
+backend/migrations/ejecutar_migracion_billing.js:69:        const verifyTables = await pool.query(`
+backend/migrations/ejecutar_migracion_billing.js:80:        const verifyColumns = await pool.query(`
+backend/migrations/seed_rbac_permissions.js:159:    const client = await pool.connect();
+backend/debug_edit_500.js:23:        const res = await pool.query(query, [id]);
+backend/debug_edit_500.js:39:        const resLines = await pool.query(queryLines, [id]);
+backend/fix-ordenes-pagos.js:9:    const client = await pool.connect();
+backend/seed_manual_account.js:9:        const existing = await pool.query('SELECT id FROM bank_account WHERE tenant_id = $1 AND display_name = $2', [tenantId, 'Cuenta Principal (Manual)']);
+backend/seed_manual_account.js:12:            await pool.query(`
+backend/run_email_config_migration.js:17:    const client = await pool.connect();
+backend/ejecutar_migracion_cuentas_corrientes.js:27:        await pool.query(sql);
+backend/ejecutar_migracion_cuentas_corrientes.js:38:        const tablas = await pool.query(`
+backend/ejecutar_migracion_cuentas_corrientes.js:52:        const columnas = await pool.query(`
+backend/ejecutar_migracion_open_banking.js:21:        await pool.query(sql);
+backend/check-cc-table.js:4:    const result = await pool.query(`
+backend/ejecutar_migracion_stripe_customer.js:17:    const client = await pool.connect();
+backend/debug-cc-caja.js:11:        const pagos = await pool.query(`
+backend/debug-cc-caja.js:28:        const movs = await pool.query(`
+backend/ejecutar_migracion_marketplace_pagos.js:40:        await pool.query(sql);
+backend/ejecutar_migracion_marketplace_pagos.js:95:        const tablesCheck = await pool.query(`
+backend/ejecutar_migracion_marketplace_pagos.js:113:        const viewCheck = await pool.query(`
+backend/debug_permissions.js:13:        const res = await pool.query(`
+backend/debug_permissions.js:24:            const checkGlobal = await pool.query('SELECT id, id_tenant FROM compracabecera WHERE id = $1', [testId]);
+backend/tests/unit/controllers/empresaController.test.js:50:            pool.connect.mockResolvedValue(mockClient);
+backend/tests/unit/controllers/empresaController.test.js:69:            expect(pool.connect).toHaveBeenCalled();
+backend/tests/unit/controllers/empresaController.test.js:96:            pool.query.mockResolvedValue({
+backend/tests/unit/controllers/empresaController.test.js:102:            expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT e.*'), [1]);
+backend/tests/unit/controllers/empresaController.test.js:111:            pool.query.mockResolvedValue({
+backend/tests/unit/controllers/empresaController.test.js:117:            expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('JOIN accounting_usuario_empresa'), [1, 1]);
+backend/tests/unit/controllers/empresaController.test.js:134:            pool.query
+backend/tests/unit/controllers/empresaController.test.js:140:            expect(pool.query).toHaveBeenCalledTimes(2);
+backend/tests/unit/controllers/empresaController.test.js:152:            pool.query.mockResolvedValueOnce({ rows: [] }); // Not found
+backend/tests/unit/services/verticalAccess.test.js:77:            pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:93:            pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:102:            pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:118:            pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:137:            pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:156:            pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:161:            pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:184:        pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:189:        pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:207:        pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:212:        pool.query.mockResolvedValueOnce({
+backend/tests/unit/services/verticalAccess.test.js:232:        pool.query
+backend/tests/integration/ordenes_km_required.test.js:144:            pool.query.mockResolvedValue({ rows: [{ id: 1 }] });
+backend/tests/integration/contabilidad.qa.test.js:18:        client = await pool.connect();
+backend/tests/integration/deducible.qa.test.js:22:        client = await pool.connect();
+backend/legacy/backend/vehiculos/vehiculos.js:39:        const result = await pool.query(query, params);
+backend/legacy/backend/vehiculos/vehiculos.js:74:        const result = await pool.query(insertQuery, [
+backend/legacy/backend/vehiculos/vehiculos.js:120:        const result = await pool.query(updateQuery, [
+backend/legacy/backend/vehiculos/vehiculos.js:193:        const result = await pool.query(query, params);
+backend/legacy/backend/clientes/clientes.js:42:        const existing = await pool.query(
+backend/legacy/backend/clientes/clientes.js:64:        const result = await pool.query(insertQuery, [
+backend/legacy/backend/clientes/clientes.js:120:        const result = await pool.query(query, params);
+backend/legacy/backend/clientes/clientes.js:145:        const result = await pool.query(query, params);
+backend/legacy/backend/clientes/clientes.js:183:        const checkResult = await pool.query(checkQuery, [id, id_tenant]);
+backend/legacy/backend/clientes/clientes.js:202:        const result = await pool.query(updateQuery, [
+backend/legacy/backend/clientes/clientes.js:266:        const result = await pool.query(query, params);
+backend/legacy/sql-migrations/populate_planes_suscripcion.js:17:        await pool.query(
+backend/legacy/sql-migrations/populate_planes_suscripcion.js:45:        await pool.query(
+backend/legacy/sql-migrations/populate_planes_suscripcion.js:73:        await pool.query(
+backend/legacy/sql-migrations/populate_planes_suscripcion.js:111:        const result = await pool.query('SELECT * FROM plan_suscripcion ORDER BY id');
+backend/legacy/sql-migrations/run_contabilidad_v3_migration.js:15:    const client = await pool.connect();
+backend/legacy/sql-migrations/seed_billing_plans.js:160:            const existingPlan = await pool.query(
+backend/legacy/sql-migrations/seed_billing_plans.js:167:                await pool.query(`
+backend/legacy/sql-migrations/seed_billing_plans.js:193:                await pool.query(`
+backend/legacy/sql-migrations/seed_billing_plans.js:230:    const result = await pool.query(`
+backend/legacy/sql-migrations/create_ordenconfigtenant.js:6:        await pool.query(`
+backend/legacy/sql-migrations/create_ordenconfigtenant.js:31:        await pool.query(`
+backend/legacy/sql-migrations/ejecutar_migracion_rbac.js:19:        await pool.query(sql);
+backend/legacy/sql-migrations/ejecutar_migracion_rbac.js:33:        const rolCols = await pool.query(`
+backend/legacy/sql-migrations/ejecutar_migracion_rbac.js:39:        const auditExists = await pool.query(`
+backend/legacy/sql-migrations/ejecutar_migracion_rbac.js:44:        const funcExists = await pool.query(`
+backend/legacy/sql-migrations/add_medio_pago_to_cuenta.js:7:        await pool.query(`
+backend/legacy/sql-migrations/seed_email_templates.js:329:    const client = await pool.connect();
+backend/legacy/sql-migrations/add_concepto_descripcion_cajamovimiento.js:12:        await pool.query(`
+backend/legacy/sql-migrations/add_concepto_descripcion_cajamovimiento.js:19:        await pool.query(`
+backend/legacy/sql-migrations/seed_rbac_roles.js:207:    const client = await pool.connect();
+backend/legacy/sql-migrations/seed_rbac_roles.js:298:        const roles = await pool.query('SELECT nombre, display_name, scope, level FROM rol WHERE is_system = true ORDER BY level');
+backend/legacy/sql-migrations/create_whatsapp_timelines_tables.js:8:        await pool.query(`
+backend/legacy/sql-migrations/create_whatsapp_timelines_tables.js:22:        await pool.query(`
+backend/legacy/sql-migrations/create_whatsapp_timelines_tables.js:39:        await pool.query(`
+backend/legacy/sql-migrations/create_caja_chica_tables.js:12:        await pool.query(`
+backend/legacy/sql-migrations/create_caja_chica_tables.js:28:        await pool.query(`
+backend/legacy/sql-migrations/create_caja_chica_tables.js:48:        await pool.query(`
+backend/legacy/sql-migrations/create_caja_chica_tables.js:68:        await pool.query(`
+backend/legacy/sql-migrations/create_caja_chica_tables.js:80:        await pool.query(`
+backend/legacy/sql-migrations/run_contable_v2_migration.js:20:    const client = await pool.connect();
+backend/legacy/sql-migrations/ejecutar_migracion_billing.js:30:            await pool.query(sql);
+backend/legacy/sql-migrations/ejecutar_migracion_billing.js:50:                        await pool.query(statement);
+backend/legacy/sql-migrations/ejecutar_migracion_billing.js:69:        const verifyTables = await pool.query(`
+backend/legacy/sql-migrations/ejecutar_migracion_billing.js:80:        const verifyColumns = await pool.query(`
+backend/legacy/sql-migrations/seed_rbac_permissions.js:159:    const client = await pool.connect();
+backend/index.js:150:    const result = await pool.query('SELECT NOW() AS now');
+backend/add-impuestos.js:6:        const check0 = await pool.query('SELECT id FROM impuesto WHERE porcentaje = 0');
+backend/add-impuestos.js:8:            await pool.query(`
+backend/add-impuestos.js:18:        const check10 = await pool.query('SELECT id FROM impuesto WHERE porcentaje = 10');
+backend/add-impuestos.js:20:            await pool.query(`
+backend/add-impuestos.js:30:        const result = await pool.query('SELECT * FROM impuesto ORDER BY porcentaje ASC');
+backend/models/vehiculoModel.js:4:    const result = await pool.query(`
+backend/models/vehiculoModel.js:15:    const result = await pool.query('SELECT * FROM vehiculo WHERE id = $1', [id]);
+backend/models/vehiculoModel.js:34:    const result = await pool.query(
+backend/models/vehiculoModel.js:59:    const result = await pool.query(
+backend/models/vehiculoModel.js:80:    await pool.query('DELETE FROM vehiculo WHERE id = $1', [id]);
+backend/models/vehiculoModel.js:84:    const result = await pool.query('SELECT * FROM vehiculo WHERE id_cliente = $1', [clienteId]);
+backend/clean-orden73.js:9:    const client = await pool.connect();
+backend/check-mediopago.js:5:        const result = await pool.query('SELECT id, codigo, nombre FROM mediopago ORDER BY id');
+backend/verificar_modulo_facturacion.js:12:    const client = await pool.connect();
+backend/debug_db.js:9:        const resCab = await pool.query('SELECT id, id_tenant, id_sucursal, id_proveedor, total FROM compracabecera WHERE id IN (27, 29)');
+backend/debug_db.js:13:        const resLin = await pool.query('SELECT * FROM compralinea WHERE id_compra IN (27, 29)');
+backend/configurar_facturacion_defaults.js:12:    const client = await pool.connect();
+backend/ejecutar_migracion_client_portal.js:23:    const client = await pool.connect();
+backend/ejecutar_migracion_egresos.js:14:    const client = await pool.connect();
+backend/check_accounts.js:6:        const res = await pool.query('SELECT * FROM bank_account WHERE tenant_id = $1', [1]);
+backend/check_accounts.js:12:        const connRes = await pool.query('SELECT * FROM bank_connection WHERE tenant_id = $1', [1]);
+backend/ejecutar_migracion_marketplace.js:19:    const client = await pool.connect();
+backend/test-caja-ops.js:11:        const cajaResult = await pool.query(
+backend/test-caja-ops.js:26:        const detalleOperacionesResult = await pool.query(`
+backend/scripts/migrations_legacy/run_enhance_templates_migration.js:17:    const client = await pool.connect();
+backend/scripts/migrations_legacy/run_email_config_migration.js:17:    const client = await pool.connect();
+backend/scripts/migrations_legacy/ejecutar_migracion_cuentas_corrientes.js:27:        await pool.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_cuentas_corrientes.js:38:        const tablas = await pool.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_cuentas_corrientes.js:52:        const columnas = await pool.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_open_banking.js:21:        await pool.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_stripe_customer.js:17:    const client = await pool.connect();
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace_pagos.js:40:        await pool.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace_pagos.js:95:        const tablesCheck = await pool.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace_pagos.js:113:        const viewCheck = await pool.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_client_portal.js:23:    const client = await pool.connect();
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace.js:19:    const client = await pool.connect();
+backend/scripts/migrations_legacy/ejecutar_migracion_facturacion.js:14:    const client = await pool.connect();
+backend/scripts/migrations_legacy/ejecutar_migracion_dashboard_prefs.js:15:        await pool.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_dashboard_prefs.js:20:        const check = await pool.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_income_event.js:10:    const client = await pool.connect();
+backend/scripts/migrations_legacy/ejecutar_migracion_email_automations.js:25:    const client = await pool.connect();
+backend/scripts/migrations_legacy/ejecutar_migracion_fidelizacion_loyalty.js:23:        await pool.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_fidelizacion_loyalty.js:28:        const tablesResult = await pool.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_fidelizacion_loyalty.js:42:        const viewResult = await pool.query(`
+backend/scripts/asignar-tecnicos-especifico.js:13:    const client = await pool.connect();
+backend/scripts/asignar-tecnicos-sucursales.js:13:    const client = await pool.connect();
+backend/scripts/seed_contabilidad_qa.js:7:    const client = await pool.connect();
+backend/scripts/fix-product-providers.js:10:    const client = await pool.connect();
+backend/scripts/check-no-pool-query.js:3: * CRIT-FIX-01 Guardrail: No pool.query outside Core DB
+backend/scripts/check-no-pool-query.js:5: * This script scans the codebase for direct pool.query usage
+backend/scripts/check-no-pool-query.js:29:// Paths that are allowed to use pool.query (The "Core" only)
+backend/scripts/check-no-pool-query.js:115:console.log('🔍 CRIT-FIX-01 Guardrail: Scanning for pool.query violations...\n');
+backend/scripts/check-no-pool-query.js:134:    console.log('   - Replace pool.query with getTenantDb(ctx).query()');
+backend/scripts/migrate-to-income-ledger.js:12:    const client = await pool.connect();
+backend/scripts/repair_marketplace_links.js:5:    const client = await pool.connect();
+backend/scripts/check-pending-payments.js:9:        const res = await pool.query(`
+backend/scripts/check-pending-payments.js:26:                    await pool.query(`
+backend/scripts/check-pending-payments.js:39:                        await pool.query("UPDATE marketplace_reserva_pago SET status = 'EXPIRED' WHERE id = $1", [pago.id]);
+backend/scripts/fix_mediopago.js:14:            const res = await pool.query('SELECT * FROM mediopago WHERE codigo = $1', [m.codigo]);
+backend/scripts/fix_mediopago.js:17:                await pool.query('INSERT INTO mediopago (nombre, codigo) VALUES ($1, $2)', [m.nombre, m.codigo]);
+backend/scripts/maintenance/fix-ordenes-pagos.js:9:    const client = await pool.connect();
+backend/scripts/maintenance/check-cc-table.js:4:    const result = await pool.query(`
+backend/scripts/maintenance/add-impuestos.js:6:        const check0 = await pool.query('SELECT id FROM impuesto WHERE porcentaje = 0');
+backend/scripts/maintenance/add-impuestos.js:8:            await pool.query(`
+backend/scripts/maintenance/add-impuestos.js:18:        const check10 = await pool.query('SELECT id FROM impuesto WHERE porcentaje = 10');
+backend/scripts/maintenance/add-impuestos.js:20:            await pool.query(`
+backend/scripts/maintenance/add-impuestos.js:30:        const result = await pool.query('SELECT * FROM impuesto ORDER BY porcentaje ASC');
+backend/scripts/maintenance/clean-orden73.js:9:    const client = await pool.connect();
+backend/scripts/maintenance/check-mediopago.js:5:        const result = await pool.query('SELECT id, codigo, nombre FROM mediopago ORDER BY id');
+backend/scripts/maintenance/configurar_facturacion_defaults.js:12:    const client = await pool.connect();
+backend/scripts/maintenance/check-impuesto.js:6:        const cols = await pool.query(`
+backend/scripts/maintenance/check-impuesto.js:14:        const data = await pool.query('SELECT * FROM impuesto');
+backend/scripts/seed_finsaas_qa.js:14:    const client = await pool.connect();
+backend/scripts/verificar-tecnicos.js:9:    const client = await pool.connect();
+backend/scripts/asignar-todos-tecnicos.js:11:    const client = await pool.connect();
+backend/scripts/debug/debug_edit_500.js:23:        const res = await pool.query(query, [id]);
+backend/scripts/debug/debug_edit_500.js:39:        const resLines = await pool.query(queryLines, [id]);
+backend/scripts/debug/debug-cc-caja.js:11:        const pagos = await pool.query(`
+backend/scripts/debug/debug-cc-caja.js:28:        const movs = await pool.query(`
+backend/scripts/debug/debug_permissions.js:13:        const res = await pool.query(`
+backend/scripts/debug/debug_permissions.js:24:            const checkGlobal = await pool.query('SELECT id, id_tenant FROM compracabecera WHERE id = $1', [testId]);
+backend/scripts/debug/verificar_modulo_facturacion.js:12:    const client = await pool.connect();
+backend/scripts/debug/debug_db.js:9:        const resCab = await pool.query('SELECT id, id_tenant, id_sucursal, id_proveedor, total FROM compracabecera WHERE id IN (27, 29)');
+backend/scripts/debug/debug_db.js:13:        const resLin = await pool.query('SELECT * FROM compralinea WHERE id_compra IN (27, 29)');
+backend/scripts/debug/test-caja-ops.js:11:        const cajaResult = await pool.query(
+backend/scripts/debug/test-caja-ops.js:26:        const detalleOperacionesResult = await pool.query(`
+backend/scripts/debug/diagnostico-caja.js:9:    const client = await pool.connect();
+backend/scripts/debug/verificar_esquema.js:9:    const client = await pool.connect();
+backend/scripts/debug/diag.js:9:        const cajas = await pool.query(`
+backend/scripts/debug/diag.js:20:        const cajaAbierta = await pool.query(`
+backend/scripts/debug/diag.js:34:        const movs = await pool.query(`
+backend/scripts/debug/diag.js:51:        const dups = await pool.query(`
+backend/run_migration_manual.js:20:        await pool.query(sql);
+backend/api/marketplace/sucursales.js:58:        const result = await pool.query(query, params);
+backend/api/marketplace/busqueda.js:119:            pool.query(query, params),
+backend/api/marketplace/busqueda.js:120:            pool.query(countQuery, params)
+backend/ejecutar_migracion_facturacion.js:14:    const client = await pool.connect();
+backend/check-impuesto.js:6:        const cols = await pool.query(`
+backend/check-impuesto.js:14:        const data = await pool.query('SELECT * FROM impuesto');
+backend/ejecutar_migracion_dashboard_prefs.js:15:        await pool.query(sql);
+backend/ejecutar_migracion_dashboard_prefs.js:20:        const check = await pool.query(`
+backend/diagnostico-caja.js:9:    const client = await pool.connect();
+backend/verificar_esquema.js:9:    const client = await pool.connect();
+backend/ejecutar_migracion_income_event.js:10:    const client = await pool.connect();
+backend/routes/meRoutes.js:84:        const result = await pool.query(`
+backend/routes/marketplaceAdmin.js:425:        const result = await pool.query(`
+backend/routes/marketplace.js:91:        const result = await pool.query(`
+backend/ejecutar_migracion_email_automations.js:25:    const client = await pool.connect();
+backend/ejecutar_migracion_fidelizacion_loyalty.js:23:        await pool.query(sql);
+backend/ejecutar_migracion_fidelizacion_loyalty.js:28:        const tablesResult = await pool.query(`
+backend/ejecutar_migracion_fidelizacion_loyalty.js:42:        const viewResult = await pool.query(`
+backend/services/unifiedNotificationService.js:44:                const clientResult = await pool.query(
+backend/services/unifiedNotificationService.js:133:            await pool.query(`
+backend/services/unifiedNotificationService.js:155:            await pool.query(`
+backend/services/ventaPDFService.js:23:        const ventaResult = await pool.query(ventaQuery, [idVenta, tenantId]);
+backend/services/ventaPDFService.js:39:        const lineasResult = await pool.query(lineasQuery, [idVenta]);
+backend/services/ventaPDFService.js:49:        const pagosResult = await pool.query(pagosQuery, [idVenta]);
+backend/services/auditService.js:33:        await pool.query(`
+backend/services/auditService.js:116:    const result = await pool.query(query, params);
+backend/services/marketplaceService.js:131:            const listingResult = await pool.query(
+backend/services/marketplaceService.js:162:            const citasResult = await pool.query(
+backend/services/marketplaceService.js:235:        const client = await pool.connect();
+backend/services/marketplaceService.js:611:        const client = await pool.connect();
+backend/services/marketplaceService.js:645:        const client = await pool.connect();
+backend/services/marketplaceService.js:679:        const client = await pool.connect();
+backend/services/ordenPDFService.js:19:            const result = await pool.query(`
+backend/services/ordenPDFService.js:58:        const ordenResult = await pool.query(`
+backend/services/ordenPDFService.js:94:        const lineasResult = await pool.query(`
+backend/services/ordenPDFService.js:108:        const pagosResult = await pool.query(`
+backend/services/customerPortalService.js:97:            const pagoResult = await pool.query(
+backend/services/customerPortalService.js:108:                await pool.query(
+backend/services/customerPortalService.js:123:                await pool.query(
+backend/services/makeEmailProvider.js:25:        const result = await pool.query(
+backend/diag.js:9:        const cajas = await pool.query(`
+backend/diag.js:20:        const cajaAbierta = await pool.query(`
+backend/diag.js:34:        const movs = await pool.query(`
+backend/diag.js:51:        const dups = await pool.query(`
+backend/src/core/db/tenant-db.js:154:        const client = await pool.connect();
+backend/src/core/db/tenant-db.js:174:        return pool.query(sql, params);
+backend/src/core/db/tenant-db.js:195:        const client = await pool.connect();
+backend/src/core/db/tenant-db.js:303:    const client = await pool.connect();
+backend/src/core/db/index.js:12: * - Acceso directo a pool.query() - migrar a getTenantDb
+backend/src/core/db/index.js:40:    query: (sql, params) => pool.query(sql, params),
+backend/src/core/db/index.js:46:        const client = await pool.connect();
+backend/src/core/db/index.js:67:        return pool.query(sql, [...params, tenantId]);
+backend/src/core/db/with-tenant-db-from-req.js:4: * Permite inyectar el contexto de RLS en funciones que antes usaban pool.query
+backend/src/modules/contable/api/controllers/documentos.controller.js:206:                    const intakesResult = await pool.query(intakesQuery, intakesParams);
+backend/src/modules/contable/api/controllers/documentos.controller.js:216:        const facturasResult = await pool.query(facturasQuery, facturasParams);
+backend/src/modules/contable/api/controllers/documentos.controller.js:419:        const intakeCheck = await pool.query(`
+backend/src/app.js:152:            const result = await pool.query('SELECT NOW() AS now');

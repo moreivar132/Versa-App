@@ -1,7 +1,7 @@
 const bankImportService = require('../services/bankImport.service');
 const bankService = require('../services/bankService');
 const path = require('path');
-const pool = require('../../../db');
+// pool removed
 
 exports.uploadImport = async (req, res) => {
     try {
@@ -67,7 +67,7 @@ exports.getHistory = async (req, res) => {
             return res.status(400).json({ ok: false, error: 'id_empresa es requerido' });
         }
 
-        const result = await pool.query(
+        const result = await req.db.query(
             'SELECT * FROM bank_import WHERE tenant_id = $1 AND id_empresa = $2 ORDER BY created_at DESC',
             [tenantId, idEmpresa]
         );
