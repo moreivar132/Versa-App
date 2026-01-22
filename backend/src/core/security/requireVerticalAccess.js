@@ -10,17 +10,28 @@
  *   // All routes after this require Manager vertical access
  */
 
-const pool = require('../../../db');
+const { getTenantDb } = require('../db/tenant-db');
 const logger = require('../logging/logger');
+
+/**
+ * Helper to resolve DB connection
+ */
+function resolveDb(ctxOrDb) {
+    if (!ctxOrDb) return null;
+    if (ctxOrDb.query && typeof ctxOrDb.query === 'function') return ctxOrDb;
+    return getTenantDb(ctxOrDb, { allowNoTenant: true });
+}
 
 /**
  * Check if user is super admin
  * @param {number} userId 
+ * @param {Object} [ctxOrDb]
  * @returns {Promise<boolean>}
  */
-async function isSuperAdmin(userId) {
+async function isSuperAdmin(userId, ctxOrDb = null) {
     if (!userId) return false;
-    const result = await pool.query(
+    const db = resolveDb(ctxOrDb) || getTenantDb({ userId }, { allowNoTenant: true });
+    const result = await db.query(
         'SELECT is_super_admin FROM usuario WHERE id = $1',
         [userId]
     );
@@ -31,10 +42,12 @@ async function isSuperAdmin(userId) {
  * Check if tenant has access to a vertical
  * @param {number} tenantId 
  * @param {string} verticalKey 
+ * @param {Object} [ctxOrDb]
  * @returns {Promise<{id: number, key: string, name: string, enabled: boolean} | null>}
  */
-async function getTenantVerticalAccess(tenantId, verticalKey) {
-    const result = await pool.query(`
+async function getTenantVerticalAccess(tenantId, verticalKey, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb) || getTenantDb({ tenantId }, { allowNoTenant: true });
+    const result = await db.query(`
         SELECT 
             v.id,
             v.key,
@@ -72,7 +85,7 @@ function requireVerticalAccess(verticalKey, options = {}) {
             }
 
             // Super admin bypass
-            if (await isSuperAdmin(userId)) {
+            if (await isSuperAdmin(userId, req.db)) {
                 req.isSuperAdmin = true;
                 req.verticalKey = verticalKey;
                 req.verticalAccess = { key: verticalKey, enabled: true, bypassed: true };
@@ -93,7 +106,7 @@ function requireVerticalAccess(verticalKey, options = {}) {
             }
 
             // Check tenant's access to this vertical
-            const verticalAccess = await getTenantVerticalAccess(tenantId, verticalKey);
+            const verticalAccess = await getTenantVerticalAccess(tenantId, verticalKey, req.db);
 
             if (!verticalAccess) {
                 // Vertical doesn't exist
@@ -184,12 +197,15 @@ function requireVerticalAccess(verticalKey, options = {}) {
  * 
  * @param {number} userId 
  * @param {number} tenantId 
+ * @param {Object} [ctxOrDb]
  * @returns {Promise<Array<{id: number, key: string, name: string, enabled: boolean}>>}
  */
-async function getUserAccessibleVerticals(userId, tenantId) {
+async function getUserAccessibleVerticals(userId, tenantId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb) || getTenantDb({ userId, tenantId }, { allowNoTenant: true });
+
     // Super admin gets all active verticals
-    if (await isSuperAdmin(userId)) {
-        const result = await pool.query(`
+    if (await isSuperAdmin(userId, db)) {
+        const result = await db.query(`
             SELECT id, key, name, true as enabled, icon
             FROM vertical
             WHERE is_active = true
@@ -199,7 +215,7 @@ async function getUserAccessibleVerticals(userId, tenantId) {
     }
 
     // Regular users get tenant's enabled verticals
-    const result = await pool.query(`
+    const result = await db.query(`
         SELECT 
             v.id,
             v.key,
@@ -221,14 +237,17 @@ async function getUserAccessibleVerticals(userId, tenantId) {
  * @param {number} userId 
  * @param {number} tenantId 
  * @param {string} verticalKey 
+ * @param {Object} [ctxOrDb]
  * @returns {Promise<boolean>}
  */
-async function canAccessVertical(userId, tenantId, verticalKey) {
-    if (await isSuperAdmin(userId)) {
+async function canAccessVertical(userId, tenantId, verticalKey, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb) || getTenantDb({ userId, tenantId, verticalKey }, { allowNoTenant: true });
+
+    if (await isSuperAdmin(userId, db)) {
         return true;
     }
 
-    const result = await pool.query(`
+    const result = await db.query(`
         SELECT user_can_access_vertical($1, $2, $3) as can_access
     `, [userId, tenantId, verticalKey]);
 

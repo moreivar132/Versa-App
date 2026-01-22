@@ -11,7 +11,7 @@
  * 3. process.env.MAKE_EMAIL_WEBHOOK_URL (fallback)
  */
 
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
 // Fallback desde .env
 const ENV_WEBHOOK_URL = process.env.MAKE_EMAIL_WEBHOOK_URL;
@@ -22,7 +22,9 @@ const ENV_WEBHOOK_URL = process.env.MAKE_EMAIL_WEBHOOK_URL;
  */
 async function getWebhookUrl(id_tenant) {
     try {
-        const result = await pool.query(
+        if (!id_tenant) return null;
+        const db = getTenantDb({ tenantId: id_tenant });
+        const result = await db.query(
             'SELECT webhook_url, sender_name, sender_email FROM email_config WHERE id_tenant = $1 AND enabled = true',
             [id_tenant]
         );

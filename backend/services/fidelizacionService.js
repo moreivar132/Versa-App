@@ -4,7 +4,7 @@
  */
 
 const crypto = require('crypto');
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const emailAutomationService = require('./emailAutomationService');
 const notificacionService = require('./notificacionService');
 // Removido notificationService duplicado o incorrecto
@@ -13,6 +13,12 @@ const notificacionService = require('./notificacionService');
 const PEPPER = process.env.LOYALTY_PUBLIC_TOKEN_PEPPER || 'default_pepper_change_in_production';
 const QR_TTL_SECONDS = parseInt(process.env.LOYALTY_QR_TTL_SECONDS || '300');
 const { APP_URL } = require('../config/urls');
+
+function resolveDb(ctxOrDb) {
+    if (!ctxOrDb) return getTenantDb({}, { allowNoTenant: true });
+    if (typeof ctxOrDb.query === 'function') return ctxOrDb;
+    return getTenantDb(ctxOrDb);
+}
 
 /**
  * Genera un token aleatorio seguro (32 bytes, base64url)
@@ -47,9 +53,10 @@ function generateMemberCode() {
 /**
  * Obtener o crear el programa de fidelización de un tenant
  */
-async function getOrCreatePrograma(idTenant) {
+async function getOrCreatePrograma(idTenant, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     // Buscar programa existente
-    let result = await pool.query(
+    let result = await db.query(
         'SELECT * FROM fidelizacion_programa WHERE id_tenant = $1',
         [idTenant]
     );
@@ -59,7 +66,7 @@ async function getOrCreatePrograma(idTenant) {
     }
 
     // Crear programa por defecto
-    result = await pool.query(
+    result = await db.query(
         `INSERT INTO fidelizacion_programa (id_tenant, nombre, etiqueta_puntos, activo)
          VALUES ($1, 'VERSA Puntos', 'Puntos', true)
          RETURNING *`,
@@ -72,14 +79,12 @@ async function getOrCreatePrograma(idTenant) {
 /**
  * Inscribir un cliente en el programa de fidelización
  */
-async function enrollMember(idCliente, idTenant) {
-    const client = await pool.connect();
+async function enrollMember(idCliente, idTenant, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
 
-    try {
-        await client.query('BEGIN');
-
+    return db.txWithRLS(async (tx) => {
         // Verificar que el cliente existe y pertenece al tenant
-        const clienteResult = await client.query(
+        const clienteResult = await tx.query(
             'SELECT id, nombre FROM clientefinal WHERE id = $1 AND id_tenant = $2',
             [idCliente, idTenant]
         );
@@ -88,11 +93,11 @@ async function enrollMember(idCliente, idTenant) {
             throw new Error('Cliente no encontrado o no pertenece al tenant');
         }
 
-        // Obtener o crear programa
-        const programa = await getOrCreatePrograma(idTenant);
+        // Obtener o crear programa (usando tx)
+        const programa = await getOrCreatePrograma(idTenant, tx);
 
         // Verificar si ya está inscrito
-        const existingMember = await client.query(
+        const existingMember = await tx.query(
             'SELECT * FROM fidelizacion_miembro WHERE id_cliente = $1 AND id_tenant = $2',
             [idCliente, idTenant]
         );
@@ -103,7 +108,7 @@ async function enrollMember(idCliente, idTenant) {
         } else {
             // Crear nuevo miembro
             const memberCode = generateMemberCode();
-            const memberResult = await client.query(
+            const memberResult = await tx.query(
                 `INSERT INTO fidelizacion_miembro (id_tenant, id_programa, id_cliente, member_code, estado)
                  VALUES ($1, $2, $3, $4, 'active')
                  RETURNING *`,
@@ -118,7 +123,7 @@ async function enrollMember(idCliente, idTenant) {
         const tokenLast4 = token.slice(-4);
 
         // Upsert del link
-        await client.query(
+        await tx.query(
             `INSERT INTO fidelizacion_tarjeta_link (id_tenant, id_miembro, public_token_hash, token_last4)
              VALUES ($1, $2, $3, $4)
              ON CONFLICT (id_miembro) DO UPDATE SET
@@ -127,8 +132,6 @@ async function enrollMember(idCliente, idTenant) {
                 updated_at = CURRENT_TIMESTAMP`,
             [idTenant, miembro.id, tokenHash, tokenLast4]
         );
-
-        await client.query('COMMIT');
 
         // Construir URL pública
         const publicUrl = `${APP_URL}/card.html?token=${token}`;
@@ -139,24 +142,19 @@ async function enrollMember(idCliente, idTenant) {
             token, // Solo se devuelve una vez, nunca más
             clienteNombre: clienteResult.rows[0].nombre
         };
-
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-    } finally {
-        client.release();
-    }
+    });
 }
 
 /**
  * Regenerar el token de un miembro
  */
-async function regenerateToken(idMiembro, idTenant) {
+async function regenerateToken(idMiembro, idTenant, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     const token = generateSecureToken();
     const tokenHash = hashWithPepper(token);
     const tokenLast4 = token.slice(-4);
 
-    const result = await pool.query(
+    const result = await db.query(
         `UPDATE fidelizacion_tarjeta_link 
          SET public_token_hash = $1, token_last4 = $2, updated_at = CURRENT_TIMESTAMP
          WHERE id_miembro = $3 AND id_tenant = $4
@@ -175,10 +173,11 @@ async function regenerateToken(idMiembro, idTenant) {
 /**
  * Validar un token público y obtener datos de la tarjeta
  */
-async function getCardData(token) {
+async function getCardData(token, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     const tokenHash = hashWithPepper(token);
 
-    const result = await pool.query(
+    const result = await db.query(
         `SELECT 
             tl.id AS link_id,
             tl.id_miembro,
@@ -207,19 +206,19 @@ async function getCardData(token) {
     const data = result.rows[0];
 
     // Actualizar last_opened_at
-    await pool.query(
+    await db.query(
         'UPDATE fidelizacion_tarjeta_link SET last_opened_at = CURRENT_TIMESTAMP WHERE id = $1',
         [data.link_id]
     );
 
     // Buscar promo activa
-    const promoResult = await pool.query(
+    const promoResult = await db.query(
         `SELECT id, titulo, descripcion 
          FROM fidelizacion_promo 
          WHERE id_tenant = $1 
-           AND activo = true 
-           AND starts_at <= CURRENT_TIMESTAMP 
-           AND ends_at >= CURRENT_TIMESTAMP
+         AND activo = true 
+         AND starts_at <= CURRENT_TIMESTAMP 
+         AND ends_at >= CURRENT_TIMESTAMP
          ORDER BY created_at DESC
          LIMIT 1`,
         [data.id_tenant]
@@ -249,12 +248,13 @@ async function getCardData(token) {
 /**
  * Generar una sesión de QR dinámica
  */
-async function generateQRSession(idMiembro, idTenant) {
+async function generateQRSession(idMiembro, idTenant, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     const nonce = generateNonce();
     const nonceHash = hashWithPepper(nonce);
     const expiresAt = new Date(Date.now() + QR_TTL_SECONDS * 1000);
 
-    await pool.query(
+    await db.query(
         `INSERT INTO fidelizacion_qr_sesion (id_tenant, id_miembro, nonce_hash, expires_at)
          VALUES ($1, $2, $3, $4)`,
         [idTenant, idMiembro, nonceHash, expiresAt]
@@ -275,7 +275,8 @@ async function generateQRSession(idMiembro, idTenant) {
 /**
  * Validar QR y sumar puntos
  */
-async function validateAndEarnPoints(adminIdTenant, qrPayload, puntos, motivo, userId) {
+async function validateAndEarnPoints(adminIdTenant, qrPayload, puntos, motivo, userId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     let idMiembro;
     let sessionId = null;
 
@@ -307,7 +308,7 @@ async function validateAndEarnPoints(adminIdTenant, qrPayload, puntos, motivo, u
 
         // Buscar sesión válida
         const nonceHash = hashWithPepper(nonce);
-        const sessionResult = await pool.query(
+        const sessionResult = await db.query(
             `SELECT id, used_at FROM fidelizacion_qr_sesion 
              WHERE id_tenant = $1 
                AND id_miembro = $2 
@@ -333,7 +334,7 @@ async function validateAndEarnPoints(adminIdTenant, qrPayload, puntos, motivo, u
             throw new Error('Código inválido (muy corto)');
         }
 
-        const memberRes = await pool.query(
+        const memberRes = await db.query(
             'SELECT id FROM fidelizacion_miembro WHERE id_tenant = $1 AND member_code = $2',
             [adminIdTenant, code]
         );
@@ -344,43 +345,39 @@ async function validateAndEarnPoints(adminIdTenant, qrPayload, puntos, motivo, u
         idMiembro = memberRes.rows[0].id;
     }
 
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-
+    return db.txWithRLS(async (tx) => {
         // Si es QR, marcar sesión como usada
         if (sessionId) {
-            await client.query(
+            await tx.query(
                 'UPDATE fidelizacion_qr_sesion SET used_at = CURRENT_TIMESTAMP WHERE id = $1',
                 [sessionId]
             );
         }
 
         // Insertar movimiento
-        await client.query(
+        await tx.query(
             `INSERT INTO fidelizacion_movimiento (id_tenant, id_miembro, tipo, puntos, motivo, created_by)
              VALUES ($1, $2, 'earn', $3, $4, $5)`,
             [adminIdTenant, idMiembro, puntos, motivo, userId]
         );
 
-        await client.query('COMMIT');
-
         // Obtener nuevo balance
-        const balanceResult = await pool.query(
+        const balanceResult = await tx.query(
             'SELECT balance FROM vw_fidelizacion_saldo WHERE id_miembro = $1',
             [idMiembro]
         );
         const nuevoBalance = balanceResult.rows[0]?.balance || puntos;
 
         // Obtener id_cliente para la notificación
-        const memberClientResult = await pool.query(
+        const memberClientResult = await tx.query(
             'SELECT id_cliente FROM fidelizacion_miembro WHERE id = $1',
             [idMiembro]
         );
         const id_cliente = memberClientResult.rows[0]?.id_cliente;
 
         if (id_cliente) {
-            // Notificación Dashboard
+            // Notificación Dashboard (fuera de tx estricta, pero awaitable)
+            // Se puede hacer async sin await si se quiere rendimiento, pero mejor consistente
             await notificacionService.crearNotificacion(
                 id_cliente,
                 'points_earned',
@@ -391,10 +388,10 @@ async function validateAndEarnPoints(adminIdTenant, qrPayload, puntos, motivo, u
 
             // Notificación Email via Automation Service
             try {
-                const clienteData = await pool.query('SELECT nombre, email FROM clientefinal WHERE id = $1', [id_cliente]);
+                const clienteData = await tx.query('SELECT nombre, email FROM clientefinal WHERE id = $1', [id_cliente]);
                 if (clienteData.rows[0]?.email) {
                     // Primero aseguramos que la plantilla base existe (id_tenant = NULL)
-                    await pool.query(`
+                    await tx.query(`
                         INSERT INTO email_template (id_tenant, code, name, subject, html_body, variables_json)
                         VALUES (NULL, 'LOYALTY_POINTS_EARNED', 'Puntos Fidelización Recibidos', '¡Has ganado {{puntos_ganados}} puntos!', $1, $2)
                         ON CONFLICT (id_tenant, code) DO NOTHING
@@ -416,12 +413,13 @@ async function validateAndEarnPoints(adminIdTenant, qrPayload, puntos, motivo, u
                     ]);
 
                     // Aseguramos que la automatización existe para este tenant
-                    await pool.query(`
+                    await tx.query(`
                         INSERT INTO email_automation (id_tenant, event_code, template_code, enabled)
                         VALUES ($1, 'LOYALTY_POINTS_EARNED', 'LOYALTY_POINTS_EARNED', true)
                         ON CONFLICT (id_tenant, event_code) DO NOTHING
                     `, [adminIdTenant]);
 
+                    // call external service - assuming it handles its own DB or is robust
                     await emailAutomationService.triggerEvent({
                         id_tenant: adminIdTenant,
                         event_code: 'LOYALTY_POINTS_EARNED',
@@ -447,21 +445,16 @@ async function validateAndEarnPoints(adminIdTenant, qrPayload, puntos, motivo, u
             nuevo_balance: nuevoBalance,
             id_miembro: idMiembro
         };
-
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-    } finally {
-        client.release();
-    }
+    });
 }
 
 /**
  * Ajuste manual de puntos
  */
-async function adjustPoints(idMiembro, idTenant, puntos, motivo, userId) {
+async function adjustPoints(idMiembro, idTenant, puntos, motivo, userId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     // Verificar que el miembro existe y pertenece al tenant
-    const memberCheck = await pool.query(
+    const memberCheck = await db.query(
         'SELECT id FROM fidelizacion_miembro WHERE id = $1 AND id_tenant = $2',
         [idMiembro, idTenant]
     );
@@ -470,13 +463,13 @@ async function adjustPoints(idMiembro, idTenant, puntos, motivo, userId) {
         throw new Error('Miembro no encontrado');
     }
 
-    await pool.query(
+    await db.query(
         `INSERT INTO fidelizacion_movimiento (id_tenant, id_miembro, tipo, puntos, motivo, created_by)
          VALUES ($1, $2, 'adjust', $3, $4, $5)`,
         [idTenant, idMiembro, puntos, motivo, userId]
     );
 
-    const balanceResult = await pool.query(
+    const balanceResult = await db.query(
         'SELECT balance FROM vw_fidelizacion_saldo WHERE id_miembro = $1',
         [idMiembro]
     );
@@ -491,10 +484,11 @@ async function adjustPoints(idMiembro, idTenant, puntos, motivo, userId) {
 /**
  * Buscar miembros por nombre, teléfono, email o código
  */
-async function searchMembers(idTenant, query) {
+async function searchMembers(idTenant, query, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     const searchQuery = `%${query}%`;
 
-    const result = await pool.query(
+    const result = await db.query(
         `SELECT 
             m.id,
             m.member_code,
@@ -528,8 +522,9 @@ async function searchMembers(idTenant, query) {
 /**
  * Listar todos los miembros de un tenant
  */
-async function listMembers(idTenant, limit = 50, offset = 0) {
-    const result = await pool.query(
+async function listMembers(idTenant, limit = 50, offset = 0, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
+    const result = await db.query(
         `SELECT 
             m.id,
             m.member_code,
@@ -557,8 +552,9 @@ async function listMembers(idTenant, limit = 50, offset = 0) {
 /**
  * Obtener historial de movimientos de un miembro
  */
-async function getMemberHistory(idMiembro, idTenant) {
-    const result = await pool.query(
+async function getMemberHistory(idMiembro, idTenant, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
+    const result = await db.query(
         `SELECT 
             mov.id,
             mov.tipo,
@@ -580,8 +576,9 @@ async function getMemberHistory(idMiembro, idTenant) {
 /**
  * Obtener detalle de un miembro
  */
-async function getMemberDetail(idMiembro, idTenant) {
-    const result = await pool.query(
+async function getMemberDetail(idMiembro, idTenant, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
+    const result = await db.query(
         `SELECT 
             m.id,
             m.member_code,
@@ -607,7 +604,7 @@ async function getMemberDetail(idMiembro, idTenant) {
     }
 
     const member = result.rows[0];
-    const history = await getMemberHistory(idMiembro, idTenant);
+    const history = await getMemberHistory(idMiembro, idTenant, db);
 
     return {
         ...member,
@@ -620,7 +617,8 @@ async function getMemberDetail(idMiembro, idTenant) {
 /**
  * Listar promos de un tenant
  */
-async function listPromos(idTenant, includeInactive = false) {
+async function listPromos(idTenant, includeInactive = false, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     let query = `
         SELECT * FROM fidelizacion_promo 
         WHERE id_tenant = $1
@@ -632,17 +630,18 @@ async function listPromos(idTenant, includeInactive = false) {
 
     query += ' ORDER BY created_at DESC';
 
-    const result = await pool.query(query, [idTenant]);
+    const result = await db.query(query, [idTenant]);
     return result.rows;
 }
 
 /**
  * Crear una promo
  */
-async function createPromo(idTenant, data, userId) {
+async function createPromo(idTenant, data, userId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     const { titulo, descripcion, starts_at, ends_at, activo = true } = data;
 
-    const result = await pool.query(
+    const result = await db.query(
         `INSERT INTO fidelizacion_promo (id_tenant, titulo, descripcion, starts_at, ends_at, activo, created_by)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
@@ -656,7 +655,7 @@ async function createPromo(idTenant, data, userId) {
         const emailCampaignService = require('./emailCampaignService');
 
         // Obtener la plantilla de promociones
-        const templateResult = await pool.query(`
+        const templateResult = await db.query(`
             SELECT html_body, subject FROM email_template 
             WHERE code = 'LOYALTY_PROMO_CREATED' 
             AND (id_tenant IS NULL OR id_tenant = $1)
@@ -713,7 +712,7 @@ async function createPromo(idTenant, data, userId) {
 
     // --- NOTIFICACIÓN EN DASHBOARD (esto sí es inmediato) ---
     try {
-        const membersResult = await pool.query(`
+        const membersResult = await db.query(`
             SELECT m.id_cliente FROM fidelizacion_miembro m 
             WHERE m.id_tenant = $1 AND m.estado = 'active'`,
             [idTenant]
@@ -738,10 +737,11 @@ async function createPromo(idTenant, data, userId) {
 /**
  * Actualizar una promo
  */
-async function updatePromo(idPromo, idTenant, data) {
+async function updatePromo(idPromo, idTenant, data, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb);
     const { titulo, descripcion, starts_at, ends_at, activo } = data;
 
-    const result = await pool.query(
+    const result = await db.query(
         `UPDATE fidelizacion_promo 
          SET titulo = COALESCE($1, titulo),
              descripcion = COALESCE($2, descripcion),

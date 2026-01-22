@@ -146,7 +146,11 @@ class OrdenesController {
      */
     async getEstadosOrden(req, res) {
         try {
-            const result = await ordenesService.getEstadosOrden();
+            const userContext = {
+                id_tenant: req.user?.id_tenant,
+                id_usuario: req.user?.id
+            };
+            const result = await ordenesService.getEstadosOrden(userContext);
             res.status(200).json({ ok: true, estados: result });
         } catch (error) {
             console.error('Error obteniendo estados de orden:', error);

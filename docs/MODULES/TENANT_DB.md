@@ -1,7 +1,30 @@
 # TenantSafe Database Access (Versa V2)
 
+**Última Actualización:** 21 de Enero, 2026
+
 ## Objetivo
 Proporcionar acceso a base de datos con **aislamiento de tenant garantizado**. Toda query multi-tenant debe pasar por el wrapper `getTenantDb(ctx)`.
+
+> [!SUCCESS]
+> **ESTADO ACTUAL (2026-01-22):** La adopción de `getTenantDb` es del **100%**.  
+> **0 archivos** usan `pool.query` directamente en código activo.  
+> Objetivo "Zero Violations" alcanzado.
+
+---
+
+## CHANGELOG
+
+| Fecha | Cambio |
+|-------|--------|
+| 2026-01-22 | **Batch A14**: **100% ADOPTION**. Refactored `documentos.controller`, `ventaPDFService`, `ordenPDFService`, `unifiedNotificationService`, `auditService`, `makeEmailProvider`. 0 Runtime Violations. |
+| 2026-01-21 | - **Batch A13**: `marketplace.js`, `marketplaceAdmin.js`, `meRoutes.js`, `marketplaceService.js`, `customerPortalService.js`. All refactored to `getTenantDb`/`resolveDb`. Fixed systemic import errors. |
+| 2026-01-21 | - **Batch A12 (Routes):** Refactored `impuestos`, `tecnicos`, `subscriptions`, `dashboardPrefs`, `customerPortal`. Guardrails 64→48. |
+| 2026-01-21 | Batch A4: Refactored `accessRoutes`, `proveedores`, `sucursales`, `emailAutomationService`, `emailCampaignService`. Restored DB Guardrails. |
+| 2026-01-21 | Batch A3: Refactored Citas, PortalCitasService, Chat, CRM Chat, WhatsApp (using `allowNoTenant` for public routes). |
+| 2026-01-21 | Añadido estado de adopción real tras auditoría. |
+| 2026-01-13 | Documento inicial con API reference. |
+
+---
 
 ## Quick Start
 

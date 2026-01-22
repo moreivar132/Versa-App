@@ -3,29 +3,41 @@
  * Provides permission checking for Express routes
  */
 
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const userModel = require('../models/userModel');
 const roleModel = require('../models/roleModel');
 
 /**
+ * Helper to resolve DB connection
+ */
+function resolveDb(req, ctxOrDb) {
+    if (req?.db) return req.db;
+    if (ctxOrDb?.query && typeof ctxOrDb.query === 'function') return ctxOrDb;
+    const ctx = ctxOrDb || (req ? (req.context || req.user) : null);
+    return getTenantDb(ctx || {}, { allowNoTenant: true });
+}
+
+/**
  * Check if user is super admin
  */
-async function isSuperAdmin(userId) {
-    const user = await userModel.getUserById(userId);
+async function isSuperAdmin(userId, db = null) {
+    const user = await userModel.getUserById(userId, db);
     return user?.is_super_admin === true;
 }
 
 /**
  * Get all permissions for a user in a specific tenant context
  */
-async function getUserPermissions(userId, tenantId = null) {
+async function getUserPermissions(userId, tenantId = null, db = null) {
+    const activeDb = resolveDb(null, db || { userId, tenantId });
+
     // If super admin, return bypass flag
-    if (await isSuperAdmin(userId)) {
+    if (await isSuperAdmin(userId, activeDb)) {
         return { isSuperAdmin: true, permissions: ['*'] };
     }
 
     // Get permissions through roles
-    const result = await pool.query(`
+    const result = await activeDb.query(`
         SELECT DISTINCT COALESCE(p.key, p.nombre) as permission_key
         FROM usuariorol ur
         JOIN rol r ON ur.id_rol = r.id
@@ -50,14 +62,16 @@ async function getUserPermissions(userId, tenantId = null) {
 /**
  * Check if user has a specific permission
  */
-async function hasPermission(userId, tenantId, permissionKey) {
+async function hasPermission(userId, tenantId, permissionKey, db = null) {
+    const activeDb = resolveDb(null, db || { userId, tenantId });
+
     // Super admin bypass
-    if (await isSuperAdmin(userId)) {
+    if (await isSuperAdmin(userId, activeDb)) {
         return true;
     }
 
     // Check via database function
-    const result = await pool.query(
+    const result = await activeDb.query(
         'SELECT user_has_permission($1, $2, $3) as has_perm',
         [userId, tenantId, permissionKey]
     );
@@ -77,13 +91,15 @@ function requirePermission(permissionKey) {
                 return res.status(401).json({ error: 'Autenticación requerida' });
             }
 
+            const db = resolveDb(req);
+
             // Get tenant from request (header, query, or body)
             const tenantId = req.headers['x-tenant-id']
                 || req.query.tenantId
                 || req.body?.id_tenant
                 || req.user?.id_tenant;
 
-            const allowed = await hasPermission(userId, tenantId, permissionKey);
+            const allowed = await hasPermission(userId, tenantId, permissionKey, db);
 
             if (!allowed) {
                 return res.status(403).json({
@@ -93,7 +109,7 @@ function requirePermission(permissionKey) {
             }
 
             // Attach permissions to request for downstream use
-            req.userPermissions = await getUserPermissions(userId, tenantId);
+            req.userPermissions = await getUserPermissions(userId, tenantId, db);
             next();
         } catch (error) {
             console.error('RBAC middleware error:', error);
@@ -112,7 +128,9 @@ async function requireSuperAdmin(req, res, next) {
             return res.status(401).json({ error: 'Autenticación requerida' });
         }
 
-        const isSuper = await isSuperAdmin(userId);
+        const db = resolveDb(req);
+
+        const isSuper = await isSuperAdmin(userId, db);
         if (!isSuper) {
             return res.status(403).json({
                 error: 'Acceso denegado: Se requieren permisos de Super Admin'
@@ -139,10 +157,11 @@ function requireAccessManage() {
  * @param {object} user - User object from req.user
  * @param {number} tenantId - Tenant ID
  * @param {string} permissionKey - Permission to check
+ * @param {object} [db] - DB client
  */
-async function can(user, tenantId, permissionKey) {
+async function can(user, tenantId, permissionKey, db = null) {
     if (!user?.id) return false;
-    return hasPermission(user.id, tenantId, permissionKey);
+    return hasPermission(user.id, tenantId, permissionKey, db);
 }
 
 /**
@@ -173,8 +192,10 @@ function validateTenantAccess(req, targetTenantId) {
 /**
  * Get user's allowed sucursales from the pivot table
  */
-async function getUserAllowedSucursales(userId) {
-    const result = await pool.query(`
+async function getUserAllowedSucursales(userId, db = null) {
+    const activeDb = resolveDb(null, db || { userId });
+
+    const result = await activeDb.query(`
         SELECT s.id, s.nombre
         FROM sucursal s
         JOIN usuariosucursal us ON s.id = us.id_sucursal
@@ -209,8 +230,10 @@ function requireSucursalScope(paramName = 'id_sucursal') {
                 return next();
             }
 
+            const db = resolveDb(req);
+
             // Get user's allowed sucursales
-            const allowedSucursales = await getUserAllowedSucursales(req.user.id);
+            const allowedSucursales = await getUserAllowedSucursales(req.user.id, db);
             const allowedIds = allowedSucursales.map(s => s.id);
 
             // Check if target is in allowed list
@@ -235,8 +258,10 @@ function requireSucursalScope(paramName = 'id_sucursal') {
 /**
  * Get user's allowed empresas from accounting_usuario_empresa
  */
-async function getUserAllowedEmpresas(userId) {
-    const result = await pool.query(`
+async function getUserAllowedEmpresas(userId, db = null) {
+    const activeDb = resolveDb(null, db || { userId });
+
+    const result = await activeDb.query(`
         SELECT id_empresa as id
         FROM accounting_usuario_empresa
         WHERE id_usuario = $1
@@ -246,6 +271,7 @@ async function getUserAllowedEmpresas(userId) {
 
 /**
  * Express middleware factory - requires access to a specific empresa
+ * @param {string} paramName - Name of the parameter containing empresa ID
  */
 function requireEmpresaAccess(paramName = 'id_empresa') {
     return async (req, res, next) => {
@@ -253,8 +279,10 @@ function requireEmpresaAccess(paramName = 'id_empresa') {
             const userId = req.user?.id;
             if (!userId) return res.status(401).json({ error: 'Autenticación requerida' });
 
+            const db = resolveDb(req);
+
             // Super admins bypass
-            if (await isSuperAdmin(userId)) return next();
+            if (await isSuperAdmin(userId, db)) return next();
 
             // Get target empresa ID from request
             const targetEmpresaId = parseInt(
@@ -267,7 +295,7 @@ function requireEmpresaAccess(paramName = 'id_empresa') {
 
             if (!targetEmpresaId) return next();
 
-            const allowedIds = await getUserAllowedEmpresas(userId);
+            const allowedIds = await getUserAllowedEmpresas(userId, db);
             if (!allowedIds.includes(targetEmpresaId)) {
                 return res.status(403).json({
                     ok: false,
@@ -313,9 +341,7 @@ module.exports = {
     can,
     getEffectiveTenant,
     validateTenantAccess,
-    getUserAllowedSucursales,
     requireSucursalScope,
-    getUserAllowedEmpresas,
     requireEmpresaAccess
 };
 

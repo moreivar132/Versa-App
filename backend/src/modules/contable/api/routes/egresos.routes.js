@@ -7,12 +7,26 @@ const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/egresos.controller');
 const { authenticate } = require('../../../../../middleware/auth');
+const { getTenantDb } = require('../../../../../src/core/db/tenant-db');
 
 // Rutas protegidas (requieren autenticación)
-router.post('/egresos/intakes', authenticate, controller.createIntake);
-router.get('/egresos/intakes/:id', authenticate, controller.getIntake);
-router.post('/egresos', authenticate, controller.createGasto);
-router.get('/egresos', authenticate, controller.listGastos);
+router.use(authenticate);
+
+// Inject Tenant DB
+router.use((req, res, next) => {
+    try {
+        req.db = getTenantDb(req.user);
+        next();
+    } catch (err) {
+        console.error('Error injecting Tenant DB:', err);
+        res.status(500).json({ error: 'Database context error' });
+    }
+});
+
+router.post('/egresos/intakes', controller.createIntake);
+router.get('/egresos/intakes/:id', controller.getIntake);
+router.post('/egresos', controller.createGasto);
+router.get('/egresos', controller.listGastos);
 
 // Callback de Make (sin auth normal, usa HMAC signature)
 router.post('/intakes/:id/ocr-result', controller.ocrResultCallback);

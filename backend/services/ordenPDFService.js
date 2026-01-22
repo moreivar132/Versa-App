@@ -5,7 +5,7 @@
  * Similar al servicio de facturas pero para órdenes.
  */
 
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
 class OrdenPDFService {
 
@@ -16,7 +16,8 @@ class OrdenPDFService {
      */
     async obtenerConfiguracionOrdenes(tenantId) {
         try {
-            const result = await pool.query(`
+            const db = getTenantDb({ tenantId });
+            const result = await db.query(`
                 SELECT * FROM ordenconfigtenant
                 WHERE id_tenant = $1 AND es_por_defecto = true
                 LIMIT 1
@@ -53,9 +54,11 @@ class OrdenPDFService {
      * @param {number} ordenId - ID de la orden
      * @returns {Promise<Object>} Datos completos de la orden
      */
-    async obtenerOrdenCompleta(ordenId) {
+    async obtenerOrdenCompleta(ordenId, tenantId) {
+        const db = getTenantDb({ tenantId });
+
         // Obtener cabecera de la orden
-        const ordenResult = await pool.query(`
+        const ordenResult = await db.query(`
             SELECT 
                 o.*,
                 c.nombre as cliente_nombre,
@@ -91,7 +94,7 @@ class OrdenPDFService {
         const orden = ordenResult.rows[0];
 
         // Obtener líneas de la orden con porcentaje de impuesto
-        const lineasResult = await pool.query(`
+        const lineasResult = await db.query(`
             SELECT 
                 ol.*,
                 p.nombre as producto_nombre,
@@ -105,7 +108,7 @@ class OrdenPDFService {
         `, [ordenId]);
 
         // Obtener pagos de la orden
-        const pagosResult = await pool.query(`
+        const pagosResult = await db.query(`
             SELECT 
                 op.*,
                 mp.nombre as medio_pago_nombre
@@ -591,8 +594,9 @@ class OrdenPDFService {
      * @param {number} ordenId - ID de la orden
      * @returns {Promise<string>} HTML del documento
      */
-    async generarDocumentoOrden(ordenId) {
-        const ordenCompleta = await this.obtenerOrdenCompleta(ordenId);
+    async generarDocumentoOrden(ordenId, tenantId) {
+        if (!tenantId) throw new Error('TenantID required for generarDocumentoOrden');
+        const ordenCompleta = await this.obtenerOrdenCompleta(ordenId, tenantId);
         return this.generarHTMLOrden(ordenCompleta);
     }
 }

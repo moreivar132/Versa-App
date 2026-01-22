@@ -1,27 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+// const pool = require('../db'); // REMOVED
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
-// Middleware para obtener el tenant y cliente (simulado o real según auth)
-// En un caso real, esto vendría del token JWT decodificado.
-// Aquí asumiremos que se pasan o se infieren. 
-// Para el cliente web, a veces es una sesión anónima o un login de cliente.
-// EL PROMPT DICE: "Supón que ya sabes en backend quién es el cliente (ej: id_cliente e id_tenant vienen del token/sesión)."
-// Vamos a simular un middleware que extrae esto, o asumiremos que el frontend lo envía en headers/body si no hay auth completa implementada para clientes finales.
-// Dado el contexto del proyecto, voy a asumir que req.user o similar tiene la info, o lo sacamos de headers para facilitar la prueba si no hay auth de cliente final estricta.
-// PERO, para ser seguros, vamos a usar un middleware dummy o esperar que venga en el request si no hay auth.
-// REVISANDO CÓDIGO EXISTENTE: parece que hay 'verifyJWT' en index.js pero es para usuarios del CRM (admin/trabajador).
-// Para el CLIENTE FINAL (portal), no he visto auth.
-// Voy a asumir que el frontend envía `x-tenant-id` y `x-client-id` por ahora para simplificar, o que hay un middleware que lo pone.
-// MEJOR: Voy a esperar que vengan en el body o query para "conversacion-actual" si no hay auth.
-// OJO: El prompt dice "Supón que ya sabes en backend quién es el cliente".
-// Voy a implementar un helper para sacar estos IDs.
+// Middleware to setup Tenant DB context
+router.use((req, res, next) => {
+    // Logic extracted/adapted from getClientContext
+    let id_tenant = req.headers['x-tenant-id'];
+    if (!id_tenant && req.body && req.body.idTenant) {
+        id_tenant = req.body.idTenant;
+    }
+    // Default to 1 (Super Admin/System) if not provided, matching original logic
+    id_tenant = id_tenant || 1;
+
+    const id_cliente = req.headers['x-client-id'] || null;
+
+    req.ctx = {
+        tenantId: id_tenant,
+        userId: id_cliente ? `client-${id_cliente}` : 'anonymous-client' // For audit logs
+    };
+
+    // Inject DB wrapper
+    req.db = getTenantDb(req.ctx);
+    next();
+});
 
 const getClientContext = (req) => {
-    // ESTO ES UNA SIMULACIÓN. En prod vendría del token.
-    // Permitimos enviarlos por headers para probar.
-    const idTenant = req.headers['x-tenant-id'] || 1; // Default a 1 si no viene
-    const idCliente = req.headers['x-client-id'] || 1; // Default a 1 si no viene
+    // Helper to get IDs for logic (now consistent with middleware)
+    const idTenant = req.ctx.tenantId;
+    const idCliente = req.headers['x-client-id'] || 1; // Default to 1 if not provided, matching original logic
     return { idTenant, idCliente };
 };
 
@@ -34,7 +41,7 @@ router.post('/identificar', async (req, res) => {
             return res.status(400).json({ ok: false, error: 'Nombre y teléfono son obligatorios' });
         }
 
-        const tenantId = idTenant || 1;
+        const tenantId = idTenant || 1; // Should match req.db.tenantId
 
         // 1. Buscar si ya existe por teléfono
         const queryBuscar = `
@@ -43,7 +50,7 @@ router.post('/identificar', async (req, res) => {
             WHERE id_tenant = $1 AND telefono = $2
             LIMIT 1
         `;
-        const resultBuscar = await pool.query(queryBuscar, [tenantId, telefono]);
+        const resultBuscar = await req.db.query(queryBuscar, [tenantId, telefono]);
 
         if (resultBuscar.rows.length > 0) {
             // Cliente existe
@@ -66,7 +73,7 @@ router.post('/identificar', async (req, res) => {
             RETURNING id, nombre, telefono
         `;
 
-        const resultInsert = await pool.query(queryInsert, [
+        const resultInsert = await req.db.query(queryInsert, [
             tenantId,
             nombre,
             documentoDummy,
@@ -101,7 +108,7 @@ router.get('/conversacion-actual', async (req, res) => {
             ORDER BY updated_at DESC
             LIMIT 1
         `;
-        const resultBuscar = await pool.query(queryBuscar, [idTenant, idCliente]);
+        const resultBuscar = await req.db.query(queryBuscar, [idTenant, idCliente]);
 
         let conversacion;
 
@@ -117,7 +124,7 @@ router.get('/conversacion-actual', async (req, res) => {
                 )
                 RETURNING *
             `;
-            const resultInsert = await pool.query(queryInsert, [idTenant, idCliente]);
+            const resultInsert = await req.db.query(queryInsert, [idTenant, idCliente]);
             conversacion = resultInsert.rows[0];
         }
 
@@ -128,7 +135,7 @@ router.get('/conversacion-actual', async (req, res) => {
             WHERE id_conversacion = $1
             ORDER BY created_at ASC
         `;
-        const resultMensajes = await pool.query(queryMensajes, [conversacion.id]);
+        const resultMensajes = await req.db.query(queryMensajes, [conversacion.id]);
 
         res.json({
             conversacion: {
@@ -163,7 +170,7 @@ router.post('/mensajes', async (req, res) => {
             SELECT id FROM chat_conversacion
             WHERE id = $1 AND id_tenant = $2 AND id_cliente = $3
         `;
-        const resultValidar = await pool.query(queryValidar, [idConversacion, idTenant, idCliente]);
+        const resultValidar = await req.db.query(queryValidar, [idConversacion, idTenant, idCliente]);
 
         if (resultValidar.rows.length === 0) {
             return res.status(403).json({ ok: false, error: 'Conversación no encontrada o no autorizada' });
@@ -182,11 +189,11 @@ router.post('/mensajes', async (req, res) => {
         const tipo = tipoMensaje || 'TEXTO';
         const url = urlAdjunto || null;
 
-        const resultInsert = await pool.query(queryInsert, [idConversacion, texto || '', tipo, url]);
+        const resultInsert = await req.db.query(queryInsert, [idConversacion, texto || '', tipo, url]);
         const mensaje = resultInsert.rows[0];
 
         // Actualizar conversación
-        await pool.query(`
+        await req.db.query(`
             UPDATE chat_conversacion
             SET ultimo_mensaje_at = NOW(), updated_at = NOW()
             WHERE id = $1
@@ -214,7 +221,7 @@ router.get('/conversaciones/:id/mensajes', async (req, res) => {
             SELECT id, estado FROM chat_conversacion
             WHERE id = $1 AND id_tenant = $2 AND id_cliente = $3
         `;
-        const resultValidar = await pool.query(queryValidar, [idConversacion, idTenant, idCliente]);
+        const resultValidar = await req.db.query(queryValidar, [idConversacion, idTenant, idCliente]);
 
         if (resultValidar.rows.length === 0) {
             return res.status(403).json({ ok: false, error: 'Conversación no encontrada o no autorizada' });
@@ -228,7 +235,7 @@ router.get('/conversaciones/:id/mensajes', async (req, res) => {
             WHERE id_conversacion = $1
             ORDER BY created_at ASC
         `;
-        const resultMensajes = await pool.query(queryMensajes, [idConversacion]);
+        const resultMensajes = await req.db.query(queryMensajes, [idConversacion]);
 
         res.json({
             conversacion: {

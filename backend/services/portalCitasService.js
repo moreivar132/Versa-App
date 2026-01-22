@@ -10,17 +10,49 @@
  * - motivo = nombre del servicio
  */
 
-const pool = require('../db');
+/**
+ * VERSA - Portal Cliente: Servicio de Citas
+ * 
+ * ARQUITECTURA: tenant → sucursal → citataller
+ * 
+ * Reglas:
+ * - citataller NO tiene id_tenant (scope por sucursal)
+ * - id_vehiculo es NOT NULL en citataller
+ * - Validar propiedad del vehículo si viene id_vehiculo
+ * - motivo = nombre del servicio
+ */
+
+// const pool = require('../db'); // REMOVED
+const { getTenantDb } = require('../src/core/db/tenant-db');
+
+function resolveDb(ctxOrDb, options) {
+    if (!ctxOrDb) return getTenantDb(null, { allowNoTenant: true }); // Fallback for legacy calls
+    if (typeof ctxOrDb.query === 'function') return ctxOrDb; // db/tx
+    return getTenantDb(ctxOrDb, options); // ctx
+}
 
 class PortalCitasService {
 
     /**
      * Obtener datos del cliente + sus vehículos
      * GET /api/portal/me
+     * 
+     * Supports: getClienteConVehiculos(idCliente) OR getClienteConVehiculos(ctx, idCliente)
      */
-    async getClienteConVehiculos(idCliente) {
+    async getClienteConVehiculos(ctxOrId, optionalId) {
+        let ctx = ctxOrId;
+        let idCliente = optionalId;
+
+        // Dual-mode handling
+        if (typeof ctxOrId === 'number' || typeof ctxOrId === 'string') {
+            ctx = null;
+            idCliente = ctxOrId;
+        }
+
+        const db = resolveDb(ctx);
+
         // Datos del cliente
-        const clienteResult = await pool.query(
+        const clienteResult = await db.query(
             `SELECT id, nombre, email, telefono, direccion, id_tenant
              FROM clientefinal WHERE id = $1`,
             [idCliente]
@@ -33,7 +65,7 @@ class PortalCitasService {
         const cliente = clienteResult.rows[0];
 
         // Vehículos del cliente
-        const vehiculosResult = await pool.query(
+        const vehiculosResult = await db.query(
             `SELECT id, matricula, marca, modelo, year, "Color" as color, "CC" as cc, "Serial" as serial
              FROM vehiculo 
              WHERE id_cliente = $1
@@ -51,10 +83,23 @@ class PortalCitasService {
      * Crear cita con validación completa
      * POST /api/portal/citas
      * 
+     * Supports: crearCita(idCliente, data) OR crearCita(ctx, idCliente, data)
+     * 
      * @param {number} idCliente - Del token de auth
      * @param {object} data - Datos de la cita
      */
-    async crearCita(idCliente, data) {
+    async crearCita(ctxOrId, idClienteOrData, dataOrUndefined) {
+        let ctx = ctxOrId;
+        let idCliente = idClienteOrData;
+        let data = dataOrUndefined;
+
+        // Dual-mode handling
+        if (typeof ctxOrId === 'number' || typeof ctxOrId === 'string') {
+            ctx = null;
+            idCliente = ctxOrId;
+            data = idClienteOrData;
+        }
+
         const {
             id_sucursal,
             fecha_hora,
@@ -81,15 +126,14 @@ class PortalCitasService {
             throw { status: 400, message: 'La fecha de la cita debe ser futura' };
         }
 
-        const client = await pool.connect();
+        const db = resolveDb(ctx);
 
-        try {
-            await client.query('BEGIN');
-
+        // Transaction using db.txWithRLS
+        return db.txWithRLS(async (tx) => {
             // =====================================================
             // 1. VALIDAR SUCURSAL
             // =====================================================
-            const sucursalResult = await client.query(
+            const sucursalResult = await tx.query(
                 `SELECT s.id, s.id_tenant, s.nombre, ml.reserva_online_activa
                  FROM sucursal s
                  LEFT JOIN marketplace_listing ml ON ml.id_sucursal = s.id
@@ -111,7 +155,7 @@ class PortalCitasService {
             // =====================================================
             // 2. RESOLVER SERVICIO → MOTIVO
             // =====================================================
-            const servicioResult = await client.query(
+            const servicioResult = await tx.query(
                 `SELECT id, nombre, categoria FROM marketplace_servicio WHERE id = $1`,
                 [id_servicio]
             );
@@ -125,7 +169,7 @@ class PortalCitasService {
 
             // Obtener duración si está configurada
             let duracionMin = 60; // default
-            const duracionResult = await client.query(
+            const duracionResult = await tx.query(
                 `SELECT duracion_min FROM marketplace_servicio_sucursal 
                  WHERE id_sucursal = $1 AND id_servicio = $2`,
                 [id_sucursal, id_servicio]
@@ -142,7 +186,7 @@ class PortalCitasService {
 
             if (id_vehiculo) {
                 // Validar que el vehículo existe y pertenece al cliente
-                const vehiculoResult = await client.query(
+                const vehiculoResult = await tx.query(
                     `SELECT id, id_cliente, matricula, marca, modelo 
                      FROM vehiculo WHERE id = $1`,
                     [id_vehiculo]
@@ -165,7 +209,7 @@ class PortalCitasService {
                 // Crear nuevo vehículo con los datos del formulario
                 const vd = vehiculo_data;
 
-                const nuevoVehiculoResult = await client.query(
+                const nuevoVehiculoResult = await tx.query(
                     `INSERT INTO vehiculo 
                      (id_cliente, id_sucursal, matricula, marca, modelo, year, "Color", "CC", "Serial")
                      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -192,7 +236,7 @@ class PortalCitasService {
             // NOT NULL: id_sucursal, id_cliente, id_vehiculo
             // NO existe id_tenant en esta tabla
             // =====================================================
-            const citaResult = await client.query(
+            const citaResult = await tx.query(
                 `INSERT INTO citataller 
                  (id_sucursal, id_cliente, id_vehiculo, fecha_hora, duracion_min, estado, motivo, notas)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -210,8 +254,6 @@ class PortalCitasService {
             );
 
             const cita = citaResult.rows[0];
-
-            await client.query('COMMIT');
 
             return {
                 cita: {
@@ -238,13 +280,7 @@ class PortalCitasService {
                     creado: true
                 } : { id: vehiculoIdFinal, creado: false }
             };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 }
 

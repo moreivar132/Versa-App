@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { getUserByEmail, getUserById, createUser } = require('../models/userModel');
 const verifyJWT = require('../middleware/auth');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
 const router = express.Router();
 
@@ -21,7 +22,11 @@ router.post('/register', async (req, res) => {
   }
 
   const normalizedEmail = String(email).trim().toLowerCase();
-  const existingUser = await getUserByEmail(normalizedEmail);
+
+  // Get DB from context or fallback with allowNoTenant for initial user check
+  const db = req.db || getTenantDb(req.context || {}, { allowNoTenant: true });
+
+  const existingUser = await getUserByEmail(normalizedEmail, db);
   if (existingUser) {
     return res.status(409).json({ error: 'El usuario ya existe.' });
   }
@@ -34,7 +39,7 @@ router.post('/register', async (req, res) => {
       email: normalizedEmail,
       passwordHash,
       isSuperAdmin: Boolean(is_super_admin),
-    });
+    }, db);
 
     return res.status(201).json(sanitizeUser(createdUser));
   } catch (error) {
@@ -51,8 +56,10 @@ router.post('/login', async (req, res) => {
   }
 
   try {
-    const pool = require('../db');
-    const user = await getUserByEmail(String(email).trim().toLowerCase());
+    // Get DB from context or fallback with allowNoTenant for login
+    const db = req.db || getTenantDb(req.context || {}, { allowNoTenant: true });
+
+    const user = await getUserByEmail(String(email).trim().toLowerCase(), db);
     if (!user) {
       return res.status(401).json({ error: 'Credenciales inválidas.' });
     }
@@ -63,7 +70,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Fetch user roles from database
-    const rolesResult = await pool.query(`
+    const rolesResult = await db.query(`
       SELECT r.nombre, r.display_name
       FROM usuariorol ur
       JOIN rol r ON r.id = ur.id_rol
@@ -80,7 +87,7 @@ router.post('/login', async (req, res) => {
     if (user.is_super_admin) {
       permissions = ['*'];
     } else {
-      const permResult = await pool.query(`
+      const permResult = await db.query(`
             SELECT DISTINCT COALESCE(p.key, p.nombre) as permission_key
             FROM usuariorol ur
             JOIN rol r ON ur.id_rol = r.id
@@ -123,10 +130,10 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', verifyJWT, async (req, res) => {
   try {
-    const pool = require('../db');
+    const db = req.db || getTenantDb(req.context || req.user || {}, { allowNoTenant: true });
 
     // Get user with tenant name
-    const result = await pool.query(`
+    const result = await db.query(`
       SELECT u.*, t.nombre as tenant_nombre
       FROM usuario u
       LEFT JOIN tenant t ON u.id_tenant = t.id
@@ -139,7 +146,7 @@ router.get('/me', verifyJWT, async (req, res) => {
     }
 
     // Fetch user roles
-    const rolesResult = await pool.query(`
+    const rolesResult = await db.query(`
       SELECT r.nombre, r.display_name
       FROM usuariorol ur
       JOIN rol r ON r.id = ur.id_rol
@@ -156,7 +163,7 @@ router.get('/me', verifyJWT, async (req, res) => {
     if (user.is_super_admin) {
       permissions = ['*'];
     } else {
-      const permResult = await pool.query(`
+      const permResult = await db.query(`
             SELECT DISTINCT COALESCE(p.key, p.nombre) as permission_key
             FROM usuariorol ur
             JOIN rol r ON ur.id_rol = r.id

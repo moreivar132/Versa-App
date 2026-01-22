@@ -8,6 +8,7 @@ const express = require('express');
 const router = express.Router();
 const verifyJWT = require('../../../../middleware/auth');
 const { requirePermission } = require('../../../../middleware/rbac');
+const { getTenantDb } = require('../../../../src/core/db/tenant-db');
 
 // Controllers
 const dashboardController = require('./controllers/dashboard.controller');
@@ -33,6 +34,17 @@ const documentosController = require('./controllers/documentos.controller');
 
 // Todas las rutas siguientes requieren autenticación
 router.use(verifyJWT);
+
+// Inject Tenant DB
+router.use((req, res, next) => {
+    try {
+        req.db = getTenantDb(req.user); // req.user acts as context
+        next();
+    } catch (err) {
+        console.error('Error injecting Tenant DB:', err);
+        res.status(500).json({ error: 'Database context error' });
+    }
+});
 
 
 // ===================================================================

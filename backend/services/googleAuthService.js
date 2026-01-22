@@ -10,9 +10,9 @@
  * Uses user_auth_identity table (formerly oauth_account)
  */
 
-const pool = require('../db');
+const { getSystemDb } = require('../src/core/db/tenant-db');
 const jwt = require('jsonwebtoken');
-const { getUserByEmail, createUser } = require('../models/userModel');
+const { getUserByEmail } = require('../models/userModel');
 const saasInviteService = require('./saasInviteService');
 
 /**
@@ -21,7 +21,8 @@ const saasInviteService = require('./saasInviteService');
  * @returns {Object|null} User data if found
  */
 async function findUserByGoogleId(providerSubject) {
-    const result = await pool.query(
+    const systemDb = getSystemDb();
+    const result = await systemDb.query(
         `SELECT uai.*, u.id as user_id, u.email, u.nombre, u.id_tenant, u.is_super_admin
          FROM user_auth_identity uai
          JOIN usuario u ON uai.user_id = u.id
@@ -50,8 +51,9 @@ async function findUserByGoogleId(providerSubject) {
  */
 async function linkGoogleToUser(userId, googleProfile) {
     const { providerId, email, name, avatar } = googleProfile;
+    const systemDb = getSystemDb();
 
-    const result = await pool.query(
+    const result = await systemDb.query(
         `INSERT INTO user_auth_identity (user_id, provider, provider_account_id, email, name, avatar_url)
          VALUES ($1, 'google', $2, $3, $4, $5)
          ON CONFLICT (provider, provider_account_id) 
@@ -76,6 +78,9 @@ async function linkGoogleToUser(userId, googleProfile) {
 async function processSaaSGoogleAuth(googleProfile, inviteToken = null) {
     const { providerId, email, name, avatar } = googleProfile;
 
+    // Use System DB for global auth flows
+    const systemDb = getSystemDb();
+
     if (!email) {
         return { user: null, isNew: false, error: 'MISSING_EMAIL' };
     }
@@ -92,7 +97,23 @@ async function processSaaSGoogleAuth(googleProfile, inviteToken = null) {
     }
 
     // 2. Check if user exists by email
-    const userByEmail = await getUserByEmail(normalizedEmail);
+    // Note: getUserByEmail from model might use pool internally if not refactored properly?
+    // But Batch A8 refactored userModel to support ctx. Let's pass systemDb (ctx) if possible or rely on its default.
+    // Wait, Batch A8 userModel accepts ctx/db. If we call it without arguments, it might default to tenant db with missing context?
+    // Actually getUserByEmail is often global.
+    // Let's check how getUserByEmail works. It likely uses resolveDb. If no context, what does it do?
+    // Assuming getUserByEmail(email) uses ALLOW_NO_TENANT logic if needed or just queries.
+    // Ideally we pass systemDb to it. But checking imported function signature...
+    // const { getUserByEmail } = require('../models/userModel');
+    // It's likely `getUserByEmail(email, ctx)`.
+    // I should pass systemDb as second arg if supported.
+    // But safely: `getUserByEmail(email)` should work if it handles its own DB resolution.
+    // However, explicit is better. I'll just look it up directly here to avoid dependency ambiguity if I can't verify userModel sig.
+    // Or just trust it.
+
+    // Direct lookup for safety and less dependency on userModel internals which might enforce tenant context.
+    const userResult = await systemDb.query('SELECT * FROM usuario WHERE email = $1', [normalizedEmail]);
+    const userByEmail = userResult.rows[0];
 
     if (userByEmail) {
         // User exists - link Google and login
@@ -116,7 +137,7 @@ async function processSaaSGoogleAuth(googleProfile, inviteToken = null) {
     }
 
     // 5. Create new user with invite's tenant and role
-    const client = await pool.connect();
+    const client = await systemDb.connect();
     try {
         await client.query('BEGIN');
 
@@ -192,8 +213,10 @@ async function processSaaSGoogleAuth(googleProfile, inviteToken = null) {
  * @returns {string} JWT token
  */
 async function generateLoginToken(user) {
+    const systemDb = getSystemDb();
+
     // Fetch user roles
-    const rolesResult = await pool.query(`
+    const rolesResult = await systemDb.query(`
         SELECT r.nombre, r.display_name
         FROM usuariorol ur
         JOIN rol r ON r.id = ur.id_rol
@@ -225,8 +248,9 @@ async function generateLoginToken(user) {
  * @param {Object} params
  */
 async function logOAuthEvent({ userId, provider, action, ip, userAgent, metadata }) {
+    const systemDb = getSystemDb();
     try {
-        await pool.query(
+        await systemDb.query(
             `INSERT INTO audit_logs (actor_user_id, action, entity_type, entity_id, after_json, ip_address, user_agent)
              VALUES ($1, $2, 'user', $3, $4, $5, $6)`,
             [
@@ -249,7 +273,8 @@ async function logOAuthEvent({ userId, provider, action, ip, userAgent, metadata
  * @returns {Array}
  */
 async function getUserOAuthAccounts(userId) {
-    const result = await pool.query(
+    const systemDb = getSystemDb();
+    const result = await systemDb.query(
         `SELECT id, provider, email, name, avatar_url, created_at 
          FROM user_auth_identity 
          WHERE user_id = $1`,
@@ -265,7 +290,8 @@ async function getUserOAuthAccounts(userId) {
  * @returns {boolean}
  */
 async function unlinkOAuthAccount(userId, provider) {
-    const result = await pool.query(
+    const systemDb = getSystemDb();
+    const result = await systemDb.query(
         `DELETE FROM user_auth_identity WHERE user_id = $1 AND provider = $2`,
         [userId, provider]
     );

@@ -26,10 +26,10 @@ router.get('/listing', async (req, res) => {
         }
 
         // Get from repository
-        const pool = require('../db');
         const marketplaceRepo = require('../repositories/marketplaceRepository');
 
-        const listing = await marketplaceRepo.getSucursalDetail(parseInt(id_sucursal));
+        // Pass req.db as client to repository
+        const listing = await marketplaceRepo.getSucursalDetail(parseInt(id_sucursal), req.db);
 
         // Check if belongs to tenant
         if (listing && listing.id_tenant !== id_tenant) {
@@ -112,7 +112,7 @@ router.put('/listing', async (req, res) => {
             deposito_valor: deposito_valor ? parseFloat(deposito_valor) : null
         };
 
-        const listing = await marketplaceService.updateListing(id_tenant, listingData);
+        const listing = await marketplaceService.updateListing(id_tenant, listingData, req.db);
 
         res.json({
             ok: true,
@@ -183,7 +183,7 @@ router.post('/servicios', async (req, res) => {
             permite_reserva_online: permite_reserva_online !== undefined ? permite_reserva_online : true
         };
 
-        const servicio = await marketplaceService.updateServicioSucursal(id_tenant, servicioData);
+        const servicio = await marketplaceService.updateServicioSucursal(id_tenant, servicioData, req.db);
 
         res.json({
             ok: true,
@@ -269,7 +269,7 @@ router.post('/promociones', async (req, res) => {
             activo: activo !== undefined ? activo : true
         };
 
-        const promo = await marketplaceService.createPromocion(id_tenant, promoData);
+        const promo = await marketplaceService.createPromocion(id_tenant, promoData, req.db);
 
         res.status(201).json({
             ok: true,
@@ -317,7 +317,7 @@ router.post('/listing/:id_sucursal/fotos', async (req, res) => {
             fotos_json: JSON.stringify(fotos)
         };
 
-        const listing = await marketplaceService.updateListing(id_tenant, listingData);
+        const listing = await marketplaceService.updateListing(id_tenant, listingData, req.db);
 
         res.json({
             ok: true,
@@ -348,7 +348,7 @@ router.post('/listing/:id_sucursal/fotos', async (req, res) => {
  */
 router.get('/servicios-catalogo', async (req, res) => {
     try {
-        const catalogo = await marketplaceService.getCatalogoServicios();
+        const catalogo = await marketplaceService.getCatalogoServicios(req.db);
 
         res.json({
             ok: true,
@@ -375,7 +375,7 @@ router.get('/servicios/:id_sucursal', async (req, res) => {
 
         // Verificar que la sucursal pertenece al tenant
         const marketplaceRepo = require('../repositories/marketplaceRepository');
-        const belongsToTenant = await marketplaceRepo.checkSucursalTenant(id_sucursal, id_tenant);
+        const belongsToTenant = await marketplaceRepo.checkSucursalTenant(id_sucursal, id_tenant, req.db);
 
         if (!belongsToTenant) {
             return res.status(403).json({
@@ -384,7 +384,7 @@ router.get('/servicios/:id_sucursal', async (req, res) => {
             });
         }
 
-        const servicios = await marketplaceRepo.getServiciosBySucursal(id_sucursal);
+        const servicios = await marketplaceRepo.getServiciosBySucursal(id_sucursal, req.db);
 
         res.json({
             ok: true,
@@ -411,7 +411,7 @@ router.get('/promociones/:id_sucursal', async (req, res) => {
 
         // Verificar que la sucursal pertenece al tenant
         const marketplaceRepo = require('../repositories/marketplaceRepository');
-        const belongsToTenant = await marketplaceRepo.checkSucursalTenant(id_sucursal, id_tenant);
+        const belongsToTenant = await marketplaceRepo.checkSucursalTenant(id_sucursal, id_tenant, req.db);
 
         if (!belongsToTenant) {
             return res.status(403).json({
@@ -421,8 +421,7 @@ router.get('/promociones/:id_sucursal', async (req, res) => {
         }
 
         // Obtener todas las promociones (no solo las activas)
-        const pool = require('../db');
-        const result = await pool.query(`
+        const result = await req.db.query(`
             SELECT 
                 p.*,
                 ms.nombre as servicio_nombre

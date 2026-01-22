@@ -3,7 +3,7 @@
  * Evalúa reglas de alerta y genera eventos
  */
 
-const pool = require('../../db');
+const { getSystemDb, getTenantDb } = require('../../core/db/tenant-db');
 const toolsService = require('./tools.service');
 
 /**
@@ -11,7 +11,8 @@ const toolsService = require('./tools.service');
  * (Se ejecutaría en un cron job)
  */
 async function evaluateAllRules() {
-    const result = await pool.query(`
+    const sysDb = getSystemDb({ source: 'alerts_cron', reason: 'evaluate_all_rules' });
+    const result = await sysDb.query(`
         SELECT * FROM copilot_alert_rule
         WHERE is_enabled = true
         ORDER BY id_tenant, id_empresa
@@ -28,6 +29,12 @@ async function evaluateRule(rule) {
     try {
         const params = rule.params_json;
         const empresaId = rule.id_empresa;
+        const tenantId = rule.id_tenant;
+
+        if (!tenantId) {
+            console.error('[Alerts] Rule missing tenant_id:', rule.id);
+            return;
+        }
 
         // Si es regla global (sin empresa), evaluar para todas
         if (!empresaId) {
@@ -41,22 +48,22 @@ async function evaluateRule(rule) {
 
         switch (rule.tipo) {
             case 'SIN_ADJUNTO':
-                resultData = await checkSinAdjunto(empresaId);
+                resultData = await checkSinAdjunto(empresaId, tenantId);
                 severity = resultData.count > 5 ? 'WARNING' : 'INFO';
                 break;
 
             case 'SIN_CATEGORIA':
-                resultData = await checkSinCategoria(empresaId);
+                resultData = await checkSinCategoria(empresaId, tenantId);
                 severity = resultData.count > 5 ? 'WARNING' : 'INFO';
                 break;
 
             case 'GASTO_CATEGORIA_SPIKE':
-                resultData = await checkCategoriaSpike(empresaId, periodo, params);
+                resultData = await checkCategoriaSpike(empresaId, periodo, params, tenantId);
                 severity = resultData.found ? 'WARNING' : 'INFO';
                 break;
 
             case 'PROVEEDOR_SPIKE':
-                resultData = await checkProveedorSpike(empresaId, periodo, params);
+                resultData = await checkProveedorSpike(empresaId, periodo, params, tenantId);
                 severity = resultData.found ? 'WARNING' : 'INFO';
                 break;
 
@@ -67,7 +74,7 @@ async function evaluateRule(rule) {
 
         // Si hay hallazgos, crear evento
         if (shouldCreateEvent(resultData, rule.tipo)) {
-            await createAlertEvent(rule.id, periodo, severity, resultData);
+            await createAlertEvent(rule.id, periodo, severity, resultData, tenantId);
         }
 
     } catch (error) {
@@ -78,8 +85,9 @@ async function evaluateRule(rule) {
 /**
  * Verificar facturas sin adjunto
  */
-async function checkSinAdjunto(empresaId) {
-    const result = await pool.query(`
+async function checkSinAdjunto(empresaId, tenantId) {
+    const db = getTenantDb({ tenantId });
+    const result = await db.query(`
         SELECT f.id, f.numero_factura, f.fecha_emision, f.total
         FROM contabilidad_factura f
         WHERE f.id_empresa = $1
@@ -106,8 +114,9 @@ async function checkSinAdjunto(empresaId) {
 /**
  * Verificar facturas sin categoría
  */
-async function checkSinCategoria(empresaId) {
-    const result = await pool.query(`
+async function checkSinCategoria(empresaId, tenantId) {
+    const db = getTenantDb({ tenantId });
+    const result = await db.query(`
         SELECT id, numero_factura, fecha_emision, total
         FROM contabilidad_factura
         WHERE id_empresa = $1
@@ -132,13 +141,14 @@ async function checkSinCategoria(empresaId) {
 /**
  * Detectar spike en categoría
  */
-async function checkCategoriaSpike(empresaId, periodo, params) {
+async function checkCategoriaSpike(empresaId, periodo, params, tenantId) {
     const threshold = params.threshold_multiplier || 1.5;
     const categories = await toolsService.getSpendByCategory(
         empresaId,
         periodo.inicio,
         periodo.fin,
-        10
+        10,
+        tenantId
     );
 
     // Obtener periodo anterior
@@ -147,7 +157,8 @@ async function checkCategoriaSpike(empresaId, periodo, params) {
         empresaId,
         prevPeriodo.inicio,
         prevPeriodo.fin,
-        10
+        10,
+        tenantId
     );
 
     const spikes = [];
@@ -178,13 +189,14 @@ async function checkCategoriaSpike(empresaId, periodo, params) {
 /**
  * Detectar spike en proveedor
  */
-async function checkProveedorSpike(empresaId, periodo, params) {
+async function checkProveedorSpike(empresaId, periodo, params, tenantId) {
     const threshold = params.threshold_multiplier || 1.5;
     const vendors = await toolsService.getSpendByVendor(
         empresaId,
         periodo.inicio,
         periodo.fin,
-        10
+        10,
+        tenantId
     );
 
     const prevPeriodo = getPreviousPeriod(periodo);
@@ -192,7 +204,8 @@ async function checkProveedorSpike(empresaId, periodo, params) {
         empresaId,
         prevPeriodo.inicio,
         prevPeriodo.fin,
-        10
+        10,
+        tenantId
     );
 
     const spikes = [];
@@ -235,8 +248,9 @@ function shouldCreateEvent(resultData, tipoRegla) {
 /**
  * Crear evento de alerta
  */
-async function createAlertEvent(ruleId, periodo, severity, resultData) {
-    await pool.query(`
+async function createAlertEvent(ruleId, periodo, severity, resultData, tenantId) {
+    const db = getTenantDb({ tenantId });
+    await db.query(`
         INSERT INTO copilot_alert_event (
             rule_id, periodo_inicio, periodo_fin, severity, result_json, status
         ) VALUES ($1, $2, $3, $4, $5, 'NEW')

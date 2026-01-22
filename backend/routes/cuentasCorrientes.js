@@ -7,8 +7,14 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const verifyJWT = require('../middleware/auth');
+
+// Middleware to inject tenant-safe DB wrapper
+router.use((req, _res, next) => {
+    req.db = getTenantDb(req.ctx);
+    next();
+});
 
 // =====================================================
 // ENDPOINTS DE CUENTAS CORRIENTES
@@ -69,7 +75,7 @@ router.get('/', verifyJWT, async (req, res) => {
         query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
         params.push(limit, offset);
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         res.json({
             success: true,
@@ -96,7 +102,7 @@ router.get('/stats', verifyJWT, async (req, res) => {
         }
 
         // Deuda total
-        const deudaTotal = await pool.query(`
+        const deudaTotal = await req.db.query(`
             SELECT COALESCE(SUM(saldo_actual), 0) AS total
             FROM cuentacorriente
             WHERE id_tenant = $1 AND estado = 'ACTIVA' AND saldo_actual > 0
@@ -107,7 +113,7 @@ router.get('/stats', verifyJWT, async (req, res) => {
         inicioMes.setDate(1);
         inicioMes.setHours(0, 0, 0, 0);
 
-        const cobradoMes = await pool.query(`
+        const cobradoMes = await req.db.query(`
             SELECT COALESCE(SUM(mc.importe), 0) AS total
             FROM movimientocuenta mc
             JOIN cuentacorriente cc ON mc.id_cuenta_corriente = cc.id
@@ -118,7 +124,7 @@ router.get('/stats', verifyJWT, async (req, res) => {
 
         // Movimientos de hoy
         const hoy = new Date().toISOString().split('T')[0];
-        const movimientosHoy = await pool.query(`
+        const movimientosHoy = await req.db.query(`
             SELECT COUNT(*) AS total
             FROM movimientocuenta mc
             JOIN cuentacorriente cc ON mc.id_cuenta_corriente = cc.id
@@ -126,7 +132,7 @@ router.get('/stats', verifyJWT, async (req, res) => {
         `, [tenantId, hoy]);
 
         // Clientes con cuenta
-        const clientesCuenta = await pool.query(`
+        const clientesCuenta = await req.db.query(`
             SELECT COUNT(*) AS total FROM cuentacorriente WHERE id_tenant = $1
         `, [tenantId]);
 
@@ -268,7 +274,7 @@ router.get('/movimientos', verifyJWT, async (req, res) => {
         query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
         params.push(limit, offset);
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         res.json({
             success: true,
@@ -297,7 +303,7 @@ router.get('/cliente/:idCliente', verifyJWT, async (req, res) => {
         }
 
         // Buscar cuenta existente
-        let cuenta = await pool.query(`
+        let cuenta = await req.db.query(`
             SELECT cc.*, cf.nombre AS cliente_nombre
             FROM cuentacorriente cc
             JOIN clientefinal cf ON cc.id_cliente = cf.id
@@ -314,14 +320,14 @@ router.get('/cliente/:idCliente', verifyJWT, async (req, res) => {
 
         // Si no existe y se pidió crear
         if (crear === 'true' || crear === true) {
-            const nueva = await pool.query(`
+            const nueva = await req.db.query(`
                 INSERT INTO cuentacorriente (id_cliente, id_tenant, created_by)
                 VALUES ($1, $2, $3)
                 RETURNING *
             `, [idCliente, tenantId, req.user?.id]);
 
             // Obtener con datos del cliente
-            cuenta = await pool.query(`
+            cuenta = await req.db.query(`
                 SELECT cc.*, cf.nombre AS cliente_nombre
                 FROM cuentacorriente cc
                 JOIN clientefinal cf ON cc.id_cliente = cf.id
@@ -354,8 +360,6 @@ router.get('/cliente/:idCliente', verifyJWT, async (req, res) => {
  * Body: { idCliente, importe, concepto, idSucursal }
  */
 router.post('/cargar', verifyJWT, async (req, res) => {
-    const client = await pool.connect();
-
     try {
         const { idCliente, importe, concepto, idSucursal } = req.body;
         const tenantId = req.user?.id_tenant;
@@ -369,77 +373,74 @@ router.post('/cargar', verifyJWT, async (req, res) => {
             return res.status(400).json({ success: false, error: 'El importe debe ser mayor a 0' });
         }
 
-        await client.query('BEGIN');
+        const result = await req.db.txWithRLS(async (tx) => {
+            // 1. Obtener o crear cuenta corriente del cliente
+            let cuentaResult = await tx.query(`
+                SELECT id, saldo_actual FROM cuentacorriente 
+                WHERE id_cliente = $1 AND id_tenant = $2
+            `, [idCliente, tenantId]);
 
-        // 1. Obtener o crear cuenta corriente del cliente
-        let cuentaResult = await client.query(`
-            SELECT id, saldo_actual FROM cuentacorriente 
-            WHERE id_cliente = $1 AND id_tenant = $2
-        `, [idCliente, tenantId]);
+            let idCuenta;
+            let saldoAnterior;
 
-        let idCuenta;
-        let saldoAnterior;
+            if (cuentaResult.rows.length === 0) {
+                // Crear cuenta corriente
+                const nuevaCuenta = await tx.query(`
+                    INSERT INTO cuentacorriente (id_cliente, id_tenant, saldo_actual, estado, created_by)
+                    VALUES ($1, $2, 0, 'ACTIVA', $3)
+                    RETURNING id
+                `, [idCliente, tenantId, userId]);
+                idCuenta = nuevaCuenta.rows[0].id;
+                saldoAnterior = 0;
+            } else {
+                idCuenta = cuentaResult.rows[0].id;
+                saldoAnterior = parseFloat(cuentaResult.rows[0].saldo_actual) || 0;
+            }
 
-        if (cuentaResult.rows.length === 0) {
-            // Crear cuenta corriente
-            const nuevaCuenta = await client.query(`
-                INSERT INTO cuentacorriente (id_cliente, id_tenant, saldo_actual, estado, created_by)
-                VALUES ($1, $2, 0, 'ACTIVA', $3)
-                RETURNING id
-            `, [idCliente, tenantId, userId]);
-            idCuenta = nuevaCuenta.rows[0].id;
-            saldoAnterior = 0;
-        } else {
-            idCuenta = cuentaResult.rows[0].id;
-            saldoAnterior = parseFloat(cuentaResult.rows[0].saldo_actual) || 0;
-        }
+            // 2. Crear movimiento de cargo
+            const saldoPosterior = saldoAnterior + parseFloat(importe);
 
-        // 2. Crear movimiento de cargo
-        const saldoPosterior = saldoAnterior + parseFloat(importe);
-
-        await client.query(`
-            INSERT INTO movimientocuenta (
-                id_cuenta_corriente,
-                tipo_movimiento,
+            await tx.query(`
+                INSERT INTO movimientocuenta (
+                    id_cuenta_corriente,
+                    tipo_movimiento,
+                    importe,
+                    saldo_anterior,
+                    saldo_posterior,
+                    concepto,
+                    created_by
+                ) VALUES ($1, 'CARGO', $2, $3, $4, $5, $6)
+            `, [
+                idCuenta,
                 importe,
-                saldo_anterior,
-                saldo_posterior,
-                concepto,
-                created_by
-            ) VALUES ($1, 'CARGO', $2, $3, $4, $5, $6)
-        `, [
-            idCuenta,
-            importe,
-            saldoAnterior,
-            saldoPosterior,
-            concepto || 'Cargo a cuenta corriente',
-            userId
-        ]);
+                saldoAnterior,
+                saldoPosterior,
+                concepto || 'Cargo a cuenta corriente',
+                userId
+            ]);
 
-        // 3. Actualizar saldo de la cuenta
-        await client.query(`
-            UPDATE cuentacorriente SET saldo_actual = $1 WHERE id = $2
-        `, [saldoPosterior, idCuenta]);
+            // 3. Actualizar saldo de la cuenta
+            await tx.query(`
+                UPDATE cuentacorriente SET saldo_actual = $1 WHERE id = $2
+            `, [saldoPosterior, idCuenta]);
 
-        await client.query('COMMIT');
+            return { idCuenta, saldoAnterior, saldoPosterior };
+        });
 
         res.json({
             success: true,
             message: `${parseFloat(importe).toFixed(2)}€ cargados a cuenta corriente`,
             data: {
-                idCuenta,
-                saldoAnterior,
-                saldoPosterior,
+                idCuenta: result.idCuenta,
+                saldoAnterior: result.saldoAnterior,
+                saldoPosterior: result.saldoPosterior,
                 importe: parseFloat(importe)
             }
         });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error al cargar a cuenta corriente:', error);
         res.status(500).json({ success: false, error: error.message });
-    } finally {
-        client.release();
     }
 });
 
@@ -448,8 +449,6 @@ router.post('/cargar', verifyJWT, async (req, res) => {
  * Carga el saldo pendiente de una orden a cuenta corriente
  */
 router.post('/cargar-orden', verifyJWT, async (req, res) => {
-    const client = await pool.connect();
-
     try {
         console.log('[DEBUG cargar-orden] Body recibido:', req.body);
         const { idOrden } = req.body;
@@ -461,115 +460,112 @@ router.post('/cargar-orden', verifyJWT, async (req, res) => {
             return res.status(400).json({ success: false, error: 'ID de orden requerido' });
         }
 
-        await client.query('BEGIN');
+        const result = await req.db.txWithRLS(async (tx) => {
+            // 1. Obtener datos de la orden
+            const ordenResult = await tx.query(`
+                SELECT 
+                    o.id,
+                    o.id_cliente,
+                    o.total_neto,
+                    o.en_cuenta_corriente,
+                    o.id_sucursal,
+                    s.id_tenant,
+                    COALESCE((SELECT SUM(importe) FROM ordenpago WHERE id_orden = o.id), 0) AS total_pagado
+                FROM orden o
+                JOIN sucursal s ON o.id_sucursal = s.id
+                WHERE o.id = $1
+            `, [idOrden]);
 
-        // 1. Obtener datos de la orden
-        const ordenResult = await client.query(`
-            SELECT 
-                o.id,
-                o.id_cliente,
-                o.total_neto,
-                o.en_cuenta_corriente,
-                o.id_sucursal,
-                s.id_tenant,
-                COALESCE((SELECT SUM(importe) FROM ordenpago WHERE id_orden = o.id), 0) AS total_pagado
-            FROM orden o
-            JOIN sucursal s ON o.id_sucursal = s.id
-            WHERE o.id = $1
-        `, [idOrden]);
+            if (ordenResult.rows.length === 0) {
+                throw new Error('Orden no encontrada');
+            }
 
-        if (ordenResult.rows.length === 0) {
-            throw new Error('Orden no encontrada');
-        }
+            const orden = ordenResult.rows[0];
+            const pendiente = parseFloat(orden.total_neto) - parseFloat(orden.total_pagado);
 
-        const orden = ordenResult.rows[0];
-        const pendiente = parseFloat(orden.total_neto) - parseFloat(orden.total_pagado);
+            if (pendiente <= 0) {
+                throw new Error('La orden no tiene saldo pendiente');
+            }
 
-        if (pendiente <= 0) {
-            throw new Error('La orden no tiene saldo pendiente');
-        }
+            if (orden.en_cuenta_corriente) {
+                throw new Error('Esta orden ya fue cargada a cuenta corriente');
+            }
 
-        if (orden.en_cuenta_corriente) {
-            throw new Error('Esta orden ya fue cargada a cuenta corriente');
-        }
+            // 2. Obtener o crear cuenta corriente del cliente
+            let cuentaResult = await tx.query(`
+                SELECT * FROM cuentacorriente 
+                WHERE id_cliente = $1 AND id_tenant = $2
+            `, [orden.id_cliente, orden.id_tenant]);
 
-        // 2. Obtener o crear cuenta corriente del cliente
-        let cuentaResult = await client.query(`
-            SELECT * FROM cuentacorriente 
-            WHERE id_cliente = $1 AND id_tenant = $2
-        `, [orden.id_cliente, orden.id_tenant]);
+            let idCuenta;
+            let saldoAnterior = 0;
 
-        let idCuenta;
-        let saldoAnterior = 0;
+            if (cuentaResult.rows.length === 0) {
+                // Crear cuenta corriente
+                const nuevaCuenta = await tx.query(`
+                    INSERT INTO cuentacorriente (id_cliente, id_tenant, created_by)
+                    VALUES ($1, $2, $3)
+                    RETURNING id, saldo_actual
+                `, [orden.id_cliente, orden.id_tenant, userId]);
 
-        if (cuentaResult.rows.length === 0) {
-            // Crear cuenta corriente
-            const nuevaCuenta = await client.query(`
-                INSERT INTO cuentacorriente (id_cliente, id_tenant, created_by)
-                VALUES ($1, $2, $3)
-                RETURNING id, saldo_actual
-            `, [orden.id_cliente, orden.id_tenant, userId]);
+                idCuenta = nuevaCuenta.rows[0].id;
+                saldoAnterior = 0;
+            } else {
+                idCuenta = cuentaResult.rows[0].id;
+                saldoAnterior = parseFloat(cuentaResult.rows[0].saldo_actual);
+            }
 
-            idCuenta = nuevaCuenta.rows[0].id;
-            saldoAnterior = 0;
-        } else {
-            idCuenta = cuentaResult.rows[0].id;
-            saldoAnterior = parseFloat(cuentaResult.rows[0].saldo_actual);
-        }
+            // 3. Crear movimiento de cargo
+            const saldoPosterior = saldoAnterior + pendiente;
 
-        // 3. Crear movimiento de cargo
-        const saldoPosterior = saldoAnterior + pendiente;
+            await tx.query(`
+                INSERT INTO movimientocuenta (
+                    id_cuenta_corriente,
+                    tipo_movimiento,
+                    importe,
+                    saldo_anterior,
+                    saldo_posterior,
+                    concepto,
+                    id_orden,
+                    created_by
+                ) VALUES ($1, 'CARGO', $2, $3, $4, $5, $6, $7)
+            `, [
+                idCuenta,
+                pendiente,
+                saldoAnterior,
+                saldoPosterior,
+                `Orden #${orden.id} - Saldo pendiente`,
+                idOrden,
+                userId
+            ]);
 
-        await client.query(`
-            INSERT INTO movimientocuenta (
-                id_cuenta_corriente,
-                tipo_movimiento,
-                importe,
-                saldo_anterior,
-                saldo_posterior,
-                concepto,
-                id_orden,
-                created_by
-            ) VALUES ($1, 'CARGO', $2, $3, $4, $5, $6, $7)
-        `, [
-            idCuenta,
-            pendiente,
-            saldoAnterior,
-            saldoPosterior,
-            `Orden #${orden.id} - Saldo pendiente`,
-            idOrden,
-            userId
-        ]);
+            // 4. Marcar orden como cargada a cuenta corriente
+            // Solo actualizamos en_cuenta_corriente e id_cuenta_corriente
+            // (la columna estado_pago no existe en la tabla)
+            await tx.query(`
+                UPDATE orden 
+                SET en_cuenta_corriente = true, 
+                    id_cuenta_corriente = $1
+                WHERE id = $2
+            `, [idCuenta, idOrden]);
 
-        // 4. Marcar orden como cargada a cuenta corriente
-        // Solo actualizamos en_cuenta_corriente e id_cuenta_corriente
-        // (la columna estado_pago no existe en la tabla)
-        await client.query(`
-            UPDATE orden 
-            SET en_cuenta_corriente = true, 
-                id_cuenta_corriente = $1
-            WHERE id = $2
-        `, [idCuenta, idOrden]);
-
-        await client.query('COMMIT');
+            return { idCuenta, pendiente, saldoAnterior, saldoPosterior };
+        });
 
         res.json({
             success: true,
-            message: `Saldo de ${pendiente.toFixed(2)}€ cargado a cuenta corriente`,
+            message: `Saldo de ${result.pendiente.toFixed(2)}€ cargado a cuenta corriente`,
             data: {
-                idCuenta,
-                importeCargado: pendiente,
-                saldoAnterior,
-                saldoPosterior
+                idCuenta: result.idCuenta,
+                importeCargado: result.pendiente,
+                saldoAnterior: result.saldoAnterior,
+                saldoPosterior: result.saldoPosterior
             }
         });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error al cargar orden a cuenta corriente:', error);
         res.status(400).json({ success: false, error: error.message });
-    } finally {
-        client.release();
     }
 });
 
@@ -578,8 +574,6 @@ router.post('/cargar-orden', verifyJWT, async (req, res) => {
  * Registra un pago/abono a cuenta corriente
  */
 router.post('/pago', verifyJWT, async (req, res) => {
-    const client = await pool.connect();
-
     try {
         const {
             idCuentaCorriente,
@@ -600,151 +594,148 @@ router.post('/pago', verifyJWT, async (req, res) => {
             return res.status(400).json({ success: false, error: 'Importe inválido' });
         }
 
-        await client.query('BEGIN');
+        const result = await req.db.txWithRLS(async (tx) => {
+            // Determinar cuenta corriente
+            let cuentaId = idCuentaCorriente;
 
-        // Determinar cuenta corriente
-        let cuentaId = idCuentaCorriente;
+            if (!cuentaId && idCliente) {
+                const cuenta = await tx.query(`
+                    SELECT id FROM cuentacorriente 
+                    WHERE id_cliente = $1 AND id_tenant = $2
+                `, [idCliente, tenantId]);
 
-        if (!cuentaId && idCliente) {
-            const cuenta = await client.query(`
-                SELECT id FROM cuentacorriente 
-                WHERE id_cliente = $1 AND id_tenant = $2
-            `, [idCliente, tenantId]);
-
-            if (cuenta.rows.length === 0) {
-                throw new Error('El cliente no tiene cuenta corriente');
+                if (cuenta.rows.length === 0) {
+                    throw new Error('El cliente no tiene cuenta corriente');
+                }
+                cuentaId = cuenta.rows[0].id;
             }
-            cuentaId = cuenta.rows[0].id;
-        }
 
-        if (!cuentaId) {
-            throw new Error('Cuenta corriente no especificada');
-        }
+            if (!cuentaId) {
+                throw new Error('Cuenta corriente no especificada');
+            }
 
-        // Obtener saldo actual
-        const cuentaResult = await client.query(`
-            SELECT saldo_actual FROM cuentacorriente WHERE id = $1
-        `, [cuentaId]);
+            // Obtener saldo actual
+            const cuentaResult = await tx.query(`
+                SELECT saldo_actual FROM cuentacorriente WHERE id = $1
+            `, [cuentaId]);
 
-        if (cuentaResult.rows.length === 0) {
-            throw new Error('Cuenta corriente no encontrada');
-        }
+            if (cuentaResult.rows.length === 0) {
+                throw new Error('Cuenta corriente no encontrada');
+            }
 
-        const saldoAnterior = parseFloat(cuentaResult.rows[0].saldo_actual);
-        const saldoPosterior = saldoAnterior - parseFloat(importe);
+            const saldoAnterior = parseFloat(cuentaResult.rows[0].saldo_actual);
+            const saldoPosterior = saldoAnterior - parseFloat(importe);
 
-        // Crear movimiento de abono
-        await client.query(`
-            INSERT INTO movimientocuenta (
-                id_cuenta_corriente,
-                tipo_movimiento,
+            // Crear movimiento de abono
+            await tx.query(`
+                INSERT INTO movimientocuenta (
+                    id_cuenta_corriente,
+                    tipo_movimiento,
+                    importe,
+                    saldo_anterior,
+                    saldo_posterior,
+                    concepto,
+                    fecha_movimiento,
+                    created_by
+                ) VALUES ($1, 'ABONO', $2, $3, $4, $5, $6, $7)
+            `, [
+                cuentaId,
                 importe,
-                saldo_anterior,
-                saldo_posterior,
+                saldoAnterior,
+                saldoPosterior,
                 concepto,
-                fecha_movimiento,
-                created_by
-            ) VALUES ($1, 'ABONO', $2, $3, $4, $5, $6, $7)
-        `, [
-            cuentaId,
-            importe,
-            saldoAnterior,
-            saldoPosterior,
-            concepto,
-            fecha || new Date().toISOString().split('T')[0],
-            userId
-        ]);
+                fecha || new Date().toISOString().split('T')[0],
+                userId
+            ]);
 
-        // Actualizar saldo de la cuenta corriente
-        await client.query(`
-            UPDATE cuentacorriente SET saldo_actual = $1 WHERE id = $2
-        `, [saldoPosterior, cuentaId]);
+            // Actualizar saldo de la cuenta corriente
+            await tx.query(`
+                UPDATE cuentacorriente SET saldo_actual = $1 WHERE id = $2
+            `, [saldoPosterior, cuentaId]);
 
-        // Si el medio de pago implica movimiento de caja, crearlo
-        if (idMedioPago) {
-            // Verificar si el medio de pago requiere movimiento de caja (EFECTIVO, TARJETA, etc.)
-            const medioPagoResult = await client.query(`
-                SELECT codigo, nombre FROM mediopago WHERE id = $1
-            `, [idMedioPago]);
+            // Si el medio de pago implica movimiento de caja, crearlo
+            if (idMedioPago) {
+                // Verificar si el medio de pago requiere movimiento de caja (EFECTIVO, TARJETA, etc.)
+                const medioPagoResult = await tx.query(`
+                    SELECT codigo, nombre FROM mediopago WHERE id = $1
+                `, [idMedioPago]);
 
-            if (medioPagoResult.rows.length > 0) {
-                const codigoMedio = (medioPagoResult.rows[0].codigo || '').toUpperCase();
-                console.log(`[CC Pago] Medio de pago ID ${idMedioPago}: código "${codigoMedio}"`);
-                // Cualquier pago real genera movimiento de caja (excepto CUENTA_CORRIENTE que es aplazamiento)
-                const mediosSinCaja = ['CUENTA_CORRIENTE'];
-                const generaCaja = !mediosSinCaja.includes(codigoMedio);
+                if (medioPagoResult.rows.length > 0) {
+                    const codigoMedio = (medioPagoResult.rows[0].codigo || '').toUpperCase();
+                    console.log(`[CC Pago] Medio de pago ID ${idMedioPago}: código "${codigoMedio}"`);
+                    // Cualquier pago real genera movimiento de caja (excepto CUENTA_CORRIENTE que es aplazamiento)
+                    const mediosSinCaja = ['CUENTA_CORRIENTE'];
+                    const generaCaja = !mediosSinCaja.includes(codigoMedio);
 
-                if (generaCaja) {
-                    console.log(`[CC Pago] Medio ${codigoMedio} requiere movimiento de caja`);
-                    // Obtener la sucursal del cliente desde la cuenta corriente
-                    const cuentaInfo = await client.query(`
-                        SELECT cc.id_tenant, cf.id
-                        FROM cuentacorriente cc
-                        JOIN clientefinal cf ON cc.id_cliente = cf.id
-                        WHERE cc.id = $1
-                    `, [cuentaId]);
+                    if (generaCaja) {
+                        console.log(`[CC Pago] Medio ${codigoMedio} requiere movimiento de caja`);
+                        // Obtener la sucursal del cliente desde la cuenta corriente
+                        const cuentaInfo = await tx.query(`
+                            SELECT cc.id_tenant, cf.id
+                            FROM cuentacorriente cc
+                            JOIN clientefinal cf ON cc.id_cliente = cf.id
+                            WHERE cc.id = $1
+                        `, [cuentaId]);
 
-                    if (cuentaInfo.rows.length > 0) {
-                        const tenantIdPago = cuentaInfo.rows[0].id_tenant;
+                        if (cuentaInfo.rows.length > 0) {
+                            const tenantIdPago = cuentaInfo.rows[0].id_tenant;
 
-                        // Determinar sucursal: usar la enviada, la del usuario, o buscar una del tenant
-                        let sucursalParaCaja = idSucursal || sucursalDelUsuario;
+                            // Determinar sucursal: usar la enviada, la del usuario, o buscar una del tenant
+                            let sucursalParaCaja = idSucursal || sucursalDelUsuario;
 
-                        if (!sucursalParaCaja) {
-                            const sucursalResult = await client.query(`
-                                SELECT id FROM sucursal WHERE id_tenant = $1 LIMIT 1
-                            `, [tenantIdPago]);
-                            sucursalParaCaja = sucursalResult.rows[0]?.id;
-                        }
+                            if (!sucursalParaCaja) {
+                                const sucursalResult = await tx.query(`
+                                    SELECT id FROM sucursal WHERE id_tenant = $1 LIMIT 1
+                                `, [tenantIdPago]);
+                                sucursalParaCaja = sucursalResult.rows[0]?.id;
+                            }
 
-                        if (sucursalParaCaja) {
-                            console.log(`[CC Pago] Buscando caja abierta en sucursal ${sucursalParaCaja}`);
+                            if (sucursalParaCaja) {
+                                console.log(`[CC Pago] Buscando caja abierta en sucursal ${sucursalParaCaja}`);
 
-                            // Buscar caja abierta
-                            const cajaResult = await client.query(`
-                                SELECT id FROM caja 
-                                WHERE id_sucursal = $1 AND estado = 'ABIERTA' 
-                                ORDER BY created_at DESC LIMIT 1
-                            `, [sucursalParaCaja]);
+                                // Buscar caja abierta
+                                const cajaResult = await tx.query(`
+                                    SELECT id FROM caja 
+                                    WHERE id_sucursal = $1 AND estado = 'ABIERTA' 
+                                    ORDER BY created_at DESC LIMIT 1
+                                `, [sucursalParaCaja]);
 
-                            if (cajaResult.rows.length > 0) {
-                                const idCaja = cajaResult.rows[0].id;
+                                if (cajaResult.rows.length > 0) {
+                                    const idCaja = cajaResult.rows[0].id;
 
-                                // Crear movimiento de caja (INGRESO) con el medio de pago
-                                await client.query(`
-                                    INSERT INTO cajamovimiento 
-                                    (id_caja, id_usuario, tipo, monto, concepto, origen_tipo, origen_id, id_medio_pago, fecha, created_at, created_by)
-                                    VALUES ($1, $2, 'INGRESO', $3, $4, 'CUENTA_CORRIENTE', $5, $6, NOW(), NOW(), $2)
-                                `, [idCaja, userId, importe, `Pago cuenta corriente - ${concepto}`, cuentaId, idMedioPago]);
+                                    // Crear movimiento de caja (INGRESO) con el medio de pago
+                                    await tx.query(`
+                                        INSERT INTO cajamovimiento 
+                                        (id_caja, id_usuario, tipo, monto, concepto, origen_tipo, origen_id, id_medio_pago, fecha, created_at, created_by)
+                                        VALUES ($1, $2, 'INGRESO', $3, $4, 'CUENTA_CORRIENTE', $5, $6, NOW(), NOW(), $2)
+                                    `, [idCaja, userId, importe, `Pago cuenta corriente - ${concepto}`, cuentaId, idMedioPago]);
 
-                                console.log(`Movimiento de caja creado: ${importe}€ en caja ${idCaja}`);
-                            } else {
-                                console.warn('No hay caja abierta para registrar el movimiento de efectivo');
+                                    console.log(`Movimiento de caja creado: ${importe}€ en caja ${idCaja}`);
+                                } else {
+                                    console.warn('No hay caja abierta para registrar el movimiento de efectivo');
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        await client.query('COMMIT');
+            return { saldoAnterior, saldoPosterior };
+        });
 
         res.json({
             success: true,
             message: `Pago de ${parseFloat(importe).toFixed(2)}€ registrado correctamente`,
             data: {
-                saldoAnterior,
-                saldoPosterior,
+                saldoAnterior: result.saldoAnterior,
+                saldoPosterior: result.saldoPosterior,
                 importeAbonado: parseFloat(importe)
             }
         });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error al registrar pago:', error);
         res.status(400).json({ success: false, error: error.message });
-    } finally {
-        client.release();
     }
 });
 
@@ -756,7 +747,7 @@ router.get('/:id', verifyJWT, async (req, res) => {
     try {
         const idCuenta = parseInt(req.params.id);
 
-        const cuenta = await pool.query(`
+        const cuenta = await req.db.query(`
             SELECT 
                 cc.*,
                 cf.nombre AS cliente_nombre,
@@ -774,7 +765,7 @@ router.get('/:id', verifyJWT, async (req, res) => {
         }
 
         // Obtener últimos movimientos
-        const movimientos = await pool.query(`
+        const movimientos = await req.db.query(`
             SELECT * FROM movimientocuenta
             WHERE id_cuenta_corriente = $1
             ORDER BY fecha_movimiento DESC, created_at DESC
@@ -840,7 +831,7 @@ router.put('/:id', verifyJWT, async (req, res) => {
             RETURNING *
         `;
 
-        const result = await pool.query(query, valores);
+        const result = await req.db.query(query, valores);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ success: false, error: 'Cuenta no encontrada' });

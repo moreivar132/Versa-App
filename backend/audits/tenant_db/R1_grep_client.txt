@@ -1,0 +1,411 @@
+backend/run_enhance_templates_migration.js:26:        await client.query(sql);
+backend/migrations/run_b2b_invite_migration.js:20:            await client.query('BEGIN');
+backend/migrations/run_b2b_invite_migration.js:23:            await client.query(sql);
+backend/migrations/run_b2b_invite_migration.js:25:            await client.query('COMMIT');
+backend/migrations/run_b2b_invite_migration.js:33:            const columns = await client.query(`
+backend/migrations/run_b2b_invite_migration.js:47:            await client.query('ROLLBACK');
+backend/migrations/run_contabilidad_v3_migration.js:25:        await client.query('BEGIN');
+backend/migrations/run_contabilidad_v3_migration.js:28:        await client.query(sql);
+backend/migrations/run_contabilidad_v3_migration.js:30:        await client.query('COMMIT');
+backend/migrations/run_contabilidad_v3_migration.js:35:        const tablesResult = await client.query(`
+backend/migrations/run_contabilidad_v3_migration.js:49:        const permsResult = await client.query(`
+backend/migrations/run_contabilidad_v3_migration.js:61:        const catsResult = await client.query(`
+backend/migrations/run_contabilidad_v3_migration.js:75:        await client.query('ROLLBACK');
+backend/migrations/run_legacy_rbac_migration.js:21:            await client.query('BEGIN');
+backend/migrations/run_legacy_rbac_migration.js:25:            await client.query(sql);
+backend/migrations/run_legacy_rbac_migration.js:27:            await client.query('COMMIT');
+backend/migrations/run_legacy_rbac_migration.js:35:            const columns = await client.query(`
+backend/migrations/run_legacy_rbac_migration.js:49:            await client.query('ROLLBACK');
+backend/migrations/seed_email_templates.js:332:        await client.query('BEGIN');
+backend/migrations/seed_email_templates.js:338:            const result = await client.query(`
+backend/migrations/seed_email_templates.js:363:        const tenantsResult = await client.query(`
+backend/migrations/seed_email_templates.js:375:                await client.query(`
+backend/migrations/seed_email_templates.js:393:        await client.query('COMMIT');
+backend/migrations/seed_email_templates.js:400:        await client.query('ROLLBACK');
+backend/migrations/seed_verticals.js:369:        await client.query('BEGIN');
+backend/migrations/seed_verticals.js:372:        const verticals = await client.query('SELECT id, key FROM vertical');
+backend/migrations/seed_verticals.js:404:        await client.query('COMMIT');
+backend/migrations/seed_verticals.js:409:        await client.query('ROLLBACK');
+backend/migrations/seed_verticals.js:424:        const existing = await client.query(
+backend/migrations/seed_verticals.js:430:            await client.query(
+backend/migrations/seed_verticals.js:440:            await client.query(
+backend/migrations/seed_verticals.js:463:        const result = await client.query(
+backend/migrations/seed_verticals.js:477:    const result = await client.query(`
+backend/migrations/seed_rbac_roles.js:210:        await client.query('BEGIN');
+backend/migrations/seed_rbac_roles.js:220:            const existing = await client.query(
+backend/migrations/seed_rbac_roles.js:230:                await client.query(`
+backend/migrations/seed_rbac_roles.js:243:                const result = await client.query(`
+backend/migrations/seed_rbac_roles.js:256:                const allPerms = await client.query('SELECT id FROM permiso');
+backend/migrations/seed_rbac_roles.js:258:                    await client.query(`
+backend/migrations/seed_rbac_roles.js:269:                    const perm = await client.query(
+backend/migrations/seed_rbac_roles.js:274:                        await client.query(`
+backend/migrations/seed_rbac_roles.js:288:        await client.query('COMMIT');
+backend/migrations/seed_rbac_roles.js:310:        await client.query('ROLLBACK');
+backend/migrations/run_vertical_access_migration.js:32:        await client.query('BEGIN');
+backend/migrations/run_vertical_access_migration.js:33:        await client.query(sql);
+backend/migrations/run_vertical_access_migration.js:34:        await client.query('COMMIT');
+backend/migrations/run_vertical_access_migration.js:40:        const tablesResult = await client.query(`
+backend/migrations/run_vertical_access_migration.js:54:        const verticalsResult = await client.query('SELECT key, name FROM vertical ORDER BY display_order');
+backend/migrations/run_vertical_access_migration.js:62:        await client.query('ROLLBACK');
+backend/migrations/run_accounting_empresa_migration.js:26:        await client.query(sql);
+backend/migrations/run_accounting_empresa_migration.js:31:        const tablesResult = await client.query(`
+backend/migrations/run_accounting_empresa_migration.js:45:        const empresasResult = await client.query(`
+backend/migrations/run_accounting_empresa_migration.js:57:        const cuentasResult = await client.query(`
+backend/migrations/run_accounting_empresa_migration.js:70:        const permsResult = await client.query(`
+backend/migrations/run_deducible_validation_migration.js:19:        await client.query('BEGIN');
+backend/migrations/run_deducible_validation_migration.js:22:        await client.query(sql);
+backend/migrations/run_deducible_validation_migration.js:24:        await client.query('COMMIT');
+backend/migrations/run_deducible_validation_migration.js:32:        const columns = await client.query(`
+backend/migrations/run_deducible_validation_migration.js:44:        const auditTable = await client.query(`
+backend/migrations/run_deducible_validation_migration.js:53:        const perms = await client.query(`
+backend/migrations/run_deducible_validation_migration.js:63:        const rolePerms = await client.query(`
+backend/migrations/run_deducible_validation_migration.js:79:        await client.query('ROLLBACK');
+backend/migrations/run_contable_v2_migration.js:30:        await client.query('BEGIN');
+backend/migrations/run_contable_v2_migration.js:33:        await client.query(sql);
+backend/migrations/run_contable_v2_migration.js:35:        await client.query('COMMIT');
+backend/migrations/run_contable_v2_migration.js:40:        const tables = await client.query(`
+backend/migrations/run_contable_v2_migration.js:52:        const permisos = await client.query(`
+backend/migrations/run_contable_v2_migration.js:60:        const categorias = await client.query(`
+backend/migrations/run_contable_v2_migration.js:72:        await client.query('ROLLBACK');
+backend/migrations/seed_rbac_permissions.js:162:        await client.query('BEGIN');
+backend/migrations/seed_rbac_permissions.js:170:            const existing = await client.query(
+backend/migrations/seed_rbac_permissions.js:177:                await client.query(
+backend/migrations/seed_rbac_permissions.js:184:                await client.query(
+backend/migrations/seed_rbac_permissions.js:192:        await client.query('COMMIT');
+backend/migrations/seed_rbac_permissions.js:213:        await client.query('ROLLBACK');
+backend/fix-ordenes-pagos.js:14:        await client.query('BEGIN');
+backend/fix-ordenes-pagos.js:26:            const pagosActuales = await client.query(`
+backend/fix-ordenes-pagos.js:62:                    await client.query(`
+backend/fix-ordenes-pagos.js:69:                        await client.query('DELETE FROM ordenpago WHERE id = $1', [pagoId]);
+backend/fix-ordenes-pagos.js:75:            const pagosRestantes = await client.query(`
+backend/fix-ordenes-pagos.js:85:            const ordenInfo = await client.query(`
+backend/fix-ordenes-pagos.js:93:                const cajaResult = await client.query(`
+backend/fix-ordenes-pagos.js:107:                            const existeMovimiento = await client.query(`
+backend/fix-ordenes-pagos.js:116:                                await client.query(`
+backend/fix-ordenes-pagos.js:130:            const totalFinal = await client.query(`
+backend/fix-ordenes-pagos.js:137:        await client.query('COMMIT');
+backend/fix-ordenes-pagos.js:141:        await client.query('ROLLBACK');
+backend/run_email_config_migration.js:26:        await client.query(sql);
+backend/run_email_config_migration.js:30:        await client.query(`
+backend/ejecutar_migracion_stripe_customer.js:24:        await client.query(sql);
+backend/ejecutar_migracion_stripe_customer.js:28:        const checkResult = await client.query(`
+backend/tests/integration/contabilidad.qa.test.js:21:        const adminA = await client.query("SELECT id FROM usuario WHERE email = 'adminA@qa.versa.com'");
+backend/tests/integration/contabilidad.qa.test.js:22:        const adminB = await client.query("SELECT id FROM usuario WHERE email = 'adminB@qa.versa.com'");
+backend/tests/integration/contabilidad.qa.test.js:23:        const tenantA = await client.query("SELECT id FROM tenant WHERE nombre = 'QA Tenant A'");
+backend/tests/integration/contabilidad.qa.test.js:24:        const tenantB = await client.query("SELECT id FROM tenant WHERE nombre = 'QA Tenant B'");
+backend/tests/integration/contabilidad.qa.test.js:25:        const empresaA1 = await client.query("SELECT id FROM accounting_empresa WHERE nif_cif = 'B-QA-A1'");
+backend/tests/integration/contabilidad.qa.test.js:26:        const empresaA2 = await client.query("SELECT id FROM accounting_empresa WHERE nif_cif = 'B-QA-A2'");
+backend/tests/integration/deducible.qa.test.js:25:        const adminA = await client.query("SELECT id FROM usuario WHERE email = 'adminA@qa.versa.com'");
+backend/tests/integration/deducible.qa.test.js:26:        const adminB = await client.query("SELECT id FROM usuario WHERE email = 'adminB@qa.versa.com'");
+backend/tests/integration/deducible.qa.test.js:27:        const tenantA = await client.query("SELECT id FROM tenant WHERE nombre = 'QA Tenant A'");
+backend/tests/integration/deducible.qa.test.js:28:        const tenantB = await client.query("SELECT id FROM tenant WHERE nombre = 'QA Tenant B'");
+backend/tests/integration/deducible.qa.test.js:29:        const empresaA1 = await client.query("SELECT id FROM accounting_empresa WHERE nif_cif = 'B-QA-A1'");
+backend/tests/integration/deducible.qa.test.js:48:        const result = await client.query(`
+backend/tests/integration/deducible.qa.test.js:63:            await client.query('DELETE FROM accounting_audit_log WHERE entity_id = $1', [testFacturaId]);
+backend/tests/integration/deducible.qa.test.js:64:            await client.query('DELETE FROM contabilidad_factura WHERE id = $1', [testFacturaId]);
+backend/tests/integration/deducible.qa.test.js:122:            const auditRes = await client.query(`
+backend/legacy/sql-migrations/run_contabilidad_v3_migration.js:25:        await client.query('BEGIN');
+backend/legacy/sql-migrations/run_contabilidad_v3_migration.js:28:        await client.query(sql);
+backend/legacy/sql-migrations/run_contabilidad_v3_migration.js:30:        await client.query('COMMIT');
+backend/legacy/sql-migrations/run_contabilidad_v3_migration.js:35:        const tablesResult = await client.query(`
+backend/legacy/sql-migrations/run_contabilidad_v3_migration.js:49:        const permsResult = await client.query(`
+backend/legacy/sql-migrations/run_contabilidad_v3_migration.js:61:        const catsResult = await client.query(`
+backend/legacy/sql-migrations/run_contabilidad_v3_migration.js:75:        await client.query('ROLLBACK');
+backend/legacy/sql-migrations/seed_email_templates.js:332:        await client.query('BEGIN');
+backend/legacy/sql-migrations/seed_email_templates.js:338:            const result = await client.query(`
+backend/legacy/sql-migrations/seed_email_templates.js:363:        const tenantsResult = await client.query(`
+backend/legacy/sql-migrations/seed_email_templates.js:375:                await client.query(`
+backend/legacy/sql-migrations/seed_email_templates.js:393:        await client.query('COMMIT');
+backend/legacy/sql-migrations/seed_email_templates.js:400:        await client.query('ROLLBACK');
+backend/legacy/sql-migrations/seed_rbac_roles.js:210:        await client.query('BEGIN');
+backend/legacy/sql-migrations/seed_rbac_roles.js:220:            const existing = await client.query(
+backend/legacy/sql-migrations/seed_rbac_roles.js:230:                await client.query(`
+backend/legacy/sql-migrations/seed_rbac_roles.js:243:                const result = await client.query(`
+backend/legacy/sql-migrations/seed_rbac_roles.js:256:                const allPerms = await client.query('SELECT id FROM permiso');
+backend/legacy/sql-migrations/seed_rbac_roles.js:258:                    await client.query(`
+backend/legacy/sql-migrations/seed_rbac_roles.js:269:                    const perm = await client.query(
+backend/legacy/sql-migrations/seed_rbac_roles.js:274:                        await client.query(`
+backend/legacy/sql-migrations/seed_rbac_roles.js:288:        await client.query('COMMIT');
+backend/legacy/sql-migrations/seed_rbac_roles.js:310:        await client.query('ROLLBACK');
+backend/legacy/sql-migrations/run_contable_v2_migration.js:30:        await client.query('BEGIN');
+backend/legacy/sql-migrations/run_contable_v2_migration.js:33:        await client.query(sql);
+backend/legacy/sql-migrations/run_contable_v2_migration.js:35:        await client.query('COMMIT');
+backend/legacy/sql-migrations/run_contable_v2_migration.js:40:        const tables = await client.query(`
+backend/legacy/sql-migrations/run_contable_v2_migration.js:52:        const permisos = await client.query(`
+backend/legacy/sql-migrations/run_contable_v2_migration.js:60:        const categorias = await client.query(`
+backend/legacy/sql-migrations/run_contable_v2_migration.js:72:        await client.query('ROLLBACK');
+backend/legacy/sql-migrations/seed_rbac_permissions.js:162:        await client.query('BEGIN');
+backend/legacy/sql-migrations/seed_rbac_permissions.js:170:            const existing = await client.query(
+backend/legacy/sql-migrations/seed_rbac_permissions.js:177:                await client.query(
+backend/legacy/sql-migrations/seed_rbac_permissions.js:184:                await client.query(
+backend/legacy/sql-migrations/seed_rbac_permissions.js:192:        await client.query('COMMIT');
+backend/legacy/sql-migrations/seed_rbac_permissions.js:213:        await client.query('ROLLBACK');
+backend/clean-orden73.js:14:        await client.query('BEGIN');
+backend/clean-orden73.js:17:        const pagosActuales = await client.query(`
+backend/clean-orden73.js:29:        const movDeleted = await client.query(`
+backend/clean-orden73.js:37:        const pagosDeleted = await client.query(`
+backend/clean-orden73.js:43:        await client.query('COMMIT');
+backend/clean-orden73.js:49:        await client.query('ROLLBACK');
+backend/verificar_modulo_facturacion.js:28:            const result = await client.query(`
+backend/verificar_modulo_facturacion.js:48:            const result = await client.query(`
+backend/verificar_modulo_facturacion.js:65:        const seriesResult = await client.query(`
+backend/verificar_modulo_facturacion.js:85:        const configResult = await client.query(`
+backend/verificar_modulo_facturacion.js:112:            const result = await client.query(`
+backend/verificar_modulo_facturacion.js:128:        const ordenesResult = await client.query(`
+backend/verificar_modulo_facturacion.js:138:        const facturasResult = await client.query(`
+backend/configurar_facturacion_defaults.js:15:        await client.query('BEGIN');
+backend/configurar_facturacion_defaults.js:20:        const sucursalesResult = await client.query('SELECT id, nombre FROM sucursal ORDER BY id');
+backend/configurar_facturacion_defaults.js:24:            const existeResult = await client.query(
+backend/configurar_facturacion_defaults.js:30:                await client.query(`
+backend/configurar_facturacion_defaults.js:56:        const tenantsResult = await client.query('SELECT id, nombre FROM tenant ORDER BY id');
+backend/configurar_facturacion_defaults.js:60:            const existeConfigResult = await client.query(
+backend/configurar_facturacion_defaults.js:66:                await client.query(`
+backend/configurar_facturacion_defaults.js:99:        await client.query('COMMIT');
+backend/configurar_facturacion_defaults.js:108:        await client.query('ROLLBACK');
+backend/ejecutar_migracion_client_portal.js:25:        await client.query("BEGIN");
+backend/ejecutar_migracion_client_portal.js:28:        await client.query(sql);
+backend/ejecutar_migracion_client_portal.js:30:        await client.query("COMMIT");
+backend/ejecutar_migracion_client_portal.js:34:        const checkResult = await client.query(`
+backend/ejecutar_migracion_client_portal.js:45:        await client.query("ROLLBACK");
+backend/ejecutar_migracion_egresos.js:25:        await client.query(sql);
+backend/ejecutar_migracion_marketplace.js:31:        await client.query(sql);
+backend/ejecutar_migracion_marketplace.js:48:        await client.query(seedSql);
+backend/ejecutar_migracion_marketplace.js:51:        const countResult = await client.query(`
+backend/ejecutar_migracion_marketplace.js:63:        const result = await client.query(`
+backend/ejecutar_migracion_marketplace.js:77:        const indexResult = await client.query(`
+backend/ejecutar_migracion_marketplace.js:91:        const triggerResult = await client.query(`
+backend/scripts/migrations_legacy/run_enhance_templates_migration.js:26:        await client.query(sql);
+backend/scripts/migrations_legacy/run_email_config_migration.js:26:        await client.query(sql);
+backend/scripts/migrations_legacy/run_email_config_migration.js:30:        await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_stripe_customer.js:24:        await client.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_stripe_customer.js:28:        const checkResult = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_client_portal.js:25:        await client.query("BEGIN");
+backend/scripts/migrations_legacy/ejecutar_migracion_client_portal.js:28:        await client.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_client_portal.js:30:        await client.query("COMMIT");
+backend/scripts/migrations_legacy/ejecutar_migracion_client_portal.js:34:        const checkResult = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_client_portal.js:45:        await client.query("ROLLBACK");
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace.js:31:        await client.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace.js:48:        await client.query(seedSql);
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace.js:51:        const countResult = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace.js:63:        const result = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace.js:77:        const indexResult = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_marketplace.js:91:        const triggerResult = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_facturacion.js:25:        await client.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_facturacion.js:39:        const result = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_income_event.js:19:        await client.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_income_event.js:26:        const tableCheck = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_income_event.js:41:        const planesCheck = await client.query(`
+backend/scripts/migrations_legacy/ejecutar_migracion_email_automations.js:39:            await client.query(sql);
+backend/scripts/migrations_legacy/ejecutar_migracion_email_automations.js:49:            const result = await client.query(`
+backend/scripts/asignar-tecnicos-especifico.js:18:        const sucursalesResult = await client.query('SELECT id, nombre FROM sucursal ORDER BY id');
+backend/scripts/asignar-tecnicos-especifico.js:23:        const tecnicosResult = await client.query(`
+backend/scripts/asignar-tecnicos-especifico.js:33:        const tesoroResult = await client.query(`SELECT id FROM sucursal WHERE nombre ILIKE '%tesoro%' LIMIT 1`);
+backend/scripts/asignar-tecnicos-especifico.js:34:        const mayoResult = await client.query(`SELECT id FROM sucursal WHERE nombre ILIKE '%mayo%' LIMIT 1`);
+backend/scripts/asignar-tecnicos-especifico.js:48:        await client.query('DELETE FROM usuario_sucursal');
+backend/scripts/asignar-tecnicos-especifico.js:52:        const joseResult = await client.query(`SELECT id, nombre FROM usuario WHERE nombre ILIKE '%jose%alberto%' LIMIT 1`);
+backend/scripts/asignar-tecnicos-especifico.js:53:        const yormanResult = await client.query(`SELECT id, nombre FROM usuario WHERE nombre ILIKE '%yorman%' LIMIT 1`);
+backend/scripts/asignar-tecnicos-especifico.js:54:        const camiloResult = await client.query(`SELECT id, nombre FROM usuario WHERE nombre ILIKE '%camilo%' LIMIT 1`);
+backend/scripts/asignar-tecnicos-especifico.js:64:            await client.query(`
+backend/scripts/asignar-tecnicos-especifico.js:76:            await client.query(`
+backend/scripts/asignar-tecnicos-especifico.js:88:            await client.query(`
+backend/scripts/asignar-tecnicos-especifico.js:99:        const verificar = await client.query(`
+backend/scripts/asignar-tecnicos-sucursales.js:18:        const sucursalesResult = await client.query('SELECT id, nombre FROM sucursal ORDER BY id');
+backend/scripts/asignar-tecnicos-sucursales.js:23:        const usuariosResult = await client.query(`
+backend/scripts/asignar-tecnicos-sucursales.js:33:        await client.query('DELETE FROM usuario_sucursal');
+backend/scripts/asignar-tecnicos-sucursales.js:37:        const tesoroResult = await client.query(`SELECT id FROM sucursal WHERE nombre ILIKE '%tesoro%' LIMIT 1`);
+backend/scripts/asignar-tecnicos-sucursales.js:38:        const mayoResult = await client.query(`SELECT id FROM sucursal WHERE nombre ILIKE '%mayo%' LIMIT 1`);
+backend/scripts/asignar-tecnicos-sucursales.js:52:        const joseResult = await client.query(`SELECT id FROM usuario WHERE nombre ILIKE '%jose%alberto%' LIMIT 1`);
+backend/scripts/asignar-tecnicos-sucursales.js:57:            await client.query(`
+backend/scripts/asignar-tecnicos-sucursales.js:65:        const otrosResult = await client.query(`
+backend/scripts/asignar-tecnicos-sucursales.js:72:            await client.query(`
+backend/scripts/seed_contabilidad_qa.js:10:        await client.query('BEGIN');
+backend/scripts/seed_contabilidad_qa.js:15:        await client.query("DELETE FROM usuario WHERE email LIKE '%@qa.versa.com'");
+backend/scripts/seed_contabilidad_qa.js:16:        await client.query("DELETE FROM tenant WHERE nombre LIKE 'QA Tenant%'");
+backend/scripts/seed_contabilidad_qa.js:20:        const tenantA = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:26:        const tenantB = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:37:        const userAdminA = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:43:        const userContableA = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:49:        const userAdminB = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:58:        const empresaA1 = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:65:        const empresaA2 = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:72:        const empresaB1 = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:82:        await client.query(`
+backend/scripts/seed_contabilidad_qa.js:88:        await client.query(`
+backend/scripts/seed_contabilidad_qa.js:94:        await client.query(`
+backend/scripts/seed_contabilidad_qa.js:100:        await client.query(`
+backend/scripts/seed_contabilidad_qa.js:107:        const contactoC1 = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:112:        const contactoP1 = await client.query(`
+backend/scripts/seed_contabilidad_qa.js:121:        await client.query(`
+backend/scripts/seed_contabilidad_qa.js:134:        await client.query(`
+backend/scripts/seed_contabilidad_qa.js:147:        await client.query(`
+backend/scripts/seed_contabilidad_qa.js:159:        await client.query('COMMIT');
+backend/scripts/seed_contabilidad_qa.js:168:        await client.query('ROLLBACK');
+backend/scripts/fix-product-providers.js:16:        const updateFromCompras = await client.query(`
+backend/scripts/fix-product-providers.js:41:        const updateUnidades = await client.query(`
+backend/scripts/fix-product-providers.js:50:        const stats = await client.query(`
+backend/scripts/migrate-to-income-ledger.js:22:        const marketplacePagos = await client.query(`
+backend/scripts/migrate-to-income-ledger.js:78:        const ventas = await client.query(`
+backend/scripts/migrate-to-income-ledger.js:130:        const ordenesPagos = await client.query(`
+backend/scripts/migrate-to-income-ledger.js:195:        const totals = await client.query(`
+backend/scripts/repair_marketplace_links.js:8:        await client.query('BEGIN');
+backend/scripts/repair_marketplace_links.js:12:        const orphans = await client.query(`
+backend/scripts/repair_marketplace_links.js:20:            await client.query(`
+backend/scripts/repair_marketplace_links.js:34:        const mismatches = await client.query(`
+backend/scripts/repair_marketplace_links.js:44:            await client.query(`
+backend/scripts/repair_marketplace_links.js:59:        const incomplete = await client.query(`
+backend/scripts/repair_marketplace_links.js:69:            await client.query(`
+backend/scripts/repair_marketplace_links.js:82:        await client.query('COMMIT');
+backend/scripts/repair_marketplace_links.js:86:        await client.query('ROLLBACK');
+backend/scripts/maintenance/fix-ordenes-pagos.js:14:        await client.query('BEGIN');
+backend/scripts/maintenance/fix-ordenes-pagos.js:26:            const pagosActuales = await client.query(`
+backend/scripts/maintenance/fix-ordenes-pagos.js:62:                    await client.query(`
+backend/scripts/maintenance/fix-ordenes-pagos.js:69:                        await client.query('DELETE FROM ordenpago WHERE id = $1', [pagoId]);
+backend/scripts/maintenance/fix-ordenes-pagos.js:75:            const pagosRestantes = await client.query(`
+backend/scripts/maintenance/fix-ordenes-pagos.js:85:            const ordenInfo = await client.query(`
+backend/scripts/maintenance/fix-ordenes-pagos.js:93:                const cajaResult = await client.query(`
+backend/scripts/maintenance/fix-ordenes-pagos.js:107:                            const existeMovimiento = await client.query(`
+backend/scripts/maintenance/fix-ordenes-pagos.js:116:                                await client.query(`
+backend/scripts/maintenance/fix-ordenes-pagos.js:130:            const totalFinal = await client.query(`
+backend/scripts/maintenance/fix-ordenes-pagos.js:137:        await client.query('COMMIT');
+backend/scripts/maintenance/fix-ordenes-pagos.js:141:        await client.query('ROLLBACK');
+backend/scripts/maintenance/clean-orden73.js:14:        await client.query('BEGIN');
+backend/scripts/maintenance/clean-orden73.js:17:        const pagosActuales = await client.query(`
+backend/scripts/maintenance/clean-orden73.js:29:        const movDeleted = await client.query(`
+backend/scripts/maintenance/clean-orden73.js:37:        const pagosDeleted = await client.query(`
+backend/scripts/maintenance/clean-orden73.js:43:        await client.query('COMMIT');
+backend/scripts/maintenance/clean-orden73.js:49:        await client.query('ROLLBACK');
+backend/scripts/maintenance/configurar_facturacion_defaults.js:15:        await client.query('BEGIN');
+backend/scripts/maintenance/configurar_facturacion_defaults.js:20:        const sucursalesResult = await client.query('SELECT id, nombre FROM sucursal ORDER BY id');
+backend/scripts/maintenance/configurar_facturacion_defaults.js:24:            const existeResult = await client.query(
+backend/scripts/maintenance/configurar_facturacion_defaults.js:30:                await client.query(`
+backend/scripts/maintenance/configurar_facturacion_defaults.js:56:        const tenantsResult = await client.query('SELECT id, nombre FROM tenant ORDER BY id');
+backend/scripts/maintenance/configurar_facturacion_defaults.js:60:            const existeConfigResult = await client.query(
+backend/scripts/maintenance/configurar_facturacion_defaults.js:66:                await client.query(`
+backend/scripts/maintenance/configurar_facturacion_defaults.js:99:        await client.query('COMMIT');
+backend/scripts/maintenance/configurar_facturacion_defaults.js:108:        await client.query('ROLLBACK');
+backend/scripts/seed_finsaas_qa.js:17:        await client.query('BEGIN');
+backend/scripts/seed_finsaas_qa.js:20:        let tenantResult = await client.query('SELECT id FROM tenant LIMIT 1');
+backend/scripts/seed_finsaas_qa.js:24:            const newTenant = await client.query(`
+backend/scripts/seed_finsaas_qa.js:37:        let userResult = await client.query(`
+backend/scripts/seed_finsaas_qa.js:53:        let empresaResult = await client.query(`
+backend/scripts/seed_finsaas_qa.js:61:            const newEmpresa = await client.query(`
+backend/scripts/seed_finsaas_qa.js:76:            await client.query(`
+backend/scripts/seed_finsaas_qa.js:89:            await client.query(`
+backend/scripts/seed_finsaas_qa.js:106:            const exists = await client.query('SELECT id FROM permiso WHERE key = $1', [key]);
+backend/scripts/seed_finsaas_qa.js:108:                await client.query(`
+backend/scripts/seed_finsaas_qa.js:118:            const userRoles = await client.query(`
+backend/scripts/seed_finsaas_qa.js:126:                    const linkExists = await client.query(`
+backend/scripts/seed_finsaas_qa.js:133:                        await client.query(`
+backend/scripts/seed_finsaas_qa.js:151:            await client.query(`
+backend/scripts/seed_finsaas_qa.js:168:            await client.query(`
+backend/scripts/seed_finsaas_qa.js:180:        await client.query('COMMIT');
+backend/scripts/seed_finsaas_qa.js:190:        await client.query('ROLLBACK');
+backend/scripts/verificar-tecnicos.js:14:        const sucursalesResult = await client.query('SELECT id, nombre FROM sucursal ORDER BY id');
+backend/scripts/verificar-tecnicos.js:19:        const tecnicosResult = await client.query(`
+backend/scripts/verificar-tecnicos.js:29:        const asignacionesResult = await client.query(`
+backend/scripts/asignar-todos-tecnicos.js:16:        const sucursalesResult = await client.query('SELECT id, nombre FROM sucursal ORDER BY id');
+backend/scripts/asignar-todos-tecnicos.js:21:        const tecnicosResult = await client.query(`
+backend/scripts/asignar-todos-tecnicos.js:31:        await client.query('DELETE FROM usuario_sucursal');
+backend/scripts/asignar-todos-tecnicos.js:39:                    await client.query(`
+backend/scripts/debug/verificar_modulo_facturacion.js:28:            const result = await client.query(`
+backend/scripts/debug/verificar_modulo_facturacion.js:48:            const result = await client.query(`
+backend/scripts/debug/verificar_modulo_facturacion.js:65:        const seriesResult = await client.query(`
+backend/scripts/debug/verificar_modulo_facturacion.js:85:        const configResult = await client.query(`
+backend/scripts/debug/verificar_modulo_facturacion.js:112:            const result = await client.query(`
+backend/scripts/debug/verificar_modulo_facturacion.js:128:        const ordenesResult = await client.query(`
+backend/scripts/debug/verificar_modulo_facturacion.js:138:        const facturasResult = await client.query(`
+backend/scripts/debug/diagnostico-caja.js:16:        const cajaResult = await client.query(`
+backend/scripts/debug/diagnostico-caja.js:42:        const movimientos = await client.query(`
+backend/scripts/debug/diagnostico-caja.js:83:        const porOrigen = await client.query(`
+backend/scripts/debug/diagnostico-caja.js:105:        const duplicados = await client.query(`
+backend/scripts/debug/diagnostico-caja.js:126:        const ordenesConPago = await client.query(`
+backend/scripts/debug/diagnostico-caja.js:150:        const movOrden = await client.query(`
+backend/scripts/debug/verificar_esquema.js:15:        const result = await client.query(`
+backend/ejecutar_migracion_facturacion.js:25:        await client.query(sql);
+backend/ejecutar_migracion_facturacion.js:39:        const result = await client.query(`
+backend/diagnostico-caja.js:16:        const cajaResult = await client.query(`
+backend/diagnostico-caja.js:42:        const movimientos = await client.query(`
+backend/diagnostico-caja.js:83:        const porOrigen = await client.query(`
+backend/diagnostico-caja.js:105:        const duplicados = await client.query(`
+backend/diagnostico-caja.js:126:        const ordenesConPago = await client.query(`
+backend/diagnostico-caja.js:150:        const movOrden = await client.query(`
+backend/verificar_esquema.js:15:        const result = await client.query(`
+backend/ejecutar_migracion_income_event.js:19:        await client.query(sql);
+backend/ejecutar_migracion_income_event.js:26:        const tableCheck = await client.query(`
+backend/ejecutar_migracion_income_event.js:41:        const planesCheck = await client.query(`
+backend/routes/customerGoogleAuth.js:134:        await client.query('BEGIN');
+backend/routes/customerGoogleAuth.js:137:        const clienteResult = await client.query(
+backend/routes/customerGoogleAuth.js:146:        const authResult = await client.query(
+backend/routes/customerGoogleAuth.js:155:        await client.query(
+backend/routes/customerGoogleAuth.js:162:        await client.query('COMMIT');
+backend/routes/customerGoogleAuth.js:174:        await client.query('ROLLBACK');
+backend/routes/trabajadores.js:171:            const mecanicoCheck = await client.query(
+backend/routes/trabajadores.js:195:            const medioPagoCheck = await client.query(
+backend/routes/trabajadores.js:205:            const movimientoResult = await client.query(`
+backend/routes/trabajadores.js:227:                const cajaResult = await client.query(
+backend/routes/trabajadores.js:236:                    const cajaMovResult = await client.query(`
+backend/routes/invitePublic.js:134:        await client.query('BEGIN');
+backend/routes/invitePublic.js:137:        const inviteResult = await client.query(`
+backend/routes/invitePublic.js:150:            await client.query('ROLLBACK');
+backend/routes/invitePublic.js:158:            await client.query('ROLLBACK');
+backend/routes/invitePublic.js:163:            await client.query('ROLLBACK');
+backend/routes/invitePublic.js:176:            await client.query('ROLLBACK');
+backend/routes/invitePublic.js:183:            await client.query('ROLLBACK');
+backend/routes/invitePublic.js:188:        const existingUser = await client.query(
+backend/routes/invitePublic.js:194:            await client.query('ROLLBACK');
+backend/routes/invitePublic.js:206:        const userResult = await client.query(`
+backend/routes/invitePublic.js:215:        const roleResult = await client.query(
+backend/routes/invitePublic.js:221:            await client.query(
+backend/routes/invitePublic.js:229:            await client.query(`
+backend/routes/invitePublic.js:237:        await client.query(`
+backend/routes/invitePublic.js:243:        await client.query('COMMIT');
+backend/routes/invitePublic.js:262:        await client.query('ROLLBACK');
+backend/ejecutar_migracion_email_automations.js:39:            await client.query(sql);
+backend/ejecutar_migracion_email_automations.js:49:            const result = await client.query(`
+backend/services/googleAuthService.js:142:        await client.query('BEGIN');
+backend/services/googleAuthService.js:145:        const userResult = await client.query(
+backend/services/googleAuthService.js:154:        const roleResult = await client.query(
+backend/services/googleAuthService.js:160:            await client.query(
+backend/services/googleAuthService.js:168:        await client.query(
+backend/services/googleAuthService.js:176:            await client.query(`
+backend/services/googleAuthService.js:185:        await client.query(
+backend/services/googleAuthService.js:190:        await client.query('COMMIT');
+backend/services/googleAuthService.js:202:        await client.query('ROLLBACK');
+backend/services/marketplaceService.js:243:            await client.query('BEGIN');
+backend/services/marketplaceService.js:292:                const clienteCheck = await client.query(
+backend/services/marketplaceService.js:301:                const clienteExistente = await client.query(
+backend/services/marketplaceService.js:312:                    const nuevoCliente = await client.query(
+backend/services/marketplaceService.js:330:                const vehiculoExistente = await client.query(
+backend/services/marketplaceService.js:342:                        const nuevoVehiculo = await client.query(
+backend/services/marketplaceService.js:354:                    const nuevoVehiculo = await client.query(
+backend/services/marketplaceService.js:364:                const nuevoVehiculo = await client.query(
+backend/services/marketplaceService.js:381:                const servicioResult = await client.query(
+backend/services/marketplaceService.js:401:            const citaResult = await client.query(
+backend/services/marketplaceService.js:478:                    await client.query(
+backend/services/marketplaceService.js:529:            await client.query('COMMIT');
+backend/services/marketplaceService.js:532:            await client.query('ROLLBACK');
+backend/services/marketplaceService.js:614:            await client.query('BEGIN');
+backend/services/marketplaceService.js:630:            await client.query('COMMIT');
+backend/services/marketplaceService.js:633:            await client.query('ROLLBACK');
+backend/services/marketplaceService.js:648:            await client.query('BEGIN');
+backend/services/marketplaceService.js:664:            await client.query('COMMIT');
+backend/services/marketplaceService.js:667:            await client.query('ROLLBACK');
+backend/services/marketplaceService.js:682:            await client.query('BEGIN');
+backend/services/marketplaceService.js:698:            await client.query('COMMIT');
+backend/services/marketplaceService.js:701:            await client.query('ROLLBACK');
+backend/src/core/db/tenant-db.js:86:        await client.query("SELECT set_config('app.is_superadmin', 'true', true)");
+backend/src/core/db/tenant-db.js:87:        await client.query("SELECT set_config('app.tenant_id', '', true)");
+backend/src/core/db/tenant-db.js:98:        await client.query("SELECT set_config('app.is_superadmin', 'false', true)");
+backend/src/core/db/tenant-db.js:99:        await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [String(tenantId)]);
+backend/src/core/db/tenant-db.js:102:        await client.query("SELECT set_config('app.is_superadmin', 'false', true)");
+backend/src/core/db/tenant-db.js:103:        await client.query("SELECT set_config('app.tenant_id', '', true)");
+backend/src/core/db/tenant-db.js:158:            return await client.query(sql, params);
+backend/src/core/db/tenant-db.js:198:            await client.query('BEGIN');
+backend/src/core/db/tenant-db.js:213:                    return client.query(sql, params);
+backend/src/core/db/tenant-db.js:220:                    return client.query(sql, params);
+backend/src/core/db/tenant-db.js:227:            await client.query('COMMIT');
+backend/src/core/db/tenant-db.js:231:            await client.query('ROLLBACK');
+backend/src/core/db/tenant-db.js:307:        return await client.query(sql, params);
+backend/src/core/db/index.js:48:            await client.query('BEGIN');
+backend/src/core/db/index.js:50:            await client.query('COMMIT');
+backend/src/core/db/index.js:53:            await client.query('ROLLBACK');

@@ -16,10 +16,21 @@ const tenantModel = require('../models/tenantModel');
 const roleModel = require('../models/roleModel');
 const sucursalModel = require('../models/sucursalModel');
 const permisoModel = require('../models/permisoModel');
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
 // All routes require authentication
 router.use(verifyJWT);
+
+// Inject Tenant DB
+router.use((req, res, next) => {
+    try {
+        req.db = getTenantDb(req.user); // req.user acts as context
+        next();
+    } catch (err) {
+        console.error('Error injecting Tenant DB:', err);
+        res.status(500).json({ error: 'Database context error' });
+    }
+});
 
 // ================================================================
 // USERS ENDPOINTS
@@ -39,7 +50,7 @@ router.get('/users', requirePermission('users.view'), async (req, res) => {
             users = await userModel.getAllUsers();
         } else {
             // Regular users only see their tenant's users
-            const result = await pool.query(`
+            const result = await req.db.query(`
                 SELECT u.*, t.nombre as tenant_nombre 
                 FROM usuario u
                 LEFT JOIN tenant t ON u.id_tenant = t.id
@@ -100,7 +111,7 @@ router.post('/users', requirePermission('users.create'), async (req, res) => {
 
         // Handle onboarding flow: create first sucursal if tenant has none
         if (tenantSucursales.length === 0 && crear_sucursal?.nombre) {
-            const newSucursalResult = await pool.query(`
+            const newSucursalResult = await req.db.query(`
                 INSERT INTO sucursal (nombre, direccion, id_tenant, created_at, updated_at)
                 VALUES ($1, $2, $3, NOW(), NOW()) RETURNING *
             `, [crear_sucursal.nombre, crear_sucursal.direccion || null, id_tenant]);
@@ -110,7 +121,7 @@ router.post('/users', requirePermission('users.create'), async (req, res) => {
 
         // Validate sucursal_ids belong to the target tenant
         if (sucursal_ids && sucursal_ids.length > 0) {
-            const validSucursales = await pool.query(
+            const validSucursales = await req.db.query(
                 'SELECT id FROM sucursal WHERE id = ANY($1) AND id_tenant = $2',
                 [sucursal_ids, id_tenant]
             );
@@ -194,7 +205,7 @@ router.put('/users/:id', requirePermission('users.update'), async (req, res) => 
 
         // Validate sucursal_ids belong to the target tenant
         if (sucursal_ids && sucursal_ids.length > 0) {
-            const validSucursales = await pool.query(
+            const validSucursales = await req.db.query(
                 'SELECT id FROM sucursal WHERE id = ANY($1) AND id_tenant = $2',
                 [sucursal_ids, newTenantId]
             );
@@ -372,7 +383,7 @@ router.get('/roles', requirePermission('roles.view'), async (req, res) => {
             roles = await roleModel.getAllRoles();
         } else {
             // Regular users see global roles + their tenant's roles
-            const result = await pool.query(`
+            const result = await req.db.query(`
                 SELECT * FROM rol 
                 WHERE scope = 'global' 
                    OR tenant_id IS NULL 
@@ -404,7 +415,7 @@ router.post('/roles', requirePermission('roles.create'), async (req, res) => {
 
         const tenantId = req.userPermissions?.isSuperAdmin ? req.body.tenant_id : req.user.id_tenant;
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             INSERT INTO rol (nombre, display_name, scope, tenant_id, level, is_system)
             VALUES ($1, $2, $3, $4, $5, false)
             RETURNING *
@@ -572,7 +583,7 @@ router.post('/roles/:id/permisos', requirePermission('roles.update'), async (req
  */
 router.get('/permissions', requirePermission('permissions.view'), async (req, res) => {
     try {
-        const result = await pool.query(`
+        const result = await req.db.query(`
             SELECT id, COALESCE(key, nombre) as key, nombre, module, descripcion, created_at
             FROM permiso
             ORDER BY module, key

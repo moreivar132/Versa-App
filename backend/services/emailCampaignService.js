@@ -3,15 +3,42 @@
  * Gestión de campañas de email programables
  */
 
-const pool = require('../db');
+// const pool = require('../db'); // REMOVED
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const emailAutomationService = require('./emailAutomationService');
 
 class EmailCampaignService {
 
     /**
-     * Crear una nueva campaña en estado borrador
+     * Helper to resolve DB and Tenant ID from variable arguments
      */
-    async createCampaign(idTenant, data) {
+    _resolveDb(arg1, arg2) {
+        if (arg1 && (arg1.tenantId || arg1.query)) {
+            // arg1 is Context/DB
+            return { db: getTenantDb(arg1), tenantId: arg1.tenantId || arg1.id_tenant };
+        }
+        // Legacy: arg1 is ID or something else, arg2 is ID Tenant?
+        // Wait, for methods like createCampaign(idTenant, data), arg1 is idTenant.
+        // For getCampaign(id, idTenant), arg2 is idTenant.
+        // We need specific handling per method or a generic strategy.
+        // Let's rely on specific handling in each method for safety.
+        return null;
+    }
+
+    /**
+     * Crear una nueva campaña en estado borrador
+     * Signature: (ctx, data) OR (idTenant, data)
+     */
+    async createCampaign(ctxOrId, data) {
+        let db, tenantId;
+        if (ctxOrId && (ctxOrId.tenantId || ctxOrId.query)) {
+            db = getTenantDb(ctxOrId);
+            tenantId = ctxOrId.tenantId;
+        } else {
+            tenantId = ctxOrId;
+            db = getTenantDb({ tenantId });
+        }
+
         const {
             nombre,
             tipo = 'manual',
@@ -24,17 +51,17 @@ class EmailCampaignService {
             created_by = null
         } = data;
 
-        const result = await pool.query(`
+        const result = await db.query(`
             INSERT INTO email_campaign 
             (id_tenant, nombre, tipo, id_promo, template_code, subject, html_body, preview_text, recipient_filter, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
-        `, [idTenant, nombre, tipo, id_promo, template_code, subject, html_body, preview_text, JSON.stringify(recipient_filter), created_by]);
+        `, [tenantId, nombre, tipo, id_promo, template_code, subject, html_body, preview_text, JSON.stringify(recipient_filter), created_by]);
 
         // Calculate initial recipient count
         const campaign = result.rows[0];
-        const count = await this.countRecipients(idTenant, recipient_filter);
-        await pool.query('UPDATE email_campaign SET total_recipients = $1 WHERE id = $2', [count, campaign.id]);
+        const count = await this.countRecipients(db, tenantId, recipient_filter);
+        await db.query('UPDATE email_campaign SET total_recipients = $1 WHERE id = $2', [count, campaign.id]);
         campaign.total_recipients = count;
 
         return campaign;
@@ -42,29 +69,54 @@ class EmailCampaignService {
 
     /**
      * Obtener campaña por ID
+     * Signature: (ctx, id) OR (id, idTenant)
      */
-    async getCampaign(id, idTenant) {
-        const result = await pool.query(`
+    async getCampaign(ctxOrId, idOrTenant) {
+        let db, tenantId, campaignId;
+
+        if (ctxOrId && (ctxOrId.tenantId || ctxOrId.query)) {
+            // (ctx, id)
+            db = getTenantDb(ctxOrId);
+            tenantId = ctxOrId.tenantId;
+            campaignId = idOrTenant;
+        } else {
+            // (id, idTenant)
+            campaignId = ctxOrId;
+            tenantId = idOrTenant;
+            db = getTenantDb({ tenantId });
+        }
+
+        const result = await db.query(`
             SELECT c.*, p.titulo as promo_titulo
             FROM email_campaign c
             LEFT JOIN fidelizacion_promo p ON p.id = c.id_promo
             WHERE c.id = $1 AND c.id_tenant = $2
-        `, [id, idTenant]);
+        `, [campaignId, tenantId]);
 
         return result.rows[0] || null;
     }
 
     /**
      * Listar campañas del tenant
+     * Signature: (ctx, status, limit) OR (idTenant, status, limit)
      */
-    async listCampaigns(idTenant, status = null, limit = 50) {
+    async listCampaigns(ctxOrId, status = null, limit = 50) {
+        let db, tenantId;
+        if (ctxOrId && (ctxOrId.tenantId || ctxOrId.query)) {
+            db = getTenantDb(ctxOrId);
+            tenantId = ctxOrId.tenantId;
+        } else {
+            tenantId = ctxOrId;
+            db = getTenantDb({ tenantId });
+        }
+
         let query = `
             SELECT c.*, p.titulo as promo_titulo
             FROM email_campaign c
             LEFT JOIN fidelizacion_promo p ON p.id = c.id_promo
             WHERE c.id_tenant = $1
         `;
-        const params = [idTenant];
+        const params = [tenantId];
 
         if (status) {
             query += ' AND c.status = $2';
@@ -74,22 +126,48 @@ class EmailCampaignService {
         query += ' ORDER BY c.created_at DESC LIMIT $' + (params.length + 1);
         params.push(limit);
 
-        const result = await pool.query(query, params);
+        const result = await db.query(query, params);
         return result.rows;
     }
 
     /**
      * Actualizar campaña (solo borradores)
+     * Signature: (ctx, id, data) OR (id, idTenant, data)
      */
-    async updateCampaign(id, idTenant, data) {
+    async updateCampaign(arg1, arg2, arg3) {
+        let db, tenantId, campaignId, data;
+
+        if (arg1 && (arg1.tenantId || arg1.query)) {
+            // (ctx, id, data)
+            db = getTenantDb(arg1);
+            tenantId = arg1.tenantId;
+            campaignId = arg2;
+            data = arg3;
+        } else {
+            // (id, idTenant, data)
+            campaignId = arg1;
+            tenantId = arg2;
+            data = arg3;
+            db = getTenantDb({ tenantId });
+        }
+
         const { nombre, subject, html_body, preview_text, recipient_filter } = data;
 
         // Verify campaign exists and is draft
-        const existing = await this.getCampaign(id, idTenant);
+        // Reuse getCampaign logic? We need db instance.
+        // We can just query directly.
+
+        const existingResult = await db.query(`
+            SELECT c.*
+            FROM email_campaign c
+            WHERE c.id = $1 AND c.id_tenant = $2
+        `, [campaignId, tenantId]);
+        const existing = existingResult.rows[0];
+
         if (!existing) throw new Error('Campaña no encontrada');
         if (existing.status !== 'draft') throw new Error('Solo se pueden editar campañas en borrador');
 
-        const result = await pool.query(`
+        const result = await db.query(`
             UPDATE email_campaign SET
                 nombre = COALESCE($1, nombre),
                 subject = COALESCE($2, subject),
@@ -99,12 +177,12 @@ class EmailCampaignService {
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $6 AND id_tenant = $7
             RETURNING *
-        `, [nombre, subject, html_body, preview_text, recipient_filter ? JSON.stringify(recipient_filter) : null, id, idTenant]);
+        `, [nombre, subject, html_body, preview_text, recipient_filter ? JSON.stringify(recipient_filter) : null, campaignId, tenantId]);
 
         // Recalculate recipient count if filter changed
         if (recipient_filter) {
-            const count = await this.countRecipients(idTenant, recipient_filter);
-            await pool.query('UPDATE email_campaign SET total_recipients = $1 WHERE id = $2', [count, id]);
+            const count = await this.countRecipients(db, tenantId, recipient_filter);
+            await db.query('UPDATE email_campaign SET total_recipients = $1 WHERE id = $2', [count, campaignId]);
         }
 
         return result.rows[0];
@@ -112,43 +190,81 @@ class EmailCampaignService {
 
     /**
      * Programar envío de campaña
+     * Signature: (ctx, id, scheduledAt) OR (id, idTenant, scheduledAt)
      */
-    async scheduleCampaign(id, idTenant, scheduledAt) {
-        const existing = await this.getCampaign(id, idTenant);
+    async scheduleCampaign(arg1, arg2, arg3) {
+        let db, tenantId, campaignId, scheduledAt;
+
+        if (arg1 && (arg1.tenantId || arg1.query)) {
+            // (ctx, id, scheduledAt)
+            db = getTenantDb(arg1);
+            tenantId = arg1.tenantId;
+            campaignId = arg2;
+            scheduledAt = arg3;
+        } else {
+            // (id, idTenant, scheduledAt)
+            campaignId = arg1;
+            tenantId = arg2;
+            scheduledAt = arg3;
+            db = getTenantDb({ tenantId });
+        }
+
+        const existingResult = await db.query('SELECT status FROM email_campaign WHERE id = $1 AND id_tenant = $2', [campaignId, tenantId]);
+        const existing = existingResult.rows[0];
+
         if (!existing) throw new Error('Campaña no encontrada');
         if (existing.status !== 'draft') throw new Error('Solo se pueden programar campañas en borrador');
 
-        const result = await pool.query(`
+        const result = await db.query(`
             UPDATE email_campaign SET
                 status = 'scheduled',
                 scheduled_at = $1,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $2 AND id_tenant = $3
             RETURNING *
-        `, [scheduledAt, id, idTenant]);
+        `, [scheduledAt, campaignId, tenantId]);
 
         return result.rows[0];
     }
 
     /**
      * Enviar campaña inmediatamente
+     * Signature: (ctx, id) OR (id, idTenant)
      */
-    async sendCampaign(id, idTenant) {
-        const campaign = await this.getCampaign(id, idTenant);
+    async sendCampaign(arg1, arg2) {
+        let db, tenantId, campaignId, ctx;
+
+        if (arg1 && (arg1.tenantId || arg1.query)) {
+            // (ctx, id)
+            ctx = arg1;
+            db = getTenantDb(arg1);
+            tenantId = arg1.tenantId;
+            campaignId = arg2;
+        } else {
+            // (id, idTenant)
+            campaignId = arg1;
+            tenantId = arg2;
+            ctx = { tenantId };
+            db = getTenantDb(ctx);
+        }
+
+        const existingResult = await db.query('SELECT * FROM email_campaign WHERE id = $1 AND id_tenant = $2', [campaignId, tenantId]);
+        const campaign = existingResult.rows[0];
+
         if (!campaign) throw new Error('Campaña no encontrada');
         if (!['draft', 'scheduled'].includes(campaign.status)) {
             throw new Error('La campaña ya fue enviada o cancelada');
         }
 
         // Mark as sending
-        await pool.query(`
+        await db.query(`
             UPDATE email_campaign SET status = 'sending', updated_at = CURRENT_TIMESTAMP
             WHERE id = $1
-        `, [id]);
+        `, [campaignId]);
 
         try {
             // Get recipients
-            const recipients = await this.getRecipients(idTenant, campaign.recipient_filter);
+            const recipients = await this.getRecipients(db, tenantId, campaign.recipient_filter);
             let sentCount = 0;
             let failedCount = 0;
 
@@ -178,9 +294,11 @@ class EmailCampaignService {
                     }
 
                     // Send via automation service
-                    await emailAutomationService.triggerEvent({
-                        id_tenant: idTenant,
-                        event_code: 'CAMPAIGN_' + id,
+                    // Call triggerEvent with ctx logic
+                    // We updated triggerEvent to accept (ctx, params) or (params)
+                    await emailAutomationService.triggerEvent(ctx, {
+                        id_tenant: tenantId,
+                        event_code: 'CAMPAIGN_' + campaignId,
                         id_cliente: recipient.id,
                         to_email: recipient.email,
                         variables,
@@ -197,7 +315,7 @@ class EmailCampaignService {
             }
 
             // Update campaign stats
-            await pool.query(`
+            await db.query(`
                 UPDATE email_campaign SET
                     status = 'sent',
                     sent_at = CURRENT_TIMESTAMP,
@@ -205,43 +323,79 @@ class EmailCampaignService {
                     failed_count = $2,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = $3
-            `, [sentCount, failedCount, id]);
+            `, [sentCount, failedCount, campaignId]);
 
             return { sent: sentCount, failed: failedCount };
 
         } catch (error) {
             // Mark as failed
-            await pool.query(`
+            await db.query(`
                 UPDATE email_campaign SET status = 'draft', updated_at = CURRENT_TIMESTAMP
                 WHERE id = $1
-            `, [id]);
+            `, [campaignId]);
             throw error;
         }
     }
 
     /**
      * Cancelar campaña
+     * Signature: (ctx, id) OR (id, idTenant)
      */
-    async cancelCampaign(id, idTenant) {
-        const existing = await this.getCampaign(id, idTenant);
+    async cancelCampaign(arg1, arg2) {
+        let db, tenantId, campaignId;
+
+        if (arg1 && (arg1.tenantId || arg1.query)) {
+            // (ctx, id)
+            db = getTenantDb(arg1);
+            tenantId = arg1.tenantId;
+            campaignId = arg2;
+        } else {
+            // (id, idTenant)
+            campaignId = arg1;
+            tenantId = arg2;
+            db = getTenantDb({ tenantId });
+        }
+
+        const existingResult = await db.query('SELECT status FROM email_campaign WHERE id = $1 AND id_tenant = $2', [campaignId, tenantId]);
+        const existing = existingResult.rows[0];
+
         if (!existing) throw new Error('Campaña no encontrada');
         if (existing.status === 'sent') throw new Error('No se puede cancelar una campaña ya enviada');
 
-        const result = await pool.query(`
+        const result = await db.query(`
             UPDATE email_campaign SET
                 status = 'cancelled',
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = $1 AND id_tenant = $2
             RETURNING *
-        `, [id, idTenant]);
+        `, [campaignId, tenantId]);
 
         return result.rows[0];
     }
 
     /**
      * Obtener destinatarios según filtro
+     * Internal method, typically called by this service.
+     * Updated to accept db instance or resolve it.
      */
-    async getRecipients(idTenant, filter) {
+    async getRecipients(ctxOrDb, idTenant, filter) {
+        // If ctxOrDb is db, use it. Else resolve.
+        // But getRecipients was (idTenant, filter).
+        // New signature: (db, idTenant, filter) or (ctx, idTenant, filter)?
+        // Or keep (idTenant, filter) and internally resolve? But we don't know tenantId in getRecipients without db/ctx.
+        // Wait, idTenant IS passed.
+        // But to query, we need db.
+        // So signature MUST change if we want to use tenantDb.
+        // I'll make it: (ctxOrDb, idTenant, filter).
+        // Since it's internal (mostly), I updated callers.
+
+        let db;
+        if (ctxOrDb.query) {
+            db = ctxOrDb;
+        } else {
+            db = getTenantDb(ctxOrDb);
+        }
+
         const filterObj = typeof filter === 'string' ? JSON.parse(filter) : filter;
         let query = '';
         let params = [idTenant];
@@ -279,23 +433,47 @@ class EmailCampaignService {
                 return [];
         }
 
-        const result = await pool.query(query, params);
+        const result = await db.query(query, params);
         return result.rows;
     }
 
     /**
      * Contar destinatarios según filtro
+     * Signature: (ctx, idTenant, filter) OR (db, idTenant, filter)
      */
-    async countRecipients(idTenant, filter) {
-        const recipients = await this.getRecipients(idTenant, filter);
+    async countRecipients(ctxOrDb, idTenant, filter) {
+        const recipients = await this.getRecipients(ctxOrDb, idTenant, filter);
         return recipients.length;
     }
 
     /**
      * Generar preview HTML con datos de ejemplo
+     * Signature: (ctx, id) OR (id, idTenant)
      */
-    async previewCampaign(id, idTenant) {
-        const campaign = await this.getCampaign(id, idTenant);
+    async previewCampaign(arg1, arg2) {
+        let db, tenantId, campaignId;
+
+        if (arg1 && (arg1.tenantId || arg1.query)) {
+            // (ctx, id)
+            db = getTenantDb(arg1);
+            tenantId = arg1.tenantId;
+            campaignId = arg2;
+        } else {
+            // (id, idTenant)
+            campaignId = arg1;
+            tenantId = arg2;
+            db = getTenantDb({ tenantId });
+        }
+
+        // Use getCampaign logic or query directly
+        const result = await db.query(`
+            SELECT c.*, p.titulo as promo_titulo
+            FROM email_campaign c
+            LEFT JOIN fidelizacion_promo p ON p.id = c.id_promo
+            WHERE c.id = $1 AND c.id_tenant = $2
+        `, [campaignId, tenantId]);
+        const campaign = result.rows[0];
+
         if (!campaign) throw new Error('Campaña no encontrada');
 
         const variables = {
@@ -320,15 +498,32 @@ class EmailCampaignService {
 
     /**
      * Eliminar campaña (solo borradores)
+     * Signature: (ctx, id) OR (id, idTenant)
      */
-    async deleteCampaign(id, idTenant) {
-        const existing = await this.getCampaign(id, idTenant);
+    async deleteCampaign(arg1, arg2) {
+        let db, tenantId, campaignId;
+
+        if (arg1 && (arg1.tenantId || arg1.query)) {
+            // (ctx, id)
+            db = getTenantDb(arg1);
+            tenantId = arg1.tenantId;
+            campaignId = arg2;
+        } else {
+            // (id, idTenant)
+            campaignId = arg1;
+            tenantId = arg2;
+            db = getTenantDb({ tenantId });
+        }
+
+        const existingResult = await db.query('SELECT status FROM email_campaign WHERE id = $1 AND id_tenant = $2', [campaignId, tenantId]);
+        const existing = existingResult.rows[0];
+
         if (!existing) throw new Error('Campaña no encontrada');
         if (existing.status !== 'draft' && existing.status !== 'cancelled') {
             throw new Error('Solo se pueden eliminar campañas en borrador o canceladas');
         }
 
-        await pool.query('DELETE FROM email_campaign WHERE id = $1 AND id_tenant = $2', [id, idTenant]);
+        await db.query('DELETE FROM email_campaign WHERE id = $1 AND id_tenant = $2', [campaignId, tenantId]);
         return true;
     }
 }

@@ -3,20 +3,11 @@
  * Logs access-related changes for compliance and security
  */
 
-const pool = require('../db');
+const { getTenantDb, getSystemDb } = require('../src/core/db/tenant-db');
 
 /**
  * Log an audit event
- * @param {object} params - Audit parameters
- * @param {number} params.actorUserId - User performing the action
- * @param {number} params.tenantId - Tenant context (optional)
- * @param {string} params.action - Action name (e.g., 'access.user.create')
- * @param {string} params.entityType - Type of entity ('user', 'role', 'permission')
- * @param {string|number} params.entityId - ID of the affected entity
- * @param {object} params.before - State before change (optional)
- * @param {object} params.after - State after change (optional)
- * @param {string} params.ipAddress - Client IP address (optional)
- * @param {string} params.userAgent - Client user agent (optional)
+ * ... (params omitted)
  */
 async function logAudit({
     actorUserId,
@@ -30,7 +21,8 @@ async function logAudit({
     userAgent = null
 }) {
     try {
-        await pool.query(`
+        const db = tenantId ? getTenantDb({ tenantId }) : getSystemDb();
+        await db.query(`
             INSERT INTO audit_logs 
             (actor_user_id, tenant_id, action, entity_type, entity_id, before_json, after_json, ip_address, user_agent)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
@@ -113,7 +105,8 @@ async function getAuditLogs({
     params.push(offset);
     query += ` OFFSET $${params.length}`;
 
-    const result = await pool.query(query, params);
+    const db = tenantId ? getTenantDb({ tenantId }) : getSystemDb();
+    const result = await db.query(query, params);
     return result.rows;
 }
 

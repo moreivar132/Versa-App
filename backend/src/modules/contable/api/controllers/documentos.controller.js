@@ -6,7 +6,7 @@
  * INCLUDES: Facturas + Orphan Intakes (IA uploads without linked factura)
  */
 
-const pool = require('../../../../../db');
+// pool removed
 const { getEffectiveTenant } = require('../../../../../middleware/rbac');
 const path = require('path');
 const fs = require('fs');
@@ -203,7 +203,7 @@ async function list(req, res) {
                 intakesQuery += ` ORDER BY i.created_at DESC`;
 
                 try {
-                    const intakesResult = await pool.query(intakesQuery, intakesParams);
+                    const intakesResult = await req.db.query(intakesQuery, intakesParams);
                     orphanIntakes = intakesResult.rows;
                 } catch (intakeError) {
                     console.warn('[Documentos] Warning: Could not fetch orphan intakes:', intakeError.message);
@@ -213,7 +213,7 @@ async function list(req, res) {
         }
 
         // Execute facturas query
-        const facturasResult = await pool.query(facturasQuery, facturasParams);
+        const facturasResult = await req.db.query(facturasQuery, facturasParams);
 
         // Combine results in JavaScript
         let allItems = [...facturasResult.rows, ...orphanIntakes];
@@ -343,7 +343,7 @@ async function serveArchivo(req, res) {
             return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
         }
 
-        const facturaCheck = await pool.query(`
+        const facturaCheck = await req.db.query(`
             SELECT f.id, f.id_empresa, f.intake_id
             FROM contabilidad_factura f
             WHERE f.id = $1 AND f.id_tenant = $2 AND f.deleted_at IS NULL
@@ -359,7 +359,7 @@ async function serveArchivo(req, res) {
             return res.status(403).json({ ok: false, error: 'Acceso denegado a esta empresa' });
         }
 
-        let fileInfo = await pool.query(`
+        let fileInfo = await req.db.query(`
             SELECT file_url, storage_key, mime_type, original_name
             FROM contabilidad_factura_archivo
             WHERE id_factura = $1
@@ -375,7 +375,7 @@ async function serveArchivo(req, res) {
             mimeType = fileInfo.rows[0].mime_type;
             originalName = fileInfo.rows[0].original_name;
         } else if (factura.intake_id) {
-            const intakeInfo = await pool.query(`
+            const intakeInfo = await req.db.query(`
                 SELECT file_url, file_storage_key, file_mime, file_original_name
                 FROM accounting_intake
                 WHERE id = $1
@@ -416,7 +416,7 @@ async function serveIntakeArchivo(req, res) {
             return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
         }
 
-        const intakeCheck = await pool.query(`
+        const intakeCheck = await req.db.query(`
             SELECT id, id_empresa, file_url, file_storage_key, file_mime, file_original_name
             FROM accounting_intake
             WHERE id = $1 AND id_tenant = $2

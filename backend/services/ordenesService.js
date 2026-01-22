@@ -1,5 +1,15 @@
 const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const ordenesRepository = require('../repositories/ordenesRepository');
+
+// Helper to build tenant context from userContext
+function buildCtx(userContext) {
+    return {
+        tenantId: userContext.id_tenant,
+        userId: userContext.id_usuario || userContext.id,
+        requestId: userContext.requestId
+    };
+}
 
 class OrdenesService {
     async createOrden(data, userContext) {
@@ -204,12 +214,10 @@ class OrdenesService {
         }
 
         // 6. Transacción
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-
+        const db = getTenantDb(buildCtx(userContext));
+        return await db.txWithRLS(async (tx) => {
             // 0. Resolver Almacén (Para movimientos de inventario)
-            const idAlmacen = await ordenesRepository.ensureAlmacenPrincipal(idSucursal, client);
+            const idAlmacen = await ordenesRepository.ensureAlmacenPrincipal(idSucursal, tx);
 
             // Crear Cabecera Orden
             const ordenData = {
@@ -227,7 +235,7 @@ class OrdenesService {
                 created_by: id_usuario
             };
 
-            const nuevaOrden = await ordenesRepository.createOrden(client, ordenData);
+            const nuevaOrden = await ordenesRepository.createOrden(tx, ordenData);
             const idOrden = nuevaOrden.id;
 
             // Insertar Líneas
@@ -235,7 +243,7 @@ class OrdenesService {
             let totalIva = 0;
 
             for (const linea of lineasProcesadas) {
-                await ordenesRepository.createOrdenLinea(client, {
+                await ordenesRepository.createOrdenLinea(tx, {
                     id_orden: idOrden,
                     id_producto: linea.idProducto,
                     id_impuesto: linea.idImpuesto,
@@ -252,10 +260,10 @@ class OrdenesService {
                 const esServicio = normalizarTipoItem(linea.tipoItem) === 'SERVICIO';
 
                 if (linea.idProducto && !esServicio) {
-                    await ordenesRepository.decreaseProductoStock(client, linea.idProducto, linea.cantidad);
+                    await ordenesRepository.decreaseProductoStock(tx, linea.idProducto, linea.cantidad);
 
                     // Registrar Movimiento de Inventario (SALIDA por ORDEN)
-                    await ordenesRepository.createMovimientoInventario(client, {
+                    await ordenesRepository.createMovimientoInventario(tx, {
                         id_producto: linea.idProducto,
                         id_almacen: idAlmacen,
                         tipo: 'SALIDA',
@@ -275,11 +283,11 @@ class OrdenesService {
             // Insertar Pagos y Movimientos de Caja
             let idCajaActual = null;
             if (pagosProcesados.length > 0) {
-                const cajaAbierta = await ordenesRepository.getOpenCaja(client, idSucursal);
+                const cajaAbierta = await ordenesRepository.getOpenCaja(tx, idSucursal);
                 if (cajaAbierta) {
                     idCajaActual = cajaAbierta.id;
                 } else {
-                    const nuevaCaja = await ordenesRepository.createOpenCaja(client, idSucursal, id_usuario);
+                    const nuevaCaja = await ordenesRepository.createOpenCaja(tx, idSucursal, id_usuario);
                     idCajaActual = nuevaCaja.id;
                 }
             }
@@ -288,7 +296,7 @@ class OrdenesService {
                 // SIEMPRE usar la caja de la sucursal de la orden (ignorar idCaja del frontend)
                 const idCajaFinal = idCajaActual;
 
-                const pagoCreado = await ordenesRepository.createOrdenPago(client, {
+                const pagoCreado = await ordenesRepository.createOrdenPago(tx, {
                     id_orden: idOrden,
                     id_medio_pago: pago.idMedioPago,
                     importe: pago.importe,
@@ -303,7 +311,7 @@ class OrdenesService {
                 console.log(`[createOrden] Pago ${pago.importe}€ - Medio: ${codigoMedio} - Caja: ${idCajaFinal}`);
 
                 if (!mediosSinCaja.includes(codigoMedio) && idCajaFinal) {
-                    await ordenesRepository.createCajaMovimiento(client, {
+                    await ordenesRepository.createCajaMovimiento(tx, {
                         id_caja: idCajaFinal,
                         id_usuario: id_usuario,
                         tipo: 'INGRESO',
@@ -317,13 +325,11 @@ class OrdenesService {
             }
 
             // Actualizar Totales en Orden
-            await ordenesRepository.updateOrdenTotales(client, idOrden, {
+            await ordenesRepository.updateOrdenTotales(tx, idOrden, {
                 total_bruto: totalBruto,
                 total_iva: totalIva,
                 total_neto: totalNeto
             });
-
-            await client.query('COMMIT');
 
             return {
                 id: idOrden,
@@ -333,13 +339,7 @@ class OrdenesService {
                 lineas: lineasProcesadas.length,
                 pagos: pagosProcesados.length
             };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 
     /**
@@ -473,7 +473,8 @@ class OrdenesService {
         query += ` ORDER BY o.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
         values.push(limit, offset);
 
-        const result = await pool.query(query, values);
+        const db = getTenantDb(buildCtx(userContext));
+        const result = await db.query(query, values);
 
         // Obtener total para paginación (sin LIMIT)
         let countQuery = `
@@ -495,7 +496,7 @@ class OrdenesService {
             countValues.push(`%${busqueda}%`);
         }
 
-        const countResult = await pool.query(countQuery, countValues);
+        const countResult = await db.query(countQuery, countValues);
 
         return {
             ordenes: result.rows,
@@ -554,7 +555,8 @@ class OrdenesService {
             WHERE o.id = $1 AND s.id_tenant = $2
         `;
 
-        const ordenResult = await pool.query(ordenQuery, [idOrden, id_tenant]);
+        const db = getTenantDb(buildCtx(userContext));
+        const ordenResult = await db.query(ordenQuery, [idOrden, id_tenant]);
 
         if (ordenResult.rows.length === 0) {
             throw new Error('Orden no encontrada');
@@ -592,7 +594,7 @@ class OrdenesService {
             ORDER BY ol.id ASC
         `;
 
-        const lineasResult = await pool.query(lineasQuery, [idOrden]);
+        const lineasResult = await db.query(lineasQuery, [idOrden]);
 
         // Query para obtener los pagos de la orden
         const pagosQuery = `
@@ -610,7 +612,7 @@ class OrdenesService {
             ORDER BY op.created_at ASC
         `;
 
-        const pagosResult = await pool.query(pagosQuery, [idOrden]);
+        const pagosResult = await db.query(pagosQuery, [idOrden]);
 
         return {
             orden: orden,
@@ -643,7 +645,8 @@ class OrdenesService {
         } = data;
 
         // Verificar que la orden existe y pertenece al tenant
-        const ordenExistente = await pool.query(`
+        const db = getTenantDb(buildCtx(userContext));
+        const ordenExistente = await db.query(`
             SELECT o.id FROM orden o 
             JOIN sucursal s ON o.id_sucursal = s.id 
             WHERE o.id = $1 AND s.id_tenant = $2
@@ -741,10 +744,9 @@ class OrdenesService {
         }
 
         // Transacción
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
-
+        // Transacción
+        // const db = getTenantDb(buildCtx(userContext)); // Removed duplicate declaration
+        return await db.txWithRLS(async (tx) => {
             // Actualizar cabecera de la orden
             const updateFields = [];
             const updateValues = [];
@@ -802,7 +804,7 @@ class OrdenesService {
                     SET ${updateFields.join(', ')}
                     WHERE id = $${paramIndex}
                 `;
-                await client.query(updateQuery, updateValues);
+                await tx.query(updateQuery, updateValues);
             }
 
             // Si hay líneas, procesarlas
@@ -811,14 +813,14 @@ class OrdenesService {
 
             if (lineasProcesadas.length > 0) {
                 // Obtener líneas actuales
-                const lineasActualesResult = await client.query(
+                const lineasActualesResult = await tx.query(
                     'SELECT id, id_producto, cantidad FROM ordenlinea WHERE id_orden = $1',
                     [idOrden]
                 );
                 const lineasActualesMap = new Map(lineasActualesResult.rows.map(l => [l.id, l]));
 
                 // Obtener almacén para movimientos de inventario
-                const almacenResult = await client.query(
+                const almacenResult = await tx.query(
                     'SELECT id FROM almacen WHERE id_sucursal = (SELECT id_sucursal FROM orden WHERE id = $1) LIMIT 1',
                     [idOrden]
                 );
@@ -832,13 +834,13 @@ class OrdenesService {
                     if (!lineasIdsEnRequest.includes(lineaId)) {
                         // Devolver stock si era un producto
                         if (lineaActual.id_producto) {
-                            await client.query(
+                            await tx.query(
                                 'UPDATE producto SET stock = COALESCE(stock, 0) + $1 WHERE id = $2',
                                 [lineaActual.cantidad, lineaActual.id_producto]
                             );
                             // Registrar movimiento de entrada (devolución)
                             if (idAlmacen) {
-                                await ordenesRepository.createMovimientoInventario(client, {
+                                await ordenesRepository.createMovimientoInventario(tx, {
                                     id_producto: lineaActual.id_producto,
                                     id_almacen: idAlmacen,
                                     tipo: 'ENTRADA',
@@ -850,7 +852,7 @@ class OrdenesService {
                             }
                         }
                         // Eliminar la línea
-                        await client.query('DELETE FROM ordenlinea WHERE id = $1', [lineaId]);
+                        await tx.query('DELETE FROM ordenlinea WHERE id = $1', [lineaId]);
                     }
                 }
 
@@ -868,9 +870,9 @@ class OrdenesService {
                             if (diferenciaCantidad !== 0) {
                                 if (diferenciaCantidad > 0) {
                                     // Más cantidad = más salida
-                                    await ordenesRepository.decreaseProductoStock(client, linea.idProducto, diferenciaCantidad);
+                                    await ordenesRepository.decreaseProductoStock(tx, linea.idProducto, diferenciaCantidad);
                                     if (idAlmacen) {
-                                        await ordenesRepository.createMovimientoInventario(client, {
+                                        await ordenesRepository.createMovimientoInventario(tx, {
                                             id_producto: linea.idProducto,
                                             id_almacen: idAlmacen,
                                             tipo: 'SALIDA',
@@ -882,12 +884,12 @@ class OrdenesService {
                                     }
                                 } else {
                                     // Menos cantidad = devolvemos stock
-                                    await client.query(
+                                    await tx.query(
                                         'UPDATE producto SET stock = COALESCE(stock, 0) + $1 WHERE id = $2',
                                         [Math.abs(diferenciaCantidad), linea.idProducto]
                                     );
                                     if (idAlmacen) {
-                                        await ordenesRepository.createMovimientoInventario(client, {
+                                        await ordenesRepository.createMovimientoInventario(tx, {
                                             id_producto: linea.idProducto,
                                             id_almacen: idAlmacen,
                                             tipo: 'ENTRADA',
@@ -902,7 +904,7 @@ class OrdenesService {
                         }
 
                         // Actualizar la línea
-                        await client.query(`
+                        await tx.query(`
                             UPDATE ordenlinea SET
                                 id_producto = $1,
                                 id_impuesto = $2,
@@ -929,7 +931,7 @@ class OrdenesService {
                         ]);
                     } else {
                         // Crear nueva línea
-                        await ordenesRepository.createOrdenLinea(client, {
+                        await ordenesRepository.createOrdenLinea(tx, {
                             id_orden: idOrden,
                             id_producto: linea.idProducto,
                             id_impuesto: linea.idImpuesto,
@@ -944,9 +946,9 @@ class OrdenesService {
 
                         // Descontar stock si es producto nuevo
                         if (linea.idProducto && !esServicio) {
-                            await ordenesRepository.decreaseProductoStock(client, linea.idProducto, linea.cantidad);
+                            await ordenesRepository.decreaseProductoStock(tx, linea.idProducto, linea.cantidad);
                             if (idAlmacen) {
-                                await ordenesRepository.createMovimientoInventario(client, {
+                                await ordenesRepository.createMovimientoInventario(tx, {
                                     id_producto: linea.idProducto,
                                     id_almacen: idAlmacen,
                                     tipo: 'SALIDA',
@@ -965,7 +967,7 @@ class OrdenesService {
 
                 // Actualizar totales
                 const totalNeto = totalBruto + totalIva;
-                await ordenesRepository.updateOrdenTotales(client, idOrden, {
+                await ordenesRepository.updateOrdenTotales(tx, idOrden, {
                     total_bruto: totalBruto,
                     total_iva: totalIva,
                     total_neto: totalNeto
@@ -977,13 +979,13 @@ class OrdenesService {
                 console.log(`[updateOrden] Eliminando ${pagosEliminados.length} pagos:`, pagosEliminados);
                 for (const idPago of pagosEliminados) {
                     // Primero eliminar movimientos de caja asociados
-                    await client.query(`
+                    await tx.query(`
                         DELETE FROM cajamovimiento 
                         WHERE origen_tipo = 'ORDEN_PAGO' AND origen_id = $1
                     `, [idOrden]);
 
                     // Luego eliminar el pago
-                    await client.query('DELETE FROM ordenpago WHERE id = $1 AND id_orden = $2', [idPago, idOrden]);
+                    await tx.query('DELETE FROM ordenpago WHERE id = $1 AND id_orden = $2', [idPago, idOrden]);
                     console.log(`[updateOrden] Pago ${idPago} y sus movimientos de caja eliminados`);
                 }
             }
@@ -993,13 +995,13 @@ class OrdenesService {
             console.log(`[updateOrden] Pagos recibidos: ${pagos ? pagos.length : 0}`, pagos);
             if (pagos && pagos.length > 0) {
                 // Validar que el total a pagar no exceda el total de la orden
-                const ordenInfo = await client.query(
+                const ordenInfo = await tx.query(
                     'SELECT total_neto FROM orden WHERE id = $1',
                     [idOrden]
                 );
                 const totalOrden = parseFloat(ordenInfo.rows[0]?.total_neto) || 0;
 
-                const pagosExistentes = await client.query(
+                const pagosExistentes = await tx.query(
                     'SELECT COALESCE(SUM(importe), 0) as total_pagado FROM ordenpago WHERE id_orden = $1',
                     [idOrden]
                 );
@@ -1016,14 +1018,14 @@ class OrdenesService {
 
                 // Obtener o crear caja abierta
                 let idCajaActual = null;
-                const sucursalId = idSucursal || (await client.query('SELECT id_sucursal FROM orden WHERE id = $1', [idOrden])).rows[0]?.id_sucursal;
+                const sucursalId = idSucursal || (await tx.query('SELECT id_sucursal FROM orden WHERE id = $1', [idOrden])).rows[0]?.id_sucursal;
 
                 if (sucursalId) {
-                    const cajaAbierta = await ordenesRepository.getOpenCaja(client, sucursalId);
+                    const cajaAbierta = await ordenesRepository.getOpenCaja(tx, sucursalId);
                     if (cajaAbierta) {
                         idCajaActual = cajaAbierta.id;
                     } else {
-                        const nuevaCaja = await ordenesRepository.createOpenCaja(client, sucursalId, id_usuario);
+                        const nuevaCaja = await ordenesRepository.createOpenCaja(tx, sucursalId, id_usuario);
                         idCajaActual = nuevaCaja.id;
                     }
                 }
@@ -1042,7 +1044,7 @@ class OrdenesService {
                     const idCajaFinal = idCajaActual;
 
                     // Crear registro de pago
-                    await ordenesRepository.createOrdenPago(client, {
+                    await ordenesRepository.createOrdenPago(tx, {
                         id_orden: idOrden,
                         id_medio_pago: medio.id,
                         importe: pago.importe,
@@ -1057,7 +1059,7 @@ class OrdenesService {
                     console.log(`[updateOrden] Pago ${pago.importe}€ - Medio: ${codigoMedio} - Caja: ${idCajaFinal}`);
 
                     if (!mediosSinCaja.includes(codigoMedio) && idCajaFinal) {
-                        await ordenesRepository.createCajaMovimiento(client, {
+                        await ordenesRepository.createCajaMovimiento(tx, {
                             id_caja: idCajaFinal,
                             id_usuario: id_usuario,
                             tipo: 'INGRESO',
@@ -1073,8 +1075,6 @@ class OrdenesService {
                 }
             }
 
-            await client.query('COMMIT');
-
             return {
                 id: idOrden,
                 message: 'Orden actualizada correctamente',
@@ -1084,13 +1084,7 @@ class OrdenesService {
                 lineas: lineasProcesadas.length,
                 pagos: pagosProcesados
             };
-
-        } catch (error) {
-            await client.query('ROLLBACK');
-            throw error;
-        } finally {
-            client.release();
-        }
+        });
     }
 
     /**
@@ -1100,7 +1094,8 @@ class OrdenesService {
         const { id_usuario } = userContext;
 
         // Verificar que la orden existe
-        const ordenExistente = await pool.query('SELECT id FROM orden WHERE id = $1', [idOrden]);
+        const db = getTenantDb(buildCtx(userContext));
+        const ordenExistente = await db.query('SELECT id FROM orden WHERE id = $1', [idOrden]);
         if (ordenExistente.rows.length === 0) {
             throw new Error('Orden no encontrada');
         }
@@ -1116,14 +1111,15 @@ class OrdenesService {
         }
 
         // Actualizar estado
-        await pool.query(`
+        // const db = getTenantDb(buildCtx(userContext)); // Removed duplicate declaration
+        await db.query(`
             UPDATE orden 
             SET id_estado_orden = $1, updated_at = NOW(), updated_by = $2
             WHERE id = $3
         `, [estadoOrden.id, id_usuario, idOrden]);
 
         // Obtener datos del estado para retornar
-        const estadoResult = await pool.query(
+        const estadoResult = await db.query(
             'SELECT id, codigo, nombre FROM estadoorden WHERE id = $1',
             [estadoOrden.id]
         );
@@ -1138,8 +1134,9 @@ class OrdenesService {
     /**
      * Obtiene todos los estados de orden disponibles
      */
-    async getEstadosOrden() {
-        const result = await pool.query(
+    async getEstadosOrden(userContext) {
+        const db = getTenantDb(buildCtx(userContext));
+        const result = await db.query(
             'SELECT id, codigo, nombre, color, orden FROM estadoorden ORDER BY COALESCE(orden, id) ASC'
         );
         return result.rows;
@@ -1148,10 +1145,11 @@ class OrdenesService {
     /**
      * Actualiza un estado de orden (nombre, color, orden)
      */
-    async updateEstadoOrdenConfig(idEstado, data) {
+    async updateEstadoOrdenConfig(idEstado, data, userContext) {
         const { nombre, color, orden } = data;
+        const db = getTenantDb(buildCtx(userContext));
 
-        const result = await pool.query(`
+        const result = await db.query(`
             UPDATE estadoorden 
             SET nombre = COALESCE($1, nombre),
                 color = COALESCE($2, color),
@@ -1170,10 +1168,12 @@ class OrdenesService {
     /**
      * Actualiza múltiples estados de orden a la vez
      */
-    async updateEstadosOrdenBatch(estados) {
+    async updateEstadosOrdenBatch(estados, userContext) {
         const results = [];
+        const db = getTenantDb(buildCtx(userContext));
+
         for (const estado of estados) {
-            const result = await pool.query(`
+            const result = await db.query(`
                 UPDATE estadoorden 
                 SET nombre = COALESCE($1, nombre),
                     color = COALESCE($2, color),
