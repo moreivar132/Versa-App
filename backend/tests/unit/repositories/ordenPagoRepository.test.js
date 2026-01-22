@@ -34,7 +34,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rowCount: 1 });
 
             // Act
-            const resultado = await ordenPagoRepository.existeOrden(idOrden);
+            const resultado = await ordenPagoRepository.existeOrden(mockPool, idOrden);
 
             // Assert
             expect(resultado).toBe(true);
@@ -50,7 +50,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rowCount: 0 });
 
             // Act
-            const resultado = await ordenPagoRepository.existeOrden(idOrden);
+            const resultado = await ordenPagoRepository.existeOrden(mockPool, idOrden);
 
             // Assert
             expect(resultado).toBe(false);
@@ -71,7 +71,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [ordenData] });
 
             // Act
-            const resultado = await ordenPagoRepository.obtenerDatosOrden(idOrden);
+            const resultado = await ordenPagoRepository.obtenerDatosOrden(mockPool, idOrden);
 
             // Assert
             expect(resultado).toEqual(ordenData);
@@ -87,7 +87,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [] });
 
             // Act
-            const resultado = await ordenPagoRepository.obtenerDatosOrden(idOrden);
+            const resultado = await ordenPagoRepository.obtenerDatosOrden(mockPool, idOrden);
 
             // Assert
             expect(resultado).toBeUndefined();
@@ -107,7 +107,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [mediosPago.efectivo] });
 
             // Act
-            const resultado = await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(codigo);
+            const resultado = await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(mockPool, codigo);
 
             // Assert
             expect(resultado).toEqual(mediosPago.efectivo);
@@ -123,7 +123,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [mediosPago.efectivo] });
 
             // Act
-            const resultado = await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(id);
+            const resultado = await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(mockPool, id);
 
             // Assert
             expect(resultado).toEqual(mediosPago.efectivo);
@@ -139,7 +139,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [] });
 
             // Act
-            const resultado = await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(codigo);
+            const resultado = await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(mockPool, codigo);
 
             // Assert
             expect(resultado).toBeNull();
@@ -151,7 +151,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [mediosPago.efectivo] });
 
             // Act
-            await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(codigo);
+            await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(mockPool, codigo);
 
             // Assert
             expect(mockPool.query).toHaveBeenCalledWith(
@@ -166,7 +166,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [mediosPago.efectivo] });
 
             // Act
-            await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(id);
+            await ordenPagoRepository.obtenerMedioPagoPorCodigoOId(mockPool, id);
 
             // Assert
             // isNaN('1') es false, por lo que debería buscar por ID
@@ -190,7 +190,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rowCount: 1 });
 
             // Act
-            const resultado = await ordenPagoRepository.existeCaja(idCaja);
+            const resultado = await ordenPagoRepository.existeCaja(mockPool, idCaja);
 
             // Assert
             expect(resultado).toBe(true);
@@ -206,7 +206,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rowCount: 0 });
 
             // Act
-            const resultado = await ordenPagoRepository.existeCaja(idCaja);
+            const resultado = await ordenPagoRepository.existeCaja(mockPool, idCaja);
 
             // Assert
             expect(resultado).toBe(false);
@@ -235,7 +235,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [pagoInsertado] });
 
             // Act
-            const resultado = await ordenPagoRepository.insertarPagoOrden(pagoData);
+            const resultado = await ordenPagoRepository.insertarPagoOrden(mockPool, pagoData);
 
             // Assert
             expect(resultado).toEqual(pagoInsertado);
@@ -268,7 +268,7 @@ describe('OrdenPagoRepository', () => {
             };
 
             // Act
-            await ordenPagoRepository.insertarPagoOrden(pagoData, mockClient);
+            await ordenPagoRepository.insertarPagoOrden(mockClient, pagoData);
 
             // Assert
             expect(mockClient.query).toHaveBeenCalled();
@@ -289,7 +289,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [{ id: 1 }] });
 
             // Act
-            await ordenPagoRepository.insertarPagoOrden(pagoData);
+            await ordenPagoRepository.insertarPagoOrden(mockPool, pagoData);
 
             // Assert
             expect(mockPool.query).toHaveBeenCalledWith(
@@ -316,7 +316,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: pagosOrden });
 
             // Act
-            const resultado = await ordenPagoRepository.obtenerPagosPorOrden(idOrden);
+            const resultado = await ordenPagoRepository.obtenerPagosPorOrden(mockPool, idOrden);
 
             // Assert
             expect(resultado).toEqual(pagosOrden);
@@ -333,7 +333,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: [] });
 
             // Act
-            const resultado = await ordenPagoRepository.obtenerPagosPorOrden(idOrden);
+            const resultado = await ordenPagoRepository.obtenerPagosPorOrden(mockPool, idOrden);
 
             // Assert
             expect(resultado).toEqual([]);
@@ -359,7 +359,7 @@ describe('OrdenPagoRepository', () => {
             mockPool.query.mockResolvedValue({ rows: todosMedios });
 
             // Act
-            const resultado = await ordenPagoRepository.obtenerTodosMediosPago();
+            const resultado = await ordenPagoRepository.obtenerTodosMediosPago(mockPool);
 
             // Assert
             expect(resultado).toEqual(todosMedios);

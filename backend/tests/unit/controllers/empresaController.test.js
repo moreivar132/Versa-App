@@ -3,28 +3,35 @@
  */
 
 const empresaController = require('../../../src/modules/contable/api/controllers/empresa.controller');
-const pool = require('../../../db');
 const { getEffectiveTenant } = require('../../../middleware/rbac');
 
-// Mocks
-jest.mock('../../../db', () => ({
-    query: jest.fn(),
-    connect: jest.fn()
-}));
-
+// Mock middlewares
 jest.mock('../../../middleware/rbac', () => ({
-    getEffectiveTenant: jest.fn()
+    getEffectiveTenant: jest.fn(),
+    isSuperAdmin: jest.fn().mockResolvedValue(false)
 }));
 
 describe('Empresa Controller', () => {
-    let req, res;
+    let req, res, mockDb;
 
     beforeEach(() => {
         jest.clearAllMocks();
+
+        // Mock DB interface
+        mockDb = {
+            query: jest.fn(),
+            txWithRLS: jest.fn(async (callback) => {
+                // Simulate transaction by just calling the callback with the same mockDb
+                // In a real scenario, this might need a separate mockClient if we test isolation
+                return await callback(mockDb);
+            })
+        };
+
         req = {
             user: { id: 1, rol: 'user' },
             params: {},
-            body: {}
+            body: {},
+            db: mockDb // Inject mock DB
         };
         res = {
             status: jest.fn().mockReturnThis(),
@@ -43,31 +50,21 @@ describe('Empresa Controller', () => {
                 nif_cif: 'B12345678'
             };
 
-            const mockClient = {
-                query: jest.fn(),
-                release: jest.fn()
-            };
-            pool.connect.mockResolvedValue(mockClient);
-
-            // Mock queries: 
-            // 1. BEGIN
-            // 2. Check Count
-            // 3. Insert Empresa
-            // 4. Insert Cuenta
-            // 5. Insert Usuario
-            // 6. COMMIT
-            mockClient.query
-                .mockResolvedValueOnce({}) // BEGIN
+            // Mock queries for txWithRLS flow:
+            // 1. Check Count (tx.query)
+            // 2. Insert Empresa (tx.query)
+            // 3. Insert Cuenta (tx.query)
+            // 4. Insert Usuario (tx.query)
+            mockDb.query
                 .mockResolvedValueOnce({ rows: [{ count: 0 }] }) // Check default
                 .mockResolvedValueOnce({ rows: [{ id: 1, nombre_legal: 'Mi Empresa SL', es_default: true }] }) // Insert Empresa
                 .mockResolvedValueOnce({}) // Insert Cuenta
-                .mockResolvedValueOnce({}) // Insert Usuario
-                .mockResolvedValueOnce({}); // COMMIT
+                .mockResolvedValueOnce({}); // Insert Usuario
 
             await empresaController.create(req, res);
 
-            expect(pool.connect).toHaveBeenCalled();
-            expect(mockClient.query).toHaveBeenCalledTimes(6); // BEGIN, Check, Create Empresa, Create Cuenta, Create User Assoc, COMMIT
+            expect(mockDb.txWithRLS).toHaveBeenCalled();
+            expect(mockDb.query).toHaveBeenCalledTimes(4);
 
             // Checking response
             expect(res.status).toHaveBeenCalledWith(201);
@@ -93,31 +90,35 @@ describe('Empresa Controller', () => {
     describe('list', () => {
         test('debería listar empresas para admin', async () => {
             req.user.rol = 'admin';
-            pool.query.mockResolvedValue({
+            mockDb.query.mockResolvedValue({
                 rows: [{ id: 1, nombre_legal: 'Empresa 1' }, { id: 2, nombre_legal: 'Empresa 2' }]
             });
 
             await empresaController.list(req, res);
 
-            expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('SELECT e.*'), [1]);
+            expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('SELECT e.*'), [1]);
             expect(res.json).toHaveBeenCalledWith({
                 ok: true,
-                data: expect.arrayContaining([{ id: 1, nombre_legal: 'Empresa 1' }])
+                data: expect.objectContaining({
+                    items: expect.arrayContaining([{ id: 1, nombre_legal: 'Empresa 1' }])
+                })
             });
         });
 
         test('debería listar solo asignadas para usuario normal', async () => {
             req.user.rol = 'user';
-            pool.query.mockResolvedValue({
+            mockDb.query.mockResolvedValue({
                 rows: [{ id: 1, nombre_legal: 'Empresa Asignada' }]
             });
 
             await empresaController.list(req, res);
 
-            expect(pool.query).toHaveBeenCalledWith(expect.stringContaining('JOIN accounting_usuario_empresa'), [1, 1]);
+            expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('JOIN accounting_usuario_empresa'), [1, 1]);
             expect(res.json).toHaveBeenCalledWith({
                 ok: true,
-                data: expect.arrayContaining([{ id: 1, nombre_legal: 'Empresa Asignada' }])
+                data: expect.objectContaining({
+                    items: expect.arrayContaining([{ id: 1, nombre_legal: 'Empresa Asignada' }])
+                })
             });
         });
     });
@@ -131,13 +132,13 @@ describe('Empresa Controller', () => {
             req.body = { nombre_legal: 'Nuevo Nombre' };
 
             // Check existence
-            pool.query
+            mockDb.query
                 .mockResolvedValueOnce({ rows: [{ id: 1 }] }) // Exists check
                 .mockResolvedValueOnce({ rows: [{ id: 1, nombre_legal: 'Nuevo Nombre' }] }); // Update returning
 
             await empresaController.update(req, res);
 
-            expect(pool.query).toHaveBeenCalledTimes(2);
+            expect(mockDb.query).toHaveBeenCalledTimes(2);
             expect(res.json).toHaveBeenCalledWith({
                 ok: true,
                 data: expect.objectContaining({ nombre_legal: 'Nuevo Nombre' }),
@@ -149,7 +150,7 @@ describe('Empresa Controller', () => {
             req.params.id = 999;
             req.body = { nombre_legal: 'Nuevo Nombre' };
 
-            pool.query.mockResolvedValueOnce({ rows: [] }); // Not found
+            mockDb.query.mockResolvedValueOnce({ rows: [] }); // Not found
 
             await empresaController.update(req, res);
 

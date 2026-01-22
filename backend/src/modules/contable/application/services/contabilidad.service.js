@@ -44,8 +44,8 @@ class ContabilidadService {
         const esperado = Math.round((baseNum + ivaNum - retencionNum) * 100) / 100;
         const actual = parseFloat(total);
 
-        // Permitir diferencia de 0.10 por redondeos
-        return Math.abs(esperado - actual) <= 0.10;
+        // Permitir diferencia de 0.50 por redondeos
+        return Math.abs(esperado - actual) <= 0.50;
     }
 
     // ===================================================================

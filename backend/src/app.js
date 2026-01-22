@@ -19,8 +19,8 @@ const pool = require('../db');
 const authRouter = require('../routes/auth');
 const superAdminRouter = require('../routes/superAdminRoutes');
 const proveedoresRouter = require('../routes/proveedores');
-const clientesRouter = require('../routes/clientes');
-const vehiculosRouter = require('../routes/vehiculos');
+const clientesRouter = require('./modules/clientes/api/clientes.routes');
+const vehiculosRouter = require('./modules/vehiculos/api/vehiculos.routes');
 const verifyJWT = require('../middleware/auth');
 
 // --- Core Middlewares (Observabilidad) ---
@@ -91,6 +91,7 @@ function createApp() {
     // Módulo Contable V2 (NEW - Priority)
     console.log('[App] Registrando módulo contable en /api/contabilidad');
     app.use('/api/contabilidad', require('./modules/contable/api/contabilidad.routes'));
+    app.use('/api/me', require('../routes/meRoutes'));
     app.use('/api/access', require('../routes/accessRoutes'));
     app.use('/api/proveedores', proveedoresRouter);
     app.use('/api/clientes', clientesRouter);

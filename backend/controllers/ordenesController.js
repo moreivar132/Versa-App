@@ -1,4 +1,6 @@
 const ordenesService = require('../services/ordenesService');
+const auditService = require('../src/core/logging/audit-service');
+const { AUDIT_ACTIONS } = auditService;
 
 class OrdenesController {
     async createOrden(req, res) {
@@ -10,6 +12,14 @@ class OrdenesController {
             };
 
             const result = await ordenesService.createOrden(req.body, userContext);
+
+            // Audit Log
+            auditService.register(req, AUDIT_ACTIONS.ORDEN_CREATE, {
+                entityType: 'ORDEN',
+                entityId: result.id,
+                after: result
+            });
+
             res.status(201).json({ ok: true, ...result });
         } catch (error) {
             console.error('Error creando orden:', error);
@@ -95,7 +105,18 @@ class OrdenesController {
                 return res.status(400).json({ ok: false, error: 'ID de orden inválido' });
             }
 
+            // Get old data for audit before update
+            const oldOrden = await ordenesService.getOrdenById(idOrden, userContext);
             const result = await ordenesService.updateOrden(idOrden, req.body, userContext);
+
+            // Audit Log
+            auditService.register(req, AUDIT_ACTIONS.ORDEN_UPDATE, {
+                entityType: 'ORDEN',
+                entityId: idOrden,
+                before: oldOrden,
+                after: result
+            });
+
             res.status(200).json({ ok: true, ...result });
         } catch (error) {
             console.error('Error actualizando orden:', error);
@@ -129,7 +150,18 @@ class OrdenesController {
                 return res.status(400).json({ ok: false, error: 'Debe proporcionar idEstadoOrden o codigoEstado' });
             }
 
+            // Get old data for audit
+            const oldOrden = await ordenesService.getOrdenById(idOrden, userContext);
             const result = await ordenesService.updateEstadoOrden(idOrden, { idEstadoOrden, codigoEstado }, userContext);
+
+            // Audit Log
+            auditService.register(req, AUDIT_ACTIONS.ORDEN_STATUS_CHANGE, {
+                entityType: 'ORDEN',
+                entityId: idOrden,
+                before: { estado: oldOrden.id_estado_orden || oldOrden.estado_codigo },
+                after: { estado: idEstadoOrden || codigoEstado, result }
+            });
+
             res.status(200).json({ ok: true, ...result });
         } catch (error) {
             console.error('Error actualizando estado de orden:', error);

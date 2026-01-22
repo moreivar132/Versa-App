@@ -33,9 +33,12 @@ class OrdenesService {
             pagos
         } = data;
 
-        const kmNumber = km !== undefined && km !== null && km !== '' ? Number(km) : 0;
-        if (Number.isNaN(kmNumber) || kmNumber < 0) {
-            throw new Error('Kilometraje inválido');
+        if (km === undefined || km === null || km === '') {
+            throw new Error('km es obligatorio');
+        }
+        const kmNumber = Number(km);
+        if (Number.isNaN(kmNumber) || kmNumber < 1) {
+            throw new Error('km debe ser un número mayor o igual a 1');
         }
 
         // 1. Validaciones básicas de campos obligatorios
@@ -655,9 +658,12 @@ class OrdenesService {
             throw new Error('Orden no encontrada');
         }
 
-        const kmNumber = km !== undefined && km !== null && km !== '' ? Number(km) : 0;
-        if (Number.isNaN(kmNumber) || kmNumber < 0) {
-            throw new Error('Kilometraje inválido');
+        if (km === undefined || km === null || km === '') {
+            throw new Error('km es obligatorio');
+        }
+        const kmNumber = Number(km);
+        if (Number.isNaN(kmNumber) || kmNumber < 1) {
+            throw new Error('km debe ser un número mayor o igual a 1');
         }
 
         // Lookup TipoOrden si se proporciona
