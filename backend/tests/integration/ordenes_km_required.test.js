@@ -8,16 +8,23 @@
  * 4. Acepta órdenes con km válido >= 1
  */
 
-const OrdenesService = require('../../services/ordenesService');
-
 // Mock del pool
-jest.mock('../../db', () => ({
+const mockPool = {
     query: jest.fn(),
     connect: jest.fn(() => ({
         query: jest.fn(),
         release: jest.fn()
-    }))
+    })),
+    txWithRLS: jest.fn(async (cb) => await cb(mockPool))
+};
+jest.mock('../../db', () => mockPool);
+
+// Mock del tenant-db
+jest.mock('../../src/core/db/tenant-db', () => ({
+    getTenantDb: jest.fn(() => mockPool)
 }));
+
+const ordenesService = require('../../services/ordenesService');
 
 // Mock del repository
 jest.mock('../../repositories/ordenesRepository', () => ({
@@ -25,14 +32,29 @@ jest.mock('../../repositories/ordenesRepository', () => ({
     checkCliente: jest.fn().mockResolvedValue(true),
     checkVehiculo: jest.fn().mockResolvedValue(true),
     checkMecanico: jest.fn().mockResolvedValue(true),
+    checkSucursalExists: jest.fn().mockResolvedValue(true),
+    checkClienteExists: jest.fn().mockResolvedValue(true),
+    checkVehiculoExists: jest.fn().mockResolvedValue(true),
+    checkMecanicoExists: jest.fn().mockResolvedValue(true),
     getTipoOrdenByCodigoOrId: jest.fn().mockResolvedValue({ id: 1, codigo: 'REPARACION' }),
     getEstadoOrdenByCodigoOrId: jest.fn().mockResolvedValue({ id: 1, codigo: 'PENDIENTE' }),
-    getProductoById: jest.fn(),
-    getImpuestoById: jest.fn()
+    getProductoById: jest.fn().mockResolvedValue({ id: 1, nombre: 'Test', id_impuesto: 1, stock: 100 }),
+    getImpuestoById: jest.fn().mockResolvedValue({ id: 1, porcentaje: 21 }),
+    ensureAlmacenPrincipal: jest.fn().mockResolvedValue(1),
+    decreaseProductoStock: jest.fn().mockResolvedValue(true),
+    createMovimientoInventario: jest.fn().mockResolvedValue(true),
+    createOrden: jest.fn().mockResolvedValue({ id: 1 }),
+    createOrdenLinea: jest.fn().mockResolvedValue(true),
+    getOpenCaja: jest.fn().mockResolvedValue({ id: 1 }),
+    createOpenCaja: jest.fn().mockResolvedValue({ id: 1 }),
+    getMedioPagoByCodigoOrId: jest.fn().mockResolvedValue({ id: 1, codigo: 'EFECTIVO' }),
+    createOrdenPago: jest.fn().mockResolvedValue({ id: 1 }),
+    createCajaMovimiento: jest.fn().mockResolvedValue(true),
+    updateOrdenTotales: jest.fn().mockResolvedValue(true)
 }));
 
 describe('KM obligatorios en órdenes', () => {
-    const ordenesService = new OrdenesService();
+    // ordenesService is already imported as an instance
 
     const userContext = {
         id_tenant: 1,
@@ -137,11 +159,9 @@ describe('KM obligatorios en órdenes', () => {
     });
 
     describe('PUT /api/ordenes/:id - updateOrden', () => {
-        const pool = require('../../db');
-
         beforeEach(() => {
             // Mock: orden existe
-            pool.query.mockResolvedValue({ rows: [{ id: 1 }] });
+            mockPool.query.mockResolvedValue({ rows: [{ id: 1 }] });
         });
 
         test('Rechaza actualización sin km', async () => {
@@ -178,7 +198,7 @@ describe('KM obligatorios en órdenes', () => {
 });
 
 describe('Mensaje de error claro', () => {
-    const ordenesService = new OrdenesService();
+    // ordenesService is already imported as an instance
 
     test('El mensaje de error es claro y legible', async () => {
         const dataInvalida = {

@@ -8,6 +8,8 @@ const router = express.Router();
 const verifyJWT = require('../middleware/auth');
 const { requireEmpresaAccess } = require('../middleware/rbac');
 const openBankingService = require('../modules/open_banking/openBankingService');
+const auditService = require('../src/core/logging/audit-service');
+const { AUDIT_ACTIONS } = auditService;
 
 router.use(verifyJWT);
 router.use(requireEmpresaAccess());
@@ -42,6 +44,11 @@ router.post('/truelayer/link', verifyJWT, async (req, res) => {
         });
 
         console.log(`[OpenBanking] OAuth iniciado para tenant ${tenantId}, user ${userId}`);
+
+        auditService.register(req, AUDIT_ACTIONS.BANKING_LINK_INITIATE, {
+            entityType: 'BANK_CONNECTION',
+            after: { redirectPath: redirect_path }
+        });
 
         res.json({ ok: true, url });
 
@@ -78,12 +85,24 @@ router.get('/truelayer/callback', async (req, res) => {
 
         console.log(`[OpenBanking] Conexión creada: ${connection.id} para tenant ${connection.tenant_id}`);
 
+        auditService.register(req, AUDIT_ACTIONS.BANKING_LINK_SUCCESS, {
+            entityType: 'BANK_CONNECTION',
+            entityId: connection.id,
+            after: connection
+        });
+
         // Redirigir a UI con éxito
         const successRedirect = `${redirectPath}?connected=true&connection_id=${connection.id}`;
         res.redirect(successRedirect);
 
     } catch (error) {
         console.error('[OpenBanking] Error en callback:', error);
+
+        auditService.register(req, AUDIT_ACTIONS.BANKING_LINK_ERROR, {
+            entityType: 'BANK_CONNECTION',
+            after: { error: error.message }
+        });
+
         const errorRedirect = `/manager-taller-banking.html?error=${encodeURIComponent(error.message)}`;
         res.redirect(errorRedirect);
     }
@@ -168,6 +187,12 @@ router.post('/accounts', verifyJWT, async (req, res) => {
             currency,
             iban_masked,
             id_empresa: id_empresa || req.headers['x-empresa-id']
+        });
+
+        auditService.register(req, AUDIT_ACTIONS.BANKING_ACCOUNT_CREATE, {
+            entityType: 'BANK_ACCOUNT',
+            entityId: account.id,
+            after: account
         });
 
         res.json({ ok: true, account });
@@ -296,6 +321,12 @@ router.post('/transactions/:id/reconcile', verifyJWT, async (req, res) => {
 
         const result = await openBankingService.reconcileTransaction(tenantId, transactionId, invoices, idEmpresa);
 
+        auditService.register(req, AUDIT_ACTIONS.BANKING_RECONCILE, {
+            entityType: 'BANK_TRANSACTION',
+            entityId: transactionId,
+            after: { invoices, result }
+        });
+
         res.json(result);
     } catch (error) {
         console.error('[OpenBanking] Error en reconcile:', error);
@@ -334,6 +365,16 @@ router.post('/sync', verifyJWT, async (req, res) => {
             runType: 'manual',
             fromDate: from,
             toDate: to
+        });
+
+        auditService.register(req, AUDIT_ACTIONS.BANKING_SYNC, {
+            entityType: 'BANK_CONNECTION',
+            entityId: connection_id,
+            after: {
+                runType: 'manual',
+                syncRunId: result.syncRunId,
+                metrics: result.metrics
+            }
         });
 
         res.json({

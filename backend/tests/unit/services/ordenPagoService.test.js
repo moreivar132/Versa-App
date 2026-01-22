@@ -11,7 +11,8 @@ const { ordenes } = require('../../fixtures/ordenes.fixture');
 // Mock del pool de base de datos
 const mockClient = {
     query: jest.fn(),
-    release: jest.fn()
+    release: jest.fn(),
+    txWithRLS: jest.fn(async (cb) => cb(mockClient)) // Mock transaction wrapper
 };
 
 const mockPool = {
@@ -36,16 +37,26 @@ jest.mock('../../../repositories/ordenesRepository', () => ({
 // Mock de la conexión a BD
 jest.mock('../../../db', () => mockPool);
 
+// Mock de tenant-db
+jest.mock('../../../src/core/db/tenant-db', () => ({
+    getTenantDb: jest.fn().mockReturnValue(mockClient)
+}));
+
 const ordenPagoService = require('../../../services/ordenPagoService');
 const ordenPagoRepository = require('../../../repositories/ordenPagoRepository');
 const ordenesRepository = require('../../../repositories/ordenesRepository');
 
 describe('OrdenPagoService', () => {
+    let ctx;
+
     beforeEach(() => {
         jest.clearAllMocks();
         // Reset del mock client
         mockClient.query.mockReset();
         mockClient.release.mockReset();
+        mockClient.txWithRLS.mockClear();
+
+        ctx = { tenantId: 1, userId: 1 };
     });
 
     describe('registrarPago', () => {
@@ -62,7 +73,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = registrarPagoData.valido;
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -76,7 +87,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = registrarPagoData.valido;
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -90,7 +101,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = { ...registrarPagoData.valido, importe: null };
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -104,7 +115,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = { ...registrarPagoData.valido, importe: undefined };
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -118,7 +129,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = { ...registrarPagoData.valido, importe: '' };
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -132,7 +143,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = registrarPagoData.importeCero;
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -146,7 +157,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = registrarPagoData.importeNegativo;
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -160,7 +171,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = { ...registrarPagoData.valido, importe: 'abc' };
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -174,7 +185,7 @@ describe('OrdenPagoService', () => {
                 const datosPago = registrarPagoData.sinMedioPago;
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -198,14 +209,14 @@ describe('OrdenPagoService', () => {
                 ordenPagoRepository.obtenerDatosOrden.mockResolvedValue(null);
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 404,
                         message: `La orden con ID ${idOrden} no existe.`
                     });
 
-                expect(ordenPagoRepository.obtenerDatosOrden).toHaveBeenCalledWith(idOrden);
+                expect(ordenPagoRepository.obtenerDatosOrden).toHaveBeenCalledWith(mockClient, idOrden);
             });
 
             test('registrarPago_medioPagoInvalido_lanzaError404', async () => {
@@ -217,7 +228,7 @@ describe('OrdenPagoService', () => {
                 ordenPagoRepository.obtenerMedioPagoPorCodigoOId.mockResolvedValue(null);
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 404,
@@ -225,7 +236,7 @@ describe('OrdenPagoService', () => {
                     });
 
                 expect(ordenPagoRepository.obtenerMedioPagoPorCodigoOId)
-                    .toHaveBeenCalledWith(datosPago.medioPago);
+                    .toHaveBeenCalledWith(mockClient, datosPago.medioPago);
             });
 
             test('registrarPago_cajaNoExiste_lanzaError400', async () => {
@@ -238,7 +249,7 @@ describe('OrdenPagoService', () => {
                 ordenPagoRepository.existeCaja.mockResolvedValue(false);
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toMatchObject({
                         status: 400,
@@ -276,14 +287,15 @@ describe('OrdenPagoService', () => {
                 mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act
-                const resultado = await ordenPagoService.registrarPago(idOrden, datosPago);
+                const resultado = await ordenPagoService.registrarPago(ctx, idOrden, datosPago);
 
                 // Assert
                 expect(resultado).toHaveProperty('pago');
                 expect(resultado.pago).toEqual(pagoCreado);
-                expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
-                expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
-                expect(mockClient.release).toHaveBeenCalled();
+                // When using txWithRLS, explicit BEGIN/COMMIT might not be called if wrapper handles it implicitly or we mock it that way.
+                // But our mock wrapper calls callback directly.
+                // We should check that repos are called with mockClient (which is the tx)
+                expect(ordenPagoRepository.insertarPagoOrden).toHaveBeenCalledWith(mockClient, expect.any(Object));
             });
 
             test('registrarPago_conMedioPagoPorCodigo_resuelveCorrectamente', async () => {
@@ -298,11 +310,11 @@ describe('OrdenPagoService', () => {
                 mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act
-                await ordenPagoService.registrarPago(idOrden, datosPago);
+                await ordenPagoService.registrarPago(ctx, idOrden, datosPago);
 
                 // Assert
                 expect(ordenPagoRepository.obtenerMedioPagoPorCodigoOId)
-                    .toHaveBeenCalledWith('CARD');
+                    .toHaveBeenCalledWith(mockClient, 'CARD');
             });
 
             test('registrarPago_conMedioPagoPorId_resuelveCorrectamente', async () => {
@@ -317,11 +329,11 @@ describe('OrdenPagoService', () => {
                 mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act
-                await ordenPagoService.registrarPago(idOrden, datosPago);
+                await ordenPagoService.registrarPago(ctx, idOrden, datosPago);
 
                 // Assert
                 expect(ordenPagoRepository.obtenerMedioPagoPorCodigoOId)
-                    .toHaveBeenCalledWith(1);
+                    .toHaveBeenCalledWith(mockClient, 1);
             });
 
         });
@@ -344,7 +356,7 @@ describe('OrdenPagoService', () => {
                 mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act
-                const resultado = await ordenPagoService.registrarPago(idOrden, datosPago);
+                const resultado = await ordenPagoService.registrarPago(ctx, idOrden, datosPago);
 
                 // Assert
                 expect(ordenesRepository.getOpenCaja).toHaveBeenCalledWith(
@@ -352,8 +364,8 @@ describe('OrdenPagoService', () => {
                     ordenes.ordenCompleta.id_sucursal
                 );
                 expect(ordenPagoRepository.insertarPagoOrden).toHaveBeenCalledWith(
-                    expect.objectContaining({ id_caja: cajas.abierta.id }),
-                    mockClient
+                    mockClient,
+                    expect.objectContaining({ id_caja: cajas.abierta.id })
                 );
             });
 
@@ -371,7 +383,7 @@ describe('OrdenPagoService', () => {
                 mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act
-                await ordenPagoService.registrarPago(idOrden, datosPago);
+                await ordenPagoService.registrarPago(ctx, idOrden, datosPago);
 
                 // Assert
                 expect(ordenesRepository.createOpenCaja).toHaveBeenCalledWith(
@@ -380,8 +392,8 @@ describe('OrdenPagoService', () => {
                     datosPago.createdBy
                 );
                 expect(ordenPagoRepository.insertarPagoOrden).toHaveBeenCalledWith(
-                    expect.objectContaining({ id_caja: nuevaCaja.id }),
-                    mockClient
+                    mockClient,
+                    expect.objectContaining({ id_caja: nuevaCaja.id })
                 );
             });
 
@@ -393,7 +405,7 @@ describe('OrdenPagoService', () => {
 
         describe('Manejo de transacciones', () => {
 
-            test('registrarPago_errorEnInsercion_haceRollback', async () => {
+            test('registrarPago_errorEnInsercion_propagaError', async () => {
                 // Arrange
                 const idOrden = 1;
                 const datosPago = registrarPagoData.valido;
@@ -403,58 +415,15 @@ describe('OrdenPagoService', () => {
                 ordenPagoRepository.obtenerMedioPagoPorCodigoOId.mockResolvedValue(mediosPago.efectivo);
                 ordenPagoRepository.existeCaja.mockResolvedValue(true);
                 ordenPagoRepository.insertarPagoOrden.mockRejectedValue(errorDB);
-                mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act & Assert
-                await expect(ordenPagoService.registrarPago(idOrden, datosPago))
+                await expect(ordenPagoService.registrarPago(ctx, idOrden, datosPago))
                     .rejects
                     .toThrow('Error de base de datos');
 
-                expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
-                expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
-                expect(mockClient.release).toHaveBeenCalled();
+                // Rollback handles automatically by txWithRLS usually, or by propagation.
+                // In our mock, we just propagate.
             });
-
-            test('registrarPago_exitoso_siempreLiberaCliente', async () => {
-                // Arrange
-                const idOrden = 1;
-                const datosPago = registrarPagoData.valido;
-
-                ordenPagoRepository.obtenerDatosOrden.mockResolvedValue(ordenes.ordenCompleta);
-                ordenPagoRepository.obtenerMedioPagoPorCodigoOId.mockResolvedValue(mediosPago.efectivo);
-                ordenPagoRepository.existeCaja.mockResolvedValue(true);
-                ordenPagoRepository.insertarPagoOrden.mockResolvedValue({ id: 1 });
-                mockClient.query.mockResolvedValue({ rows: [] });
-
-                // Act
-                await ordenPagoService.registrarPago(idOrden, datosPago);
-
-                // Assert
-                expect(mockClient.release).toHaveBeenCalledTimes(1);
-            });
-
-            test('registrarPago_error_siempreLiberaCliente', async () => {
-                // Arrange
-                const idOrden = 1;
-                const datosPago = registrarPagoData.valido;
-
-                ordenPagoRepository.obtenerDatosOrden.mockResolvedValue(ordenes.ordenCompleta);
-                ordenPagoRepository.obtenerMedioPagoPorCodigoOId.mockResolvedValue(mediosPago.efectivo);
-                ordenPagoRepository.existeCaja.mockResolvedValue(true);
-                ordenPagoRepository.insertarPagoOrden.mockRejectedValue(new Error('Error'));
-                mockClient.query.mockResolvedValue({ rows: [] });
-
-                // Act
-                try {
-                    await ordenPagoService.registrarPago(idOrden, datosPago);
-                } catch (e) {
-                    // Esperamos el error
-                }
-
-                // Assert
-                expect(mockClient.release).toHaveBeenCalledTimes(1);
-            });
-
         });
 
         // =========================================================================
@@ -475,12 +444,12 @@ describe('OrdenPagoService', () => {
                 mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act
-                await ordenPagoService.registrarPago(idOrden, datosPago);
+                await ordenPagoService.registrarPago(ctx, idOrden, datosPago);
 
                 // Assert
                 expect(ordenPagoRepository.insertarPagoOrden).toHaveBeenCalledWith(
-                    expect.objectContaining({ importe: 123.45 }),
-                    mockClient
+                    mockClient,
+                    expect.objectContaining({ importe: 123.45 })
                 );
             });
 
@@ -496,12 +465,12 @@ describe('OrdenPagoService', () => {
                 mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act
-                await ordenPagoService.registrarPago(idOrden, datosPago);
+                await ordenPagoService.registrarPago(ctx, idOrden, datosPago);
 
                 // Assert
                 expect(ordenPagoRepository.insertarPagoOrden).toHaveBeenCalledWith(
-                    expect.objectContaining({ importe: 500.50 }),
-                    mockClient
+                    mockClient,
+                    expect.objectContaining({ importe: 500.50 })
                 );
             });
 
@@ -517,12 +486,12 @@ describe('OrdenPagoService', () => {
                 mockClient.query.mockResolvedValue({ rows: [] });
 
                 // Act
-                await ordenPagoService.registrarPago(idOrden, datosPago);
+                await ordenPagoService.registrarPago(ctx, idOrden, datosPago);
 
                 // Assert
                 expect(ordenPagoRepository.insertarPagoOrden).toHaveBeenCalledWith(
-                    expect.objectContaining({ referencia: null }),
-                    mockClient
+                    mockClient,
+                    expect.objectContaining({ referencia: null })
                 );
             });
 

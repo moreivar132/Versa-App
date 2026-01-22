@@ -7,22 +7,32 @@
  * - Permission computation with overrides
  */
 
-const { describe, it, expect, beforeEach, afterEach, jest } = require('@jest/globals');
+// const { describe, it, expect, beforeEach, afterEach, jest } = require('@jest/globals');
 
 // Mock dependencies
-jest.mock('../../db', () => ({
+// Mock dependencies
+const mockQuery = jest.fn();
+const mockRelease = jest.fn();
+const mockClient = { query: mockQuery, release: mockRelease };
+
+jest.mock('../../../db', () => ({
     query: jest.fn(),
     connect: jest.fn()
 }));
 
-jest.mock('../../src/core/logging/logger', () => ({
+jest.mock('../../../src/core/logging/logger', () => ({
     warn: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
     info: jest.fn()
 }));
 
-const pool = require('../../db');
+// Mock tenant-db to bypass RLS setup queries
+jest.mock('../../../src/core/db/tenant-db', () => ({
+    getTenantDb: jest.fn(() => mockClient)
+}));
+
+const pool = require('../../../db');
 
 describe('requireVerticalAccess', () => {
     let req, res, next;
@@ -30,19 +40,33 @@ describe('requireVerticalAccess', () => {
     beforeEach(() => {
         req = {
             user: { id: 1, id_tenant: 100 },
-            path: '/api/v1/manager/workorders'
+            path: '/api/v1/manager/workorders',
+            headers: {},
+            query: {}
         };
         res = {
             status: jest.fn().mockReturnThis(),
             json: jest.fn()
         };
         next = jest.fn();
+
         jest.clearAllMocks();
+
+        // Setup unified mock query
+        mockQuery.mockReset();
+        mockRelease.mockReset();
+
+        // Make pool.query and client.query share the same mock
+        pool.query = mockQuery;
+        pool.connect.mockResolvedValue(mockClient);
+
+        // Default return to avoid crashes
+        mockQuery.mockResolvedValue({ rows: [] });
     });
 
     describe('authentication checks', () => {
         it('returns 401 if no user in request', async () => {
-            const { requireVerticalAccess } = require('../../src/core/security/requireVerticalAccess');
+            const { requireVerticalAccess } = require('../../../src/core/security/requireVerticalAccess');
             req.user = null;
 
             const middleware = requireVerticalAccess('manager');
@@ -56,7 +80,8 @@ describe('requireVerticalAccess', () => {
         });
 
         it('returns 400 if no tenant identified', async () => {
-            const { requireVerticalAccess } = require('../../src/core/security/requireVerticalAccess');
+            mockQuery.mockResolvedValueOnce({ rows: [] });
+            const { requireVerticalAccess } = require('../../../src/core/security/requireVerticalAccess');
             req.user = { id: 1 }; // No tenant
 
             const middleware = requireVerticalAccess('manager');
@@ -71,7 +96,7 @@ describe('requireVerticalAccess', () => {
 
     describe('super admin bypass', () => {
         it('allows super admin to access any vertical', async () => {
-            const { requireVerticalAccess } = require('../../src/core/security/requireVerticalAccess');
+            const { requireVerticalAccess } = require('../../../src/core/security/requireVerticalAccess');
 
             // Mock super admin check
             pool.query.mockResolvedValueOnce({
@@ -96,7 +121,7 @@ describe('requireVerticalAccess', () => {
         });
 
         it('allows access when tenant has vertical enabled', async () => {
-            const { requireVerticalAccess } = require('../../src/core/security/requireVerticalAccess');
+            const { requireVerticalAccess } = require('../../../src/core/security/requireVerticalAccess');
 
             // Mock vertical lookup
             pool.query.mockResolvedValueOnce({
@@ -112,7 +137,7 @@ describe('requireVerticalAccess', () => {
         });
 
         it('returns 403 when vertical not enabled for tenant', async () => {
-            const { requireVerticalAccess } = require('../../src/core/security/requireVerticalAccess');
+            const { requireVerticalAccess } = require('../../../src/core/security/requireVerticalAccess');
 
             // Mock vertical lookup - not enabled
             pool.query.mockResolvedValueOnce({
@@ -131,7 +156,7 @@ describe('requireVerticalAccess', () => {
         });
 
         it('returns 404 when vertical does not exist', async () => {
-            const { requireVerticalAccess } = require('../../src/core/security/requireVerticalAccess');
+            const { requireVerticalAccess } = require('../../../src/core/security/requireVerticalAccess');
 
             // Mock vertical lookup - not found
             pool.query.mockResolvedValueOnce({
@@ -150,7 +175,7 @@ describe('requireVerticalAccess', () => {
 
     describe('log-only mode', () => {
         it('allows request but logs would-be block in log-only mode', async () => {
-            const { requireVerticalAccess } = require('../../src/core/security/requireVerticalAccess');
+            const { requireVerticalAccess } = require('../../../src/core/security/requireVerticalAccess');
 
             // Not super admin
             pool.query.mockResolvedValueOnce({
@@ -178,7 +203,7 @@ describe('getUserAccessibleVerticals', () => {
     });
 
     it('returns all verticals for super admin', async () => {
-        const { getUserAccessibleVerticals } = require('../../src/core/security/requireVerticalAccess');
+        const { getUserAccessibleVerticals } = require('../../../src/core/security/requireVerticalAccess');
 
         // Super admin check
         pool.query.mockResolvedValueOnce({
@@ -201,7 +226,7 @@ describe('getUserAccessibleVerticals', () => {
     });
 
     it('returns only enabled verticals for regular user', async () => {
-        const { getUserAccessibleVerticals } = require('../../src/core/security/requireVerticalAccess');
+        const { getUserAccessibleVerticals } = require('../../../src/core/security/requireVerticalAccess');
 
         // Not super admin
         pool.query.mockResolvedValueOnce({
@@ -226,7 +251,7 @@ describe('getUserAccessibleVerticals', () => {
 
 describe('buildUserAccessInfo', () => {
     it('returns complete access info structure', async () => {
-        const { buildUserAccessInfo } = require('../../src/core/security/context');
+        const { buildUserAccessInfo } = require('../../../src/core/security/context');
 
         // Mock all queries
         pool.query

@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const { getUserByEmail, getUserById, createUser } = require('../models/userModel');
 const verifyJWT = require('../middleware/auth');
 const { getTenantDb } = require('../src/core/db/tenant-db');
+const auditService = require('../src/core/logging/audit-service');
+const { AUDIT_ACTIONS } = auditService;
 
 const router = express.Router();
 
@@ -40,6 +42,18 @@ router.post('/register', async (req, res) => {
       passwordHash,
       isSuperAdmin: Boolean(is_super_admin),
     }, db);
+
+    // Audit Log
+    auditService.logAudit({
+      userId: createdUser.id,
+      tenantId: createdUser.id_tenant,
+      action: AUDIT_ACTIONS.AUTH_REGISTER,
+      entityType: 'USER',
+      entityId: createdUser.id,
+      after: sanitizeUser(createdUser),
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+      userAgent: req.headers['user-agent']
+    });
 
     return res.status(201).json(sanitizeUser(createdUser));
   } catch (error) {
@@ -119,6 +133,17 @@ router.post('/login', async (req, res) => {
     const safeUser = sanitizeUser(user);
     safeUser.roles = userRoles;
     safeUser.permissions = permissions;
+
+    // Audit Log
+    auditService.logAudit({
+      userId: user.id,
+      tenantId: user.id_tenant,
+      action: AUDIT_ACTIONS.AUTH_LOGIN,
+      entityType: 'USER',
+      entityId: user.id,
+      ipAddress: req.ip || req.headers['x-forwarded-for'] || req.connection?.remoteAddress,
+      userAgent: req.headers['user-agent']
+    });
 
     return res.json({ token, user: safeUser });
   } catch (error) {

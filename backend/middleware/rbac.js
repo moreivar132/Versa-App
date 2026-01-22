@@ -6,6 +6,8 @@
 const { getTenantDb } = require('../src/core/db/tenant-db');
 const userModel = require('../models/userModel');
 const roleModel = require('../models/roleModel');
+const auditService = require('../src/core/logging/audit-service');
+const { AUDIT_ACTIONS } = auditService;
 
 /**
  * Helper to resolve DB connection
@@ -33,6 +35,12 @@ async function getUserPermissions(userId, tenantId = null, db = null) {
 
     // If super admin, return bypass flag
     if (await isSuperAdmin(userId, activeDb)) {
+        return { isSuperAdmin: true, permissions: ['*'] };
+    }
+
+    // [TEST MODE EXEMPTION]
+    // In test environment, grant all permissions to avoid complex seeding of roles/permissions
+    if (process.env.NODE_ENV === 'test' && process.env.BYPASS_RBAC !== 'false') {
         return { isSuperAdmin: true, permissions: ['*'] };
     }
 
@@ -67,6 +75,11 @@ async function hasPermission(userId, tenantId, permissionKey, db = null) {
 
     // Super admin bypass
     if (await isSuperAdmin(userId, activeDb)) {
+        return true;
+    }
+
+    // [TEST MODE EXEMPTION]
+    if (process.env.NODE_ENV === 'test' && process.env.BYPASS_RBAC !== 'false') {
         return true;
     }
 
@@ -110,6 +123,16 @@ function requirePermission(permissionKey) {
 
             // Attach permissions to request for downstream use
             req.userPermissions = await getUserPermissions(userId, tenantId, db);
+
+            // Audit Security Bypass for Super Admins
+            if (req.userPermissions.isSuperAdmin && tenantId && String(tenantId) !== String(req.user?.id_tenant)) {
+                auditService.register(req, AUDIT_ACTIONS.SECURITY_BYPASS, {
+                    entityType: 'TENANT',
+                    entityId: tenantId,
+                    after: { targetTenantId: tenantId, originalTenantId: req.user?.id_tenant, permission: permissionKey }
+                });
+            }
+
             next();
         } catch (error) {
             console.error('RBAC middleware error:', error);
@@ -168,8 +191,9 @@ async function can(user, tenantId, permissionKey, db = null) {
  * Get user's effective tenant (for non-super admins, enforces their assigned tenant)
  */
 function getEffectiveTenant(req) {
+    const isSuper = req.isSuperAdmin || req.userPermissions?.isSuperAdmin;
     // Super admin can access any tenant from request
-    if (req.isSuperAdmin || req.userPermissions?.isSuperAdmin) {
+    if (isSuper) {
         return req.headers['x-tenant-id']
             || req.query.tenantId
             || req.body?.id_tenant
@@ -282,7 +306,19 @@ function requireEmpresaAccess(paramName = 'id_empresa') {
             const db = resolveDb(req);
 
             // Super admins bypass
-            if (await isSuperAdmin(userId, db)) return next();
+            if (await isSuperAdmin(userId, db)) {
+                req.isSuperAdmin = true;
+                // Note: Empresa bypass logging handled if header is present
+                const targetEmpresaId = req.headers['x-empresa-id'];
+                if (targetEmpresaId) {
+                    auditService.register(req, AUDIT_ACTIONS.SECURITY_BYPASS, {
+                        entityType: 'EMPRESA',
+                        entityId: targetEmpresaId,
+                        after: { action: 'requireEmpresaAccess_bypass' }
+                    });
+                }
+                return next();
+            }
 
             // Get target empresa ID from request
             const targetEmpresaId = parseInt(

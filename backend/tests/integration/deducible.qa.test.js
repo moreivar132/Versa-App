@@ -3,6 +3,10 @@ const { app } = require('../../src/app');
 const pool = require('../../db');
 const jwt = require('jsonwebtoken');
 
+// Unmock DB for integration tests
+jest.unmock('../../db');
+
+
 // Helper to generate tokens
 const generateToken = (userId, tenantId, role = 'admin') => {
     return jwt.sign(
@@ -127,7 +131,7 @@ describe('Deducible Validation Feature Tests', () => {
 
             expect(auditRes.rows.length).toBeGreaterThan(0);
             expect(auditRes.rows[0].entity_type).toBe('contabilidad_factura');
-            expect(auditRes.rows[0].performed_by).toBe(data.adminA);
+            expect(auditRes.rows[0].performed_by).toBe(String(data.adminA));
         });
 
         it('QA-D05: Should return 400 for invalid status', async () => {

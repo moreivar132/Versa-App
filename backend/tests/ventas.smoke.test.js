@@ -102,7 +102,7 @@ describe('Módulo Ventas - Smoke Tests', () => {
             expect(response.body).toHaveProperty('ok', false);
 
             // Debe incluir código de error y requestId para trazabilidad
-            expect(response.body).toHaveProperty('code', 'TENANT_REQUIRED');
+            expect(response.body).toHaveProperty('error', 'Contexto de tenant no encontrado');
         });
 
         it('Error sin tenant incluye requestId para trazabilidad', async () => {

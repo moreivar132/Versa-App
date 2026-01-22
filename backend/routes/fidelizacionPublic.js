@@ -37,14 +37,17 @@ function checkRateLimit(token) {
 }
 
 // Limpiar rate limit map cada 5 minutos
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, value] of rateLimitMap) {
-        if (now > value.resetAt) {
-            rateLimitMap.delete(key);
+const cleanupInterval = 300000;
+if (process.env.NODE_ENV !== 'test') {
+    setInterval(() => {
+        const now = Date.now();
+        for (const [key, value] of rateLimitMap) {
+            if (now > value.resetAt) {
+                rateLimitMap.delete(key);
+            }
         }
-    }
-}, 300000);
+    }, cleanupInterval);
+}
 
 /**
  * GET /api/public/fidelizacion/card

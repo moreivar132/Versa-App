@@ -8,8 +8,9 @@ const bcrypt = require('bcrypt');
 const router = express.Router();
 
 const verifyJWT = require('../middleware/auth');
-const { requirePermission, requireSuperAdmin, getEffectiveTenant, validateTenantAccess } = require('../middleware/rbac');
-const { logAudit, getAuditLogs, getAuditContext, AUDIT_ACTIONS } = require('../services/auditService');
+const { requirePermission, requireSuperAdmin, getEffectiveTenant, validateTenantAccess, getUserPermissions } = require('../middleware/rbac');
+const auditService = require('../src/core/logging/audit-service');
+const { AUDIT_ACTIONS } = auditService;
 
 const userModel = require('../models/userModel');
 const tenantModel = require('../models/tenantModel');
@@ -150,10 +151,7 @@ router.post('/users', requirePermission('users.create'), async (req, res) => {
         }
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.USER_CREATE,
+        auditService.register(req, AUDIT_ACTIONS.USER_CREATE, {
             entityType: 'user',
             entityId: newUser.id,
             after: { nombre, email, id_tenant, is_super_admin, sucursales: sucursalesToAssign }
@@ -233,10 +231,7 @@ router.put('/users/:id', requirePermission('users.update'), async (req, res) => 
         const updatedUser = await userModel.updateUser(id, updateData);
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.USER_UPDATE,
+        auditService.register(req, AUDIT_ACTIONS.USER_UPDATE, {
             entityType: 'user',
             entityId: id,
             before,
@@ -280,10 +275,7 @@ router.delete('/users/:id', requirePermission('users.delete'), async (req, res) 
         await userModel.deleteUser(id);
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.USER_DELETE,
+        auditService.register(req, AUDIT_ACTIONS.USER_DELETE, {
             entityType: 'user',
             entityId: id,
             before: { nombre: targetUser.nombre, email: targetUser.email }
@@ -315,10 +307,7 @@ router.post('/users/:id/roles', requirePermission('users.update'), async (req, r
         }
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.USER_ROLE_ASSIGN,
+        auditService.register(req, AUDIT_ACTIONS.USER_ROLE_ASSIGN, {
             entityType: 'user',
             entityId: id,
             after: { roles: role_ids }
@@ -350,10 +339,7 @@ router.post('/users/:id/sucursales', requirePermission('users.update'), async (r
         }
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.USER_SUCURSAL_ASSIGN,
+        auditService.register(req, AUDIT_ACTIONS.USER_SUCURSAL_ASSIGN, {
             entityType: 'user',
             entityId: id,
             after: { sucursales: sucursal_ids }
@@ -422,10 +408,7 @@ router.post('/roles', requirePermission('roles.create'), async (req, res) => {
         `, [nombre, display_name || nombre, scope || 'tenant', tenantId, level || 50]);
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.ROLE_CREATE,
+        auditService.register(req, AUDIT_ACTIONS.ROLE_CREATE, {
             entityType: 'role',
             entityId: result.rows[0].id,
             after: { nombre, display_name, scope }
@@ -460,10 +443,7 @@ router.put('/roles/:id', requirePermission('roles.update'), async (req, res) => 
         const updated = await roleModel.updateRole(id, req.body);
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.ROLE_UPDATE,
+        auditService.register(req, AUDIT_ACTIONS.ROLE_UPDATE, {
             entityType: 'role',
             entityId: id,
             before: existing,
@@ -498,10 +478,7 @@ router.delete('/roles/:id', requirePermission('roles.delete'), async (req, res) 
         await roleModel.deleteRole(id);
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.ROLE_DELETE,
+        auditService.register(req, AUDIT_ACTIONS.ROLE_DELETE, {
             entityType: 'role',
             entityId: id,
             before: existing
@@ -557,10 +534,7 @@ router.post('/roles/:id/permisos', requirePermission('roles.update'), async (req
         }
 
         // Audit log
-        const ctx = getAuditContext(req);
-        await logAudit({
-            ...ctx,
-            action: AUDIT_ACTIONS.ROLE_PERMISSION_ASSIGN,
+        auditService.register(req, AUDIT_ACTIONS.ROLE_PERMISSION_ASSIGN, {
             entityType: 'role',
             entityId: id,
             after: { permissions: permiso_ids }
@@ -620,7 +594,7 @@ router.get('/audit', requirePermission('audit.view'), async (req, res) => {
     try {
         const tenantId = req.userPermissions?.isSuperAdmin ? req.query.tenantId : req.user.id_tenant;
 
-        const logs = await getAuditLogs({
+        const logs = await auditService.queryLogs({
             tenantId,
             entityType: req.query.entityType,
             action: req.query.action,
