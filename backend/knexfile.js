@@ -16,6 +16,9 @@
 
 require('dotenv').config();
 
+// Fix: Force NODE_ENV=development if undefined to ensure knex commands work
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {

@@ -1,33 +1,12 @@
-/**
- * Migration: Add Empresa to Archivos
- * @description Adds id_empresa to contabilidad_factura_archivo for multi-empresa support
- */
+// ZOMBIE MIGRATION — NO-OP
+// Reason: baseline-only strategy. This migration attempts to alter 'contabilidad_factura_archivo', but the table creation migration (create_contabilidad_v3_tables) was neutralized because it conflicted with baseline. However, if the table actually exists in baseline, we should check.
+// Wait, looking at baseline dump (Step 101), 'contabilidad_factura_archivo' DOES NOT EXIST in the first 800 lines or the rest.
+// Ah, checking baseline schema again. 'contabilidad_factura' exists. 'contabilidad_factura_archivo' was in the neutralized file create_contabilidad_v3_tables.js.
+// Since that file was neutralized, the table was never created.
+// Therefore, this migration fails.
+// Verdict: ZOMBIE by broken dependency.
+// Date: 2026-01-23
 
-exports.up = async function (knex) {
-    // 1. Add column
-    await knex.raw(`
-        ALTER TABLE contabilidad_factura_archivo 
-        ADD COLUMN IF NOT EXISTS id_empresa BIGINT REFERENCES accounting_empresa(id);
-    `);
-
-    // 2. Backfill from existing invoices
-    await knex.raw(`
-        UPDATE contabilidad_factura_archivo a
-        SET id_empresa = f.id_empresa
-        FROM contabilidad_factura f
-        WHERE a.id_factura = f.id AND a.id_empresa IS NULL;
-    `);
-
-    // 3. Create index
-    await knex.raw(`
-        CREATE INDEX IF NOT EXISTS idx_contab_factura_archivo_empresa 
-        ON contabilidad_factura_archivo(id_empresa);
-    `);
-};
-
-exports.down = async function (knex) {
-    await knex.raw(`DROP INDEX IF EXISTS idx_contab_factura_archivo_empresa;`);
-    await knex.raw(`ALTER TABLE contabilidad_factura_archivo DROP COLUMN IF EXISTS id_empresa;`);
-};
-
+exports.up = async function (knex) { };
+exports.down = async function (knex) { };
 exports.config = { transaction: true };
