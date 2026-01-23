@@ -29,8 +29,8 @@
     $$ LANGUAGE plpgsql;
 
     -- RLS Helpers (Standard Implementation)
-    CREATE OR REPLACE FUNCTION app_current_tenant() RETURNS INTEGER AS $$
-      SELECT current_setting('app.current_tenant', true)::INTEGER;
+    CREATE OR REPLACE FUNCTION app_current_tenant() RETURNS bigint AS $$
+      SELECT current_setting('app.current_tenant', true)::bigint;
     $$ LANGUAGE sql STABLE;
 
     CREATE OR REPLACE FUNCTION app_is_superadmin() RETURNS boolean AS $$
