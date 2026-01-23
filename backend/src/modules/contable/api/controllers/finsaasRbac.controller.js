@@ -22,7 +22,6 @@ async function listUsers(req, res) {
                 u.id,
                 u.nombre,
                 u.email,
-                u.activo,
                 u.created_at,
                 COALESCE(
                     json_agg(DISTINCT jsonb_build_object(
@@ -41,10 +40,10 @@ async function listUsers(req, res) {
             FROM usuario u
             LEFT JOIN usuariorol ur ON ur.id_usuario = u.id AND (ur.tenant_id = $1 OR ur.tenant_id IS NULL)
             LEFT JOIN rol r ON r.id = ur.id_rol
-            LEFT JOIN accounting_usuario_empresa aue ON aue.id_usuario = u.id AND aue.id_tenant = $1
-            LEFT JOIN accounting_empresa e ON e.id = aue.id_empresa
+            LEFT JOIN accounting_usuario_empresa aue ON aue.id_usuario = u.id
+            LEFT JOIN accounting_empresa e ON e.id = aue.id_empresa AND e.id_tenant = $1
             WHERE u.id_tenant = $1
-            GROUP BY u.id, u.nombre, u.email, u.activo, u.created_at
+            GROUP BY u.id, u.nombre, u.email, u.created_at
             ORDER BY u.nombre
         `, [tenantId]);
 
@@ -54,7 +53,7 @@ async function listUsers(req, res) {
                 id: user.id,
                 nombre: user.nombre,
                 email: user.email,
-                activo: user.activo,
+                activo: true,  // All listed users are active (no activo column in DB)
                 createdAt: user.created_at,
                 roles: user.roles,
                 empresas: user.empresas
@@ -76,7 +75,7 @@ async function listRoles(req, res) {
 
     try {
         const result = await req.db.query(`
-            SELECT id, nombre, descripcion, scope
+            SELECT id, nombre, COALESCE(display_name, nombre) as display_name, scope
             FROM rol
             WHERE (tenant_id = $1 OR tenant_id IS NULL OR scope = 'global')
             ORDER BY nombre
@@ -84,7 +83,12 @@ async function listRoles(req, res) {
 
         res.json({
             ok: true,
-            roles: result.rows
+            roles: result.rows.map(r => ({
+                id: r.id,
+                nombre: r.nombre,
+                descripcion: r.display_name,  // alias for frontend compatibility
+                scope: r.scope
+            }))
         });
 
     } catch (error) {
@@ -183,17 +187,20 @@ async function updateUserAccess(req, res) {
                     }
                 }
 
-                // Remove existing empresa access
-                await tx.query(
-                    'DELETE FROM accounting_usuario_empresa WHERE id_usuario = $1 AND id_tenant = $2',
-                    [targetUserId, tenantId]
-                );
+                // Remove existing empresa access for empresas in this tenant
+                await tx.query(`
+                    DELETE FROM accounting_usuario_empresa aue
+                    USING accounting_empresa e
+                    WHERE aue.id_empresa = e.id 
+                      AND aue.id_usuario = $1 
+                      AND e.id_tenant = $2
+                `, [targetUserId, tenantId]);
 
                 // Add new empresa access
                 for (const empresaId of empresaIds) {
                     await tx.query(
-                        'INSERT INTO accounting_usuario_empresa (id_usuario, id_empresa, id_tenant) VALUES ($1, $2, $3)',
-                        [targetUserId, empresaId, tenantId]
+                        'INSERT INTO accounting_usuario_empresa (id_usuario, id_empresa, rol_empresa) VALUES ($1, $2, $3)',
+                        [targetUserId, empresaId, 'empresa_lector']
                     );
                 }
             }

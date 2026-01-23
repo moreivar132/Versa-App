@@ -69,7 +69,7 @@ async function handleOAuthCallback(code, state) {
 
     const { tenantId, userId, redirectPath } = pending;
     const redirectUri = process.env.TRUELAYER_REDIRECT_URI;
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
 
     // Intercambiar código por tokens
     const tokens = await trueLayerProvider.exchangeCodeForTokens(code, redirectUri);
@@ -122,7 +122,7 @@ async function handleOAuthCallback(code, state) {
  * @returns {string} Access token válido
  */
 async function getValidAccessToken(connectionId, tenantId) {
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
     const result = await db.query(`
         SELECT * FROM bank_connection WHERE id = $1
     `, [connectionId]);
@@ -189,7 +189,7 @@ async function getValidAccessToken(connectionId, tenantId) {
  * @returns {Array} Conexiones
  */
 async function listConnections(tenantId) {
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
     const result = await db.query(`
         SELECT 
             id, tenant_id, created_by_user_id, provider, status,
@@ -210,7 +210,7 @@ async function listConnections(tenantId) {
  * @returns {Object|null}
  */
 async function getConnection(connectionId, tenantId) {
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
     const result = await db.query(`
         SELECT 
             id, tenant_id, created_by_user_id, provider, status,
@@ -234,7 +234,7 @@ async function getConnection(connectionId, tenantId) {
  * @returns {Array}
  */
 async function listAccounts(connectionId, tenantId) {
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
     const result = await db.query(`
         SELECT * FROM bank_account
         WHERE bank_connection_id = $1 AND tenant_id = $2
@@ -250,7 +250,7 @@ async function listAccounts(connectionId, tenantId) {
  * @returns {Array}
  */
 async function listAllAccounts(tenantId, idEmpresa = null) {
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
     let query = `
         SELECT ba.*, bc.provider, bc.status as connection_status,
                (SELECT COALESCE(SUM(amount), 0) FROM bank_transaction WHERE bank_account_id = ba.id) as balance
@@ -278,7 +278,7 @@ async function listAllAccounts(tenantId, idEmpresa = null) {
  */
 async function createManualAccount({ tenantId, display_name, currency, iban_masked, id_empresa }) {
     const providerAccountId = `manual_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
 
     const result = await db.query(`
         INSERT INTO bank_account (
@@ -309,7 +309,7 @@ async function listTransactions({
     limit = 50,
     offset = 0
 }) {
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
     let conditions = ['tenant_id = $1'];
     let params = [tenantId];
     let paramIndex = 2;
@@ -380,7 +380,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
         toDate = null
     } = options;
 
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
 
     // Crear registro de sync run
     const runResult = await db.query(`
@@ -566,7 +566,7 @@ async function scheduleInitialSync(connectionId, tenantId) {
  * @returns {Array}
  */
 async function getSyncHistory(connectionId, tenantId, limit = 10) {
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
     const result = await db.query(`
         SELECT * FROM bank_sync_run
         WHERE bank_connection_id = $1 AND tenant_id = $2
@@ -601,7 +601,7 @@ function cleanupOldStates() {
  * Concilia una transacción bancaria con una o varias facturas
  */
 async function reconcileTransaction(tenantId, transactionId, invoiceIds, idEmpresa = null) {
-    const db = getTenantDb({ id_tenant: tenantId });
+    const db = getTenantDb({ tenantId });
     try {
         await db.txWithRLS(async (tx) => {
             // 1. Obtener transacción y verificar
