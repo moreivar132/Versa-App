@@ -58,6 +58,7 @@ export default defineConfig({
                 finsaasGastosNuevo: 'src/verticals/finsaas/pages/gastos-nuevo.html',
                 finsaasDocumentos: 'src/verticals/finsaas/pages/documentos.html',
                 finsaasPlantillaFactura: 'src/verticals/finsaas/pages/plantilla-factura.html',
+                finsaasBancos: 'src/verticals/finsaas/pages/bancos.html',
                 finsaasConfigFactura: 'src/verticals/finsaas/pages/configuracion-factura.html',
 
                 // Copiloto IA
