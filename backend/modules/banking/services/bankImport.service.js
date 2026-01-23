@@ -20,7 +20,7 @@ class BankImportService {
         hashSum.update(fileBuffer);
         const hex = hashSum.digest('hex');
 
-        const db = getTenantDb({ id_tenant: tenantId });
+        const db = getTenantDb({ tenantId });
 
         // Check if file already imported (dedupe)
         const existing = await db.query(
@@ -69,10 +69,6 @@ class BankImportService {
 
                 return { isDuplicate: false, importId, status: 'uploaded' };
             });
-            return { isDuplicate: false, importId: 'PENDING_FIX_RETURN', status: 'uploaded' }; // Wait, txWithRLS returns result? 
-            // Actually txWithRLS returns whatever the callback returns.
-            // But let's verify txWithRLS implementation. Assuming it returns callback result.
-            // If so, I can just return the callback result.
         } catch (e) {
             // Try cleanup
             try { fs.unlinkSync(file.path); } catch (err) { }
@@ -85,7 +81,7 @@ class BankImportService {
      */
     async parseImport(importId, tenantId) {
         // 1. Get import record
-        const db = getTenantDb({ id_tenant: tenantId });
+        const db = getTenantDb({ tenantId });
         const res = await db.query('SELECT * FROM bank_import WHERE id = $1 AND tenant_id = $2', [importId, tenantId]);
         if (res.rows.length === 0) throw new Error('Import no encontrado');
         const importRecord = res.rows[0];

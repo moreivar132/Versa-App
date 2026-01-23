@@ -246,11 +246,14 @@
         let currentImportId = null;
 
         // --- Helpers ---
-        const api = async (url, method = 'GET', body = null) => {
+        const api = async (url, method = 'GET', body = null, extraHeaders = {}) => {
             const token = getToken();
             const opts = {
                 method,
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    ...extraHeaders
+                }
             };
             if (body && !(body instanceof FormData)) {
                 opts.headers['Content-Type'] = 'application/json';
@@ -270,15 +273,25 @@
         // --- Flows ---
 
         async function handleUpload(file) {
+            const empresaId = document.getElementById('empresa-selector').value;
+
+            if (!empresaId) {
+                alert('Por favor, selecciona una empresa antes de subir el archivo.');
+                // Reset file input so user can try again
+                document.getElementById('file-input').value = '';
+                return;
+            }
+
             const fd = new FormData();
             fd.append('file', file);
+            fd.append('id_empresa', empresaId);
 
             try {
-                const res = await api('/api/banking/imports', 'POST', fd);
+                const res = await api('/api/banking/imports', 'POST', fd, { 'x-empresa-id': empresaId });
                 currentImportId = res.importId;
 
                 // Trigger Parse
-                const parseRes = await api(`/api/banking/imports/${currentImportId}/parse`, 'POST');
+                const parseRes = await api(`/api/banking/imports/${currentImportId}/parse`, 'POST', null, { 'x-empresa-id': empresaId });
 
                 renderPreview(parseRes);
                 document.getElementById('step-upload').classList.add('hidden');
@@ -286,6 +299,7 @@
 
             } catch (e) {
                 alert('Error subiendo archivo: ' + e.message);
+                document.getElementById('file-input').value = '';
             }
         }
 
@@ -387,8 +401,9 @@
         async function handleCommit() {
             console.log('handleCommit started, currentImportId:', currentImportId);
             const accountId = document.getElementById('account-select').value;
-            if (!accountId) return alert('Selecciona una cuenta destino');
+            const empresaId = document.getElementById('empresa-selector').value;
 
+            if (!accountId) return alert('Selecciona una cuenta destino');
             if (!currentImportId) return alert('Error: No hay una importación activa. Por favor, sube el archivo de nuevo.');
 
             if (!confirm('¿Confirmar importación?')) return;
@@ -397,7 +412,7 @@
                 console.log('Sending commit request...');
                 const res = await api(`/api/banking/imports/${currentImportId}/commit`, 'POST', {
                     bank_account_id: accountId
-                });
+                }, { 'x-empresa-id': empresaId });
                 console.log('Commit response:', res);
 
                 alert(`Importación completada.\nInsertados: ${res.inserted}\nDuplicados: ${res.duplicated}`);
