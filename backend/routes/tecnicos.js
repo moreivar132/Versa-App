@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
 const verifyJWT = require('../middleware/auth');
 
 // Buscar técnicos (usuarios)
 router.post('/search', verifyJWT, async (req, res) => {
     try {
+        const db = req.db;
         const { query } = req.body;
         const id_tenant = req.user.id_tenant;
 
@@ -23,7 +23,7 @@ router.post('/search', verifyJWT, async (req, res) => {
 
         sql += ` ORDER BY nombre ASC LIMIT 20`;
 
-        const result = await pool.query(sql, params);
+        const result = await db.query(sql, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error buscando técnicos:', error);

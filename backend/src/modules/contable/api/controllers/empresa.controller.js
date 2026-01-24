@@ -3,7 +3,6 @@
  * CRUD para empresas contables dentro del tenant
  */
 
-const pool = require('../../../../../db');
 const { getEffectiveTenant, isSuperAdmin } = require('../../../../../middleware/rbac');
 
 /**
@@ -61,7 +60,7 @@ async function list(req, res) {
             params = [tenantId, userId];
         }
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
         console.log('[Empresas] Found:', result.rows.length, 'empresas');
 
         res.json({
@@ -91,7 +90,7 @@ async function getById(req, res) {
             return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
         }
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             SELECT e.*,
                    (SELECT COUNT(*) FROM contabilidad_factura f WHERE f.id_empresa = e.id AND f.deleted_at IS NULL) as num_facturas,
                    (SELECT COUNT(*) FROM contabilidad_contacto c WHERE c.id_empresa = e.id AND c.deleted_at IS NULL) as num_contactos,
@@ -105,7 +104,7 @@ async function getById(req, res) {
         }
 
         // Obtener cuentas de tesorería
-        const cuentas = await pool.query(`
+        const cuentas = await req.db.query(`
             SELECT * FROM accounting_cuenta_tesoreria
             WHERE id_empresa = $1 AND activo = true
             ORDER BY es_default DESC, nombre ASC
@@ -129,8 +128,6 @@ async function getById(req, res) {
  * Crea una nueva empresa contable
  */
 async function create(req, res) {
-    const client = await pool.connect();
-
     try {
         const tenantId = getEffectiveTenant(req);
         const userId = req.user?.id;
@@ -162,54 +159,51 @@ async function create(req, res) {
             });
         }
 
-        await client.query('BEGIN');
+        await req.db.txWithRLS(async (tx) => {
+            // Verificar si es la primera empresa (será default)
+            const countResult = await tx.query(
+                'SELECT COUNT(*) FROM accounting_empresa WHERE id_tenant = $1 AND deleted_at IS NULL',
+                [tenantId]
+            );
+            const esDefault = parseInt(countResult.rows[0].count) === 0;
 
-        // Verificar si es la primera empresa (será default)
-        const countResult = await client.query(
-            'SELECT COUNT(*) FROM accounting_empresa WHERE id_tenant = $1 AND deleted_at IS NULL',
-            [tenantId]
-        );
-        const esDefault = parseInt(countResult.rows[0].count) === 0;
-
-        // Crear empresa
-        const result = await client.query(`
-            INSERT INTO accounting_empresa (
-                id_tenant, nombre_legal, nombre_comercial, nif_cif,
+            // Crear empresa
+            const result = await tx.query(`
+                INSERT INTO accounting_empresa (
+                    id_tenant, nombre_legal, nombre_comercial, nif_cif,
+                    direccion, codigo_postal, ciudad, provincia, pais,
+                    moneda, iva_defecto, regimen, email, telefono,
+                    es_default, created_by
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                RETURNING *
+            `, [
+                tenantId, nombre_legal, nombre_comercial, nif_cif,
                 direccion, codigo_postal, ciudad, provincia, pais,
                 moneda, iva_defecto, regimen, email, telefono,
-                es_default, created_by
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-            RETURNING *
-        `, [
-            tenantId, nombre_legal, nombre_comercial, nif_cif,
-            direccion, codigo_postal, ciudad, provincia, pais,
-            moneda, iva_defecto, regimen, email, telefono,
-            esDefault, userId
-        ]);
+                esDefault, userId
+            ]);
 
-        const empresa = result.rows[0];
+            const empresa = result.rows[0];
 
-        // Crear cuenta caja por defecto
-        await client.query(`
-            INSERT INTO accounting_cuenta_tesoreria (id_empresa, nombre, tipo, es_default, created_by)
-            VALUES ($1, 'Caja Principal', 'CAJA', true, $2)
-        `, [empresa.id, userId]);
+            // Crear cuenta caja por defecto
+            await tx.query(`
+                INSERT INTO accounting_cuenta_tesoreria (id_empresa, nombre, tipo, es_default, created_by)
+                VALUES ($1, 'Caja Principal', 'CAJA', true, $2)
+            `, [empresa.id, userId]);
 
-        // Asignar usuario creador como admin de la empresa
-        await client.query(`
-            INSERT INTO accounting_usuario_empresa (id_usuario, id_empresa, rol_empresa, created_by)
-            VALUES ($1, $2, 'empresa_admin', $1)
-        `, [userId, empresa.id]);
+            // Asignar usuario creador como admin de la empresa
+            await tx.query(`
+                INSERT INTO accounting_usuario_empresa (id_usuario, id_empresa, rol_empresa, created_by)
+                VALUES ($1, $2, 'empresa_admin', $1)
+            `, [userId, empresa.id]);
 
-        await client.query('COMMIT');
-
-        res.status(201).json({
-            ok: true,
-            data: empresa,
-            message: 'Empresa creada correctamente'
+            res.status(201).json({
+                ok: true,
+                data: empresa,
+                message: 'Empresa creada correctamente'
+            });
         });
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error en create empresa:', error);
 
         if (error.code === '23505') { // Unique violation
@@ -220,8 +214,6 @@ async function create(req, res) {
         }
 
         res.status(500).json({ ok: false, error: error.message });
-    } finally {
-        client.release();
     }
 }
 
@@ -240,7 +232,7 @@ async function update(req, res) {
         }
 
         // Verificar que la empresa pertenece al tenant
-        const checkResult = await pool.query(
+        const checkResult = await req.db.query(
             'SELECT id FROM accounting_empresa WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL',
             [empresaId, tenantId]
         );
@@ -279,7 +271,7 @@ async function update(req, res) {
         values.push(empresaId);
         values.push(tenantId);
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             UPDATE accounting_empresa 
             SET ${updates.join(', ')}
             WHERE id = $${paramCount - 1} AND id_tenant = $${paramCount}
@@ -312,7 +304,7 @@ async function remove(req, res) {
         }
 
         // Verificar que no sea la única empresa o la default
-        const checkResult = await pool.query(`
+        const checkResult = await req.db.query(`
             SELECT id, es_default,
                    (SELECT COUNT(*) FROM contabilidad_factura WHERE id_empresa = $1 AND deleted_at IS NULL) as facturas,
                    (SELECT COUNT(*) FROM accounting_empresa WHERE id_tenant = $2 AND deleted_at IS NULL) as total_empresas
@@ -341,7 +333,7 @@ async function remove(req, res) {
         }
 
         // Soft delete
-        await pool.query(`
+        await req.db.query(`
             UPDATE accounting_empresa 
             SET deleted_at = now(), updated_by = $3
             WHERE id = $1 AND id_tenant = $2
@@ -370,7 +362,7 @@ async function listUsuarios(req, res) {
             return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
         }
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             SELECT ue.*, u.nombre, u.email
             FROM accounting_usuario_empresa ue
             JOIN usuario u ON u.id = ue.id_usuario
@@ -408,7 +400,7 @@ async function addUsuario(req, res) {
         }
 
         // Verificar empresa pertenece al tenant
-        const empresaCheck = await pool.query(
+        const empresaCheck = await req.db.query(
             'SELECT id FROM accounting_empresa WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL',
             [empresaId, tenantId]
         );
@@ -417,7 +409,7 @@ async function addUsuario(req, res) {
             return res.status(404).json({ ok: false, error: 'Empresa no encontrada' });
         }
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             INSERT INTO accounting_usuario_empresa (id_usuario, id_empresa, rol_empresa, created_by)
             VALUES ($1, $2, $3, $4)
             ON CONFLICT (id_usuario, id_empresa) 
@@ -450,7 +442,7 @@ async function removeUsuario(req, res) {
             return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
         }
 
-        await pool.query(`
+        await req.db.query(`
             DELETE FROM accounting_usuario_empresa
             WHERE id_empresa = $1 AND id_usuario = $2
             AND id_empresa IN (SELECT id FROM accounting_empresa WHERE id_tenant = $3)

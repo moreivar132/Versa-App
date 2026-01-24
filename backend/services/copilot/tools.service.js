@@ -4,18 +4,16 @@
  * ANTI-ALUCINACIÓN: Solo datos reales de DB
  */
 
-const pool = require('../../db');
+const { getTenantDb } = require('../../src/core/db/tenant-db');
 
 /**
  * Tool 1: Obten gasto por categoría
- * @param {number} empresaId 
- * @param {string} dateFrom - YYYY-MM-DD
- * @param {string} dateTo - YYYY-MM-DD
- * @param {number} limit - Top N
- * @returns {object} - {summary, items, metadata}
  */
-async function getSpendByCategory(empresaId, dateFrom, dateTo, limit = 10) {
-    const result = await pool.query(`
+async function getSpendByCategory(empresaId, dateFrom, dateTo, limit = 10, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for getSpendByCategory');
+    const db = getTenantDb({ tenantId });
+
+    const result = await db.query(`
         SELECT 
             cc.id,
             cc.codigo,
@@ -37,7 +35,7 @@ async function getSpendByCategory(empresaId, dateFrom, dateTo, limit = 10) {
         LIMIT $4
     `, [empresaId, dateFrom, dateTo, limit]);
 
-    const totalResult = await pool.query(`
+    const totalResult = await db.query(`
         SELECT 
             SUM(f.total) as total_general,
             COUNT(f.id) as total_facturas
@@ -76,8 +74,11 @@ async function getSpendByCategory(empresaId, dateFrom, dateTo, limit = 10) {
 /**
  * Tool 2: Obtener gasto por proveedor
  */
-async function getSpendByVendor(empresaId, dateFrom, dateTo, limit = 10) {
-    const result = await pool.query(`
+async function getSpendByVendor(empresaId, dateFrom, dateTo, limit = 10, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for getSpendByVendor');
+    const db = getTenantDb({ tenantId });
+
+    const result = await db.query(`
         SELECT 
             c.id,
             c.nombre as proveedor,
@@ -121,8 +122,11 @@ async function getSpendByVendor(empresaId, dateFrom, dateTo, limit = 10) {
 /**
  * Tool 3: Top facturas (mayores gastos/ingresos)
  */
-async function getTopInvoices(empresaId, dateFrom, dateTo, tipo = 'GASTO', limit = 20) {
-    const result = await pool.query(`
+async function getTopInvoices(empresaId, dateFrom, dateTo, tipo = 'GASTO', limit = 20, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for getTopInvoices');
+    const db = getTenantDb({ tenantId });
+
+    const result = await db.query(`
         SELECT 
             f.id,
             f.numero_factura,
@@ -170,11 +174,13 @@ async function getTopInvoices(empresaId, dateFrom, dateTo, tipo = 'GASTO', limit
 
 /**
  * Tool 4: Detectar gastos anómalos (outliers)
- * Usa z-score simple: valores > threshold * desviación estándar
  */
-async function getOutliers(empresaId, dateFrom, dateTo, threshold = 2.0) {
+async function getOutliers(empresaId, dateFrom, dateTo, threshold = 2.0, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for getOutliers');
+    const db = getTenantDb({ tenantId });
+
     // Primero obtener promedio y desviación estándar
-    const statsResult = await pool.query(`
+    const statsResult = await db.query(`
         SELECT 
             AVG(total) as avg_total,
             STDDEV(total) as stddev_total
@@ -199,7 +205,7 @@ async function getOutliers(empresaId, dateFrom, dateTo, threshold = 2.0) {
     }
 
     // Obtener facturas que excedan el límite
-    const result = await pool.query(`
+    const result = await db.query(`
         SELECT 
             f.id,
             f.numero_factura,
@@ -250,14 +256,16 @@ async function getOutliers(empresaId, dateFrom, dateTo, threshold = 2.0) {
 /**
  * Tool 5: Resumen IVA (repercutido vs soportado)
  */
-async function getIVASummary(empresaId, year, quarter) {
-    // Calcular fechas del trimestre
+async function getIVASummary(empresaId, year, quarter, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for getIVASummary');
+    const db = getTenantDb({ tenantId });
+
     const quarterStart = `${year}-${(quarter * 3 - 2).toString().padStart(2, '0')}-01`;
     const quarterEndMonth = quarter * 3;
     const lastDay = new Date(year, quarterEndMonth, 0).getDate();
     const quarterEnd = `${year}-${quarterEndMonth.toString().padStart(2, '0')}-${lastDay}`;
 
-    const result = await pool.query(`
+    const result = await db.query(`
         SELECT 
             tipo,
             SUM(base_imponible) as base_total,
@@ -311,8 +319,11 @@ async function getIVASummary(empresaId, year, quarter) {
 /**
  * Tool 6: Resultado contable (ingresos - gastos)
  */
-async function getProfitLoss(empresaId, dateFrom, dateTo) {
-    const result = await pool.query(`
+async function getProfitLoss(empresaId, dateFrom, dateTo, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for getProfitLoss');
+    const db = getTenantDb({ tenantId });
+
+    const result = await db.query(`
         SELECT 
             tipo,
             SUM(total) as total,
@@ -362,7 +373,10 @@ async function getProfitLoss(empresaId, dateFrom, dateTo) {
 /**
  * Tool 7: Buscar documentos por texto
  */
-async function searchDocuments(empresaId, query, filters = {}) {
+async function searchDocuments(empresaId, query, filters = {}, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for searchDocuments');
+    const db = getTenantDb({ tenantId });
+
     let conditions = ['f.id_empresa = $1', 'f.deleted_at IS NULL'];
     let params = [empresaId];
     let paramCount = 2;
@@ -385,7 +399,7 @@ async function searchDocuments(empresaId, query, filters = {}) {
         paramCount++;
     }
 
-    const result = await pool.query(`
+    const result = await db.query(`
         SELECT 
             f.id,
             f.numero_factura,
@@ -427,8 +441,11 @@ async function searchDocuments(empresaId, query, filters = {}) {
 /**
  * Tool 8: Problemas de higiene (sin categoría, sin adjunto)
  */
-async function getHygieneIssues(empresaId) {
-    const sinCategoriaResult = await pool.query(`
+async function getHygieneIssues(empresaId, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for getHygieneIssues');
+    const db = getTenantDb({ tenantId });
+
+    const sinCategoriaResult = await db.query(`
         SELECT COUNT(*) as count
         FROM contabilidad_factura
         WHERE id_empresa = $1
@@ -437,7 +454,7 @@ async function getHygieneIssues(empresaId) {
           AND estado != 'ANULADA'
     `, [empresaId]);
 
-    const sinAdjuntoResult = await pool.query(`
+    const sinAdjuntoResult = await db.query(`
         SELECT COUNT(*) as count
         FROM contabilidad_factura f
         WHERE f.id_empresa = $1
@@ -465,12 +482,15 @@ async function getHygieneIssues(empresaId) {
 /**
  * Tool 9: Facturas impagadas
  */
-async function getUnpaidInvoices(empresaId, daysOverdue = 30) {
+async function getUnpaidInvoices(empresaId, daysOverdue = 30, tenantId) {
+    if (!tenantId) throw new Error('TenantID required for getUnpaidInvoices');
+    const db = getTenantDb({ tenantId });
+
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOverdue);
     const cutoffStr = cutoffDate.toISOString().split('T')[0];
 
-    const result = await pool.query(`
+    const result = await db.query(`
         SELECT 
             f.id,
             f.numero_factura,

@@ -5,6 +5,8 @@
 
 const service = require('../../application/services/contabilidad.service');
 const { getEffectiveTenant } = require('../../../../../middleware/rbac');
+const auditService = require('../../../../core/logging/audit-service');
+const { AUDIT_ACTIONS } = auditService;
 
 /**
  * Helper para obtener empresa ID
@@ -148,6 +150,13 @@ async function create(req, res) {
 
         const contacto = await service.createContacto({ tenantId }, data, userId);
 
+        // Audit Log
+        auditService.register(req, AUDIT_ACTIONS.CONTACTO_CREATE, {
+            entityType: 'CONTACTO',
+            entityId: contacto.id,
+            after: contacto
+        });
+
         res.status(201).json({
             ok: true,
             data: contacto,
@@ -195,7 +204,17 @@ async function update(req, res) {
         const userId = req.user?.id;
         const data = req.body;
 
+        // Get old data for audit before updating
+        const oldContacto = await service.getContacto({ tenantId }, id);
         const contacto = await service.updateContacto({ tenantId }, id, data, userId);
+
+        // Audit Log
+        auditService.register(req, AUDIT_ACTIONS.CONTACTO_UPDATE, {
+            entityType: 'CONTACTO',
+            entityId: id,
+            before: oldContacto,
+            after: contacto
+        });
 
         res.json({
             ok: true,
@@ -224,7 +243,16 @@ async function remove(req, res) {
         const id = parseInt(req.params.id);
         const userId = req.user?.id;
 
+        // Get data for audit before deleting
+        const oldContacto = await service.getContacto({ tenantId }, id);
         await service.deleteContacto({ tenantId }, id, userId);
+
+        // Audit Log
+        auditService.register(req, AUDIT_ACTIONS.CONTACTO_DELETE, {
+            entityType: 'CONTACTO',
+            entityId: id,
+            before: oldContacto
+        });
 
         res.json({
             ok: true,

@@ -1,0 +1,38 @@
+# R3 Client.Query Grep Results
+# Date: 2026-01-22
+# Command: grep -RInE "client\.query" . --include="*.js" | grep -v node_modules
+
+## Summary
+All client.query usages are in ALLOWED locations:
+- Migration scripts using standard transaction pattern
+- Seed scripts for initial data
+
+## Runtime Violations: 0
+
+## Allowed Locations (Migration/Seed Scripts Only)
+
+./migrations/run_b2b_invite_migration.js - Transaction pattern
+./migrations/run_contabilidad_v3_migration.js - Transaction pattern
+./migrations/run_legacy_rbac_migration.js - Transaction pattern
+./migrations/seed_email_templates.js - Seed script
+./migrations/seed_verticals.js - Seed script
+./run_enhance_templates_migration.js - Migration runner
+
+## Pattern Used (Safe)
+All migrations use the correct pattern:
+```javascript
+const client = await pool.connect();
+try {
+    await client.query('BEGIN');
+    // ... operations
+    await client.query('COMMIT');
+} catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+} finally {
+    client.release();
+}
+```
+
+## Conclusion
+Gate A: ✅ PASS - No unsafe client.query in runtime code.

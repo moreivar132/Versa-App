@@ -3,7 +3,6 @@
  * Gestión de cuentas de tesorería y transacciones
  */
 
-const pool = require('../../../../../db');
 const { getEffectiveTenant } = require('../../../../../middleware/rbac');
 
 /**
@@ -35,7 +34,7 @@ async function listCuentas(req, res) {
         }
 
         // Verificar acceso a la empresa
-        const empresaCheck = await pool.query(
+        const empresaCheck = await req.db.query(
             'SELECT id FROM accounting_empresa WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL',
             [empresaId, tenantId]
         );
@@ -44,7 +43,7 @@ async function listCuentas(req, res) {
             return res.status(404).json({ ok: false, error: 'Empresa no encontrada' });
         }
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             SELECT c.*,
                    (SELECT COALESCE(SUM(CASE WHEN tipo IN ('COBRO', 'INGRESO_EFECTIVO') THEN importe ELSE -importe END), 0)
                     FROM accounting_transaccion t WHERE t.id_cuenta = c.id) as saldo_calculado
@@ -83,7 +82,7 @@ async function createCuenta(req, res) {
             return res.status(400).json({ ok: false, error: 'nombre es obligatorio' });
         }
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             INSERT INTO accounting_cuenta_tesoreria 
                 (id_empresa, nombre, tipo, entidad, numero_cuenta, saldo_actual, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -117,7 +116,7 @@ async function updateCuenta(req, res) {
 
         const { nombre, tipo, entidad, numero_cuenta, activo } = req.body;
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             UPDATE accounting_cuenta_tesoreria 
             SET nombre = COALESCE($3, nombre),
                 tipo = COALESCE($4, tipo),
@@ -203,10 +202,10 @@ async function listTransacciones(req, res) {
         query += ` LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
         params.push(limit, offset);
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         // Contar total
-        const countResult = await pool.query(`
+        const countResult = await req.db.query(`
             SELECT COUNT(*) FROM accounting_transaccion WHERE id_empresa = $1
         `, [empresaId]);
 
@@ -228,8 +227,6 @@ async function listTransacciones(req, res) {
  * Registra una transacción (cobro, pago, ingreso efectivo)
  */
 async function createTransaccion(req, res) {
-    const client = await pool.connect();
-
     try {
         const tenantId = getEffectiveTenant(req);
         const empresaId = getEmpresaId(req);
@@ -262,75 +259,72 @@ async function createTransaccion(req, res) {
             return res.status(400).json({ ok: false, error: 'importe no puede ser 0' });
         }
 
-        await client.query('BEGIN');
-
-        // Crear transacción
-        const result = await client.query(`
-            INSERT INTO accounting_transaccion (
-                id_empresa, id_cuenta, id_factura, id_contacto,
+        await req.db.txWithRLS(async (tx) => {
+            // Crear transacción
+            const result = await tx.query(`
+                INSERT INTO accounting_transaccion (
+                    id_empresa, id_cuenta, id_factura, id_contacto,
+                    tipo, fecha, importe, metodo, referencia, concepto,
+                    incluye_en_resultados, incluye_en_iva, notas, created_by
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                RETURNING *
+            `, [
+                empresaId, id_cuenta, id_factura, id_contacto,
                 tipo, fecha, importe, metodo, referencia, concepto,
-                incluye_en_resultados, incluye_en_iva, notas, created_by
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-            RETURNING *
-        `, [
-            empresaId, id_cuenta, id_factura, id_contacto,
-            tipo, fecha, importe, metodo, referencia, concepto,
-            incluye_en_resultados, incluye_en_iva, notas, userId
-        ]);
+                incluye_en_resultados, incluye_en_iva, notas, userId
+            ]);
 
-        // Si está asociada a una factura, actualizar total_pagado
-        if (id_factura && (tipo === 'COBRO' || tipo === 'PAGO')) {
-            // El trigger en la BD debería manejar esto, pero lo hacemos explícito por seguridad
-            const totalPagos = await client.query(`
-                SELECT COALESCE(SUM(importe), 0) as total
-                FROM accounting_transaccion
-                WHERE id_factura = $1 AND tipo IN ('COBRO', 'PAGO')
-            `, [id_factura]);
+            // Si está asociada a una factura, actualizar total_pagado
+            if (id_factura && (tipo === 'COBRO' || tipo === 'PAGO')) {
+                // El trigger en la BD debería manejar esto, pero lo hacemos explícito por seguridad
+                const totalPagos = await tx.query(`
+                    SELECT COALESCE(SUM(importe), 0) as total
+                    FROM accounting_transaccion
+                    WHERE id_factura = $1 AND tipo IN ('COBRO', 'PAGO')
+                `, [id_factura]);
 
-            const totalFactura = await client.query(`
-                SELECT total FROM contabilidad_factura WHERE id = $1
-            `, [id_factura]);
+                const totalFactura = await tx.query(`
+                    SELECT total FROM contabilidad_factura WHERE id = $1
+                `, [id_factura]);
 
-            const pagado = parseFloat(totalPagos.rows[0].total);
-            const total = parseFloat(totalFactura.rows[0]?.total || 0);
+                const pagado = parseFloat(totalPagos.rows[0].total);
+                const total = parseFloat(totalFactura.rows[0]?.total || 0);
 
-            let nuevoEstado = 'PENDIENTE';
-            if (pagado >= total) {
-                nuevoEstado = 'PAGADA';
-            } else if (pagado > 0) {
-                nuevoEstado = 'PARCIAL';
+                let nuevoEstado = 'PENDIENTE';
+                if (pagado >= total) {
+                    nuevoEstado = 'PAGADA';
+                } else if (pagado > 0) {
+                    nuevoEstado = 'PARCIAL';
+                }
+
+                await tx.query(`
+                    UPDATE contabilidad_factura
+                    SET total_pagado = $2, estado = $3, updated_at = now()
+                    WHERE id = $1
+                `, [id_factura, pagado, nuevoEstado]);
             }
 
-            await client.query(`
-                UPDATE contabilidad_factura
-                SET total_pagado = $2, estado = $3, updated_at = now()
-                WHERE id = $1
-            `, [id_factura, pagado, nuevoEstado]);
-        }
+            // Actualizar saldo de cuenta si se especificó
+            if (id_cuenta) {
+                const delta = (tipo === 'COBRO' || tipo === 'INGRESO_EFECTIVO') ? importe : -importe;
+                await tx.query(`
+                    UPDATE accounting_cuenta_tesoreria
+                    SET saldo_actual = saldo_actual + $2
+                    WHERE id = $1
+                `, [id_cuenta, delta]);
+            }
 
-        // Actualizar saldo de cuenta si se especificó
-        if (id_cuenta) {
-            const delta = (tipo === 'COBRO' || tipo === 'INGRESO_EFECTIVO') ? importe : -importe;
-            await client.query(`
-                UPDATE accounting_cuenta_tesoreria
-                SET saldo_actual = saldo_actual + $2
-                WHERE id = $1
-            `, [id_cuenta, delta]);
-        }
-
-        await client.query('COMMIT');
-
-        res.status(201).json({
-            ok: true,
-            data: result.rows[0],
-            message: 'Transacción registrada correctamente'
+            // Transaction commits automatically if success
+            res.status(201).json({
+                ok: true,
+                data: result.rows[0],
+                message: 'Transacción registrada correctamente'
+            });
         });
+
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error en createTransaccion:', error);
         res.status(500).json({ ok: false, error: error.message });
-    } finally {
-        client.release();
     }
 }
 
@@ -339,8 +333,6 @@ async function createTransaccion(req, res) {
  * Elimina una transacción (solo admin)
  */
 async function removeTransaccion(req, res) {
-    const client = await pool.connect();
-
     try {
         const tenantId = getEffectiveTenant(req);
         const empresaId = getEmpresaId(req);
@@ -350,63 +342,72 @@ async function removeTransaccion(req, res) {
             return res.status(400).json({ ok: false, error: 'Tenant y empresa son obligatorios' });
         }
 
-        await client.query('BEGIN');
+        await req.db.txWithRLS(async (tx) => {
+            // Obtener transacción antes de eliminar
+            const trans = await tx.query(`
+                SELECT * FROM accounting_transaccion WHERE id = $1 AND id_empresa = $2
+            `, [transaccionId, empresaId]);
 
-        // Obtener transacción antes de eliminar
-        const trans = await client.query(`
-            SELECT * FROM accounting_transaccion WHERE id = $1 AND id_empresa = $2
-        `, [transaccionId, empresaId]);
+            if (trans.rows.length === 0) {
+                // Return explicitly to trigger error response outside if needed, or just throw
+                // But since we are inside response handler, we can return response.
+                // HOWEVER txWithRLS catches errors. We should throw and handle in catch?
+                // Or just return JSON. Returning JSON here works if express handles it, but txWithRLS might commit.
+                // We should throw an error to rollback, OR just return and allow commit if we didn't change anything.
+                // But we want to return 404.
+                // Best practice: throw to rollback (even if read-only so far) or just response.
+                // We can't return response from inside tx callback easily if we want to stop execution.
+                // We'll throw special error or just return.
+                // If we return, we must ensure we don't try to query more.
+                // Actually returning res.json(...) works fine, but we should ensure we don't execute proceeding code.
+                return res.status(404).json({ ok: false, error: 'Transacción no encontrada' });
+            }
 
-        if (trans.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ ok: false, error: 'Transacción no encontrada' });
-        }
+            const t = trans.rows[0];
 
-        const t = trans.rows[0];
+            // Eliminar transacción
+            await tx.query('DELETE FROM accounting_transaccion WHERE id = $1', [transaccionId]);
 
-        // Eliminar transacción
-        await client.query('DELETE FROM accounting_transaccion WHERE id = $1', [transaccionId]);
+            // Revertir saldo de cuenta
+            if (t.id_cuenta) {
+                const delta = (t.tipo === 'COBRO' || t.tipo === 'INGRESO_EFECTIVO') ? -t.importe : t.importe;
+                await tx.query(`
+                    UPDATE accounting_cuenta_tesoreria SET saldo_actual = saldo_actual + $2 WHERE id = $1
+                `, [t.id_cuenta, delta]);
+            }
 
-        // Revertir saldo de cuenta
-        if (t.id_cuenta) {
-            const delta = (t.tipo === 'COBRO' || t.tipo === 'INGRESO_EFECTIVO') ? -t.importe : t.importe;
-            await client.query(`
-                UPDATE accounting_cuenta_tesoreria SET saldo_actual = saldo_actual + $2 WHERE id = $1
-            `, [t.id_cuenta, delta]);
-        }
+            // Recalcular estado de factura
+            if (t.id_factura) {
+                const totalPagos = await tx.query(`
+                    SELECT COALESCE(SUM(importe), 0) as total
+                    FROM accounting_transaccion WHERE id_factura = $1 AND tipo IN ('COBRO', 'PAGO')
+                `, [t.id_factura]);
 
-        // Recalcular estado de factura
-        if (t.id_factura) {
-            const totalPagos = await client.query(`
-                SELECT COALESCE(SUM(importe), 0) as total
-                FROM accounting_transaccion WHERE id_factura = $1 AND tipo IN ('COBRO', 'PAGO')
-            `, [t.id_factura]);
+                const totalFactura = await tx.query(`
+                    SELECT total FROM contabilidad_factura WHERE id = $1
+                `, [t.id_factura]);
 
-            const totalFactura = await client.query(`
-                SELECT total FROM contabilidad_factura WHERE id = $1
-            `, [t.id_factura]);
+                const pagado = parseFloat(totalPagos.rows[0].total);
+                const total = parseFloat(totalFactura.rows[0]?.total || 0);
 
-            const pagado = parseFloat(totalPagos.rows[0].total);
-            const total = parseFloat(totalFactura.rows[0]?.total || 0);
+                let nuevoEstado = 'PENDIENTE';
+                if (pagado >= total) nuevoEstado = 'PAGADA';
+                else if (pagado > 0) nuevoEstado = 'PARCIAL';
 
-            let nuevoEstado = 'PENDIENTE';
-            if (pagado >= total) nuevoEstado = 'PAGADA';
-            else if (pagado > 0) nuevoEstado = 'PARCIAL';
+                await tx.query(`
+                    UPDATE contabilidad_factura SET total_pagado = $2, estado = $3 WHERE id = $1
+                `, [t.id_factura, pagado, nuevoEstado]);
+            }
 
-            await client.query(`
-                UPDATE contabilidad_factura SET total_pagado = $2, estado = $3 WHERE id = $1
-            `, [t.id_factura, pagado, nuevoEstado]);
-        }
+            res.json({ ok: true, message: 'Transacción eliminada' });
+        });
 
-        await client.query('COMMIT');
-
-        res.json({ ok: true, message: 'Transacción eliminada' });
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('Error en removeTransaccion:', error);
-        res.status(500).json({ ok: false, error: error.message });
-    } finally {
-        client.release();
+        // If headers already sent (because of 404 inside), don't send again.
+        if (!res.headersSent) {
+            res.status(500).json({ ok: false, error: error.message });
+        }
     }
 }
 
@@ -434,7 +435,7 @@ async function getCashflow(req, res) {
         const hasta = fechaHasta || now.toISOString().split('T')[0];
 
         // Resumen por tipo
-        const resumen = await pool.query(`
+        const resumen = await req.db.query(`
             SELECT 
                 tipo,
                 COUNT(*) as num_transacciones,
@@ -457,7 +458,7 @@ async function getCashflow(req, res) {
         });
 
         // Saldos por cuenta
-        const saldos = await pool.query(`
+        const saldos = await req.db.query(`
             SELECT id, nombre, tipo, saldo_actual
             FROM accounting_cuenta_tesoreria
             WHERE id_empresa = $1 AND activo = true

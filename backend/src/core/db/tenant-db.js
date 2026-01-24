@@ -78,7 +78,7 @@ async function setRLSContext(client, ctx) {
         return; // RLS deshabilitado via env var (emergencia)
     }
 
-    const tenantId = ctx?.tenantId;
+    const tenantId = ctx?.tenantId || ctx?.id_tenant || ctx?.tenant_id;
     const isSuperAdmin = ctx?.isSuperAdmin === true || ctx?.systemContext === true;
 
     if (isSuperAdmin) {
@@ -114,8 +114,8 @@ async function setRLSContext(client, ctx) {
  */
 function getTenantDb(ctx, options = {}) {
     const { allowNoTenant = false, systemContext = false } = options;
-    const tenantId = ctx?.tenantId;
-    const userId = ctx?.userId;
+    const tenantId = ctx?.tenantId || ctx?.id_tenant || ctx?.tenant_id;
+    const userId = ctx?.userId || ctx?.id || ctx?.id_usuario;
     const requestId = ctx?.requestId;
     const isSuperAdmin = ctx?.isSuperAdmin || systemContext;
 

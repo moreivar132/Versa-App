@@ -4,18 +4,8 @@
  */
 
 // Mock the database pool by default
-jest.mock('../db', () => {
-    const mockClient = {
-        query: jest.fn(),
-        release: jest.fn()
-    };
-
-    return {
-        query: jest.fn(),
-        connect: jest.fn().mockResolvedValue(mockClient),
-        end: jest.fn()
-    };
-});
+// Global DB mock removed to allow integration tests to use real DB on demand.
+// Unit tests MUST mock '../db' explicitly.
 
 // Mock console.error to keep tests clean (optional)
 // Uncomment if you want to suppress console.error during tests

@@ -7,6 +7,8 @@ const service = require('../../application/services/contabilidad.service');
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const auditService = require('../../../../core/logging/audit-service');
+const { AUDIT_ACTIONS } = auditService;
 
 // Configurar multer para uploads
 const uploadDir = path.join(__dirname, '../../../../../uploads/contabilidad');
@@ -45,6 +47,8 @@ async function list(req, res) {
             return res.status(403).json({ ok: false, error: 'Contexto de tenant requerido', requestId: req.requestId });
         }
 
+        const idEmpresa = req.headers['x-empresa-id'] || req.query.idEmpresa || ctx.empresaId;
+
         const filters = {
             tipo: req.query.tipo,
             estado: req.query.estado,
@@ -55,9 +59,9 @@ async function list(req, res) {
             idContacto: req.query.idContacto ? parseInt(req.query.idContacto) : null,
             idCategoria: req.query.idCategoria ? parseInt(req.query.idCategoria) : null,
             idSucursal: req.query.idSucursal ? parseInt(req.query.idSucursal) : null,
-            deducible_status: req.query.deducible_status, // nuevo filtro
+            deducible_status: req.query.deducible_status,
             search: req.query.search,
-            idEmpresa: ctx.empresaId, // Ya viene validado del middleware
+            idEmpresa: idEmpresa,
             limit: parseInt(req.query.limit) || 50,
             offset: parseInt(req.query.offset) || 0
         };
@@ -117,11 +121,23 @@ async function create(req, res) {
         // Asignar empresa: priorizar contexto, fallback a body
         if (ctx.empresaId) {
             data.id_empresa = ctx.empresaId;
-        } else if (!data.id_empresa) {
-            // If no empresa in context or body, log warning (optional empresa mode)
-            console.warn('[Facturas] No empresa context - invoice will have null id_empresa');
+        } else if (req.headers['x-empresa-id']) {
+            data.id_empresa = parseInt(req.headers['x-empresa-id']);
         }
-        // Note: if data.id_empresa is already set from body, keep it
+
+        if (!data.id_empresa) {
+            // STRICT MODE: Empresa ID is required for accounting
+            return res.status(400).json({ ok: false, error: 'Empresa ID requerida' });
+        }
+
+        // Security Check: Verify empresa belongs to tenant
+        const empresaCheck = await req.db.query(
+            'SELECT 1 FROM accounting_empresa WHERE id = $1 AND id_tenant = $2',
+            [data.id_empresa, ctx.tenantId]
+        );
+        if (empresaCheck.rows.length === 0) {
+            return res.status(400).json({ ok: false, error: 'Empresa no válida para este tenant' });
+        }
 
         if (!data.numero_factura) {
             return res.status(400).json({ ok: false, error: 'Número de factura requerido' });
@@ -136,6 +152,13 @@ async function create(req, res) {
         }
 
         const factura = await service.createFactura(ctx, data);
+
+        // Audit Log
+        auditService.register(req, AUDIT_ACTIONS.FACTURA_CREATE, {
+            entityType: 'FACTURA',
+            entityId: factura.id,
+            after: factura
+        });
 
         res.status(201).json({
             ok: true,
@@ -161,7 +184,17 @@ async function update(req, res) {
         const id = parseInt(req.params.id);
         const data = req.body;
 
+        // Get old data for audit before updating
+        const oldFactura = await service.getFactura(ctx, id);
         const factura = await service.updateFactura(ctx, id, data);
+
+        // Audit Log
+        auditService.register(req, AUDIT_ACTIONS.FACTURA_UPDATE, {
+            entityType: 'FACTURA',
+            entityId: id,
+            before: oldFactura,
+            after: factura
+        });
 
         res.json({
             ok: true,
@@ -185,8 +218,16 @@ async function remove(req, res) {
     try {
         const ctx = req.ctx;
         const id = parseInt(req.params.id);
-
+        // Get data for audit before deleting
+        const oldFactura = await service.getFactura(ctx, id);
         await service.deleteFactura(ctx, id);
+
+        // Audit Log
+        auditService.register(req, AUDIT_ACTIONS.FACTURA_DELETE, {
+            entityType: 'FACTURA',
+            entityId: id,
+            before: oldFactura
+        });
 
         res.json({
             ok: true,

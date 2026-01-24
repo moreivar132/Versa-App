@@ -495,6 +495,7 @@ router.put('/series/:id', async (req, res) => {
 router.get('/config-tenant', async (req, res) => {
     try {
         const tenantId = req.query.tenantId ? parseInt(req.query.tenantId) : null;
+        const empresaId = req.query.empresaId ? parseInt(req.query.empresaId) : null;
 
         if (!tenantId) {
             return res.status(400).json({
@@ -503,39 +504,59 @@ router.get('/config-tenant', async (req, res) => {
             });
         }
 
-        const query = `
-      SELECT * FROM facturaconfigtenant
-      WHERE id_tenant = $1 AND es_por_defecto = true
-      LIMIT 1
-    `;
+        let query = `
+            SELECT * FROM facturaconfigtenant
+            WHERE id_tenant = $1 AND es_por_defecto = true
+            LIMIT 1
+        `;
+        let params = [tenantId];
 
-        const result = await req.db.query(query, [tenantId]);
+        if (empresaId) {
+            query = `
+                SELECT * FROM facturaconfigtenant
+                WHERE id_tenant = $1 AND id_empresa = $2
+                LIMIT 1
+            `;
+            params = [tenantId, empresaId];
+        }
 
-        // console.log('GET /config-tenant result:', result.rows[0]); // DEBUG
+        let result = await req.db.query(query, params);
 
-        if (result.rows.length === 0) {
-            // Si no existe, crear una configuración por defecto
+        // Fallback to default if specific company config not found
+        if (result.rows.length === 0 && empresaId) {
+            const defaultQuery = `
+                SELECT * FROM facturaconfigtenant
+                WHERE id_tenant = $1 AND es_por_defecto = true
+                LIMIT 1
+            `;
+            result = await req.db.query(defaultQuery, [tenantId]);
+        }
+
+        // Check if Default exists, if not create it
+        if (result.rows.length === 0 && !empresaId) {
             const insertQuery = `
-        INSERT INTO facturaconfigtenant (
-          id_tenant,
-          nombre_plantilla,
-          color_primario,
-          es_por_defecto
-        ) VALUES ($1, $2, $3, $4)
-        RETURNING *
-      `;
-
+                INSERT INTO facturaconfigtenant (
+                  id_tenant,
+                  nombre_plantilla,
+                  color_primario,
+                  es_por_defecto
+                ) VALUES ($1, $2, $3, $4)
+                RETURNING *
+              `;
             const insertResult = await req.db.query(insertQuery, [
                 tenantId,
                 'Por defecto',
                 '#ff4400',
                 true
             ]);
+            return res.json({ success: true, data: insertResult.rows[0] });
+        }
 
-            return res.json({
-                success: true,
-                data: insertResult.rows[0]
-            });
+        // If still no result (company requested, no specific config, no default config), return empty or create default
+        if (result.rows.length === 0) {
+            // Can choose to return empty or create a blank one for the company. 
+            // For now let's return null data to indicate "use defaults"
+            return res.json({ success: true, data: {} });
         }
 
         res.json({
@@ -560,6 +581,7 @@ router.put('/config-tenant', async (req, res) => {
     try {
         const {
             tenantId,
+            id_empresa, // NEW
             logo_url,
             color_primario,
             cabecera_html,
@@ -583,19 +605,30 @@ router.put('/config-tenant', async (req, res) => {
         }
 
         // Verificar si existe configuración
-        const checkQuery = `
-      SELECT id FROM facturaconfigtenant
-      WHERE id_tenant = $1 AND es_por_defecto = true
-      LIMIT 1
-    `;
+        let checkQuery = `
+            SELECT id FROM facturaconfigtenant
+            WHERE id_tenant = $1 AND es_por_defecto = true
+            LIMIT 1
+        `;
+        let checkParams = [tenantId];
 
-        const checkResult = await req.db.query(checkQuery, [tenantId]);
+        if (id_empresa) {
+            checkQuery = `
+                SELECT id FROM facturaconfigtenant
+                WHERE id_tenant = $1 AND id_empresa = $2
+                LIMIT 1
+            `;
+            checkParams = [tenantId, id_empresa];
+        }
+
+        const checkResult = await req.db.query(checkQuery, checkParams);
 
         if (checkResult.rows.length === 0) {
             // Crear nueva configuración
             const insertQuery = `
         INSERT INTO facturaconfigtenant (
           id_tenant,
+          id_empresa,
           logo_url,
           color_primario,
           cabecera_html,
@@ -608,12 +641,13 @@ router.put('/config-tenant', async (req, res) => {
           config_json,
           es_por_defecto,
           creado_por
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING *
       `;
 
             const result = await req.db.query(insertQuery, [
                 tenantId,
+                id_empresa || null, // param 2
                 logo_url || null,
                 color_primario || '#ff4400',
                 cabecera_html || null,
@@ -624,7 +658,7 @@ router.put('/config-tenant', async (req, res) => {
                 mostrar_domicilio_cliente !== undefined ? mostrar_domicilio_cliente : true,
                 mostrar_matricula_vehiculo !== undefined ? mostrar_matricula_vehiculo : true,
                 config_json || {},
-                true,
+                id_empresa ? false : true, // es_por_defecto is true ONLY if no company specified (global default)
                 id_usuario || null
             ]);
 

@@ -15,7 +15,7 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getSystemDb, getTenantDb } = require('../src/core/db/tenant-db');
 const stripeService = require('../services/stripeService');
 const incomeService = require('../services/incomeService');
 
@@ -29,8 +29,9 @@ const incomeService = require('../services/incomeService');
  * @returns {Promise<boolean>} True if already processed
  */
 async function isEventProcessed(eventId) {
+    const systemDb = getSystemDb();
     try {
-        const result = await pool.query(
+        const result = await systemDb.query(
             'SELECT id FROM stripe_event_log WHERE stripe_event_id = $1',
             [eventId]
         );
@@ -51,8 +52,9 @@ async function isEventProcessed(eventId) {
  * @param {string|null} error - Processing error if any
  */
 async function markEventProcessed(event, processingError = null) {
+    const systemDb = getSystemDb();
     try {
-        await pool.query(`
+        await systemDb.query(`
             INSERT INTO stripe_event_log (stripe_event_id, type, created, payload_json, processing_error)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (stripe_event_id) DO UPDATE SET
@@ -199,8 +201,18 @@ async function handleBookingCheckoutCompleted(session) {
     }
 
     try {
+        // Resolve tenant DB for writes
+        // In webhooks we usually don't have authenticated context but valid metadata provides tenantId
+        const tenantId = parseInt(id_tenant) || null;
+        if (!tenantId) {
+            console.error('[Stripe] No tenantId found in booking session metadata');
+            return;
+        }
+
+        const db = getTenantDb({ tenantId });
+
         // Actualizar registro de pago a PAID
-        const updateResult = await pool.query(
+        const updateResult = await db.query(
             `UPDATE marketplace_reserva_pago 
              SET status = 'PAID',
                  stripe_payment_intent_id = $1,
@@ -230,7 +242,6 @@ async function handleBookingCheckoutCompleted(session) {
         // CREAR INCOME EVENT EN EL LEDGER
         // =====================================================
         try {
-            const tenantId = parseInt(id_tenant) || pago.id_tenant;
             const sucursalId = parseInt(id_sucursal) || pago.id_sucursal;
             const clienteId = parseInt(id_cliente) || pago.id_cliente;
             const amount = session.amount_total / 100; // Stripe usa centavos
@@ -263,6 +274,8 @@ async function handleBookingCheckoutCompleted(session) {
         }
 
         // Enviar WhatsApp de confirmación de pago (opcional)
+        // Using System DB or Tenant DB? Timelines service likely needs optimization too.
+        // For now, assume it works if we don't pass explicit DB.
         try {
             const timelinesService = require('../services/timelinesService');
             const { cliente_telefono } = pago.metadata_json || {};
@@ -289,11 +302,32 @@ async function handleBookingCheckoutCompleted(session) {
 async function handleBookingCheckoutExpired(session) {
     console.log('[Stripe] Procesando checkout.session.expired (booking):', session.id);
 
-    const { id_cita } = session.metadata || {};
+    const { id_cita, id_tenant } = session.metadata || {};
+
+    // Resolve tenant DB if possible
+    const tenantId = parseInt(id_tenant) || null;
+    // Fallback to system db for reads if tenant unknown, but here writes are needed.
+    // However, if we can't resolve tenant, we can maybe query `stripe_checkout_session_id` using system db to find tenant?
+    // Let's rely on metadata first.
+
+    let db;
+    if (tenantId) {
+        db = getTenantDb({ tenantId });
+    } else {
+        // We need to find the tenant. Use SystemDB to lookup payment.
+        const systemDb = getSystemDb();
+        const res = await systemDb.query('SELECT id_tenant FROM marketplace_reserva_pago WHERE stripe_checkout_session_id = $1', [session.id]);
+        if (res.rows.length > 0 && res.rows[0].id_tenant) {
+            db = getTenantDb({ tenantId: res.rows[0].id_tenant });
+        } else {
+            console.error('Cant resolve tenant for expired session', session.id);
+            return;
+        }
+    }
 
     try {
         // Solo actualizar el registro de pago a EXPIRED
-        await pool.query(
+        await db.query(
             `UPDATE marketplace_reserva_pago 
              SET status = 'EXPIRED',
                  updated_at = NOW()
@@ -306,7 +340,7 @@ async function handleBookingCheckoutExpired(session) {
 
         // Enviar WhatsApp opcional informando que el enlace expiró
         try {
-            const result = await pool.query(
+            const result = await db.query(
                 `SELECT metadata_json->>'cliente_telefono' as telefono
                  FROM marketplace_reserva_pago 
                  WHERE stripe_checkout_session_id = $1`,
@@ -335,9 +369,21 @@ async function handleBookingCheckoutExpired(session) {
 async function handleBookingPaymentFailed(paymentIntent) {
     console.log('[Stripe] Procesando payment_intent.payment_failed:', paymentIntent.id);
 
+    // We don't have metadata with tenantId easily here unless expanded.
+    // Try to resolve via System DB lookup first
+    const systemDb = getSystemDb();
+    let db = systemDb;
+
     try {
+        const lookup = await systemDb.query('SELECT id_tenant FROM marketplace_reserva_pago WHERE stripe_payment_intent_id = $1', [paymentIntent.id]);
+        if (lookup.rows.length > 0 && lookup.rows[0].id_tenant) {
+            db = getTenantDb({ tenantId: lookup.rows[0].id_tenant });
+        } else {
+            console.warn('Could not resolve tenant for failed payment intent, using system db fallback (unsafe but likely fail)');
+        }
+
         // Buscar el pago por payment_intent_id
-        await pool.query(
+        await db.query(
             `UPDATE marketplace_reserva_pago 
              SET status = 'FAILED',
                  updated_at = NOW(),
@@ -377,13 +423,15 @@ async function handleSubscriptionCheckoutCompleted(session) {
         return;
     }
 
+    const db = getTenantDb({ tenantId });
+
     try {
         // Obtener la suscripción completa de Stripe
         const subscription = await stripeService.getSubscription(subscriptionId);
 
         // Determinar el plan según el price_id
         const priceId = subscription.items.data[0].price.id;
-        const planQuery = await pool.query(
+        const planQuery = await db.query(
             `SELECT id FROM plan_suscripcion 
              WHERE precio_mensual_stripe_price_id = $1 
              OR precio_anual_stripe_price_id = $1 
@@ -399,7 +447,7 @@ async function handleSubscriptionCheckoutCompleted(session) {
         const planId = planQuery.rows[0].id;
 
         // Crear o actualizar la suscripción del tenant
-        await pool.query(
+        await db.query(
             `INSERT INTO tenant_suscripcion (
               tenant_id,
               plan_id,
@@ -453,17 +501,25 @@ async function handleInvoicePaid(invoice) {
     console.log('[Stripe] Procesando invoice.paid:', invoice.id);
 
     const subscriptionId = invoice.subscription;
+    if (!subscriptionId) return;
 
-    if (!subscriptionId) {
-        console.log('[Stripe] Invoice sin suscripción asociada');
-        return;
+    // Resolve tenant via subscription ID (System Lookup)
+    const systemDb = getSystemDb();
+    let db = systemDb;
+    try {
+        const tQuery = await systemDb.query('SELECT tenant_id FROM tenant_suscripcion WHERE stripe_subscription_id = $1', [subscriptionId]);
+        if (tQuery.rows.length > 0) {
+            db = getTenantDb({ tenantId: tQuery.rows[0].tenant_id });
+        }
+    } catch (e) {
+        console.error('Error resolving tenant for invoice', e);
     }
 
     try {
         const subscription = await stripeService.getSubscription(subscriptionId);
 
         // Actualizar el estado de la suscripción y clear past_due_since
-        await pool.query(
+        await db.query(
             `UPDATE tenant_suscripcion SET
               status = $1,
               current_period_start = $2,
@@ -491,16 +547,24 @@ async function handleInvoicePaid(invoice) {
  */
 async function handleInvoicePaymentFailed(invoice) {
     console.log('[Stripe] Procesando invoice.payment_failed:', invoice.id);
-
     const subscriptionId = invoice.subscription;
+    if (!subscriptionId) return;
 
-    if (!subscriptionId) {
-        return;
+    // Resolve tenant via subscription ID (System Lookup)
+    const systemDb = getSystemDb();
+    let db = systemDb;
+    try {
+        const tQuery = await systemDb.query('SELECT tenant_id FROM tenant_suscripcion WHERE stripe_subscription_id = $1', [subscriptionId]);
+        if (tQuery.rows.length > 0) {
+            db = getTenantDb({ tenantId: tQuery.rows[0].tenant_id });
+        }
+    } catch (e) {
+        console.error('Error resolving tenant for invoice failed', e);
     }
 
     try {
         // Marcar la suscripción como past_due y set past_due_since if null
-        await pool.query(
+        await db.query(
             `UPDATE tenant_suscripcion SET
               status = 'past_due',
               past_due_since = COALESCE(past_due_since, NOW()),
@@ -533,6 +597,8 @@ async function handleSubscriptionCreated(subscription) {
             return;
         }
 
+        const db = getTenantDb({ tenantId });
+
         // Get price_id and infer plan if not in metadata
         const priceId = subscription.items?.data?.[0]?.price?.id;
         let planKey = metadataPlanKey;
@@ -542,7 +608,7 @@ async function handleSubscriptionCreated(subscription) {
         }
 
         // Get plan_id from database
-        const planQuery = await pool.query(
+        const planQuery = await db.query(
             `SELECT id, plan_key FROM plan_suscripcion 
              WHERE (plan_key = $1 OR precio_mensual_stripe_price_id = $2 OR precio_anual_stripe_price_id = $2)
              AND activo = true
@@ -558,7 +624,7 @@ async function handleSubscriptionCreated(subscription) {
         const plan = planQuery.rows[0];
 
         // Upsert subscription
-        await pool.query(`
+        await db.query(`
             INSERT INTO tenant_suscripcion (
                 tenant_id, plan_id, plan_key, stripe_customer_id, stripe_subscription_id,
                 status, trial_start_at, trial_end_at, current_period_start, current_period_end,
@@ -604,8 +670,21 @@ async function handleSubscriptionCreated(subscription) {
 async function handleSubscriptionDeleted(subscription) {
     console.log('[Stripe] Procesando customer.subscription.deleted:', subscription.id);
 
+    const subscriptionId = subscription.id;
+    // Resolve tenant via lookup
+    const systemDb = getSystemDb();
+    let db = systemDb;
     try {
-        await pool.query(
+        const tQuery = await systemDb.query('SELECT tenant_id FROM tenant_suscripcion WHERE stripe_subscription_id = $1', [subscriptionId]);
+        if (tQuery.rows.length > 0) {
+            db = getTenantDb({ tenantId: tQuery.rows[0].tenant_id });
+        }
+    } catch (e) {
+        console.error('Error resolving tenant for canceled subscription', e);
+    }
+
+    try {
+        await db.query(
             `UPDATE tenant_suscripcion SET
               status = 'canceled',
               cancel_at = $1,
@@ -630,6 +709,23 @@ async function handleSubscriptionDeleted(subscription) {
 async function handleSubscriptionUpdated(subscription) {
     console.log('[Stripe] Procesando customer.subscription.updated:', subscription.id);
 
+    const subscriptionId = subscription.id;
+    // Resolve tenant via lookup or metadata
+    let tenantId = parseInt(subscription.metadata?.tenant_id);
+    const systemDb = getSystemDb();
+    let db = systemDb;
+
+    if (!tenantId) {
+        const tQuery = await systemDb.query('SELECT tenant_id FROM tenant_suscripcion WHERE stripe_subscription_id = $1', [subscriptionId]);
+        if (tQuery.rows.length > 0) {
+            tenantId = tQuery.rows[0].tenant_id;
+        }
+    }
+
+    if (tenantId) {
+        db = getTenantDb({ tenantId });
+    }
+
     try {
         // Check if plan changed
         const priceId = subscription.items?.data?.[0]?.price?.id;
@@ -640,7 +736,7 @@ async function handleSubscriptionUpdated(subscription) {
         }
 
         // Get plan details
-        const planQuery = await pool.query(
+        const planQuery = await db.query(
             `SELECT id, plan_key FROM plan_suscripcion 
              WHERE (plan_key = $1 OR precio_mensual_stripe_price_id = $2 OR precio_anual_stripe_price_id = $2)
              AND activo = true
@@ -651,7 +747,7 @@ async function handleSubscriptionUpdated(subscription) {
         const plan = planQuery.rows[0];
 
         if (plan) {
-            await pool.query(
+            await db.query(
                 `UPDATE tenant_suscripcion SET
                   plan_id = $1,
                   plan_key = $2,
@@ -675,7 +771,7 @@ async function handleSubscriptionUpdated(subscription) {
             );
         } else {
             // Just update status without plan change
-            await pool.query(
+            await db.query(
                 `UPDATE tenant_suscripcion SET
                   status = $1,
                   current_period_start = $2,

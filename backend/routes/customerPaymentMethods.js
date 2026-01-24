@@ -14,12 +14,24 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const stripeService = require('../services/stripeService');
 const { customerAuth } = require('../middleware/customerAuth');
 
 // Middleware de autenticación para todas las rutas
 router.use(customerAuth);
+
+// Middleware para inyectar req.db (Soporte RLS)
+router.use((req, res, next) => {
+    const ctx = {
+        userId: req.customer?.id_cliente,
+        requestId: req.headers['x-request-id']
+    };
+    // Permitimos sin tenant porque el customer token a veces no trae el tenant explícito
+    // y se obtiene de la BD en cada handler.
+    req.db = getTenantDb(ctx, { allowNoTenant: true });
+    next();
+});
 
 // ==========================================================
 // POST /api/cliente/payment-methods/setup-session
@@ -30,7 +42,7 @@ router.post('/setup-session', async (req, res) => {
         const id_cliente = req.customer.id_cliente;
 
         // Obtener datos del cliente
-        const clienteResult = await pool.query(
+        const clienteResult = await req.db.query(
             `SELECT cf.email, cf.telefono, cf.nombre, cf.id_tenant
              FROM clientefinal cf
              WHERE cf.id = $1`,
@@ -86,7 +98,7 @@ router.get('/', async (req, res) => {
         const id_cliente = req.customer.id_cliente;
 
         // Obtener stripe_customer_id del cliente
-        const authResult = await pool.query(
+        const authResult = await req.db.query(
             `SELECT stripe_customer_id, stripe_default_payment_method_id 
              FROM clientefinal_auth 
              WHERE id_cliente = $1`,
@@ -160,7 +172,7 @@ router.post('/:id/default', async (req, res) => {
         }
 
         // Obtener stripe_customer_id
-        const authResult = await pool.query(
+        const authResult = await req.db.query(
             `SELECT stripe_customer_id FROM clientefinal_auth WHERE id_cliente = $1`,
             [id_cliente]
         );
@@ -224,7 +236,7 @@ router.delete('/:id', async (req, res) => {
         }
 
         // Obtener stripe_customer_id
-        const authResult = await pool.query(
+        const authResult = await req.db.query(
             `SELECT stripe_customer_id FROM clientefinal_auth WHERE id_cliente = $1`,
             [id_cliente]
         );
@@ -262,7 +274,7 @@ router.delete('/:id', async (req, res) => {
         await stripeService.detachPaymentMethod(payment_method_id);
 
         // Si era el default, limpiar en nuestra BD
-        await pool.query(
+        await req.db.query(
             `UPDATE clientefinal_auth 
              SET stripe_default_payment_method_id = NULL 
              WHERE id_cliente = $1 AND stripe_default_payment_method_id = $2`,
@@ -293,7 +305,7 @@ router.get('/pending-payments', async (req, res) => {
         const id_cliente = req.customer.id_cliente;
 
         // Buscar pagos pendientes
-        const result = await pool.query(
+        const result = await req.db.query(
             `SELECT mrp.*, 
                     c.fecha_hora, c.motivo as servicio_nombre,
                     s.nombre as sucursal_nombre
@@ -356,7 +368,7 @@ router.post('/regenerate/:citaId', async (req, res) => {
         }
 
         // Verificar que la cita y pago pertenecen al cliente
-        const pagoResult = await pool.query(
+        const pagoResult = await req.db.query(
             `SELECT mrp.*, c.correo_cliente, c.telefono_cliente, c.motivo,
                     ml.titulo_publico as sucursal_nombre
              FROM marketplace_reserva_pago mrp
@@ -379,7 +391,7 @@ router.post('/regenerate/:citaId', async (req, res) => {
         const pagoAnterior = pagoResult.rows[0];
 
         // Obtener stripe_customer_id si existe
-        const authResult = await pool.query(
+        const authResult = await req.db.query(
             `SELECT stripe_customer_id FROM clientefinal_auth WHERE id_cliente = $1`,
             [id_cliente]
         );
@@ -402,7 +414,7 @@ router.post('/regenerate/:citaId', async (req, res) => {
         });
 
         // Actualizar el registro antiguo a CANCELED
-        await pool.query(
+        await req.db.query(
             `UPDATE marketplace_reserva_pago 
              SET status = 'CANCELED', updated_at = NOW()
              WHERE id = $1`,
@@ -410,7 +422,7 @@ router.post('/regenerate/:citaId', async (req, res) => {
         );
 
         // Crear nuevo registro de pago
-        await pool.query(
+        await req.db.query(
             `INSERT INTO marketplace_reserva_pago 
              (id_tenant, id_sucursal, id_cita, id_cliente, payment_mode, amount, currency, status, stripe_checkout_session_id, checkout_url, metadata_json)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', $8, $9, $10)`,
@@ -458,7 +470,7 @@ router.get('/saldo', async (req, res) => {
         const id_cliente = req.customer.id_cliente;
 
         // Usar la vista para obtener saldo
-        const result = await pool.query(
+        const result = await req.db.query(
             `SELECT * FROM vw_clientefinal_saldo WHERE id_cliente = $1`,
             [id_cliente]
         );
@@ -516,7 +528,7 @@ router.post('/pay/:citaId', async (req, res) => {
         }
 
         // Obtener la cita con todos los datos necesarios
-        const citaResult = await pool.query(
+        const citaResult = await req.db.query(
             `SELECT c.*, 
                     s.nombre as sucursal_nombre,
                     s.id_tenant,
@@ -548,7 +560,7 @@ router.post('/pay/:citaId', async (req, res) => {
         }
 
         // Verificar si ya existe un pago PAID para esta cita
-        const pagoExistente = await pool.query(
+        const pagoExistente = await req.db.query(
             `SELECT id, status FROM marketplace_reserva_pago 
              WHERE id_cita = $1 AND status = 'PAID'`,
             [citaId]
@@ -567,7 +579,7 @@ router.post('/pay/:citaId', async (req, res) => {
         // Buscar el servicio por nombre (motivo de la cita)
         if (cita.motivo) {
             try {
-                const servicioResult = await pool.query(
+                const servicioResult = await req.db.query(
                     `SELECT mss.precio
                      FROM marketplace_servicio_sucursal mss
                      JOIN marketplace_servicio ms ON ms.id = mss.id_servicio
@@ -592,7 +604,7 @@ router.post('/pay/:citaId', async (req, res) => {
         }
 
         // Obtener stripe_customer_id si existe
-        const authResult = await pool.query(
+        const authResult = await req.db.query(
             `SELECT stripe_customer_id FROM clientefinal_auth WHERE id_cliente = $1`,
             [id_cliente]
         );
@@ -615,7 +627,7 @@ router.post('/pay/:citaId', async (req, res) => {
         });
 
         // Verificar si ya existe un registro de pago PENDING para actualizar
-        const pendingPago = await pool.query(
+        const pendingPago = await req.db.query(
             `SELECT id FROM marketplace_reserva_pago 
              WHERE id_cita = $1 AND status = 'PENDING'
              ORDER BY created_at DESC LIMIT 1`,
@@ -624,7 +636,7 @@ router.post('/pay/:citaId', async (req, res) => {
 
         if (pendingPago.rows.length > 0) {
             // Actualizar el existente
-            await pool.query(
+            await req.db.query(
                 `UPDATE marketplace_reserva_pago 
                  SET stripe_checkout_session_id = $1, checkout_url = $2, updated_at = NOW()
                  WHERE id = $3`,
@@ -632,7 +644,7 @@ router.post('/pay/:citaId', async (req, res) => {
             );
         } else {
             // Crear nuevo registro de pago
-            await pool.query(
+            await req.db.query(
                 `INSERT INTO marketplace_reserva_pago 
                  (id_tenant, id_sucursal, id_cita, id_cliente, payment_mode, amount, currency, status, stripe_checkout_session_id, checkout_url, metadata_json)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, 'PENDING', $8, $9, $10)`,

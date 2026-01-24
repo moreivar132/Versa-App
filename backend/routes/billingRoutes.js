@@ -15,7 +15,7 @@
 
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+const { getSystemDb, getTenantDb } = require('../src/core/db/tenant-db');
 const verifyJWT = require('../middleware/auth');
 const stripeService = require('../services/stripeService');
 const trialService = require('../services/trialService');
@@ -32,7 +32,8 @@ const { APP_URL } = require('../config/urls');
  */
 router.get('/plans', async (req, res) => {
     try {
-        const result = await pool.query(`
+        const db = getSystemDb();
+        const result = await db.query(`
             SELECT 
                 id,
                 nombre,
@@ -93,7 +94,10 @@ router.get('/my-subscription', verifyJWT, async (req, res) => {
             return res.status(400).json({ ok: false, error: 'Tenant no identificado' });
         }
 
-        const result = await pool.query(`
+        // Use tenant DB
+        const db = getTenantDb({ tenantId });
+
+        const result = await db.query(`
             SELECT 
                 ts.*,
                 ps.nombre as plan_nombre,
@@ -183,8 +187,11 @@ router.post('/checkout-session', verifyJWT, async (req, res) => {
             });
         }
 
+        // Use tenant DB
+        const db = getTenantDb({ tenantId });
+
         // Get plan from database
-        const planResult = await pool.query(`
+        const planResult = await db.query(`
             SELECT id, plan_key, precio_mensual_stripe_price_id, precio_anual_stripe_price_id
             FROM plan_suscripcion
             WHERE plan_key = $1 AND activo = true
@@ -208,7 +215,7 @@ router.post('/checkout-session', verifyJWT, async (req, res) => {
 
         // Get or create Stripe customer
         let stripeCustomerId = null;
-        const existingSub = await pool.query(
+        const existingSub = await db.query(
             'SELECT stripe_customer_id FROM tenant_suscripcion WHERE tenant_id = $1',
             [tenantId]
         );
@@ -233,7 +240,7 @@ router.post('/checkout-session', verifyJWT, async (req, res) => {
         });
 
         // Save checkout session ID
-        await pool.query(`
+        await db.query(`
             UPDATE tenant_suscripcion 
             SET stripe_checkout_session_id_last = $1
             WHERE tenant_id = $2
@@ -263,8 +270,10 @@ router.post('/portal-session', verifyJWT, async (req, res) => {
             return res.status(400).json({ ok: false, error: 'Tenant no identificado' });
         }
 
+        const db = getTenantDb({ tenantId });
+
         // Get Stripe customer ID
-        const subResult = await pool.query(
+        const subResult = await db.query(
             'SELECT stripe_customer_id FROM tenant_suscripcion WHERE tenant_id = $1',
             [tenantId]
         );
@@ -373,8 +382,11 @@ router.post('/start-trial', async (req, res) => {
             return res.status(400).json({ ok: false, error: 'Email inválido' });
         }
 
+        // Use System DB for creation flow
+        const systemDb = getSystemDb();
+
         // Check if user already exists
-        const existingUser = await pool.query(
+        const existingUser = await systemDb.query(
             'SELECT id, email, id_tenant FROM usuario WHERE email = $1',
             [email]
         );
@@ -391,7 +403,7 @@ router.post('/start-trial', async (req, res) => {
 
         // Create new tenant
         const tenantName = empresa || `Empresa de ${nombre || email.split('@')[0]}`;
-        const tenantResult = await pool.query(`
+        const tenantResult = await systemDb.query(`
             INSERT INTO tenant (nombre, created_at, updated_at)
             VALUES ($1, NOW(), NOW())
             RETURNING id, nombre
@@ -400,7 +412,7 @@ router.post('/start-trial', async (req, res) => {
         const tenantId = tenantResult.rows[0].id;
 
         // Create default sucursal for tenant
-        await pool.query(`
+        await systemDb.query(`
             INSERT INTO sucursal (nombre, id_tenant, created_at, updated_at)
             VALUES ($1, $2, NOW(), NOW())
         `, ['Principal', tenantId]);
@@ -411,7 +423,7 @@ router.post('/start-trial', async (req, res) => {
         const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
         // Create user
-        const userResult = await pool.query(`
+        const userResult = await systemDb.query(`
             INSERT INTO usuario (email, password_hash, nombre, id_tenant, created_at, updated_at)
             VALUES ($1, $2, $3, $4, NOW(), NOW())
             RETURNING id, email, nombre, id_tenant
@@ -421,7 +433,7 @@ router.post('/start-trial', async (req, res) => {
 
         // Find or create Admin role for this tenant
         let adminRoleId;
-        const existingRole = await pool.query(
+        const existingRole = await systemDb.query(
             'SELECT id FROM rol WHERE nombre = $1 AND (tenant_id = $2 OR scope = $3)',
             ['Administrador', tenantId, 'global']
         );
@@ -430,7 +442,7 @@ router.post('/start-trial', async (req, res) => {
             adminRoleId = existingRole.rows[0].id;
         } else {
             // Create tenant-specific admin role
-            const newRole = await pool.query(`
+            const newRole = await systemDb.query(`
                 INSERT INTO rol (nombre, display_name, scope, tenant_id, level, created_at)
                 VALUES ($1, $2, 'tenant', $3, 100, NOW())
                 RETURNING id
@@ -438,7 +450,7 @@ router.post('/start-trial', async (req, res) => {
             adminRoleId = newRole.rows[0].id;
 
             // Assign ALL permissions to this new Admin role
-            await pool.query(`
+            await systemDb.query(`
                 INSERT INTO rolpermiso (id_rol, id_permiso)
                 SELECT $1, id
                 FROM permiso
@@ -446,7 +458,7 @@ router.post('/start-trial', async (req, res) => {
         }
 
         // Assign admin role to user
-        await pool.query(`
+        await systemDb.query(`
             INSERT INTO usuariorol (id_usuario, id_rol, tenant_id, assigned_at)
             VALUES ($1, $2, $3, NOW())
             ON CONFLICT DO NOTHING

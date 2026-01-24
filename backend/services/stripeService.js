@@ -38,11 +38,11 @@ const STRIPE_CANCEL_PATH = process.env.STRIPE_CANCEL_PATH || '/stripe-cancel.htm
  * @returns {Promise<string>} stripe_customer_id
  */
 async function ensureStripeCustomer({ id_cliente, email, phone, name }) {
-    const pool = require('../db');
+    const db = getSystemDb();
 
     try {
         // 1. Buscar si ya tiene stripe_customer_id en clientefinal_auth
-        const existingResult = await pool.query(
+        const existingResult = await db.query(
             `SELECT stripe_customer_id FROM clientefinal_auth WHERE id_cliente = $1`,
             [id_cliente]
         );
@@ -77,7 +77,7 @@ async function ensureStripeCustomer({ id_cliente, email, phone, name }) {
         console.log(`[Stripe] Nuevo customer creado: ${customer.id.substring(0, 10)}...`);
 
         // 3. Guardar en nuestra BD
-        await pool.query(
+        await db.query(
             `UPDATE clientefinal_auth SET stripe_customer_id = $1 WHERE id_cliente = $2`,
             [customer.id, id_cliente]
         );
@@ -166,7 +166,7 @@ async function getCustomerPaymentMethods(stripe_customer_id) {
  * @param {number} id_cliente - ID del cliente en nuestra BD
  */
 async function setDefaultPaymentMethod(stripe_customer_id, payment_method_id, id_cliente = null) {
-    const pool = require('../db');
+    const db = getSystemDb();
 
     try {
         // Actualizar en Stripe
@@ -178,7 +178,7 @@ async function setDefaultPaymentMethod(stripe_customer_id, payment_method_id, id
 
         // Opcionalmente guardar en nuestra BD
         if (id_cliente) {
-            await pool.query(
+            await db.query(
                 `UPDATE clientefinal_auth SET stripe_default_payment_method_id = $1 WHERE id_cliente = $2`,
                 [payment_method_id, id_cliente]
             );
@@ -401,11 +401,11 @@ async function getPaymentIntent(paymentIntentId) {
  * @returns {Promise<string>} Stripe customer ID
  */
 async function getOrCreateTenantCustomer({ id_tenant, email, name }) {
-    const pool = require('../db');
+    const db = getSystemDb();
 
     try {
         // Check if tenant already has a Stripe customer
-        const existingResult = await pool.query(
+        const existingResult = await db.query(
             `SELECT stripe_customer_id FROM tenant_suscripcion WHERE tenant_id = $1 AND stripe_customer_id IS NOT NULL LIMIT 1`,
             [id_tenant]
         );
@@ -435,7 +435,7 @@ async function getOrCreateTenantCustomer({ id_tenant, email, name }) {
         console.log(`[Stripe] New tenant customer created: ${customer.id.substring(0, 10)}...`);
 
         // Update tenant_suscripcion with the customer ID if record exists
-        await pool.query(
+        await db.query(
             `UPDATE tenant_suscripcion SET stripe_customer_id = $1 WHERE tenant_id = $2`,
             [customer.id, id_tenant]
         );
@@ -478,10 +478,10 @@ async function createPortalSession({ stripe_customer_id, return_url }) {
  * @returns {Promise<string|null>} plan_key or null if not found
  */
 async function inferPlanKeyFromPriceId(priceId) {
-    const pool = require('../db');
+    const db = getSystemDb();
 
     try {
-        const result = await pool.query(`
+        const result = await db.query(`
             SELECT plan_key FROM plan_suscripcion 
             WHERE precio_mensual_stripe_price_id = $1 
                OR precio_anual_stripe_price_id = $1

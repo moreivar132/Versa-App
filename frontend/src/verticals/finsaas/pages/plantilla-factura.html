@@ -164,29 +164,98 @@
         async function init() {
             await requireAuth();
             session = getSession();
-            await loadInvoice();
+            await loadInvoiceAndConfig();
         }
 
-        // Load config from localStorage
-        function applyConfig() {
-            const config = JSON.parse(localStorage.getItem('finsaas_invoice_config') || '{}');
-            if (config.color) {
-                document.documentElement.style.setProperty('--accent-color', config.color);
+        async function loadInvoiceAndConfig() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (!id) return alert('No invoice ID specified');
 
-                // Apply dynamic color
-                document.querySelectorAll('.accent-bg').forEach(el => el.style.backgroundColor = config.color);
-                document.querySelectorAll('.accent-text').forEach(el => el.style.color = config.color);
-                // Logo background
-                const logo = document.querySelector('.w-16.h-16');
-                if (logo) {
-                    logo.style.backgroundColor = config.color;
-                    logo.style.color = getContrastColor(config.color);
+            try {
+                // 1. Fetch Invoice Data
+                const res = await fetch(`${API_BASE}/api/contabilidad/facturas/${id}`, {
+                    headers: { 'Authorization': `Bearer ${session?.token}` }
+                });
+                const f = await res.json();
+
+                if (f.error) throw new Error(f.error);
+                const data = f.data || f;
+
+                // 2. Fetch Config for this Company
+                const tenantId = session?.user?.id_tenant; // Or extract from invoice/context if possible
+                if (tenantId) {
+                    await fetchAndApplyConfig(tenantId, data.id_empresa);
                 }
-                const headings = document.querySelectorAll('h1, h2, h3, h4, th');
-                // Optional: color them? For now keeping black/dark green but respecting user choice if implemented deeper
+
+                // 3. Render Invoice Data
+                renderInvoice(data);
+
+            } catch (e) {
+                alert('Error loading invoice: ' + e.message);
+                console.error(e);
             }
-            if (config.footerText) {
-                document.getElementById('notas').textContent = config.footerText;
+        }
+
+        async function fetchAndApplyConfig(tenantId, empresaId) {
+            try {
+                let url = `${API_BASE}/api/facturas/config-tenant?tenantId=${tenantId}`;
+                if (empresaId) url += `&empresaId=${empresaId}`;
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${session?.token}` }
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result.success && result.data) {
+                        applyConfigToDOM(result.data);
+                    }
+                }
+            } catch (e) {
+                console.error("Error applying config", e);
+            }
+        }
+
+        function applyConfigToDOM(config) {
+            if (config.color_primario) {
+                const color = config.color_primario;
+                document.documentElement.style.setProperty('--accent-color', color);
+
+                document.querySelectorAll('.accent-bg').forEach(el => el.style.backgroundColor = color);
+                document.querySelectorAll('.accent-text').forEach(el => el.style.color = color);
+
+                // Static logo coloring (fallback)
+                const logoPlaceholder = document.querySelector('.w-16.h-16');
+                if (logoPlaceholder) {
+                    logoPlaceholder.style.backgroundColor = color;
+                    logoPlaceholder.style.color = getContrastColor(color);
+                }
+            }
+
+            if (config.pie_html) {
+                document.getElementById('notas').textContent = config.pie_html;
+            }
+
+            // Image Logo
+            if (config.logo_url) {
+                const logoContainer = document.querySelector('.text-right');
+                // Remove placeholder if exists or find existing image
+                const existingPlaceholder = logoContainer.querySelector('.w-16.h-16');
+                const existingImg = document.getElementById('company-logo-img');
+
+                const fullUrl = config.logo_url.startsWith('http') ? config.logo_url : `${API_BASE}${config.logo_url}`;
+
+                if (existingImg) {
+                    existingImg.src = fullUrl;
+                } else if (existingPlaceholder) {
+                    // Replace placeholder with image
+                    const img = document.createElement('img');
+                    img.id = 'company-logo-img';
+                    img.src = fullUrl;
+                    img.className = 'w-32 h-auto object-contain mb-2 ml-auto'; // Adjusted size
+                    existingPlaceholder.replaceWith(img);
+                }
             }
         }
 
@@ -200,86 +269,70 @@
             return (yiq >= 128) ? '#142210' : 'white';
         }
 
-        async function loadInvoice() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            if (!id) return alert('No invoice ID specified');
+        function renderInvoice(data) {
+            // Fill data
+            document.getElementById('factura-numero').textContent = data.numero_factura;
+            document.getElementById('fecha-emision').textContent = new Date(data.fecha_emision).toLocaleDateString();
+            document.getElementById('fecha-vencimiento').textContent = data.fecha_vencimiento ? new Date(data.fecha_vencimiento).toLocaleDateString() : '-';
 
-            applyConfig(); // Apply basic placeholders first
+            document.getElementById('estado-badge').textContent = data.estado;
 
+            // Format Currency
+            const fmt = (v) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
+
+            // Try to parse structured notas for items
+            let notasData = null;
+            let publicNotes = '';
             try {
-                const res = await fetch(`${API_BASE}/api/contabilidad/facturas/${id}`, {
-                    headers: { 'Authorization': `Bearer ${session?.token}` }
-                });
-                const f = await res.json();
+                notasData = typeof data.notas === 'string' ? JSON.parse(data.notas) : data.notas;
+                publicNotes = notasData?.public_notes || '';
+            } catch (e) {
+                publicNotes = data.notas || '';
+            }
 
-                if (f.error) throw new Error(f.error);
-                const data = f.data || f;
+            // Render line items
+            const tbody = document.getElementById('line-items');
+            if (notasData && notasData.items && notasData.items.length > 0) {
+                tbody.innerHTML = notasData.items.map(item => `
+                    <tr class="border-b border-gray-100">
+                        <td class="py-4">${item.concepto}</td>
+                        <td class="text-right py-4">${item.cantidad}</td>
+                        <td class="text-right py-4">${fmt(item.precio)}</td>
+                        <td class="text-right py-4 font-bold">${fmt(item.subtotal)}</td>
+                    </tr>
+                `).join('');
+            } else {
+                // Fallback single line
+                document.getElementById('main-concept').textContent = 'Servicios profesionales';
+                document.getElementById('main-base').textContent = fmt(data.base_imponible);
+                document.getElementById('main-total').textContent = fmt(data.total);
+            }
 
-                // Fill data
-                document.getElementById('factura-numero').textContent = data.numero_factura;
-                document.getElementById('fecha-emision').textContent = new Date(data.fecha_emision).toLocaleDateString();
-                document.getElementById('fecha-vencimiento').textContent = data.fecha_vencimiento ? new Date(data.fecha_vencimiento).toLocaleDateString() : '-';
+            document.getElementById('total-base').textContent = fmt(data.base_imponible);
+            document.getElementById('iva-pct').textContent = data.iva_porcentaje;
+            document.getElementById('total-iva').textContent = fmt(data.iva_importe);
+            document.getElementById('total-final').textContent = fmt(data.total);
 
-                document.getElementById('estado-badge').textContent = data.estado;
-
-                // Format Currency
-                const fmt = (v) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(v);
-
-                // Try to parse structured notas for items
-                let notasData = null;
-                let publicNotes = '';
-                try {
-                    notasData = typeof data.notas === 'string' ? JSON.parse(data.notas) : data.notas;
-                    publicNotes = notasData?.public_notes || '';
-                } catch (e) {
-                    publicNotes = data.notas || '';
-                }
-
-                // Render line items
-                const tbody = document.getElementById('line-items');
-                if (notasData && notasData.items && notasData.items.length > 0) {
-                    tbody.innerHTML = notasData.items.map(item => `
-                        <tr class="border-b border-gray-100">
-                            <td class="py-4">${item.concepto}</td>
-                            <td class="text-right py-4">${item.cantidad}</td>
-                            <td class="text-right py-4">${fmt(item.precio)}</td>
-                            <td class="text-right py-4 font-bold">${fmt(item.subtotal)}</td>
-                        </tr>
-                    `).join('');
+            // Set public notes if present
+            if (publicNotes) {
+                const current = document.getElementById('notas').textContent;
+                // Only append if it's not the same placeholder text we just set from config
+                if (!current || current === 'Transferencia bancaria a: ES00 0000 0000 0000 0000') {
+                    document.getElementById('notas').textContent = publicNotes;
                 } else {
-                    // Fallback single line
-                    document.getElementById('main-concept').textContent = 'Servicios profesionales';
-                    document.getElementById('main-base').textContent = fmt(data.base_imponible);
-                    document.getElementById('main-total').textContent = fmt(data.total);
-                }
-
-                document.getElementById('total-base').textContent = fmt(data.base_imponible);
-                document.getElementById('iva-pct').textContent = data.iva_porcentaje;
-                document.getElementById('total-iva').textContent = fmt(data.iva_importe);
-                document.getElementById('total-final').textContent = fmt(data.total);
-
-                // Set public notes if present
-                if (publicNotes) {
-                    const current = document.getElementById('notas').textContent;
-                    if (current.includes('Transferencia')) {
-                        document.getElementById('notas').textContent = publicNotes;
-                    } else {
+                    // Check if not already included
+                    if (!current.includes(publicNotes)) {
                         document.getElementById('notas').textContent = current + ' | ' + publicNotes;
                     }
                 }
-
-                // Initial Placeholder for client info
-                document.getElementById('cliente-nombre').textContent = data.contacto_nombre || 'Cliente General';
-                if (data.contacto_nif) document.getElementById('cliente-nif').textContent = 'NIF/CIF: ' + data.contacto_nif;
-
-                // Fetch full contact and empresa details
-                fetchDetails(data.id_contacto, data.id_empresa);
-
-            } catch (e) {
-                alert('Error loading invoice: ' + e.message);
-                console.error(e);
             }
+
+            // Initial Placeholder for client info
+            document.getElementById('cliente-nombre').textContent = data.contacto_nombre || 'Cliente General';
+            if (data.contacto_nif) document.getElementById('cliente-nif').textContent = 'NIF/CIF: ' + data.contacto_nif;
+
+            // Fetch full contact and empresa details
+            fetchDetails(data.id_contacto, data.id_empresa);
         }
 
         async function fetchDetails(contactId, empresaId) {

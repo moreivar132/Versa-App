@@ -30,5 +30,6 @@ módulo-nombre/
 - [Taller](./taller.md) (Core)
 - [Marketplace](./marketplace.md)
 - [Contable](./contable.md) (Caja, Facturación, Ventas)
+- [Banking](./BANKING.md) (Importación de Extractos)
 - [Suscripciones] (Billing y Planes)
 - [Admin] (Usuarios, Roles y Permisos)

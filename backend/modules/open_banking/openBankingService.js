@@ -3,7 +3,7 @@
  * 
  * Gestiona conexiones, sincronización y consultas de datos bancarios
  */
-const pool = require('../../db');
+const { getTenantDb } = require('../../src/core/db/tenant-db');
 const crypto = require('crypto');
 const { encrypt, decrypt } = require('./cryptoUtils');
 const trueLayerProvider = require('./trueLayerProvider');
@@ -69,6 +69,7 @@ async function handleOAuthCallback(code, state) {
 
     const { tenantId, userId, redirectPath } = pending;
     const redirectUri = process.env.TRUELAYER_REDIRECT_URI;
+    const db = getTenantDb({ tenantId });
 
     // Intercambiar código por tokens
     const tokens = await trueLayerProvider.exchangeCodeForTokens(code, redirectUri);
@@ -80,7 +81,7 @@ async function handleOAuthCallback(code, state) {
     const refreshTokenEnc = encrypt(tokens.refresh_token);
 
     // Crear o actualizar conexión
-    const result = await pool.query(`
+    const result = await db.query(`
         INSERT INTO bank_connection (
             tenant_id, created_by_user_id, provider, status,
             scopes, refresh_token_enc, access_token_cache, access_token_expires_at,
@@ -120,8 +121,9 @@ async function handleOAuthCallback(code, state) {
  * @param {string} connectionId
  * @returns {string} Access token válido
  */
-async function getValidAccessToken(connectionId) {
-    const result = await pool.query(`
+async function getValidAccessToken(connectionId, tenantId) {
+    const db = getTenantDb({ tenantId });
+    const result = await db.query(`
         SELECT * FROM bank_connection WHERE id = $1
     `, [connectionId]);
 
@@ -156,7 +158,7 @@ async function getValidAccessToken(connectionId) {
             ? encrypt(tokens.refresh_token)
             : conn.refresh_token_enc;
 
-        await pool.query(`
+        await db.query(`
             UPDATE bank_connection SET
                 access_token_cache = $1,
                 access_token_expires_at = $2,
@@ -170,7 +172,7 @@ async function getValidAccessToken(connectionId) {
     } catch (error) {
         // Si falla el refresh, marcar como needs_reauth
         if (error.code === 'invalid_grant' || error.code === 'access_denied') {
-            await pool.query(`
+            await db.query(`
                 UPDATE bank_connection SET
                     status = 'needs_reauth',
                     updated_at = NOW()
@@ -187,7 +189,8 @@ async function getValidAccessToken(connectionId) {
  * @returns {Array} Conexiones
  */
 async function listConnections(tenantId) {
-    const result = await pool.query(`
+    const db = getTenantDb({ tenantId });
+    const result = await db.query(`
         SELECT 
             id, tenant_id, created_by_user_id, provider, status,
             scopes, connected_at, last_sync_at, next_sync_at,
@@ -207,7 +210,8 @@ async function listConnections(tenantId) {
  * @returns {Object|null}
  */
 async function getConnection(connectionId, tenantId) {
-    const result = await pool.query(`
+    const db = getTenantDb({ tenantId });
+    const result = await db.query(`
         SELECT 
             id, tenant_id, created_by_user_id, provider, status,
             scopes, connected_at, last_sync_at, next_sync_at,
@@ -230,7 +234,8 @@ async function getConnection(connectionId, tenantId) {
  * @returns {Array}
  */
 async function listAccounts(connectionId, tenantId) {
-    const result = await pool.query(`
+    const db = getTenantDb({ tenantId });
+    const result = await db.query(`
         SELECT * FROM bank_account
         WHERE bank_connection_id = $1 AND tenant_id = $2
         ORDER BY display_name
@@ -244,16 +249,46 @@ async function listAccounts(connectionId, tenantId) {
  * @param {number} tenantId
  * @returns {Array}
  */
-async function listAllAccounts(tenantId) {
-    const result = await pool.query(`
-        SELECT ba.*, bc.provider, bc.status as connection_status
+async function listAllAccounts(tenantId, idEmpresa = null) {
+    const db = getTenantDb({ tenantId });
+    let query = `
+        SELECT ba.*, bc.provider, bc.status as connection_status,
+               (SELECT COALESCE(SUM(amount), 0) FROM bank_transaction WHERE bank_account_id = ba.id) as balance
         FROM bank_account ba
-        JOIN bank_connection bc ON bc.id = ba.bank_connection_id
+        LEFT JOIN bank_connection bc ON bc.id = ba.bank_connection_id
         WHERE ba.tenant_id = $1
-        ORDER BY ba.display_name
-    `, [tenantId]);
+    `;
+    const params = [tenantId];
 
+    if (idEmpresa) {
+        query += ` AND ba.id_empresa = $2`;
+        params.push(idEmpresa);
+    }
+
+    query += ` ORDER BY ba.display_name`;
+
+    const result = await db.query(query, params);
     return result.rows;
+}
+
+/**
+ * Crea una cuenta manual sin conexión provider
+ * @param {Object} params
+ * @returns {Object} Cuenta creada
+ */
+async function createManualAccount({ tenantId, display_name, currency, iban_masked, id_empresa }) {
+    const providerAccountId = `manual_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const db = getTenantDb({ tenantId });
+
+    const result = await db.query(`
+        INSERT INTO bank_account (
+            tenant_id, bank_connection_id, provider_account_id,
+            account_type, currency, iban_masked, display_name, source, id_empresa
+        ) VALUES ($1, NULL, $2, 'checking', $3, $4, $5, 'manual', $6)
+        RETURNING *
+    `, [tenantId, providerAccountId, currency, iban_masked, display_name, id_empresa]);
+
+    return result.rows[0];
 }
 
 // ================================================================
@@ -268,11 +303,13 @@ async function listAllAccounts(tenantId) {
 async function listTransactions({
     tenantId,
     accountId = null,
+    idEmpresa = null,
     from = null,
     to = null,
     limit = 50,
     offset = 0
 }) {
+    const db = getTenantDb({ tenantId });
     let conditions = ['tenant_id = $1'];
     let params = [tenantId];
     let paramIndex = 2;
@@ -280,6 +317,11 @@ async function listTransactions({
     if (accountId) {
         conditions.push(`bank_account_id = $${paramIndex++}`);
         params.push(accountId);
+    }
+
+    if (idEmpresa) {
+        conditions.push(`ba.id_empresa = $${paramIndex++}`);
+        params.push(idEmpresa);
     }
 
     if (from) {
@@ -295,13 +337,16 @@ async function listTransactions({
     const whereClause = conditions.join(' AND ');
 
     // Obtener total
-    const countResult = await pool.query(`
-        SELECT COUNT(*) as total FROM bank_transaction WHERE ${whereClause}
+    const countResult = await db.query(`
+        SELECT COUNT(*) as total 
+        FROM bank_transaction bt
+        JOIN bank_account ba ON ba.id = bt.bank_account_id
+        WHERE ${whereClause.replace(/tenant_id/g, 'bt.tenant_id')}
     `, params);
     const total = parseInt(countResult.rows[0].total);
 
     // Obtener transacciones
-    const result = await pool.query(`
+    const result = await db.query(`
         SELECT bt.*, ba.display_name as account_name, ba.currency as account_currency
         FROM bank_transaction bt
         JOIN bank_account ba ON ba.id = bt.bank_account_id
@@ -335,8 +380,10 @@ async function syncConnection(connectionId, tenantId, options = {}) {
         toDate = null
     } = options;
 
+    const db = getTenantDb({ tenantId });
+
     // Crear registro de sync run
-    const runResult = await pool.query(`
+    const runResult = await db.query(`
         INSERT INTO bank_sync_run (tenant_id, bank_connection_id, run_type, status)
         VALUES ($1, $2, $3, 'running')
         RETURNING *
@@ -351,7 +398,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
 
     try {
         // Obtener access token
-        const accessToken = await getValidAccessToken(connectionId);
+        const accessToken = await getValidAccessToken(connectionId, tenantId);
 
         // Calcular rango de fechas
         const defaultDays = parseInt(process.env.OPEN_BANKING_DEFAULT_FROM_DAYS) || 90;
@@ -359,7 +406,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
         const from = fromDate ? new Date(fromDate) : new Date(Date.now() - defaultDays * 24 * 60 * 60 * 1000);
 
         // Actualizar sync run con rango
-        await pool.query(`
+        await db.query(`
             UPDATE bank_sync_run SET from_ts = $1, to_ts = $2 WHERE id = $3
         `, [from, to, syncRun.id]);
 
@@ -369,7 +416,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
 
         for (const acc of accounts) {
             // Upsert cuenta
-            await pool.query(`
+            await db.query(`
                 INSERT INTO bank_account (
                     tenant_id, bank_connection_id, provider_account_id,
                     account_type, currency, iban_masked, display_name, provider_payload
@@ -389,7 +436,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
         }
 
         // Obtener IDs de cuentas en BD
-        const dbAccounts = await pool.query(`
+        const dbAccounts = await db.query(`
             SELECT id, provider_account_id FROM bank_account
             WHERE bank_connection_id = $1 AND tenant_id = $2
         `, [connectionId, tenantId]);
@@ -409,7 +456,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
 
                 // Upsert transacciones en batch
                 for (const tx of transactions) {
-                    const result = await pool.query(`
+                    const result = await db.query(`
                         INSERT INTO bank_transaction (
                             tenant_id, bank_account_id, provider_transaction_id,
                             booking_date, value_date, amount, currency, description,
@@ -443,7 +490,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
 
         // Actualizar conexión
         const nextSync = new Date(Date.now() + 6 * 60 * 60 * 1000); // +6 horas
-        await pool.query(`
+        await db.query(`
             UPDATE bank_connection SET
                 last_sync_at = NOW(),
                 next_sync_at = $1,
@@ -452,7 +499,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
         `, [nextSync, connectionId]);
 
         // Finalizar sync run exitoso
-        await pool.query(`
+        await db.query(`
             UPDATE bank_sync_run SET
                 status = 'succeeded',
                 finished_at = NOW(),
@@ -468,7 +515,7 @@ async function syncConnection(connectionId, tenantId, options = {}) {
         console.error(`[OpenBanking] Sync failed for connection ${connectionId}:`, error);
 
         // Registrar error
-        await pool.query(`
+        await db.query(`
             UPDATE bank_sync_run SET
                 status = 'failed',
                 finished_at = NOW(),
@@ -519,7 +566,8 @@ async function scheduleInitialSync(connectionId, tenantId) {
  * @returns {Array}
  */
 async function getSyncHistory(connectionId, tenantId, limit = 10) {
-    const result = await pool.query(`
+    const db = getTenantDb({ tenantId });
+    const result = await db.query(`
         SELECT * FROM bank_sync_run
         WHERE bank_connection_id = $1 AND tenant_id = $2
         ORDER BY started_at DESC
@@ -545,6 +593,92 @@ function cleanupOldStates() {
     }
 }
 
+// ================================================================
+// CONCILIACIÓN
+// ================================================================
+
+/**
+ * Concilia una transacción bancaria con una o varias facturas
+ */
+async function reconcileTransaction(tenantId, transactionId, invoiceIds, idEmpresa = null) {
+    const db = getTenantDb({ tenantId });
+    try {
+        await db.txWithRLS(async (tx) => {
+            // 1. Obtener transacción y verificar
+            const txRes = await tx.query(`
+                SELECT bt.*, ba.id_empresa 
+                FROM bank_transaction bt
+                JOIN bank_account ba ON ba.id = bt.bank_account_id
+                WHERE bt.id = $1 AND bt.tenant_id = $2
+                FOR UPDATE
+            `, [transactionId, tenantId]);
+
+            const transaction = txRes.rows[0];
+            if (!transaction) throw new Error('Transacción no encontrada');
+            if (transaction.status === 'RECONCILED') throw new Error('Transacción ya conciliada');
+
+            // Enforce Company Isolation
+            if (idEmpresa && transaction.id_empresa && String(transaction.id_empresa) !== String(idEmpresa)) {
+                throw new Error(`La transacción pertenece a la empresa ${transaction.id_empresa}, pero se solicita desde ${idEmpresa}`);
+            }
+
+            // 2. Procesar facturas
+            for (const invId of invoiceIds) {
+                // Verificar factura
+                const invRes = await tx.query(`
+                    SELECT * FROM contabilidad_factura 
+                    WHERE id = $1 AND id_empresa = $2
+                `, [invId, transaction.id_empresa]);
+
+                const invoice = invRes.rows[0];
+                if (!invoice) throw new Error(`Factura ${invId} no válida para esta empresa`);
+                if (invoice.estado === 'PAGADA') throw new Error(`Factura ${invoice.numero_factura} ya está pagada`);
+
+                // Crear movimiento contable (Cobro o Pago)
+                const tipo = transaction.amount >= 0 ? 'COBRO' : 'PAGO';
+
+                await tx.query(`
+                    INSERT INTO accounting_transaccion 
+                    (id_empresa, tipo, importe, fecha, concepto, metodo, id_factura, bank_transaction_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                `, [
+                    transaction.id_empresa,
+                    tipo,
+                    invoice.total,
+                    transaction.booking_date,
+                    `Conciliación: ${transaction.description}`,
+                    'TRANSFERENCIA',
+                    invoice.id,
+                    transaction.id
+                ]);
+
+                // Actualizar estado factura
+                await tx.query(`
+                    UPDATE contabilidad_factura 
+                    SET estado = 'PAGADA', 
+                        total_pagado = total 
+                    WHERE id = $1
+                `, [invId]);
+            }
+
+            // 3. Actualizar estado transacción bancaria
+            await tx.query(`
+                UPDATE bank_transaction 
+                SET status = 'RECONCILED', 
+                    reconciled_at = NOW() 
+                WHERE id = $1
+            `, [transactionId]);
+
+            return { ok: true };
+        });
+
+        return { ok: true };
+
+    } catch (e) {
+        throw e;
+    }
+}
+
 module.exports = {
     // OAuth
     initiateOAuthFlow,
@@ -558,9 +692,11 @@ module.exports = {
     // Cuentas
     listAccounts,
     listAllAccounts,
+    createManualAccount,
 
     // Transacciones
     listTransactions,
+    reconcileTransaction,
 
     // Sync
     syncConnection,

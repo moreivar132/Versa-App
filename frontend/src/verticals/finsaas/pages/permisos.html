@@ -178,6 +178,69 @@
         import { getSession, requireAuth, getToken, fetchWithAuth } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
+        // === CONFIGURACIÓN DE ROLES ===
+        const ROLE_DETAILS = {
+            'TENANT_ADMIN': {
+                label: 'Administrador de Organización',
+                icon: 'admin_panel_settings',
+                description: 'Acceso total a la configuración, usuarios y todas las empresas del tenant.',
+                capabilities: [
+                    'Gestionar usuarios y roles',
+                    'Crear y editar empresas',
+                    'Configuración fiscal global',
+                    'Ver todos los reportes',
+                    'Aprobar/Rechazar acciones críticas'
+                ]
+            },
+            'ACCOUNTING': {
+                label: 'Contable Senior',
+                icon: 'account_balance',
+                description: 'Gestión completa de contabilidad, impuestos y tesorería.',
+                capabilities: [
+                    'Crear y editar asientos',
+                    'Gestionar facturas y gastos',
+                    'Presentar impuestos (Modelos)',
+                    'Conciliación bancaria',
+                    'Ver reportes financieros'
+                ]
+            },
+            'ADMINISTRADOR': { // Alias legacy
+                label: 'Administrador',
+                icon: 'verified_user',
+                description: 'Administrador general con acceso amplio.',
+                capabilities: ['Gestión general del sistema', 'Ver reportes', 'Gestionar operativa']
+            },
+            'CONTADOR': {
+                label: 'Contable',
+                icon: 'calculate',
+                description: 'Gestión del día a día contable.',
+                capabilities: ['Registrar facturas', 'Conciliar bancos', 'Ver libros contables']
+            },
+            'OPERATIONS_MANAGER': {
+                label: 'Gerente de Operaciones',
+                icon: 'manage_history',
+                description: 'Supervisión de operaciones no contables.',
+                capabilities: ['Ver dashboard operativo', 'Gestionar inventario', 'Ver ventas']
+            },
+            'VIEWER': {
+                label: 'Visualizador',
+                icon: 'visibility',
+                description: 'Acceso de solo lectura para auditoría o consulta.',
+                capabilities: ['Ver dashboards', 'Ver facturas (sin editar)', 'Exportar reportes']
+            },
+            // Fallback para roles no definidos explícitamente
+            'DEFAULT': {
+                label: 'Usuario',
+                icon: 'person',
+                description: 'Rol estándar del sistema.',
+                capabilities: ['Acceso básico según asignación']
+            }
+        };
+
+        function getRoleInfo(roleCode) {
+            return ROLE_DETAILS[roleCode] || ROLE_DETAILS['DEFAULT'];
+        }
+
         let availableRoles = [];
         let availableEmpresas = [];
         let usersData = [];
@@ -211,6 +274,11 @@
             // Load initial data
             await Promise.all([loadRoles(), loadEmpresas()]);
             loadUsers();
+
+            // Setup Role Change Listener for Modal
+            document.getElementById('edit-role-select').addEventListener('change', (e) => {
+                updateRoleInfoCard(e.target.options[e.target.selectedIndex].text); // Pass the raw name/code to lookup
+            });
         }
 
         init();
@@ -282,7 +350,9 @@
             }
 
             tbody.innerHTML = users.map(user => {
-                const roleName = user.roles && user.roles.length > 0 ? user.roles[0].nombre : 'Sin Rol';
+                const rawRoleName = user.roles && user.roles.length > 0 ? user.roles[0].nombre : 'DEFAULT';
+                const roleInfo = getRoleInfo(rawRoleName.toUpperCase()) || { label: rawRoleName, icon: 'badge' };
+
                 const initials = user.nombre.substring(0, 2).toUpperCase();
                 const empresasCount = user.empresas ? user.empresas.length : 0;
 
@@ -300,9 +370,12 @@
                             </div>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="px-3 py-1 bg-gray-100 dark:bg-surface-dark-light rounded-full text-xs font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#25381e]">
-                                ${roleName}
-                            </span>
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-gray-400 text-lg">${roleInfo.icon}</span>
+                                <span class="px-3 py-1 bg-gray-100 dark:bg-surface-dark-light rounded-full text-xs font-bold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-[#25381e]">
+                                    ${roleInfo.label}
+                                </span>
+                            </div>
                         </td>
                         <td class="px-6 py-4">
                             <span class="text-sm text-gray-600 dark:text-gray-400">
@@ -325,6 +398,49 @@
             }).join('');
         }
 
+        function updateRoleInfoCard() {
+            // roleName is optional/removed; we primarily look up by selected ID
+            // Note: The select option text matches the raw role name from backend. 
+            // We need to match it against our ROLE_DETAILS keys or use the ID to find the raw name first.
+            // Better approach: Find the role object from availableRoles first.
+
+            const selectedRoleId = document.getElementById('edit-role-select').value;
+            const roleObj = availableRoles.find(r => r.id == selectedRoleId);
+
+            const infoContainer = document.getElementById('role-info-card');
+            if (!infoContainer) {
+                // Creates container if not exists (appended after select)
+                const descP = document.createElement('div');
+                descP.id = 'role-info-card';
+                descP.className = 'mt-4 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-xl';
+                document.getElementById('edit-role-select').parentNode.appendChild(descP);
+            }
+
+            const container = document.getElementById('role-info-card');
+
+            if (roleObj) {
+                const info = getRoleInfo(roleObj.nombre.toUpperCase());
+
+                container.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <span class="material-symbols-outlined text-blue-500 mt-1">${info.icon}</span>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-900 dark:text-white mb-1">${info.label}</h4>
+                            <p class="text-xs text-slate-600 dark:text-slate-400 mb-2">${info.description}</p>
+                            ${info.capabilities ? `
+                                <ul class="text-xs text-slate-500 dark:text-slate-400 list-disc list-inside space-y-0.5">
+                                    ${info.capabilities.map(cap => `<li>${cap}</li>`).join('')}
+                                </ul>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
         window.openEditModal = function (userId) {
             const user = usersData.find(u => u.id === userId);
             if (!user) return;
@@ -336,14 +452,21 @@
 
             // Populate Roles
             const roleSelect = document.getElementById('edit-role-select');
-            roleSelect.innerHTML = availableRoles.map(role => `
-                <option value="${role.id}">${role.nombre}</option>
-            `).join('');
+            roleSelect.innerHTML = availableRoles.map(role => {
+                const info = getRoleInfo(role.nombre.toUpperCase());
+                // Show friendly name in dropdown too
+                return `<option value="${role.id}">${info.label} (${role.nombre})</option>`;
+            }).join('');
 
             // Select current role
             if (user.roles && user.roles.length > 0) {
                 roleSelect.value = user.roles[0].id;
+            } else if (availableRoles.length > 0) {
+                roleSelect.value = availableRoles[0].id;
             }
+
+            // Trigger info update
+            updateRoleInfoCard();
 
             // Populate Empresas
             const empresasList = document.getElementById('edit-empresas-list');

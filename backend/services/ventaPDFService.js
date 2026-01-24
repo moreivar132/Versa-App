@@ -1,10 +1,13 @@
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
 class VentaPDFService {
     /**
      * Genera el HTML del documento de venta (ticket/factura)
      */
     async generarDocumentoVenta(idVenta, tenantId) {
+        if (!tenantId) throw new Error('TenantID required for PDF generation');
+        const db = getTenantDb({ tenantId });
+
         // Obtener datos de la venta
         const ventaQuery = `
             SELECT 
@@ -20,7 +23,7 @@ class VentaPDFService {
             JOIN sucursal s ON v.id_sucursal = s.id
             WHERE v.id = $1 AND v.id_tenant = $2
         `;
-        const ventaResult = await pool.query(ventaQuery, [idVenta, tenantId]);
+        const ventaResult = await db.query(ventaQuery, [idVenta, tenantId]);
 
         if (ventaResult.rows.length === 0) {
             throw new Error('Venta no encontrada');
@@ -36,7 +39,7 @@ class VentaPDFService {
             WHERE vl.id_venta = $1
             ORDER BY vl.id
         `;
-        const lineasResult = await pool.query(lineasQuery, [idVenta]);
+        const lineasResult = await db.query(lineasQuery, [idVenta]);
         const lineas = lineasResult.rows;
 
         // Obtener pagos de la venta
@@ -46,7 +49,7 @@ class VentaPDFService {
             JOIN mediopago mp ON vp.id_medio_pago = mp.id
             WHERE vp.id_venta = $1
         `;
-        const pagosResult = await pool.query(pagosQuery, [idVenta]);
+        const pagosResult = await db.query(pagosQuery, [idVenta]);
         const pagos = pagosResult.rows;
 
         // Generar HTML del documento

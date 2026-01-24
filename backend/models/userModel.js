@@ -1,18 +1,35 @@
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
-async function getUserByEmail(email) {
+/**
+ * Helper para resolver DB vs Ctx
+ * Si recibe un objeto "query" style, es DB directa (tx o req.db)
+ * Si recibe un objeto { ... } es ctx
+ * Si no recibe nada o null, busca tenant en ctx
+ */
+function resolveDb(ctxOrDb, options = {}) {
+  if (ctxOrDb && typeof ctxOrDb.query === 'function') {
+    return ctxOrDb;
+  }
+  return getTenantDb(ctxOrDb, options);
+}
+
+async function getUserByEmail(email, ctx = null) {
   if (!email) return null;
-  const result = await pool.query('SELECT * FROM usuario WHERE email = $1 LIMIT 1', [email]);
+  // Login flow typically calls this without tenant context first
+  const db = resolveDb(ctx, { allowNoTenant: true });
+  const result = await db.query('SELECT * FROM usuario WHERE email = $1 LIMIT 1', [email]);
   return result.rows[0] || null;
 }
 
-async function getUserById(id) {
+async function getUserById(id, ctx = null) {
   if (!id) return null;
-  const result = await pool.query('SELECT * FROM usuario WHERE id = $1 LIMIT 1', [id]);
+  // Can be used in login flow too
+  const db = resolveDb(ctx, { allowNoTenant: true });
+  const result = await db.query('SELECT * FROM usuario WHERE id = $1 LIMIT 1', [id]);
   return result.rows[0] || null;
 }
 
-async function createUser({ id_tenant, nombre, email, passwordHash, isSuperAdmin, porcentaje_mano_obra }) {
+async function createUser({ id_tenant, nombre, email, passwordHash, isSuperAdmin, porcentaje_mano_obra }, ctx = null) {
   const insertQuery = `
     INSERT INTO usuario (id_tenant, nombre, email, password_hash, is_super_admin, porcentaje_mano_obra)
     VALUES ($1, $2, $3, $4, $5, $6)
@@ -26,12 +43,22 @@ async function createUser({ id_tenant, nombre, email, passwordHash, isSuperAdmin
     Boolean(isSuperAdmin),
     porcentaje_mano_obra || 0.5
   ];
-  const result = await pool.query(insertQuery, values);
+
+  // Creation might happen in public signup (no curr tenant) or admin (has tenant)
+  // safe to allow no tenant if id_tenant is explicit
+  const db = resolveDb(ctx, { allowNoTenant: true });
+  const result = await db.query(insertQuery, values);
   return result.rows[0] || null;
 }
 
-async function getAllUsers() {
-  const result = await pool.query(`
+async function getAllUsers(ctx = {}) {
+  // Listing users is usually an admin task, should be tenant aware or system aware
+  // But legacy behavior was global. For now, we allow global if superadmin context, 
+  // but let's default to tenant safety if ctx provided.
+  // Given the query joins tenant, this is likely a superadmin view.
+  const db = resolveDb(ctx, { allowNoTenant: true });
+
+  const result = await db.query(`
     SELECT u.*, t.nombre as tenant_nombre 
     FROM usuario u
     LEFT JOIN tenant t ON u.id_tenant = t.id
@@ -40,7 +67,9 @@ async function getAllUsers() {
   return result.rows;
 }
 
-async function updateUser(id, { nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra, password_hash }) {
+async function updateUser(id, { nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra, password_hash }, ctx = null) {
+  const db = resolveDb(ctx, { allowNoTenant: true }); // Updates can be self-profile or admin
+
   // Build dynamic query based on whether password is being updated
   if (password_hash) {
     const updateQuery = `
@@ -55,7 +84,7 @@ async function updateUser(id, { nombre, email, id_tenant, is_super_admin, porcen
       RETURNING *
     `;
     const values = [nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra, password_hash, id];
-    const result = await pool.query(updateQuery, values);
+    const result = await db.query(updateQuery, values);
     return result.rows[0];
   } else {
     const updateQuery = `
@@ -69,13 +98,14 @@ async function updateUser(id, { nombre, email, id_tenant, is_super_admin, porcen
       RETURNING *
     `;
     const values = [nombre, email, id_tenant, is_super_admin, porcentaje_mano_obra, id];
-    const result = await pool.query(updateQuery, values);
+    const result = await db.query(updateQuery, values);
     return result.rows[0];
   }
 }
 
-async function deleteUser(id) {
-  await pool.query('DELETE FROM usuario WHERE id = $1', [id]);
+async function deleteUser(id, ctx = null) {
+  const db = resolveDb(ctx, { allowNoTenant: true });
+  await db.query('DELETE FROM usuario WHERE id = $1', [id]);
   return true;
 }
 

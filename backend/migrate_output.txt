@@ -1,0 +1,694 @@
+﻿[dotenv@17.2.3] injecting env (3) from .env -- tip: ÔÜÖ´©Å  specify custom .env file path with { path: '/custom/path/.env' }
+Using environment: [35mdevelopment[39m
+­ƒôï BASELINE (NO-OP): Schema initialization handled by schema_dump.
+[Migration] Ensuring subscription tables and columns exist (idempotent)...
+[Migration] Ôä╣´©Å plan_suscripcion already exists, skipping creation
+[Migration] Ôä╣´©Å tenant_suscripcion exists, adding missing columns...
+[Migration] Ô£à Added missing Stripe columns to tenant_suscripcion
+[Migration] Ô£à Created idx_tenant_suscripcion_stripe_sub index
+[Migration] Ô£à Subscription tables migration complete (idempotent)
+[Migration] Enhancing RBAC tables for multi-tenant...
+[33mmigration file "20260113020000_create_rbac_tables.js" failed[39m
+[33mmigration failed with error: 
+        -- ================================================================
+        -- 1. ENHANCE ROL TABLE (add multi-tenant columns)
+        -- ================================================================
+        ALTER TABLE rol ADD COLUMN IF NOT EXISTS scope VARCHAR(20) DEFAULT 'tenant';
+        ALTER TABLE rol ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenant(id) ON DELETE CASCADE;
+        ALTER TABLE rol ADD COLUMN IF NOT EXISTS level INTEGER DEFAULT 50;
+        ALTER TABLE rol ADD COLUMN IF NOT EXISTS is_system BOOLEAN DEFAULT false;
+        ALTER TABLE rol ADD COLUMN IF NOT EXISTS display_name VARCHAR(255);
+        ALTER TABLE rol ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+        ALTER TABLE rol ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+
+        -- ================================================================
+        -- 2. ENHANCE PERMISO TABLE
+        -- ================================================================
+        DO $$ 
+        BEGIN
+            IF EXISTS (SELECT 1 FROM information_schema.columns 
+                       WHERE table_name = 'permiso' AND column_name = 'nombre') THEN
+                ALTER TABLE permiso ADD COLUMN IF NOT EXISTS key VARCHAR(100);
+                UPDATE permiso SET key = nombre WHERE key IS NULL;
+            END IF;
+        END $$;
+
+        ALTER TABLE permiso ADD COLUMN IF NOT EXISTS module VARCHAR(100);
+        ALTER TABLE permiso ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+        -- ================================================================
+        -- 3. ENHANCE USUARIOROL TABLE
+        -- ================================================================
+        ALTER TABLE usuariorol ADD COLUMN IF NOT EXISTS tenant_id INTEGER REFERENCES tenant(id) ON DELETE CASCADE;
+        ALTER TABLE usuariorol ADD COLUMN IF NOT EXISTS assigned_at TIMESTAMPTZ DEFAULT NOW();
+
+        -- ================================================================
+        -- 4. CREATE AUDIT_LOGS TABLE
+        -- ================================================================
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id SERIAL PRIMARY KEY,
+            actor_user_id INTEGER REFERENCES usuario(id) ON DELETE SET NULL,
+            tenant_id INTEGER REFERENCES tenant(id) ON DELETE SET NULL,
+            action VARCHAR(255) NOT NULL,
+            entity_type VARCHAR(50) NOT NULL,
+            entity_id VARCHAR(255),
+            before_json JSONB,
+            after_json JSONB,
+            ip_address VARCHAR(45),
+            user_agent TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_actor ON audit_logs(actor_user_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant ON audit_logs(tenant_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at DESC);
+
+        -- ================================================================
+        -- 5. UNIQUE CONSTRAINTS AND INDEXES
+        -- ================================================================
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_rol_global_unique 
+        ON rol(nombre) WHERE tenant_id IS NULL;
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_rol_tenant_unique 
+        ON rol(tenant_id, nombre) WHERE tenant_id IS NOT NULL;
+
+        DO $$ 
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_permiso_key_unique') THEN
+                CREATE UNIQUE INDEX idx_permiso_key_unique ON permiso(key) WHERE key IS NOT NULL;
+            END IF;
+        END $$;
+
+        CREATE INDEX IF NOT EXISTS idx_permiso_module ON permiso(module);
+
+        -- ================================================================
+        -- 6. ENSURE is_super_admin EXISTS ON USUARIO
+        -- ================================================================
+        ALTER TABLE usuario ADD COLUMN IF NOT EXISTS is_super_admin BOOLEAN DEFAULT false;
+
+        -- ================================================================
+        -- 7. HELPER FUNCTION FOR PERMISSION CHECK
+        -- ================================================================
+        CREATE OR REPLACE FUNCTION user_has_permission(
+            p_user_id INTEGER,
+            p_tenant_id INTEGER,
+            p_permission_key VARCHAR
+        ) RETURNS BOOLEAN AS $$
+        DECLARE
+            is_super BOOLEAN;
+            has_perm BOOLEAN;
+        BEGIN
+            SELECT is_super_admin INTO is_super FROM usuario WHERE id = p_user_id;
+            IF is_super THEN
+                RETURN TRUE;
+            END IF;
+            
+            SELECT EXISTS (
+                SELECT 1 
+                FROM usuariorol ur
+                JOIN rol r ON ur.id_rol = r.id
+                JOIN rolpermiso rp ON rp.id_rol = r.id
+                JOIN permiso p ON p.id = rp.id_permiso
+                WHERE ur.id_usuario = p_user_id
+                  AND (p.key = p_permission_key OR p.nombre = p_permission_key)
+                  AND (
+                      r.scope = 'global' 
+                      OR (r.scope = 'tenant' AND r.tenant_id = p_tenant_id)
+                      OR (ur.tenant_id = p_tenant_id)
+                  )
+            ) INTO has_perm;
+            
+            RETURN has_perm;
+        END;
+        $$ LANGUAGE plpgsql;
+     - foreign key constraint "rol_tenant_id_fkey" cannot be implemented[39m
+node.exe : [31m
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: ([31m:S  
+  tring) [], RemoteExcepti   
+ on
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+        -- ==================
+=============================
+=================
+        -- 1. ENHANCE ROL 
+TABLE (add multi-tenant 
+columns)
+        -- ==================
+=============================
+=================
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS scope 
+VARCHAR(20) DEFAULT 'tenant';
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+tenant_id INTEGER REFERENCES 
+tenant(id) ON DELETE CASCADE;
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS level 
+INTEGER DEFAULT 50;
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+is_system BOOLEAN DEFAULT 
+false;
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+display_name VARCHAR(255);
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+created_at TIMESTAMPTZ 
+DEFAULT NOW();
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+updated_at TIMESTAMPTZ 
+DEFAULT NOW();
+
+        -- ==================
+=============================
+=================
+        -- 2. ENHANCE 
+PERMISO TABLE
+        -- ==================
+=============================
+=================
+        DO $$ 
+        BEGIN
+            IF EXISTS 
+(SELECT 1 FROM 
+information_schema.columns 
+                       WHERE 
+table_name = 'permiso' AND 
+column_name = 'nombre') THEN
+                ALTER TABLE 
+permiso ADD COLUMN IF NOT 
+EXISTS key VARCHAR(100);
+                UPDATE 
+permiso SET key = nombre 
+WHERE key IS NULL;
+            END IF;
+        END $$;
+
+        ALTER TABLE permiso 
+ADD COLUMN IF NOT EXISTS 
+module VARCHAR(100);
+        ALTER TABLE permiso 
+ADD COLUMN IF NOT EXISTS 
+created_at TIMESTAMPTZ 
+DEFAULT NOW();
+
+        -- ==================
+=============================
+=================
+        -- 3. ENHANCE 
+USUARIOROL TABLE
+        -- ==================
+=============================
+=================
+        ALTER TABLE 
+usuariorol ADD COLUMN IF NOT 
+EXISTS tenant_id INTEGER 
+REFERENCES tenant(id) ON 
+DELETE CASCADE;
+        ALTER TABLE 
+usuariorol ADD COLUMN IF NOT 
+EXISTS assigned_at 
+TIMESTAMPTZ DEFAULT NOW();
+
+        -- ==================
+=============================
+=================
+        -- 4. CREATE 
+AUDIT_LOGS TABLE
+        -- ==================
+=============================
+=================
+        CREATE TABLE IF NOT 
+EXISTS audit_logs (
+            id SERIAL 
+PRIMARY KEY,
+            actor_user_id 
+INTEGER REFERENCES 
+usuario(id) ON DELETE SET 
+NULL,
+            tenant_id 
+INTEGER REFERENCES 
+tenant(id) ON DELETE SET 
+NULL,
+            action 
+VARCHAR(255) NOT NULL,
+            entity_type 
+VARCHAR(50) NOT NULL,
+            entity_id 
+VARCHAR(255),
+            before_json 
+JSONB,
+            after_json JSONB,
+            ip_address 
+VARCHAR(45),
+            user_agent TEXT,
+            created_at 
+TIMESTAMPTZ DEFAULT NOW()
+        );
+
+        CREATE INDEX IF NOT 
+EXISTS idx_audit_logs_actor 
+ON audit_logs(actor_user_id);
+        CREATE INDEX IF NOT 
+EXISTS idx_audit_logs_tenant 
+ON audit_logs(tenant_id);
+        CREATE INDEX IF NOT 
+EXISTS idx_audit_logs_action 
+ON audit_logs(action);
+        CREATE INDEX IF NOT 
+EXISTS idx_audit_logs_entity 
+ON audit_logs(entity_type, 
+entity_id);
+        CREATE INDEX IF NOT 
+EXISTS 
+idx_audit_logs_created ON 
+audit_logs(created_at DESC);
+
+        -- ==================
+=============================
+=================
+        -- 5. UNIQUE 
+CONSTRAINTS AND INDEXES
+        -- ==================
+=============================
+=================
+        CREATE UNIQUE INDEX 
+IF NOT EXISTS 
+idx_rol_global_unique 
+        ON rol(nombre) WHERE 
+tenant_id IS NULL;
+
+        CREATE UNIQUE INDEX 
+IF NOT EXISTS 
+idx_rol_tenant_unique 
+        ON rol(tenant_id, 
+nombre) WHERE tenant_id IS 
+NOT NULL;
+
+        DO $$ 
+        BEGIN
+            IF NOT EXISTS 
+(SELECT 1 FROM pg_indexes 
+WHERE indexname = 
+'idx_permiso_key_unique') 
+THEN
+                CREATE 
+UNIQUE INDEX 
+idx_permiso_key_unique ON 
+permiso(key) WHERE key IS 
+NOT NULL;
+            END IF;
+        END $$;
+
+        CREATE INDEX IF NOT 
+EXISTS idx_permiso_module ON 
+permiso(module);
+
+        -- ==================
+=============================
+=================
+        -- 6. ENSURE 
+is_super_admin EXISTS ON 
+USUARIO
+        -- ==================
+=============================
+=================
+        ALTER TABLE usuario 
+ADD COLUMN IF NOT EXISTS 
+is_super_admin BOOLEAN 
+DEFAULT false;
+
+        -- ==================
+=============================
+=================
+        -- 7. HELPER 
+FUNCTION FOR PERMISSION CHECK
+        -- ==================
+=============================
+=================
+        CREATE OR REPLACE 
+FUNCTION user_has_permission(
+            p_user_id 
+INTEGER,
+            p_tenant_id 
+INTEGER,
+            p_permission_key 
+VARCHAR
+        ) RETURNS BOOLEAN AS 
+$$
+        DECLARE
+            is_super BOOLEAN;
+            has_perm BOOLEAN;
+        BEGIN
+            SELECT 
+is_super_admin INTO is_super 
+FROM usuario WHERE id = 
+p_user_id;
+            IF is_super THEN
+                RETURN TRUE;
+            END IF;
+            
+            SELECT EXISTS (
+                SELECT 1 
+                FROM 
+usuariorol ur
+                JOIN rol r 
+ON ur.id_rol = r.id
+                JOIN 
+rolpermiso rp ON rp.id_rol = 
+r.id
+                JOIN permiso 
+p ON p.id = rp.id_permiso
+                WHERE 
+ur.id_usuario = p_user_id
+                  AND (p.key 
+= p_permission_key OR 
+p.nombre = p_permission_key)
+                  AND (
+                      
+r.scope = 'global' 
+                      OR 
+(r.scope = 'tenant' AND 
+r.tenant_id = p_tenant_id)
+                      OR 
+(ur.tenant_id = p_tenant_id)
+                  )
+            ) INTO has_perm;
+            
+            RETURN has_perm;
+        END;
+        $$ LANGUAGE plpgsql;
+     - foreign key 
+constraint 
+"rol_tenant_id_fkey" cannot 
+be implemented[39m
+[31mKey columns "tenant_id" 
+and "id" are of incompatible 
+types: integer and character 
+varying.
+error: 
+        -- ==================
+=============================
+=================
+        -- 1. ENHANCE ROL 
+TABLE (add multi-tenant 
+columns)
+        -- ==================
+=============================
+=================
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS scope 
+VARCHAR(20) DEFAULT 'tenant';
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+tenant_id INTEGER REFERENCES 
+tenant(id) ON DELETE CASCADE;
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS level 
+INTEGER DEFAULT 50;
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+is_system BOOLEAN DEFAULT 
+false;
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+display_name VARCHAR(255);
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+created_at TIMESTAMPTZ 
+DEFAULT NOW();
+        ALTER TABLE rol ADD 
+COLUMN IF NOT EXISTS 
+updated_at TIMESTAMPTZ 
+DEFAULT NOW();
+
+        -- ==================
+=============================
+=================
+        -- 2. ENHANCE 
+PERMISO TABLE
+        -- ==================
+=============================
+=================
+        DO $$ 
+        BEGIN
+            IF EXISTS 
+(SELECT 1 FROM 
+information_schema.columns 
+                       WHERE 
+table_name = 'permiso' AND 
+column_name = 'nombre') THEN
+                ALTER TABLE 
+permiso ADD COLUMN IF NOT 
+EXISTS key VARCHAR(100);
+                UPDATE 
+permiso SET key = nombre 
+WHERE key IS NULL;
+            END IF;
+        END $$;
+
+        ALTER TABLE permiso 
+ADD COLUMN IF NOT EXISTS 
+module VARCHAR(100);
+        ALTER TABLE permiso 
+ADD COLUMN IF NOT EXISTS 
+created_at TIMESTAMPTZ 
+DEFAULT NOW();
+
+        -- ==================
+=============================
+=================
+        -- 3. ENHANCE 
+USUARIOROL TABLE
+        -- ==================
+=============================
+=================
+        ALTER TABLE 
+usuariorol ADD COLUMN IF NOT 
+EXISTS tenant_id INTEGER 
+REFERENCES tenant(id) ON 
+DELETE CASCADE;
+        ALTER TABLE 
+usuariorol ADD COLUMN IF NOT 
+EXISTS assigned_at 
+TIMESTAMPTZ DEFAULT NOW();
+
+        -- ==================
+=============================
+=================
+        -- 4. CREATE 
+AUDIT_LOGS TABLE
+        -- ==================
+=============================
+=================
+        CREATE TABLE IF NOT 
+EXISTS audit_logs (
+            id SERIAL 
+PRIMARY KEY,
+            actor_user_id 
+INTEGER REFERENCES 
+usuario(id) ON DELETE SET 
+NULL,
+            tenant_id 
+INTEGER REFERENCES 
+tenant(id) ON DELETE SET 
+NULL,
+            action 
+VARCHAR(255) NOT NULL,
+            entity_type 
+VARCHAR(50) NOT NULL,
+            entity_id 
+VARCHAR(255),
+            before_json 
+JSONB,
+            after_json JSONB,
+            ip_address 
+VARCHAR(45),
+            user_agent TEXT,
+            created_at 
+TIMESTAMPTZ DEFAULT NOW()
+        );
+
+        CREATE INDEX IF NOT 
+EXISTS idx_audit_logs_actor 
+ON audit_logs(actor_user_id);
+        CREATE INDEX IF NOT 
+EXISTS idx_audit_logs_tenant 
+ON audit_logs(tenant_id);
+        CREATE INDEX IF NOT 
+EXISTS idx_audit_logs_action 
+ON audit_logs(action);
+        CREATE INDEX IF NOT 
+EXISTS idx_audit_logs_entity 
+ON audit_logs(entity_type, 
+entity_id);
+        CREATE INDEX IF NOT 
+EXISTS 
+idx_audit_logs_created ON 
+audit_logs(created_at DESC);
+
+        -- ==================
+=============================
+=================
+        -- 5. UNIQUE 
+CONSTRAINTS AND INDEXES
+        -- ==================
+=============================
+=================
+        CREATE UNIQUE INDEX 
+IF NOT EXISTS 
+idx_rol_global_unique 
+        ON rol(nombre) WHERE 
+tenant_id IS NULL;
+
+        CREATE UNIQUE INDEX 
+IF NOT EXISTS 
+idx_rol_tenant_unique 
+        ON rol(tenant_id, 
+nombre) WHERE tenant_id IS 
+NOT NULL;
+
+        DO $$ 
+        BEGIN
+            IF NOT EXISTS 
+(SELECT 1 FROM pg_indexes 
+WHERE indexname = 
+'idx_permiso_key_unique') 
+THEN
+                CREATE 
+UNIQUE INDEX 
+idx_permiso_key_unique ON 
+permiso(key) WHERE key IS 
+NOT NULL;
+            END IF;
+        END $$;
+
+        CREATE INDEX IF NOT 
+EXISTS idx_permiso_module ON 
+permiso(module);
+
+        -- ==================
+=============================
+=================
+        -- 6. ENSURE 
+is_super_admin EXISTS ON 
+USUARIO
+        -- ==================
+=============================
+=================
+        ALTER TABLE usuario 
+ADD COLUMN IF NOT EXISTS 
+is_super_admin BOOLEAN 
+DEFAULT false;
+
+        -- ==================
+=============================
+=================
+        -- 7. HELPER 
+FUNCTION FOR PERMISSION CHECK
+        -- ==================
+=============================
+=================
+        CREATE OR REPLACE 
+FUNCTION user_has_permission(
+            p_user_id 
+INTEGER,
+            p_tenant_id 
+INTEGER,
+            p_permission_key 
+VARCHAR
+        ) RETURNS BOOLEAN AS 
+$$
+        DECLARE
+            is_super BOOLEAN;
+            has_perm BOOLEAN;
+        BEGIN
+            SELECT 
+is_super_admin INTO is_super 
+FROM usuario WHERE id = 
+p_user_id;
+            IF is_super THEN
+                RETURN TRUE;
+            END IF;
+            
+            SELECT EXISTS (
+                SELECT 1 
+                FROM 
+usuariorol ur
+                JOIN rol r 
+ON ur.id_rol = r.id
+                JOIN 
+rolpermiso rp ON rp.id_rol = 
+r.id
+                JOIN permiso 
+p ON p.id = rp.id_permiso
+                WHERE 
+ur.id_usuario = p_user_id
+                  AND (p.key 
+= p_permission_key OR 
+p.nombre = p_permission_key)
+                  AND (
+                      
+r.scope = 'global' 
+                      OR 
+(r.scope = 'tenant' AND 
+r.tenant_id = p_tenant_id)
+                      OR 
+(ur.tenant_id = p_tenant_id)
+                  )
+            ) INTO has_perm;
+            
+            RETURN has_perm;
+        END;
+        $$ LANGUAGE plpgsql;
+     - foreign key 
+constraint 
+"rol_tenant_id_fkey" cannot 
+be implemented
+    at 
+Parser.parseErrorMessage (C:\
+Users\moreivar\Desktop\Versa-
+App\node_modules\pg-protocol\
+dist\parser.js:285:98)
+    at Parser.handlePacket (C
+:\Users\moreivar\Desktop\Vers
+a-App\node_modules\pg-protoco
+l\dist\parser.js:122:29)
+    at Parser.parse (C:\Users
+\moreivar\Desktop\Versa-App\n
+ode_modules\pg-protocol\dist\
+parser.js:35:38)
+    at TLSSocket.<anonymous> 
+(C:\Users\moreivar\Desktop\Ve
+rsa-App\node_modules\pg-proto
+col\dist\index.js:11:42)
+    at TLSSocket.emit 
+(node:events:508:28)
+    at addChunk (node:interna
+l/streams/readable:559:12)
+    at 
+readableAddChunkPushByteMode 
+(node:internal/streams/readab
+le:510:3)
+    at Readable.push (node:in
+ternal/streams/readable:390:5
+)
+    at TLSWrap.onStreamRead (
+node:internal/stream_base_com
+mons:189:23)[39m

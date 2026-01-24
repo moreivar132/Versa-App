@@ -12,6 +12,34 @@ async function seedQA() {
         // 1. Limpiar datos previos de prueba (evitar duplicados)
         // Usamos emails específicos para identificar datos de QA
         console.log('🧹 Limpiando datos anteriores...');
+
+        // Limpiar dependencias de usuarios QA
+        await client.query(`
+            DELETE FROM usuariorol 
+            WHERE id_usuario IN (SELECT id FROM usuario WHERE email LIKE '%@qa.versa.com')
+        `);
+
+        await client.query(`
+            DELETE FROM accounting_usuario_empresa 
+            WHERE id_usuario IN (SELECT id FROM usuario WHERE email LIKE '%@qa.versa.com')
+        `);
+
+        // Limpiar facturas y contactos de QA Tenants
+        await client.query(`
+            DELETE FROM contabilidad_factura 
+            WHERE id_tenant IN (SELECT id FROM tenant WHERE nombre LIKE 'QA Tenant%')
+        `);
+
+        await client.query(`
+            DELETE FROM contabilidad_contacto 
+            WHERE id_tenant IN (SELECT id FROM tenant WHERE nombre LIKE 'QA Tenant%')
+        `);
+
+        await client.query(`
+            DELETE FROM accounting_empresa 
+            WHERE id_tenant IN (SELECT id FROM tenant WHERE nombre LIKE 'QA Tenant%')
+        `);
+
         await client.query("DELETE FROM usuario WHERE email LIKE '%@qa.versa.com'");
         await client.query("DELETE FROM tenant WHERE nombre LIKE 'QA Tenant%'");
 

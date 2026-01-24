@@ -1,0 +1,388 @@
+﻿[dotenv@17.2.3] injecting env (3) from .env -- tip: ­ƒæÑ sync secrets across teammates & machines: https://dotenvx.com/ops
+Using environment: [35mdevelopment[39m
+­ƒôï BASELINE (NO-OP): Schema initialization handled by schema_dump.
+[Migration] Creating subscription tables...
+[33mmigration file "20260113010000_create_subscription_tables.js" failed[39m
+[33mmigration failed with error: 
+        -- Tabla plan_suscripcion (cat├ílogo de planes)
+        CREATE TABLE IF NOT EXISTS plan_suscripcion (
+            id SERIAL PRIMARY KEY,
+            nombre TEXT UNIQUE NOT NULL,
+            descripcion TEXT,
+            trial_dias_default INTEGER DEFAULT 15,
+            precio_mensual_stripe_price_id TEXT,
+            precio_anual_stripe_price_id TEXT,
+            activo BOOLEAN DEFAULT true,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW()
+        );
+
+        -- Tabla tenant_suscripcion (estado de suscripci├│n por tenant)
+        CREATE TABLE IF NOT EXISTS tenant_suscripcion (
+            id SERIAL PRIMARY KEY,
+            id_tenant INTEGER NOT NULL REFERENCES tenant(id) ON DELETE CASCADE,
+            plan_id INTEGER NOT NULL REFERENCES plan_suscripcion(id),
+            stripe_customer_id TEXT,
+            stripe_subscription_id TEXT,
+            status TEXT NOT NULL,
+            trial_start_at TIMESTAMPTZ,
+            trial_end_at TIMESTAMPTZ,
+            current_period_start TIMESTAMPTZ,
+            current_period_end TIMESTAMPTZ,
+            cancel_at TIMESTAMPTZ,
+            cancel_at_period_end BOOLEAN DEFAULT false,
+            ultima_sync_stripe_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            CONSTRAINT unique_tenant_subscription UNIQUE (id_tenant)
+        );
+
+        -- ├ìndices
+        CREATE INDEX IF NOT EXISTS idx_tenant_suscripcion_tenant ON tenant_suscripcion(id_tenant);
+        CREATE INDEX IF NOT EXISTS idx_tenant_suscripcion_stripe_sub ON tenant_suscripcion(stripe_subscription_id);
+        CREATE INDEX IF NOT EXISTS idx_tenant_suscripcion_status ON tenant_suscripcion(status);
+
+        -- Trigger para actualizar updated_at
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+           NEW.updated_at = NOW();
+           RETURN NEW;
+        END;
+        $$ language 'plpgsql';
+
+        DROP TRIGGER IF EXISTS update_plan_suscripcion_updated_at ON plan_suscripcion;
+        CREATE TRIGGER update_plan_suscripcion_updated_at
+            BEFORE UPDATE ON plan_suscripcion
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+
+        DROP TRIGGER IF EXISTS update_tenant_suscripcion_updated_at ON tenant_suscripcion;
+        CREATE TRIGGER update_tenant_suscripcion_updated_at
+            BEFORE UPDATE ON tenant_suscripcion
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
+
+        COMMENT ON TABLE plan_suscripcion IS 'Cat├ílogo de planes de suscripci├│n disponibles';
+        COMMENT ON TABLE tenant_suscripcion IS 'Estado de suscripci├│n de cada tenant con Stripe';
+     - column "stripe_subscription_id" does not exist[39m
+node.exe : [31m
+En línea: 1 Carácter: 1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: ([31m:S  
+  tring) [], RemoteExcepti   
+ on
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+        -- Tabla 
+plan_suscripcion (cat├ílogo 
+de planes)
+        CREATE TABLE IF NOT 
+EXISTS plan_suscripcion (
+            id SERIAL 
+PRIMARY KEY,
+            nombre TEXT 
+UNIQUE NOT NULL,
+            descripcion TEXT,
+            
+trial_dias_default INTEGER 
+DEFAULT 15,
+            precio_mensual_st
+ripe_price_id TEXT,
+            
+precio_anual_stripe_price_id 
+TEXT,
+            activo BOOLEAN 
+DEFAULT true,
+            created_at 
+TIMESTAMPTZ DEFAULT NOW(),
+            updated_at 
+TIMESTAMPTZ DEFAULT NOW()
+        );
+
+        -- Tabla 
+tenant_suscripcion (estado 
+de suscripci├│n por tenant)
+        CREATE TABLE IF NOT 
+EXISTS tenant_suscripcion (
+            id SERIAL 
+PRIMARY KEY,
+            id_tenant 
+INTEGER NOT NULL REFERENCES 
+tenant(id) ON DELETE CASCADE,
+            plan_id INTEGER 
+NOT NULL REFERENCES 
+plan_suscripcion(id),
+            
+stripe_customer_id TEXT,
+            
+stripe_subscription_id TEXT,
+            status TEXT NOT 
+NULL,
+            trial_start_at 
+TIMESTAMPTZ,
+            trial_end_at 
+TIMESTAMPTZ,
+            
+current_period_start 
+TIMESTAMPTZ,
+            
+current_period_end 
+TIMESTAMPTZ,
+            cancel_at 
+TIMESTAMPTZ,
+            
+cancel_at_period_end BOOLEAN 
+DEFAULT false,
+            
+ultima_sync_stripe_at 
+TIMESTAMPTZ,
+            created_at 
+TIMESTAMPTZ DEFAULT NOW(),
+            updated_at 
+TIMESTAMPTZ DEFAULT NOW(),
+            CONSTRAINT 
+unique_tenant_subscription 
+UNIQUE (id_tenant)
+        );
+
+        -- ├ìndices
+        CREATE INDEX IF NOT 
+EXISTS idx_tenant_suscripcion
+_tenant ON tenant_suscripcion
+(id_tenant);
+        CREATE INDEX IF NOT 
+EXISTS idx_tenant_suscripcion
+_stripe_sub ON tenant_suscrip
+cion(stripe_subscription_id);
+        CREATE INDEX IF NOT 
+EXISTS idx_tenant_suscripcion
+_status ON 
+tenant_suscripcion(status);
+
+        -- Trigger para 
+actualizar updated_at
+        CREATE OR REPLACE 
+FUNCTION 
+update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+           NEW.updated_at = 
+NOW();
+           RETURN NEW;
+        END;
+        $$ language 
+'plpgsql';
+
+        DROP TRIGGER IF 
+EXISTS update_plan_suscripcio
+n_updated_at ON 
+plan_suscripcion;
+        CREATE TRIGGER update
+_plan_suscripcion_updated_at
+            BEFORE UPDATE ON 
+plan_suscripcion
+            FOR EACH ROW
+            EXECUTE FUNCTION 
+update_updated_at_column();
+
+        DROP TRIGGER IF 
+EXISTS update_tenant_suscripc
+ion_updated_at ON 
+tenant_suscripcion;
+        CREATE TRIGGER update
+_tenant_suscripcion_updated_a
+t
+            BEFORE UPDATE ON 
+tenant_suscripcion
+            FOR EACH ROW
+            EXECUTE FUNCTION 
+update_updated_at_column();
+
+        COMMENT ON TABLE 
+plan_suscripcion IS 
+'Cat├ílogo de planes de 
+suscripci├│n disponibles';
+        COMMENT ON TABLE 
+tenant_suscripcion IS 
+'Estado de suscripci├│n de 
+cada tenant con Stripe';
+     - column 
+"stripe_subscription_id" 
+does not exist[39m
+[31merror: 
+        -- Tabla 
+plan_suscripcion (cat├ílogo 
+de planes)
+        CREATE TABLE IF NOT 
+EXISTS plan_suscripcion (
+            id SERIAL 
+PRIMARY KEY,
+            nombre TEXT 
+UNIQUE NOT NULL,
+            descripcion TEXT,
+            
+trial_dias_default INTEGER 
+DEFAULT 15,
+            precio_mensual_st
+ripe_price_id TEXT,
+            
+precio_anual_stripe_price_id 
+TEXT,
+            activo BOOLEAN 
+DEFAULT true,
+            created_at 
+TIMESTAMPTZ DEFAULT NOW(),
+            updated_at 
+TIMESTAMPTZ DEFAULT NOW()
+        );
+
+        -- Tabla 
+tenant_suscripcion (estado 
+de suscripci├│n por tenant)
+        CREATE TABLE IF NOT 
+EXISTS tenant_suscripcion (
+            id SERIAL 
+PRIMARY KEY,
+            id_tenant 
+INTEGER NOT NULL REFERENCES 
+tenant(id) ON DELETE CASCADE,
+            plan_id INTEGER 
+NOT NULL REFERENCES 
+plan_suscripcion(id),
+            
+stripe_customer_id TEXT,
+            
+stripe_subscription_id TEXT,
+            status TEXT NOT 
+NULL,
+            trial_start_at 
+TIMESTAMPTZ,
+            trial_end_at 
+TIMESTAMPTZ,
+            
+current_period_start 
+TIMESTAMPTZ,
+            
+current_period_end 
+TIMESTAMPTZ,
+            cancel_at 
+TIMESTAMPTZ,
+            
+cancel_at_period_end BOOLEAN 
+DEFAULT false,
+            
+ultima_sync_stripe_at 
+TIMESTAMPTZ,
+            created_at 
+TIMESTAMPTZ DEFAULT NOW(),
+            updated_at 
+TIMESTAMPTZ DEFAULT NOW(),
+            CONSTRAINT 
+unique_tenant_subscription 
+UNIQUE (id_tenant)
+        );
+
+        -- ├ìndices
+        CREATE INDEX IF NOT 
+EXISTS idx_tenant_suscripcion
+_tenant ON tenant_suscripcion
+(id_tenant);
+        CREATE INDEX IF NOT 
+EXISTS idx_tenant_suscripcion
+_stripe_sub ON tenant_suscrip
+cion(stripe_subscription_id);
+        CREATE INDEX IF NOT 
+EXISTS idx_tenant_suscripcion
+_status ON 
+tenant_suscripcion(status);
+
+        -- Trigger para 
+actualizar updated_at
+        CREATE OR REPLACE 
+FUNCTION 
+update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+           NEW.updated_at = 
+NOW();
+           RETURN NEW;
+        END;
+        $$ language 
+'plpgsql';
+
+        DROP TRIGGER IF 
+EXISTS update_plan_suscripcio
+n_updated_at ON 
+plan_suscripcion;
+        CREATE TRIGGER update
+_plan_suscripcion_updated_at
+            BEFORE UPDATE ON 
+plan_suscripcion
+            FOR EACH ROW
+            EXECUTE FUNCTION 
+update_updated_at_column();
+
+        DROP TRIGGER IF 
+EXISTS update_tenant_suscripc
+ion_updated_at ON 
+tenant_suscripcion;
+        CREATE TRIGGER update
+_tenant_suscripcion_updated_a
+t
+            BEFORE UPDATE ON 
+tenant_suscripcion
+            FOR EACH ROW
+            EXECUTE FUNCTION 
+update_updated_at_column();
+
+        COMMENT ON TABLE 
+plan_suscripcion IS 
+'Cat├ílogo de planes de 
+suscripci├│n disponibles';
+        COMMENT ON TABLE 
+tenant_suscripcion IS 
+'Estado de suscripci├│n de 
+cada tenant con Stripe';
+     - column 
+"stripe_subscription_id" 
+does not exist
+    at 
+Parser.parseErrorMessage (C:\
+Users\moreivar\Desktop\Versa-
+App\node_modules\pg-protocol\
+dist\parser.js:285:98)
+    at Parser.handlePacket (C
+:\Users\moreivar\Desktop\Vers
+a-App\node_modules\pg-protoco
+l\dist\parser.js:122:29)
+    at Parser.parse (C:\Users
+\moreivar\Desktop\Versa-App\n
+ode_modules\pg-protocol\dist\
+parser.js:35:38)
+    at TLSSocket.<anonymous> 
+(C:\Users\moreivar\Desktop\Ve
+rsa-App\node_modules\pg-proto
+col\dist\index.js:11:42)
+    at TLSSocket.emit 
+(node:events:508:28)
+    at addChunk (node:interna
+l/streams/readable:559:12)
+    at 
+readableAddChunkPushByteMode 
+(node:internal/streams/readab
+le:510:3)
+    at Readable.push (node:in
+ternal/streams/readable:390:5
+)
+    at TLSWrap.onStreamRead (
+node:internal/stream_base_com
+mons:189:23)[39m

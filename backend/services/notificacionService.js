@@ -3,16 +3,31 @@
  * Maneja la creación y consulta de notificaciones del portal cliente
  */
 
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
+
+/**
+ * Helper to resolve DB connection from context or DB client
+ */
+function resolveDb(ctxOrDb) {
+    if (!ctxOrDb) return null;
+    if (ctxOrDb.query && typeof ctxOrDb.query === 'function') return ctxOrDb; // It's a DB client/req.db
+    return getTenantDb(ctxOrDb); // It's a context
+}
 
 class NotificacionService {
 
     /**
      * Crear notificación para un cliente
      */
-    async crearNotificacion(idCliente, tipo, titulo, mensaje, data = {}) {
+    async crearNotificacion(idCliente, tipo, titulo, mensaje, data = {}, ctxOrDb = null) {
         try {
-            const result = await pool.query(`
+            const db = resolveDb(ctxOrDb);
+            if (!db) {
+                console.warn('[NotificacionService] No DB/Context provided for crearNotificacion');
+                return null;
+            }
+
+            const result = await db.query(`
                 INSERT INTO cliente_notificacion (id_cliente, tipo, titulo, mensaje, data)
                 VALUES ($1, $2, $3, $4, $5)
                 RETURNING id, created_at
@@ -29,7 +44,10 @@ class NotificacionService {
     /**
      * Obtener notificaciones de un cliente
      */
-    async getNotificaciones(idCliente, soloNoLeidas = false, limit = 20) {
+    async getNotificaciones(idCliente, soloNoLeidas = false, limit = 20, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        if (!db) return [];
+
         let query = `
             SELECT id, tipo, titulo, mensaje, leida, data, created_at
             FROM cliente_notificacion
@@ -42,15 +60,18 @@ class NotificacionService {
 
         query += ` ORDER BY created_at DESC LIMIT $2`;
 
-        const result = await pool.query(query, [idCliente, limit]);
+        const result = await db.query(query, [idCliente, limit]);
         return result.rows;
     }
 
     /**
      * Contar notificaciones no leídas
      */
-    async contarNoLeidas(idCliente) {
-        const result = await pool.query(`
+    async contarNoLeidas(idCliente, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        if (!db) return 0;
+
+        const result = await db.query(`
             SELECT COUNT(*) as count
             FROM cliente_notificacion
             WHERE id_cliente = $1 AND leida = FALSE
@@ -61,8 +82,11 @@ class NotificacionService {
     /**
      * Marcar notificación como leída
      */
-    async marcarLeida(idNotificacion, idCliente) {
-        await pool.query(`
+    async marcarLeida(idNotificacion, idCliente, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        if (!db) return;
+
+        await db.query(`
             UPDATE cliente_notificacion
             SET leida = TRUE
             WHERE id = $1 AND id_cliente = $2
@@ -72,8 +96,11 @@ class NotificacionService {
     /**
      * Marcar todas como leídas
      */
-    async marcarTodasLeidas(idCliente) {
-        await pool.query(`
+    async marcarTodasLeidas(idCliente, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        if (!db) return;
+
+        await db.query(`
             UPDATE cliente_notificacion
             SET leida = TRUE
             WHERE id_cliente = $1 AND leida = FALSE
@@ -83,10 +110,13 @@ class NotificacionService {
     /**
      * Notificar cambio de estado de cita
      */
-    async notificarCambioEstadoCita(idCita, estadoAnterior, estadoNuevo) {
+    async notificarCambioEstadoCita(idCita, estadoAnterior, estadoNuevo, ctxOrDb = null) {
         try {
+            const db = resolveDb(ctxOrDb);
+            if (!db) return null;
+
             // Obtener datos de la cita y cliente
-            const citaResult = await pool.query(`
+            const citaResult = await db.query(`
                 SELECT c.id, c.id_cliente, c.fecha_hora, c.motivo, 
                        s.nombre as sucursal_nombre,
                        cli.nombre as cliente_nombre
@@ -160,7 +190,7 @@ class NotificacionService {
                 estado_nuevo: estadoNuevo,
                 sucursal: cita.sucursal_nombre,
                 motivo: cita.motivo
-            });
+            }, db);
 
         } catch (error) {
             console.error('Error al notificar cambio de estado:', error);

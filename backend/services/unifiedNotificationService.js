@@ -15,8 +15,7 @@
  * });
  */
 
-const pool = require('../db');
-const { getEvent, NOTIFICATION_EVENTS } = require('../config/notificationEvents');
+const { getTenantDb, getSystemDb } = require('../src/core/db/tenant-db');
 const emailAutomationService = require('./emailAutomationService');
 const notificacionService = require('./notificacionService');
 
@@ -41,9 +40,15 @@ class UnifiedNotificationService {
             // Get client data if not provided
             let clientData = data;
             if (idCliente && !data.nombre) {
-                const clientResult = await pool.query(
-                    'SELECT nombre, email FROM clientefinal WHERE id = $1',
-                    [idCliente]
+                // Determine DB context (requires tenantId)
+                if (!idTenant) {
+                    throw new Error('TenantID required for notification client lookup');
+                }
+                const db = getTenantDb({ tenantId: idTenant });
+
+                const clientResult = await db.query(
+                    'SELECT nombre, email FROM clientefinal WHERE id = $1 AND id_tenant = $2',
+                    [idCliente, idTenant]
                 );
                 if (clientResult.rows.length > 0) {
                     clientData = {
@@ -130,7 +135,9 @@ class UnifiedNotificationService {
         if (!event.htmlTemplate && !event.subject) return;
 
         try {
-            await pool.query(`
+            // System templates go to system DB (id_tenant IS NULL)
+            const systemDb = getSystemDb();
+            await systemDb.query(`
                 INSERT INTO email_template (id_tenant, code, name, subject, html_body, variables_json)
                 VALUES (NULL, $1, $2, $3, $4, $5)
                 ON CONFLICT (id_tenant, code) DO NOTHING
@@ -152,7 +159,9 @@ class UnifiedNotificationService {
      */
     async ensureAutomationExists(idTenant, eventCode) {
         try {
-            await pool.query(`
+            if (!idTenant) return;
+            const db = getTenantDb({ tenantId: idTenant });
+            await db.query(`
                 INSERT INTO email_automation (id_tenant, event_code, template_code, enabled)
                 VALUES ($1, $2, $2, true)
                 ON CONFLICT (id_tenant, event_code) DO NOTHING

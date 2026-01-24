@@ -3,7 +3,13 @@
  * Repositorio para operaciones de base de datos del portal cliente
  */
 
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
+
+function resolveDb(ctxOrDb) {
+    if (!ctxOrDb) return getTenantDb({}, { allowNoTenant: true });
+    if (typeof ctxOrDb.query === 'function') return ctxOrDb;
+    return getTenantDb(ctxOrDb);
+}
 
 class CustomerRepository {
 
@@ -14,8 +20,9 @@ class CustomerRepository {
     /**
      * Buscar auth por email
      */
-    async findAuthByEmail(email) {
-        const result = await pool.query(
+    async findAuthByEmail(email, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `SELECT ca.*, cf.nombre, cf.telefono as cliente_telefono
              FROM clientefinal_auth ca
              JOIN clientefinal cf ON cf.id = ca.id_cliente
@@ -28,8 +35,9 @@ class CustomerRepository {
     /**
      * Buscar auth por id_cliente
      */
-    async findAuthByClienteId(idCliente) {
-        const result = await pool.query(
+    async findAuthByClienteId(idCliente, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `SELECT ca.*, cf.nombre
              FROM clientefinal_auth ca
              JOIN clientefinal cf ON cf.id = ca.id_cliente
@@ -42,8 +50,9 @@ class CustomerRepository {
     /**
      * Buscar clientefinal por email
      */
-    async findClienteByEmail(email) {
-        const result = await pool.query(
+    async findClienteByEmail(email, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `SELECT * FROM clientefinal WHERE LOWER(email) = LOWER($1)`,
             [email]
         );
@@ -53,10 +62,11 @@ class CustomerRepository {
     /**
      * Buscar clientefinal por teléfono
      */
-    async findClienteByTelefono(telefono) {
+    async findClienteByTelefono(telefono, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
         // Normalizar teléfono (quitar espacios y caracteres especiales)
         const normalizedPhone = telefono.replace(/\D/g, '');
-        const result = await pool.query(
+        const result = await db.query(
             `SELECT * FROM clientefinal WHERE REPLACE(REPLACE(telefono, ' ', ''), '-', '') = $1`,
             [normalizedPhone]
         );
@@ -66,16 +76,32 @@ class CustomerRepository {
     /**
      * Crear cliente y auth en una transacción
      */
-    async createClienteWithAuth(clienteData, authData, client = null) {
-        const db = client || pool;
-        const shouldManageTransaction = !client;
+    async createClienteWithAuth(clienteData, authData, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const shouldManageTransaction = !ctxOrDb || (ctxOrDb && !ctxOrDb.query);
 
         if (shouldManageTransaction) {
-            await db.query('BEGIN');
+            return db.txWithRLS(async (tx) => {
+                const clienteResult = await tx.query(
+                    `INSERT INTO clientefinal (nombre, email, telefono, id_tenant)
+                     VALUES ($1, $2, $3, $4)
+                     RETURNING *`,
+                    [clienteData.nombre, clienteData.email, clienteData.telefono || null, clienteData.id_tenant || 1]
+                );
+                const cliente = clienteResult.rows[0];
+
+                const authResult = await tx.query(
+                    `INSERT INTO clientefinal_auth (id_cliente, email, telefono, password_hash)
+                     VALUES ($1, $2, $3, $4)
+                     RETURNING *`,
+                    [cliente.id, authData.email, authData.telefono || null, authData.password_hash]
+                );
+                const auth = authResult.rows[0];
+                return { cliente, auth };
+            });
         }
 
         try {
-            // Crear clientefinal (necesitamos un id_tenant)
             const clienteResult = await db.query(
                 `INSERT INTO clientefinal (nombre, email, telefono, id_tenant)
                  VALUES ($1, $2, $3, $4)
@@ -84,7 +110,6 @@ class CustomerRepository {
             );
             const cliente = clienteResult.rows[0];
 
-            // Crear clientefinal_auth
             const authResult = await db.query(
                 `INSERT INTO clientefinal_auth (id_cliente, email, telefono, password_hash)
                  VALUES ($1, $2, $3, $4)
@@ -92,16 +117,8 @@ class CustomerRepository {
                 [cliente.id, authData.email, authData.telefono || null, authData.password_hash]
             );
             const auth = authResult.rows[0];
-
-            if (shouldManageTransaction) {
-                await db.query('COMMIT');
-            }
-
             return { cliente, auth };
         } catch (error) {
-            if (shouldManageTransaction) {
-                await db.query('ROLLBACK');
-            }
             throw error;
         }
     }
@@ -109,8 +126,8 @@ class CustomerRepository {
     /**
      * Crear auth para cliente existente
      */
-    async createAuthForCliente(idCliente, authData, client = null) {
-        const db = client || pool;
+    async createAuthForCliente(idCliente, authData, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
         const result = await db.query(
             `INSERT INTO clientefinal_auth (id_cliente, email, telefono, password_hash)
              VALUES ($1, $2, $3, $4)
@@ -123,8 +140,9 @@ class CustomerRepository {
     /**
      * Actualizar último login
      */
-    async updateLastLogin(authId) {
-        await pool.query(
+    async updateLastLogin(authId, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        await db.query(
             `UPDATE clientefinal_auth SET last_login_at = NOW() WHERE id = $1`,
             [authId]
         );
@@ -133,8 +151,9 @@ class CustomerRepository {
     /**
      * Guardar token de reset password
      */
-    async saveResetToken(authId, token, expiresAt) {
-        await pool.query(
+    async saveResetToken(authId, token, expiresAt, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        await db.query(
             `UPDATE clientefinal_auth 
              SET reset_token = $1, reset_token_expires_at = $2 
              WHERE id = $3`,
@@ -145,8 +164,9 @@ class CustomerRepository {
     /**
      * Buscar por token de reset
      */
-    async findByResetToken(token) {
-        const result = await pool.query(
+    async findByResetToken(token, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `SELECT ca.*, cf.nombre
              FROM clientefinal_auth ca
              JOIN clientefinal cf ON cf.id = ca.id_cliente
@@ -159,8 +179,9 @@ class CustomerRepository {
     /**
      * Actualizar password y limpiar token de reset
      */
-    async updatePassword(authId, passwordHash) {
-        await pool.query(
+    async updatePassword(authId, passwordHash, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        await db.query(
             `UPDATE clientefinal_auth 
              SET password_hash = $1, reset_token = NULL, reset_token_expires_at = NULL 
              WHERE id = $2`,
@@ -175,8 +196,9 @@ class CustomerRepository {
     /**
      * Obtener perfil completo del cliente
      */
-    async getClienteProfile(idCliente) {
-        const result = await pool.query(
+    async getClienteProfile(idCliente, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `SELECT cf.*, ca.email as auth_email, ca.email_verified, ca.last_login_at
              FROM clientefinal cf
              LEFT JOIN clientefinal_auth ca ON ca.id_cliente = cf.id
@@ -189,7 +211,8 @@ class CustomerRepository {
     /**
      * Actualizar perfil del cliente
      */
-    async updateClienteProfile(idCliente, data) {
+    async updateClienteProfile(idCliente, data, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
         const updates = [];
         const values = [];
         let paramIndex = 1;
@@ -213,7 +236,7 @@ class CustomerRepository {
 
         values.push(idCliente);
 
-        const result = await pool.query(
+        const result = await db.query(
             `UPDATE clientefinal SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
             values
         );
@@ -223,7 +246,8 @@ class CustomerRepository {
     /**
      * Obtener citas del cliente
      */
-    async getClienteCitas(idCliente, scope = 'all') {
+    async getClienteCitas(idCliente, scope = 'all', ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
         let whereClause = 'c.id_cliente = $1';
         const now = new Date().toISOString();
 
@@ -234,7 +258,7 @@ class CustomerRepository {
         }
 
         try {
-            const result = await pool.query(
+            const result = await db.query(
                 `SELECT DISTINCT ON (c.id)
                 c.id,
                 c.fecha_hora,
@@ -288,9 +312,10 @@ class CustomerRepository {
     /**
      * Obtener una cita específica del cliente
      */
-    async getClienteCitaById(idCliente, idCita) {
+    async getClienteCitaById(idCliente, idCita, ctxOrDb = null) {
         try {
-            const result = await pool.query(
+            const db = resolveDb(ctxOrDb);
+            const result = await db.query(
                 `SELECT 
                     c.*,
                     s.nombre as sucursal_nombre,
@@ -310,8 +335,9 @@ class CustomerRepository {
     /**
      * Cancelar cita
      */
-    async cancelarCita(idCita, idCliente) {
-        const result = await pool.query(
+    async cancelarCita(idCita, idCliente, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `UPDATE citataller 
              SET estado = 'cancelada' 
              WHERE id = $1 AND id_cliente = $2
@@ -324,8 +350,9 @@ class CustomerRepository {
     /**
      * Reprogramar cita
      */
-    async reprogramarCita(idCita, idCliente, nuevaFechaHora) {
-        const result = await pool.query(
+    async reprogramarCita(idCita, idCliente, nuevaFechaHora, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `UPDATE citataller 
              SET fecha_hora = $1, estado = 'pendiente'
              WHERE id = $2 AND id_cliente = $3
@@ -338,9 +365,10 @@ class CustomerRepository {
     /**
      * Obtener pagos del cliente
      */
-    async getClientePagos(idCliente) {
+    async getClientePagos(idCliente, ctxOrDb = null) {
         try {
-            const result = await pool.query(
+            const db = resolveDb(ctxOrDb);
+            const result = await db.query(
                 `SELECT 
                     'pago_cita' as tipo,
                     p.id,
@@ -365,9 +393,10 @@ class CustomerRepository {
     /**
      * Crear reseña para una cita (en tabla marketplace_review)
      */
-    async createResena(idCita, puntuacion, comentario, fotos = []) {
+    async createResena(idCita, puntuacion, comentario, fotos = [], ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
         // 1. Obtener datos necesarios de la cita (tenant, sucursal, cliente)
-        const citaData = await pool.query(
+        const citaData = await db.query(
             `SELECT s.id_tenant, c.id_sucursal, c.id_cliente, c.estado
              FROM citataller c
              JOIN sucursal s ON s.id = c.id_sucursal
@@ -387,7 +416,7 @@ class CustomerRepository {
         }
 
         // 2. Insertar en marketplace_review con fotos
-        const result = await pool.query(
+        const result = await db.query(
             `INSERT INTO marketplace_review 
                 (id_tenant, id_sucursal, id_cliente, id_cita, rating, comentario, fotos_json)
              VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -400,8 +429,9 @@ class CustomerRepository {
     /**
      * Obtener reseña de una cita por cliente
      */
-    async getResenaPorCita(idCliente, idCita) {
-        const result = await pool.query(
+    async getResenaPorCita(idCliente, idCita, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `SELECT r.*, c.fecha_hora as cita_fecha, s.nombre as sucursal_nombre
              FROM marketplace_review r
              JOIN citataller c ON c.id = r.id_cita
@@ -415,7 +445,8 @@ class CustomerRepository {
     /**
      * Actualizar reseña de una cita
      */
-    async updateResena(idCliente, idCita, data) {
+    async updateResena(idCliente, idCita, data, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
         const updates = [];
         const values = [];
         let paramIndex = 1;
@@ -439,7 +470,7 @@ class CustomerRepository {
 
         values.push(idCita, idCliente);
 
-        const result = await pool.query(
+        const result = await db.query(
             `UPDATE marketplace_review 
              SET ${updates.join(', ')}, updated_at = NOW()
              WHERE id_cita = $${paramIndex++} AND id_cliente = $${paramIndex}
@@ -457,8 +488,9 @@ class CustomerRepository {
     /**
      * Eliminar reseña de una cita
      */
-    async deleteResena(idCliente, idCita) {
-        const result = await pool.query(
+    async deleteResena(idCliente, idCita, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `DELETE FROM marketplace_review 
              WHERE id_cita = $1 AND id_cliente = $2
              RETURNING id`,
@@ -475,8 +507,9 @@ class CustomerRepository {
     /**
      * Verificar si slot está disponible
      */
-    async checkSlotDisponible(idSucursal, fechaHora) {
-        const result = await pool.query(
+    async checkSlotDisponible(idSucursal, fechaHora, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `SELECT COUNT(*) as count FROM citataller 
              WHERE id_sucursal = $1 
              AND fecha_hora = $2 
@@ -489,8 +522,9 @@ class CustomerRepository {
     /**
      * Obtener todas las reseñas del cliente
      */
-    async getAllResenasCliente(idCliente) {
-        const result = await pool.query(
+    async getAllResenasCliente(idCliente, ctxOrDb = null) {
+        const db = resolveDb(ctxOrDb);
+        const result = await db.query(
             `SELECT 
                 r.id,
                 r.id_cita,

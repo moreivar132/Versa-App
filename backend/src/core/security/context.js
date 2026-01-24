@@ -14,7 +14,7 @@
  */
 
 const { resolveTenantContext } = require('./tenant-context');
-const pool = require('../../../db');
+const { getTenantDb } = require('../db/tenant-db');
 
 /**
  * Security context object
@@ -52,14 +52,26 @@ function resolveSecurityContext(req) {
 }
 
 /**
+ * Helper to resolve DB connection
+ */
+function resolveDb(ctxOrDb) {
+    if (!ctxOrDb) return null;
+    if (ctxOrDb.query && typeof ctxOrDb.query === 'function') return ctxOrDb;
+    return getTenantDb(ctxOrDb, { allowNoTenant: true });
+}
+
+/**
  * Get user's accessible branches
  * 
  * @param {number} userId 
  * @param {number} tenantId 
+ * @param {Object} [ctxOrDb]
  * @returns {Promise<Array<{id: number, nombre: string}>>}
  */
-async function getUserBranches(userId, tenantId) {
-    const result = await pool.query(`
+async function getUserBranches(userId, tenantId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb) || getTenantDb({ userId, tenantId }, { allowNoTenant: true });
+
+    const result = await db.query(`
         SELECT s.id, s.nombre
         FROM sucursal s
         JOIN usuariosucursal us ON us.id_sucursal = s.id
@@ -75,10 +87,13 @@ async function getUserBranches(userId, tenantId) {
  * 
  * @param {number} userId 
  * @param {number} tenantId 
+ * @param {Object} [ctxOrDb]
  * @returns {Promise<Array<{id: number, nombre: string, key: string}>>}
  */
-async function getUserRoles(userId, tenantId) {
-    const result = await pool.query(`
+async function getUserRoles(userId, tenantId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb) || getTenantDb({ userId, tenantId }, { allowNoTenant: true });
+
+    const result = await db.query(`
         SELECT DISTINCT r.id, r.nombre, r.nombre as key
         FROM rol r
         JOIN usuariorol ur ON ur.id_rol = r.id
@@ -95,11 +110,14 @@ async function getUserRoles(userId, tenantId) {
  * 
  * @param {number} userId 
  * @param {number} tenantId 
+ * @param {Object} [ctxOrDb]
  * @returns {Promise<Array<string>>}
  */
-async function getUserPermissions(userId, tenantId) {
+async function getUserPermissions(userId, tenantId, ctxOrDb = null) {
+    const db = resolveDb(ctxOrDb) || getTenantDb({ userId, tenantId }, { allowNoTenant: true });
+
     // Check for super admin
-    const userResult = await pool.query(
+    const userResult = await db.query(
         'SELECT is_super_admin FROM usuario WHERE id = $1',
         [userId]
     );
@@ -109,7 +127,7 @@ async function getUserPermissions(userId, tenantId) {
     }
 
     // Get permissions through roles, filtered by enabled verticals
-    const result = await pool.query(`
+    const result = await db.query(`
         SELECT DISTINCT COALESCE(p.key, p.nombre) as permission_key
         FROM usuariorol ur
         JOIN rol r ON ur.id_rol = r.id
@@ -132,7 +150,7 @@ async function getUserPermissions(userId, tenantId) {
     `, [userId, tenantId]);
 
     // Also check for explicit overrides
-    const overrides = await pool.query(`
+    const overrides = await db.query(`
         SELECT 
             COALESCE(p.key, p.nombre) as permission_key,
             upo.effect
@@ -161,16 +179,18 @@ async function getUserPermissions(userId, tenantId) {
  * 
  * @param {number} userId 
  * @param {number} tenantId 
+ * @param {Object} [ctxOrDb]
  * @returns {Promise<Object>}
  */
-async function buildUserAccessInfo(userId, tenantId) {
+async function buildUserAccessInfo(userId, tenantId, ctxOrDb = null) {
     const { getUserAccessibleVerticals } = require('./requireVerticalAccess');
+    const db = resolveDb(ctxOrDb) || getTenantDb({ userId, tenantId }, { allowNoTenant: true });
 
     const [verticals, permissions, branches, roles] = await Promise.all([
-        getUserAccessibleVerticals(userId, tenantId),
-        getUserPermissions(userId, tenantId),
-        getUserBranches(userId, tenantId),
-        getUserRoles(userId, tenantId)
+        getUserAccessibleVerticals(userId, tenantId, db),
+        getUserPermissions(userId, tenantId, db),
+        getUserBranches(userId, tenantId, db),
+        getUserRoles(userId, tenantId, db)
     ]);
 
     return {

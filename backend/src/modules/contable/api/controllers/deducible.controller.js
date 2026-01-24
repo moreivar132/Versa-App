@@ -5,8 +5,6 @@
  * - GET /facturas/export.csv - Export invoices to CSV
  */
 
-const pool = require('../../../../../db');
-
 /**
  * Update deducible status of an invoice
  * Only TENANT_ADMIN with contabilidad.deducible.approve permission can do this
@@ -33,74 +31,71 @@ async function updateDeducibleStatus(req, res) {
         });
     }
 
-    const client = await pool.connect();
-
     try {
-        await client.query('BEGIN');
+        await req.db.txWithRLS(async (tx) => {
 
-        // Get current state for audit log - only check tenant, not empresa
-        // TENANT_ADMIN can update any invoice in their tenant
-        const currentResult = await client.query(`
-            SELECT id, id_tenant, id_empresa, deducible_status, deducible_reason, 
-                   deducible_checked_by, deducible_checked_at, numero_factura, tipo
-            FROM contabilidad_factura 
-            WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL
-        `, [id, tenantId]);
+            // Get current state for audit log - only check tenant, not empresa
+            // TENANT_ADMIN can update any invoice in their tenant
+            const currentResult = await tx.query(`
+                SELECT id, id_tenant, id_empresa, deducible_status, deducible_reason, 
+                       deducible_checked_by, deducible_checked_at, numero_factura, tipo
+                FROM contabilidad_factura 
+                WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL
+            `, [id, tenantId]);
 
-        if (currentResult.rows.length === 0) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ error: 'Factura no encontrada' });
-        }
+            if (currentResult.rows.length === 0) {
+                throw { status: 404, message: 'Factura no encontrada' };
+            }
 
-        const current = currentResult.rows[0];
+            const current = currentResult.rows[0];
 
-        // Update deducible status
-        const updateResult = await client.query(`
-            UPDATE contabilidad_factura
-            SET deducible_status = $1,
+            // Update deducible status
+            const updateResult = await tx.query(`
+                UPDATE contabilidad_factura
+                SET deducible_status = $1,
                 deducible_reason = $2,
                 deducible_checked_by = $3,
                 deducible_checked_at = NOW(),
                 updated_at = NOW(),
                 updated_by = $3
-            WHERE id = $4 AND id_tenant = $5
-            RETURNING id, numero_factura, deducible_status, deducible_reason, 
-                      deducible_checked_by, deducible_checked_at
-        `, [deducible_status, deducible_reason, userId, id, tenantId]);
+                WHERE id = $4 AND id_tenant = $5
+                RETURNING id, numero_factura, deducible_status, deducible_reason, 
+                          deducible_checked_by, deducible_checked_at
+            `, [deducible_status, deducible_reason, userId, id, tenantId]);
 
-        // Write audit log
-        await client.query(`
-            INSERT INTO accounting_audit_log 
-            (id_tenant, id_empresa, entity_type, entity_id, action, before_json, after_json, performed_by)
-            VALUES ($1, $2, 'contabilidad_factura', $3, 'SET_DEDUCIBLE_STATUS', $4, $5, $6)
-        `, [
-            tenantId,
-            current.id_empresa,
-            id,
-            JSON.stringify({
-                deducible_status: current.deducible_status,
-                deducible_reason: current.deducible_reason
-            }),
-            JSON.stringify({
-                deducible_status: deducible_status,
-                deducible_reason: deducible_reason
-            }),
-            userId
-        ]);
+            // Write audit log
+            await tx.query(`
+                INSERT INTO accounting_audit_log 
+                (id_tenant, id_empresa, entity_type, entity_id, action, before_json, after_json, performed_by)
+                VALUES ($1, $2, 'contabilidad_factura', $3, 'SET_DEDUCIBLE_STATUS', $4, $5, $6)
+            `, [
+                tenantId,
+                current.id_empresa,
+                id,
+                JSON.stringify({
+                    deducible_status: current.deducible_status,
+                    deducible_reason: current.deducible_reason
+                }),
+                JSON.stringify({
+                    deducible_status: deducible_status,
+                    deducible_reason: deducible_reason
+                }),
+                userId
+            ]);
 
-        await client.query('COMMIT');
-
-        res.json({
-            message: 'Estado de deducibilidad actualizado',
-            factura: updateResult.rows[0]
+            res.json({
+                message: 'Estado de deducibilidad actualizado',
+                factura: updateResult.rows[0]
+            });
         });
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('[ERROR updateDeducibleStatus]:', error);
-        res.status(500).json({ error: 'Error al actualizar estado de deducibilidad' });
-    } finally {
-        client.release();
+        if (error.status) {
+            res.status(error.status).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: 'Error al actualizar estado de deducibilidad' });
+        }
     }
 }
 
@@ -112,7 +107,7 @@ async function getDeducibleHistory(req, res) {
     const tenantId = req.user.id_tenant;
 
     try {
-        const result = await pool.query(`
+        const result = await req.db.query(`
             SELECT al.*, u.nombre as performed_by_nombre, u.email as performed_by_email
             FROM accounting_audit_log al
             LEFT JOIN usuario u ON al.performed_by = u.id
@@ -256,7 +251,7 @@ async function exportCSV(req, res) {
 
         query += ` ORDER BY f.fecha_devengo DESC, f.id DESC`;
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
 
         // Generate CSV content
         const csvSeparator = ';'; // Spain standard

@@ -5,6 +5,8 @@
 const express = require('express');
 const router = express.Router();
 const { getTenantDb } = require('../src/core/db/tenant-db');
+const auditService = require('../src/core/logging/audit-service');
+const { AUDIT_ACTIONS } = auditService;
 
 // Middleware para inyectar db en req
 router.use((req, res, next) => {
@@ -23,7 +25,7 @@ const pool = {
 const formatCurrency = (value) => parseFloat(value || 0).toFixed(2);
 
 // Obtener o crear caja abierta para sucursal
-async function getCajaAbierta(db, idSucursal, idUsuario) {
+async function getCajaAbierta(db, idSucursal, idUsuario, req = null) {
     let result = await db.query(
         `SELECT c.*, u.nombre as usuario_apertura_nombre 
          FROM caja c 
@@ -39,12 +41,24 @@ async function getCajaAbierta(db, idSucursal, idUsuario) {
          VALUES ($1, 'Caja Principal', 'ABIERTA', $2, $2, NOW(), NOW()) RETURNING *`,
         [idSucursal, idUsuario]
     );
+
+    const newCaja = insertResult.rows[0];
+
+    // Audit Log if req is provided
+    if (req) {
+        auditService.register(req, AUDIT_ACTIONS.CAJA_OPEN, {
+            entityType: 'CAJA',
+            entityId: newCaja.id,
+            after: newCaja
+        });
+    }
+
     // Obtener nombre del usuario
     if (idUsuario) {
         const userResult = await db.query('SELECT nombre FROM usuario WHERE id = $1', [idUsuario]);
-        insertResult.rows[0].usuario_apertura_nombre = userResult.rows[0]?.nombre || 'Usuario';
+        newCaja.usuario_apertura_nombre = userResult.rows[0]?.nombre || 'Usuario';
     }
-    return insertResult.rows[0];
+    return newCaja;
 }
 
 // Obtener o crear caja chica para sucursal
@@ -248,7 +262,7 @@ router.get('/estado-actual', async (req, res) => {
         const idSucursal = await resolverSucursal(req.db, req);
         if (!idSucursal) return res.status(400).json({ ok: false, error: 'No se encontró sucursal asignada. Configure una sucursal para el usuario.' });
 
-        const caja = await getCajaAbierta(req.db, idSucursal, req.user.id);
+        const caja = await getCajaAbierta(req.db, idSucursal, req.user.id, req);
 
         // Totales por método de pago desde ordenpago
         const totalesPagoResult = await req.db.query(`
@@ -638,7 +652,7 @@ router.post('/movimientos', async (req, res) => {
         const montoNum = parseFloat(monto);
 
         // Obtener caja abierta
-        const caja = await getCajaAbierta(req.db, idSucursal, idUsuario);
+        const caja = await getCajaAbierta(req.db, idSucursal, idUsuario, req);
         if (!caja) {
             return res.status(400).json({ ok: false, error: 'No hay caja abierta para esta sucursal' });
         }
@@ -649,6 +663,13 @@ router.post('/movimientos', async (req, res) => {
             VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7, NOW())
             RETURNING *
         `, [caja.id, idUsuario, tipo, montoNum, 'MANUAL', concepto, descripcion || null]);
+
+        // Audit Log
+        auditService.register(req, AUDIT_ACTIONS.CAJA_MOVIMIENTO, {
+            entityType: 'CAJA_MOVIMIENTO',
+            entityId: result.rows[0].id,
+            after: result.rows[0]
+        });
 
         res.json({
             ok: true,
@@ -961,6 +982,17 @@ router.post('/cerrar', async (req, res) => {
                 `, [nuevaCajaResult.rows[0].id, idUsuario, saldoAperturaNueva]);
             }
 
+            // Audit Log
+            auditService.register(req, AUDIT_ACTIONS.CAJA_CLOSE, {
+                entityType: 'CAJA',
+                entityId: caja.id,
+                after: {
+                    cierre: cierreResult.rows[0],
+                    enviaCajaChica: montoACajaChica,
+                    nuevaCajaId: nuevaCajaResult.rows[0]?.id
+                }
+            });
+
             return {
                 id: cierreResult.rows[0].id,
                 saldo_teorico: formatCurrency(saldoTeorico),
@@ -992,7 +1024,7 @@ router.post('/enviar-caja-chica', async (req, res) => {
             const idSucursal = await resolverSucursal(tx, req);
             if (!idSucursal) throw new Error('Sucursal no especificada');
 
-            const caja = await getCajaAbierta(tx, idSucursal, idUsuario);
+            const caja = await getCajaAbierta(tx, idSucursal, idUsuario, req);
             const montoNum = parseFloat(monto);
 
             // Movimiento egreso en caja principal
@@ -1009,6 +1041,17 @@ router.post('/enviar-caja-chica', async (req, res) => {
             `, [cajaChica.id, idUsuario, montoNum, descripcion || 'Transferencia desde caja', movCajaResult.rows[0].id]);
 
             await tx.query(`UPDATE cajachica SET saldo_actual = saldo_actual + $1, updated_at = NOW() WHERE id = $2`, [montoNum, cajaChica.id]);
+
+            // Audit Log
+            auditService.register(req, AUDIT_ACTIONS.CAJA_MOVIMIENTO, {
+                entityType: 'CAJA_MOVIMIENTO',
+                entityId: movCajaResult.rows[0].id,
+                after: {
+                    origen: 'CAJA_PRINCIPAL',
+                    destino: 'CAJA_CHICA',
+                    monto: montoNum
+                }
+            });
 
             return {
                 monto: formatCurrency(montoNum),
@@ -1143,6 +1186,12 @@ router.post('/chica/movimientos', async (req, res) => {
                 : parseFloat(cajaChica.saldo_actual) - montoNum;
 
             await tx.query(`UPDATE cajachica SET saldo_actual = $1, updated_at = NOW() WHERE id = $2`, [nuevoSaldo, cajaChica.id]);
+
+            // Audit Log
+            auditService.register(req, AUDIT_ACTIONS.CAJA_MOVIMIENTO, {
+                entityType: 'CAJA_CHICA_MOVIMIENTO',
+                after: { tipo, monto: montoNum, descripcion }
+            });
 
             return { nuevoSaldo };
         });

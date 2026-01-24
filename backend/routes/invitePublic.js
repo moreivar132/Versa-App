@@ -10,7 +10,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
-const pool = require('../db');
+const { getSystemDb } = require('../src/core/db/tenant-db');
 const saasInviteService = require('../services/saasInviteService');
 
 /**
@@ -34,7 +34,8 @@ router.get('/verify', async (req, res) => {
         const tokenHash = saasInviteService.hashInviteToken(token);
 
         // Find invite with tenant and empresa info
-        const result = await pool.query(`
+        const systemDb = getSystemDb();
+        const result = await systemDb.query(`
             SELECT 
                 si.id,
                 si.tenant_id,
@@ -110,7 +111,8 @@ router.get('/verify', async (req, res) => {
  * Public endpoint - no auth required
  */
 router.post('/accept', async (req, res) => {
-    const client = await pool.connect();
+    const systemDb = getSystemDb();
+    const client = await systemDb.connect();
 
     try {
         const { token, password, nombre, email } = req.body;

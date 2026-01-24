@@ -1,7 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
+// const pool = require('../db'); // REMOVED
+const { getTenantDb } = require('../src/core/db/tenant-db');
 const verifyJWT = require('../middleware/auth');
+
+// Inject Tenant DB
+router.use((req, res, next) => {
+    try {
+        req.db = getTenantDb(req.user); // req.user acts as context
+        next();
+    } catch (err) {
+        console.error('Error injecting Tenant DB:', err);
+        res.status(500).json({ error: 'Database context error' });
+    }
+});
 
 // ================================================================
 // SUCURSALES CRUD
@@ -31,7 +43,7 @@ router.get('/', verifyJWT, async (req, res) => {
             params = [id_tenant];
         }
 
-        const result = await pool.query(query, params);
+        const result = await req.db.query(query, params);
         res.json(result.rows);
     } catch (error) {
         console.error('Error getting sucursales:', error);
@@ -54,7 +66,7 @@ router.post('/', verifyJWT, async (req, res) => {
         : id_tenant;
 
     try {
-        const result = await pool.query(`
+        const result = await req.db.query(`
             INSERT INTO sucursal (nombre, direccion, telefono, email, id_tenant, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
             RETURNING *
@@ -75,7 +87,7 @@ router.put('/:id', verifyJWT, async (req, res) => {
 
     try {
         // Verify ownership/existence first
-        const check = await pool.query(
+        const check = await req.db.query(
             'SELECT id, id_tenant FROM sucursal WHERE id = $1',
             [id]
         );
@@ -88,7 +100,7 @@ router.put('/:id', verifyJWT, async (req, res) => {
             return res.status(403).json({ error: 'No tienes permiso para editar esta sucursal' });
         }
 
-        const result = await pool.query(`
+        const result = await req.db.query(`
             UPDATE sucursal 
             SET nombre = $1, direccion = $2, telefono = $3, email = $4, updated_at = NOW()
             WHERE id = $5
@@ -109,7 +121,7 @@ router.delete('/:id', verifyJWT, async (req, res) => {
 
     try {
         // Verify ownership first
-        const check = await pool.query(
+        const check = await req.db.query(
             'SELECT id, id_tenant FROM sucursal WHERE id = $1',
             [id]
         );
@@ -122,7 +134,7 @@ router.delete('/:id', verifyJWT, async (req, res) => {
             return res.status(403).json({ error: 'No tienes permiso para eliminar esta sucursal' });
         }
 
-        await pool.query('DELETE FROM sucursal WHERE id = $1', [id]);
+        await req.db.query('DELETE FROM sucursal WHERE id = $1', [id]);
         res.json({ success: true, message: 'Sucursal eliminada' });
     } catch (error) {
         console.error('Error deleting sucursal:', error);

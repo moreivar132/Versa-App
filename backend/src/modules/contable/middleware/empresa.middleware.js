@@ -3,7 +3,7 @@
  * Valida el contexto de empresa y los permisos de usuario
  */
 
-const pool = require('../../../../db');
+const { getTenantDb } = require('../../../../src/core/db/tenant-db');
 const { getEffectiveTenant } = require('../../../../middleware/rbac');
 
 /**
@@ -37,9 +37,10 @@ async function requireEmpresa(req, res, next) {
             });
         }
 
-        // Usar pool directamente para validación de infraestructura si es necesario,
-        // pero idealmente pasar por getTenantDb para asegurar RLS incluso aquí.
-        const empresaResult = await pool.query(
+        // Usar req.db si está inyectado (preferido), o derivarlo del contexto
+        const db = req.db || getTenantDb(req.ctx);
+
+        const empresaResult = await db.query(
             'SELECT id, activo FROM accounting_empresa WHERE id = $1 AND id_tenant = $2 AND deleted_at IS NULL',
             [empresaId, tenantId]
         );
@@ -61,7 +62,7 @@ async function requireEmpresa(req, res, next) {
 
         // Verificar permisos específicos de empresa si no es superadmin
         if (!req.ctx.isSuperAdmin) {
-            const accessResult = await pool.query(
+            const accessResult = await db.query(
                 'SELECT rol_empresa FROM accounting_usuario_empresa WHERE id_usuario = $1 AND id_empresa = $2',
                 [req.ctx.userId, empresaId]
             );

@@ -5,7 +5,7 @@
  * Este servicio es la FUENTE DE VERDAD para todos los ingresos.
  * Tanto Marketplace como CRM emiten eventos hacia este ledger.
  */
-const pool = require('../db');
+const { getTenantDb } = require('../src/core/db/tenant-db');
 
 class IncomeService {
 
@@ -15,19 +15,7 @@ class IncomeService {
      * 
      * @param {Object} payload
      * @param {number} payload.idTenant - ID del tenant
-     * @param {number} payload.idSucursal - ID de la sucursal
-     * @param {string} payload.origen - 'marketplace' | 'crm' | 'subscription' | 'manual'
-     * @param {string} payload.originType - 'cita' | 'orden' | 'venta' | 'factura' | 'manual'
-     * @param {number} [payload.originId] - ID de la entidad origen
-     * @param {number} [payload.idCliente] - ID del cliente
-     * @param {number} payload.amount - Monto del ingreso
-     * @param {string} [payload.currency='EUR'] - Moneda
-     * @param {string} [payload.status='paid'] - 'pending' | 'paid' | 'failed' | 'refunded' | 'canceled'
-     * @param {string} [payload.provider='internal'] - 'stripe' | 'cash' | 'transfer' | 'card' | 'internal'
-     * @param {string} payload.reference - Referencia única para idempotencia
-     * @param {Object} [payload.metadata] - Metadata adicional JSON
-     * @param {string} [payload.description] - Descripción del ingreso
-     * @returns {Object} El evento creado o existente si ya existía
+     * ...
      */
     async createIncomeEvent(payload) {
         const {
@@ -63,9 +51,11 @@ class IncomeService {
             throw new Error('amount es obligatorio');
         }
 
+        const db = getTenantDb({ tenantId: idTenant });
+
         try {
             // Intentar insertar con UPSERT para idempotencia
-            const result = await pool.query(`
+            const result = await db.query(`
                 INSERT INTO income_event (
                     id_tenant, id_sucursal, origen, origin_type, origin_id,
                     id_cliente, amount, currency, status, provider,
@@ -100,17 +90,6 @@ class IncomeService {
 
     /**
      * Obtener eventos de ingreso con filtros
-     * 
-     * @param {Object} filters
-     * @param {number} filters.idTenant - (Obligatorio) ID del tenant
-     * @param {number} [filters.idSucursal] - Filtrar por sucursal
-     * @param {string} [filters.origen] - Filtrar por origen (marketplace/crm/etc)
-     * @param {string} [filters.status] - Filtrar por status
-     * @param {string} [filters.dateFrom] - Fecha desde (YYYY-MM-DD)
-     * @param {string} [filters.dateTo] - Fecha hasta (YYYY-MM-DD)
-     * @param {number} [filters.limit=50] - Límite de resultados
-     * @param {number} [filters.offset=0] - Offset para paginación
-     * @returns {Object} { events, total, pagination }
      */
     async getIncomeEvents(filters) {
         const {
@@ -127,6 +106,8 @@ class IncomeService {
         if (!idTenant) {
             throw new Error('idTenant es obligatorio');
         }
+
+        const db = getTenantDb({ tenantId: idTenant });
 
         let whereClause = 'WHERE ie.id_tenant = $1';
         const params = [idTenant];
@@ -176,8 +157,8 @@ class IncomeService {
         `;
 
         const [eventsResult, countResult] = await Promise.all([
-            pool.query(query, params),
-            pool.query(countQuery, params.slice(0, paramIndex - 2))
+            db.query(query, params),
+            db.query(countQuery, params.slice(0, paramIndex - 2))
         ]);
 
         return {
@@ -193,14 +174,6 @@ class IncomeService {
 
     /**
      * Obtener reporte de ingresos agrupado
-     * 
-     * @param {Object} options
-     * @param {number} options.idTenant - (Obligatorio) ID del tenant
-     * @param {number} [options.idSucursal] - Filtrar por sucursal
-     * @param {string} [options.dateFrom] - Fecha desde
-     * @param {string} [options.dateTo] - Fecha hasta
-     * @param {string} [options.groupBy='origen'] - 'origen' | 'sucursal' | 'day' | 'month'
-     * @returns {Object} Reporte con totales por grupo
      */
     async getRevenueReport(options) {
         const {
@@ -214,6 +187,8 @@ class IncomeService {
         if (!idTenant) {
             throw new Error('idTenant es obligatorio');
         }
+
+        const db = getTenantDb({ tenantId: idTenant });
 
         let whereClause = 'WHERE ie.id_tenant = $1 AND ie.status = \'paid\'';
         const params = [idTenant];
@@ -285,8 +260,8 @@ class IncomeService {
         `;
 
         const [reportResult, totalsResult] = await Promise.all([
-            pool.query(query, params),
-            pool.query(totalsQuery, params)
+            db.query(query, params),
+            db.query(totalsQuery, params)
         ]);
 
         return {
@@ -318,10 +293,6 @@ class IncomeService {
 
     /**
      * Generar reference única para una entidad
-     * @param {string} type - Tipo de entidad ('cita', 'orden', 'venta', etc)
-     * @param {number} id - ID de la entidad
-     * @param {string} [suffix] - Sufijo adicional opcional
-     * @returns {string} Reference formateada
      */
     generateReference(type, id, suffix = null) {
         const parts = [type, id];
@@ -331,12 +302,10 @@ class IncomeService {
 
     /**
      * Verificar si un evento ya existe por reference
-     * @param {number} idTenant
-     * @param {string} reference
-     * @returns {Object|null} El evento existente o null
      */
     async checkExistingEvent(idTenant, reference) {
-        const result = await pool.query(
+        const db = getTenantDb({ tenantId: idTenant });
+        const result = await db.query(
             'SELECT * FROM income_event WHERE id_tenant = $1 AND reference = $2',
             [idTenant, reference]
         );
@@ -345,13 +314,10 @@ class IncomeService {
 
     /**
      * Marcar un evento como reembolsado
-     * @param {number} idTenant
-     * @param {string} reference
-     * @param {Object} [metadata] - Metadata del reembolso
-     * @returns {Object} Evento actualizado
      */
     async markAsRefunded(idTenant, reference, metadata = null) {
-        const result = await pool.query(`
+        const db = getTenantDb({ tenantId: idTenant });
+        const result = await db.query(`
             UPDATE income_event 
             SET status = 'refunded', 
                 updated_at = now(),
