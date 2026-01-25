@@ -1,10 +1,12 @@
 const SESSION_KEY = 'versa_session_v1';
 
 export function getApiBaseUrl() {
-  return import.meta.env.VITE_API_URL || '';
+  const url = import.meta.env.VITE_API_URL || '';
+  return url.replace(/\/$/, '');
 }
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('🔒 Auth Service API URL:', API_BASE_URL);
 
 export function getSession() {
   try {
