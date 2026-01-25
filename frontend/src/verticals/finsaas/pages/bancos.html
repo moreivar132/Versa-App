@@ -347,11 +347,11 @@
     </div>
 
     <script type="module">
-        import { logout, getSession, requireAuth } from '/auth.js';
+        import { logout, getSession, requireAuth, getApiBaseUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
-        const API_BASE = '';
+        const API_BASE = getApiBaseUrl();
         let session = null;
         let currentEmpresaId = null;
         let currentPage = 0;

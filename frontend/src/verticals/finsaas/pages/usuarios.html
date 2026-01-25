@@ -203,7 +203,7 @@
     </div>
 
     <script type="module">
-        import { getSession, requireAuth, getToken } from '/auth.js';
+        import { getSession, requireAuth, getToken, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         let selectedExpiry = 72;
@@ -234,7 +234,7 @@
             btn.innerHTML = '<span class="animate-spin">⏳</span> Generando...';
 
             try {
-                const res = await fetch('/api/saas/invites', {
+                const res = await fetch(buildApiUrl('/api/saas/invites'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -313,7 +313,7 @@
         // Load existing invites
         window.loadInvites = async function () {
             try {
-                const res = await fetch('/api/saas/invites', {
+                const res = await fetch(buildApiUrl('/api/saas/invites'), {
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
 
@@ -389,7 +389,7 @@
             if (!confirm('¿Eliminar esta invitación?')) return;
 
             try {
-                const res = await fetch(`/api/saas/invites/${id}`, {
+                const res = await fetch(buildApiUrl(`/api/saas/invites/${id}`), {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
@@ -405,7 +405,7 @@
         // Load empresas for selector
         async function loadEmpresas() {
             try {
-                const res = await fetch('/api/contabilidad/empresas', {
+                const res = await fetch(buildApiUrl('/api/contabilidad/empresas'), {
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
 

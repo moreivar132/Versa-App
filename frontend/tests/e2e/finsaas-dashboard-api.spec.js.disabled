@@ -1,0 +1,27 @@
+import { test, expect } from '@playwright/test';
+
+test('FinSaaS Dashboard uses absolute API URL and avoids relative /api calls', async ({ page }) => {
+    const relativeApiRequests = [];
+
+    // Interceptar todos los requests
+    page.on('request', req => {
+        const url = req.url();
+        // Detectar si la URL es relativa al dominio del frontend (netlify/localhost) y contiene /api/
+        // Playwright siempre devuelve URLs absolutas, así que si vemos 'localhost:5173/api/' o 'netlify.app/api/' es un error.
+        if (url.includes('/api/') && !url.includes('railway.app')) {
+            relativeApiRequests.push(url);
+            console.error('❌ Forbidden request detected:', url);
+        }
+    });
+
+    // Navegar al dashboard (login primero si es necesario, aquí asumimos acceso directo o mock)
+    // Nota: En un entorno real E2E, necesitaríamos hacer login o mockear el estado de auth.
+    // Para este smoke test básico, verificamos que al cargar los scripts no disparen fetchs locos.
+    await page.goto('/src/verticals/finsaas/pages/dashboard.html');
+
+    // Esperar un poco a que los scripts de inicialización corran
+    await page.waitForTimeout(2000);
+
+    // Verificar que no hubo peticiones "malas"
+    expect(relativeApiRequests.length, 'Se detectaron peticiones a rutas relativas /api').toBe(0);
+});

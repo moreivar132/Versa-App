@@ -157,7 +157,7 @@
     </div>
 
     <script type="module">
-        import { requireAuth, getToken } from '/auth.js';
+        import { requireAuth, getToken, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         let currentEmpresaId = localStorage.getItem('finsaas_current_empresa');
@@ -181,7 +181,7 @@
 
         async function loadEmpresas() {
             try {
-                const res = await fetch('/api/contabilidad/empresas', {
+                const res = await fetch(buildApiUrl('/api/contabilidad/empresas'), {
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
                 const { data } = await res.json();
@@ -235,7 +235,7 @@
                 const now = new Date();
                 const year = now.getFullYear();
 
-                const res = await fetch('/api/contabilidad/copiloto/chat', {
+                const res = await fetch(buildApiUrl('/api/contabilidad/copiloto/chat'), {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${getToken()}`,

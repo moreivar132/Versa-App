@@ -350,11 +350,11 @@
     </div>
 
     <script type="module">
-        import { logout, getSession, requireAuth, getToken } from '/auth.js';
+        import { logout, getSession, requireAuth, getToken, getApiBaseUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
-        const API_BASE = '';
+        const API_BASE = getApiBaseUrl();
         let session = getSession(); // Initialize session properly
         let currentPage = 0;
         const PAGE_SIZE = 20;

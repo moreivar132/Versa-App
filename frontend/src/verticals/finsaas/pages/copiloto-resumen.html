@@ -184,7 +184,7 @@
     </template>
 
     <script type="module">
-        import { logout, requireAuth, getToken } from '/auth.js';
+        import { logout, requireAuth, getToken, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         let session = null;
@@ -202,7 +202,7 @@
 
         async function loadEmpresas() {
             try {
-                const res = await fetch('/api/contabilidad/empresas', {
+                const res = await fetch(buildApiUrl('/api/contabilidad/empresas'), {
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
                 const { data } = await res.json();
