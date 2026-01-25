@@ -5,6 +5,12 @@ export function getApiBaseUrl() {
   return url.replace(/\/$/, '');
 }
 
+export function buildApiUrl(path) {
+  const base = getApiBaseUrl();
+  const cleanPath = String(path || '').replace(/^\/+/, '');
+  return `${base}/${cleanPath}`;
+}
+
 const API_BASE_URL = getApiBaseUrl();
 console.log('🔒 Auth Service API URL:', API_BASE_URL);
 

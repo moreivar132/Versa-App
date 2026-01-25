@@ -119,7 +119,7 @@
     </div>
 
     <script type="module">
-        import { requireAuth, getToken } from '/auth.js';
+        import { requireAuth, getToken, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         let session = null;
@@ -142,7 +142,7 @@
         async function loadAlerts() {
             const container = document.getElementById('alerts-container');
             try {
-                const res = await fetch(`/api/contabilidad/copiloto/alerts?empresa_id=${currentEmpresaId}`, {
+                const res = await fetch(buildApiUrl(`/api/contabilidad/copiloto/alerts?empresa_id=${currentEmpresaId}`), {
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
                 const { data } = await res.json();
@@ -206,7 +206,7 @@
             btn.innerText = 'Activando...';
 
             try {
-                const res = await fetch('/api/contabilidad/copiloto/alerts', {
+                const res = await fetch(buildApiUrl('/api/contabilidad/copiloto/alerts'), {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${getToken()}`,
@@ -229,7 +229,7 @@
 
         async function markAsSeen(id) {
             try {
-                const res = await fetch(`/api/contabilidad/copiloto/alerts/${id}`, {
+                const res = await fetch(buildApiUrl(`/api/contabilidad/copiloto/alerts/${id}`), {
                     method: 'PATCH',
                     headers: {
                         'Authorization': `Bearer ${getToken()}`,
