@@ -291,11 +291,10 @@
 
 
     <script type="module">
-        import { logout, getSession, requireAuth, getToken, getApiBaseUrl } from '/auth.js';
+        import { logout, getSession, requireAuth, getToken, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
-        const API_BASE = getApiBaseUrl();
         let session = null;
         let currentEmpresaId = null;
 
@@ -307,13 +306,13 @@
         }
 
         async function apiGet(endpoint) {
-            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            const res = await fetch(buildApiUrl(endpoint), { headers: getAuthHeaders() });
             if (!res.ok) throw new Error('API Error');
             return res.json();
         }
 
         async function apiPost(endpoint, data = {}) {
-            const res = await fetch(API_BASE + endpoint, {
+            const res = await fetch(buildApiUrl(endpoint), {
                 method: 'POST',
                 headers: getAuthHeaders(),
                 body: JSON.stringify(data)
