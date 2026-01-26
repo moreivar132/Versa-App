@@ -295,9 +295,28 @@ async function listArchivos(req, res) {
         const facturaId = parseInt(req.params.id);
         const archivos = await service.listArchivos(ctx, facturaId);
 
+        // Enrich with existence check
+        const enriched = archivos.map(file => {
+            // file.file_url example: "/uploads/contabilidad/...jpg"
+            // Physical path: process.cwd() + "/backend" + file.file_url
+            // Note: process.cwd() is usually project root. Ensure we point to backend/uploads.
+
+            // Safer resolution:
+            // We assume file_url starts with /uploads
+            let relativePath = file.file_url;
+            if (relativePath.startsWith('/')) relativePath = relativePath.substring(1); // "uploads/contabilidad/..."
+
+            const absolutePath = path.resolve(process.cwd(), 'backend', relativePath);
+
+            return {
+                ...file,
+                exists: fs.existsSync(absolutePath)
+            };
+        });
+
         res.json({
             ok: true,
-            data: archivos
+            data: enriched
         });
     } catch (error) {
         console.error('Error en listArchivos:', error);
