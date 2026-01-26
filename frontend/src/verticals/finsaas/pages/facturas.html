@@ -558,7 +558,7 @@
 
 
         async function apiGet(endpoint) {
-            console.log('[FinSaaS] API GET:', endpoint);
+            // console.log('[FinSaaS] API GET:', endpoint); // Removed for cleanliness
             const res = await fetch(buildApiUrl(endpoint), { headers: getAuthHeaders() });
             if (!res.ok) {
                 console.error('[FinSaaS] API Error:', res.status, await res.text());

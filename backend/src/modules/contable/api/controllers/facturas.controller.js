@@ -297,16 +297,15 @@ async function listArchivos(req, res) {
 
         // Enrich with existence check
         const enriched = archivos.map(file => {
-            // file.file_url example: "/uploads/contabilidad/...jpg"
-            // Physical path: process.cwd() + "/backend" + file.file_url
-            // Note: process.cwd() is usually project root. Ensure we point to backend/uploads.
+            // Safer resolution: use __dirname relative path to match uploadDir logic
+            // Upload dir was: path.join(__dirname, '../../../../../uploads/contabilidad');
 
-            // Safer resolution:
-            // We assume file_url starts with /uploads
+            // file.file_url: "/uploads/contabilidad/filename.ext"
             let relativePath = file.file_url;
             if (relativePath.startsWith('/')) relativePath = relativePath.substring(1); // "uploads/contabilidad/..."
 
-            const absolutePath = path.resolve(process.cwd(), 'backend', relativePath);
+            // Go up 5 levels from controllers/ to backend root, then append relative path
+            const absolutePath = path.join(__dirname, '../../../../../', relativePath);
 
             return {
                 ...file,
