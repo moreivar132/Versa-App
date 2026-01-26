@@ -37,8 +37,8 @@
         }
     </script>
 
-    <!-- Guard.js -->
-    <script src="/guard.js"></script>
+    <!-- Guard.js (Module) -->
+    <script type="module" src="/guard.js"></script>
 
     <style>
         /* Custom scrollbar for dark theme matching */
@@ -431,7 +431,7 @@
 
     <!-- Application Logic (Hidden implementation) -->
     <script type="module">
-        import { requireAuth, getToken } from '/auth.js';
+        import { getToken } from '/auth.js';
 
         const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -577,7 +577,7 @@
 
         // Init
         document.addEventListener('DOMContentLoaded', async () => {
-            await requireAuth();
+            // Auth handled by guard.js
             const u = JSON.parse(localStorage.getItem('userData') || '{}');
             if (u.nombre) document.getElementById('user-name').textContent = u.nombre;
 

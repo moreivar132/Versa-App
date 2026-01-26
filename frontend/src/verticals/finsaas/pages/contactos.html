@@ -350,11 +350,10 @@
     </div>
 
     <script type="module">
-        import { logout, getSession, requireAuth, getToken, getApiBaseUrl } from '/auth.js';
+        import { logout, getSession, requireAuth, getToken, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
-        const API_BASE = getApiBaseUrl();
         let session = getSession(); // Initialize session properly
         let currentPage = 0;
         const PAGE_SIZE = 20;
@@ -369,7 +368,7 @@
 
         async function apiGet(endpoint) {
             console.log('[FinSaaS] API GET:', endpoint);
-            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            const res = await fetch(buildApiUrl(endpoint), { headers: getAuthHeaders() });
             if (!res.ok) {
                 console.error('[FinSaaS] API Error:', res.status);
                 throw new Error('API Error ' + res.status);
@@ -379,12 +378,12 @@
 
 
         async function apiPost(endpoint, data) {
-            const res = await fetch(API_BASE + endpoint, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) });
+            const res = await fetch(buildApiUrl(endpoint), { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) });
             return res.json();
         }
 
         async function apiPatch(endpoint, data) {
-            const res = await fetch(API_BASE + endpoint, { method: 'PATCH', headers: getAuthHeaders(), body: JSON.stringify(data) });
+            const res = await fetch(buildApiUrl(endpoint), { method: 'PATCH', headers: getAuthHeaders(), body: JSON.stringify(data) });
             return res.json();
         }
 
@@ -583,7 +582,7 @@
         window.deleteContact = async function (id) {
             if (!confirm('¿Eliminar contacto?')) return;
             try {
-                if (await fetch(API_BASE + `/api/contabilidad/contactos/${id}`, { method: 'DELETE', headers: getAuthHeaders() }).then(r => r.ok)) loadContactos(currentPage);
+                if (await fetch(buildApiUrl(`/api/contabilidad/contactos/${id}`), { method: 'DELETE', headers: getAuthHeaders() }).then(r => r.ok)) loadContactos(currentPage);
             } catch (e) { }
         };
 
