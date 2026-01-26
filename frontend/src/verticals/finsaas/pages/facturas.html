@@ -721,13 +721,7 @@
 
         async function loadContactos() {
             try {
-                // Add empresa ID header for filtering
-                const headers = getAuthHeaders();
-                if (currentEmpresaId) {
-                    headers['X-Empresa-Id'] = currentEmpresaId;
-                }
-                const response = await fetch(API_BASE + '/api/contabilidad/contactos', { headers });
-                const res = await response.json();
+                const res = await apiGet('/api/contabilidad/contactos');
                 const select = document.getElementById('f-contacto');
                 select.innerHTML = '<option value="">-- Seleccionar --</option>';
 
@@ -1215,6 +1209,37 @@
         }
 
         // --- Attachments Logic ---
+
+        window.showToast = function (message, type = 'error') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 z-[100] px-6 py-4 rounded-xl shadow-2xl text-white font-bold transform transition-all duration-300 translate-y-10 opacity-0 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'} flex items-center gap-3`;
+            toast.innerHTML = `<span class="material-symbols-outlined text-[24px]">${type === 'error' ? 'error' : 'check_circle'}</span> ${message}`;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-10', 'opacity-0'));
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
+
+        window.previewFile = async function (url) {
+            try {
+                const res = await fetch(url, { method: 'HEAD' });
+                if (res.ok) {
+                    window.open(url, '_blank');
+                } else {
+                    if (res.status === 404) {
+                        showToast('El archivo ya no está disponible. Súbelo de nuevo.', 'error');
+                    } else {
+                        showToast('Error al acceder al archivo.', 'error');
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('No se pudo verificar el archivo. Revisa tu conexión.', 'error');
+            }
+        };
+
         window.openAttachments = async function (id) {
             const modal = document.getElementById('attachments-modal');
             const list = document.getElementById('attachments-list');
@@ -1237,6 +1262,16 @@
                     if (file.mime_type?.includes('image')) icon = 'image';
                     else if (file.mime_type?.includes('pdf')) icon = 'picture_as_pdf';
 
+                    // Check existence flag if available (default true to assume it exists if backend doesn't tell us yet)
+                    const fileExists = file.exists !== undefined ? file.exists : true;
+                    // If missing, show red eye with slash
+                    const visualClass = fileExists ? 'text-gray-400 hover:text-primary' : 'text-red-400 hover:text-red-600';
+                    const action = fileExists
+                        ? `previewFile('${buildApiUrl(file.file_url.startsWith('/uploads') ? '/api' + file.file_url : file.file_url)}')`
+                        : `showToast('Este archivo no existe en el disco.', 'error')`;
+                    const iconName = fileExists ? 'visibility' : 'visibility_off';
+                    const title = fileExists ? 'Ver / Descargar' : 'Archivo no disponible';
+
                     return `
                         <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-surface-dark-light rounded-lg hover:bg-gray-100 dark:hover:bg-[#25381e] transition-colors group">
                             <div class="flex items-center gap-3 overflow-hidden">
@@ -1249,10 +1284,10 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-2">
-                                <a href="${file.file_url}" target="_blank" 
-                                    class="p-2 text-gray-400 hover:text-primary transition-colors rounded-full hover:bg-primary/5" title="Ver / Descargar">
-                                    <span class="material-symbols-outlined text-[20px]">visibility</span>
-                                </a>
+                                <button onclick="${action}" 
+                                    class="p-2 ${visualClass} transition-colors rounded-full hover:bg-primary/5" title="${title}">
+                                    <span class="material-symbols-outlined text-[20px]">${iconName}</span>
+                                </button>
                             </div>
                         </div>
                     `;

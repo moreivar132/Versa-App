@@ -816,7 +816,7 @@
             // Use the robust serveArchivo endpoint from Documentos module
             // This handles ID lookup, storage key resolution, and authentication
             const token = getToken();
-            const url = `${API_BASE}/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`;
+            const url = buildApiUrl(`/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`);
             window.open(url, '_blank');
         };
         function redirectToDocuments(numero) {

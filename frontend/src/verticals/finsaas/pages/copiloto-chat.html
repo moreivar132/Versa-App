@@ -157,7 +157,7 @@
     </div>
 
     <script type="module">
-        import { requireAuth, getToken, buildApiUrl } from '/auth.js';
+        import { requireAuth, getToken, buildApiUrl, fetchWithAuth } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         let currentEmpresaId = localStorage.getItem('finsaas_current_empresa');
@@ -235,11 +235,9 @@
                 const now = new Date();
                 const year = now.getFullYear();
 
-                const res = await fetch(buildApiUrl('/api/contabilidad/copiloto/chat'), {
+                const res = await fetchWithAuth('/api/contabilidad/copiloto/chat', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${getToken()}`,
-                        'Content-Type': 'application/json',
                         'X-Empresa-Id': currentEmpresaId
                     },
                     body: JSON.stringify({

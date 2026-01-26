@@ -688,12 +688,18 @@
             let fileUrl = intake?.file_url || lastUploadedFileUrl || '';
 
             // Add token for authenticated access if URL is a local path
+            // Add token for authenticated access if URL is a local path
             if (fileUrl && !fileUrl.startsWith('http')) {
                 const token = getToken();
-                // For intake files, use the intake archivo endpoint
+                // For intake files, use the intake archivo endpoint if possible for security
                 if (currentIntakeId || intake?.id) {
                     const intakeIdForUrl = intake?.id || currentIntakeId;
-                    fileUrl = `/api/contabilidad/documentos/intake/${intakeIdForUrl}/archivo?preview=true&token=${encodeURIComponent(token)}`;
+                    fileUrl = buildApiUrl(`/api/contabilidad/documentos/intake/${intakeIdForUrl}/archivo?preview=true&token=${encodeURIComponent(token)}`);
+                } else if (fileUrl.startsWith('/uploads')) {
+                    // Fallback to static serving, but ensure /api prefix logic
+                    fileUrl = buildApiUrl('/api' + fileUrl);
+                } else {
+                    fileUrl = buildApiUrl(fileUrl);
                 }
             }
 
@@ -811,7 +817,7 @@
 
             try {
                 // Fetch latest state to get file_url
-                const res = await fetchWithAuth(`${API_BASE}/egresos/intakes/${currentIntakeId}`, {
+                const res = await fetchWithAuth(`/api/contabilidad/egresos/intakes/${currentIntakeId}`, {
                     headers: { 'X-Empresa-Id': selectedEmpresaId }
                 });
                 const intake = res.data;
@@ -854,11 +860,9 @@
             };
 
             try {
-                const token = getToken();
-                const res = await fetch(`${API_BASE}/egresos`, {
+                const res = await fetchWithAuth('/api/contabilidad/egresos', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'X-Empresa-Id': selectedEmpresaId,
                         'Content-Type': 'application/json'
                     },

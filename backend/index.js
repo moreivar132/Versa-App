@@ -143,6 +143,13 @@ app.use('/api/admin/fidelizacion', privateRoute, require('./routes/fidelizacionA
 
 // Static Uploads
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/api/uploads', (req, res) => {
+  res.status(404).json({
+    ok: false,
+    code: "FILE_NOT_FOUND",
+    message: "El archivo ya no existe en el servidor"
+  });
+});
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check / DB status
