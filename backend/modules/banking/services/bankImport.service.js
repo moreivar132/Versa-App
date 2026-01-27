@@ -38,7 +38,7 @@ class BankImportService {
 
             if (fs.existsSync(targetPath)) {
                 // File exists, safe to delete new duplicate upload
-                try { fs.unlinkSync(file.path); } catch (e) { }
+                try { fs.unlinkSync(file.path); } catch (_e) { /* ignore */ }
             } else {
                 // File missing! Recover by using this new upload as the file for the existing record
                 console.log(`Recuperando archivo faltante para import ${existingId}`);
@@ -71,7 +71,7 @@ class BankImportService {
             });
         } catch (e) {
             // Try cleanup
-            try { fs.unlinkSync(file.path); } catch (err) { }
+            try { fs.unlinkSync(file.path); } catch (_err) { /* ignore */ }
             throw e;
         }
     }
@@ -132,7 +132,7 @@ class BankImportService {
             // detectFormat(headers, firstRows)
             // I'll create an instance and use sniffing inside parser? 
             // Or better: try to parse with JasperXls if extension matches?
-            const parserHelper = ParserFactory.getParser('jasper_xls_v1'); // Just to test? No.
+
 
             // Quick fix: for xls, just assume Jasper if extension is xls/xlsx and valid content
             format = 'jasper_xls_v1'; // Defaulting for MVP if ext matches
@@ -149,63 +149,58 @@ class BankImportService {
         const rows = await parser.parse(buffer);
 
         // 5. Save to bank_import_row (bulk insert)
-        try {
-            return await db.txWithRLS(async (tx) => {
-                // Clear previous rows if re-parsing
-                await tx.query('DELETE FROM bank_import_row WHERE bank_import_id = $1', [importId]);
+        return await db.txWithRLS(async (tx) => {
+            // Clear previous rows if re-parsing
+            await tx.query('DELETE FROM bank_import_row WHERE bank_import_id = $1', [importId]);
 
-                // Update import status
-                await tx.query(
-                    `UPDATE bank_import SET detected_format = $1, status = 'parsed', 
-                    stats = jsonb_build_object('rows_total', $2::int) 
-                    WHERE id = $3::uuid`,
-                    [format, rows.length, importId]
-                );
+            // Update import status
+            await tx.query(
+                `UPDATE bank_import SET detected_format = $1, status = 'parsed', 
+                stats = jsonb_build_object('rows_total', $2::int) 
+                WHERE id = $3::uuid`,
+                [format, rows.length, importId]
+            );
 
-                // Bulk Insert (batching 500)
-                const batchSize = 500;
-                for (let i = 0; i < rows.length; i += batchSize) {
-                    const batch = rows.slice(i, i + batchSize);
-                    // Using pure SQL for cleaner bulk with JSONB
-                    // It's easier to verify implementation detail later, but for speed:
-                    const queryText = `
-                        INSERT INTO bank_import_row (bank_import_id, row_number, status, errors, parsed, raw)
-                        SELECT $1::uuid, x.rn, x.st, x.err::jsonb, x.par::jsonb, x.raw::jsonb
-                        FROM jsonb_to_recordset($2::jsonb) AS x(rn int, st text, err text, par text, raw text)
-                    `;
+            // Bulk Insert (batching 500)
+            const batchSize = 500;
+            for (let i = 0; i < rows.length; i += batchSize) {
+                const batch = rows.slice(i, i + batchSize);
+                // Using pure SQL for cleaner bulk with JSONB
+                // It's easier to verify implementation detail later, but for speed:
+                const queryText = `
+                    INSERT INTO bank_import_row (bank_import_id, row_number, status, errors, parsed, raw)
+                    SELECT $1::uuid, x.rn, x.st, x.err::jsonb, x.par::jsonb, x.raw::jsonb
+                    FROM jsonb_to_recordset($2::jsonb) AS x(rn int, st text, err text, par text, raw text)
+                `;
 
-                    // Prepare JSONB array for the batch
-                    const jsonBatch = JSON.stringify(batch.map(r => ({
-                        rn: r.row_number,
-                        st: r.status,
-                        err: r.errors ? JSON.stringify(r.errors) : null,
-                        par: JSON.stringify(r.parsed),
-                        raw: JSON.stringify(r.raw)
-                    })));
+                // Prepare JSONB array for the batch
+                const jsonBatch = JSON.stringify(batch.map(r => ({
+                    rn: r.row_number,
+                    st: r.status,
+                    err: r.errors ? JSON.stringify(r.errors) : null,
+                    par: JSON.stringify(r.parsed),
+                    raw: JSON.stringify(r.raw)
+                })));
 
-                    await tx.query(queryText, [importId, jsonBatch]);
-                }
+                await tx.query(queryText, [importId, jsonBatch]);
+            }
 
-                // Get preview (first 50)
-                const previewRes = await tx.query(
-                    `SELECT * FROM bank_import_row WHERE bank_import_id = $1 ORDER BY row_number LIMIT 50`,
-                    [importId]
-                );
+            // Get preview (first 50)
+            const previewRes = await tx.query(
+                `SELECT * FROM bank_import_row WHERE bank_import_id = $1 ORDER BY row_number LIMIT 50`,
+                [importId]
+            );
 
-                return {
-                    detected_format: format,
-                    stats: { rows_total: rows.length },
-                    preview: previewRes.rows.map(r => ({
-                        ...r.parsed,
-                        status: r.status,
-                        errors: r.errors
-                    }))
-                };
-            });
-
-        } catch (e) {
-            throw e;
-        }
+            return {
+                detected_format: format,
+                stats: { rows_total: rows.length },
+                preview: previewRes.rows.map(r => ({
+                    ...r.parsed,
+                    status: r.status,
+                    errors: r.errors
+                }))
+            };
+        });
     }
 }
 

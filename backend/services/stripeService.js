@@ -13,6 +13,7 @@ const Stripe = require('stripe');
 
 // Inicializar Stripe con la clave secreta desde el entorno
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const { getSystemDb } = require('../src/core/db/tenant-db');
 
 // ============================================================
 // CONFIGURACIÓN DE URLs

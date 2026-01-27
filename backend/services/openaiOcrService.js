@@ -222,7 +222,7 @@ function normalizeExtractedData(data) {
             if (!isNaN(d.getTime())) {
                 return d.toISOString().split('T')[0];
             }
-        } catch (e) { }
+        } catch (e) { /* Ignore invalid date */ }
         return val;
     };
 

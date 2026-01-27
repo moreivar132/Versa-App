@@ -16,6 +16,7 @@
  */
 
 const { getTenantDb, getSystemDb } = require('../src/core/db/tenant-db');
+const { getEvent } = require('../config/notificationEvents');
 const emailAutomationService = require('./emailAutomationService');
 const notificacionService = require('./notificacionService');
 
