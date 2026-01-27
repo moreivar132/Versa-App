@@ -602,10 +602,9 @@ function cleanupOldStates() {
  */
 async function reconcileTransaction(tenantId, transactionId, invoiceIds, idEmpresa = null) {
     const db = getTenantDb({ tenantId });
-    try {
-        await db.txWithRLS(async (tx) => {
-            // 1. Obtener transacción y verificar
-            const txRes = await tx.query(`
+    return await db.txWithRLS(async (tx) => {
+        // 1. Obtener transacción y verificar
+        const txRes = await tx.query(`
                 SELECT bt.*, ba.id_empresa 
                 FROM bank_transaction bt
                 JOIN bank_account ba ON ba.id = bt.bank_account_id
@@ -613,70 +612,64 @@ async function reconcileTransaction(tenantId, transactionId, invoiceIds, idEmpre
                 FOR UPDATE
             `, [transactionId, tenantId]);
 
-            const transaction = txRes.rows[0];
-            if (!transaction) throw new Error('Transacción no encontrada');
-            if (transaction.status === 'RECONCILED') throw new Error('Transacción ya conciliada');
+        const transaction = txRes.rows[0];
+        if (!transaction) throw new Error('Transacción no encontrada');
+        if (transaction.status === 'RECONCILED') throw new Error('Transacción ya conciliada');
 
-            // Enforce Company Isolation
-            if (idEmpresa && transaction.id_empresa && String(transaction.id_empresa) !== String(idEmpresa)) {
-                throw new Error(`La transacción pertenece a la empresa ${transaction.id_empresa}, pero se solicita desde ${idEmpresa}`);
-            }
+        // Enforce Company Isolation
+        if (idEmpresa && transaction.id_empresa && String(transaction.id_empresa) !== String(idEmpresa)) {
+            throw new Error(`La transacción pertenece a la empresa ${transaction.id_empresa}, pero se solicita desde ${idEmpresa}`);
+        }
 
-            // 2. Procesar facturas
-            for (const invId of invoiceIds) {
-                // Verificar factura
-                const invRes = await tx.query(`
+        // 2. Procesar facturas
+        for (const invId of invoiceIds) {
+            // Verificar factura
+            const invRes = await tx.query(`
                     SELECT * FROM contabilidad_factura 
                     WHERE id = $1 AND id_empresa = $2
                 `, [invId, transaction.id_empresa]);
 
-                const invoice = invRes.rows[0];
-                if (!invoice) throw new Error(`Factura ${invId} no válida para esta empresa`);
-                if (invoice.estado === 'PAGADA') throw new Error(`Factura ${invoice.numero_factura} ya está pagada`);
+            const invoice = invRes.rows[0];
+            if (!invoice) throw new Error(`Factura ${invId} no válida para esta empresa`);
+            if (invoice.estado === 'PAGADA') throw new Error(`Factura ${invoice.numero_factura} ya está pagada`);
 
-                // Crear movimiento contable (Cobro o Pago)
-                const tipo = transaction.amount >= 0 ? 'COBRO' : 'PAGO';
+            // Crear movimiento contable (Cobro o Pago)
+            const tipo = transaction.amount >= 0 ? 'COBRO' : 'PAGO';
 
-                await tx.query(`
+            await tx.query(`
                     INSERT INTO accounting_transaccion 
                     (id_empresa, tipo, importe, fecha, concepto, metodo, id_factura, bank_transaction_id)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 `, [
-                    transaction.id_empresa,
-                    tipo,
-                    invoice.total,
-                    transaction.booking_date,
-                    `Conciliación: ${transaction.description}`,
-                    'TRANSFERENCIA',
-                    invoice.id,
-                    transaction.id
-                ]);
+                transaction.id_empresa,
+                tipo,
+                invoice.total,
+                transaction.booking_date,
+                `Conciliación: ${transaction.description}`,
+                'TRANSFERENCIA',
+                invoice.id,
+                transaction.id
+            ]);
 
-                // Actualizar estado factura
-                await tx.query(`
+            // Actualizar estado factura
+            await tx.query(`
                     UPDATE contabilidad_factura 
                     SET estado = 'PAGADA', 
                         total_pagado = total 
                     WHERE id = $1
                 `, [invId]);
-            }
+        }
 
-            // 3. Actualizar estado transacción bancaria
-            await tx.query(`
+        // 3. Actualizar estado transacción bancaria
+        await tx.query(`
                 UPDATE bank_transaction 
                 SET status = 'RECONCILED', 
                     reconciled_at = NOW() 
                 WHERE id = $1
             `, [transactionId]);
 
-            return { ok: true };
-        });
-
         return { ok: true };
-
-    } catch (e) {
-        throw e;
-    }
+    });
 }
 
 module.exports = {

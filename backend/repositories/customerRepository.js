@@ -101,26 +101,22 @@ class CustomerRepository {
             });
         }
 
-        try {
-            const clienteResult = await db.query(
-                `INSERT INTO clientefinal (nombre, email, telefono, id_tenant)
-                 VALUES ($1, $2, $3, $4)
-                 RETURNING *`,
-                [clienteData.nombre, clienteData.email, clienteData.telefono || null, clienteData.id_tenant || 1]
-            );
-            const cliente = clienteResult.rows[0];
+        const clienteResult = await db.query(
+            `INSERT INTO clientefinal (nombre, email, telefono, id_tenant)
+                VALUES ($1, $2, $3, $4)
+                RETURNING *`,
+            [clienteData.nombre, clienteData.email, clienteData.telefono || null, clienteData.id_tenant || 1]
+        );
+        const cliente = clienteResult.rows[0];
 
-            const authResult = await db.query(
-                `INSERT INTO clientefinal_auth (id_cliente, email, telefono, password_hash)
-                 VALUES ($1, $2, $3, $4)
-                 RETURNING *`,
-                [cliente.id, authData.email, authData.telefono || null, authData.password_hash]
-            );
-            const auth = authResult.rows[0];
-            return { cliente, auth };
-        } catch (error) {
-            throw error;
-        }
+        const authResult = await db.query(
+            `INSERT INTO clientefinal_auth (id_cliente, email, telefono, password_hash)
+                VALUES ($1, $2, $3, $4)
+                RETURNING *`,
+            [cliente.id, authData.email, authData.telefono || null, authData.password_hash]
+        );
+        const auth = authResult.rows[0];
+        return { cliente, auth };
     }
 
     /**
