@@ -817,12 +817,8 @@
             // Use the robust serveArchivo endpoint from Documentos module
             // This handles ID lookup, storage key resolution, and authentication
             const token = getToken();
-<<<<<<< HEAD
             const baseUrl = getApiBaseUrl();
-            const url = `${baseUrl}${API_BASE}/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`;
-=======
-            const url = buildApiUrl(`/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`);
->>>>>>> 05f503fbb8f47b059365dbfd941676cec2b34e64
+            const url = `${baseUrl}/api/contabilidad/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`;
             window.open(url, '_blank');
         };
         function redirectToDocuments(numero) {
