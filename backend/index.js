@@ -16,6 +16,10 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 const express = require('express');
+console.log('[Startup] entry:', __filename);
+console.log('[Startup] node:', process.version);
+console.log('[Startup] NODE_ENV:', process.env.NODE_ENV);
+console.log('[Startup] express_version:', require('express/package.json').version);
 const cors = require('cors');
 const path = require('path');
 const pool = require('./db');
