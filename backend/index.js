@@ -5,7 +5,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // --- PROD SAFEGUARDS : Environment Validation ---
 if (process.env.NODE_ENV === 'production') {
-  const requiredVars = ['NODE_ENV', 'DATABASE_URL', 'REMOTE_STORAGE_URL'];
+  const requiredVars = ['NODE_ENV', 'DATABASE_URL'];
   const missing = requiredVars.filter(v => !process.env[v]);
 
   if (missing.length > 0) {
