@@ -1,0 +1,61 @@
+# Tenant DB Audit — Evidence File R0
+# Generated: 2026-01-21T18:40:00+01:00
+
+## 1) Guardrails Output
+
+Command: cd backend && npm run check:db-guardrails
+
+Result: 🚨 Total violations: 86
+
+Top files reported:
+- services/notificacionService.js (6 occurrences)
+- services/ordenPDFService.js (4 occurrences)
+- services/unifiedNotificationService.js (3 occurrences)
+- services/ventaPDFService.js (3 occurrences)
+- routes/auth.js (5 occurrences)
+- src/core/security/context.js (5 occurrences)
+- src/core/security/requireVerticalAccess.js (5 occurrences)
+- middleware/rbac.js (4 occurrences)
+- src/modules/contable/api/controllers/documentos.controller.js (3 occurrences)
+
+## 2) Raw Grep Count
+
+Command: grep -rlE "pool\.query|pool\.connect|client\.query" backend --include="*.js" | grep -vE "node_modules" | wc -l
+
+Result: 145 files contain matches
+
+## 3) Allowlist Verification
+
+Files confirmed as allowlist (core DB infrastructure):
+- backend/db.js — Pool export, OK
+- backend/src/core/db/index.js — DB wrapper, OK
+- backend/src/core/db/tenant-db.js — getTenantDb/getSystemDb implementation, OK
+- backend/src/core/db/with-tenant-db-from-req.js — Middleware injection, OK
+
+## 4) Classification Summary
+
+After filtering allowlist and classifying:
+- Runtime A (production HTTP): 32 files
+- Legacy B: 2 files
+- Scripts/Migrations/Tests C: 107 files
+
+## 5) Transactional Pattern Verification
+
+Files using client.query WITHIN proper wrappers (NOT violations):
+- routes/invitePublic.js: getSystemDb().connect() → client.query('BEGIN/COMMIT/ROLLBACK')
+- routes/trabajadores.js: getTenantDb(req.user).tx(async (client) => ...)
+- routes/customerGoogleAuth.js: getSystemDb().connect() → transactional
+- services/googleAuthService.js: getSystemDb().connect() → transactional
+
+These are SAFE and should not be counted as violations.
+
+## 6) Reproducibility
+
+To regenerate this audit:
+```bash
+cd /Users/admin/Library/Mobile Documents/com~apple~CloudDocs/Versa-App
+grep -rlE "pool\.query|pool\.connect|client\.query" backend --include="*.js" | grep -vE "node_modules|coverage|dist" | sort > /tmp/candidates.txt
+cd backend && npm run check:db-guardrails
+```
+
+END OF EVIDENCE FILE

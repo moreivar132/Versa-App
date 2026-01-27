@@ -1,0 +1,1362 @@
+
+> versa-backend@1.0.0 test
+> jest --detectOpenHandles tests/integration
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.log
+    [App] Registrando módulo contable en /api/contabilidad
+
+      at log (src/app.js:92:13)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.warn
+    EmailService: No SMTP credentials found (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console only.
+
+      21 |             console.log('EmailService: SMTP Transporter initialized');
+      22 |         } else {
+    > 23 |             console.warn('EmailService: No SMTP credentials found (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console only.');
+         |                     ^
+      24 |         }
+      25 |     }
+      26 |
+
+      at EmailService.warn (services/emailService.js:23:21)
+      at new init (services/emailService.js:6:14)
+      at Object.<anonymous> (services/emailService.js:94:18)
+      at Object.require (routes/billingRoutes.js:22:22)
+      at require (src/app.js:109:29)
+      at Object.createApp (src/app.js:171:13)
+      at Object.require (tests/integration/deducible.qa.test.js:2:17)
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:55.261Z","level":"info","message":"Incoming request","requestId":"ddaa8019-56a4-4a69-90a0-fcb02923bb58","method":"PATCH","url":"/api/contabilidad/facturas/98/deducible"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:55.271Z","level":"info","message":"Incoming request","requestId":"32671baa-4eff-4f6c-941e-0007b4a29b37","method":"PATCH","url":"/api/contabilidad/facturas/98/deducible"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.log
+    [updateDeducibleStatus] userId: 46 tenantId: 32 facturaId: 98
+
+      at log (src/modules/contable/api/controllers/deducible.controller.js:19:13)
+
+  console.debug
+    [TenantDb:TX+RLS] Query | tenant=32
+
+      at Object.debug (src/core/db/tenant-db.js:211:33)
+
+  console.error
+    [ERROR updateDeducibleStatus]: { status: 404, message: 'Factura no encontrada' }
+
+      91 |
+      92 |     } catch (error) {
+    > 93 |         console.error('[ERROR updateDeducibleStatus]:', error);
+         |                 ^
+      94 |         if (error.status) {
+      95 |             res.status(error.status).json({ error: error.message });
+      96 |         } else {
+
+      at error (src/modules/contable/api/controllers/deducible.controller.js:93:17)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:55.913Z","level":"info","message":"Incoming request","requestId":"91eac746-1a3c-4519-8f85-781cf3896e20","method":"PATCH","url":"/api/contabilidad/facturas/98/deducible"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    [updateDeducibleStatus] userId: 44 tenantId: 31 facturaId: 98
+
+      at log (src/modules/contable/api/controllers/deducible.controller.js:19:13)
+
+  console.debug
+    [TenantDb:TX+RLS] Query | tenant=31
+
+      at Object.debug (src/core/db/tenant-db.js:211:33)
+
+  console.debug
+    [TenantDb:TX+RLS] Query | tenant=31
+
+      at Object.debug (src/core/db/tenant-db.js:211:33)
+
+  console.debug
+    [TenantDb:TX+RLS] Query | tenant=31
+
+      at Object.debug (src/core/db/tenant-db.js:211:33)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:56.400Z","level":"info","message":"Incoming request","requestId":"94c00ec2-25fa-4570-a6a3-ad70dc4dc4ae","method":"PATCH","url":"/api/contabilidad/facturas/98/deducible"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    [updateDeducibleStatus] userId: 44 tenantId: 31 facturaId: 98
+
+      at log (src/modules/contable/api/controllers/deducible.controller.js:19:13)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:56.622Z","level":"info","message":"Incoming request","requestId":"5b5e2d71-6ceb-4ae9-9609-3666a3b25f3c","method":"GET","url":"/api/contabilidad/facturas/export.csv?empresa_id=35&year=2026&quarter=1"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    [DeducibleCSV] Export request: {
+      query: [Object: null prototype] {
+        empresa_id: '35',
+        year: '2026',
+        quarter: '1'
+      },
+      tenantId: 31,
+      user: 44
+    }
+
+      at log (src/modules/contable/api/controllers/deducible.controller.js:139:13)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:56.977Z","level":"info","message":"Incoming request","requestId":"6c7f8e39-b5e3-470c-9775-2b799fdd2b6d","method":"GET","url":"/api/contabilidad/facturas/export.csv?empresa_id=35"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    [DeducibleCSV] Export request: {
+      query: [Object: null prototype] { empresa_id: '35' },
+      tenantId: 31,
+      user: 44
+    }
+
+      at log (src/modules/contable/api/controllers/deducible.controller.js:139:13)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:57.354Z","level":"info","message":"Incoming request","requestId":"ba5f5467-fbe9-46a7-ac07-70bea8e81432","method":"GET","url":"/api/contabilidad/facturas/export.csv?year=2026"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    [DeducibleCSV] Export request: {
+      query: [Object: null prototype] { year: '2026' },
+      tenantId: 31,
+      user: 44
+    }
+
+      at log (src/modules/contable/api/controllers/deducible.controller.js:139:13)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:57.793Z","level":"info","message":"Incoming request","requestId":"6fb0849b-2b98-4451-bd7c-8df3a15075d6","method":"GET","url":"/api/contabilidad/facturas/export.csv?empresa_id=35&deducible_status=deducible"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    [DeducibleCSV] Export request: {
+      query: [Object: null prototype] {
+        empresa_id: '35',
+        deducible_status: 'deducible'
+      },
+      tenantId: 31,
+      user: 44
+    }
+
+      at log (src/modules/contable/api/controllers/deducible.controller.js:139:13)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:58.173Z","level":"info","message":"Incoming request","requestId":"bd3cb17c-4b80-460e-8748-6ff92b17688a","method":"GET","url":"/api/contabilidad/facturas?tipo=GASTO&deducible_status=deducible"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+PASS tests/integration/deducible.qa.test.js
+  Deducible Validation Feature Tests
+    PATCH /api/contabilidad/facturas/:id/deducible
+      ✓ QA-D01: Should return 401 without authentication (29 ms)
+      ✓ QA-D02: Should return 403 for user without contabilidad.deducible.approve (640 ms)
+      ✓ QA-D03: TENANT_ADMIN should be able to update deducible status (450 ms)
+      ✓ QA-D04: Should create audit log entry when status changes (40 ms)
+      ✓ QA-D05: Should return 400 for invalid status (221 ms)
+    GET /api/contabilidad/facturas/export.csv
+      ✓ QA-D06: Should return CSV with correct content type (352 ms)
+      ✓ QA-D07: CSV should contain expected columns (376 ms)
+      ✓ QA-D08: Export without empresa_id should fail for non-admin (437 ms)
+      ✓ QA-D09: Export with deducible_status filter (383 ms)
+    GET /api/contabilidad/facturas with deducible_status filter
+      ✓ QA-D10: Should filter by deducible_status (460 ms)
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: false
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"idProducto":1,"cantidad":1,"precio":100,"iva":21,"tipoItem":"PRODUCTO"}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: false
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"idProducto":1,"cantidad":1,"precio":100,"iva":21,"tipoItem":"PRODUCTO"}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: false
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"idProducto":1,"cantidad":1,"precio":100,"iva":21,"tipoItem":"PRODUCTO"}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: false
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"idProducto":1,"cantidad":1,"precio":100,"iva":21,"tipoItem":"PRODUCTO"}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: false
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"idProducto":1,"cantidad":1,"precio":100,"iva":21,"tipoItem":"PRODUCTO"}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: false
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"idProducto":1,"cantidad":1,"precio":100,"iva":21,"tipoItem":"PRODUCTO"}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: false
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"idProducto":1,"cantidad":1,"precio":100,"iva":21,"tipoItem":"PRODUCTO"}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: false
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"idProducto":1,"cantidad":1,"precio":100,"iva":21,"tipoItem":"PRODUCTO"}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+  console.log
+    Validando entidades - id_tenant: 1 idSucursal: 1 idCliente: 1 is_super_admin: undefined
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:59:17)
+
+  console.log
+    Verificando cliente - idCliente: 1 id_tenant: 1
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:88:21)
+
+  console.log
+    Resultado checkCliente: true
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:90:21)
+
+  console.log
+    Procesando líneas para orden: [{"cantidad":1,"precio":100}]
+
+      at OrdenesService.log [as createOrden] (services/ordenesService.js:125:17)
+
+FAIL tests/integration/ordenes_km_required.test.js
+  KM obligatorios en órdenes
+    POST /api/ordenes - createOrden
+      ✕ Rechaza orden sin campo km (17 ms)
+      ✕ Rechaza orden con km = null (2 ms)
+      ✕ Rechaza orden con km = undefined (2 ms)
+      ✕ Rechaza orden con km = "" (string vacío) (2 ms)
+      ✕ Rechaza orden con km = 0 (2 ms)
+      ✕ Rechaza orden con km negativo (1 ms)
+      ✕ Rechaza orden con km no numérico (1 ms)
+      ✓ Acepta orden con km = 1 (mínimo válido) (1 ms)
+      ✓ Acepta orden con km válido (ej: 125000) (1 ms)
+      ✓ Acepta km como string numérico ("50000") (1 ms)
+    PUT /api/ordenes/:id - updateOrden
+      ✕ Rechaza actualización sin km (1 ms)
+      ✕ Rechaza actualización con km = null (1 ms)
+      ✕ Rechaza actualización con km = 0 (1 ms)
+      ✓ Acepta actualización con km válido (1 ms)
+  Mensaje de error claro
+    ✕ El mensaje de error es claro y legible (2 ms)
+
+  ● KM obligatorios en órdenes › POST /api/ordenes - createOrden › Rechaza orden sin campo km
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km es obligatorio"
+    Received message:   "Producto ID 1 no encontrado o no pertenece al tenant"
+
+          135 |             if (linea.idProducto) {
+          136 |                 producto = await ordenesRepository.getProductoById(linea.idProducto, id_tenant);
+        > 137 |                 if (!producto) throw new Error(`Producto ID ${linea.idProducto} no encontrado o no pertenece al tenant`);
+              |                                      ^
+          138 |             }
+          139 |
+          140 |             const tipoItemNormalizado = normalizarTipoItem(linea.tipoItem || linea.tipo_item);
+
+      at OrdenesService.createOrden (services/ordenesService.js:137:38)
+      at Object.<anonymous> (tests/integration/ordenes_km_required.test.js:59:13)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:60:26)
+
+  ● KM obligatorios en órdenes › POST /api/ordenes - createOrden › Rechaza orden con km = null
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km es obligatorio"
+    Received message:   "Producto ID 1 no encontrado o no pertenece al tenant"
+
+          135 |             if (linea.idProducto) {
+          136 |                 producto = await ordenesRepository.getProductoById(linea.idProducto, id_tenant);
+        > 137 |                 if (!producto) throw new Error(`Producto ID ${linea.idProducto} no encontrado o no pertenece al tenant`);
+              |                                      ^
+          138 |             }
+          139 |
+          140 |             const tipoItemNormalizado = normalizarTipoItem(linea.tipoItem || linea.tipo_item);
+
+      at OrdenesService.createOrden (services/ordenesService.js:137:38)
+      at Object.<anonymous> (tests/integration/ordenes_km_required.test.js:66:13)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:67:26)
+
+  ● KM obligatorios en órdenes › POST /api/ordenes - createOrden › Rechaza orden con km = undefined
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km es obligatorio"
+    Received message:   "Producto ID 1 no encontrado o no pertenece al tenant"
+
+          135 |             if (linea.idProducto) {
+          136 |                 producto = await ordenesRepository.getProductoById(linea.idProducto, id_tenant);
+        > 137 |                 if (!producto) throw new Error(`Producto ID ${linea.idProducto} no encontrado o no pertenece al tenant`);
+              |                                      ^
+          138 |             }
+          139 |
+          140 |             const tipoItemNormalizado = normalizarTipoItem(linea.tipoItem || linea.tipo_item);
+
+      at OrdenesService.createOrden (services/ordenesService.js:137:38)
+      at Object.<anonymous> (tests/integration/ordenes_km_required.test.js:73:13)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:74:26)
+
+  ● KM obligatorios en órdenes › POST /api/ordenes - createOrden › Rechaza orden con km = "" (string vacío)
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km es obligatorio"
+    Received message:   "Producto ID 1 no encontrado o no pertenece al tenant"
+
+          135 |             if (linea.idProducto) {
+          136 |                 producto = await ordenesRepository.getProductoById(linea.idProducto, id_tenant);
+        > 137 |                 if (!producto) throw new Error(`Producto ID ${linea.idProducto} no encontrado o no pertenece al tenant`);
+              |                                      ^
+          138 |             }
+          139 |
+          140 |             const tipoItemNormalizado = normalizarTipoItem(linea.tipoItem || linea.tipo_item);
+
+      at OrdenesService.createOrden (services/ordenesService.js:137:38)
+      at Object.<anonymous> (tests/integration/ordenes_km_required.test.js:80:13)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:81:26)
+
+  ● KM obligatorios en órdenes › POST /api/ordenes - createOrden › Rechaza orden con km = 0
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km debe ser un número mayor o igual a 1"
+    Received message:   "Producto ID 1 no encontrado o no pertenece al tenant"
+
+          135 |             if (linea.idProducto) {
+          136 |                 producto = await ordenesRepository.getProductoById(linea.idProducto, id_tenant);
+        > 137 |                 if (!producto) throw new Error(`Producto ID ${linea.idProducto} no encontrado o no pertenece al tenant`);
+              |                                      ^
+          138 |             }
+          139 |
+          140 |             const tipoItemNormalizado = normalizarTipoItem(linea.tipoItem || linea.tipo_item);
+
+      at OrdenesService.createOrden (services/ordenesService.js:137:38)
+      at Object.<anonymous> (tests/integration/ordenes_km_required.test.js:87:13)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:88:26)
+
+  ● KM obligatorios en órdenes › POST /api/ordenes - createOrden › Rechaza orden con km negativo
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km debe ser un número mayor o igual a 1"
+    Received message:   "Kilometraje inválido"
+
+          36 |         const kmNumber = km !== undefined && km !== null && km !== '' ? Number(km) : 0;
+          37 |         if (Number.isNaN(kmNumber) || kmNumber < 0) {
+        > 38 |             throw new Error('Kilometraje inválido');
+             |                   ^
+          39 |         }
+          40 |
+          41 |         // 1. Validaciones básicas de campos obligatorios
+
+      at OrdenesService.createOrden (services/ordenesService.js:38:19)
+      at Object.createOrden (tests/integration/ordenes_km_required.test.js:94:41)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:95:26)
+
+  ● KM obligatorios en órdenes › POST /api/ordenes - createOrden › Rechaza orden con km no numérico
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km debe ser un número mayor o igual a 1"
+    Received message:   "Kilometraje inválido"
+
+          36 |         const kmNumber = km !== undefined && km !== null && km !== '' ? Number(km) : 0;
+          37 |         if (Number.isNaN(kmNumber) || kmNumber < 0) {
+        > 38 |             throw new Error('Kilometraje inválido');
+             |                   ^
+          39 |         }
+          40 |
+          41 |         // 1. Validaciones básicas de campos obligatorios
+
+      at OrdenesService.createOrden (services/ordenesService.js:38:19)
+      at Object.createOrden (tests/integration/ordenes_km_required.test.js:101:41)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:102:26)
+
+  ● KM obligatorios en órdenes › PUT /api/ordenes/:id - updateOrden › Rechaza actualización sin km
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km es obligatorio"
+    Received message:   "Cannot read properties of undefined (reading 'rows')"
+
+          652 |             WHERE o.id = $1 AND s.id_tenant = $2
+          653 |         `, [idOrden, id_tenant]);
+        > 654 |         if (ordenExistente.rows.length === 0) {
+              |                            ^
+          655 |             throw new Error('Orden no encontrada');
+          656 |         }
+          657 |
+
+      at OrdenesService.rows [as updateOrden] (services/ordenesService.js:654:28)
+      at Object.<anonymous> (tests/integration/ordenes_km_required.test.js:150:13)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:151:26)
+
+  ● KM obligatorios en órdenes › PUT /api/ordenes/:id - updateOrden › Rechaza actualización con km = null
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km es obligatorio"
+    Received message:   "Cannot read properties of undefined (reading 'rows')"
+
+          652 |             WHERE o.id = $1 AND s.id_tenant = $2
+          653 |         `, [idOrden, id_tenant]);
+        > 654 |         if (ordenExistente.rows.length === 0) {
+              |                            ^
+          655 |             throw new Error('Orden no encontrada');
+          656 |         }
+          657 |
+
+      at OrdenesService.rows [as updateOrden] (services/ordenesService.js:654:28)
+      at Object.<anonymous> (tests/integration/ordenes_km_required.test.js:157:13)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:158:26)
+
+  ● KM obligatorios en órdenes › PUT /api/ordenes/:id - updateOrden › Rechaza actualización con km = 0
+
+    expect(received).rejects.toThrow(expected)
+
+    Expected substring: "km debe ser un número mayor o igual a 1"
+    Received message:   "Cannot read properties of undefined (reading 'rows')"
+
+          652 |             WHERE o.id = $1 AND s.id_tenant = $2
+          653 |         `, [idOrden, id_tenant]);
+        > 654 |         if (ordenExistente.rows.length === 0) {
+              |                            ^
+          655 |             throw new Error('Orden no encontrada');
+          656 |         }
+          657 |
+
+      at OrdenesService.rows [as updateOrden] (services/ordenesService.js:654:28)
+      at Object.<anonymous> (tests/integration/ordenes_km_required.test.js:164:13)
+      at Object.toThrow (../node_modules/expect/build/index.js:218:22)
+      at Object.toThrow (tests/integration/ordenes_km_required.test.js:165:26)
+
+  ● Mensaje de error claro › El mensaje de error es claro y legible
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "km es obligatorio"
+    Received: "ordenesRepository.ensureAlmacenPrincipal is not a function"
+
+      195 |         } catch (error) {
+      196 |             // El mensaje debe ser claro para el usuario
+    > 197 |             expect(error.message).toBe('km es obligatorio');
+          |                                   ^
+      198 |             expect(error.message).not.toContain('undefined');
+      199 |             expect(error.message).not.toContain('null');
+      200 |         }
+
+      at Object.toBe (tests/integration/ordenes_km_required.test.js:197:35)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.log
+    [App] Registrando módulo contable en /api/contabilidad
+
+      at log (src/app.js:92:13)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.warn
+    EmailService: No SMTP credentials found (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console only.
+
+      21 |             console.log('EmailService: SMTP Transporter initialized');
+      22 |         } else {
+    > 23 |             console.warn('EmailService: No SMTP credentials found (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console only.');
+         |                     ^
+      24 |         }
+      25 |     }
+      26 |
+
+      at EmailService.warn (services/emailService.js:23:21)
+      at new init (services/emailService.js:6:14)
+      at Object.<anonymous> (services/emailService.js:94:18)
+      at Object.require (routes/billingRoutes.js:22:22)
+      at require (src/app.js:109:29)
+      at Object.createApp (src/app.js:171:13)
+      at Object.require (tests/integration/contabilidad.qa.test.js:2:17)
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.info
+    {"timestamp":"2026-01-22T12:33:59.657Z","level":"info","message":"Incoming request","requestId":"6bf02c68-2ccd-45db-8739-a95889bbf2bd","method":"GET","url":"/api/contabilidad/empresas"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.log
+    [Empresas] List request: {
+      tenantId: 31,
+      userId: 44,
+      isSuperAdmin: [AsyncFunction: isSuperAdmin],
+      userRole: 'admin',
+      isAdmin: true
+    }
+
+      at log (src/modules/contable/api/controllers/empresa.controller.js:30:17)
+
+  console.log
+    [Empresas] Found: 2 empresas
+
+      at log (src/modules/contable/api/controllers/empresa.controller.js:64:17)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:00.465Z","level":"info","message":"Incoming request","requestId":"f5e48c16-3f8b-4006-8107-db0dd7395cf9","method":"GET","url":"/api/contabilidad/empresas"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    [Empresas] List request: {
+      tenantId: 32,
+      userId: 46,
+      isSuperAdmin: [AsyncFunction: isSuperAdmin],
+      userRole: 'admin',
+      isAdmin: true
+    }
+
+      at log (src/modules/contable/api/controllers/empresa.controller.js:30:17)
+
+  console.log
+    [Empresas] Found: 1 empresas
+
+      at log (src/modules/contable/api/controllers/empresa.controller.js:64:17)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:00.970Z","level":"info","message":"Incoming request","requestId":"c3f24aeb-9116-42c5-be9a-0cfa7aeca00b","method":"POST","url":"/api/contabilidad/facturas"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:01.200Z","level":"info","message":"Incoming request","requestId":"a6762e2b-2a58-4bad-8f80-0a2ddf98ebdf","method":"POST","url":"/api/contabilidad/facturas"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:01.554Z","level":"info","message":"Incoming request","requestId":"7a3a8eaa-bad7-4a75-9169-da458cf3e456","method":"POST","url":"/api/contabilidad/facturas"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:02.052Z","level":"info","message":"Incoming request","requestId":"68823655-a9d2-4e78-95f8-bfee41c4ae5c","method":"POST","url":"/api/contabilidad/contactos"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:02.536Z","level":"info","message":"Incoming request","requestId":"b5401cd0-971e-4994-9550-07a11c890dd7","method":"GET","url":"/api/contabilidad/dashboard?anio=2026&trimestre=1"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:03.621Z","level":"info","message":"Incoming request","requestId":"42031ed4-5efe-4fe7-8335-1a590c0e2252","method":"GET","url":"/api/contabilidad/dashboard?anio=2026&trimestre=1"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+PASS tests/integration/contabilidad.qa.test.js (5.89 s)
+  Contabilidad V2 Integration Tests (QA)
+    GET /api/contabilidad/empresas
+      ✓ QA-01: Admin A should see companies A1 and A2 (812 ms)
+      ✓ QA-02: Admin B should NOT see companies from Tenant A (477 ms)
+    POST /api/contabilidad/facturas
+      ✓ QA-03: Should fail if x-empresa-id header is missing (259 ms)
+      ✓ QA-04: Should fail if accessing empresa from another tenant (340 ms)
+      ✓ QA-05: Should create invoice in correct empresa context (511 ms)
+    GET /api/contabilidad/contactos
+      ✓ QA-06: Should verify IBAN format on creation (483 ms)
+    GET /api/contabilidad/dashboard
+      ✓ QA-07: Should return distinct metrics for different companies (2187 ms)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.log
+    [App] Registrando módulo contable en /api/contabilidad
+
+      at log (src/app.js:92:13)
+
+  console.log
+    [dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+
+      at _log (../node_modules/dotenv/lib/main.js:142:11)
+
+  console.warn
+    EmailService: No SMTP credentials found (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console only.
+
+      21 |             console.log('EmailService: SMTP Transporter initialized');
+      22 |         } else {
+    > 23 |             console.warn('EmailService: No SMTP credentials found (SMTP_HOST, SMTP_USER, SMTP_PASS). Emails will be logged to console only.');
+         |                     ^
+      24 |         }
+      25 |     }
+      26 |
+
+      at EmailService.warn (services/emailService.js:23:21)
+      at new init (services/emailService.js:6:14)
+      at Object.<anonymous> (services/emailService.js:94:18)
+      at Object.require (routes/billingRoutes.js:22:22)
+      at require (src/app.js:109:29)
+      at Object.createApp (src/app.js:171:13)
+      at Object.require (tests/integration/vertical-access.test.js:11:17)
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:05.475Z","level":"info","message":"Incoming request","requestId":"8029da30-f41a-40ae-99b1-cada6d43644c","method":"GET","url":"/api/me/access"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.log
+    🔌 Conexión exitosa a la base de datos de Neon!
+
+      at BoundPool.log (db.js:24:11)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:06.156Z","level":"info","message":"Incoming request","requestId":"2f6196ac-8df8-4b1f-99a8-d214e1aa96b6","method":"GET","url":"/api/me/access"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:06.168Z","level":"info","message":"Incoming request","requestId":"202cdf83-8ec3-4213-a77e-66f6a921af62","method":"GET","url":"/api/me/access"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:06.434Z","level":"info","message":"Incoming request","requestId":"e3eb3681-d989-4305-9aa8-e8f780cb5033","method":"GET","url":"/api/contabilidad/empresas"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.info
+    {"timestamp":"2026-01-22T12:34:06.821Z","level":"info","message":"Incoming request","requestId":"dd22e416-515c-4184-a33a-b1eb2c618b90","method":"GET","url":"/api/contabilidad/empresas"}
+
+      at Object.info (src/core/logging/logger.js:45:21)
+
+  console.warn
+    {"timestamp":"2026-01-22T12:34:06.833Z","level":"warn","message":"SuperAdmin impersonating tenant 32 via header","requestId":"dd22e416-515c-4184-a33a-b1eb2c618b90","userId":2,"impersonatedTenantId":"32","source":"header","action":"TENANT_IMPERSONATION"}
+
+      49 |     warn(context, message) {
+      50 |         if (currentLevel <= LOG_LEVELS.warn) {
+    > 51 |             console.warn(formatLog('warn', typeof context === 'string' ? { message: context } : context, message));
+         |                     ^
+      52 |         }
+      53 |     },
+      54 |
+
+      at Object.warn (src/core/logging/logger.js:51:21)
+      at warn (src/core/security/tenant-context.js:47:16)
+      at resolveTenantContext (src/core/http/middlewares/tenant-context.js:75:55)
+      at Layer.handleRequest (../node_modules/router/lib/layer.js:152:17)
+      at trimPrefix (../node_modules/router/index.js:342:13)
+      at ../node_modules/router/index.js:297:9
+      at processParams (../node_modules/router/index.js:582:12)
+      at next (../node_modules/router/index.js:291:5)
+      at next (middleware/auth.js:29:12)
+      at Layer.handleRequest (../node_modules/router/lib/layer.js:152:17)
+      at trimPrefix (../node_modules/router/index.js:342:13)
+      at ../node_modules/router/index.js:297:9
+      at processParams (../node_modules/router/index.js:582:12)
+      at next (../node_modules/router/index.js:291:5)
+      at router.handle (../node_modules/router/index.js:186:3)
+      at router (../node_modules/router/index.js:60:12)
+      at Layer.handleRequest (../node_modules/router/lib/layer.js:152:17)
+      at trimPrefix (../node_modules/router/index.js:342:13)
+      at ../node_modules/router/index.js:297:9
+      at processParams (../node_modules/router/index.js:582:12)
+      at next (../node_modules/router/index.js:291:5)
+      at next (src/app.js:76:9)
+      at Layer.handleRequest (../node_modules/router/lib/layer.js:152:17)
+      at trimPrefix (../node_modules/router/index.js:342:13)
+      at ../node_modules/router/index.js:297:9
+      at processParams (../node_modules/router/index.js:582:12)
+      at next (../node_modules/router/index.js:291:5)
+      at read (../node_modules/body-parser/lib/read.js:53:5)
+      at urlencodedParser (../node_modules/body-parser/lib/types/urlencoded.js:57:5)
+      at Layer.handleRequest (../node_modules/router/lib/layer.js:152:17)
+      at trimPrefix (../node_modules/router/index.js:342:13)
+      at ../node_modules/router/index.js:297:9
+      at processParams (../node_modules/router/index.js:582:12)
+      at next (../node_modules/router/index.js:291:5)
+      at read (../node_modules/body-parser/lib/read.js:53:5)
+      at jsonParser (../node_modules/body-parser/lib/types/json.js:88:5)
+      at Layer.handleRequest (../node_modules/router/lib/layer.js:152:17)
+      at trimPrefix (../node_modules/router/index.js:342:13)
+      at ../node_modules/router/index.js:297:9
+      at processParams (../node_modules/router/index.js:582:12)
+      at next (../node_modules/router/index.js:291:5)
+      at next (src/core/http/middlewares/request-id.js:39:5)
+      at Layer.handleRequest (../node_modules/router/lib/layer.js:152:17)
+      at trimPrefix (../node_modules/router/index.js:342:13)
+      at ../node_modules/router/index.js:297:9
+      at processParams (../node_modules/router/index.js:582:12)
+      at next (../node_modules/router/index.js:291:5)
+      at cors (../node_modules/cors/lib/index.js:188:7)
+      at ../node_modules/cors/lib/index.js:224:17
+      at originCallback (../node_modules/cors/lib/index.js:214:15)
+      at ../node_modules/cors/lib/index.js:219:13
+      at optionsCallback (../node_modules/cors/lib/index.js:199:9)
+      at corsMiddleware (../node_modules/cors/lib/index.js:204:7)
+      at Layer.handleRequest (../node_modules/router/lib/layer.js:152:17)
+      at trimPrefix (../node_modules/router/index.js:342:13)
+      at ../node_modules/router/index.js:297:9
+      at processParams (../node_modules/router/index.js:582:12)
+      at next (../node_modules/router/index.js:291:5)
+      at router.handle (../node_modules/router/index.js:186:3)
+      at app.handle (../node_modules/express/lib/application.js:177:15)
+      at Server.app (../node_modules/express/lib/express.js:38:9)
+
+  console.warn
+    {"timestamp":"2026-01-22T12:34:06.939Z","level":"warn","message":"Super-admin RLS bypass activated","requestId":"dd22e416-515c-4184-a33a-b1eb2c618b90","userId":2,"action":"SUPERADMIN_RLS_BYPASS","reason":"not_specified"}
+
+      49 |     warn(context, message) {
+      50 |         if (currentLevel <= LOG_LEVELS.warn) {
+    > 51 |             console.warn(formatLog('warn', typeof context === 'string' ? { message: context } : context, message));
+         |                     ^
+      52 |         }
+      53 |     },
+      54 |
+
+      at Object.warn (src/core/logging/logger.js:51:21)
+      at warn (src/core/db/tenant-db.js:90:16)
+      at Object.query (src/core/db/tenant-db.js:157:13)
+      at Object.getUserById (models/userModel.js:28:18)
+      at isSuperAdmin (middleware/rbac.js:24:18)
+      at hasPermission (middleware/rbac.js:75:9)
+      at middleware/rbac.js:113:29
+
+  console.warn
+    {"timestamp":"2026-01-22T12:34:07.092Z","level":"warn","message":"Super-admin RLS bypass activated","requestId":"dd22e416-515c-4184-a33a-b1eb2c618b90","userId":2,"action":"SUPERADMIN_RLS_BYPASS","reason":"not_specified"}
+
+      49 |     warn(context, message) {
+      50 |         if (currentLevel <= LOG_LEVELS.warn) {
+    > 51 |             console.warn(formatLog('warn', typeof context === 'string' ? { message: context } : context, message));
+         |                     ^
+      52 |         }
+      53 |     },
+      54 |
+
+      at Object.warn (src/core/logging/logger.js:51:21)
+      at warn (src/core/db/tenant-db.js:90:16)
+      at Object.query (src/core/db/tenant-db.js:157:13)
+      at Object.getUserById (models/userModel.js:28:18)
+      at isSuperAdmin (middleware/rbac.js:24:18)
+      at getUserPermissions (middleware/rbac.js:35:9)
+      at middleware/rbac.js:123:35
+
+  console.log
+    [Empresas] List request: {
+      tenantId: '32',
+      userId: 2,
+      isSuperAdmin: [AsyncFunction: isSuperAdmin],
+      userRole: 'super_admin',
+      isAdmin: true
+    }
+
+      at log (src/modules/contable/api/controllers/empresa.controller.js:30:17)
+
+  console.warn
+    {"timestamp":"2026-01-22T12:34:07.351Z","level":"warn","message":"Super-admin RLS bypass activated","requestId":"dd22e416-515c-4184-a33a-b1eb2c618b90","userId":2,"action":"SUPERADMIN_RLS_BYPASS","reason":"not_specified"}
+
+      49 |     warn(context, message) {
+      50 |         if (currentLevel <= LOG_LEVELS.warn) {
+    > 51 |             console.warn(formatLog('warn', typeof context === 'string' ? { message: context } : context, message));
+         |                     ^
+      52 |         }
+      53 |     },
+      54 |
+
+      at Object.warn (src/core/logging/logger.js:51:21)
+      at warn (src/core/db/tenant-db.js:90:16)
+      at Object.query (src/core/db/tenant-db.js:157:13)
+      at list (src/modules/contable/api/controllers/empresa.controller.js:63:24)
+
+  console.log
+    [Empresas] Found: 1 empresas
+
+      at log (src/modules/contable/api/controllers/empresa.controller.js:64:17)
+
+PASS tests/integration/vertical-access.test.js
+  Vertical Access Control Integration
+    GET /api/me/access
+      ✓ returns access info for authenticated user (681 ms)
+      ✓ returns 401 for unauthenticated request (19 ms)
+      ✓ returns all verticals enabled for super admin (259 ms)
+    Cross-Tenant Access Denial
+      ✓ user cannot access data from another tenant (378 ms)
+      ✓ super admin can impersonate any tenant (596 ms)
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+  console.log
+    📁 Encontrados 31 archivos HTML protegidos
+
+      at Object.log (tests/integration/frontend-auth.test.js:78:21)
+
+  console.log
+    ℹ️ Página pública no encontrada (OK): portal-cliente.html
+
+      at Object.log (tests/integration/frontend-auth.test.js:117:29)
+
+  console.log
+    
+    📊 ESTADÍSTICAS DE PROTECCIÓN:
+
+      at Object.log (tests/integration/frontend-auth.test.js:232:21)
+
+  console.log
+       Total HTML: 51
+
+      at Object.log (tests/integration/frontend-auth.test.js:233:21)
+
+  console.log
+       Protegidos: 31
+
+      at Object.log (tests/integration/frontend-auth.test.js:234:21)
+
+  console.log
+       Públicos: 5
+
+      at Object.log (tests/integration/frontend-auth.test.js:235:21)
+
+  console.log
+       Otros: 15
+
+      at Object.log (tests/integration/frontend-auth.test.js:236:21)
+
+  console.log
+    
+    ⚠️ Archivos no clasificados:
+
+      at Object.log (tests/integration/frontend-auth.test.js:239:25)
+
+  console.log
+       - 403.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - FinSaaS.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - _head-template.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - _sidebar-template.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - accept-invite.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - cancel.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - card.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - cliente-register.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - cliente-reset.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - login-finsaas.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - marketplace-busqueda.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - marketplace-taller.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - stripe-cancel.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - stripe-success.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+  console.log
+       - success.html
+
+      at log (tests/integration/frontend-auth.test.js:240:49)
+          at Array.forEach (<anonymous>)
+
+PASS tests/integration/frontend-auth.test.js
+  Frontend - Protección de Autenticación
+    Detección automática de páginas sin protección
+      ✓ Se encontraron archivos HTML para verificar (2 ms)
+      ✓ ✅ admin-accesos.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-admin-accesos.html tiene protección de autenticación (4 ms)
+      ✓ ✅ manager-marketing-email.html tiene protección de autenticación (4 ms)
+      ✓ ✅ manager-taller-billing.html tiene protección de autenticación (1 ms)
+      ✓ ✅ manager-taller-caja.html tiene protección de autenticación (4 ms)
+      ✓ ✅ manager-taller-chat.html tiene protección de autenticación (1 ms)
+      ✓ ✅ manager-taller-citas.html tiene protección de autenticación (4 ms)
+      ✓ ✅ manager-taller-clientes.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-compras-historial.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-compras.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-config-facturas.html tiene protección de autenticación (2 ms)
+      ✓ ✅ manager-taller-config-ordenes.html tiene protección de autenticación (2 ms)
+      ✓ ✅ manager-taller-configuracion.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-cuentas-corrientes.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-facturas-pendientes.html tiene protección de autenticación (2 ms)
+      ✓ ✅ manager-taller-facturas.html tiene protección de autenticación (2 ms)
+      ✓ ✅ manager-taller-fidelizacion.html tiene protección de autenticación (2 ms)
+      ✓ ✅ manager-taller-historial-unificado.html tiene protección de autenticación (1 ms)
+      ✓ ✅ manager-taller-inicio.html tiene protección de autenticación (4 ms)
+      ✓ ✅ manager-taller-inventario-nuevo.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-inventario.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-marketplace.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-ordenes-lista.html tiene protección de autenticación (4 ms)
+      ✓ ✅ manager-taller-ordenes.html tiene protección de autenticación (4 ms)
+      ✓ ✅ manager-taller-proveedores.html tiene protección de autenticación (2 ms)
+      ✓ ✅ manager-taller-sucursales.html tiene protección de autenticación (1 ms)
+      ✓ ✅ manager-taller-trabajadores.html tiene protección de autenticación (3 ms)
+      ✓ ✅ manager-taller-vehiculos.html tiene protección de autenticación (4 ms)
+      ✓ ✅ manager-taller-ventas-historial.html tiene protección de autenticación (2 ms)
+      ✓ ✅ manager-taller-ventas.html tiene protección de autenticación (2 ms)
+      ✓ ✅ manager-taller-whatsapp.html tiene protección de autenticación (1 ms)
+    Páginas públicas accesibles sin login
+      ✓ login.html es página pública (1 ms)
+      ✓ cita-previa.html es página pública (4 ms)
+      ✓ portal-cliente.html es página pública
+      ✓ cliente-login.html es página pública (2 ms)
+      ✓ index.html es página pública (4 ms)
+      ✓ cliente-dashboard.html es página pública (2 ms)
+    guard.js tiene protección correcta
+      ✓ guard.js existe en public/ (1 ms)
+      ✓ guard.js verifica localStorage (2 ms)
+      ✓ guard.js hace validación con servidor (1 ms)
+      ✓ guard.js tiene lista de páginas públicas
+      ✓ guard.js redirige a login si no hay sesión (1 ms)
+      ✓ guard.js maneja logout
+    auth.js tiene funciones requeridas
+      ✓ auth.js existe
+      ✓ auth.js exporta requireAuth (1 ms)
+      ✓ auth.js exporta getSession (1 ms)
+      ✓ auth.js exporta fetchWithAuth
+      ✓ auth.js maneja 401 en fetchWithAuth
+    Resumen de cobertura
+      ✓ Mostrar estadísticas de protección (8 ms)
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+PASS tests/integration/caja.test.js
+  Caja - Integration Tests
+    Estado de Caja - Cálculos
+      ✓ estadoActual_saldoAperturaCorrecto (6 ms)
+      ✓ estadoActual_calculaTotalIngresos (6 ms)
+      ✓ estadoActual_efectivoEsperado_incluyeTodosOrigenes (4 ms)
+    Movimientos de Caja
+      ✓ movimiento_INGRESO_incrementaSaldoEsperado
+      ✓ movimiento_EGRESO_decrementaSaldoEsperado (1 ms)
+      ✓ movimiento_validacion_tipoRequerido
+      ✓ movimiento_validacion_importePositivo (2 ms)
+      ✓ movimiento_registra_metadatos (7 ms)
+    Cierre de Caja
+      ✓ cerrarCaja_calculaDiferenciaPositiva
+      ✓ cerrarCaja_calculaDiferenciaNegativa (1 ms)
+      ✓ cerrarCaja_cuadreExacto (1 ms)
+      ✓ cerrarCaja_actualizaEstado (1 ms)
+      ✓ cerrarCaja_creaAperturaParaSiguiente
+    Cálculo de Efectivo Esperado - Completo
+      ✓ efectivoEsperado_calculoCompleto (1 ms)
+      ✓ efectivoEsperado_noIncluyePagosTarjeta (1 ms)
+    Resultado de Periodo
+      ✓ resultadoPeriodo_ingresosMayorQueEgresos (1 ms)
+      ✓ resultadoPeriodo_egresosMayorQueIngresos (2 ms)
+      ✓ resultadoPeriodo_cero (1 ms)
+    Formato de Moneda
+      ✓ formatCurrency_numeroPositivo (102 ms)
+      ✓ formatCurrency_cero (1 ms)
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+PASS tests/integration/inventory.test.js
+  Inventory - Integration Tests
+    Aislamiento Multi-Tenant
+      ✓ GET_productos_filtraPorTenant (1 ms)
+    Validación de código de barras
+      ✓ POST_producto_validaCodigoUnico (1 ms)
+    Movimientos de Inventario
+      ✓ movimientoEntrada_actualizaStockPositivo
+      ✓ movimientoSalida_actualizaStockNegativo (1 ms)
+      ✓ movimientoAjuste_puedeSerPositivoONegativo
+    Alertas de Stock Bajo
+      ✓ stockBajo_detectaProductosBajoMinimo (1 ms)
+      ✓ stockBajo_noIncluirProductosInactivos
+      ✓ stockBajo_calculaPorcentajeRestock (1 ms)
+    Valoración de Inventario
+      ✓ valoracion_calculaPorProducto (4 ms)
+      ✓ valoracion_totalInventario (1 ms)
+    Historial de Movimientos
+      ✓ historial_registraTodosLosTipos (1 ms)
+      ✓ historial_calculaStockActual
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+PASS tests/integration/cuentasCorrientes.test.js
+  Cuentas Corrientes
+    Gestión de Cuentas
+      ✓ crearCuenta_clienteNuevo_cuentaEstadoActiva (1 ms)
+      ✓ cuenta_limiteCreditoPorDefecto
+      ✓ cuenta_estados_validos (1 ms)
+      ✓ cuenta_aislamiento_porTenant
+    Movimientos de Cuenta
+      ✓ movimiento_CARGO_incrementaSaldo (1 ms)
+      ✓ movimiento_ABONO_decrementaSaldo (1 ms)
+      ✓ movimiento_registra_saldoAnterior (1 ms)
+      ✓ movimiento_origenTipo_identificaOrigen (2 ms)
+      ✓ movimiento_historial_ordenadoPorFecha (1 ms)
+    Límite de Crédito
+      ✓ limiteCredito_validar_noExcede
+      ✓ limiteCredito_excedido_bloqueaCargo (1 ms)
+      ✓ limiteCredito_creditoDisponible
+      ✓ limiteCredito_saldoNegativo_creditoMayorQueLimite (1 ms)
+    Cobros y Pagos
+      ✓ pago_totalDeuda_saldoCero
+      ✓ pago_parcial_reduceDeuda (1 ms)
+      ✓ pago_mayorQueDeuda_generaSaldoFavor
+      ✓ pago_registra_medioPago (1 ms)
+      ✓ pago_afecta_caja
+    Cargo desde Orden/Venta
+      ✓ cargoDesdeOrden_registraReferencia (1 ms)
+      ✓ cargoDesdeVenta_registraReferencia
+      ✓ cargo_conMedioPago_CC (1 ms)
+    Estadísticas
+      ✓ stats_deudaTotal_sumaSaldos
+      ✓ stats_cobradoMes_filtraPorFecha (1 ms)
+      ✓ stats_clientesConDeuda_cuenta
+    Suspensión de Cuenta
+      ✓ cuenta_suspendida_noPermiteCargos (1 ms)
+      ✓ cuenta_suspendida_permiteAbonos (6 ms)
+      ✓ cuenta_cerrada_noPermiteMovimientos
+
+  console.log
+    
+    🧪 Versa-App Backend Test Suite
+
+      at Object.log (tests/setup.js:99:13)
+
+PASS tests/integration/compras.test.js
+  Compras - Integration Tests
+    Entrada de Inventario desde Compra
+      ✓ POST_compra_incrementaStock (1 ms)
+      ✓ compra_multipleLineas_incrementaTodos (1 ms)
+    Cálculo de IVA
+      ✓ POST_compra_calculaIVACorrecto
+      ✓ compra_diferentesIVA_calculaCadaLinea (1 ms)
+      ✓ compra_ivaDeducible_calculaCorrecto
+    Asociación con Proveedor
+      ✓ POST_compra_asociaProveedor (1 ms)
+      ✓ compra_sinProveedor_permitido
+    Actualización de Costos
+      ✓ compra_actualizaPrecioCosto
+      ✓ compra_calculaCostoPromedio (1 ms)
+    Pagos de Compra
+      ✓ compra_pagoEfectivo_registraEnCaja
+      ✓ compra_pagoCredito_noAfectaCajaInmediato (1 ms)
+
+Test Suites: 1 failed, 8 passed, 9 total
+Tests:       11 failed, 146 passed, 157 total
+Snapshots:   0 total
+Time:        14.024 s
+Ran all test suites matching /tests\/integration/i.
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /Users/admin/Library/Mobile Documents/com~apple~CloudDocs/Versa-App/backend
+npm error workspace versa-backend@1.0.0
+npm error location /Users/admin/Library/Mobile Documents/com~apple~CloudDocs/Versa-App/backend
+npm error command failed
+npm error command sh -c jest --detectOpenHandles tests/integration
