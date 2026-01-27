@@ -295,7 +295,7 @@
 
     <!-- MODULES -->
     <script type="module">
-        import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken, getApiBaseUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         // Initialize Layout
@@ -816,7 +816,8 @@
             // Use the robust serveArchivo endpoint from Documentos module
             // This handles ID lookup, storage key resolution, and authentication
             const token = getToken();
-            const url = `${API_BASE}/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`;
+            const baseUrl = getApiBaseUrl();
+            const url = `${baseUrl}${API_BASE}/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`;
             window.open(url, '_blank');
         };
         function redirectToDocuments(numero) {

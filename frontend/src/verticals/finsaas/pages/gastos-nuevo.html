@@ -377,7 +377,7 @@
 
     <!-- MODULES -->
     <script type="module">
-        import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken, getApiBaseUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         // Initialize Layout
@@ -690,10 +690,14 @@
             // Add token for authenticated access if URL is a local path
             if (fileUrl && !fileUrl.startsWith('http')) {
                 const token = getToken();
+                const baseUrl = getApiBaseUrl();
                 // For intake files, use the intake archivo endpoint
                 if (currentIntakeId || intake?.id) {
                     const intakeIdForUrl = intake?.id || currentIntakeId;
-                    fileUrl = `/api/contabilidad/documentos/intake/${intakeIdForUrl}/archivo?preview=true&token=${encodeURIComponent(token)}`;
+                    fileUrl = `${baseUrl}/api/contabilidad/documentos/intake/${intakeIdForUrl}/archivo?preview=true&token=${encodeURIComponent(token)}`;
+                } else {
+                    // Fallback for just uploaded file path if needed (though usually intakes have IDs)
+                    fileUrl = `${baseUrl}${fileUrl}`;
                 }
             }
 

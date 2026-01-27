@@ -454,7 +454,11 @@ async function serveIntakeArchivo(req, res) {
 /**
  * Helper function to serve file from storage
  */
+
+
+// Add this wrapper function to override the original serveFileFromStorage
 function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, isPreview) {
+    // 1. Resolve local path
     let filePath;
     if (storageKey) {
         const egresosPath = path.join(__dirname, '../../../../../uploads/egresos', storageKey);
@@ -472,11 +476,42 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
         filePath = path.join(__dirname, '../../../../../uploads', urlPath);
     }
 
+    // 2. Check existence
     if (!filePath || !fs.existsSync(filePath)) {
         console.warn('[Documentos] File NOT found on disk:', filePath, 'URL:', fileUrl);
+
+        // --- FALLBACK LOGIC START ---
+        // If absolute URL, redirect immediately
         if (fileUrl && (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))) {
             return res.redirect(fileUrl);
         }
+
+        // If local dev environment (implied by missing file but present DB record), 
+        // try to redirect to the persistent Railway env
+        const FALLBACK_HOST = 'https://versa-app-dev.up.railway.app';
+
+        let redirectUrl = null;
+        if (fileUrl) {
+            // Normalize path to ensure it starts with /api/uploads
+            let cleanPath = fileUrl;
+            if (!cleanPath.startsWith('/api')) {
+                cleanPath = '/api' + (cleanPath.startsWith('/') ? '' : '/') + cleanPath;
+            }
+            redirectUrl = `${FALLBACK_HOST}${cleanPath}`;
+        } else if (storageKey) {
+            // Construct likely URL from storage key
+            // Default to egresos as it's the most common for PDF invoices
+            redirectUrl = `${FALLBACK_HOST}/api/uploads/egresos/${storageKey}`;
+        }
+
+        console.log('[Documentos] DEBUG Fallback:', { fileUrl, storageKey, redirectUrl });
+
+        if (redirectUrl) {
+            console.log('[Documentos] Redirecting to fallback:', redirectUrl);
+            return res.redirect(redirectUrl);
+        }
+        // --- FALLBACK LOGIC END ---
+
         return res.status(404).json({ ok: false, error: 'Archivo no encontrado en servidor' });
     }
 

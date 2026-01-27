@@ -140,8 +140,35 @@ function createApp() {
     // Open Banking
     app.use('/api/open-banking', require('../routes/openBankingRoutes'));
 
-    // Uploads estáticos
-    app.use('/api/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+    // Uploads Handling with Fallback
+    // we need 'fs' for manual check
+    const fs = require('fs');
+    const uploadsPath = path.join(__dirname, '..', 'uploads');
+
+    // 1. Check if file exists locally. If NOT, redirect. If YES, next() to let static serve it.
+    const uploadsInterceptor = (req, res, next) => {
+        if (req.method !== 'GET') return next();
+
+        // req.path is relative to the mount point (e.g. /egresos/file.pdf)
+        const localFilePath = path.join(uploadsPath, req.path);
+
+        if (fs.existsSync(localFilePath)) {
+            return next();
+        }
+
+        const redirectUrl = `https://versa-app-dev.up.railway.app${req.baseUrl}${req.path}`;
+        console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
+        res.redirect(redirectUrl);
+    };
+
+    app.use('/uploads', uploadsInterceptor);
+    app.use('/api/uploads', uploadsInterceptor);
+
+    // 2. Serve static files (only reaches here if file exists)
+    app.use('/api/uploads', express.static(uploadsPath));
+    app.use('/uploads', express.static(uploadsPath));
+
+    // Health check
 
     // Health check
     app.get('/api/health', (req, res) => {

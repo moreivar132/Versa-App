@@ -139,9 +139,30 @@ app.use('/api/marketing/campaigns', privateRoute, require('./routes/emailCampaig
 app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
 app.use('/api/admin/fidelizacion', privateRoute, require('./routes/fidelizacionAdmin'));
 
-// Static Uploads
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static Uploads with Fallback (Manual Check)
+const fs = require('fs');
+const uploadsPath = path.join(__dirname, 'uploads');
+
+const uploadsInterceptor = (req, res, next) => {
+  if (req.method !== 'GET') return next();
+
+  // req.path is relative (e.g. /egresos/file.pdf)
+  const localFilePath = path.join(uploadsPath, req.path);
+
+  if (fs.existsSync(localFilePath)) {
+    return next();
+  }
+
+  const redirectUrl = `https://versa-app-dev.up.railway.app${req.baseUrl}${req.path}`;
+  console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
+  res.redirect(redirectUrl);
+};
+
+app.use('/uploads', uploadsInterceptor);
+app.use('/api/uploads', uploadsInterceptor);
+
+app.use('/api/uploads', express.static(uploadsPath));
+app.use('/uploads', express.static(uploadsPath));
 
 // Health check / DB status
 app.get('/api/health', (req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));

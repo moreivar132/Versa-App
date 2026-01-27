@@ -545,7 +545,7 @@
 
     <!-- Logic -->
     <script type="module">
-        import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken, getApiBaseUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
@@ -737,11 +737,13 @@
                 return;
             }
 
+            const baseUrl = getApiBaseUrl();
+
             tbody.innerHTML = items.map(doc => {
                 const thumbnailHtml = doc.has_attachment
                     ? `<div class="w-10 h-10 rounded bg-surface-dark-light flex items-center justify-center overflow-hidden">
                          ${doc.archivo?.file_type === 'IMG'
-                        ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500\\'>image</span>'">`
+                        ? `<img src="${baseUrl}${doc.archivo.preview_url}${authParam}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500\\'>image</span>'">`
                         : `<span class="material-symbols-outlined text-red-400 text-[20px]">picture_as_pdf</span>`
                     }
                        </div>`
@@ -794,10 +796,12 @@
                 return;
             }
 
+            const baseUrl = getApiBaseUrl();
+
             grid.innerHTML = items.map(doc => {
                 const thumbnailHtml = doc.has_attachment
                     ? (doc.archivo?.file_type === 'IMG'
-                        ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500 text-4xl\\'>image</span>'">`
+                        ? `<img src="${baseUrl}${doc.archivo.preview_url}${authParam}" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500 text-4xl\\'>image</span>'">`
                         : `<span class="material-symbols-outlined text-red-400 text-4xl">picture_as_pdf</span>`)
                     : `<span class="material-symbols-outlined text-gray-600 text-4xl">visibility_off</span>`;
 
@@ -909,11 +913,12 @@
             if (doc.has_attachment && doc.archivo) {
                 const token = session?.token || getToken();
                 const authParam = token ? `&token=${encodeURIComponent(token)}` : '';
-                const fileUrl = doc.archivo.preview_url + authParam;
+                const baseUrl = getApiBaseUrl();
+                const fileUrl = `${baseUrl}${doc.archivo.preview_url}${authParam}`;
 
                 // Ensure download URL has token correctly
-                let downloadUrl = doc.archivo.download_url;
-                if (downloadUrl.includes('?')) {
+                let downloadUrl = `${baseUrl}${doc.archivo.download_url}`;
+                if (doc.archivo.download_url.includes('?')) {
                     downloadUrl += authParam;
                 } else {
                     downloadUrl += `?token=${encodeURIComponent(token)}`;
