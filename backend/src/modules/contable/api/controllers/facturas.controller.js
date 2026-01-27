@@ -11,10 +11,9 @@ const auditService = require('../../../../core/logging/audit-service');
 const { AUDIT_ACTIONS } = auditService;
 
 // Configurar multer para uploads
-const uploadDir = path.join(__dirname, '../../../../../uploads/contabilidad');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Configurar multer para uploads
+const { getUploadPath } = require('../../../../core/config/storage');
+const uploadDir = getUploadPath('contabilidad');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, uploadDir),
@@ -295,9 +294,29 @@ async function listArchivos(req, res) {
         const facturaId = parseInt(req.params.id);
         const archivos = await service.listArchivos(ctx, facturaId);
 
+        // Enrich with existence check
+        const enriched = archivos.map(file => {
+            // Safer resolution: use UPLOADS_ROOT
+            const { UPLOADS_ROOT } = require('../../../../core/config/storage');
+
+            // file.file_url: "/uploads/contabilidad/filename.ext"
+            let relativePath = file.file_url;
+            if (relativePath.startsWith('/')) relativePath = relativePath.substring(1); // "uploads/contabilidad/..."
+            if (relativePath.startsWith('api/')) relativePath = relativePath.substring(4); // "uploads/contabilidad/..."
+            // Strip "uploads/" prefix if present in relative path to join properly with UPLOADS_ROOT
+            if (relativePath.startsWith('uploads/')) relativePath = relativePath.substring(8);
+
+            const absolutePath = path.join(UPLOADS_ROOT, relativePath);
+
+            return {
+                ...file,
+                exists: fs.existsSync(absolutePath)
+            };
+        });
+
         res.json({
             ok: true,
-            data: archivos
+            data: enriched
         });
     } catch (error) {
         console.error('Error en listArchivos:', error);

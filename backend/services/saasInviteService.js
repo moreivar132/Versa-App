@@ -259,7 +259,25 @@ async function deleteInvite(inviteId, ctxOrDb = null) {
  * @returns {string}
  */
 function buildInviteUrl(token, loginPath = '/login-finsaas.html') {
-    const baseUrl = process.env.FRONTEND_BASE_URL || 'http://localhost:5173';
+    let baseUrl = process.env.FRONTEND_BASE_URL;
+
+    // Si no hay URL configurada explícitamente, intentar inferirla o usar defaults seguros
+    if (!baseUrl) {
+        if (process.env.NODE_ENV === 'production') {
+            // En producción, intentar usar variables de plataforma o fallar
+            baseUrl = process.env.RAILWAY_PUBLIC_DOMAIN
+                ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+                : ''; // Dejar vacío para que se note el error, o manejarlo arriba
+
+            if (!baseUrl) {
+                console.error('[SaaSInvite] ❌ CRITICAL: FRONTEND_BASE_URL not set in Production for Invite URL');
+            }
+        } else {
+            // En desarrollo, fallback a localhost
+            baseUrl = 'http://localhost:5173';
+        }
+    }
+
     return `${baseUrl}${loginPath}?invite=${token}`;
 }
 

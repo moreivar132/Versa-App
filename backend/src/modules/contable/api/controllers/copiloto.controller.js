@@ -91,6 +91,7 @@ async function chat(req, res) {
             const response = await chatgptService.askCopilot(message, {
                 empresaId,
                 empresaNombre,
+                tenantId, // Pass tenantId to service
                 periodoInicio: periodo_inicio,
                 periodoFin: periodo_fin,
                 conversationHistory
@@ -134,11 +135,12 @@ async function chat(req, res) {
 
     } catch (error) {
         console.error('[Copiloto] Error in chat:', error);
-        if (error.status) {
-            res.status(error.status).json({ ok: false, error: error.message });
-        } else {
-            res.status(500).json({ ok: false, error: error.message });
-        }
+
+        // Prevent frontend logout on OpenAI 401 errors
+        let status = error.status || 500;
+        if (status === 401) status = 502; // Bad Gateway used for external service auth failure
+
+        res.status(status).json({ ok: false, error: error.message });
     }
 }
 
@@ -212,7 +214,12 @@ async function getInsights(req, res) {
 
     } catch (error) {
         console.error('[Copiloto] Error getting insights:', error);
-        res.status(500).json({ ok: false, error: error.message });
+
+        // Prevent frontend logout on OpenAI 401 errors
+        let status = error.status || 500;
+        if (status === 401) status = 502; // Bad Gateway used for external service auth failure
+
+        res.status(status).json({ ok: false, error: error.message });
     }
 }
 

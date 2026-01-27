@@ -262,11 +262,10 @@
     </div>
 
     <script type="module">
-        import { logout, getSession, requireAuth, getApiBaseUrl } from '/auth.js';
+        import { logout, getSession, requireAuth, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
-        const API_BASE = '';
         let session = null;
         let currentEmpresaId = null;
         let currentPage = 0;
@@ -280,13 +279,13 @@
         }
 
         async function apiGet(endpoint) {
-            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            const res = await fetch(buildApiUrl(endpoint), { headers: getAuthHeaders() });
             if (!res.ok) throw new Error('API Error');
             return res.json();
         }
 
         async function apiPost(endpoint, data) {
-            const res = await fetch(API_BASE + endpoint, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) });
+            const res = await fetch(buildApiUrl(endpoint), { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(data) });
             return res.json();
         }
 
@@ -432,7 +431,7 @@
         window.deleteMovimiento = async function (id) {
             if (!confirm('¿Eliminar este movimiento?')) return;
             try {
-                const res = await fetch(API_BASE + `/api/contabilidad/tesoreria/transacciones/${id}`, {
+                const res = await fetch(buildApiUrl(`/api/contabilidad/tesoreria/transacciones/${id}`), {
                     method: 'DELETE',
                     headers: getAuthHeaders()
                 });

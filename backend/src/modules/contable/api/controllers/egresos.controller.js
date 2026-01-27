@@ -15,10 +15,9 @@ const multer = require('multer');
 const { analyzeInvoice } = require('../../../../../services/openaiOcrService');
 
 // Directorio uploads
-const uploadDir = path.join(__dirname, '../../../../../uploads/egresos');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Directorio uploads
+const { getUploadPath } = require('../../../../../src/core/config/storage');
+const uploadDir = getUploadPath('egresos');
 
 // Multer config
 const storage = multer.diskStorage({

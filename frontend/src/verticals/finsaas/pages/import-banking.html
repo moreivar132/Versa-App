@@ -29,7 +29,7 @@
             },
         }
     </script>
-    <script src="/guard.js"></script>
+
     <style>
         ::-webkit-scrollbar-thumb:hover {
             background: #46ec13;
@@ -239,10 +239,10 @@
 
     <!-- Logic -->
     <script type="module">
-        import { getToken, requireAuth } from '/auth.js';
+        import { getToken, requireAuth, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
-        const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
         let currentImportId = null;
 
         // --- Helpers ---
@@ -262,7 +262,7 @@
                 opts.body = body;
             }
 
-            const res = await fetch(API_BASE_URL + url, opts);
+            const res = await fetch(buildApiUrl(url), opts);
             const json = await res.json();
             if (!json.ok) throw new Error(json.error || 'API Error');
             return json;
