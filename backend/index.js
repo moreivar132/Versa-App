@@ -2,6 +2,18 @@
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
+
+// --- PROD SAFEGUARDS : Environment Validation ---
+if (process.env.NODE_ENV === 'production') {
+  const requiredVars = ['NODE_ENV', 'DATABASE_URL', 'REMOTE_STORAGE_URL'];
+  const missing = requiredVars.filter(v => !process.env[v]);
+
+  if (missing.length > 0) {
+    console.error('CRITICAL: Missing required environment variables in PRODUCTION:', missing);
+    console.error('Aborting startup to prevent ambiguous state.');
+    process.exit(1);
+  }
+}
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -36,7 +48,34 @@ console.log('   VERSA BACKEND - Modular V2 (with Contabilidad)   ');
 console.log('---------------------------------------------------');
 
 // --- Middlewares ---
-app.use(cors());
+// --- Middlewares ---
+const allowedOrigins = [
+  'https://versa-app.netlify.app',
+  'https://versa-app.up.railway.app', // Self (if needed)
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
+
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    // Dynamic check for Netlify previews or allowed list
+    if (allowedOrigins.includes(origin) || origin.endsWith('.netlify.app')) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-empresa-id', 'x-tenant-id'],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+// app.options('*', cors(corsOptions)); // Removed to prevent Express 5 crash, global middleware handles it
 
 // --- Passport OAuth Initialization ---
 app.use(passport.initialize());
@@ -155,10 +194,18 @@ const uploadsInterceptor = (req, res, next) => {
     return next();
   }
 
-  const remoteUrl = (process.env.REMOTE_STORAGE_URL || 'https://versa-app-dev.up.railway.app').replace(/\/$/, '');
-  const redirectUrl = `${remoteUrl}${req.baseUrl}${req.path}`;
-  console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
-  res.redirect(redirectUrl);
+  // STRICT PROD: No defaults to dev.
+  const remoteUrl = process.env.REMOTE_STORAGE_URL ? process.env.REMOTE_STORAGE_URL.replace(/\/$/, '') : null;
+
+  if (remoteUrl) {
+    const redirectUrl = `${remoteUrl}${req.baseUrl}${req.path}`;
+    console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
+    return res.redirect(redirectUrl);
+  }
+
+  // No fallback to Dev. Fail explicitly.
+  console.warn(`[Uploads] File not found locally: ${localFilePath}`);
+  return res.status(404).send('File not found');
 };
 
 app.use('/uploads', uploadsInterceptor);
