@@ -158,7 +158,8 @@ function createApp() {
             return next();
         }
 
-        const redirectUrl = `https://versa-app-dev.up.railway.app${req.baseUrl}${req.path}`;
+        const remoteUrl = (process.env.REMOTE_STORAGE_URL || 'https://versa-app-dev.up.railway.app').replace(/\/$/, '');
+        const redirectUrl = `${remoteUrl}${req.baseUrl}${req.path}`;
         console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
         res.redirect(redirectUrl);
     };

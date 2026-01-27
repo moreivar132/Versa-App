@@ -362,8 +362,10 @@ async function serveArchivo(req, res) {
             return res.status(403).json({ ok: false, error: 'Acceso denegado a esta empresa' });
         }
 
+        console.log(`[Documentos] Serving archivo for factura: ${facturaId}, tenant: ${tenantId}`);
+
         let fileInfo = await req.db.query(`
-            SELECT file_url, storage_key, mime_type, original_name
+            SELECT id, file_url, storage_key, mime_type, original_name
             FROM contabilidad_factura_archivo
             WHERE id_factura = $1
             ORDER BY created_at DESC
@@ -373,11 +375,13 @@ async function serveArchivo(req, res) {
         let fileUrl, storageKey, mimeType, originalName;
 
         if (fileInfo.rows.length > 0) {
+            console.log('[Documentos] Found file in contabilidad_factura_archivo:', fileInfo.rows[0]);
             fileUrl = fileInfo.rows[0].file_url;
             storageKey = fileInfo.rows[0].storage_key;
             mimeType = fileInfo.rows[0].mime_type;
             originalName = fileInfo.rows[0].original_name;
         } else if (factura.intake_id) {
+            console.log(`[Documentos] No file in factura_archivo, checking intake: ${factura.intake_id}`);
             const intakeInfo = await req.db.query(`
                 SELECT file_url, file_storage_key, file_mime, file_original_name
                 FROM accounting_intake
@@ -385,14 +389,20 @@ async function serveArchivo(req, res) {
             `, [factura.intake_id]);
 
             if (intakeInfo.rows.length > 0) {
+                console.log('[Documentos] Found file in accounting_intake:', intakeInfo.rows[0]);
                 fileUrl = intakeInfo.rows[0].file_url;
                 storageKey = intakeInfo.rows[0].file_storage_key;
                 mimeType = intakeInfo.rows[0].file_mime;
                 originalName = intakeInfo.rows[0].file_original_name;
+            } else {
+                console.log('[Documentos] Intake not found or has no file');
             }
+        } else {
+            console.log('[Documentos] No file in factura_archivo and no intake_id');
         }
 
         if (!fileUrl && !storageKey) {
+            console.warn(`[Documentos] No file found for factura ${facturaId}`);
             return res.status(404).json({ ok: false, error: 'Sin archivo adjunto' });
         }
 
@@ -461,14 +471,22 @@ async function serveIntakeArchivo(req, res) {
 function resolveFilePath(storageKey, fileUrl) {
     let filePath = null;
 
+    console.log('[Documentos] DEBUG resolveFilePath:', { storageKey, fileUrl, UPLOADS_ROOT, cwd: process.cwd() });
+
     // 1. Try storageKey in specific folders (Standardized)
     if (storageKey) {
         const egresosPath = path.join(UPLOADS_ROOT, 'egresos', storageKey);
         const contabPath = path.join(UPLOADS_ROOT, 'contabilidad', storageKey);
 
-        if (fs.existsSync(egresosPath)) {
+        const egresosExists = fs.existsSync(egresosPath);
+        const contabExists = fs.existsSync(contabPath);
+
+        console.log(`[Documentos] Checking egresos: ${egresosPath} (${egresosExists})`);
+        console.log(`[Documentos] Checking contabilidad: ${contabPath} (${contabExists})`);
+
+        if (egresosExists) {
             filePath = egresosPath;
-        } else if (fs.existsSync(contabPath)) {
+        } else if (contabExists) {
             filePath = contabPath;
         }
     }
@@ -483,7 +501,10 @@ function resolveFilePath(storageKey, fileUrl) {
         cleanUrl = cleanUrl.replace(/^api\/uploads\//, '').replace(/^uploads\//, '');
 
         const derivedPath = path.join(UPLOADS_ROOT, cleanUrl);
-        if (fs.existsSync(derivedPath)) {
+        const derivedExists = fs.existsSync(derivedPath);
+        console.log(`[Documentos] Checking derived path: ${derivedPath} (${derivedExists})`);
+
+        if (derivedExists) {
             filePath = derivedPath;
         }
     }
@@ -496,26 +517,22 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
     // 1. Resolve local path
     const filePath = resolveFilePath(storageKey, fileUrl);
 
-
     // 2. Check existence
-
     // Assign to finalPath for use in stream creation below
     const finalPath = filePath;
 
     if (!finalPath || !fs.existsSync(finalPath)) {
-        console.warn('[Documentos] File NOT found on disk:', filePath, 'URL:', fileUrl);
-
+        console.warn('[Documentos] File NOT found on disk. Local resolve failed. Path:', filePath, 'URL:', fileUrl);
 
         // --- FALLBACK LOGIC START ---
         // If absolute URL, redirect immediately
-
         if (fileUrl && (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))) {
             return res.redirect(fileUrl);
         }
 
         // If local dev environment (implied by missing file but present DB record), 
         // try to redirect to the persistent Railway env
-        const FALLBACK_HOST = 'https://versa-app-dev.up.railway.app';
+        const FALLBACK_HOST = (process.env.REMOTE_STORAGE_URL || 'https://versa-app-dev.up.railway.app').replace(/\/$/, '');
 
         let redirectUrl = null;
         if (fileUrl) {
@@ -542,7 +559,6 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
         return res.status(404).json({ ok: false, error: 'Archivo no encontrado en servidor' });
     }
 
-
     console.log('[Documentos] Serving file:', finalPath, 'MIME:', mimeType, 'Preview:', isPreview);
 
     if (isPreview) {
@@ -552,7 +568,6 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
         res.setHeader('Content-Type', mimeType || 'application/octet-stream');
         res.setHeader('Content-Disposition', `attachment; filename="${originalName || 'archivo'}"`);
     }
-
 
     const fileStream = fs.createReadStream(finalPath);
     fileStream.pipe(res);
