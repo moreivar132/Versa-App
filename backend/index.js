@@ -141,9 +141,18 @@ app.use('/api/marketing/campaigns', privateRoute, require('./routes/emailCampaig
 app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
 app.use('/api/admin/fidelizacion', privateRoute, require('./routes/fidelizacionAdmin'));
 
-// Static Uploads
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+const { UPLOADS_ROOT } = require('./src/core/config/storage');
+app.use('/api/uploads', express.static(UPLOADS_ROOT));
+app.use('/uploads', express.static(UPLOADS_ROOT));
+
+// Fallback for not found files (prevents HTML 404 response for images)
+app.use('/api/uploads', (req, res) => {
+  res.status(404).json({
+    ok: false,
+    code: "FILE_NOT_FOUND",
+    message: "El archivo no existe en el almacenamiento persistente"
+  });
+});
 
 // Health check / DB status
 app.get('/api/health', (req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));

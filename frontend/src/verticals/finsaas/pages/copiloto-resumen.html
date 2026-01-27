@@ -184,7 +184,7 @@
     </template>
 
     <script type="module">
-        import { logout, requireAuth, getToken } from '/auth.js';
+        import { logout, requireAuth, getToken, buildApiUrl, fetchWithAuth } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         let session = null;
@@ -202,7 +202,7 @@
 
         async function loadEmpresas() {
             try {
-                const res = await fetch('/api/contabilidad/empresas', {
+                const res = await fetch(buildApiUrl('/api/contabilidad/empresas'), {
                     headers: { 'Authorization': `Bearer ${getToken()}` }
                 });
                 const { data } = await res.json();
@@ -247,12 +247,13 @@
                 const year = now.getFullYear();
                 const quarter = Math.ceil((now.getMonth() + 1) / 3);
 
-                let url = `/api/contabilidad/copiloto/insights?empresa_id=${currentEmpresaId}&type=${type}&year=${year}`;
-                if (type === 'quarter') url += `&quarter=${quarter}`;
+                let query = `?empresa_id=${currentEmpresaId}&type=${type}&year=${year}`;
+                if (type === 'quarter') query += `&quarter=${quarter}`;
 
-                const res = await fetch(url, {
+                // Use fetchWithAuth which handles Base URL and Auth automatically
+                // We add X-Empresa-Id as an extra header
+                const res = await fetchWithAuth(`/api/contabilidad/copiloto/insights${query}`, {
                     headers: {
-                        'Authorization': `Bearer ${getToken()}`,
                         'X-Empresa-Id': currentEmpresaId
                     }
                 });

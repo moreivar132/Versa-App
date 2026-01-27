@@ -545,11 +545,10 @@
 
     <!-- Logic -->
     <script type="module">
-        import { logout, getSession, requireAuth, fetchWithAuth, getToken } from '/auth.js';
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
-        const API_BASE = '';
         let session = getSession();
 
         let currentPage = 0;
@@ -573,7 +572,7 @@
         }
 
         async function apiGet(endpoint) {
-            const res = await fetch(API_BASE + endpoint, { headers: getAuthHeaders() });
+            const res = await fetch(buildApiUrl(endpoint), { headers: getAuthHeaders() });
             if (!res.ok) {
                 console.error('[Documentos] API Error:', res.status);
                 throw new Error(`API Error ${res.status}`);
@@ -738,16 +737,26 @@
             }
 
             tbody.innerHTML = items.map(doc => {
-                const thumbnailHtml = doc.has_attachment
-                    ? `<div class="w-10 h-10 rounded bg-surface-dark-light flex items-center justify-center overflow-hidden">
-                         ${doc.archivo?.file_type === 'IMG'
-                        ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500\\'>image</span>'">`
-                        : `<span class="material-symbols-outlined text-red-400 text-[20px]">picture_as_pdf</span>`
-                    }
-                       </div>`
-                    : `<div class="w-10 h-10 rounded bg-surface-dark-light/50 flex items-center justify-center">
-                         <span class="material-symbols-outlined text-gray-600 text-[18px]">visibility_off</span>
-                       </div>`;
+
+                let thumbnailHtml;
+
+                if (doc.has_attachment && doc.archivo?.exists === false) {
+                    // Check 'exists' flag from backend - if false, show broken link icon
+                    thumbnailHtml = `<div class="w-10 h-10 rounded bg-red-100 dark:bg-red-900/20 flex items-center justify-center cursor-not-allowed" title="Archivo no disponible en este entorno">
+                          <span class="material-symbols-outlined text-red-400 text-[20px]">link_off</span>
+                        </div>`;
+                } else if (doc.has_attachment) {
+                    thumbnailHtml = `<div class="w-10 h-10 rounded bg-surface-dark-light flex items-center justify-center overflow-hidden">
+                          ${doc.archivo?.file_type === 'IMG'
+                            ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500\\'>image</span>'">`
+                            : `<span class="material-symbols-outlined text-red-400 text-[20px]">picture_as_pdf</span>`
+                        }
+                        </div>`;
+                } else {
+                    thumbnailHtml = `<div class="w-10 h-10 rounded bg-surface-dark-light/50 flex items-center justify-center">
+                          <span class="material-symbols-outlined text-gray-600 text-[18px]">visibility_off</span>
+                        </div>`;
+                }
 
                 const fileTypeBadge = doc.has_attachment && doc.archivo?.file_type
                     ? `<span class="file-badge file-${doc.archivo.file_type}">${doc.archivo.file_type}</span>`
@@ -771,10 +780,17 @@
                         <td><span class="status-badge status-${doc.estado}">${doc.estado}</span></td>
                         <td>${fileTypeBadge}</td>
                         <td class="text-right">
-                            <button onclick="event.stopPropagation(); openPreview(${doc.id})" 
-                                class="text-gray-400 hover:text-primary transition-colors p-1" title="Ver">
-                                <span class="material-symbols-outlined text-[18px]">visibility</span>
-                            </button>
+
+                            ${(doc.has_attachment && doc.archivo?.exists === false) ?
+                        `<button onclick="event.stopPropagation(); showMissingFileToast()" 
+                                    class="text-gray-400 hover:text-red-500 transition-colors p-1" title="Archivo no disponible">
+                                    <span class="material-symbols-outlined text-[18px]">link_off</span>
+                                </button>` :
+                        `<button onclick="event.stopPropagation(); openPreview(${doc.id})" 
+                                    class="text-gray-400 hover:text-primary transition-colors p-1" title="Ver">
+                                    <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                </button>`
+                    }
                         </td>
                     </tr>
                 `;
@@ -795,10 +811,13 @@
             }
 
             grid.innerHTML = items.map(doc => {
+
                 const thumbnailHtml = doc.has_attachment
-                    ? (doc.archivo?.file_type === 'IMG'
-                        ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500 text-4xl\\'>image</span>'">`
-                        : `<span class="material-symbols-outlined text-red-400 text-4xl">picture_as_pdf</span>`)
+                    ? (doc.archivo?.exists === false
+                        ? `<span class="material-symbols-outlined text-red-400 text-4xl" title="Archivo no disponible">link_off</span>`
+                        : (doc.archivo?.file_type === 'IMG'
+                            ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500 text-4xl\\'>image</span>'">`
+                            : `<span class="material-symbols-outlined text-red-400 text-4xl">picture_as_pdf</span>`))
                     : `<span class="material-symbols-outlined text-gray-600 text-4xl">visibility_off</span>`;
 
                 return `
@@ -854,6 +873,12 @@
             const doc = documentsData.find(d => d.id == docId);
             if (!doc) {
                 console.error('[Documentos] Document not found in cache:', docId, 'Cache size:', documentsData.length);
+                return;
+            }
+
+            // check existence (UX resilience)
+            if (doc.has_attachment && doc.archivo?.exists === false) {
+                showMissingFileToast();
                 return;
             }
 
@@ -997,6 +1022,25 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') closeDrawer();
         });
+
+
+        window.showMissingFileToast = function () {
+            // Simple toast implementation or alert
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-red-900 border border-red-700 text-white px-4 py-3 rounded-lg shadow-lg z-[100] flex items-center gap-3 animate-bounce-in';
+            toast.innerHTML = `
+                <span class="material-symbols-outlined">link_off</span>
+                <div>
+                    <p class="font-bold text-sm">Archivo no disponible</p>
+                    <p class="text-xs text-red-200">Este documento no existe en el disco local.</p>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
 
         // Init
         init();

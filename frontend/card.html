@@ -490,7 +490,7 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
         // State
         let cardData = null;
         let qrExpiresAt = null;
@@ -501,10 +501,8 @@
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
 
-        // API Base URL
-        const API_BASE = window.location.hostname === 'localhost'
-            ? 'http://localhost:3000'
-            : '';
+        // API Base URL from Vite Config
+        const API_BASE = import.meta.env.VITE_API_URL || '';
 
         // DOM Elements
         const loadingState = document.getElementById('loading-state');
