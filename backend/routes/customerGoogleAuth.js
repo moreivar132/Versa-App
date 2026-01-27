@@ -16,6 +16,7 @@ const crypto = require('crypto');
 const router = express.Router();
 const { generateCustomerToken } = require('../middleware/customerAuth');
 const { getSystemDb } = require('../src/core/db/tenant-db');
+const { APP_URL } = require('../config/urls');
 
 // State tokens store (in-memory, short-lived)
 const stateTokens = new Map();
@@ -179,7 +180,16 @@ async function findOrCreateMarketplaceCustomer(googleProfile) {
 }
 
 function getFrontendBaseUrl() {
-    return process.env.FRONTEND_BASE_URL || 'http://localhost:5173';
+    if (process.env.FRONTEND_BASE_URL) {
+        return process.env.FRONTEND_BASE_URL.replace(/\/$/, '');
+    }
+
+    // In production, do not default to localhost
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('CRITICAL: FRONTEND_BASE_URL not set in Production.');
+    }
+
+    return 'http://localhost:5173';
 }
 
 /**
@@ -191,7 +201,7 @@ router.get('/google', (req, res, next) => {
     const state = generateStateToken(redirectTo);
 
     // Customer-specific callback URL
-    const callbackURL = 'http://localhost:3000/api/cliente/auth/google/callback';
+    const callbackURL = `${APP_URL}/api/cliente/auth/google/callback`;
 
     passport.authenticate('google', {
         scope: ['openid', 'email', 'profile'],
@@ -206,7 +216,7 @@ router.get('/google', (req, res, next) => {
  * Handle Google OAuth callback for marketplace customers
  */
 router.get('/google/callback', (req, res, next) => {
-    const callbackURL = 'http://localhost:3000/api/cliente/auth/google/callback';
+    const callbackURL = `${APP_URL}/api/cliente/auth/google/callback`;
 
     passport.authenticate('google', {
         session: false,
