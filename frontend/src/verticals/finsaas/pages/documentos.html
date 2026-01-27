@@ -545,7 +545,8 @@
 
     <!-- Logic -->
     <script type="module">
-        import { logout, getSession, requireAuth, fetchWithAuth, getToken, buildApiUrl } from '/auth.js';
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken, getApiBaseUrl } from '/auth.js';
+
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
@@ -736,27 +737,20 @@
                 return;
             }
 
+            const baseUrl = getApiBaseUrl();
+
             tbody.innerHTML = items.map(doc => {
+                const thumbnailHtml = doc.has_attachment
+                    ? `<div class="w-10 h-10 rounded bg-surface-dark-light flex items-center justify-center overflow-hidden">
+                         ${doc.archivo?.file_type === 'IMG'
+                        ? `<img src="${baseUrl}${doc.archivo.preview_url}${authParam}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500\\'>image</span>'">`
+                        : `<span class="material-symbols-outlined text-red-400 text-[20px]">picture_as_pdf</span>`
+                    }
+                       </div>`
+                    : `<div class="w-10 h-10 rounded bg-surface-dark-light/50 flex items-center justify-center">
+                         <span class="material-symbols-outlined text-gray-600 text-[18px]">visibility_off</span>
+                       </div>`;
 
-                let thumbnailHtml;
-
-                if (doc.has_attachment && doc.archivo?.exists === false) {
-                    // Check 'exists' flag from backend - if false, show broken link icon
-                    thumbnailHtml = `<div class="w-10 h-10 rounded bg-red-100 dark:bg-red-900/20 flex items-center justify-center cursor-not-allowed" title="Archivo no disponible en este entorno">
-                          <span class="material-symbols-outlined text-red-400 text-[20px]">link_off</span>
-                        </div>`;
-                } else if (doc.has_attachment) {
-                    thumbnailHtml = `<div class="w-10 h-10 rounded bg-surface-dark-light flex items-center justify-center overflow-hidden">
-                          ${doc.archivo?.file_type === 'IMG'
-                            ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500\\'>image</span>'">`
-                            : `<span class="material-symbols-outlined text-red-400 text-[20px]">picture_as_pdf</span>`
-                        }
-                        </div>`;
-                } else {
-                    thumbnailHtml = `<div class="w-10 h-10 rounded bg-surface-dark-light/50 flex items-center justify-center">
-                          <span class="material-symbols-outlined text-gray-600 text-[18px]">visibility_off</span>
-                        </div>`;
-                }
 
                 const fileTypeBadge = doc.has_attachment && doc.archivo?.file_type
                     ? `<span class="file-badge file-${doc.archivo.file_type}">${doc.archivo.file_type}</span>`
@@ -810,14 +804,22 @@
                 return;
             }
 
+            const baseUrl = getApiBaseUrl();
+
             grid.innerHTML = items.map(doc => {
 
                 const thumbnailHtml = doc.has_attachment
+<<<<<<< HEAD
+                    ? (doc.archivo?.file_type === 'IMG'
+                        ? `<img src="${baseUrl}${doc.archivo.preview_url}${authParam}" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500 text-4xl\\'>image</span>'">`
+                        : `<span class="material-symbols-outlined text-red-400 text-4xl">picture_as_pdf</span>`)
+=======
                     ? (doc.archivo?.exists === false
                         ? `<span class="material-symbols-outlined text-red-400 text-4xl" title="Archivo no disponible">link_off</span>`
                         : (doc.archivo?.file_type === 'IMG'
                             ? `<img src="${doc.archivo.preview_url}${authParam}" class="w-full h-full object-contain" onerror="this.parentElement.innerHTML='<span class=\\'material-symbols-outlined text-gray-500 text-4xl\\'>image</span>'">`
                             : `<span class="material-symbols-outlined text-red-400 text-4xl">picture_as_pdf</span>`))
+>>>>>>> 05f503fbb8f47b059365dbfd941676cec2b34e64
                     : `<span class="material-symbols-outlined text-gray-600 text-4xl">visibility_off</span>`;
 
                 return `
@@ -934,11 +936,12 @@
             if (doc.has_attachment && doc.archivo) {
                 const token = session?.token || getToken();
                 const authParam = token ? `&token=${encodeURIComponent(token)}` : '';
-                const fileUrl = doc.archivo.preview_url + authParam;
+                const baseUrl = getApiBaseUrl();
+                const fileUrl = `${baseUrl}${doc.archivo.preview_url}${authParam}`;
 
                 // Ensure download URL has token correctly
-                let downloadUrl = doc.archivo.download_url;
-                if (downloadUrl.includes('?')) {
+                let downloadUrl = `${baseUrl}${doc.archivo.download_url}`;
+                if (doc.archivo.download_url.includes('?')) {
                     downloadUrl += authParam;
                 } else {
                     downloadUrl += `?token=${encodeURIComponent(token)}`;

@@ -377,7 +377,8 @@
 
     <!-- MODULES -->
     <script type="module">
-        import { logout, getSession, requireAuth, fetchWithAuth, getToken, buildApiUrl } from '/auth.js';
+        import { logout, getSession, requireAuth, fetchWithAuth, getToken, getApiBaseUrl } from '/auth.js';
+
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         // Initialize Layout
@@ -687,19 +688,16 @@
 
             let fileUrl = intake?.file_url || lastUploadedFileUrl || '';
 
-            // Add token for authenticated access if URL is a local path
-            // Add token for authenticated access if URL is a local path
             if (fileUrl && !fileUrl.startsWith('http')) {
                 const token = getToken();
-                // For intake files, use the intake archivo endpoint if possible for security
+                const baseUrl = getApiBaseUrl();
+                // For intake files, use the intake archivo endpoint
                 if (currentIntakeId || intake?.id) {
                     const intakeIdForUrl = intake?.id || currentIntakeId;
-                    fileUrl = buildApiUrl(`/api/contabilidad/documentos/intake/${intakeIdForUrl}/archivo?preview=true&token=${encodeURIComponent(token)}`);
-                } else if (fileUrl.startsWith('/uploads')) {
-                    // Fallback to static serving, but ensure /api prefix logic
-                    fileUrl = buildApiUrl('/api' + fileUrl);
+                    fileUrl = `${baseUrl}/api/contabilidad/documentos/intake/${intakeIdForUrl}/archivo?preview=true&token=${encodeURIComponent(token)}`;
                 } else {
-                    fileUrl = buildApiUrl(fileUrl);
+                    // Fallback for just uploaded file path if needed (though usually intakes have IDs)
+                    fileUrl = `${baseUrl}${fileUrl}`;
                 }
             }
 
@@ -709,6 +707,7 @@
             } else {
                 downloadLink.classList.add('hidden');
             }
+
 
             // Capture draft ID if exists
             currentGastoId = intake?.gasto_id || null;
@@ -786,6 +785,7 @@
 
             recalcTotal();
         }
+
 
         // --- Helpers ---
         window.recalcTotal = function () {

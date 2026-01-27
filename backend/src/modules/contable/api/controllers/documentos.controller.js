@@ -458,10 +458,12 @@ async function serveIntakeArchivo(req, res) {
 /**
  * Helper to resolve file path on disk
  */
-function resolveFilePath(storageKey, fileUrl) {
-    let filePath = null;
 
-    // 1. Try storageKey in specific folders (Standardized)
+// Add this wrapper function to override the original serveFileFromStorage
+function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, isPreview) {
+    // 1. Resolve local path
+    let filePath;
+
     if (storageKey) {
         const egresosPath = path.join(UPLOADS_ROOT, 'egresos', storageKey);
         const contabPath = path.join(UPLOADS_ROOT, 'contabilidad', storageKey);
@@ -488,32 +490,43 @@ function resolveFilePath(storageKey, fileUrl) {
         }
     }
 
-    return filePath;
-}
+    // 2. Check existence
+    if (!filePath || !fs.existsSync(filePath)) {
+        console.warn('[Documentos] File NOT found on disk:', filePath, 'URL:', fileUrl);
 
-/**
- * Helper function to serve file from storage
- */
+        // --- FALLBACK LOGIC START ---
+        // If absolute URL, redirect immediately
 
-function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, isPreview) {
-
-    // Use shared resolver
-    const filePath = resolveFilePath(storageKey, fileUrl);
-    // If not found by resolver, try fallback construction for error messaging/redirection check below
-    // If not found by resolver, try fallback construction for error messaging/redirection check below
-    let fallbackPath = null;
-    if (!filePath && fileUrl) {
-        let cleanUrl = fileUrl.replace(/^[\\\/]+/, '').replace(/^api\/uploads\//, '').replace(/^uploads\//, '');
-        fallbackPath = path.join(UPLOADS_ROOT, cleanUrl);
-    }
-    const finalPath = filePath || fallbackPath;
-
-
-    if (!finalPath || !fs.existsSync(finalPath)) {
-        console.warn('[Documentos] File NOT found on disk:', finalPath, 'URL:', fileUrl);
         if (fileUrl && (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))) {
             return res.redirect(fileUrl);
         }
+
+        // If local dev environment (implied by missing file but present DB record), 
+        // try to redirect to the persistent Railway env
+        const FALLBACK_HOST = 'https://versa-app-dev.up.railway.app';
+
+        let redirectUrl = null;
+        if (fileUrl) {
+            // Normalize path to ensure it starts with /api/uploads
+            let cleanPath = fileUrl;
+            if (!cleanPath.startsWith('/api')) {
+                cleanPath = '/api' + (cleanPath.startsWith('/') ? '' : '/') + cleanPath;
+            }
+            redirectUrl = `${FALLBACK_HOST}${cleanPath}`;
+        } else if (storageKey) {
+            // Construct likely URL from storage key
+            // Default to egresos as it's the most common for PDF invoices
+            redirectUrl = `${FALLBACK_HOST}/api/uploads/egresos/${storageKey}`;
+        }
+
+        console.log('[Documentos] DEBUG Fallback:', { fileUrl, storageKey, redirectUrl });
+
+        if (redirectUrl) {
+            console.log('[Documentos] Redirecting to fallback:', redirectUrl);
+            return res.redirect(redirectUrl);
+        }
+        // --- FALLBACK LOGIC END ---
+
         return res.status(404).json({ ok: false, error: 'Archivo no encontrado en servidor' });
     }
 
