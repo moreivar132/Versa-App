@@ -84,7 +84,7 @@ const corsOptions = {
 // Apply CORS globally before any route
 app.use(cors(corsOptions));
 // Explicitly handle Preflight for all routes to prevent Auth middleware interference
-app.options('*', cors(corsOptions));
+app.options('/.*/', cors(corsOptions));
 
 // --- Passport OAuth Initialization ---
 app.use(passport.initialize());
