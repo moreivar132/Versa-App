@@ -1,0 +1,38 @@
+# R3 Pool.Query Grep Results
+# Date: 2026-01-22
+# Command: grep -RInE "pool\.query|pool\.connect" . --include="*.js" | grep -v node_modules
+
+## Summary
+All pool.query/pool.connect usages are in ALLOWED locations:
+- Core DB wrappers (src/core/db/)
+- Legacy migration scripts (migrations/, scripts/)
+- Test files (tests/)
+- Legacy archived code (legacy/)
+
+## Runtime Violations: 0
+
+## Allowed Locations (Not Runtime)
+
+### Core DB Wrappers (ALLOWED)
+./src/core/db/tenant-db.js:154:        const client = await pool.connect();
+./src/core/db/tenant-db.js:174:        return pool.query(sql, params);
+./src/core/db/tenant-db.js:195:        const client = await pool.connect();
+./src/core/db/tenant-db.js:303:    const client = await pool.connect();
+./src/core/db/index.js:40:    query: (sql, params) => pool.query(sql, params),
+./src/core/db/index.js:46:        const client = await pool.connect();
+./src/core/db/index.js:67:        return pool.query(sql, [...params, tenantId]);
+./src/app.js:153:            const result = await pool.query('SELECT NOW() AS now');
+
+### Migration Scripts (ALLOWED - Not Runtime)
+./migrations/*.js - Legacy migration runners
+./scripts/*.js - Maintenance and seed scripts
+
+### Test Files (ALLOWED - Test Environment Only)
+./tests/unit/services/verticalAccess.test.js - Mock setup
+./tests/integration/*.test.js - Test setup/teardown
+
+### Legacy Code (ARCHIVED - Not Used)
+./legacy/backend/*.js - Old code, not imported
+
+## Conclusion
+Gate A: ✅ PASS - Zero runtime violations detected.

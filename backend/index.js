@@ -141,18 +141,32 @@ app.use('/api/marketing/campaigns', privateRoute, require('./routes/emailCampaig
 app.use('/api/public/fidelizacion', require('./routes/fidelizacionPublic'));
 app.use('/api/admin/fidelizacion', privateRoute, require('./routes/fidelizacionAdmin'));
 
-const { UPLOADS_ROOT } = require('./src/core/config/storage');
-app.use('/api/uploads', express.static(UPLOADS_ROOT));
-app.use('/uploads', express.static(UPLOADS_ROOT));
+// Static Uploads with Fallback (Manual Check)
+const fs = require('fs');
+const uploadsPath = path.join(__dirname, 'uploads');
 
-// Fallback for not found files (prevents HTML 404 response for images)
-app.use('/api/uploads', (req, res) => {
-  res.status(404).json({
-    ok: false,
-    code: "FILE_NOT_FOUND",
-    message: "El archivo no existe en el almacenamiento persistente"
-  });
-});
+const uploadsInterceptor = (req, res, next) => {
+  if (req.method !== 'GET') return next();
+
+  // req.path is relative (e.g. /egresos/file.pdf)
+  const localFilePath = path.join(uploadsPath, req.path);
+
+  if (fs.existsSync(localFilePath)) {
+    return next();
+  }
+
+  const remoteUrl = (process.env.REMOTE_STORAGE_URL || 'https://versa-app-dev.up.railway.app').replace(/\/$/, '');
+  const redirectUrl = `${remoteUrl}${req.baseUrl}${req.path}`;
+  console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
+  res.redirect(redirectUrl);
+};
+
+app.use('/uploads', uploadsInterceptor);
+app.use('/api/uploads', uploadsInterceptor);
+
+app.use('/api/uploads', express.static(uploadsPath));
+app.use('/uploads', express.static(uploadsPath));
+
 
 // Health check / DB status
 app.get('/api/health', (req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));
