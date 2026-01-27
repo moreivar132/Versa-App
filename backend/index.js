@@ -52,7 +52,8 @@ console.log('---------------------------------------------------');
 // --- Middlewares ---
 const allowedOrigins = [
   'https://versa-app.netlify.app',
-  'https://versa-app.up.railway.app', // Self (if needed)
+  'https://versa-app-dev.netlify.app', // Adding Dev preview if needed
+  'https://versa-app.up.railway.app',
   'http://localhost:5173',
   'http://localhost:3000'
 ];
@@ -61,7 +62,8 @@ const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    // Dynamic check for Netlify previews or allowed list
+
+    // Check allowlist or Netlify dynamic previews
     if (allowedOrigins.includes(origin) || origin.endsWith('.netlify.app')) {
       callback(null, true);
     } else {
@@ -72,11 +74,13 @@ const corsOptions = {
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-empresa-id', 'x-tenant-id'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 204
 };
 
+// Apply CORS globally before any route
 app.use(cors(corsOptions));
-// app.options('*', cors(corsOptions)); // Removed to prevent Express 5 crash, global middleware handles it
+// Explicitly handle Preflight for all routes to prevent Auth middleware interference
+app.options('*', cors(corsOptions));
 
 // --- Passport OAuth Initialization ---
 app.use(passport.initialize());
@@ -217,7 +221,14 @@ app.use('/uploads', express.static(uploadsPath));
 
 
 // Health check / DB status
-app.get('/api/health', (req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));
+app.get('/api/health', (req, res) => {
+  res.setHeader('X-Build-Id', process.env.RAILWAY_GIT_COMMIT_SHA || 'hotfix-cors-manual');
+  res.json({
+    ok: true,
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV
+  });
+});
 app.get('/api/db-test', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW() AS now');
