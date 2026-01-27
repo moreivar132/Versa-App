@@ -1,4 +1,5 @@
 // index.js
+console.log('--- STARTING VERSA BACKEND V1.2.0 (HOTFIX MOUNT) ---');
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
