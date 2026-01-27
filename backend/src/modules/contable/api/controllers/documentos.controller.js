@@ -531,21 +531,23 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
         }
 
         // If local dev environment (implied by missing file but present DB record), 
-        // try to redirect to the persistent Railway env
-        const FALLBACK_HOST = (process.env.REMOTE_STORAGE_URL || 'https://versa-app-dev.up.railway.app').replace(/\/$/, '');
+        // try to redirect to the persistent Railway env ONLY if configured
+        const FALLBACK_HOST = process.env.REMOTE_STORAGE_URL ? process.env.REMOTE_STORAGE_URL.replace(/\/$/, '') : null;
 
         let redirectUrl = null;
-        if (fileUrl) {
-            // Normalize path to ensure it starts with /api/uploads
-            let cleanPath = fileUrl;
-            if (!cleanPath.startsWith('/api')) {
-                cleanPath = '/api' + (cleanPath.startsWith('/') ? '' : '/') + cleanPath;
+        if (FALLBACK_HOST) {
+            if (fileUrl) {
+                // Normalize path to ensure it starts with /api/uploads
+                let cleanPath = fileUrl;
+                if (!cleanPath.startsWith('/api')) {
+                    cleanPath = '/api' + (cleanPath.startsWith('/') ? '' : '/') + cleanPath;
+                }
+                redirectUrl = `${FALLBACK_HOST}${cleanPath}`;
+            } else if (storageKey) {
+                // Construct likely URL from storage key
+                // Default to egresos as it's the most common for PDF invoices
+                redirectUrl = `${FALLBACK_HOST}/api/uploads/egresos/${storageKey}`;
             }
-            redirectUrl = `${FALLBACK_HOST}${cleanPath}`;
-        } else if (storageKey) {
-            // Construct likely URL from storage key
-            // Default to egresos as it's the most common for PDF invoices
-            redirectUrl = `${FALLBACK_HOST}/api/uploads/egresos/${storageKey}`;
         }
 
         console.log('[Documentos] DEBUG Fallback:', { fileUrl, storageKey, redirectUrl });
