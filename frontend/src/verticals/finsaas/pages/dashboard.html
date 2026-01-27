@@ -219,7 +219,7 @@
 
 
     <script type="module">
-        import { logout, getSession, requireAuth, getToken } from '/auth.js';
+        import { logout, getSession, requireAuth, getToken, buildApiUrl } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         window.logout = logout;
@@ -238,8 +238,9 @@
         }
 
         async function apiGet(endpoint) {
-            console.log('[FinSaaS] API GET:', endpoint);
-            const res = await fetch(endpoint, { headers: getAuthHeaders() });
+            const url = buildApiUrl(endpoint);
+            console.log('[FinSaaS] API GET:', url);
+            const res = await fetch(url, { headers: getAuthHeaders() });
             if (!res.ok) {
                 console.error('[FinSaaS] API Error:', res.status);
                 throw new Error('API Error ' + res.status);
@@ -490,7 +491,8 @@
 
         async function linkBank() {
             try {
-                const res = await fetch('/api/open-banking/truelayer/link', {
+                const url = buildApiUrl('/api/open-banking/truelayer/link');
+                const res = await fetch(url, {
                     method: 'POST',
                     headers: getAuthHeaders(),
                     body: JSON.stringify({ redirect_path: window.location.pathname })

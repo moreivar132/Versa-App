@@ -156,7 +156,10 @@ FORMATO DE RESPUESTA:
 /**
  * Ejecutar una herramienta
  */
-async function executeTool(toolName, args, empresaId) {
+/**
+ * Ejecutar una herramienta
+ */
+async function executeTool(toolName, args, empresaId, tenantId) {
     console.log(`[Copilot] Executing tool: ${toolName}`, args);
 
     switch (toolName) {
@@ -165,14 +168,16 @@ async function executeTool(toolName, args, empresaId) {
                 empresaId,
                 args.dateFrom,
                 args.dateTo,
-                args.limit || 10
+                args.limit || 10,
+                tenantId
             );
         case 'get_spend_by_vendor':
             return await toolsService.getSpendByVendor(
                 empresaId,
                 args.dateFrom,
                 args.dateTo,
-                args.limit || 10
+                args.limit || 10,
+                tenantId
             );
         case 'get_top_invoices':
             return await toolsService.getTopInvoices(
@@ -180,33 +185,38 @@ async function executeTool(toolName, args, empresaId) {
                 args.dateFrom,
                 args.dateTo,
                 args.tipo,
-                args.limit || 20
+                args.limit || 20,
+                tenantId
             );
         case 'get_outliers':
             return await toolsService.getOutliers(
                 empresaId,
                 args.dateFrom,
                 args.dateTo,
-                args.threshold || 2.0
+                args.threshold || 2.0,
+                tenantId
             );
         case 'get_iva_summary':
             return await toolsService.getIVASummary(
                 empresaId,
                 args.year,
-                args.quarter
+                args.quarter,
+                tenantId
             );
         case 'get_profit_loss':
             return await toolsService.getProfitLoss(
                 empresaId,
                 args.dateFrom,
-                args.dateTo
+                args.dateTo,
+                tenantId
             );
         case 'get_hygiene_issues':
-            return await toolsService.getHygieneIssues(empresaId);
+            return await toolsService.getHygieneIssues(empresaId, tenantId);
         case 'get_unpaid_invoices':
             return await toolsService.getUnpaidInvoices(
                 empresaId,
-                args.daysOverdue || 30
+                args.daysOverdue || 30,
+                tenantId
             );
         default:
             throw new Error(`Unknown tool: ${toolName}`);
@@ -216,11 +226,13 @@ async function executeTool(toolName, args, empresaId) {
 /**
  * Conversar con el copiloto
  * @param {string} userMessage - Mensaje del usuario
- * @param {object} context - { empresaId, empresaNombre, periodoInicio, periodoFin, conversationHistory }
+ * @param {object} context - { empresaId, empresaNombre, tenantId, periodoInicio, periodoFin, conversationHistory }
  * @returns {object} - { content, evidence, toolsUsed, tokensUsed }
  */
 async function askCopilot(userMessage, context) {
-    const { empresaId, empresaNombre, periodoInicio, periodoFin, conversationHistory = [] } = context;
+    const { empresaId, empresaNombre, tenantId, periodoInicio, periodoFin, conversationHistory = [] } = context;
+
+    if (!tenantId) throw new Error('TenantID required for Copilot');
 
     // Construir historial de mensajes
     const messages = [
@@ -265,7 +277,7 @@ Si el usuario no especifica un periodo, usa este por defecto.`
                 const toolArgs = JSON.parse(toolCall.function.arguments);
 
                 try {
-                    const toolResult = await executeTool(toolName, toolArgs, empresaId);
+                    const toolResult = await executeTool(toolName, toolArgs, empresaId, tenantId);
 
                     toolsUsed.push({
                         tool: toolName,

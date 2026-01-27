@@ -1,5 +1,7 @@
 // index.js
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config();
+}
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -163,6 +165,7 @@ app.use('/api/uploads', uploadsInterceptor);
 
 app.use('/api/uploads', express.static(uploadsPath));
 app.use('/uploads', express.static(uploadsPath));
+
 
 // Health check / DB status
 app.get('/api/health', (req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));

@@ -296,11 +296,12 @@
     <!-- MODULES -->
     <script type="module">
         import { logout, getSession, requireAuth, fetchWithAuth, getToken, getApiBaseUrl } from '/auth.js';
+
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         // Initialize Layout
         const layout = new FinSaaSLayout('app-shell');
-        const API_BASE = '/api/contabilidad';
+
 
         // State
         let currentPage = 0;
@@ -415,7 +416,7 @@
 
         async function loadEmpresas() {
             try {
-                const response = await fetchWithAuth(`${API_BASE}/empresas`);
+                const response = await fetchWithAuth(`/api/contabilidad/empresas`);
                 if (!response.ok) throw new Error(`API Error: ${response.status}`);
 
                 const res = await response.json();
@@ -528,7 +529,7 @@
             }
 
             try {
-                const response = await fetchWithAuth(`${API_BASE}/facturas?${params.toString()}`, { headers });
+                const response = await fetchWithAuth(`/api/contabilidad/facturas?${params.toString()}`, { headers });
                 const res = await response.json();
 
                 if (!res.ok && res.error) throw new Error(res.error);
@@ -716,7 +717,7 @@
                     headers['X-Empresa-Id'] = selectedEmpresaId;
                 }
 
-                const response = await fetchWithAuth(`${API_BASE}/facturas/${facturaId}/deducible`, {
+                const response = await fetchWithAuth(`/api/contabilidad/facturas/${facturaId}/deducible`, {
                     method: 'PATCH',
                     headers,
                     body: JSON.stringify({
@@ -769,7 +770,7 @@
 
             try {
                 const token = getToken();
-                const url = `${API_BASE}/facturas/export.csv?${params.toString()}`;
+                const url = buildApiUrl(`/api/contabilidad/facturas/export.csv?${params.toString()}`);
 
                 // Build headers - only add X-Empresa-Id if it has a valid value
                 const headers = {
@@ -816,8 +817,12 @@
             // Use the robust serveArchivo endpoint from Documentos module
             // This handles ID lookup, storage key resolution, and authentication
             const token = getToken();
+<<<<<<< HEAD
             const baseUrl = getApiBaseUrl();
             const url = `${baseUrl}${API_BASE}/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`;
+=======
+            const url = buildApiUrl(`/documentos/${id}/archivo?preview=true&token=${encodeURIComponent(token)}`);
+>>>>>>> 05f503fbb8f47b059365dbfd941676cec2b34e64
             window.open(url, '_blank');
         };
         function redirectToDocuments(numero) {

@@ -10,6 +10,7 @@
 const { getEffectiveTenant } = require('../../../../../middleware/rbac');
 const path = require('path');
 const fs = require('fs');
+const { UPLOADS_ROOT } = require('../../../../../src/core/config/storage');
 
 function getEmpresaId(req) {
     return req.headers['x-empresa-id'] || req.query.empresaId;
@@ -304,9 +305,11 @@ async function list(req, res) {
                     preview_url: isIntake
                         ? `/api/contabilidad/documentos/intake/${row.intake_id}/archivo?preview=true`
                         : `/api/contabilidad/documentos/${row.id}/archivo?preview=true`,
+
                     download_url: isIntake
                         ? `/api/contabilidad/documentos/intake/${row.intake_id}/archivo`
-                        : `/api/contabilidad/documentos/${row.id}/archivo`
+                        : `/api/contabilidad/documentos/${row.id}/archivo`,
+                    exists: !!resolveFilePath(storageKey, fileUrl)
                 } : null
             };
         });
@@ -451,18 +454,19 @@ async function serveIntakeArchivo(req, res) {
     }
 }
 
-/**
- * Helper function to serve file from storage
- */
 
+/**
+ * Helper to resolve file path on disk
+ */
 
 // Add this wrapper function to override the original serveFileFromStorage
 function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, isPreview) {
     // 1. Resolve local path
     let filePath;
+
     if (storageKey) {
-        const egresosPath = path.join(__dirname, '../../../../../uploads/egresos', storageKey);
-        const contabPath = path.join(__dirname, '../../../../../uploads/contabilidad', storageKey);
+        const egresosPath = path.join(UPLOADS_ROOT, 'egresos', storageKey);
+        const contabPath = path.join(UPLOADS_ROOT, 'contabilidad', storageKey);
 
         if (fs.existsSync(egresosPath)) {
             filePath = egresosPath;
@@ -471,9 +475,19 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
         }
     }
 
+    // 2. Try fileUrl if not found yet
     if (!filePath && fileUrl) {
-        const urlPath = fileUrl.replace(/^\/api\/uploads\//, '').replace(/^\/uploads\//, '');
-        filePath = path.join(__dirname, '../../../../../uploads', urlPath);
+        // Strip leading slashes and 'api/uploads' or 'uploads'
+        let cleanUrl = fileUrl;
+        if (cleanUrl.startsWith('/')) cleanUrl = cleanUrl.substring(1);
+
+        // Remove prefixes to get relative path to UPLOADS_ROOT
+        cleanUrl = cleanUrl.replace(/^api\/uploads\//, '').replace(/^uploads\//, '');
+
+        const derivedPath = path.join(UPLOADS_ROOT, cleanUrl);
+        if (fs.existsSync(derivedPath)) {
+            filePath = derivedPath;
+        }
     }
 
     // 2. Check existence
@@ -482,6 +496,7 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
 
         // --- FALLBACK LOGIC START ---
         // If absolute URL, redirect immediately
+
         if (fileUrl && (fileUrl.startsWith('http://') || fileUrl.startsWith('https://'))) {
             return res.redirect(fileUrl);
         }
@@ -515,7 +530,8 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
         return res.status(404).json({ ok: false, error: 'Archivo no encontrado en servidor' });
     }
 
-    console.log('[Documentos] Serving file:', filePath, 'MIME:', mimeType, 'Preview:', isPreview);
+
+    console.log('[Documentos] Serving file:', finalPath, 'MIME:', mimeType, 'Preview:', isPreview);
 
     if (isPreview) {
         res.setHeader('Content-Type', mimeType || 'application/octet-stream');
@@ -525,7 +541,8 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
         res.setHeader('Content-Disposition', `attachment; filename="${originalName || 'archivo'}"`);
     }
 
-    const fileStream = fs.createReadStream(filePath);
+
+    const fileStream = fs.createReadStream(finalPath);
     fileStream.pipe(res);
 }
 

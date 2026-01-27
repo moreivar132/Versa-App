@@ -156,9 +156,7 @@
     </div>
 
     <script type="module">
-        import { getSession, getApiBaseUrl, requireAuth } from '/auth.js';
-
-        const API_BASE = getApiBaseUrl();
+        import { getSession, buildApiUrl, requireAuth } from '/auth.js';
         let session = getSession();
 
         async function init() {
@@ -174,7 +172,7 @@
 
             try {
                 // 1. Fetch Invoice Data
-                const res = await fetch(`${API_BASE}/api/contabilidad/facturas/${id}`, {
+                const res = await fetch(buildApiUrl(`/api/contabilidad/facturas/${id}`), {
                     headers: { 'Authorization': `Bearer ${session?.token}` }
                 });
                 const f = await res.json();
@@ -199,7 +197,7 @@
 
         async function fetchAndApplyConfig(tenantId, empresaId) {
             try {
-                let url = `${API_BASE}/api/facturas/config-tenant?tenantId=${tenantId}`;
+                let url = buildApiUrl(`/api/facturas/config-tenant?tenantId=${tenantId}`);
                 if (empresaId) url += `&empresaId=${empresaId}`;
 
                 const res = await fetch(url, {
@@ -244,7 +242,7 @@
                 const existingPlaceholder = logoContainer.querySelector('.w-16.h-16');
                 const existingImg = document.getElementById('company-logo-img');
 
-                const fullUrl = config.logo_url.startsWith('http') ? config.logo_url : `${API_BASE}${config.logo_url}`;
+                const fullUrl = config.logo_url.startsWith('http') ? config.logo_url : buildApiUrl(config.logo_url);
 
                 if (existingImg) {
                     existingImg.src = fullUrl;
@@ -338,7 +336,7 @@
         async function fetchDetails(contactId, empresaId) {
             try {
                 if (contactId) {
-                    const cRes = await fetch(`${API_BASE}/api/contabilidad/contactos/${contactId}`, { headers: { 'Authorization': `Bearer ${session?.token}` } });
+                    const cRes = await fetch(buildApiUrl(`/api/contabilidad/contactos/${contactId}`), { headers: { 'Authorization': `Bearer ${session?.token}` } });
                     const cWrapped = await cRes.json();
 
                     // Unpack response: items? data?
@@ -357,7 +355,7 @@
                     }
                 }
                 if (empresaId) {
-                    const eRes = await fetch(`${API_BASE}/api/contabilidad/empresas`, { headers: { 'Authorization': `Bearer ${session?.token}` } });
+                    const eRes = await fetch(buildApiUrl(`/api/contabilidad/empresas`), { headers: { 'Authorization': `Bearer ${session?.token}` } });
                     const eData = await eRes.json();
                     const items = eData.data?.items || eData.data || [];
                     const emp = items.find(x => x.id === empresaId);

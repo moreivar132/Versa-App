@@ -378,6 +378,7 @@
     <!-- MODULES -->
     <script type="module">
         import { logout, getSession, requireAuth, fetchWithAuth, getToken, getApiBaseUrl } from '/auth.js';
+
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
         // Initialize Layout
@@ -386,7 +387,7 @@
         requireAuth();
 
         const session = getSession();
-        const API_BASE = '/api/contabilidad';
+
 
         // State
         let currentIntakeId = null;
@@ -417,7 +418,7 @@
         async function loadIntake(id) {
             try {
                 // Fetch intake details regardless of current company context
-                const res = await fetchWithAuth(`${API_BASE}/egresos/intakes/${id}`);
+                const res = await fetchWithAuth(`/api/contabilidad/egresos/intakes/${id}`);
                 const data = await res.json();
 
                 if (data.ok && data.data) {
@@ -456,7 +457,7 @@
 
         async function loadEmpresas() {
             try {
-                const response = await fetchWithAuth(`${API_BASE}/empresas`);
+                const response = await fetchWithAuth(`/api/contabilidad/empresas`);
                 if (!response.ok) throw new Error(`API Error: ${response.status}`);
 
                 const res = await response.json();
@@ -579,7 +580,7 @@
 
             try {
                 const token = getToken();
-                const res = await fetch(`${API_BASE}/egresos/intakes`, {
+                const res = await fetch(buildApiUrl('/api/contabilidad/egresos/intakes'), {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -635,7 +636,7 @@
             pollingInterval = setInterval(async () => {
                 attempts++;
                 try {
-                    const response = await fetchWithAuth(`${API_BASE}/egresos/intakes/${intakeId}`, {
+                    const response = await fetchWithAuth(`/api/contabilidad/egresos/intakes/${intakeId}`, {
                         headers: { 'X-Empresa-Id': selectedEmpresaId }
                     });
 
@@ -687,7 +688,6 @@
 
             let fileUrl = intake?.file_url || lastUploadedFileUrl || '';
 
-            // Add token for authenticated access if URL is a local path
             if (fileUrl && !fileUrl.startsWith('http')) {
                 const token = getToken();
                 const baseUrl = getApiBaseUrl();
@@ -707,6 +707,7 @@
             } else {
                 downloadLink.classList.add('hidden');
             }
+
 
             // Capture draft ID if exists
             currentGastoId = intake?.gasto_id || null;
@@ -785,6 +786,7 @@
             recalcTotal();
         }
 
+
         // --- Helpers ---
         window.recalcTotal = function () {
             const base = parseFloat(document.getElementById('fac-base').value) || 0;
@@ -815,7 +817,7 @@
 
             try {
                 // Fetch latest state to get file_url
-                const res = await fetchWithAuth(`${API_BASE}/egresos/intakes/${currentIntakeId}`, {
+                const res = await fetchWithAuth(`/api/contabilidad/egresos/intakes/${currentIntakeId}`, {
                     headers: { 'X-Empresa-Id': selectedEmpresaId }
                 });
                 const intake = res.data;
@@ -858,11 +860,9 @@
             };
 
             try {
-                const token = getToken();
-                const res = await fetch(`${API_BASE}/egresos`, {
+                const res = await fetchWithAuth('/api/contabilidad/egresos', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
                         'X-Empresa-Id': selectedEmpresaId,
                         'Content-Type': 'application/json'
                     },

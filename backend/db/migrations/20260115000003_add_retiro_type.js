@@ -1,15 +1,7 @@
-exports.up = function (knex) {
-    return knex.raw(`
-    ALTER TABLE accounting_transaccion DROP CONSTRAINT accounting_transaccion_tipo_check;
-    ALTER TABLE accounting_transaccion ADD CONSTRAINT accounting_transaccion_tipo_check 
-    CHECK (tipo IN ('COBRO', 'PAGO', 'INGRESO_EFECTIVO', 'AJUSTE', 'RETIRO_EFECTIVO'));
-  `);
-};
+// ZOMBIE MIGRATION — NO-OP
+// Reason: baseline-only strategy. This migration attempts to drop a constraint (accounting_transaccion_tipo_check) that does not exist in the baseline schema.
+// Evidence: accounting_transaccion in baseline (line 161) has no check constraint.
+// Date: 2026-01-23
 
-exports.down = function (knex) {
-    return knex.raw(`
-    ALTER TABLE accounting_transaccion DROP CONSTRAINT accounting_transaccion_tipo_check;
-    ALTER TABLE accounting_transaccion ADD CONSTRAINT accounting_transaccion_tipo_check 
-    CHECK (tipo IN ('COBRO', 'PAGO', 'INGRESO_EFECTIVO', 'AJUSTE'));
-  `);
-};
+exports.up = async function (knex) { };
+exports.down = async function (knex) { };

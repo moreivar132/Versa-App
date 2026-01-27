@@ -14,9 +14,17 @@
  * @see docs/MIGRATIONS.md para guía completa
  */
 
-require('dotenv').config();
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
 
-const connectionString = process.env.DATABASE_URL;
+// Fix: Force NODE_ENV=development if undefined to ensure knex commands work
+process.env.NODE_ENV = process.env.NODE_ENV || 'development';
+
+const connectionString =
+    process.env.DATABASE_URL ||
+    process.env.NEON_DATABASE_URL ||
+    process.env.POSTGRES_URL;
 
 if (!connectionString) {
     console.error('❌ DATABASE_URL no definida. Configura tu archivo .env');
