@@ -458,12 +458,10 @@ async function serveIntakeArchivo(req, res) {
 /**
  * Helper to resolve file path on disk
  */
+function resolveFilePath(storageKey, fileUrl) {
+    let filePath = null;
 
-// Add this wrapper function to override the original serveFileFromStorage
-function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, isPreview) {
-    // 1. Resolve local path
-    let filePath;
-
+    // 1. Try storageKey in specific folders (Standardized)
     if (storageKey) {
         const egresosPath = path.join(UPLOADS_ROOT, 'egresos', storageKey);
         const contabPath = path.join(UPLOADS_ROOT, 'contabilidad', storageKey);
@@ -490,9 +488,23 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
         }
     }
 
+    return filePath;
+}
+
+// Add this wrapper function to override the original serveFileFromStorage
+function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, isPreview) {
+    // 1. Resolve local path
+    const filePath = resolveFilePath(storageKey, fileUrl);
+
+
     // 2. Check existence
-    if (!filePath || !fs.existsSync(filePath)) {
+
+    // Assign to finalPath for use in stream creation below
+    const finalPath = filePath;
+
+    if (!finalPath || !fs.existsSync(finalPath)) {
         console.warn('[Documentos] File NOT found on disk:', filePath, 'URL:', fileUrl);
+
 
         // --- FALLBACK LOGIC START ---
         // If absolute URL, redirect immediately
