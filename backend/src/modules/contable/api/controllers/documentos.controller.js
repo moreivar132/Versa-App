@@ -10,6 +10,7 @@
 const { getEffectiveTenant } = require('../../../../../middleware/rbac');
 const path = require('path');
 const fs = require('fs');
+const { UPLOADS_ROOT } = require('../../../../../src/core/config/storage');
 
 function getEmpresaId(req) {
     return req.headers['x-empresa-id'] || req.query.empresaId;
@@ -460,10 +461,10 @@ async function serveIntakeArchivo(req, res) {
 function resolveFilePath(storageKey, fileUrl) {
     let filePath = null;
 
-    // 1. Try storageKey in specific folders
+    // 1. Try storageKey in specific folders (Standardized)
     if (storageKey) {
-        const egresosPath = path.join(__dirname, '../../../../../uploads/egresos', storageKey);
-        const contabPath = path.join(__dirname, '../../../../../uploads/contabilidad', storageKey);
+        const egresosPath = path.join(UPLOADS_ROOT, 'egresos', storageKey);
+        const contabPath = path.join(UPLOADS_ROOT, 'contabilidad', storageKey);
 
         if (fs.existsSync(egresosPath)) {
             filePath = egresosPath;
@@ -474,9 +475,14 @@ function resolveFilePath(storageKey, fileUrl) {
 
     // 2. Try fileUrl if not found yet
     if (!filePath && fileUrl) {
-        const urlPath = fileUrl.replace(/^\/api\/uploads\//, '').replace(/^\/uploads\//, '');
-        // Construct path relative to backend root/uploads
-        const derivedPath = path.join(__dirname, '../../../../../uploads', urlPath);
+        // Strip leading slashes and 'api/uploads' or 'uploads'
+        let cleanUrl = fileUrl;
+        if (cleanUrl.startsWith('/')) cleanUrl = cleanUrl.substring(1);
+
+        // Remove prefixes to get relative path to UPLOADS_ROOT
+        cleanUrl = cleanUrl.replace(/^api\/uploads\//, '').replace(/^uploads\//, '');
+
+        const derivedPath = path.join(UPLOADS_ROOT, cleanUrl);
         if (fs.existsSync(derivedPath)) {
             filePath = derivedPath;
         }
@@ -494,7 +500,12 @@ function serveFileFromStorage(res, fileUrl, storageKey, mimeType, originalName, 
     // Use shared resolver
     const filePath = resolveFilePath(storageKey, fileUrl);
     // If not found by resolver, try fallback construction for error messaging/redirection check below
-    const fallbackPath = !filePath && fileUrl ? path.join(__dirname, '../../../../../uploads', fileUrl.replace(/^\/api\/uploads\//, '').replace(/^\/uploads\//, '')) : null;
+    // If not found by resolver, try fallback construction for error messaging/redirection check below
+    let fallbackPath = null;
+    if (!filePath && fileUrl) {
+        let cleanUrl = fileUrl.replace(/^[\\\/]+/, '').replace(/^api\/uploads\//, '').replace(/^uploads\//, '');
+        fallbackPath = path.join(UPLOADS_ROOT, cleanUrl);
+    }
     const finalPath = filePath || fallbackPath;
 
 

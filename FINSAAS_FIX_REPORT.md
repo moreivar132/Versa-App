@@ -1,90 +1,47 @@
-# PROMPT 2 — ANTIGRAVITY (Fix) — FinSaaS Documentos
 
-## 0) Estado final
-- **LOCAL**: ✅ OK (Resiliente)
-- **DEV**: ✅ OK (No afecta, debería funcionar igual si los archivos existen)
-- **PROD**: ✅ OK (No afecta)
+# Fix Report — Preview Documentos (Railway DEV)
 
-## 1) Cambios aplicados
+## 0) Solución aplicada
+**Opción A (Railway Volume Persistente)**
+Se ha estandarizado la gestión de rutas de archivos en el backend para permitir el montaje de un **Volumen Persistente** en Railway en la ruta `/app/backend/uploads`.
 
-### Backend
-**Archivo**: `backend/src/modules/contable/api/controllers/documentos.controller.js`
+## 1) Cambios realizados
 
-**Cambio Principal**:
-Se introdujo una función `resolveFilePath(storageKey, fileUrl)` verificada que centraliza la lógica de comprobar si el archivo existe físicamente en el disco.
-Se usa esta función para:
-1. Servir el archivo (como antes).
-2. Calcular la nueva propiedad `exists: boolean` en el endpoint `list`.
+### Backend (Código)
+Se ha eliminado el uso de rutas relativas frágiles (`../../../../`) y se ha centralizado la configuración en `backend/src/core/config/storage.js`.
 
-Snippet de cálculo en `list()`:
-```javascript
-const items = paginatedItems.map(row => {
-    // ...
-    return {
-        // ...
-        archivo: row.has_attachment ? {
-            // ...
-            exists: !!resolveFilePath(storageKey, fileUrl) // <--- NUEVO
-        } : null
-    };
-});
-```
+- **Nueva Utilidad**: `src/core/config/storage.js` define `UPLOADS_ROOT` basado en `process.env.UPLOADS_DIR` o `process.cwd()`.
+- **Refactorización**:
+  - `index.js`: Usa `UPLOADS_ROOT` para servir estáticos.
+  - `documentos.controller.js`: Resuelve archivos buscando en `UPLOADS_ROOT`.
+  - `facturas.controller.js`: Guarda archivos usando `getUploadPath('contabilidad')`.
+  - `egresos.controller.js`: Guarda archivos usando `getUploadPath('egresos')`.
 
-### Frontend
-**Archivo**: `frontend/src/verticals/finsaas/pages/documentos.html`
+### Infraestructura (ACCIÓN REQUERIDA EN RAILWAY)
+Para que el fix sea efectivo, **debes realizar esta configuración manual en Railway Dashboard**:
 
-**Renderizado Condicional**:
-- En **Tabla**: Si `exists: false`, muestra icono `link_off` (enlace roto) en rojo en lugar de la miniatura/ojo.
-- En **Galería**: Si `exists: false`, muestra icono `link_off` grande.
+1.  Ve a tu proyecto en Railway.
+2.  Haz clic en el servicio **backend**.
+3.  Ve a la pestaña **Volumes**.
+4.  Haz clic en **Add Volume** (o `Create`).
+5.  Configura el montaje:
+    - **Mount Path**: `/app/backend/uploads`
+6.  **Redeploy** el servicio.
 
-**Lógica de Interacción (`openPreview`)**:
-```javascript
-// check existence (UX resilience)
-if (doc.has_attachment && doc.archivo?.exists === false) {
-     showMissingFileToast();
-     return;
-}
-```
-Esto bloquea el intento de abrir el `iframe` o `img` que daría 404.
-
-**UX/Feedback**:
-Se añade `showMissingFileToast()` que muestra un mensaje flotante:
-> "Archivo no disponible. Este documento no existe en el disco local."
+> **Nota**: Si Railway despliega desde la raíz del repo (monorepo), el path podría ser `/app/backend/uploads`. Si la raíz del servicio es backend, podría ser `/app/uploads`. Verifica el "Working Directory" en los settings. **Lo más seguro es `/app/backend/uploads`** basado en la estructura estándar.
 
 ## 2) Validación
+1.  **Subida**: Sube un nuevo documento (Factura o Gasto) desde el Frontend.
+2.  **Verificación**: Abre el preview. Debería funcionar.
+3.  **Persistencia**:
+    - Haz un cambio trivial o redeploy forzado en Railway.
+    - Vuelve a abrir el preview del **mismo** documento.
+    - **Resultado esperado**: El preview carga correctamente (200 OK) porque el archivo está en el volumen persistente.
 
-### Caso 1: Documento Subido en LOCAL (Nuevo)
-- **Acción**: Subir factura desde "Ingresar Gasto".
-- **Resultado**: El archivo se guarda en `backend/uploads/...`.
-- **Backend**: `resolveFilePath` devuelve path válido -> `exists: true`.
-- **Frontend**: Muestra miniatura y permite previsualizar.
+## 3) Estado final
+- **DEV**: **OK** (Pendiente de montar Volume).
+- **PROD**: **OK** (El cambio de código es compatible con el despliegue actual, aunque se recomienda montar Volume en PROD también o migrar a S3).
 
-### Caso 2: Documento existente en DB remota pero NO en disco local
-- **Acción**: Ir a Biblioteca y buscar factura antigua (ID 110).
-- **Resultado**: Backend no encuentra archivo en disco -> `exists: false`.
-- **Frontend**:
-  - Icono cambia a "Enlace Roto" rojo.
-  - Al hacer click, NO se abre modal negro.
-  - Aparece Toast "Archivo no disponible".
-- **Consola**: 0 errores 404 (porque no se intenta cargar la imagen/pdf).
-
----
-
-## 3) Recomendación de Arquitectura (Storage Compartido)
-
-Para solucionar el problema de raíz y permitir ver archivos de credos en PROD desde LOCAL (y viceversa), se recomienda:
-
-**Estrategia: Almacenamiento S3 Compatible (Cloudflare R2)**
-Por qué R2: Coste de egreso $0 (ideal para previews masivos).
-
-**Plan de Acción:**
-1.  **Infra**: Crear Bucket `finsaas-storage`.
-2.  **Backend**:
-    - Instalar `@aws-sdk/client-s3`.
-    - Configurar cliente S3 apuntando a R2.
-    - Reemplazar `multer.diskStorage` por `multer-s3` o subida manual buffer a S3.
-3.  **Migración**: Script para subir todo `backend/uploads` actual al bucket.
-4.  **Servir**:
-    - El endpoint `serveArchivo` redirige (302) a URL firmada (Presigned URL) o hace pipe del stream S3 -> Cliente.
-
-Con esto, `fs.existsSync` desaparece y se reemplaza por ver si tenemos `storage_key` válida. Todos los entornos "verían" los mismos archivos.
+## 4) Recomendación final
+- **A Corto Plazo (DEV)**: Mantener el Volume. Es barato y soluciona el problema de inmediato.
+- **A Largo Plazo**: Migrar a **AWS S3** o **Cloudflare R2** para desacoplar el almacenamiento de la ejecución, permitiendo escalado horizontal (múltiples instancias de backend) sin problemas de sincronización de archivos.
