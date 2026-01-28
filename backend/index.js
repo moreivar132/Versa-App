@@ -53,38 +53,20 @@ console.log('   VERSA BACKEND - Modular V2 (with Contabilidad)   ');
 console.log('---------------------------------------------------');
 
 // --- Middlewares ---
-// --- Middlewares ---
-const allowedOrigins = [
-  'https://versa-app.netlify.app',
-  'https://versa-app-dev.netlify.app', // Adding Dev preview if needed
-  'https://versa-app.up.railway.app',
-  'http://localhost:5173',
-  'http://localhost:3000'
-];
-
 const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    // Check allowlist or Netlify dynamic previews
-    if (allowedOrigins.includes(origin) || origin.endsWith('.netlify.app')) {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-empresa-id', 'x-tenant-id'],
-  credentials: true,
-  optionsSuccessStatus: 204
+  origin: [
+    'https://versa-app.netlify.app',
+    'http://localhost:5173',
+    'https://versa-frontend.netlify.app',
+    'https://versa-app-production.up.railway.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID', 'X-Client-ID'],
+  credentials: true
 };
 
-// Apply CORS globally before any route
 app.use(cors(corsOptions));
-// Explicitly handle Preflight for all routes to prevent Auth middleware interference
-app.options('*', cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight across-the-board
 
 // --- Passport OAuth Initialization ---
 app.use(passport.initialize());
