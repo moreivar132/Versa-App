@@ -309,7 +309,7 @@ async function list(req, res) {
                     download_url: isIntake
                         ? `/api/contabilidad/documentos/intake/${row.intake_id}/archivo`
                         : `/api/contabilidad/documentos/${row.id}/archivo`,
-                    exists: !!resolveFilePath(storageKey, fileUrl)
+                    exists: !!resolveFilePath(storageKey, fileUrl, true) // true for quiet mode
                 } : null
             };
         });
@@ -468,10 +468,12 @@ async function serveIntakeArchivo(req, res) {
 /**
  * Helper to resolve file path on disk
  */
-function resolveFilePath(storageKey, fileUrl) {
+function resolveFilePath(storageKey, fileUrl, quiet = false) {
     let filePath = null;
 
-    console.log('[Documentos] DEBUG resolveFilePath:', { storageKey, fileUrl, UPLOADS_ROOT, cwd: process.cwd() });
+    if (!quiet) {
+        console.log('[Documentos] DEBUG resolveFilePath:', { storageKey, fileUrl, UPLOADS_ROOT, cwd: process.cwd() });
+    }
 
     // 1. Try storageKey in specific folders (Standardized)
     if (storageKey) {
@@ -481,8 +483,10 @@ function resolveFilePath(storageKey, fileUrl) {
         const egresosExists = fs.existsSync(egresosPath);
         const contabExists = fs.existsSync(contabPath);
 
-        console.log(`[Documentos] Checking egresos: ${egresosPath} (${egresosExists})`);
-        console.log(`[Documentos] Checking contabilidad: ${contabPath} (${contabExists})`);
+        if (!quiet) {
+            console.log(`[Documentos] Checking egresos: ${egresosPath} (${egresosExists})`);
+            console.log(`[Documentos] Checking contabilidad: ${contabPath} (${contabExists})`);
+        }
 
         if (egresosExists) {
             filePath = egresosPath;
@@ -502,11 +506,19 @@ function resolveFilePath(storageKey, fileUrl) {
 
         const derivedPath = path.join(UPLOADS_ROOT, cleanUrl);
         const derivedExists = fs.existsSync(derivedPath);
-        console.log(`[Documentos] Checking derived path: ${derivedPath} (${derivedExists})`);
+
+        if (!quiet) {
+            console.log(`[Documentos] Checking derived path: ${derivedPath} (${derivedExists})`);
+        }
 
         if (derivedExists) {
             filePath = derivedPath;
         }
+    }
+
+    // 3. If NOT found locally, but we HAVE a Remote Storage URL, consider it "exists virtually"
+    if (!filePath && process.env.REMOTE_STORAGE_URL) {
+        return 'REMOTE_FALLBACK';
     }
 
     return filePath;

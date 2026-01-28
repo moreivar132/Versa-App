@@ -63,7 +63,18 @@ function createApp() {
             }
         },
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-empresa-id', 'x-tenant-id'],
+        allowedHeaders: [
+            'Content-Type',
+            'Authorization',
+            'X-Requested-With',
+            'Accept',
+            'x-empresa-id',
+            'X-Empresa-Id',
+            'x-tenant-id',
+            'X-Tenant-Id',
+            'x-client-id',
+            'X-Client-ID'
+        ],
         credentials: true,
         optionsSuccessStatus: 200
     };

@@ -60,9 +60,21 @@ const corsOptions = {
     'https://versa-frontend.netlify.app',
     'https://versa-app-production.up.railway.app'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID', 'X-Client-ID'],
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'x-empresa-id',
+    'X-Empresa-Id',
+    'x-tenant-id',
+    'X-Tenant-Id',
+    'x-client-id',
+    'X-Client-ID'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
 };
 
 app.use(cors(corsOptions));
