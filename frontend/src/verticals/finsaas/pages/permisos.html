@@ -150,6 +150,15 @@
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Acceso a
                         Empresas</label>
+
+                    <!-- Search Bar -->
+                    <div class="relative mb-2">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+                        <input type="text" id="empresa-search" placeholder="Filtrar empresas..."
+                            class="w-full pl-9 pr-4 py-2 bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/50 transition-all">
+                    </div>
+
                     <div class="bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-[#25381e] rounded-xl p-4 max-h-48 overflow-y-auto space-y-2"
                         id="edit-empresas-list">
                         <!-- Checkboxes populated via JS -->
@@ -178,7 +187,6 @@
         import { getSession, requireAuth, getToken, fetchWithAuth } from '/auth.js';
         import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
-        // === CONFIGURACIÓN DE ROLES ===
         const ROLE_DETAILS = {
             'TENANT_ADMIN': {
                 label: 'Administrador de Organización',
@@ -192,48 +200,48 @@
                     'Aprobar/Rechazar acciones críticas'
                 ]
             },
+            'MANAGER_FINSAAS': {
+                label: 'Manager de Operaciones',
+                icon: 'engineering',
+                description: 'Perfil operativo total sin acceso a administración de usuarios ni validación fiscal sensible.',
+                capabilities: [
+                    'Gestión contable completa (Facturas, Bancos, Caja)',
+                    'Acceso total a Copiloto IA',
+                    'Gestión de Clientes y Empresas',
+                    'Aprobar/Anular transacciones operativas',
+                    'Generar informes y exportar datos',
+                    'Bloqueado: Gestión de usuarios y Roles',
+                    'Bloqueado: Validación de Deducibles Fiscales'
+                ]
+            },
             'ACCOUNTING': {
-                label: 'Contable Senior',
+                label: 'Contable / Asesor',
                 icon: 'account_balance',
                 description: 'Gestión completa de contabilidad, impuestos y tesorería.',
                 capabilities: [
-                    'Crear y editar asientos',
-                    'Gestionar facturas y gastos',
+                    'Gestionar facturas y gastos (OCR)',
                     'Presentar impuestos (Modelos)',
-                    'Conciliación bancaria',
-                    'Ver reportes financieros'
+                    'Conciliación bancaria y caja',
+                    'Generar balances y libros',
+                    'Asesoría fiscal avanzada'
                 ]
             },
             'ADMINISTRADOR': { // Alias legacy
-                label: 'Administrador',
+                label: 'Administrador Senior',
                 icon: 'verified_user',
-                description: 'Administrador general con acceso amplio.',
-                capabilities: ['Gestión general del sistema', 'Ver reportes', 'Gestionar operativa']
+                description: 'Administrador general con acceso total a todas las herramientas del tenant.',
+                capabilities: [
+                    'Control total de la organización',
+                    'Gestión de seguridad y roles',
+                    'Acceso a auditoría completa',
+                    'Gestión de facturación propia'
+                ]
             },
-            'CONTADOR': {
-                label: 'Contable',
-                icon: 'calculate',
-                description: 'Gestión del día a día contable.',
-                capabilities: ['Registrar facturas', 'Conciliar bancos', 'Ver libros contables']
-            },
-            'OPERATIONS_MANAGER': {
-                label: 'Gerente de Operaciones',
-                icon: 'manage_history',
-                description: 'Supervisión de operaciones no contables.',
-                capabilities: ['Ver dashboard operativo', 'Gestionar inventario', 'Ver ventas']
-            },
-            'VIEWER': {
-                label: 'Visualizador',
-                icon: 'visibility',
-                description: 'Acceso de solo lectura para auditoría o consulta.',
-                capabilities: ['Ver dashboards', 'Ver facturas (sin editar)', 'Exportar reportes']
-            },
-            // Fallback para roles no definidos explícitamente
             'DEFAULT': {
-                label: 'Usuario',
+                label: 'Usuario Estándar',
                 icon: 'person',
-                description: 'Rol estándar del sistema.',
-                capabilities: ['Acceso básico según asignación']
+                description: 'Acceso restringido según asignación manual.',
+                capabilities: ['Consulta de datos permitidos', 'Acceso básico']
             }
         };
 
@@ -277,7 +285,21 @@
 
             // Setup Role Change Listener for Modal
             document.getElementById('edit-role-select').addEventListener('change', (e) => {
-                updateRoleInfoCard(e.target.options[e.target.selectedIndex].text); // Pass the raw name/code to lookup
+                updateRoleInfoCard();
+            });
+
+            // Setup Empresa Search Listener
+            document.getElementById('empresa-search').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const labels = document.querySelectorAll('#edit-empresas-list label');
+                labels.forEach(label => {
+                    const text = label.textContent.toLowerCase();
+                    if (text.includes(term)) {
+                        label.classList.remove('hidden');
+                    } else {
+                        label.classList.add('hidden');
+                    }
+                });
             });
         }
 

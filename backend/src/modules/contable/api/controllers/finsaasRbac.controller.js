@@ -78,6 +78,8 @@ async function listRoles(req, res) {
             SELECT id, nombre, COALESCE(display_name, nombre) as display_name, scope
             FROM rol
             WHERE (tenant_id = $1 OR tenant_id IS NULL OR scope = 'global')
+              -- Exclude Taller specific roles from FinSaaS view
+              AND nombre NOT IN ('MECANICO', 'VENDEDOR', 'RECEPCIONISTA', 'INVENTORY_MANAGER', 'FLEET_MANAGER')
             ORDER BY nombre
         `, [tenantId]);
 
