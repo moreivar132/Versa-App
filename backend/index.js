@@ -1,8 +1,25 @@
 // index.js
+console.log('--- STARTING VERSA BACKEND V1.2.0 (HOTFIX MOUNT) ---');
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config();
 }
+
+// --- PROD SAFEGUARDS : Environment Validation ---
+if (process.env.NODE_ENV === 'production') {
+  const requiredVars = ['NODE_ENV', 'DATABASE_URL'];
+  const missing = requiredVars.filter(v => !process.env[v]);
+
+  if (missing.length > 0) {
+    console.error('CRITICAL: Missing required environment variables in PRODUCTION:', missing);
+    console.error('Aborting startup to prevent ambiguous state.');
+    process.exit(1);
+  }
+}
 const express = require('express');
+console.log('[Startup] entry:', __filename);
+console.log('[Startup] node:', process.version);
+console.log('[Startup] NODE_ENV:', process.env.NODE_ENV);
+console.log('[Startup] express_version:', require('express/package.json').version);
 const cors = require('cors');
 const path = require('path');
 const pool = require('./db');
@@ -36,7 +53,43 @@ console.log('   VERSA BACKEND - Modular V2 (with Contabilidad)   ');
 console.log('---------------------------------------------------');
 
 // --- Middlewares ---
-app.use(cors());
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://versa-app.netlify.app',
+      'https://versadev.netlify.app',
+      'https://versa-frontend.netlify.app',
+      'https://versa-app-production.up.railway.app'
+    ];
+    if (allowedOrigins.includes(origin) || origin.endsWith('.netlify.app')) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'x-empresa-id',
+    'X-Empresa-Id',
+    'x-tenant-id',
+    'X-Tenant-Id',
+    'x-client-id',
+    'X-Client-ID'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight across-the-board
 
 // --- Passport OAuth Initialization ---
 app.use(passport.initialize());
@@ -155,10 +208,18 @@ const uploadsInterceptor = (req, res, next) => {
     return next();
   }
 
-  const remoteUrl = (process.env.REMOTE_STORAGE_URL || 'https://versa-app-dev.up.railway.app').replace(/\/$/, '');
-  const redirectUrl = `${remoteUrl}${req.baseUrl}${req.path}`;
-  console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
-  res.redirect(redirectUrl);
+  // STRICT PROD: No defaults to dev.
+  const remoteUrl = process.env.REMOTE_STORAGE_URL ? process.env.REMOTE_STORAGE_URL.replace(/\/$/, '') : null;
+
+  if (remoteUrl) {
+    const redirectUrl = `${remoteUrl}${req.baseUrl}${req.path}`;
+    console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
+    return res.redirect(redirectUrl);
+  }
+
+  // No fallback to Dev. Fail explicitly.
+  console.warn(`[Uploads] File not found locally: ${localFilePath}`);
+  return res.status(404).send('File not found');
 };
 
 app.use('/uploads', uploadsInterceptor);
@@ -169,7 +230,14 @@ app.use('/uploads', express.static(uploadsPath));
 
 
 // Health check / DB status
-app.get('/api/health', (req, res) => res.json({ ok: true, timestamp: new Date().toISOString() }));
+app.get('/api/health', (req, res) => {
+  res.setHeader('X-Build-Id', process.env.RAILWAY_GIT_COMMIT_SHA || 'hotfix-cors-manual');
+  res.json({
+    ok: true,
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV
+  });
+});
 app.get('/api/db-test', async (req, res) => {
   try {
     const result = await pool.query('SELECT NOW() AS now');

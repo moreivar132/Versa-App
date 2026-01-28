@@ -1,40 +1,15 @@
 {
-    "name": "versa-app-monorepo",
+    "name": "versa-app-all",
     "version": "1.0.0",
     "private": true,
-    "description": "VERSA Manager - Software para Talleres y Flotas",
-    "workspaces": [
-        "frontend",
-        "backend"
-    ],
+    "description": "VERSA Manager - Root project management",
     "scripts": {
-        "install:frontend": "npm install --workspace=frontend",
-        "install:backend": "npm install --workspace=backend",
-        "lint:frontend": "npm run lint --workspace=frontend",
-        "lint:backend": "npm run lint --workspace=backend",
-        "lint": "npm run lint:frontend && npm run lint:backend",
-        "build:frontend": "npm run build --workspace=frontend",
-        "build": "npm run install:frontend && npm run build:frontend && npm run install:backend",
-        "start": "npm start --workspace=backend",
-        "dev:frontend": "npm run dev --workspace=frontend",
-        "dev:backend": "npm run dev --workspace=backend",
-        "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
-        "test": "npm test --workspace=backend",
-        "test:watch": "npm run test:watch --workspace=backend",
-        "test:critical": "npm run test:critical --workspace=backend",
-        "test:coverage": "npm run test:coverage --workspace=backend",
-        "test:unit": "npm run test:unit --workspace=backend",
-        "test:integration": "npm run test:integration --workspace=backend"
+        "install:all": "cd frontend && npm install && cd ../backend && npm install",
+        "dev": "concurrently \"cd frontend && npm run dev\" \"cd backend && npm run dev\"",
+        "test": "cd backend && npm test",
+        "lint": "cd frontend && npm run lint && cd ../backend && npm run lint"
     },
-    "engines": {
-        "node": ">=18.0.0",
-        "npm": ">=9.0.0"
-    },
-    "author": "VERSA Team",
-    "license": "UNLICENSED",
     "devDependencies": {
-        "@eslint/js": "^9.39.2",
-        "eslint": "^9.39.2",
-        "globals": "^17.0.0"
+        "concurrently": "^8.2.2"
     }
 }

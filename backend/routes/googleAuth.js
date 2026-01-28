@@ -67,8 +67,20 @@ function consumeStateToken(token) {
 /**
  * Get frontend base URL for redirects
  */
+/**
+ * Get frontend base URL for redirects
+ */
 function getFrontendBaseUrl() {
-    return process.env.FRONTEND_BASE_URL || 'http://localhost:5173';
+    if (process.env.FRONTEND_BASE_URL) {
+        return process.env.FRONTEND_BASE_URL.replace(/\/$/, '');
+    }
+
+    // In production, do not default to localhost
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('CRITICAL: FRONTEND_BASE_URL not set in Production.');
+    }
+
+    return 'http://localhost:5173';
 }
 
 /**
