@@ -46,7 +46,30 @@ function createApp() {
     const app = express();
 
     // --- Middlewares ---
-    app.use(cors());
+    // --- Middlewares ---
+    const allowedOrigins = [
+        'https://versa-app.netlify.app',
+        'http://localhost:5173',
+        'http://localhost:3000'
+    ];
+
+    const corsOptions = {
+        origin: function (origin, callback) {
+            if (!origin) return callback(null, true);
+            if (allowedOrigins.includes(origin) || origin.endsWith('.netlify.app')) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'x-empresa-id', 'x-tenant-id'],
+        credentials: true,
+        optionsSuccessStatus: 200
+    };
+
+    app.use(cors(corsOptions));
+    // app.options('*', cors(corsOptions)); // Removed to prevent Express 5 crash
 
     // --- API DOCUMENTATION (Swagger) ---
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -158,10 +181,20 @@ function createApp() {
             return next();
         }
 
-        const remoteUrl = (process.env.REMOTE_STORAGE_URL || 'https://versa-app-dev.up.railway.app').replace(/\/$/, '');
-        const redirectUrl = `${remoteUrl}${req.baseUrl}${req.path}`;
-        console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
-        res.redirect(redirectUrl);
+        // STRICT PROD: No defaults to dev.
+        const remoteUrl = process.env.REMOTE_STORAGE_URL ? process.env.REMOTE_STORAGE_URL.replace(/\/$/, '') : null;
+
+        if (remoteUrl) {
+            const redirectUrl = `${remoteUrl}${req.baseUrl}${req.path}`;
+            console.log(`[Uploads] Missing local file: ${localFilePath}, redirecting to: ${redirectUrl}`);
+            return res.redirect(redirectUrl);
+        }
+
+        // No fallback to Dev. Fail explicitly.
+        // If file is missing locally and no REMOTE_STORAGE defined, it's a 404.
+        // We do NOT call next() because strict mode is requested (or we log and 404).
+        console.warn(`[Uploads] File not found locally: ${localFilePath}`);
+        return res.status(404).send('File not found');
     };
 
     app.use('/uploads', uploadsInterceptor);
