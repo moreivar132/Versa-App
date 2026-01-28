@@ -119,15 +119,7 @@
                         </select>
                     </div>
 
-                    <!-- Empresa Selector -->
-                    <div
-                        class="flex items-center gap-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl px-4 py-2 shadow-sm">
-                        <span class="material-symbols-outlined text-gray-400 text-[18px]">business</span>
-                        <select id="empresa-selector"
-                            class="bg-transparent text-sm font-bold focus:outline-none min-w-[150px] dark:text-white">
-                            <option value="">Cargando empresas...</option>
-                        </select>
-                    </div>
+                    <!-- Global Selector in Topbar handles this now -->
                 </div>
             </div>
 
@@ -201,37 +193,10 @@
         }
 
         async function loadEmpresas() {
-            try {
-                const res = await fetch(buildApiUrl('/api/contabilidad/empresas'), {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-                const { data } = await res.json();
-                const select = document.getElementById('empresa-selector');
-                select.innerHTML = '';
-
-                data.items.forEach(emp => {
-                    const opt = document.createElement('option');
-                    opt.value = emp.id;
-                    opt.textContent = emp.nombre_legal || emp.nombre_comercial;
-                    if (emp.id == currentEmpresaId) opt.selected = true;
-                    select.appendChild(opt);
-                });
-
-                if (!currentEmpresaId && data.items.length > 0) {
-                    currentEmpresaId = data.items[0].id;
-                    localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
-                }
-            } catch (e) {
-                console.error('Error cargando empresas:', e);
-            }
+            currentEmpresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
         }
 
         function setupEventListeners() {
-            document.getElementById('empresa-selector').addEventListener('change', (e) => {
-                currentEmpresaId = e.target.value;
-                localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
-                loadInsights();
-            });
 
             document.getElementById('period-selector').addEventListener('change', () => {
                 loadInsights();

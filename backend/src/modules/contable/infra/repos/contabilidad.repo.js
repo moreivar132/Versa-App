@@ -39,12 +39,15 @@ class ContabilidadRepository {
                 c.nif_cif as contacto_nif,
                 cat.nombre as categoria_nombre,
                 s.nombre as sucursal_nombre,
+                e.nombre_legal as empresa_nombre,
+                e.nombre_comercial as empresa_comercial,
                 (SELECT COUNT(*) FROM contabilidad_factura_archivo WHERE id_factura = f.id) as archivos_count,
                 (SELECT COUNT(*) FROM contabilidad_pago WHERE id_factura = f.id) as pagos_count
             FROM contabilidad_factura f
             LEFT JOIN contabilidad_contacto c ON f.id_contacto = c.id
             LEFT JOIN contable_category cat ON f.id_categoria = cat.id
             LEFT JOIN sucursal s ON f.id_sucursal = s.id
+            LEFT JOIN accounting_empresa e ON f.id_empresa = e.id
             WHERE f.id_tenant = $1 AND f.deleted_at IS NULL
         `;
         const params = [ctx.tenantId];

@@ -44,14 +44,7 @@
                 class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-8 shadow-sm">
                 <form id="config-form" onsubmit="saveConfig(event)">
 
-                    <div
-                        class="mb-8 p-4 bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg">
-                        <label class="block text-sm font-bold mb-2">Configurar para:</label>
-                        <select id="empresa-selector" onchange="loadConfig()"
-                            class="w-full bg-white dark:bg-surface-dark border border-gray-300 dark:border-[#25381e] rounded-lg p-2.5 text-sm">
-                            <option value="">Configuración General (Por defecto)</option>
-                        </select>
-                    </div>
+                    <!-- Global Selector in Topbar handles this now -->
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
@@ -114,33 +107,11 @@
         }
 
         async function loadCompanies() {
-            try {
-                const response = await fetch(`${getApiBaseUrl()}/api/contabilidad/empresas?tenantId=${currentUser.id_tenant}`, {
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('versa_session_v1') ? JSON.parse(localStorage.getItem('versa_session_v1')).token : ''}`
-                    }
-                });
-
-                if (response.ok) {
-                    const result = await response.json();
-                    const items = result.data?.items || result.data || [];
-                    const selector = document.getElementById('empresa-selector');
-
-                    items.forEach(emp => {
-                        const opt = document.createElement('option');
-                        opt.value = emp.id;
-                        opt.textContent = emp.nombre_legal || emp.nombre_comercial || `Empresa #${emp.id}`;
-                        selector.appendChild(opt);
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading companies:', error);
-            }
+            // Already handled by global topbar
         }
 
         window.loadConfig = async function () {
-            const selector = document.getElementById('empresa-selector');
-            const empresaId = selector ? selector.value : '';
+            const empresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa') || '';
 
             // Reset fields
             document.getElementById('cfg-color').value = '#46ec13'; // default
@@ -254,7 +225,7 @@
 
             const color = document.getElementById('cfg-color').value;
             const footerText = document.getElementById('cfg-footer').value;
-            const empresaId = document.getElementById('empresa-selector').value;
+            const empresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
 
             const payload = {
                 tenantId: currentUser.id_tenant,
