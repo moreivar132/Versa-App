@@ -209,7 +209,7 @@ async function create(req, res) {
         if (error.code === '23505') { // Unique violation
             return res.status(400).json({
                 ok: false,
-                error: 'Ya existe una empresa con ese NIF/CIF en este tenant'
+                error: 'Ya existe una empresa con ese NIF/CIF y Nombre Comercial en este tenant'
             });
         }
 

@@ -130,52 +130,49 @@ async function findOrCreateMarketplaceCustomer(googleProfile) {
     }
 
     // 3. Create new global customer (NO TENANT - B2C)
-    const client = await systemDb.connect();
+    // 3. Create new global customer (NO TENANT - B2C)
     try {
-        await client.query('BEGIN');
+        const customer = await systemDb.txWithRLS(async (tx) => {
+            // Create clientefinal WITHOUT tenant (id_tenant = NULL for global customers)
+            const clienteResult = await tx.query(
+                `INSERT INTO clientefinal (nombre, email, telefono, id_tenant)
+                 VALUES ($1, $2, NULL, NULL)
+                 RETURNING id`,
+                [name || 'Usuario Google', normalizedEmail]
+            );
+            const clienteId = clienteResult.rows[0].id;
 
-        // Create clientefinal WITHOUT tenant (id_tenant = NULL for global customers)
-        const clienteResult = await client.query(
-            `INSERT INTO clientefinal (nombre, email, telefono, id_tenant)
-             VALUES ($1, $2, NULL, NULL)
-             RETURNING id`,
-            [name || 'Usuario Google', normalizedEmail]
-        );
-        const clienteId = clienteResult.rows[0].id;
+            // Create clientefinal_auth (no password for OAuth-only users)
+            const authResult = await tx.query(
+                `INSERT INTO clientefinal_auth (id_cliente, email, password_hash, is_google_auth)
+                 VALUES ($1, $2, NULL, true)
+                 RETURNING id`,
+                [clienteId, normalizedEmail]
+            );
+            const authId = authResult.rows[0].id;
 
-        // Create clientefinal_auth (no password for OAuth-only users)
-        const authResult = await client.query(
-            `INSERT INTO clientefinal_auth (id_cliente, email, password_hash, is_google_auth)
-             VALUES ($1, $2, NULL, true)
-             RETURNING id`,
-            [clienteId, normalizedEmail]
-        );
-        const authId = authResult.rows[0].id;
+            // Create marketplace_auth_identity link
+            await tx.query(
+                `INSERT INTO marketplace_auth_identity 
+                 (customer_id, provider, provider_subject, email, name, avatar_url)
+                 VALUES ($1, 'google', $2, $3, $4, $5)`,
+                [clienteId, providerId, normalizedEmail, name, avatar]
+            );
 
-        // Create marketplace_auth_identity link
-        await client.query(
-            `INSERT INTO marketplace_auth_identity 
-             (customer_id, provider, provider_subject, email, name, avatar_url)
-             VALUES ($1, 'google', $2, $3, $4, $5)`,
-            [clienteId, providerId, normalizedEmail, name, avatar]
-        );
+            process.nextTick(() => console.log(`[MarketplaceAuth] Created new global customer: ${normalizedEmail} (id: ${clienteId})`));
 
-        await client.query('COMMIT');
+            return {
+                id: authId,
+                id_cliente: clienteId,
+                email: normalizedEmail,
+                nombre: name || 'Usuario Google',
+                isNew: true
+            };
+        });
 
-        console.log(`[MarketplaceAuth] Created new global customer: ${normalizedEmail} (id: ${clienteId})`);
-
-        return {
-            id: authId,
-            id_cliente: clienteId,
-            email: normalizedEmail,
-            nombre: name || 'Usuario Google',
-            isNew: true
-        };
+        return customer;
     } catch (error) {
-        await client.query('ROLLBACK');
         throw error;
-    } finally {
-        client.release();
     }
 }
 
