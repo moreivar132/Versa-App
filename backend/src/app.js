@@ -49,6 +49,7 @@ function createApp() {
     // --- Middlewares ---
     const allowedOrigins = [
         'https://versa-app.netlify.app',
+        'https://versadev.netlify.app',
         'http://localhost:5173',
         'http://localhost:3000'
     ];
