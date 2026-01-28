@@ -416,7 +416,18 @@
                     data.data.items.forEach(empresa => {
                         const option = document.createElement('option');
                         option.value = empresa.id;
-                        option.textContent = empresa.nombre_legal || empresa.nombre_comercial;
+
+                        const commercial = empresa.nombre_comercial;
+                        const legal = empresa.nombre_legal;
+
+                        let displayName = legal;
+                        if (commercial && commercial !== legal) {
+                            displayName = `${commercial} (${legal})`;
+                        } else if (commercial) {
+                            displayName = commercial;
+                        }
+
+                        option.textContent = displayName;
                         select.appendChild(option);
                     });
                 }

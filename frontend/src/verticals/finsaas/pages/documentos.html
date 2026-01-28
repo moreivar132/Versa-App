@@ -318,14 +318,7 @@
             <!-- Year & Quarter Selector -->
             <div class="flex flex-wrap items-center gap-4">
                 <!-- Empresa Selector -->
-                <div
-                    class="flex items-center gap-2 bg-gray-50 dark:bg-surface-dark-light px-3 py-2 rounded-lg border border-gray-200 dark:border-transparent">
-                    <span class="material-symbols-outlined text-gray-500 text-[18px]">business</span>
-                    <select id="empresa-selector"
-                        class="bg-transparent text-sm text-slate-700 dark:text-white focus:outline-none min-w-[150px]">
-                        <option value="">Cargando...</option>
-                    </select>
-                </div>
+                <!-- Global Selector in Topbar handles this now -->
 
                 <div class="h-6 w-px bg-gray-200 dark:bg-[#25381e]"></div>
 
@@ -638,40 +631,8 @@
         }
 
         async function loadEmpresas() {
-            try {
-                const res = await apiGet('/api/contabilidad/empresas');
-                const select = document.getElementById('empresa-selector');
-                select.innerHTML = '';
-
-                // Add "All empresas" option first
-                const allOpt = document.createElement('option');
-                allOpt.value = '';
-                allOpt.textContent = '📁 Todas las empresas';
-                select.appendChild(allOpt);
-
-                if (res.data && res.data.items) {
-                    res.data.items.forEach(emp => {
-                        const opt = document.createElement('option');
-                        opt.value = emp.id;
-                        opt.textContent = emp.nombre_legal || emp.nombre_comercial || 'Sin nombre';
-                        select.appendChild(opt);
-                    });
-
-                    // Default to "all empresas" to show all documents
-                    currentEmpresaId = '';
-                    select.value = '';
-
-                    loadDocuments(0);
-
-                    select.addEventListener('change', (e) => {
-                        currentEmpresaId = e.target.value;
-                        localStorage.setItem('filsaas_current_empresa', currentEmpresaId);
-                        loadDocuments(0);
-                    });
-                } else {
-                    select.innerHTML = '<option value="">Sin empresas</option>';
-                }
-            } catch (e) { console.error('[Documentos] Error loading empresas:', e); }
+            currentEmpresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa') || '';
+            loadDocuments(0);
         }
 
         async function loadDocuments(page = 0) {
@@ -762,6 +723,7 @@
                             <div class="text-xs font-semibold py-0.5 px-1.5 rounded bg-slate-100 dark:bg-surface-dark-light inline-block">
                                 ${doc.empresa_nombre || '-'}
                             </div>
+                            <div class="text-[10px] text-gray-400 italic mt-0.5">${doc.empresa_comercial || ''}</div>
                         </td>
                         <td class="text-gray-500 dark:text-gray-400">${doc.contacto?.nombre || '-'}</td>
                         <td><span class="type-badge type-${doc.tipo}">${doc.tipo}</span></td>

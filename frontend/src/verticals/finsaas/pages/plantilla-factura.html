@@ -351,19 +351,20 @@
 
                         document.getElementById('cliente-nombre').textContent = name;
                         document.getElementById('cliente-dir').textContent = address || '-';
-                        document.getElementById('cliente-nif').textContent = 'NIF: ' + nif;
+                        document.getElementById('cliente-nif').textContent = nif ? 'NIF/CIF: ' + nif : 'NIF/CIF: -';
                     }
                 }
                 if (empresaId) {
                     const eRes = await fetch(buildApiUrl(`/api/contabilidad/empresas`), { headers: { 'Authorization': `Bearer ${session?.token}` } });
                     const eData = await eRes.json();
                     const items = eData.data?.items || eData.data || [];
-                    const emp = items.find(x => x.id === empresaId);
+                    const emp = items.find(x => x.id == empresaId);
 
                     if (emp) {
                         document.getElementById('empresa-nombre').textContent = emp.nombre_legal || emp.nombre_comercial;
                         document.getElementById('empresa-dir').textContent = [emp.direccion, emp.codigo_postal, emp.ciudad].filter(Boolean).join('\n');
-                        document.getElementById('empresa-nif').textContent = 'NIF: ' + (emp.nif || '-');
+                        const nifEmpresa = emp.nif_cif || emp.nif || '-';
+                        document.getElementById('empresa-nif').textContent = 'NIF/CIF: ' + nifEmpresa;
                     }
                 }
             } catch (e) { console.error(e); }

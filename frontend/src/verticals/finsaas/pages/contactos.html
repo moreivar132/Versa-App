@@ -168,14 +168,7 @@
                 <!-- Filters -->
                 <div class="p-4 border-b border-gray-200 dark:border-[#25381e] flex flex-wrap items-center gap-4">
                     <!-- Empresa Selector -->
-                    <div
-                        class="flex items-center gap-2 bg-gray-50 dark:bg-surface-dark-light px-3 py-2 rounded-lg border border-gray-200 dark:border-transparent">
-                        <span class="material-symbols-outlined text-gray-500 text-[18px]">business</span>
-                        <select id="empresa-selector"
-                            class="bg-transparent text-sm text-slate-700 dark:text-white focus:outline-none min-w-[150px]">
-                            <option value="">Cargando...</option>
-                        </select>
-                    </div>
+                    <!-- Global Selector in Topbar handles this now -->
 
                     <div class="h-6 w-px bg-gray-200 dark:bg-[#25381e]"></div>
 
@@ -390,50 +383,8 @@
         function debounce(fn, ms) { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), ms); }; }
 
         async function loadEmpresas() {
-            try {
-                const res = await apiGet('/api/contabilidad/empresas');
-                const select = document.getElementById('empresa-selector');
-                select.innerHTML = '';
-
-                if (res.data && res.data.items && res.data.items.length > 0) {
-                    res.data.items.forEach(emp => {
-                        const opt = document.createElement('option');
-                        opt.value = emp.id;
-                        opt.textContent = emp.nombre_legal || emp.nombre_comercial || 'Sin nombre';
-                        select.appendChild(opt);
-                    });
-
-                    // Restaurar selección guardada o usar primera empresa
-                    const stored = localStorage.getItem('finsaas_current_empresa');
-                    if (stored && res.data.items.find(e => e.id == stored)) {
-                        currentEmpresaId = stored;
-                        select.value = stored;
-                    } else {
-                        // Por defecto, usar primera empresa
-                        currentEmpresaId = res.data.items[0].id;
-                        select.value = currentEmpresaId;
-                        localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
-                    }
-                } else {
-                    select.innerHTML = '<option value="">No hay empresas - Crear una primero</option>';
-                    currentEmpresaId = null;
-                }
-
-                // SIEMPRE cargar contactos
-                loadContactos(0);
-
-                select.addEventListener('change', (e) => {
-                    currentEmpresaId = e.target.value || null;
-                    if (currentEmpresaId) {
-                        localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
-                    }
-                    loadContactos(0);
-                });
-            } catch (e) {
-                console.error('[FinSaaS] Error cargando empresas:', e);
-                // Aún así intentar cargar contactos
-                loadContactos(0);
-            }
+            currentEmpresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
+            loadContactos(0);
         }
 
         async function loadContactos(page = 0) {

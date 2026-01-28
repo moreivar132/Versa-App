@@ -155,7 +155,7 @@
                     <table class="w-full glass-table text-left border-collapse">
                         <thead class="bg-gray-50 dark:bg-surface-dark-light sticky top-0 z-10">
                             <tr>
-                                <th>Nombre Legal</th>
+                                <th>Empresa</th>
                                 <th>NIF / CIF</th>
                                 <th>Email</th>
                                 <th>Ciudad</th>
@@ -416,11 +416,14 @@
                 const tbody = document.getElementById('empresas-list');
 
                 if (!Array.isArray(items) || items.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="p-8 text-center text-gray-500">No tienes empresas registradas</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-gray-500">No tienes empresas registradas</td></tr>';
                 } else {
                     tbody.innerHTML = items.map(e => `
                         <tr class="cursor-pointer hover:bg-gray-50 dark:hover:bg-surface-dark-light/50 transition-colors group" onclick="editEmpresa(${e.id})">
-                            <td class="font-bold text-slate-900 dark:text-white">${e.nombre_legal || e.nombre || 'Sin nombre'}</td>
+                            <td>
+                                <div class="font-bold text-slate-900 dark:text-white uppercase">${e.nombre_legal || e.nombre || 'Sin nombre'}</div>
+                                <div class="text-xs text-gray-500 font-medium">${e.nombre_comercial ? '✨ ' + e.nombre_comercial : ''}</div>
+                            </td>
                             <td class="text-gray-500 dark:text-gray-400 font-mono text-xs">${e.nif_cif || '-'}</td>
                             <td class="text-gray-500 dark:text-gray-400 text-xs">${e.email || '-'}</td>
                             <td class="text-gray-500 dark:text-gray-400">${e.ciudad || '-'}</td>

@@ -118,354 +118,333 @@
                     <h2 class="text-lg font-bold mb-4">2. Configuración</h2>
 
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Empresa
-                            Destino</label>
-                        <select id="empresa-selector"
-                            class="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
-                            <option value="">Cargando empresas...</option>
-                        </select>
-                        <p class="text-[10px] text-gray-500 mt-1">Los movimientos se verán en la Caja de esta empresa.
-                        </p>
-                    </div>
+                        <!-- Global Selector in Topbar handles this now -->
 
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cuenta Bancaria
-                            Destino</label>
-                        <div class="flex gap-2">
-                            <select id="account-select"
-                                class="flex-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
-                                <option value="">Selecciona una cuenta...</option>
-                            </select>
-                            <button id="btn-new-account"
-                                class="px-3 py-2 bg-gray-100 dark:bg-surface-dark-light hover:bg-gray-200 dark:hover:bg-surface-dark-light/80 rounded-lg text-sm font-bold flex items-center gap-1 transition-all">
-                                <span class="material-symbols-outlined text-[18px]">add</span> Nueva
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cuenta
+                                Bancaria
+                                Destino</label>
+                            <div class="flex gap-2">
+                                <select id="account-select"
+                                    class="flex-1 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary outline-none text-slate-900 dark:text-white">
+                                    <option value="">Selecciona una cuenta...</option>
+                                </select>
+                                <button id="btn-new-account"
+                                    class="px-3 py-2 bg-gray-100 dark:bg-surface-dark-light hover:bg-gray-200 dark:hover:bg-surface-dark-light/80 rounded-lg text-sm font-bold flex items-center gap-1 transition-all">
+                                    <span class="material-symbols-outlined text-[18px]">add</span> Nueva
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">Los movimientos se insertarán en esta cuenta.</p>
+                        </div>
+                        <!-- Preview Table -->
+                        <div
+                            class="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-[#25381e] shadow-sm overflow-hidden flex flex-col mt-6">
+                            <div
+                                class="p-6 border-b border-gray-200 dark:border-[#25381e] flex justify-between items-center">
+                                <h3 class="font-bold">Vista Previa (<span id="rows-count">0</span> filas)</h3>
+                                <div class="text-xs text-gray-400">Mostrando primeras 50 filas</div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-50 dark:bg-surface-dark-light text-gray-500">
+                                        <tr>
+                                            <th class="px-6 py-4">Fecha</th>
+                                            <th class="px-6 py-4">Descripción</th>
+                                            <th class="px-6 py-4 text-right">Importe</th>
+                                            <th class="px-6 py-4">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="preview-tbody" class="divide-y divide-gray-200 dark:divide-[#25381e]">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex justify-end gap-3 mt-6 pb-10">
+                            <button id="btn-cancel"
+                                class="px-6 py-3 border border-gray-200 dark:border-[#25381e] rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-all">Cancelar</button>
+                            <button id="btn-commit"
+                                class="px-8 py-3 bg-primary text-background-dark font-extrabold rounded-xl hover:brightness-110 shadow-lg shadow-primary/20 transition-all">
+                                Confirmar Importación
                             </button>
                         </div>
-                        <p class="text-xs text-gray-500 mt-2">Los movimientos se insertarán en esta cuenta.</p>
-                    </div>
-                    <!-- Preview Table -->
-                    <div
-                        class="bg-white dark:bg-surface-dark rounded-2xl border border-gray-200 dark:border-[#25381e] shadow-sm overflow-hidden flex flex-col mt-6">
-                        <div
-                            class="p-6 border-b border-gray-200 dark:border-[#25381e] flex justify-between items-center">
-                            <h3 class="font-bold">Vista Previa (<span id="rows-count">0</span> filas)</h3>
-                            <div class="text-xs text-gray-400">Mostrando primeras 50 filas</div>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm">
-                                <thead class="bg-gray-50 dark:bg-surface-dark-light text-gray-500">
-                                    <tr>
-                                        <th class="px-6 py-4">Fecha</th>
-                                        <th class="px-6 py-4">Descripción</th>
-                                        <th class="px-6 py-4 text-right">Importe</th>
-                                        <th class="px-6 py-4">Estado</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="preview-tbody" class="divide-y divide-gray-200 dark:divide-[#25381e]">
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="flex justify-end gap-3 mt-6 pb-10">
-                        <button id="btn-cancel"
-                            class="px-6 py-3 border border-gray-200 dark:border-[#25381e] rounded-xl font-bold hover:bg-gray-50 dark:hover:bg-surface-dark-light transition-all">Cancelar</button>
-                        <button id="btn-commit"
-                            class="px-8 py-3 bg-primary text-background-dark font-extrabold rounded-xl hover:brightness-110 shadow-lg shadow-primary/20 transition-all">
-                            Confirmar Importación
-                        </button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Modal: Nueva Cuenta -->
-    <div id="modal-account"
-        class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-        <div
-            class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div class="p-6 border-b border-gray-200 dark:border-[#25381e] flex justify-between items-center">
-                <h3 class="text-xl font-bold">Nueva Cuenta Manual</h3>
-                <button onclick="document.getElementById('modal-account').classList.add('hidden')"
-                    class="text-gray-500 hover:text-red-500 transition-colors">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-            </div>
-            <div class="p-6 space-y-4">
-                <div class="mb-4">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Empresa</label>
-                    <select id="acc-empresa"
-                        class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 outline-none">
-                        <option value="">Seleccionar empresa...</option>
-                    </select>
+        <!-- Modal: Nueva Cuenta -->
+        <div id="modal-account"
+            class="fixed inset-0 z-[60] hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div
+                class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div class="p-6 border-b border-gray-200 dark:border-[#25381e] flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Nueva Cuenta Manual</h3>
+                    <button onclick="document.getElementById('modal-account').classList.add('hidden')"
+                        class="text-gray-500 hover:text-red-500 transition-colors">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Nombre de la
-                        Cuenta *</label>
-                    <input type="text" id="acc-name" placeholder="Ej: BBVA Operativa"
-                        class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary outline-none">
-                </div>
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="col-span-1">
+                <div class="p-6 space-y-4">
+                    <div class="mb-4">
                         <label
-                            class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Moneda</label>
-                        <select id="acc-currency"
-                            class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-3 py-2 outline-none">
-                            <option value="EUR">EUR</option>
-                            <option value="USD">USD</option>
-                            <option value="GBP">GBP</option>
+                            class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Empresa</label>
+                        <select id="acc-empresa"
+                            class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 outline-none">
+                            <option value="">Seleccionar empresa...</option>
                         </select>
                     </div>
-                    <div class="col-span-2">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">IBAN
-                            (opcional)</label>
-                        <input type="text" id="acc-iban" placeholder="ES00 0000..."
-                            class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 outline-none">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Nombre de la
+                            Cuenta *</label>
+                        <input type="text" id="acc-name" placeholder="Ej: BBVA Operativa"
+                            class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 focus:ring-1 focus:ring-primary outline-none">
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="col-span-1">
+                            <label
+                                class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Moneda</label>
+                            <select id="acc-currency"
+                                class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-3 py-2 outline-none">
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="GBP">GBP</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">IBAN
+                                (opcional)</label>
+                            <input type="text" id="acc-iban" placeholder="ES00 0000..."
+                                class="w-full bg-gray-50 dark:bg-background-dark border border-gray-200 dark:border-[#25381e] rounded-lg px-4 py-2 outline-none">
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div
-                class="p-6 bg-gray-50 dark:bg-surface-dark-light/30 border-t border-gray-200 dark:border-[#25381e] flex justify-end gap-3">
-                <button onclick="document.getElementById('modal-account').classList.add('hidden')"
-                    class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-slate-900 dark:hover:text-white">Cancelar</button>
-                <button id="btn-save-account"
-                    class="px-6 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 shadow-lg shadow-primary/20 transition-all">Crear
-                    Cuenta</button>
+                <div
+                    class="p-6 bg-gray-50 dark:bg-surface-dark-light/30 border-t border-gray-200 dark:border-[#25381e] flex justify-end gap-3">
+                    <button onclick="document.getElementById('modal-account').classList.add('hidden')"
+                        class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-slate-900 dark:hover:text-white">Cancelar</button>
+                    <button id="btn-save-account"
+                        class="px-6 py-2 bg-primary text-background-dark font-bold rounded-lg hover:brightness-110 shadow-lg shadow-primary/20 transition-all">Crear
+                        Cuenta</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Logic -->
-    <script type="module">
-        import { getToken, requireAuth, buildApiUrl } from '/auth.js';
-        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+        <!-- Logic -->
+        <script type="module">
+            import { getToken, requireAuth, buildApiUrl } from '/auth.js';
+            import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
 
-        let currentImportId = null;
+            let currentImportId = null;
 
-        // --- Helpers ---
-        const api = async (url, method = 'GET', body = null, extraHeaders = {}) => {
-            const token = getToken();
-            const opts = {
-                method,
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    ...extraHeaders
+            // --- Helpers ---
+            const api = async (url, method = 'GET', body = null, extraHeaders = {}) => {
+                const token = getToken();
+                const opts = {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        ...extraHeaders
+                    }
+                };
+                if (body && !(body instanceof FormData)) {
+                    opts.headers['Content-Type'] = 'application/json';
+                    opts.body = JSON.stringify(body);
+                } else if (body instanceof FormData) {
+                    opts.body = body;
                 }
+
+                const res = await fetch(buildApiUrl(url), opts);
+                const json = await res.json();
+                if (!json.ok) throw new Error(json.error || 'API Error');
+                return json;
             };
-            if (body && !(body instanceof FormData)) {
-                opts.headers['Content-Type'] = 'application/json';
-                opts.body = JSON.stringify(body);
-            } else if (body instanceof FormData) {
-                opts.body = body;
+
+            const formatCurrency = (val, cur = 'EUR') => new Intl.NumberFormat('es-ES', { style: 'currency', currency: cur }).format(val);
+
+            // --- Flows ---
+
+            async function handleUpload(file) {
+                const empresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
+
+                if (!empresaId) {
+                    alert('Por favor, selecciona una empresa en la barra superior antes de subir el archivo.');
+                    // Reset file input so user can try again
+                    document.getElementById('file-input').value = '';
+                    return;
+                }
+
+                const fd = new FormData();
+                fd.append('file', file);
+                fd.append('id_empresa', empresaId);
+
+                try {
+                    const res = await api('/api/banking/imports', 'POST', fd, { 'x-empresa-id': empresaId });
+                    currentImportId = res.importId;
+
+                    // Trigger Parse
+                    const parseRes = await api(`/api/banking/imports/${currentImportId}/parse`, 'POST', null, { 'x-empresa-id': empresaId });
+
+                    renderPreview(parseRes);
+                    document.getElementById('step-upload').classList.add('hidden');
+                    document.getElementById('step-preview').classList.remove('hidden');
+
+                } catch (e) {
+                    alert('Error subiendo archivo: ' + e.message);
+                    document.getElementById('file-input').value = '';
+                }
             }
 
-            const res = await fetch(buildApiUrl(url), opts);
-            const json = await res.json();
-            if (!json.ok) throw new Error(json.error || 'API Error');
-            return json;
-        };
+            async function renderPreview(data) {
+                document.getElementById('rows-count').textContent = data.stats?.rows_total || 0;
+                const tbody = document.getElementById('preview-tbody');
+                tbody.innerHTML = '';
 
-        const formatCurrency = (val, cur = 'EUR') => new Intl.NumberFormat('es-ES', { style: 'currency', currency: cur }).format(val);
-
-        // --- Flows ---
-
-        async function handleUpload(file) {
-            const empresaId = document.getElementById('empresa-selector').value;
-
-            if (!empresaId) {
-                alert('Por favor, selecciona una empresa antes de subir el archivo.');
-                // Reset file input so user can try again
-                document.getElementById('file-input').value = '';
-                return;
-            }
-
-            const fd = new FormData();
-            fd.append('file', file);
-            fd.append('id_empresa', empresaId);
-
-            try {
-                const res = await api('/api/banking/imports', 'POST', fd, { 'x-empresa-id': empresaId });
-                currentImportId = res.importId;
-
-                // Trigger Parse
-                const parseRes = await api(`/api/banking/imports/${currentImportId}/parse`, 'POST', null, { 'x-empresa-id': empresaId });
-
-                renderPreview(parseRes);
-                document.getElementById('step-upload').classList.add('hidden');
-                document.getElementById('step-preview').classList.remove('hidden');
-
-            } catch (e) {
-                alert('Error subiendo archivo: ' + e.message);
-                document.getElementById('file-input').value = '';
-            }
-        }
-
-        async function renderPreview(data) {
-            document.getElementById('rows-count').textContent = data.stats?.rows_total || 0;
-            const tbody = document.getElementById('preview-tbody');
-            tbody.innerHTML = '';
-
-            data.preview.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.className = row.status === 'error' ? 'bg-red-500/10' : '';
-                tr.innerHTML = `
+                data.preview.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = row.status === 'error' ? 'bg-red-500/10' : '';
+                    tr.innerHTML = `
                     <td class="px-6 py-3 whitespace-nowrap">${row.booking_date || '-'}</td>
                     <td class="px-6 py-3">${row.description || '-'}</td>
                     <td class="px-6 py-3 text-right font-mono ${row.amount >= 0 ? 'text-primary' : 'text-red-400'}">${formatCurrency(row.amount)}</td>
                     <td class="px-6 py-3">
                         ${row.status === 'ok'
-                        ? '<span class="text-green-500 text-xs font-bold">OK</span>'
-                        : `<span class="text-red-500 text-xs" title="${row.errors?.join(',')}">ERROR</span>`}
+                            ? '<span class="text-green-500 text-xs font-bold">OK</span>'
+                            : `<span class="text-red-500 text-xs" title="${row.errors?.join(',')}">ERROR</span>`}
                     </td>
                 `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        async function loadAccounts() {
-            try {
-                const res = await api('/api/open-banking/accounts');
-                const sel = document.getElementById('account-select');
-                const empId = document.getElementById('empresa-selector').value;
-
-                sel.innerHTML = '<option value="">Selecciona una cuenta...</option>';
-
-                res.accounts?.forEach(acc => {
-                    // Si hay empresa seleccionada, filtrar
-                    if (empId && acc.id_empresa && acc.id_empresa != empId) return;
-
-                    const opt = document.createElement('option');
-                    opt.value = acc.id;
-                    opt.textContent = `${acc.display_name || acc.label || 'Cuenta'} (${acc.currency}) - ${acc.source}`;
-                    sel.appendChild(opt);
+                    tbody.appendChild(tr);
                 });
-            } catch (e) {
-                console.error('Error loading accounts:', e);
             }
-        }
 
-        async function loadEmpresas() {
-            try {
-                const res = await api('/api/contabilidad/empresas');
-                const sel = document.getElementById('empresa-selector');
+            async function loadAccounts() {
+                try {
+                    const res = await api('/api/open-banking/accounts');
+                    const sel = document.getElementById('account-select');
+                    const empId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
+
+                    sel.innerHTML = '<option value="">Selecciona una cuenta...</option>';
+
+                    res.accounts?.forEach(acc => {
+                        // Si hay empresa seleccionada, filtrar
+                        if (empId && acc.id_empresa && acc.id_empresa != empId) return;
+
+                        const opt = document.createElement('option');
+                        opt.value = acc.id;
+                        opt.textContent = `${acc.display_name || acc.label || 'Cuenta'} (${acc.currency}) - ${acc.source}`;
+                        sel.appendChild(opt);
+                    });
+                } catch (e) {
+                    console.error('Error loading accounts:', e);
+                }
+            }
+
+            async function loadEmpresas() {
+                const empId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
                 const accEmpSel = document.getElementById('acc-empresa');
 
-                sel.innerHTML = '<option value="">Cualquier empresa</option>';
-                accEmpSel.innerHTML = '<option value="">-- Seleccionar --</option>';
+                try {
+                    const res = await api('/api/contabilidad/empresas');
+                    accEmpSel.innerHTML = '<option value="">-- Seleccionar --</option>';
 
-                if (res.data && res.data.items) {
-                    res.data.items.forEach(emp => {
-                        const opt = `<option value="${emp.id}">${emp.nombre_legal}</option>`;
-                        sel.innerHTML += opt;
-                        accEmpSel.innerHTML += opt;
+                    if (res.data && res.data.items) {
+                        res.data.items.forEach(emp => {
+                            const opt = `<option value="${emp.id}">${emp.nombre_legal}</option>`;
+                            accEmpSel.innerHTML += opt;
+                        });
+                        if (empId) accEmpSel.value = empId;
+                    }
+                } catch (e) { console.error('Error loading empresas:', e); }
+            }
+
+            async function handleSaveAccount() {
+                const name = document.getElementById('acc-name').value;
+                const currency = document.getElementById('acc-currency').value;
+                const iban = document.getElementById('acc-iban').value;
+                const id_empresa = document.getElementById('acc-empresa').value;
+
+                if (!name) return alert('El nombre es obligatorio');
+
+                try {
+                    const res = await api('/api/open-banking/accounts', 'POST', {
+                        display_name: name,
+                        currency,
+                        iban_masked: iban,
+                        id_empresa
                     });
 
-                    // Auto-select from localStorage if exists
-                    const stored = localStorage.getItem('finsaas_current_empresa');
-                    if (stored) {
-                        sel.value = stored;
-                        accEmpSel.value = stored;
-                    }
+                    document.getElementById('modal-account').classList.add('hidden');
+                    await loadAccounts();
+                    document.getElementById('account-select').value = res.account.id;
+                    alert('Cuenta creada con éxito');
+                } catch (e) {
+                    alert('Error al crear cuenta: ' + e.message);
                 }
-            } catch (e) { console.error('Error loading empresas:', e); }
-        }
+            }
 
-        async function handleSaveAccount() {
-            const name = document.getElementById('acc-name').value;
-            const currency = document.getElementById('acc-currency').value;
-            const iban = document.getElementById('acc-iban').value;
-            const id_empresa = document.getElementById('acc-empresa').value;
+            async function handleCommit() {
+                const accountId = document.getElementById('account-select').value;
+                const empresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
 
-            if (!name) return alert('El nombre es obligatorio');
+                if (!accountId) return alert('Selecciona una cuenta destino');
+                if (!currentImportId) return alert('Error: No hay una importación activa. Por favor, sube el archivo de nuevo.');
 
-            try {
-                const res = await api('/api/open-banking/accounts', 'POST', {
-                    display_name: name,
-                    currency,
-                    iban_masked: iban,
-                    id_empresa
-                });
+                if (!confirm('¿Confirmar importación?')) return;
 
-                document.getElementById('modal-account').classList.add('hidden');
+                try {
+                    console.log('Sending commit request...');
+                    const res = await api(`/api/banking/imports/${currentImportId}/commit`, 'POST', {
+                        bank_account_id: accountId
+                    }, { 'x-empresa-id': empresaId });
+                    console.log('Commit response:', res);
+
+                    alert(`Importación completada.\nInsertados: ${res.inserted}\nDuplicados: ${res.duplicated}`);
+                    window.location.reload();
+                } catch (e) {
+                    console.error('Commit error:', e);
+                    alert('Error: ' + e.message);
+                }
+            }
+
+            // --- Init ---
+            document.addEventListener('DOMContentLoaded', async () => {
+                await requireAuth();
+
+                const layout = new FinSaaSLayout('app-shell');
+                layout.init();
+
+                await loadEmpresas();
                 await loadAccounts();
-                document.getElementById('account-select').value = res.account.id;
-                alert('Cuenta creada con éxito');
-            } catch (e) {
-                alert('Error al crear cuenta: ' + e.message);
-            }
-        }
 
-        async function handleCommit() {
-            console.log('handleCommit started, currentImportId:', currentImportId);
-            const accountId = document.getElementById('account-select').value;
-            const empresaId = document.getElementById('empresa-selector').value;
+                const dropzone = document.getElementById('dropzone');
+                const fileInput = document.getElementById('file-input');
 
-            if (!accountId) return alert('Selecciona una cuenta destino');
-            if (!currentImportId) return alert('Error: No hay una importación activa. Por favor, sube el archivo de nuevo.');
+                dropzone.onclick = () => fileInput.click();
+                fileInput.onchange = (e) => {
+                    if (e.target.files[0]) handleUpload(e.target.files[0]);
+                };
 
-            if (!confirm('¿Confirmar importación?')) return;
+                // Drag & Drop
+                dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('bg-gray-100', 'dark:bg-surface-dark-light'); };
+                dropzone.ondragleave = () => dropzone.classList.remove('bg-gray-100', 'dark:bg-surface-dark-light');
+                dropzone.ondrop = (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('bg-gray-100', 'dark:bg-surface-dark-light');
+                    if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
+                };
 
-            try {
-                console.log('Sending commit request...');
-                const res = await api(`/api/banking/imports/${currentImportId}/commit`, 'POST', {
-                    bank_account_id: accountId
-                }, { 'x-empresa-id': empresaId });
-                console.log('Commit response:', res);
+                document.getElementById('btn-commit').onclick = handleCommit;
+                document.getElementById('btn-cancel').onclick = () => window.location.reload();
 
-                alert(`Importación completada.\nInsertados: ${res.inserted}\nDuplicados: ${res.duplicated}`);
-                window.location.reload();
-            } catch (e) {
-                console.error('Commit error:', e);
-                alert('Error: ' + e.message);
-            }
-        }
-
-        // --- Init ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            await requireAuth();
-
-            const layout = new FinSaaSLayout('app-shell');
-            layout.init();
-
-            await loadEmpresas();
-            await loadAccounts();
-
-            const dropzone = document.getElementById('dropzone');
-            const fileInput = document.getElementById('file-input');
-
-            dropzone.onclick = () => fileInput.click();
-            fileInput.onchange = (e) => {
-                if (e.target.files[0]) handleUpload(e.target.files[0]);
-            };
-
-            // Drag & Drop
-            dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add('bg-gray-100', 'dark:bg-surface-dark-light'); };
-            dropzone.ondragleave = () => dropzone.classList.remove('bg-gray-100', 'dark:bg-surface-dark-light');
-            dropzone.ondrop = (e) => {
-                e.preventDefault();
-                dropzone.classList.remove('bg-gray-100', 'dark:bg-surface-dark-light');
-                if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
-            };
-
-            document.getElementById('btn-commit').onclick = handleCommit;
-            document.getElementById('btn-cancel').onclick = () => window.location.reload();
-
-            document.getElementById('btn-new-account').onclick = () => {
-                document.getElementById('modal-account').classList.remove('hidden');
-                document.getElementById('modal-account').classList.add('flex');
-            };
-            document.getElementById('btn-save-account').onclick = handleSaveAccount;
-
-            document.getElementById('empresa-selector').onchange = () => {
-                const val = document.getElementById('empresa-selector').value;
-                localStorage.setItem('finsaas_current_empresa', val);
-                loadAccounts();
-            };
-        });
-    </script>
+                document.getElementById('btn-new-account').onclick = () => {
+                    document.getElementById('modal-account').classList.remove('hidden');
+                    document.getElementById('modal-account').classList.add('flex');
+                };
+                document.getElementById('btn-save-account').onclick = handleSaveAccount;
+            });
+        </script>
 </body>
 
 </html>
