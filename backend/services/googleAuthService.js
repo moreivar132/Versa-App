@@ -137,73 +137,70 @@ async function processSaaSGoogleAuth(googleProfile, inviteToken = null) {
     }
 
     // 5. Create new user with invite's tenant and role
-    const client = await systemDb.connect();
+    // 5. Create new user with invite's tenant and role
     try {
-        await client.query('BEGIN');
-
-        // Create user with tenant from invite
-        const userResult = await client.query(
-            `INSERT INTO usuario (id_tenant, nombre, email, password_hash, is_super_admin)
-             VALUES ($1, $2, $3, $4, false)
-             RETURNING id, id_tenant, nombre, email, is_super_admin`,
-            [invite.tenantId, name || 'Usuario Google', normalizedEmail, '']
-        );
-        const newUser = userResult.rows[0];
-
-        // Assign role from invite (with tenant_id for RBAC)
-        const roleResult = await client.query(
-            `SELECT id FROM rol WHERE nombre = $1`,
-            [invite.role]
-        );
-
-        if (roleResult.rows.length > 0) {
-            await client.query(
-                `INSERT INTO usuariorol (id_usuario, id_rol, tenant_id) VALUES ($1, $2, $3)
-                 ON CONFLICT DO NOTHING`,
-                [newUser.id, roleResult.rows[0].id, invite.tenantId]
+        const result = await systemDb.txWithRLS(async (tx) => {
+            // Create user with tenant from invite
+            const userResult = await tx.query(
+                `INSERT INTO usuario (id_tenant, nombre, email, password_hash, is_super_admin)
+                 VALUES ($1, $2, $3, $4, false)
+                 RETURNING id, id_tenant, nombre, email, is_super_admin`,
+                [invite.tenantId, name || 'Usuario Google', normalizedEmail, '']
             );
-        }
+            const newUser = userResult.rows[0];
 
-        // Link Google account
-        await client.query(
-            `INSERT INTO user_auth_identity (user_id, provider, provider_account_id, email, name, avatar_url)
-             VALUES ($1, 'google', $2, $3, $4, $5)`,
-            [newUser.id, providerId, normalizedEmail, name, avatar]
-        );
+            // Assign role from invite (with tenant_id for RBAC)
+            const roleResult = await tx.query(
+                `SELECT id FROM rol WHERE nombre = $1`,
+                [invite.role]
+            );
 
-        // If empresa specified in invite, assign user to empresa
-        if (invite.empresaId) {
-            await client.query(`
-                INSERT INTO accounting_usuario_empresa (id_usuario, id_empresa, rol_empresa, created_by)
-                VALUES ($1, $2, $3, $1)
-                ON CONFLICT (id_usuario, id_empresa) DO NOTHING
-            `, [newUser.id, invite.empresaId, 'empresa_lector']);
-            console.log(`[SaaSAuth] Assigned user ${newUser.id} to empresa ${invite.empresaId}`);
-        }
+            if (roleResult.rows.length > 0) {
+                await tx.query(
+                    `INSERT INTO usuariorol (id_usuario, id_rol, tenant_id) VALUES ($1, $2, $3)
+                     ON CONFLICT DO NOTHING`,
+                    [newUser.id, roleResult.rows[0].id, invite.tenantId]
+                );
+            }
 
-        // Mark invite as used
-        await client.query(
-            `UPDATE saas_invite SET used_at = NOW(), used_by_user_id = $1 WHERE id = $2`,
-            [newUser.id, invite.id]
-        );
+            // Link Google account
+            await tx.query(
+                `INSERT INTO user_auth_identity (user_id, provider, provider_account_id, email, name, avatar_url)
+                 VALUES ($1, 'google', $2, $3, $4, $5)`,
+                [newUser.id, providerId, normalizedEmail, name, avatar]
+            );
 
-        await client.query('COMMIT');
+            // If empresa specified in invite, assign user to empresa
+            if (invite.empresaId) {
+                await tx.query(`
+                    INSERT INTO accounting_usuario_empresa (id_usuario, id_empresa, rol_empresa, created_by)
+                    VALUES ($1, $2, $3, $1)
+                    ON CONFLICT (id_usuario, id_empresa) DO NOTHING
+                `, [newUser.id, invite.empresaId, 'empresa_lector']);
+                console.log(`[SaaSAuth] Assigned user ${newUser.id} to empresa ${invite.empresaId}`);
+            }
 
-        console.log(`[SaaSAuth] Created new user via invite: ${normalizedEmail} (tenant: ${invite.tenantId}, role: ${invite.role})`);
+            // Mark invite as used
+            await tx.query(
+                `UPDATE saas_invite SET used_at = NOW(), used_by_user_id = $1 WHERE id = $2`,
+                [newUser.id, invite.id]
+            );
 
-        return {
-            user: newUser,
-            isNew: true,
-            error: null,
-            tenantName: invite.tenantName
-        };
+            process.nextTick(() => console.log(`[SaaSAuth] Created new user via invite: ${normalizedEmail} (tenant: ${invite.tenantId}, role: ${invite.role})`));
+
+            return {
+                user: newUser,
+                isNew: true,
+                error: null,
+                tenantName: invite.tenantName
+            };
+        });
+
+        return result;
 
     } catch (error) {
-        await client.query('ROLLBACK');
         console.error('[SaaSAuth] User creation error:', error);
         return { user: null, isNew: false, error: 'CREATION_FAILED' };
-    } finally {
-        client.release();
     }
 }
 
