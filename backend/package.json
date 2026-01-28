@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "npm run db:sync-rbac && node index.js",
     "dev": "nodemon index.js",
     "build": "echo 'No build step for backend'",
     "lint": "eslint . --fix",
@@ -22,6 +22,7 @@
     "migrate:down": "knex migrate:down",
     "seed:run": "knex seed:run",
     "db:verify": "knex migrate:status && echo '✅ DB connection verified'",
+    "db:sync-rbac": "node src/core/rbac/sync.js",
     "check:db-guardrails": "node scripts/check-no-pool-query.js"
   },
   "repository": {

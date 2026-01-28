@@ -61,9 +61,44 @@ async function getUserPermissions(userId, tenantId = null, db = null) {
           )
     `, [userId, tenantId]);
 
+    const permissions = result.rows.map(r => r.permission_key);
+    console.log(`[RBAC] User ${userId} (Tenant ${tenantId}) Permissions:`, permissions.length);
+    if (permissions.length === 0) {
+        console.log(`[RBAC-DEBUG] No permissions found via roles. TenantId param: ${tenantId}`);
+    }
+
+    // [FALLBACK for Invitees/Company Users] 
+    // If user has no RBAC permissions but belongs to a company in this tenant, grant basic read access.
+    if (permissions.length === 0 && tenantId) {
+        try {
+            // Check if user is associated with any company in this tenant
+            const companyCheck = await activeDb.query(
+                `SELECT 1 FROM accounting_usuario_empresa ue
+                 JOIN accounting_empresa e ON ue.id_empresa = e.id
+                 WHERE ue.id_usuario = $1 
+                   AND e.id_tenant = $2 
+                   AND e.deleted_at IS NULL
+                 LIMIT 1`,
+                [userId, tenantId]
+            );
+
+            if (companyCheck.rows.length > 0) {
+                // Grant basic permissions to allow accessing the module
+                // 'contabilidad.empresa.read' -> List companies
+                // 'contabilidad.read' -> List invoices/contacts (scoped by company in controller)
+                permissions.push('contabilidad.empresa.read');
+                permissions.push('contabilidad.read');
+                permissions.push('dashboard.read');
+            }
+        } catch (err) {
+            console.warn('Error verifying company fallback permissions:', err);
+            // Non-blocking error, user just won't get fallback perms
+        }
+    }
+
     return {
         isSuperAdmin: false,
-        permissions: result.rows.map(r => r.permission_key)
+        permissions: permissions
     };
 }
 
@@ -113,6 +148,10 @@ function requirePermission(permissionKey) {
                 || req.user?.id_tenant;
 
             const allowed = await hasPermission(userId, tenantId, permissionKey, db);
+
+            if (!allowed) {
+                console.warn(`[RBAC-FAIL] User ${userId} denied ${permissionKey} on Tenant ${tenantId}`);
+            }
 
             if (!allowed) {
                 return res.status(403).json({
