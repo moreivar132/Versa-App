@@ -30,3 +30,32 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
+
+/* Global Selector Styles */
+#global-empresa-selector {
+    border: none;
+    background: none;
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+#global-empresa-selector:focus {
+    box-shadow: none;
+}
+
+/* Custom Select in Dark Mode Fixes */
+.dark #global-empresa-selector option {
+    background-color: #1a2c15;
+    color: white;
+}
+
+/* Premium Navigation Hover */
+.nav-link.active {
+    background-color: rgba(70, 236, 19, 0.1);
+    color: #46ec13;
+}
+
+.nav-link:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.05);
+}

@@ -29,6 +29,138 @@ export class FinSaaSLayout {
         this.renderShell(shell);
         this.highlightActiveRoute();
         this.attachEvents();
+        this.initGlobalEmpresaSelector();
+    }
+
+    async initGlobalEmpresaSelector() {
+        const container = document.getElementById('global-empresa-container');
+        if (!container) return;
+
+        try {
+            const SESSION_KEY = 'versa_session_v1';
+            const session = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+            const token = session.token;
+
+            if (!token) return;
+
+            const response = await fetch('/api/contabilidad/empresas', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const res = await response.json();
+
+            if (res.data && res.data.items) {
+                this.empresas = res.data.items.map(emp => ({
+                    id: emp.id,
+                    nombre: this.cleanName(emp.nombre_comercial || emp.nombre_legal),
+                    legal: emp.nombre_legal,
+                    nif: emp.nif_cif
+                }));
+
+                const stored = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
+                let current = this.empresas.find(e => e.id == stored) || this.empresas[0];
+
+                if (current) {
+                    localStorage.setItem('finsaas_current_empresa', current.id);
+                    localStorage.setItem('filsaas_current_empresa', current.id);
+                }
+
+                this.renderSearchableSelector(container, current);
+            }
+        } catch (e) {
+            console.error('[FinSaaSLayout] Error loading empresas:', e);
+        }
+    }
+
+    renderSearchableSelector(container, current) {
+        // Replace the native select with our custom searchable UI
+        container.innerHTML = `
+            <div class="relative w-full" id="empresa-search-wrapper">
+                <button type="button" id="empresa-dropdown-btn" class="flex items-center gap-3 w-full text-left">
+                    <span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors text-[20px]">business</span>
+                    <div class="flex flex-col min-w-[140px] max-w-[200px]">
+                        <span id="selected-empresa-name" class="text-sm font-bold text-slate-700 dark:text-white truncate">${current?.nombre || 'Seleccionar...'}</span>
+                        <span class="text-[10px] text-gray-400 truncate">${current?.nif || ''}</span>
+                    </div>
+                    <span class="material-symbols-outlined text-gray-400 text-[18px] ml-auto">expand_more</span>
+                </button>
+                
+                <div id="empresa-dropdown-panel" class="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl shadow-2xl z-[100] hidden overflow-hidden min-w-[250px]">
+                    <div class="p-3 border-b border-gray-200 dark:border-[#25381e]">
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[18px]">search</span>
+                            <input type="text" id="empresa-search-input" placeholder="Buscar empresa..." class="w-full bg-gray-50 dark:bg-surface-dark-light border border-gray-200 dark:border-transparent rounded-lg pl-9 pr-3 py-2 text-sm focus:ring-1 focus:ring-primary focus:outline-none">
+                        </div>
+                    </div>
+                    <div id="empresa-list" class="max-h-[300px] overflow-y-auto">
+                        <!-- Items injected by JS -->
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const btn = document.getElementById('empresa-dropdown-btn');
+        const panel = document.getElementById('empresa-dropdown-panel');
+        const input = document.getElementById('empresa-search-input');
+        const list = document.getElementById('empresa-list');
+
+        const updateList = (filter = '') => {
+            const filtered = this.empresas.filter(e =>
+                e.nombre.toLowerCase().includes(filter.toLowerCase()) ||
+                (e.legal && e.legal.toLowerCase().includes(filter.toLowerCase())) ||
+                (e.nif && e.nif.toLowerCase().includes(filter.toLowerCase()))
+            );
+
+            list.innerHTML = filtered.map(e => `
+                <div class="empresa-item px-4 py-3 hover:bg-gray-50 dark:hover:bg-surface-dark-light cursor-pointer transition-colors flex flex-col gap-0.5" data-id="${e.id}">
+                    <span class="text-sm font-bold text-slate-700 dark:text-white">${e.nombre}</span>
+                    <span class="text-[10px] text-gray-500">${e.nif || ''} ${e.legal ? '• ' + e.legal : ''}</span>
+                </div>
+            `).join('');
+
+            // In case of no results
+            if (filtered.length === 0) {
+                list.innerHTML = `<div class="p-4 text-center text-xs text-gray-500">No se encontraron empresas</div>`;
+            }
+
+            // Click events for items
+            list.querySelectorAll('.empresa-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const id = item.dataset.id;
+                    localStorage.setItem('finsaas_current_empresa', id);
+                    localStorage.setItem('filsaas_current_empresa', id);
+                    window.location.reload();
+                });
+            });
+        };
+
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            panel.classList.toggle('hidden');
+            if (!panel.classList.contains('hidden')) {
+                input.focus();
+                updateList();
+            }
+        });
+
+        input.addEventListener('input', (e) => {
+            updateList(e.target.value);
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!panel.contains(e.target) && !btn.contains(e.target)) {
+                panel.classList.add('hidden');
+            }
+        });
+    }
+
+    /**
+     * Helper to clean names and fix common typos (like the one in the screenshot)
+     */
+    cleanName(name) {
+        if (!name) return 'Sin nombre';
+        // Fix "Enrirque" typo specifically if it appears
+        return name.replace(/Enrirque/g, 'Enrique');
     }
 
     /**
@@ -112,6 +244,15 @@ export class FinSaaSLayout {
                         <h2 id="page-title" class="text-lg font-bold hidden md:block text-slate-900 dark:text-white"></h2>
                     </div>
                     <div class="flex items-center gap-4">
+                        <!-- Global Empresa Selector Container -->
+                        <div id="global-empresa-container" class="hidden md:flex items-center gap-2 bg-gray-50 dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl px-4 py-2 hover:border-primary/50 transition-all group focus-within:ring-2 focus-within:ring-primary/20 cursor-pointer">
+                            <!-- Injected by initGlobalEmpresaSelector -->
+                            <div class="flex items-center gap-3 animate-pulse">
+                                <div class="w-8 h-8 bg-gray-200 dark:bg-surface-dark-light rounded-lg"></div>
+                                <div class="w-24 h-4 bg-gray-200 dark:bg-surface-dark-light rounded"></div>
+                            </div>
+                        </div>
+
                         <button class="relative p-2 text-gray-500 hover:text-slate-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-surface-dark">
                             <span class="material-symbols-outlined">notifications</span>
                             <span class="absolute top-2 right-2 size-2 bg-primary rounded-full border-2 border-white dark:border-background-dark"></span>

@@ -93,204 +93,173 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2 bg-surface-dark border border-[#25381e] rounded-xl px-3 py-2">
-                    <span class="material-symbols-outlined text-gray-400 text-[16px]">business</span>
-                    <select id="empresa-selector"
-                        class="bg-transparent text-sm font-bold focus:outline-none text-white min-w-[120px]">
-                        <option value="">Cargando...</option>
-                    </select>
+                <!-- Global Selector in Topbar handles this now -->
+
+
+                <!-- Tabs -->
+                <div class="flex border-b border-[#25381e] mb-4 flex-shrink-0">
+                    <a href="copiloto-resumen.html"
+                        class="px-4 py-2 text-sm text-gray-500 hover:text-white transition-colors">Resumen</a>
+                    <a href="#" class="px-4 py-2 text-sm font-bold border-b-2 border-primary text-primary">Chat</a>
                 </div>
-            </div>
 
-            <!-- Tabs -->
-            <div class="flex border-b border-[#25381e] mb-4 flex-shrink-0">
-                <a href="copiloto-resumen.html"
-                    class="px-4 py-2 text-sm text-gray-500 hover:text-white transition-colors">Resumen</a>
-                <a href="#" class="px-4 py-2 text-sm font-bold border-b-2 border-primary text-primary">Chat</a>
-            </div>
+                <!-- Chat Container -->
+                <div
+                    class="flex-1 flex flex-col min-h-0 bg-surface-dark border border-[#25381e] rounded-2xl overflow-hidden">
 
-            <!-- Chat Container -->
-            <div
-                class="flex-1 flex flex-col min-h-0 bg-surface-dark border border-[#25381e] rounded-2xl overflow-hidden">
+                    <!-- Messages -->
+                    <div id="chat-history" class="flex-1 overflow-y-auto p-4 space-y-4 chat-container">
 
-                <!-- Messages -->
-                <div id="chat-history" class="flex-1 overflow-y-auto p-4 space-y-4 chat-container">
-
-                    <!-- Welcome Message -->
-                    <div class="flex justify-start">
-                        <div class="bubble-ai p-4">
-                            <p class="text-sm leading-relaxed">Hola, soy tu Copiloto Contable. Estoy conectado a tus
-                                datos reales para ayudarte a entender tus finanzas. ¿En qué puedo ayudarte hoy?</p>
-                            <div class="mt-3 flex flex-wrap gap-2" id="suggested-questions">
-                                <button
-                                    class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿En
-                                    qué estoy gastando más?</button>
-                                <button
-                                    class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿Cómo
-                                    va mi IVA este trimestre?</button>
-                                <button
-                                    class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿Tengo
-                                    anomalías este mes?</button>
+                        <!-- Welcome Message -->
+                        <div class="flex justify-start">
+                            <div class="bubble-ai p-4">
+                                <p class="text-sm leading-relaxed">Hola, soy tu Copiloto Contable. Estoy conectado a tus
+                                    datos reales para ayudarte a entender tus finanzas. ¿En qué puedo ayudarte hoy?</p>
+                                <div class="mt-3 flex flex-wrap gap-2" id="suggested-questions">
+                                    <button
+                                        class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿En
+                                        qué estoy gastando más?</button>
+                                    <button
+                                        class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿Cómo
+                                        va mi IVA este trimestre?</button>
+                                    <button
+                                        class="suggestion-btn px-3 py-1 bg-background-dark rounded-full text-xs font-medium border border-primary/30 hover:bg-primary hover:text-black transition-all">¿Tengo
+                                        anomalías este mes?</button>
+                                </div>
                             </div>
                         </div>
+
                     </div>
 
+                    <!-- Input Area -->
+                    <div class="p-3 bg-surface-dark-light/50 border-t border-[#25381e] flex-shrink-0">
+                        <div
+                            class="flex gap-2 bg-surface-dark border border-primary/20 p-2 rounded-xl focus-within:border-primary transition-all">
+                            <input type="text" id="chat-input" placeholder="Haz una pregunta sobre tu empresa..."
+                                class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 text-white placeholder-gray-500" />
+                            <button id="send-btn"
+                                class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all">
+                                <span class="material-symbols-outlined">send</span>
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-center mt-2 text-gray-500">Toda respuesta se basa en datos reales de
+                            tu
+                            empresa.</p>
+                    </div>
                 </div>
 
-                <!-- Input Area -->
-                <div class="p-3 bg-surface-dark-light/50 border-t border-[#25381e] flex-shrink-0">
-                    <div
-                        class="flex gap-2 bg-surface-dark border border-primary/20 p-2 rounded-xl focus-within:border-primary transition-all">
-                        <input type="text" id="chat-input" placeholder="Haz una pregunta sobre tu empresa..."
-                            class="flex-1 bg-transparent border-none focus:ring-0 text-sm py-2 px-2 text-white placeholder-gray-500" />
-                        <button id="send-btn"
-                            class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all">
-                            <span class="material-symbols-outlined">send</span>
-                        </button>
-                    </div>
-                    <p class="text-[10px] text-center mt-2 text-gray-500">Toda respuesta se basa en datos reales de tu
-                        empresa.</p>
-                </div>
             </div>
-
         </div>
-    </div>
 
-    <script type="module">
-        import { requireAuth, getToken, buildApiUrl, fetchWithAuth } from '/auth.js';
-        import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
+        <script type="module">
+            import { requireAuth, getToken, buildApiUrl, fetchWithAuth } from '/auth.js';
+            import { FinSaaSLayout } from '/src/verticals/finsaas/layout/FinSaaSLayout.js';
 
-        let currentEmpresaId = localStorage.getItem('finsaas_current_empresa');
-        let currentSessionId = null;
+            let currentEmpresaId = localStorage.getItem('finsaas_current_empresa');
+            let currentSessionId = null;
 
-        async function init() {
-            await requireAuth();
-            const layout = new FinSaaSLayout('app-shell');
-            layout.init();
+            async function init() {
+                await requireAuth();
+                const layout = new FinSaaSLayout('app-shell');
+                layout.init();
 
-            await loadEmpresas();
-            setupEventListeners();
+                await loadEmpresas();
+                setupEventListeners();
 
-            const prefilled = localStorage.getItem('copilot_prefilled_question');
-            if (prefilled) {
-                localStorage.removeItem('copilot_prefilled_question');
-                document.getElementById('chat-input').value = prefilled;
-                sendMessage();
-            }
-        }
-
-        async function loadEmpresas() {
-            try {
-                const res = await fetch(buildApiUrl('/api/contabilidad/empresas'), {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-                const { data } = await res.json();
-                const select = document.getElementById('empresa-selector');
-                select.innerHTML = '';
-
-                data.items.forEach(emp => {
-                    const opt = document.createElement('option');
-                    opt.value = emp.id;
-                    opt.textContent = emp.nombre_legal || emp.nombre_comercial;
-                    if (emp.id == currentEmpresaId) opt.selected = true;
-                    select.appendChild(opt);
-                });
-
-                if (!currentEmpresaId && data.items.length > 0) {
-                    currentEmpresaId = data.items[0].id;
-                    localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
-                }
-            } catch (e) { console.error('Error cargando empresas:', e); }
-        }
-
-        function setupEventListeners() {
-            document.getElementById('send-btn').onclick = sendMessage;
-            document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
-
-            document.querySelectorAll('.suggestion-btn').forEach(btn => {
-                btn.onclick = () => {
-                    document.getElementById('chat-input').value = btn.innerText;
+                const prefilled = localStorage.getItem('copilot_prefilled_question');
+                if (prefilled) {
+                    localStorage.removeItem('copilot_prefilled_question');
+                    document.getElementById('chat-input').value = prefilled;
                     sendMessage();
                 }
-            });
-
-            document.getElementById('empresa-selector').addEventListener('change', (e) => {
-                currentEmpresaId = e.target.value;
-                localStorage.setItem('finsaas_current_empresa', currentEmpresaId);
-                location.reload();
-            });
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if (!message) return;
-
-            appendMessage('user', message);
-            input.value = '';
-
-            const loadingEl = appendMessage('ai', '<span class="animate-pulse text-primary">Analizando datos...</span>');
-
-            try {
-                const now = new Date();
-                const year = now.getFullYear();
-
-                const res = await fetchWithAuth('/api/contabilidad/copiloto/chat', {
-                    method: 'POST',
-                    headers: {
-                        'X-Empresa-Id': currentEmpresaId
-                    },
-                    body: JSON.stringify({
-                        session_id: currentSessionId,
-                        message: message,
-                        periodo_inicio: `${year}-01-01`,
-                        periodo_fin: `${year}-12-31`
-                    })
-                });
-
-                const response = await res.json();
-
-                if (!res.ok) {
-                    throw new Error(response.error || 'Error del servidor');
-                }
-
-                currentSessionId = response.data.session_id;
-                updateMessage(loadingEl, response.data.content, response.data.evidence);
-
-            } catch (e) {
-                console.error(e);
-                loadingEl.querySelector('.bubble-ai').innerHTML = `<p class="text-sm text-red-400"><strong>Error:</strong> ${e.message}</p>`;
             }
-        }
 
-        function appendMessage(role, content) {
-            const history = document.getElementById('chat-history');
-            const wrapper = document.createElement('div');
-            wrapper.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
+            async function loadEmpresas() {
+                currentEmpresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
+            }
 
-            const bubble = document.createElement('div');
-            bubble.className = role === 'user' ? 'bubble-user p-3' : 'bubble-ai p-4';
-            bubble.innerHTML = `<p class="text-sm leading-relaxed">${content}</p>`;
+            function setupEventListeners() {
+                document.getElementById('send-btn').onclick = sendMessage;
+                document.getElementById('chat-input').onkeypress = (e) => { if (e.key === 'Enter') sendMessage(); };
 
-            wrapper.appendChild(bubble);
-            history.appendChild(wrapper);
-            history.scrollTop = history.scrollHeight;
-            return wrapper;
-        }
+                document.querySelectorAll('.suggestion-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        document.getElementById('chat-input').value = btn.innerText;
+                        sendMessage();
+                    }
+                });
+            }
 
-        function updateMessage(wrapper, content, evidence) {
-            const bubble = wrapper.querySelector('.bubble-ai');
-            if (!bubble) return;
+            async function sendMessage() {
+                const input = document.getElementById('chat-input');
+                const message = input.value.trim();
+                if (!message) return;
 
-            // Simple formatting: newlines to <br>, bold **text**
-            let html = content
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary">$1</strong>')
-                .replace(/\n/g, '<br/>');
+                appendMessage('user', message);
+                input.value = '';
 
-            bubble.innerHTML = `<div class="text-sm leading-relaxed">${html}</div>`;
+                const loadingEl = appendMessage('ai', '<span class="animate-pulse text-primary">Analizando datos...</span>');
 
-            if (evidence && evidence.empresa) {
-                const evidenceHtml = `
+                try {
+                    const now = new Date();
+                    const year = now.getFullYear();
+
+                    const res = await fetchWithAuth('/api/contabilidad/copiloto/chat', {
+                        method: 'POST',
+                        headers: {
+                            'X-Empresa-Id': currentEmpresaId
+                        },
+                        body: JSON.stringify({
+                            session_id: currentSessionId,
+                            message: message,
+                            periodo_inicio: `${year}-01-01`,
+                            periodo_fin: `${year}-12-31`
+                        })
+                    });
+
+                    const response = await res.json();
+
+                    if (!res.ok) {
+                        throw new Error(response.error || 'Error del servidor');
+                    }
+
+                    currentSessionId = response.data.session_id;
+                    updateMessage(loadingEl, response.data.content, response.data.evidence);
+
+                } catch (e) {
+                    console.error(e);
+                    loadingEl.querySelector('.bubble-ai').innerHTML = `<p class="text-sm text-red-400"><strong>Error:</strong> ${e.message}</p>`;
+                }
+            }
+
+            function appendMessage(role, content) {
+                const history = document.getElementById('chat-history');
+                const wrapper = document.createElement('div');
+                wrapper.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
+
+                const bubble = document.createElement('div');
+                bubble.className = role === 'user' ? 'bubble-user p-3' : 'bubble-ai p-4';
+                bubble.innerHTML = `<p class="text-sm leading-relaxed">${content}</p>`;
+
+                wrapper.appendChild(bubble);
+                history.appendChild(wrapper);
+                history.scrollTop = history.scrollHeight;
+                return wrapper;
+            }
+
+            function updateMessage(wrapper, content, evidence) {
+                const bubble = wrapper.querySelector('.bubble-ai');
+                if (!bubble) return;
+
+                // Simple formatting: newlines to <br>, bold **text**
+                let html = content
+                    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-primary">$1</strong>')
+                    .replace(/\n/g, '<br/>');
+
+                bubble.innerHTML = `<div class="text-sm leading-relaxed">${html}</div>`;
+
+                if (evidence && evidence.empresa) {
+                    const evidenceHtml = `
                     <div class="mt-4 p-3 rounded-lg evidence-box">
                         <p class="text-[10px] font-bold text-primary uppercase mb-2">📊 Datos consultados</p>
                         <ul class="text-[11px] space-y-1 text-gray-400">
@@ -300,15 +269,15 @@
                         </ul>
                     </div>
                 `;
-                bubble.innerHTML += evidenceHtml;
+                    bubble.innerHTML += evidenceHtml;
+                }
+
+                const history = document.getElementById('chat-history');
+                history.scrollTop = history.scrollHeight;
             }
 
-            const history = document.getElementById('chat-history');
-            history.scrollTop = history.scrollHeight;
-        }
-
-        init();
-    </script>
+            init();
+        </script>
 </body>
 
 </html>
