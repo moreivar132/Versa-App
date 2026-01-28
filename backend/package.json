@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm run db:sync-rbac && node index.js",
+    "start": "node index.js",
     "dev": "nodemon index.js",
     "build": "echo 'No build step for backend'",
     "lint": "eslint . --fix",

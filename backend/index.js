@@ -264,6 +264,15 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Start Server
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, '0.0.0.0', async () => {
   console.log(`🚀 Servidor escuchando en http://0.0.0.0:${port}`);
+
+  // Auto-Sync RBAC on startup
+  try {
+    const { syncRBAC } = require('./src/core/rbac/sync');
+    console.log('[Startup] trigger: syncRBAC...');
+    await syncRBAC({ cleanup: true });
+  } catch (err) {
+    console.error('[Startup] RBAC Sync failed, but server is running:', err);
+  }
 });
