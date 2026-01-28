@@ -220,7 +220,9 @@ async function syncRBAC(options = { cleanup: true }) {
 
 // Allow direct execution
 if (require.main === module) {
-    require('dotenv').config();
+    if (process.env.NODE_ENV !== 'production') {
+        require('dotenv').config();
+    }
     syncRBAC()
         .then(() => process.exit(0))
         .catch(() => process.exit(1));
