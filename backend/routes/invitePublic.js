@@ -143,7 +143,7 @@ router.post('/accept', async (req, res) => {
             JOIN tenant t ON si.tenant_id = t.id
             LEFT JOIN accounting_empresa e ON si.id_empresa = e.id
             WHERE si.token_hash = $1
-            FOR UPDATE OF si
+            FOR UPDATE
         `, [tokenHash]);
 
         if (inviteResult.rows.length === 0) {
