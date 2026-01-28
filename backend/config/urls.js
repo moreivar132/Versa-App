@@ -32,7 +32,12 @@ function getAppUrl() {
     }
 
     // 4. Fallback para desarrollo local
-    return 'http://localhost:5173';
+    if (process.env.NODE_ENV !== 'production') {
+        return 'http://localhost:5173';
+    }
+
+    // In Production: Fail if no URL is determined.
+    throw new Error('CRITICAL: APP_URL could not be determined. Set APP_URL or RAILWAY_PUBLIC_DOMAIN.');
 }
 
 const APP_URL = getAppUrl();

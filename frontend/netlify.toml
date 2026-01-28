@@ -7,7 +7,7 @@
 
 # --- CONTEXTO DE PRODUCCIÓN (Rama main) ---
 [context.production]
-  environment = { VITE_API_URL = "https://versa-app.up.railway.app" }
+  environment = { VITE_API_URL = "https://versa-app-production.up.railway.app" }
 
 # --- CONTEXTO DE DEVELOPMENT (Rama ivan, dev, staging, etc) ---
 [context.deploy-preview]
