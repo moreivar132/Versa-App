@@ -54,12 +54,23 @@ console.log('---------------------------------------------------');
 
 // --- Middlewares ---
 const corsOptions = {
-  origin: [
-    'https://versa-app.netlify.app',
-    'http://localhost:5173',
-    'https://versa-frontend.netlify.app',
-    'https://versa-app-production.up.railway.app'
-  ],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://versa-app.netlify.app',
+      'https://versadev.netlify.app',
+      'https://versa-frontend.netlify.app',
+      'https://versa-app-production.up.railway.app'
+    ];
+    if (allowedOrigins.includes(origin) || origin.endsWith('.netlify.app')) {
+      callback(null, true);
+    } else {
+      console.warn(`[CORS] Blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
     'Content-Type',
