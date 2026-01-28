@@ -40,7 +40,20 @@ console.log('   VERSA BACKEND - Modular V2 (with Contabilidad)   ');
 console.log('---------------------------------------------------');
 
 // --- Middlewares ---
-app.use(cors());
+const corsOptions = {
+  origin: [
+    'https://versa-app.netlify.app',
+    'http://localhost:5173',
+    'https://versa-frontend.netlify.app',
+    'https://versa-app-production.up.railway.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Tenant-ID', 'X-Client-ID'],
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Enable pre-flight across-the-board
 
 // --- Passport OAuth Initialization ---
 app.use(passport.initialize());
