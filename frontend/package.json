@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "echo \"/api/*  ${VITE_API_URL}/api/:splat  200\n/uploads/*  ${VITE_API_URL}/uploads/:splat  200\n/*  /index.html  200\" > public/_redirects",
+    "prebuild": "printf \"/api/*  %s/api/:splat  200\\n/uploads/*  %s/uploads/:splat  200\\n/*  /index.html  200\" \"$VITE_API_URL\" \"$VITE_API_URL\" > public/_redirects",
     "build": "vite build",
     "lint": "eslint . --fix",
     "preview": "vite preview",
