@@ -46,6 +46,7 @@ export default defineConfig({
                 marketplaceBusqueda: 'marketplace-busqueda.html',
                 marketplaceTaller: 'marketplace-taller.html',
                 managerTallerMarketplace: 'manager-taller-marketplace.html',
+                managerTallerSucursales: 'manager-taller-sucursales.html',
 
                 // FinSaaS Vertical (New Shell)
                 loginFinsaas: 'login-finsaas.html',
@@ -96,10 +97,12 @@ export default defineConfig({
                 finsaasImportBanking: 'src/verticals/finsaas/pages/import-banking.html',
 
                 // Tasks & Leads Vertical
+                tasksleadsLogin: 'login-tasksleads.html',
                 tasksleadsDashboard: 'src/verticals/tasksleads/pages/dashboard.html',
                 tasksleadsProjects: 'src/verticals/tasksleads/pages/projects.html',
                 tasksleadsTasks: 'src/verticals/tasksleads/pages/tasks.html',
                 tasksleadsLeads: 'src/verticals/tasksleads/pages/leads.html',
+                tasksleadsChats: 'src/verticals/tasksleads/pages/chats.html',
             }
         }
     },
