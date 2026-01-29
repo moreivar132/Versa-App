@@ -151,44 +151,44 @@ async function timelinesWebhook(req, res) {
                  VALUES ($1, $2, $3, $4, NOW())`,
                 [tenantId, leadId, externalChatId, senderPhone]
             );
+        }
 
-            // 6. Enviar Email (Solo si es nuevo)
-            const emailSubject = `Nuevo lead WhatsApp - ${senderName || senderPhone}`;
-            const emailBody = `
-                Nuevo mensaje entrante:
-                
-                De: ${senderName} (${senderPhone})
-                Mensaje: ${messageText}
-                
-                Chat ID: ${externalChatId}
-                Fecha: ${timestamp.toLocaleString()}
-            `;
+        // 6. Enviar Email (PARA TODOS los mensajes entrantes, nuevos o existentes)
+        const emailSubject = `Nuevo mensaje WhatsApp - ${senderName || senderPhone}`;
+        const emailBody = `
+            Nuevo mensaje entrante:
+            
+            De: ${senderName} (${senderPhone})
+            Mensaje: ${messageText}
+            
+            Chat ID: ${externalChatId}
+            Fecha: ${timestamp.toLocaleString()}
+        `;
 
-            const emailHtml = `
-                <h3>🟠 Nuevo Lead Detectado</h3>
-                <p><strong>De:</strong> ${senderName || 'Desconocido'} (${senderPhone})</p>
-                <p><strong>Mensaje:</strong></p>
-                <blockquote style="background: #f5f5f5; padding: 10px; border-left: 4px solid #ff5f00;">
-                    ${messageText}
-                </blockquote>
-                <p><small>ID: ${externalChatId}</small></p>
-            `;
+        const emailHtml = `
+            <h3>🟠 Nuevo Mensaje Detectado</h3>
+            <p><strong>De:</strong> ${senderName || 'Desconocido'} (${senderPhone})</p>
+            <p><strong>Mensaje:</strong></p>
+            <blockquote style="background: #f5f5f5; padding: 10px; border-left: 4px solid #ff5f00;">
+                ${messageText}
+            </blockquote>
+            <p><small>ID: ${externalChatId}</small></p>
+        `;
 
-            console.log(`[Webhook] Prepared email for ${senderName}. Sending...`);
+        console.log(`[Webhook] Prepared email for ${senderName}. Sending...`);
 
-            // No hacemos await para no bloquear el webhook? El usuario dijo "Mantener respuesta HTTP 200".
-            // Pero si falla necesitamos logs.
-            try {
-                const sent = await emailService.sendLeadNotificationEmail({
-                    subject: emailSubject,
-                    text: emailBody,
-                    html: emailHtml
-                });
-                if (sent) console.log("[Webhook] Email notification sent OK");
-                else console.error("[Webhook] Email notification FAILED (check emailService logs)");
-            } catch (emailErr) {
-                console.error("[Webhook] XMLHTTP Request Failed during email send:", emailErr);
-            }
+        // No hacemos await para no bloquear el webhook? El usuario dijo "Mantener respuesta HTTP 200".
+        // Pero si falla necesitamos logs.
+        try {
+            const sent = await emailService.sendLeadNotificationEmail({
+                subject: emailSubject,
+                text: emailBody,
+                html: emailHtml
+            });
+            if (sent) console.log("[Webhook] Email notification sent OK");
+            else console.error("[Webhook] Email notification FAILED (check emailService logs)");
+        } catch (emailErr) {
+            console.error("[Webhook] XMLHTTP Request Failed during email send:", emailErr);
         }
 
         return res.status(200).json({ ok: true, lead_id: leadId, created: linkResult.rows.length === 0 });
