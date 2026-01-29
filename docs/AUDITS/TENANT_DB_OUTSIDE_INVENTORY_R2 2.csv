@@ -1,7 +1,0 @@
-path,type,runtime,pattern,pool_count,client_count,total_count,module_or_vertical,risk,notes
-backend/src/modules/contable/api/controllers/documentos.controller.js,controller,A,pool.query,6,0,6,Contable,S1,Active controller
-backend/services/ordenPDFService.js,service,A,pool.query,8,0,8,Core,S2,PDF generation
-backend/services/ventaPDFService.js,service,A,pool.query,6,0,6,Core,S2,PDF generation
-backend/services/unifiedNotificationService.js,service,A,pool.query,6,0,6,Core,S2,Notifications
-backend/services/auditService.js,service,A,pool.query,4,0,4,Core,S2,Audit logging
-backend/services/makeEmailProvider.js,service,A,pool.query,2,0,2,Core,S2,Email provider

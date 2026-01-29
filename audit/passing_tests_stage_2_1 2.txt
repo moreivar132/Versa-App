@@ -1,1 +1,0 @@
-Tests Passing: tests/integration/contabilidad.qa.test.js tests/integration/deducible.qa.test.js

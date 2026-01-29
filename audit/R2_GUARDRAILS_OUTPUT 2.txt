@@ -1,9 +1,0 @@
-🔍 CRIT-FIX-01 Guardrail: Scanning for pool.query violations...
-
-📁 Scanned 119 files
-
-✅ No violations found. All clear!
-
---- Execution Date: 2026-01-22T14:06:30+01:00 ---
---- Branch: rafael ---
---- Commit: 805e18edfadc643e1d1b20b0fd3046fb3e2c683d ---
