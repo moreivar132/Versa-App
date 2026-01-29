@@ -226,10 +226,15 @@ class TasksLeadsRepository {
                 l.*,
                 u.nombre as owner_name,
                 tl.timeline_external_id,
-                tl.last_sync_at as timeline_last_sync
+                tl.last_sync_at as timeline_last_sync,
+                (SELECT json_agg(tag) FROM tasksleads_lead_tag WHERE lead_id = l.id) as tags,
+                ai.categoria_principal as ai_category,
+                ai.urgencia as ai_urgency,
+                ai.resumen as ai_summary
             FROM tasksleads_lead l
             LEFT JOIN usuario u ON l.owner_user_id = u.id
             LEFT JOIN tasksleads_lead_timeline_link tl ON l.id = tl.lead_id
+            LEFT JOIN tasksleads_lead_ai ai ON l.id = ai.lead_id
             WHERE l.id_tenant = $1 AND l.deleted_at IS NULL
         `;
         const params = [ctx.tenantId];
@@ -271,10 +276,16 @@ class TasksLeadsRepository {
                 u.nombre as owner_name,
                 tl.timeline_external_id,
                 tl.timeline_phone,
-                tl.last_sync_at as timeline_last_sync
+                tl.last_sync_at as timeline_last_sync,
+                (SELECT json_agg(tag) FROM tasksleads_lead_tag WHERE lead_id = l.id) as tags,
+                ai.categoria_principal as ai_category,
+                ai.urgencia as ai_urgency,
+                ai.resumen as ai_summary,
+                ai.intencion as ai_intention
             FROM tasksleads_lead l
             LEFT JOIN usuario u ON l.owner_user_id = u.id
             LEFT JOIN tasksleads_lead_timeline_link tl ON l.id = tl.lead_id
+            LEFT JOIN tasksleads_lead_ai ai ON l.id = ai.lead_id
             WHERE l.id = $1 AND l.id_tenant = $2 AND l.deleted_at IS NULL
         `, [id, ctx.tenantId]);
         return result.rows[0] || null;
