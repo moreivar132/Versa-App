@@ -44,7 +44,15 @@
                 class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-xl p-8 shadow-sm">
                 <form id="config-form" onsubmit="saveConfig(event)">
 
-                    <!-- Global Selector in Topbar handles this now -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-bold mb-2">Empresa a Configurar</label>
+                        <select id="company-select" onchange="onCompanyChange()"
+                            class="w-full bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg p-3 text-sm focus:ring-2 focus:ring-primary outline-none">
+                            <option value="">Cargando empresas...</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">Selecciona la empresa para personalizar sus facturas
+                            (Logo, Colores, Datos).</p>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
@@ -107,11 +115,67 @@
         }
 
         async function loadCompanies() {
-            // Already handled by global topbar
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/api/contabilidad/empresas`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('versa_session_v1') ? JSON.parse(localStorage.getItem('versa_session_v1')).token : ''}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Error loading companies');
+
+                const result = await response.json();
+                const items = result.data.items || result.data || [];
+
+                const select = document.getElementById('company-select');
+                select.innerHTML = '';
+
+                if (items.length === 0) {
+                    select.innerHTML = '<option value="">Sin empresas asignadas</option>';
+                    return;
+                }
+
+                const storedId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
+                let found = false;
+
+                items.forEach(emp => {
+                    const opt = document.createElement('option');
+                    opt.value = emp.id;
+                    opt.textContent = emp.nombre || emp.nombre_comercial || emp.nombre_legal || 'Empresa sin nombre';
+                    if (String(emp.id) === String(storedId)) found = true;
+                    select.appendChild(opt);
+                });
+
+                // Select stored or first
+                if (found) {
+                    select.value = storedId;
+                } else {
+                    select.value = items[0].id;
+                    // Update storage to match
+                    localStorage.setItem('finsaas_current_empresa', items[0].id);
+                }
+
+            } catch (e) {
+                console.error('Error loading companies:', e);
+                document.getElementById('company-select').innerHTML = '<option value="">Error al cargar</option>';
+            }
+        }
+
+        window.onCompanyChange = function () {
+            const select = document.getElementById('company-select');
+            const newId = select.value;
+            if (newId) {
+                localStorage.setItem('finsaas_current_empresa', newId);
+                loadConfig();
+            }
         }
 
         window.loadConfig = async function () {
-            const empresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa') || '';
+            // Get ID directly from select if populated, otherwise fallback to storage
+            let empresaId = document.getElementById('company-select').value;
+            if (!empresaId) {
+                empresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa') || '';
+            }
 
             // Reset fields
             document.getElementById('cfg-color').value = '#46ec13'; // default
@@ -225,7 +289,12 @@
 
             const color = document.getElementById('cfg-color').value;
             const footerText = document.getElementById('cfg-footer').value;
-            const empresaId = localStorage.getItem('finsaas_current_empresa') || localStorage.getItem('filsaas_current_empresa');
+            const empresaId = document.getElementById('company-select').value;
+
+            if (!empresaId) {
+                alert('Por favor selecciona una empresa primero');
+                return;
+            }
 
             const payload = {
                 tenantId: currentUser.id_tenant,

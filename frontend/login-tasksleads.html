@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tasks & Leads Login | Versa</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, #0f0a14 0%, #1a1022 100%);
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f0a14;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #2e1e38;
+            border-radius: 4px;
+        }
+
+        /* Login Switch CSS - 4 Options */
+        .flip-switch-container {
+            --card-width: 75px;
+            --card-height: 90px;
+            --switch-bg: rgba(255, 255, 255, 0.1);
+            --switch-border-color: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --inactive-text-color: rgba(255, 255, 255, 0.6);
+            --icon-shadow-color: rgba(0, 0, 0, 0.3);
+            --card-bg: linear-gradient(135deg, rgba(255, 95, 0, 0.5), rgba(255, 95, 0, 0.2));
+            --card-bg-finsaas: linear-gradient(135deg, rgba(70, 236, 19, 0.5), rgba(70, 236, 19, 0.2));
+            --card-bg-tasks: linear-gradient(135deg, rgba(168, 85, 247, 0.5), rgba(168, 85, 247, 0.2));
+            --highlight-color: #ff5f00;
+            --highlight-finsaas: #46ec13;
+            --highlight-tasks: #a855f7;
+            display: grid;
+            place-content: center;
+            margin-bottom: 2rem;
+        }
+
+        .flip-switch {
+            display: flex;
+            position: relative;
+            width: calc(var(--card-width) * 4);
+            height: var(--card-height);
+            background: var(--switch-bg);
+            border-radius: 20px;
+            border: 1px solid var(--switch-border-color);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37), inset 0 4px 8px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            perspective: 1000px;
+        }
+
+        .flip-switch input[type="radio"] {
+            display: none;
+        }
+
+        .flip-switch .switch-button {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            z-index: 2;
+            color: var(--inactive-text-color);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .flip-switch .switch-button:hover {
+            color: var(--text-color);
+        }
+
+        .flip-switch .switch-button:hover svg {
+            transform: translateY(-3px);
+            filter: drop-shadow(0 4px 6px var(--icon-shadow-color)) brightness(1.2);
+        }
+
+        .flip-switch .switch-button svg {
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            filter: drop-shadow(0 2px 3px var(--icon-shadow-color));
+            width: 22px;
+            height: 22px;
+        }
+
+        .flip-switch .switch-button span {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .flip-switch #switch-opt-1:checked~[for="switch-opt-1"],
+        .flip-switch #switch-opt-2:checked~[for="switch-opt-2"],
+        .flip-switch #switch-opt-3:checked~[for="switch-opt-3"],
+        .flip-switch #switch-opt-4:checked~[for="switch-opt-4"] {
+            color: var(--text-color);
+            text-shadow: 0 0 8px rgba(255, 95, 0, 0.5);
+        }
+
+        .flip-switch #switch-opt-3:checked~[for="switch-opt-3"] {
+            text-shadow: 0 0 8px rgba(70, 236, 19, 0.5);
+        }
+
+        .flip-switch #switch-opt-4:checked~[for="switch-opt-4"] {
+            text-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+        }
+
+        .flip-switch .switch-card {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: var(--card-width);
+            height: var(--card-height);
+            z-index: 1;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+            border-radius: 20px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+        }
+
+        .flip-switch #switch-opt-1:checked~.switch-card {
+            transform: translateX(0%);
+            background: var(--card-bg);
+        }
+
+        .flip-switch #switch-opt-2:checked~.switch-card {
+            transform: translateX(100%);
+            background: var(--card-bg);
+        }
+
+        .flip-switch #switch-opt-3:checked~.switch-card {
+            transform: translateX(200%);
+            background: var(--card-bg-finsaas);
+        }
+
+        .flip-switch #switch-opt-4:checked~.switch-card {
+            transform: translateX(300%);
+            background: var(--card-bg-tasks);
+        }
+
+        .flip-switch #switch-opt-1:checked~[for="switch-opt-1"]::after,
+        .flip-switch #switch-opt-2:checked~[for="switch-opt-2"]::after,
+        .flip-switch #switch-opt-3:checked~[for="switch-opt-3"]::after,
+        .flip-switch #switch-opt-4:checked~[for="switch-opt-4"]::after {
+            content: "";
+            position: absolute;
+            bottom: -5px;
+            width: 30px;
+            height: 3px;
+            background: var(--highlight-color);
+            border-radius: 2px;
+            animation: glow 1.5s infinite alternate;
+        }
+
+        .flip-switch #switch-opt-3:checked~[for="switch-opt-3"]::after {
+            background: var(--highlight-finsaas);
+        }
+
+        .flip-switch #switch-opt-4:checked~[for="switch-opt-4"]::after {
+            background: var(--highlight-tasks);
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px var(--highlight-tasks);
+            }
+
+            to {
+                box-shadow: 0 0 15px var(--highlight-tasks), 0 0 25px var(--highlight-tasks);
+            }
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { primary: "#a855f7" }, fontFamily: { main: ["Montserrat", "sans-serif"] } } }
+        }
+    </script>
+</head>
+
+<body>
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div
+            class="bg-[#1a1022] border border-[#2e1e38] w-full max-w-md p-8 rounded-2xl shadow-2xl relative overflow-hidden">
+
+            <!-- Logo -->
+            <div class="flex justify-center mb-8">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary text-4xl">connect_without_contact</span>
+                    <span class="text-3xl font-black text-white tracking-tighter">Tasks&Leads</span>
+                </div>
+            </div>
+
+            <!-- Standalone Title -->
+            <h1 class="text-2xl font-bold text-white text-center mb-2">Panel Comercial</h1>
+            <p class="text-gray-400 text-center mb-8">Accede a tu gestión de Leads</p>
+
+            <div id="alertContainer" class="hidden mb-4 p-4 rounded-lg text-sm"></div>
+
+            <form id="loginForm" class="space-y-6">
+                <!-- Email -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2 ml-1">Email</label>
+                    <input type="email" id="email"
+                        class="w-full px-4 py-3.5 bg-[#241330] border border-[#2e1e38] rounded-xl text-white placeholder-gray-500 focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] transition-all text-base shadow-inner"
+                        placeholder="tu@empresa.com" required>
+                </div>
+
+                <!-- Password -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-300 mb-2 ml-1">Contraseña</label>
+                    <div class="relative">
+                        <input type="password" id="password"
+                            class="w-full px-4 py-3.5 bg-[#241330] border border-[#2e1e38] rounded-xl text-white placeholder-gray-500 focus:border-[#a855f7] focus:ring-1 focus:ring-[#a855f7] transition-all text-base pr-12 shadow-inner"
+                            placeholder="••••••••" required>
+                        <button type="button" onclick="togglePassword()"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors p-2">
+                            <span class="material-symbols-outlined" id="togglePasswordIcon"
+                                style="font-size: 22px;">visibility_off</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" id="submitBtn"
+                    class="w-full px-6 py-4 bg-[#a855f7] hover:bg-[#9333ea] text-white font-bold text-lg rounded-xl transition-all shadow-lg shadow-purple-900/30 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2">
+                    <span id="submitText">Acceder al CRM</span>
+                    <div id="submitLoader"
+                        class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="flex items-center my-6">
+                <div class="flex-1 border-t border-[#2e1e38]"></div>
+                <span class="px-4 text-gray-500 text-sm">o continúa con</span>
+                <div class="flex-1 border-t border-[#2e1e38]"></div>
+            </div>
+
+            <!-- Google Login Button -->
+            <button id="googleLoginBtn" type="button"
+                class="w-full px-6 py-4 bg-white hover:bg-gray-100 text-gray-800 font-semibold text-base rounded-xl transition-all shadow-lg flex justify-center items-center gap-3 transform hover:-translate-y-0.5">
+                <svg viewBox="0 0 24 24" width="20" height="20">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                <span>Continuar con Google</span>
+            </button>
+
+            <!-- Back to home -->
+            <p class="text-center text-gray-500 text-sm mt-6">
+                <a href="/" class="hover:text-white transition-colors">← Volver al inicio</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Invite Required Modal (Same as FinSaaS but styled different if wanted, keeping consistent for now) -->
+    <div id="inviteModal"
+        class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div
+            class="bg-gradient-to-br from-[#1a1022] to-[#0f0a14] border border-[#2e1e38] rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <!-- Icon -->
+            <div class="flex justify-center mb-6">
+                <div
+                    class="w-20 h-20 bg-gradient-to-br from-amber-500/20 to-orange-600/20 rounded-full flex items-center justify-center border border-amber-500/30">
+                    <span class="material-symbols-outlined text-amber-400" style="font-size: 40px;">mail_lock</span>
+                </div>
+            </div>
+            <h3 class="text-2xl font-bold text-white text-center mb-3">Acceso Restringido</h3>
+            <p class="text-gray-400 text-center mb-6 leading-relaxed">
+                Tu cuenta de Google <strong id="inviteModalEmail" class="text-white"></strong> no está asociada a
+                ninguna empresa.
+            </p>
+            <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 mb-6">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-amber-400 mt-0.5">info</span>
+                    <div>
+                        <p class="text-amber-200 text-sm font-medium mb-1">¿Cómo acceder?</p>
+                        <p class="text-gray-400 text-sm">Solicita a un administrador de tu empresa que te envíe un
+                            enlace de invitación.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button onclick="closeInviteModal()"
+                    class="w-full px-6 py-3 bg-[#a855f7] hover:bg-[#9333ea] text-white font-bold rounded-xl transition-all">
+                    Entendido
+                </button>
+                <a href="mailto:soporte@versa-app.com?subject=Solicitud%20de%20invitación%20CRM"
+                    class="w-full px-6 py-3 bg-transparent border border-[#2e1e38] hover:border-[#a855f7] text-white font-medium rounded-xl transition-all text-center">
+                    Contactar Soporte
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { login, setSession, getApiBaseUrl, getSession, clearSession } from '/auth.js';
+
+        const API_BASE_URL = getApiBaseUrl();
+
+        // Check for logout parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const shouldLogout = urlParams.get('logout') === 'true';
+
+        if (shouldLogout) {
+            clearSession();
+            urlParams.delete('logout');
+            const newUrl = urlParams.toString()
+                ? `${window.location.pathname}?${urlParams.toString()}`
+                : window.location.pathname;
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        const session = getSession();
+        if (session && session.token) {
+            const infoBanner = document.createElement('div');
+            infoBanner.className = 'fixed top-4 right-4 bg-purple-500/20 border border-purple-500/40 text-purple-400 px-4 py-2 rounded-lg text-sm z-50 flex items-center gap-2';
+            infoBanner.innerHTML = `
+                <span>✓ Sesión activa: ${session.user?.email || 'Usuario'}</span>
+                <a href="/src/verticals/tasksleads/pages/dashboard.html" class="underline hover:text-white ml-2">Ir al Dashboard →</a>
+            `;
+            document.body.appendChild(infoBanner);
+        }
+
+        // Form submit
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            document.getElementById('alertContainer').classList.add('hidden');
+
+            if (!email || !password) {
+                showAlert('Por favor completa todos los campos', 'error');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const user = await login(email, password);
+                // REDIRECT TO TASKS LEADS DASHBOARD
+                window.location.href = '/src/verticals/tasksleads/pages/dashboard.html';
+
+            } catch (error) {
+                console.error('Login error:', error);
+                showAlert(error.message || 'Error al iniciar sesión', 'error');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function showAlert(message, type = 'error') {
+            const container = document.getElementById('alertContainer');
+            container.textContent = message;
+            container.className = `mb-4 p-4 rounded-lg text-sm ${type === 'error' ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 'bg-green-500/10 border border-green-500/20 text-green-400'}`;
+            container.classList.remove('hidden');
+        }
+
+        function setLoading(loading) {
+            document.getElementById('submitBtn').disabled = loading;
+            document.getElementById('submitText').classList.toggle('hidden', loading);
+            document.getElementById('submitLoader').classList.toggle('hidden', !loading);
+        }
+
+        window.togglePassword = function () {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.textContent = 'visibility';
+            } else {
+                input.type = 'password';
+                icon.textContent = 'visibility_off';
+            }
+        };
+
+        // Switch Logic
+        document.getElementById('switch-opt-1').addEventListener('change', function () {
+            if (this.checked) setTimeout(() => { window.location.href = '/cliente-login.html'; }, 300);
+        });
+
+        document.getElementById('switch-opt-2').addEventListener('change', function () {
+            if (this.checked) setTimeout(() => { window.location.href = '/login.html'; }, 300);
+        });
+
+        document.getElementById('switch-opt-3').addEventListener('change', function () {
+            if (this.checked) setTimeout(() => { window.location.href = '/login-finsaas.html'; }, 300);
+        });
+
+        // Google OAuth Handling
+        (function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const oauthProvider = urlParams.get('oauth');
+            const error = urlParams.get('error');
+
+            if (error) {
+                if (error === 'no_account' || error === 'invalid_invite') {
+                    showInviteModal();
+                } else {
+                    showAlert('Error de autenticación: ' + error, 'error');
+                }
+                window.history.replaceState({}, '', window.location.pathname);
+                return;
+            }
+
+            if (token && oauthProvider === 'google') {
+                fetch(`${API_BASE_URL}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                    .then(res => res.json())
+                    .then(user => {
+                        setSession(token, user);
+                        const redirectTo = urlParams.get('redirect') || '/src/verticals/tasksleads/pages/dashboard.html';
+                        window.location.href = redirectTo;
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showAlert('Error al verificar sesión.', 'error');
+                    });
+            }
+        })();
+
+        document.getElementById('googleLoginBtn').addEventListener('click', function () {
+            const redirectTo = encodeURIComponent('/src/verticals/tasksleads/pages/dashboard.html');
+            const inviteToken = new URLSearchParams(window.location.search).get('invite');
+            let authUrl = `${API_BASE_URL}/api/auth/google?redirect=${redirectTo}`;
+            if (inviteToken) authUrl += `&invite=${encodeURIComponent(inviteToken)}`;
+            window.location.href = authUrl;
+        });
+
+        function showInviteModal() {
+            document.getElementById('inviteModal').classList.remove('hidden');
+        }
+
+        window.closeInviteModal = function () {
+            document.getElementById('inviteModal').classList.add('hidden');
+        }
+
+        document.getElementById('inviteModal').addEventListener('click', function (e) {
+            if (e.target === this) {
+                closeInviteModal();
+            }
+        });
+    </script>
+</body>
+
+</html>

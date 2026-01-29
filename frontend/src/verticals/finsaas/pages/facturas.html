@@ -1060,7 +1060,7 @@
 
 
         async function apiDelete(endpoint) {
-            const res = await fetch(API_BASE + endpoint, {
+            const res = await fetch(buildApiUrl(endpoint), {
                 method: 'DELETE',
                 headers: getAuthHeaders()
             });

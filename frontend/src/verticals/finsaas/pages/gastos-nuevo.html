@@ -72,11 +72,7 @@
                         class="px-4 py-2 border border-gray-200 dark:border-[#25381e] rounded-lg hover:bg-gray-100 dark:hover:bg-surface-dark-light transition-colors text-slate-900 dark:text-white">
                         Cancelar
                     </button>
-                    <!-- Selector de Empresa Global -->
-                    <select id="header-empresa-select"
-                        class="px-3 py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-[#25381e] rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary outline-none">
-                        <option value="">Cargando empresas...</option>
-                    </select>
+                    <!-- Empresa selector is provided by FinSaaSLayout in global topbar -->
                 </div>
             </div>
 
@@ -398,7 +394,6 @@
         const stepUpload = document.getElementById('step-upload');
         const stepProcessing = document.getElementById('step-processing');
         const stepReview = document.getElementById('step-review');
-        const empresaSelect = document.getElementById('header-empresa-select');
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
 
@@ -406,6 +401,14 @@
         async function init() {
             await loadEmpresas();
             setupDragAndDrop();
+
+            // Listen for empresa changes from the global Layout selector
+            window.addEventListener('storage', (e) => {
+                if (e.key === 'finsaas_current_empresa') {
+                    selectedEmpresaId = e.newValue;
+                    loadCategorias();
+                }
+            });
 
             // Handle intakeId from URL (e.g. from Library "Ir al registro")
             const urlParams = new URLSearchParams(window.location.search);
@@ -429,8 +432,7 @@
                     if (intake.id_empresa) {
                         if (selectedEmpresaId != intake.id_empresa) {
                             selectedEmpresaId = intake.id_empresa;
-                            empresaSelect.value = selectedEmpresaId;
-                            // Trigger change just in case
+                            localStorage.setItem('finsaas_current_empresa', selectedEmpresaId);
                             localStorage.setItem('finsaas_last_empresa', selectedEmpresaId);
                         }
                     }
@@ -472,44 +474,28 @@
                     items = res;
                 }
 
-                empresaSelect.innerHTML = '';
                 if (!items || items.length === 0) {
-                    empresaSelect.innerHTML = '<option value="">Sin empresas</option>';
+                    console.warn('No empresas found');
                     return;
                 }
 
-                items.forEach(emp => {
-                    const opt = document.createElement('option');
-                    opt.value = emp.id;
-                    opt.textContent = emp.nombre_legal || emp.nombre_comercial || emp.nombre || 'Sin nombre';
-                    empresaSelect.appendChild(opt);
-                });
-
-                // Auto-select: if URL intake loading hasn't set it yet
+                // Use global empresa selector from Layout (via localStorage)
+                // The Layout component manages the selector UI
                 if (!selectedEmpresaId) {
-                    const stored = localStorage.getItem('finsaas_last_empresa');
+                    const stored = localStorage.getItem('finsaas_current_empresa') ||
+                        localStorage.getItem('finsaas_last_empresa');
                     if (stored && items.find(e => e.id == stored)) {
-                        empresaSelect.value = stored;
+                        selectedEmpresaId = stored;
                     } else {
-                        empresaSelect.value = items[0].id;
+                        selectedEmpresaId = items[0].id;
+                        localStorage.setItem('finsaas_current_empresa', selectedEmpresaId);
                     }
-                    selectedEmpresaId = empresaSelect.value;
-                } else {
-                    // Maintain selected if already set (e.g. by loadIntake racing)
-                    empresaSelect.value = selectedEmpresaId;
                 }
 
                 loadCategorias();
 
-                empresaSelect.addEventListener('change', (e) => {
-                    selectedEmpresaId = e.target.value;
-                    localStorage.setItem('finsaas_last_empresa', selectedEmpresaId);
-                    loadCategorias();
-                });
-
             } catch (e) {
                 console.error('Error loading empresas', e);
-                empresaSelect.innerHTML = '<option value="">Error carga</option>';
             }
         }
 
@@ -829,10 +815,35 @@
             }
         };
 
-        window.cancelProcess = function () {
-            if (confirm("¿Cancelar este gasto? Se perderán los datos extraídos.")) {
-                window.location.reload();
+        window.cancelProcess = async function () {
+            if (!confirm("¿Cancelar este gasto? Se eliminará el documento subido y los datos extraídos.")) {
+                return;
             }
+
+            // If we have a current intake, delete it along with any draft invoice
+            if (currentIntakeId) {
+                try {
+                    const token = getToken();
+                    const res = await fetch(buildApiUrl(`/api/contabilidad/egresos/intakes/${currentIntakeId}`), {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'X-Empresa-Id': selectedEmpresaId
+                        }
+                    });
+                    const data = await res.json();
+                    if (!data.ok) {
+                        console.warn('[Cancel] Could not delete intake:', data.error);
+                    } else {
+                        console.log('[Cancel] Intake and draft deleted successfully');
+                    }
+                } catch (e) {
+                    console.warn('[Cancel] Error deleting intake:', e.message);
+                }
+            }
+
+            // Redirect back or reload
+            window.location.href = '/src/verticals/finsaas/pages/facturas.html';
         };
 
         window.saveGasto = async function (mode) {

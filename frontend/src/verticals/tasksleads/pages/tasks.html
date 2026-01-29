@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Tareas | Tasks & Leads</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "background-dark": "#0f172a",
+                        "surface-dark": "#1e293b",
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <link href="/src/verticals/tasksleads/layout/TasksLeadsLayout.css" rel="stylesheet" />
+</head>
+
+<body class="font-display bg-background-dark text-white antialiased overflow-auto">
+    <div class="max-w-7xl mx-auto p-6 flex flex-col gap-6">
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined">assignment</span>
+                </div>
+                <div>
+                    <a href="/src/verticals/tasksleads/pages/dashboard.html"
+                        class="text-primary text-sm hover:underline mb-1 inline-block">← Dashboard</a>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Board de Tareas</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4 border-l border-slate-700 pl-4">
+                <div class="text-right hidden sm:block">
+                    <p class="text-sm font-bold truncate max-w-[150px]" id="user-name">Usuario</p>
+                    <p class="text-xs text-gray-500" id="user-tenant">Tenant</p>
+                </div>
+                <div class="flex gap-3">
+                    <select id="filter-status" onchange="applyFilters()"
+                        class="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
+                        <option value="">Todos los estados</option>
+                        <option value="todo">Por hacer</option>
+                        <option value="doing">En progreso</option>
+                        <option value="done">Completadas</option>
+                    </select>
+                    <button onclick="openCreateModal()"
+                        class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-all shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined">add</span>
+                        Nueva Tarea
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="flex gap-4 overflow-x-auto pb-4">
+            <!-- Todo Column -->
+            <div class="kanban-column flex-shrink-0">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-gray-400">Por hacer</h3>
+                    <span class="text-xs bg-gray-500/20 px-2 py-1 rounded-full" id="count-todo">0</span>
+                </div>
+                <div id="column-todo" class="space-y-3 min-h-[200px]"></div>
+            </div>
+
+            <!-- Doing Column -->
+            <div class="kanban-column flex-shrink-0">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-blue-400">En progreso</h3>
+                    <span class="text-xs bg-blue-500/20 px-2 py-1 rounded-full" id="count-doing">0</span>
+                </div>
+                <div id="column-doing" class="space-y-3 min-h-[200px]"></div>
+            </div>
+
+            <!-- Done Column -->
+            <div class="kanban-column flex-shrink-0">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-green-400">Completadas</h3>
+                    <span class="text-xs bg-green-500/20 px-2 py-1 rounded-full" id="count-done">0</span>
+                </div>
+                <div id="column-done" class="space-y-3 min-h-[200px]"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="task-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-surface-dark rounded-2xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-xl font-bold mb-6" id="modal-title">Nueva Tarea</h2>
+            <form id="task-form" class="space-y-4">
+                <input type="hidden" id="task-id" />
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Título *</label>
+                    <input type="text" id="task-title" required
+                        class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Proyecto *</label>
+                    <select id="task-project" required
+                        class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
+                        <option value="">Seleccionar...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Descripción</label>
+                    <textarea id="task-description" rows="3"
+                        class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Estado</label>
+                        <select id="task-status"
+                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
+                            <option value="todo">Por hacer</option>
+                            <option value="doing">En progreso</option>
+                            <option value="done">Completada</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Prioridad</label>
+                        <select id="task-priority"
+                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
+                            <option value="low">Baja</option>
+                            <option value="medium">Media</option>
+                            <option value="high">Alta</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Fecha límite</label>
+                    <input type="date" id="task-due"
+                        class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 px-4 py-2 bg-slate-600 rounded-lg hover:bg-slate-500">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-primary rounded-lg hover:bg-primary/80">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getSession, buildApiUrl } from '/auth.js';
+
+        let session = null;
+        let currentProjectId = null;
+        let allTasks = [];
+
+        window.openCreateModal = openCreateModal;
+        window.closeModal = closeModal;
+        window.editTask = editTask;
+        window.deleteTask = deleteTask;
+        window.applyFilters = applyFilters;
+        window.updateTaskStatus = updateTaskStatus;
+
+        async function init() {
+            session = await getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            currentProjectId = params.get('projectId');
+
+            await loadProjects();
+            await loadTasks();
+
+            document.getElementById('user-name').textContent = session.user.nombre || session.user.email;
+            document.getElementById('user-tenant').textContent = `ID: ${session.user.id_tenant}`;
+            document.getElementById('task-form').addEventListener('submit', saveTask);
+        }
+
+        async function loadProjects() {
+            try {
+                const response = await fetch(buildApiUrl('/api/tasks-leads/projects'), {
+                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                });
+                const { data: projects } = await response.json();
+
+                const select = document.getElementById('task-project');
+                select.innerHTML = '<option value="">Seleccionar...</option>';
+                projects.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.name;
+                    select.appendChild(opt);
+                });
+
+                if (currentProjectId) {
+                    select.value = currentProjectId;
+                    const project = projects.find(p => p.id == currentProjectId);
+                    if (project) {
+                        document.getElementById('project-subtitle').textContent = `Tareas de: ${project.name}`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+            }
+        }
+
+        async function loadTasks() {
+            try {
+                let url = '/api/tasks-leads/tasks';
+                if (currentProjectId) url += `?projectId=${currentProjectId}`;
+
+                const response = await fetch(buildApiUrl(url), {
+                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                });
+                const { data: tasks } = await response.json();
+                allTasks = tasks || [];
+                renderTasks(allTasks);
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+            }
+        }
+
+        function applyFilters() {
+            const status = document.getElementById('filter-status').value;
+            let filtered = [...allTasks];
+            if (status) filtered = filtered.filter(t => t.status === status);
+            renderTasks(filtered);
+        }
+
+        function renderTasks(tasks) {
+            const todoTasks = tasks.filter(t => t.status === 'todo');
+            const doingTasks = tasks.filter(t => t.status === 'doing');
+            const doneTasks = tasks.filter(t => t.status === 'done');
+
+            document.getElementById('count-todo').textContent = todoTasks.length;
+            document.getElementById('count-doing').textContent = doingTasks.length;
+            document.getElementById('count-done').textContent = doneTasks.length;
+
+            document.getElementById('column-todo').innerHTML = todoTasks.map(renderTaskCard).join('') || '<p class="text-gray-500 text-sm">Sin tareas</p>';
+            document.getElementById('column-doing').innerHTML = doingTasks.map(renderTaskCard).join('') || '<p class="text-gray-500 text-sm">Sin tareas</p>';
+            document.getElementById('column-done').innerHTML = doneTasks.map(renderTaskCard).join('') || '<p class="text-gray-500 text-sm">Sin tareas</p>';
+        }
+
+        function renderTaskCard(task) {
+            const priorityClass = {
+                'high': 'priority-high',
+                'medium': 'priority-medium',
+                'low': 'priority-low'
+            }[task.priority] || 'priority-medium';
+
+            const priorityLabel = { 'high': 'Alta', 'medium': 'Media', 'low': 'Baja' }[task.priority] || 'Media';
+
+            const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done';
+
+            return `
+                <div class="kanban-card ${isOverdue ? 'border-l-4 border-red-500' : ''}">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-semibold text-sm">${task.title}</h4>
+                        <div class="flex gap-1">
+                            <button onclick="editTask(${task.id})" class="p-1 hover:bg-slate-600 rounded">
+                                <span class="material-symbols-outlined text-xs">edit</span>
+                            </button>
+                            <button onclick="deleteTask(${task.id})" class="p-1 hover:bg-red-500/20 rounded text-red-400">
+                                <span class="material-symbols-outlined text-xs">delete</span>
+                            </button>
+                        </div>
+                    </div>
+                    ${task.description ? `<p class="text-xs text-gray-400 mb-2 line-clamp-2">${task.description}</p>` : ''}
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-xs px-2 py-0.5 rounded-full ${priorityClass}">${priorityLabel}</span>
+                        ${task.due_date ? `<span class="text-xs ${isOverdue ? 'text-red-400' : 'text-gray-500'}">${new Date(task.due_date).toLocaleDateString('es')}</span>` : ''}
+                    </div>
+                    ${task.project_name ? `<p class="text-xs text-gray-500 mt-2">📁 ${task.project_name}</p>` : ''}
+                    <div class="flex gap-1 mt-3">
+                        ${task.status !== 'todo' ? `<button onclick="updateTaskStatus(${task.id}, 'todo')" class="text-xs px-2 py-1 bg-gray-500/20 rounded hover:bg-gray-500/30">← Todo</button>` : ''}
+                        ${task.status !== 'doing' ? `<button onclick="updateTaskStatus(${task.id}, 'doing')" class="text-xs px-2 py-1 bg-blue-500/20 rounded hover:bg-blue-500/30">In Progress</button>` : ''}
+                        ${task.status !== 'done' ? `<button onclick="updateTaskStatus(${task.id}, 'done')" class="text-xs px-2 py-1 bg-green-500/20 rounded hover:bg-green-500/30">Done ✓</button>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function openCreateModal() {
+            document.getElementById('modal-title').textContent = 'Nueva Tarea';
+            document.getElementById('task-id').value = '';
+            document.getElementById('task-title').value = '';
+            document.getElementById('task-description').value = '';
+            document.getElementById('task-status').value = 'todo';
+            document.getElementById('task-priority').value = 'medium';
+            document.getElementById('task-due').value = '';
+            if (currentProjectId) document.getElementById('task-project').value = currentProjectId;
+            document.getElementById('task-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('task-modal').classList.add('hidden');
+        }
+
+        async function editTask(id) {
+            try {
+                const response = await fetch(buildApiUrl(`/api/tasks-leads/tasks/${id}`), {
+                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                });
+                const { data: task } = await response.json();
+
+                document.getElementById('modal-title').textContent = 'Editar Tarea';
+                document.getElementById('task-id').value = task.id;
+                document.getElementById('task-title').value = task.title;
+                document.getElementById('task-description').value = task.description || '';
+                document.getElementById('task-project').value = task.project_id;
+                document.getElementById('task-status').value = task.status;
+                document.getElementById('task-priority').value = task.priority;
+                document.getElementById('task-due').value = task.due_date ? task.due_date.split('T')[0] : '';
+                document.getElementById('task-modal').classList.remove('hidden');
+            } catch (error) {
+                alert('Error cargando tarea');
+            }
+        }
+
+        async function saveTask(e) {
+            e.preventDefault();
+            const id = document.getElementById('task-id').value;
+            const data = {
+                title: document.getElementById('task-title').value,
+                description: document.getElementById('task-description').value,
+                project_id: parseInt(document.getElementById('task-project').value),
+                status: document.getElementById('task-status').value,
+                priority: document.getElementById('task-priority').value,
+                due_date: document.getElementById('task-due').value || null
+            };
+
+            try {
+                const url = id ? `/api/tasks-leads/tasks/${id}` : '/api/tasks-leads/tasks';
+                const method = id ? 'PATCH' : 'POST';
+
+                const response = await fetch(buildApiUrl(url), {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`,
+                        'X-Tenant-Id': session.user.id_tenant,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Error saving');
+                closeModal();
+                loadTasks();
+            } catch (error) {
+                alert('Error guardando tarea');
+            }
+        }
+
+        async function updateTaskStatus(id, newStatus) {
+            try {
+                await fetch(buildApiUrl(`/api/tasks-leads/tasks/${id}`), {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`,
+                        'X-Tenant-Id': session.user.id_tenant,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                loadTasks();
+            } catch (error) {
+                alert('Error actualizando estado');
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm('¿Eliminar esta tarea?')) return;
+            try {
+                await fetch(buildApiUrl(`/api/tasks-leads/tasks/${id}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                });
+                loadTasks();
+            } catch (error) {
+                alert('Error eliminando');
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

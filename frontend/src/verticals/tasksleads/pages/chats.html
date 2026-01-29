@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Historial de Chats | Tasks & Leads</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "background-dark": "#0f172a",
+                        "surface-dark": "#1e293b",
+                        "surface-dark-light": "#334155",
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <link href="/src/verticals/tasksleads/layout/TasksLeadsLayout.css" rel="stylesheet" />
+    <style>
+        /* Chat bubbles */
+        .msg-bubble {
+            max-width: 80%;
+            padding: 0.75rem 1rem;
+            border-radius: 1rem;
+            position: relative;
+        }
+
+        .msg-sent {
+            background-color: #3b82f6;
+            /* Primary blue */
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+            margin-left: auto;
+        }
+
+        .msg-received {
+            background-color: #334155;
+            /* Surface dark light */
+            color: white;
+            border-bottom-left-radius: 0.25rem;
+            margin-right: auto;
+        }
+
+        .chat-list-item.active {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid #3b82f6;
+        }
+    </style>
+</head>
+
+<body class="font-display bg-background-dark text-white antialiased h-screen flex overflow-hidden">
+
+    <!-- Sidebar / Chat List -->
+    <div class="w-full md:w-1/3 lg:w-1/4 bg-surface-dark border-r border-slate-700 flex flex-col h-full z-10">
+        <!-- Header -->
+        <div class="p-4 border-b border-slate-700 flex flex-col gap-3">
+            <div class="flex items-center justify-between">
+                <a href="/src/verticals/tasksleads/pages/dashboard.html"
+                    class="text-gray-400 hover:text-white flex items-center gap-1 text-sm">
+                    <span class="material-symbols-outlined text-lg">arrow_back</span> Dashboard
+                </a>
+                <span class="font-bold">Chats</span>
+            </div>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-2.5 text-gray-400 text-lg">search</span>
+                <input type="text" id="search-input" placeholder="Buscar por nombre o teléfono..."
+                    class="w-full bg-slate-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm text-white focus:ring-1 focus:ring-primary placeholder-gray-500">
+            </div>
+        </div>
+
+        <!-- Chat List -->
+        <div id="chat-list" class="flex-1 overflow-y-auto p-2 space-y-1">
+            <div class="text-center py-8 text-gray-500">Cargando chats...</div>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col h-full bg-background-dark relative">
+        <!-- Welcome / Empty State -->
+        <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 z-0">
+            <div class="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mb-4">
+                <span class="material-symbols-outlined text-4xl text-slate-600">chat</span>
+            </div>
+            <p class="text-lg font-medium">Selecciona un chat para ver el historial</p>
+        </div>
+
+        <!-- Chat Header -->
+        <div id="chat-header"
+            class="h-16 border-b border-slate-700 bg-surface-dark flex items-center justify-between px-6 hidden z-10 shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg"
+                    id="chat-avatar">
+                    A
+                </div>
+                <div>
+                    <h2 class="font-bold text-white leading-tight" id="chat-name">Nombre Contacto</h2>
+                    <p class="text-xs text-gray-400" id="chat-detail">+34 000 000 000 • WhatsApp</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <div id="chat-labels" class="flex gap-2"></div>
+                <a href="#" target="_blank" id="open-timelines-btn"
+                    class="text-gray-400 hover:text-primary transition-colors flex items-center gap-1 text-sm bg-slate-800 px-3 py-1.5 rounded-lg">
+                    <span class="material-symbols-outlined text-sm">open_in_new</span>
+                    Abrir en Timelines
+                </a>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="messages-container"
+            class="flex-1 overflow-y-auto p-6 space-y-4 hidden relative z-10 opacity-0 transition-opacity duration-300">
+            <!-- Messages injected here -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { getSession, buildApiUrl } from '/auth.js';
+
+        let session = null;
+        let allChats = [];
+        let currentChatId = null;
+
+        async function init() {
+            session = await getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            // Search listener
+            document.getElementById('search-input').addEventListener('input', (e) => filterChats(e.target.value));
+
+            loadChats();
+        }
+
+        async function loadChats() {
+            try {
+                const response = await fetch(buildApiUrl('/api/tasks-leads/timeline/chats'), {
+                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                });
+                const { data } = await response.json();
+                allChats = data || [];
+                renderChatList(allChats);
+            } catch (error) {
+                console.error('Error loading chats:', error);
+                document.getElementById('chat-list').innerHTML = '<div class="text-center py-8 text-red-400">Error cargando chats</div>';
+            }
+        }
+
+        function renderChatList(chats) {
+            const list = document.getElementById('chat-list');
+            if (chats.length === 0) {
+                list.innerHTML = '<div class="text-center py-8 text-gray-500">No hay chats disponibles</div>';
+                return;
+            }
+
+            list.innerHTML = chats.map(chat => {
+                const lastTime = formatTime(chat.last_message_at);
+                const isActive = chat.timeline_id === currentChatId;
+
+                return `
+                <div class="chat-list-item p-3 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors flex gap-3 ${isActive ? 'active' : ''}" 
+                     onclick="selectChat('${chat.timeline_id}')">
+                    <div class="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-gray-300 flex-shrink-0 font-bold overflow-hidden">
+                        ${chat.photo ? `<img src="${chat.photo}" class="w-full h-full object-cover">` : (chat.full_name || chat.phone || '?').charAt(0).toUpperCase()}
+                    </div>
+                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                        <div class="flex justify-between items-baseline">
+                            <h3 class="font-semibold text-sm truncate text-white">${chat.full_name || chat.phone}</h3>
+                            <span class="text-[10px] text-gray-500 flex-shrink-0">${lastTime}</span>
+                        </div>
+                        <p class="text-xs text-gray-400 truncate mt-0.5">
+                            ${chat.phone}
+                        </p>
+                        ${chat.labels && chat.labels.length > 0 ? `
+                            <div class="flex gap-1 mt-1.5 overflow-hidden">
+                                ${chat.labels.slice(0, 3).map(l => `<span class="text-[9px] px-1.5 py-0.5 bg-slate-700 rounded text-gray-300 whitespace-nowrap">${l}</span>`).join('')}
+                                ${chat.labels.length > 3 ? `<span class="text-[9px] px-1.5 py-0.5 bg-slate-700 rounded text-gray-300">+${chat.labels.length - 3}</span>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function filterChats(query) {
+            const lower = query.toLowerCase();
+            const filtered = allChats.filter(c =>
+                (c.full_name && c.full_name.toLowerCase().includes(lower)) ||
+                (c.phone && c.phone.includes(query)) ||
+                (c.labels && c.labels.some(l => l.toLowerCase().includes(lower)))
+            );
+            renderChatList(filtered);
+        }
+
+        window.selectChat = async (id) => {
+            currentChatId = id;
+            const chat = allChats.find(c => c.timeline_id === String(id)) || allChats.find(c => c.timeline_id === Number(id));
+            if (!chat) return;
+
+            // Highlight in list - Safe filtering
+            const currentSearch = document.getElementById('search-input').value;
+            if (currentSearch) {
+                const lower = currentSearch.toLowerCase();
+                const filtered = allChats.filter(c =>
+                    (c.full_name && c.full_name.toLowerCase().includes(lower)) ||
+                    (c.phone && c.phone.includes(currentSearch)) ||
+                    (c.labels && c.labels.some(l => l.toLowerCase().includes(lower)))
+                );
+                renderChatList(filtered);
+            } else {
+                renderChatList(allChats);
+            }
+
+            // Setup Header
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('chat-header').classList.remove('hidden');
+            document.getElementById('chat-name').textContent = chat.full_name || chat.phone || 'Usuario Desconocido';
+            document.getElementById('chat-detail').textContent = `${chat.phone || 'Sin número'} • ${chat.responsible || 'Sin asignar'}`;
+            document.getElementById('chat-avatar').textContent = (chat.full_name || chat.phone || '?').charAt(0).toUpperCase();
+            document.getElementById('open-timelines-btn').href = chat.chat_url ? `https://app.timelines.ai${chat.chat_url}` : '#';
+
+            const labelsContainer = document.getElementById('chat-labels');
+            labelsContainer.innerHTML = (chat.labels || []).map(l =>
+                `<span class="text-xs px-2 py-1 bg-slate-700 rounded-lg text-gray-300">${l}</span>`
+            ).join('');
+
+            // Load Messages
+            const messagesContainer = document.getElementById('messages-container');
+            messagesContainer.innerHTML = '<div class="text-center py-8 text-gray-500">Cargando historial...</div>';
+            messagesContainer.classList.remove('hidden', 'opacity-0');
+            messagesContainer.classList.add('opacity-100');
+
+            try {
+                const response = await fetch(buildApiUrl(`/api/tasks-leads/timeline/chats/${id}/messages`), {
+                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                });
+                const { data: messages } = await response.json();
+                renderMessages(messages);
+            } catch (error) {
+                console.error(error);
+                messagesContainer.innerHTML = '<div class="text-center py-8 text-red-400">Error cargando mensajes</div>';
+            }
+        };
+
+        function renderMessages(messages) {
+            const container = document.getElementById('messages-container');
+            if (!messages || messages.length === 0) {
+                container.innerHTML = '<div class="text-center py-12 text-gray-500">No hay mensajes en este historial</div>';
+                return;
+            }
+
+            // TimelinesAI messages usually come newest first? Or oldest first? 
+            // We usually want oldest at top. If API returns newest first, reverse().
+            // Assuming API returns distinct order, we sort by timestamp just in case.
+            const sorted = [...messages].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            container.innerHTML = sorted.map(msg => {
+                const isSentByUs = msg.direction === 'sent' || msg.sender?.is_me; // Adjust based on actual API payload
+                const time = formatTime(msg.timestamp);
+
+                return `
+                <div class="flex flex-col gap-1 ${isSentByUs ? 'items-end' : 'items-start'}">
+                    <div class="msg-bubble ${isSentByUs ? 'msg-sent' : 'msg-received'}">
+                        <p class="text-sm whitespace-pre-wrap">${msg.text || (msg.attachments?.length ? '📎 Adjunto' : '')}</p>
+                    </div>
+                    <span class="text-[10px] text-gray-500 px-1">${time}</span>
+                </div>
+                `;
+            }).join('');
+
+            // Scroll to bottom
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+
+        function formatTime(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // e.g. 14:30
+        }
+
+        // Init
+        init();
+        window.filterChats = filterChats; // Make accessible globally just in case
+    </script>
+</body>
+
+</html>
