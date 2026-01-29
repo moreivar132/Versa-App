@@ -19,7 +19,6 @@ const client = axios.create({
 
 /**
  * Adds a label to a chat in TimelinesAI.
- * Note: TimelinesAI API uses PUT /labels to assign labels to a chat.
  */
 async function addLabelToChat(chatId, label) {
     if (!API_TOKEN) {
@@ -28,63 +27,47 @@ async function addLabelToChat(chatId, label) {
     }
 
     try {
-        /* 
-           TimelinesAI Label API (Official or Reverse-engineered):
-           Usually: POST /chats/{chat_id}/labels or similar. 
-           For this MVP, we will try the documented endpoint for editing chat or adding labels.
-           If strict specific endpoint is needed, check docs. 
-           Assuming simple implementation: POST /integrations/pipedrive/labels or generic labels endpoint.
-           
-           *Correction*: Timelines public API is limited. 
-           If specific "add label" endpoint doesn't exist publicly, we might only be able to add Notes.
-           Let's assume we can add Notes for now effectively. Labs/Tags support varies.
-        */
+        console.log(`[TimelinesService] Adding label [${label}] to chat ${chatId}...`);
 
-        // MVP: We will focus on NOTES first as they are universally supported.
-        // Labels support in public API depends on plan.
-        console.log(`[TimelinesService] (Mock) Adding label [${label}] to chat ${chatId}`);
+        // Attempt strict Label API first
+        await client.post('/labels', {
+            chat_id: parseInt(chatId),
+            name: label,
+            background_color: '#3b82f6', // Optional color
+            text_color: '#ffffff'
+        });
+
+        console.log(`[TimelinesService] Label [${label}] added OK.`);
         return true;
     } catch (error) {
-        console.error(`[TimelinesService] Failed to add label ${label}:`, error.message);
+        // Log as warning, don't crash flow
+        // 404 means endpoint doesn't exist or chat not found
+        const msg = error.response?.data?.detail || error.message;
+        console.warn(`[TimelinesService] Failed to add label ${label}: ${msg}`);
         return false;
     }
 }
 
 /**
  * Sends an internal note to the chat.
- * This is the best way to add context (summary, next steps) visible to agents.
  */
 async function sendNoteToChat(chatId, noteContent) {
     if (!API_TOKEN) return false;
 
     try {
-        /*
-          According to some TimelinesAI docs: POST /chats/{chat_id}/notes
-          Payload: { "text": "..." }
-        */
-        // const response = await client.post(`/chats/${chatId}/notes`, {
-        //     text: noteContent
-        // });
+        console.log(`[TimelinesService] Sending NOTE to chat ${chatId}...`);
 
-        // If the specific endpoint is different (e.g. sending a message as type note):
-        // Fallback to sending a message if notes API isn't distinct.
-        // But for "Internal Note", usually it's a specific endpoint.
+        // Endpoint standard de notes
+        await client.post('/notes', {
+            chat_id: parseInt(chatId),
+            text: noteContent
+        });
 
-        // Let's assume standard POST /message with type='note' or specific endpoint.
-        // For MVP safety: We will log this action until endpoint confirmation.
-
-        console.log(`[TimelinesService] Sending NOTE to chat ${chatId}:`, noteContent);
-
-        // UNCOMMENT WHEN ENDPOINT IS CONFIRMED
-        // const response = await client.post('/messages', {
-        //   chat_id: parseInt(chatId),
-        //   text: noteContent,
-        //   type: 'note' // or similar internal flag
-        // });
-
+        console.log(`[TimelinesService] Note sent OK.`);
         return true;
     } catch (error) {
-        console.error('[TimelinesService] Failed to send note:', error.message);
+        const msg = error.response?.data?.detail || error.message;
+        console.error(`[TimelinesService] Failed to send note: ${msg}`);
         return false;
     }
 }

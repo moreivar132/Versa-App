@@ -5,12 +5,16 @@
 
 const KEYWORDS = {
     BICI: ['bici', 'bicicleta', 'ebike', 'e-bike', 'alquiler', 'paseo', 'montaña', 'road'],
-    TALLER: ['taller', 'reparar', 'reparación', 'freno', 'pinchazo', 'rueda', 'mantenimiento', 'averia', 'avería', 'roto'],
-    MOTO: ['moto', 'scooter', 'matricula', 'matrícula', '125', 'cc', 'sym', 'honda'],
+    TALLER: ['taller', 'reparar', 'reparación', 'freno', 'pinchazo', 'rueda', 'mantenimiento', 'averia', 'avería', 'roto', 'tesoro'],
+    MOTO: ['moto', 'scooter', 'matricula', 'matrícula', '125', 'cc', 'sym', 'honda', 'yamaha', 'pcx', 'nmax'],
     SAAS: ['factura', 'contabilidad', 'crm', 'empresa', 'tenant', 'software', 'acceso', 'login'],
     MARKETPLACE: ['cita', 'reserva', 'hora', 'agenda', 'disponible', 'hueco'],
     SOPORTE: ['ayuda', 'problema', 'error', 'no funciona', 'duda', 'consulta'],
-    URGENTE: ['hoy', 'ahora', 'urgente', 'ya', 'inmediato', 'pronto']
+    URGENTE: ['hoy', 'ahora', 'urgente', 'ya', 'inmediato', 'pronto'],
+    REPARTIDOR: ['reparto', 'entrega', 'pedido', 'rider', 'glovo', 'uber'],
+    COBRANZA: ['cobro', 'deuda', 'pago', 'pendiente', 'moroso', 'no pagado'],
+    PAQUETERIA: ['paquete', 'envio', 'seguimiento'],
+    CONTRATADO: ['contrato', 'alta', 'firmar', 'empleo', 'trabajo']
 };
 
 /**
@@ -39,7 +43,7 @@ function classifyMessage(messageText) {
     let maxMatches = 0;
 
     // Prioritize business verticals over generic tags like URGENTE/SOPORTE
-    const verticals = ['BICI', 'TALLER', 'MOTO', 'SAAS', 'MARKETPLACE'];
+    const verticals = ['BICI', 'TALLER', 'MOTO', 'SAAS', 'MARKETPLACE', 'REPARTIDOR', 'COBRANZA', 'PAQUETERIA', 'CONTRATADO'];
 
     for (const cat of verticals) {
         if (matches[cat] && matches[cat] > maxMatches) {

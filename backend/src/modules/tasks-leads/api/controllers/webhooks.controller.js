@@ -1,127 +1,65 @@
-/**
- * TimelinesAI Webhooks Controller
- * Deployment trigger comment: v1.0.1
- */
-
-const crypto = require('crypto');
-const { getSystemDb } = require('../../../../core/db/tenant-db');
-const emailService = require('../../application/services/emailService');
+const { getTenantDb } = require('../../../../core/database/postgres/client');
+const emailService = require('../../../../services/emailService');
 const classifierService = require('../../application/services/leadClassifierService');
 const timelinesService = require('../../application/services/timelinesService');
 
 /**
- * TimelinesAI Webhooks Controller
- * Handles message:received:new to create/update leads.
+ * Webhook handler for TimelinesAI
+ * Recibe mensajes entrantes, crea Leads si es necesario y dispara clasficación
  */
 async function timelinesWebhook(req, res) {
-    // 1. Validar Token
-    const providedToken = String(req.query.token || "");
-    const secretToken = process.env.TIMELINES_WEBHOOK_SECRET;
+    const db = getTenantDb({ tenantId: 1 }); // Default to tenant 1 for webhook context
+    const payload = req.body;
 
-    if (!secretToken || providedToken !== secretToken) {
-        console.warn(`[Webhook Unauthorized] IP: ${req.ip}`);
-        return res.status(401).json({ ok: false, error: "unauthorized" });
-    }
-
-    // Respuesta optimista inmediata para TimelinesAI
-    // TimelinesAI reintentará si NO respondemos 200, así que respondemos al final,
-    // pero envolvemos en try/catch seguro que siempre devuelva 200.
-
-    const db = getSystemDb({ source: 'timelines_webhook', reason: 'incoming_message' });
+    // console.log('[Webhook Payload]', JSON.stringify(payload, null, 2));
 
     try {
-        const body = req.body || {};
-        const eventType = body.event_type || body.event || 'unknown';
-
-        // Metadata para logs
-        const metadata = {
-            ip: req.ip,
-            eventType,
-            chat_id: body.chat_id,
-            timestamp: new Date().toISOString()
-        };
-
-        // Solo procesamos 'message:received:new'
-        if (eventType !== 'message:received:new') {
-            console.log('[Webhook Skipped] Ignored event type:', eventType);
-            return res.status(200).json({ ok: true, ignored: true });
+        // Validación básica
+        if (!payload || !payload.message || !payload.chat) {
+            console.warn('[Webhook] Invalid payload structure');
+            return res.status(200).json({ ok: false, reason: 'ignored_structure' });
         }
 
-        // 2. Parseo Defensivo del Mensaje
-        const messageData = body.message || {};
-        const chatData = body.chat || {}; // A veces viene info del chat
+        const messageData = payload.message;
+        const chatData = payload.chat;
 
-        const externalChatId = String(chatData.chat_id || body.chat_id || messageData.chat_id || "");
-        const messageText = String(messageData.text || body.text || "");
-        const senderName = messageData.sender?.full_name || chatData.full_name || "Desconocido";
-        const senderPhone = messageData.sender?.phone || chatData.phone || "";
-        const timestamp = messageData.timestamp ? new Date(messageData.timestamp) : new Date();
-        const messageId = String(messageData.message_id || body.message_id || "");
-
-        if (!externalChatId) {
-            console.warn('[Webhook Warning] No chat_id found in payload');
-            return res.status(200).json({ ok: true, error: "no_data" });
+        // Solo nos interesan mensajes RECIBIDOS (no enviados por nosotros)
+        if (messageData.direction !== 'received') {
+            return res.status(200).json({ ok: true, ignored: 'direction_sent' });
         }
 
-        // 3. Deduplicación
-        // Generamos un ID único si no viene message_id
-        const eventUniqueId = messageId || crypto.createHash('md5').update(`${externalChatId}-${messageText}-${timestamp.getTime()}`).digest('hex');
-
-        // Verificamos si ya lo procesamos
-        // Usamos try/catch para verificar existencia de tabla por si la migración falló
-        try {
-            const existingEvent = await db.queryRaw(
-                'SELECT id FROM tasksleads_webhook_event WHERE external_event_id = $1',
-                [eventUniqueId]
-            );
-
-            if (existingEvent.rows.length > 0) {
-                console.log('[Webhook Skipped] Duplicate event:', eventUniqueId);
-                return res.status(200).json({ ok: true, duplicated: true });
-            }
-
-            // Registramos el evento (Commit posterior o inmediato)
-            // Lo hacemos al final o aquí? Mejor aquí para asegurar idempotencia futura rapida
-            await db.queryRaw(
-                `INSERT INTO tasksleads_webhook_event 
-                (external_event_id, event_type, payload, created_at) 
-                VALUES ($1, $2, $3, NOW())`,
-                [eventUniqueId, eventType, JSON.stringify(body)]
-            );
-        } catch (err) {
-            console.warn('[Webhook DB Warning] Could not check deduplication (table missing?):', err.message);
-            // Continuamos igual, es mejor procesar doble que perder leads en Beta
-        }
-
-        // 4. Filtro de Grupos
-        const isGroup = body.is_group ||
-            externalChatId.includes('@g.us') ||
-            (chatData.products_count === undefined && chatData.participants_count > 1); // Heurística
+        const externalChatId = chatData.id || chatData.uid; // Timelines ID
+        const senderPhone = chatData.phone || chatData.whatsapp_id;
+        const senderName = chatData.full_name || chatData.name || 'Desconocido';
+        const messageText = messageData.text || '';
+        const timestamp = new Date();
+        const isGroup = chatData.is_group || false;
 
         if (isGroup) {
             console.log('[Webhook Skipped] Group message');
             return res.status(200).json({ ok: true, ignored: 'group' });
         }
 
-        // 5. Lógica de Lead (Buscar o Crear)
-        // Buscamos si existe link con este chat externo
+        // ===========================================
+        // 5. GESTION DE LEADS (Buscar o Crear)
+        // ===========================================
+
+        // Primero buscamos si ya existe el link con Timeline
         const linkResult = await db.queryRaw(
             `SELECT lead_id, id_tenant FROM tasksleads_lead_timeline_link WHERE timeline_external_id = $1 LIMIT 1`,
             [externalChatId]
         );
 
         let leadId = null;
-        let tenantId = 1; // FALLBACK DEFAULT TENANT (Cambiar si hay lógica multi-tenant real)
+        let tenantId = 1;
 
         if (linkResult.rows.length > 0) {
-            // LEAD EXISTE: UPDATE
+            // LEAD YA VINCULADO: UPDATE
             leadId = linkResult.rows[0].lead_id;
             tenantId = linkResult.rows[0].id_tenant;
 
-            console.log(`[Webhook] Updating existing lead ${leadId}`);
+            console.log(`[Webhook] Updating existing linked lead ${leadId}`);
 
-            // Actualizamos actividad y preview
-            // Usamos queryRaw para evitar problemas de RLS si el contexto no está set (SystemDb lo bypasea pero igual)
             await db.queryRaw(
                 `UPDATE tasksleads_lead 
                  SET last_activity_at = $1, last_message_preview = $2, updated_at = NOW()
@@ -130,157 +68,172 @@ async function timelinesWebhook(req, res) {
             );
 
         } else {
-            // LEAD NUEVO: INSERT
-            console.log(`[Webhook] Creating NEW lead for chat ${externalChatId}`);
+            // NO HAY LINK: Buscar si existe Lead por telefono (evitar duplicados)
+            console.log(`[Webhook] No link found for chat ${externalChatId}. Check logic...`);
 
-            // Intentamos buscar por teléfono si el chat no existía (para no duplicar contacto)
-            // TODO: Fallback search by phone logic here if needed.
+            let existingLead = null;
+            if (senderPhone) {
+                const phoneResult = await db.queryRaw(
+                    `SELECT id, id_tenant FROM tasksleads_lead WHERE phone = $1 LIMIT 1`,
+                    [senderPhone]
+                );
+                if (phoneResult.rows.length > 0) {
+                    existingLead = phoneResult.rows[0];
+                }
+            }
 
-            const newLeadResult = await db.queryRaw(
-                `INSERT INTO tasksleads_lead 
-                 (id_tenant, full_name, phone, status, source, channel, last_activity_at, last_message_preview, created_at)
-                 VALUES ($1, $2, $3, 'open', 'timelinesai', 'whatsapp', $4, $5, NOW())
-                 RETURNING id`,
-                [tenantId, senderName, senderPhone, timestamp, messageText]
-            );
+            if (existingLead) {
+                // YA EXISTÍA EL LEAD (pero sin link)
+                console.log(`[Webhook] ✅ Found existing lead by phone: ${existingLead.id}. Linking...`);
+                leadId = existingLead.id;
+                tenantId = existingLead.id_tenant;
 
-            leadId = newLeadResult.rows[0].id;
+                await db.queryRaw(
+                    `UPDATE tasksleads_lead 
+                      SET last_activity_at = $1, last_message_preview = $2, updated_at = NOW()
+                      WHERE id = $3`,
+                    [timestamp, messageText, leadId]
+                );
+            } else {
+                // COMPLETAMENTE NUEVO
+                console.log(`[Webhook] Creating NEW lead for chat ${externalChatId}`);
 
-            // Crear Link
+                const newLeadResult = await db.queryRaw(
+                    `INSERT INTO tasksleads_lead 
+                     (id_tenant, full_name, phone, status, source, channel, last_activity_at, last_message_preview, created_at)
+                     VALUES ($1, $2, $3, 'open', 'timelinesai', 'whatsapp', $4, $5, NOW())
+                     RETURNING id`,
+                    [tenantId, senderName, senderPhone, timestamp, messageText]
+                );
+                leadId = newLeadResult.rows[0].id;
+            }
+
+            // CREAR LINK (Siempre)
             await db.queryRaw(
                 `INSERT INTO tasksleads_lead_timeline_link
                  (id_tenant, lead_id, timeline_external_id, timeline_phone, last_sync_at)
-                 VALUES ($1, $2, $3, $4, NOW())`,
+                 VALUES ($1, $2, $3, $4, NOW())
+                 ON CONFLICT (timeline_external_id) DO NOTHING`,
                 [tenantId, leadId, externalChatId, senderPhone]
             );
         }
 
-        // 6. Enviar Email (PARA TODOS los mensajes entrantes, nuevos o existentes)
+        // ===========================================
+        // 6. ENVIAR EMAIL DE NOTIFICACIÓN
+        // ===========================================
+
+        // Link directo al chat en Timelines
+        const chatUrl = `https://app.timelines.ai/chat/${externalChatId}`;
+
         const emailSubject = `Nuevo mensaje WhatsApp - ${senderName || senderPhone}`;
         const emailBody = `
-            Nuevo mensaje entrante:
-            
-            De: ${senderName} (${senderPhone})
-            Mensaje: ${messageText}
-            
-            Chat ID: ${externalChatId}
-            Fecha: ${timestamp.toLocaleString()}
+De: ${senderName} (${senderPhone})
+Mensaje:
+"${messageText}"
+
+Ver Chat: ${chatUrl}
         `;
 
         const emailHtml = `
-            <h3>🟠 Nuevo Mensaje Detectado</h3>
-            <p><strong>De:</strong> ${senderName || 'Desconocido'} (${senderPhone})</p>
-            <p><strong>Mensaje:</strong></p>
-            <blockquote style="background: #f5f5f5; padding: 10px; border-left: 4px solid #ff5f00;">
-                ${messageText}
-            </blockquote>
-            <p><small>ID: ${externalChatId}</small></p>
+            <div style="font-family: Arial, sans-serif; color: #333;">
+                <h2 style="color: #d97706;">🟠 Nuevo Mensaje Detectado</h2>
+                <p><strong>De:</strong> ${senderName} (${senderPhone})</p>
+                <div style="background: #f3f4f6; padding: 15px; border-left: 4px solid #d97706; margin: 10px 0;">
+                    ${messageText.replace(/\n/g, '<br>')}
+                </div>
+                <p style="margin-top: 20px;">
+                    <a href="${chatUrl}" target="_blank" style="background-color: #3b82f6; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                        💬 Responder en WhatsApp
+                    </a>
+                </p>
+                <p style="font-size: 12px; color: #888; margin-top: 10px;">ID: ${externalChatId}</p>
+            </div>
         `;
 
         console.log(`[Webhook] Prepared email for ${senderName}. Firing async...`);
 
-        // Fire-and-forget: No await! El webhook responde inmediatamente.
-        // El email se envía en background.
         emailService.sendLeadNotificationEmail({
             subject: emailSubject,
             text: emailBody,
             html: emailHtml
         }).then(sent => {
             if (sent) console.log("[Webhook] Email notification sent OK");
-            else console.error("[Webhook] Email notification FAILED (check emailService logs)");
+            else console.error("[Webhook] Email notification FAILED");
         }).catch(emailErr => {
             console.error("[Webhook] Email send error:", emailErr.message);
         });
 
-        // 7. FASE 2: Clasificación Automática y Sync (Async)
-        // No esperamos (await) para no bloquear webhook
+        // ===========================================
+        // 7. FASE 2: AUTO CLASIFICACIÓN Y SYNC (Async)
+        // ===========================================
+
         (async () => {
+            // Esta función se ejecuta en "background" tras responder al webhook
             try {
-                // A) Clasificar Mensaje
+                // A) Clasificar
                 const classification = classifierService.classifyMessage(messageText);
                 const { tags, aiProfile } = classification;
 
-                if (tags.length > 0) {
-                    console.log(`[Webhook] Classified Lead ${leadId}:`, tags);
+                if (tags.length > 0 || aiProfile.categoria_principal) {
+                    console.log(`[Webhook AI] Detected tags for lead ${leadId}:`, tags);
 
                     // B) Guardar Tags en DB
                     for (const tag of tags) {
-                        await db.queryRaw(`
-                            INSERT INTO tasksleads_lead_tag (lead_id, tag) 
-                            VALUES ($1, $2)
-                            ON CONFLICT (lead_id, tag) DO NOTHING`,
-                            [leadId, tag]
-                        );
+                        try {
+                            await db.queryRaw(
+                                `INSERT INTO tasksleads_lead_tag (id_tenant, lead_id, tag) VALUES ($1, $2, $3)
+                                 ON CONFLICT (lead_id, tag) DO NOTHING`,
+                                [tenantId, leadId, tag]
+                            );
+                        } catch (e) { /* Ignore duplicate */ }
                     }
 
                     // C) Guardar Perfil AI
                     await db.queryRaw(`
-                        INSERT INTO tasksleads_lead_ai (lead_id, categoria_principal, verticales_interes, intencion, urgencia, resumen, confianza, updated_at)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+                        INSERT INTO tasksleads_lead_ai (id_tenant, lead_id, categoria_principal, verticales_interes, intencion, urgencia, resumen, confianza, last_analysis_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
                         ON CONFLICT (lead_id) DO UPDATE SET
                             categoria_principal = EXCLUDED.categoria_principal,
                             verticales_interes = EXCLUDED.verticales_interes,
                             intencion = EXCLUDED.intencion,
                             urgencia = EXCLUDED.urgencia,
                             resumen = EXCLUDED.resumen,
-                            updated_at = NOW()`,
-                        [leadId, aiProfile.categoria_principal, JSON.stringify(aiProfile.verticales_interes), aiProfile.intencion, aiProfile.urgencia, aiProfile.resumen, aiProfile.confianza]
-                    );
+                            last_analysis_at = NOW()
+                    `, [
+                        tenantId, leadId,
+                        aiProfile.categoria_principal,
+                        JSON.stringify(aiProfile.verticales_interes),
+                        aiProfile.intencion,
+                        aiProfile.urgencia,
+                        aiProfile.resumen,
+                        aiProfile.confianza
+                    ]);
 
-                    // D) Sync con TimelinesAI (Mock/Log por ahora)
-                    // Solo si detectamos Intención clara o Tags nuevos
-                    await timelinesService.addLabelToChat(externalChatId, tags[0]);
-                    await timelinesService.sendNoteToChat(externalChatId,
-                        `🤖 [VERSA AI] Análisis:\nCategoría: ${aiProfile.categoria_principal}\nIntención: ${aiProfile.intencion}\nResumen: ${aiProfile.resumen}`
-                    );
+                    // D) TimelinesAI Sync (REAL)
+                    // 1. Añadir etiqueta principal (OJO con límites API, probaremos añadir el primer tag relevante)
+                    if (tags.length > 0) {
+                        await timelinesService.addLabelToChat(externalChatId, tags[0]);
+                    }
+
+                    // 2. Enviar Nota con Resumen
+                    const noteContent = `🤖 [VERSA AI] Análisis:\nCategoría: ${aiProfile.categoria_principal}\nIntención: ${aiProfile.intencion}\nResumen: ${aiProfile.resumen}`;
+                    await timelinesService.sendNoteToChat(externalChatId, noteContent);
                 }
 
-            } catch (classError) {
-                console.error('[Webhook] Classification Error:', classError);
+            } catch (aiError) {
+                console.error('[Webhook AI] Error in async classification:', aiError);
             }
         })();
 
-        return res.status(200).json({ ok: true, lead_id: leadId, created: linkResult.rows.length === 0 });
+        // Respondemos al webhook rápido
+        return res.status(200).json({ ok: true, lead_id: leadId });
 
     } catch (error) {
         console.error('[Webhook Error]', error);
-        // Devuelve 200 intencionalmente
-        return res.status(200).json({ ok: true, warning: 'Internal processing error', details: error.message });
-    }
-}
-
-/**
- * Test Endpoint for Email Debugging
- * POST /api/tasks-leads/test-email?token=...
- */
-async function testEmail(req, res) {
-    const providedToken = String(req.query.token || "");
-    const secretToken = process.env.TIMELINES_WEBHOOK_SECRET;
-
-    if (!secretToken || providedToken !== secretToken) {
-        return res.status(401).json({ ok: false, error: "unauthorized" });
-    }
-
-    if (process.env.NODE_ENV === 'production') {
-        return res.status(403).json({ ok: false, error: "disabled_in_production" });
-    }
-
-    console.log('[TestEmail] Starting email test...');
-
-    const success = await emailService.sendLeadNotificationEmail({
-        subject: 'Test SMTP VERSA (Manual Trigger)',
-        text: 'This is a test email to verify SMTP configuration.',
-        html: '<h3>✅ SMTP Test Successful</h3><p>If you see this, the notification system is working.</p>'
-    });
-
-    if (success) {
-        return res.status(200).json({ ok: true, message: 'Email sent successfully' });
-    } else {
-        return res.status(500).json({ ok: false, error: 'email_failed', details: 'Check logs for [EmailService] errors' });
+        return res.status(500).json({ ok: false, error: error.message });
     }
 }
 
 module.exports = {
-    timelinesWebhook,
-    testEmail
+    timelinesWebhook
 };
