@@ -453,9 +453,73 @@ async function listGastos(req, res) {
     }
 }
 
+/**
+ * DELETE /api/contabilidad/egresos/intakes/:id
+ * Delete an intake and its associated draft invoice (for cancellation)
+ */
+async function deleteIntake(req, res) {
+    try {
+        const tenantId = getEffectiveTenant(req);
+        const intakeId = parseInt(req.params.id);
+
+        if (!intakeId || isNaN(intakeId)) {
+            return res.status(400).json({ ok: false, error: 'ID de intake inválido' });
+        }
+
+        console.log(`[Egresos] Deleting intake ${intakeId} for tenant ${tenantId}`);
+
+        await req.db.txWithRLS(async (tx) => {
+            // First, delete any associated draft invoice
+            const draftResult = await tx.query(
+                `SELECT id FROM contabilidad_factura WHERE intake_id = $1 AND id_tenant = $2`,
+                [intakeId, tenantId]
+            );
+
+            if (draftResult.rows.length > 0) {
+                const facturaId = draftResult.rows[0].id;
+
+                // Delete archivo references first
+                await tx.query(
+                    `DELETE FROM contabilidad_factura_archivo WHERE id_factura = $1`,
+                    [facturaId]
+                );
+
+                // Delete the draft invoice
+                await tx.query(
+                    `DELETE FROM contabilidad_factura WHERE id = $1 AND id_tenant = $2`,
+                    [facturaId, tenantId]
+                );
+
+                console.log(`[Egresos] Deleted draft invoice ${facturaId}`);
+            }
+
+            // Delete the intake record
+            const deleteResult = await tx.query(
+                `DELETE FROM accounting_intake WHERE id = $1 AND id_tenant = $2 RETURNING id`,
+                [intakeId, tenantId]
+            );
+
+            if (deleteResult.rows.length === 0) {
+                return res.status(404).json({ ok: false, error: 'Intake no encontrado' });
+            }
+
+            // Optionally delete the physical file
+            // Note: For now, we keep files for audit purposes. Implement cleanup job if needed.
+
+            console.log(`[Egresos] ✅ Intake ${intakeId} and associated data deleted`);
+            res.json({ ok: true, message: 'Intake eliminado correctamente' });
+        });
+
+    } catch (error) {
+        console.error('[Egresos] Delete intake error:', error);
+        res.status(500).json({ ok: false, error: error.message });
+    }
+}
+
 module.exports = {
     createIntake,
     getIntake,
     createGasto,
-    listGastos
+    listGastos,
+    deleteIntake
 };
