@@ -18,7 +18,7 @@ Los siguientes archivos presentaban problemas de procesamiento o acceso a variab
   - **Motivo**: Usaba `<script>` estándar (no `type="module"`), impidiendo el uso de `import.meta.env`.
   - **Consecuencia**: Dependía de lógica hardcodeada basada en `window.location.hostname`.
 
----
+----
 
 ## 2. Fallbacks detectados
 Se encontraron lógicas peligrosas que ignoraban la configuración centralizada:
