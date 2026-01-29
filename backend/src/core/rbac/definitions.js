@@ -8,7 +8,8 @@
 const VERTICALS = {
     TALLER: 1,
     SAAS: 2,
-    MARKETPLACE: 3
+    MARKETPLACE: 3,
+    TASKS_LEADS: 4
 };
 
 const PERMISSIONS = [
@@ -59,7 +60,32 @@ const PERMISSIONS = [
 
     // Ventas (Placeholder - not strictly enforced yet in code but good to have)
     { key: 'ventas.read', nombre: 'Ver Ventas', module: 'ventas', vertical_id: VERTICALS.TALLER },
-    { key: 'ventas.write', nombre: 'Crear Ventas', module: 'ventas', vertical_id: VERTICALS.TALLER }
+    { key: 'ventas.write', nombre: 'Crear Ventas', module: 'ventas', vertical_id: VERTICALS.TALLER },
+
+    // =================================================================
+    // TASKS & LEADS (Vertical 4)
+    // =================================================================
+    // Projects
+    { key: 'tasksleads.projects.view', nombre: 'Ver Proyectos', module: 'projects', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.projects.create', nombre: 'Crear Proyectos', module: 'projects', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.projects.edit', nombre: 'Editar Proyectos', module: 'projects', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.projects.delete', nombre: 'Eliminar Proyectos', module: 'projects', vertical_id: VERTICALS.TASKS_LEADS },
+
+    // Tasks
+    { key: 'tasksleads.tasks.view', nombre: 'Ver Tareas', module: 'tasks', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.tasks.create', nombre: 'Crear Tareas', module: 'tasks', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.tasks.edit', nombre: 'Editar Tareas', module: 'tasks', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.tasks.delete', nombre: 'Eliminar Tareas', module: 'tasks', vertical_id: VERTICALS.TASKS_LEADS },
+
+    // Leads
+    { key: 'tasksleads.leads.view', nombre: 'Ver Leads', module: 'leads', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.leads.create', nombre: 'Crear Leads', module: 'leads', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.leads.edit', nombre: 'Editar Leads', module: 'leads', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.leads.close', nombre: 'Cerrar Leads', module: 'leads', vertical_id: VERTICALS.TASKS_LEADS },
+
+    // Timeline
+    { key: 'tasksleads.timeline.view', nombre: 'Ver Timeline', module: 'timeline', vertical_id: VERTICALS.TASKS_LEADS },
+    { key: 'tasksleads.timeline.sync', nombre: 'Sincronizar Timeline', module: 'timeline', vertical_id: VERTICALS.TASKS_LEADS }
 ];
 
 const ROLES = [
@@ -174,6 +200,45 @@ const ROLES = [
             // 'contabilidad.deducible.approve' -> Validación Deducible
             // 'finsaas.invites.manage'        -> Usuarios e Invitaciones
             // 'finsaas.rbac.manage'           -> Permisos y Roles
+        ]
+    },
+    // =================================================================
+    // TASKS & LEADS ROLES
+    // =================================================================
+    {
+        nombre: 'TASKSLEADS_ADMIN',
+        display_name: 'Admin Tasks & Leads',
+        is_system: true,
+        level: 20,
+        permissions: [
+            'tasksleads.projects.view', 'tasksleads.projects.create', 'tasksleads.projects.edit', 'tasksleads.projects.delete',
+            'tasksleads.tasks.view', 'tasksleads.tasks.create', 'tasksleads.tasks.edit', 'tasksleads.tasks.delete',
+            'tasksleads.leads.view', 'tasksleads.leads.create', 'tasksleads.leads.edit', 'tasksleads.leads.close',
+            'tasksleads.timeline.view', 'tasksleads.timeline.sync'
+        ]
+    },
+    {
+        nombre: 'TASKSLEADS_STAFF',
+        display_name: 'Staff Tasks & Leads',
+        is_system: true,
+        level: 50,
+        permissions: [
+            'tasksleads.projects.view',
+            'tasksleads.tasks.view', 'tasksleads.tasks.create', 'tasksleads.tasks.edit',
+            'tasksleads.leads.view', 'tasksleads.leads.create', 'tasksleads.leads.edit',
+            'tasksleads.timeline.view'
+        ]
+    },
+    {
+        nombre: 'TASKSLEADS_VIEWER',
+        display_name: 'Solo Lectura Tasks & Leads',
+        is_system: true,
+        level: 90,
+        permissions: [
+            'tasksleads.projects.view',
+            'tasksleads.tasks.view',
+            'tasksleads.leads.view',
+            'tasksleads.timeline.view'
         ]
     }
 ];

@@ -158,6 +158,10 @@ app.use('/api/contabilidad', privateRoute, require('./src/modules/contable/api/c
 // FinSaaS Admin RBAC (Tenant admin only)
 app.use('/api/finsaas/admin/rbac', require('./routes/finsaasRbac.routes'));
 
+// Tasks & Leads Module (Vertical 4)
+app.use('/api/tasks-leads', privateRoute, require('./src/modules/tasks-leads/api/routes/tasks-leads.routes'));
+
+
 // Otras rutas legacy / utilidades
 app.use('/api/citas', privateRoute, require('./routes/citas'));
 app.use('/api/inventory', privateRoute, require('./routes/inventory'));

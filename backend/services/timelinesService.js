@@ -5,8 +5,12 @@ require('dotenv').config();
 const fetch = global.fetch || require('node-fetch');
 
 const TIMELINES_API_BASE_URL = 'https://app.timelines.ai/integrations/api';
-const TIMELINES_API_TOKEN = process.env.TIMELINES_API_TOKEN || '812176d7-1392-431e-9df5-20966f2fa49f';
-const LABEL_ORIGEN = 'Manager';
+const TIMELINES_API_TOKEN = process.env.TIMELINES_API_TOKEN;
+const LABEL_ORIGEN = process.env.TIMELINES_LABEL_ORIGEN || 'Manager';
+
+if (!TIMELINES_API_TOKEN) {
+    console.warn('[TimelinesService] ⚠️ TIMELINES_API_TOKEN not configured - Timeline features will be disabled');
+}
 
 /**
  * Realiza una petición a la API de TimelinesAI
@@ -112,11 +116,73 @@ async function getChatMessages(chatId) {
     return await timelinesRequest(`/chats/${chatId}/messages`, 'GET');
 }
 
+/**
+ * Obtiene todos los chats con filtros opcionales
+ * @param {object} options - Opciones de filtro
+ * @param {number} options.limit - Límite de resultados (default: 50)
+ * @param {number} options.offset - Offset para paginación
+ * @param {boolean} options.read - Filtrar por leído (true/false)
+ * @param {boolean} options.closed - Filtrar por cerrado
+ * @returns {Promise<object>} - Lista de chats
+ */
+async function getAllChats(options = {}) {
+    const { limit = 50, offset = 0, read, closed } = options;
+    let endpoint = `/chats?limit=${limit}&offset=${offset}`;
+
+    if (read !== undefined) {
+        endpoint += `&read=${read}`;
+    }
+    if (closed !== undefined) {
+        endpoint += `&closed=${closed}`;
+    }
+
+    return await timelinesRequest(endpoint, 'GET');
+}
+
+/**
+ * Obtiene los chats sin leer (pendientes de respuesta)
+ * @param {number} limit - Límite de resultados
+ * @returns {Promise<Array>} - Array de chats sin leer
+ */
+async function getUnreadChats(limit = 50) {
+    try {
+        const response = await getAllChats({ limit, read: false });
+        return response?.data?.chats || [];
+    } catch (error) {
+        console.error('[TimelinesService] Error fetching unread chats:', error);
+        return [];
+    }
+}
+
+async function getChatMessages(chatId, limit = 50) {
+    if (!chatId) throw new Error('Chat ID required');
+    try {
+        // TimelinesAI endpoint for messages usually follows /chats/:id/messages pattern or similar
+        // Adjusting based on standard TimelinesAI API documentation or generic structure
+        return await timelinesRequest(`/chats/${chatId}/messages?limit=${limit}`);
+    } catch (error) {
+        console.error(`[TimelinesService] Error fetching messages for chat ${chatId}:`, error);
+        throw error;
+    }
+}
+
+/**
+ * Verifica si el servicio está configurado correctamente
+ * @returns {boolean}
+ */
+function isConfigured() {
+    return !!TIMELINES_API_TOKEN;
+}
+
 module.exports = {
     sendInitialMessage,
     sendMessage,
     updateChatLabels,
     getChat,
     getChatMessages,
+    getAllChats,
+    getUnreadChats,
+    getChatMessages,
+    isConfigured,
     LABEL_ORIGEN,
 };

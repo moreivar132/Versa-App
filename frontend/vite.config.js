@@ -94,6 +94,12 @@ export default defineConfig({
                 managerTallerBilling: 'manager-taller-billing.html',
                 // Banking Import
                 finsaasImportBanking: 'src/verticals/finsaas/pages/import-banking.html',
+
+                // Tasks & Leads Vertical
+                tasksleadsDashboard: 'src/verticals/tasksleads/pages/dashboard.html',
+                tasksleadsProjects: 'src/verticals/tasksleads/pages/projects.html',
+                tasksleadsTasks: 'src/verticals/tasksleads/pages/tasks.html',
+                tasksleadsLeads: 'src/verticals/tasksleads/pages/leads.html',
             }
         }
     },

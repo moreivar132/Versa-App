@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Dashboard | Tasks & Leads</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "background-light": "#f6f8fa",
+                        "background-dark": "#0f172a",
+                        "surface-dark": "#1e293b",
+                        "surface-dark-light": "#334155",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "main": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <link href="/src/verticals/tasksleads/layout/TasksLeadsLayout.css" rel="stylesheet" />
+</head>
+
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased">
+
+    <div id="app-shell" class="flex min-h-screen w-full">
+
+        <div class="max-w-7xl mx-auto flex flex-col gap-8 p-6 w-full">
+
+            <!-- Welcome Header -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">Tasks & Leads
+                    </h1>
+                    <p class="text-gray-500 dark:text-gray-400 mt-1" id="welcome-message">Gestiona tus proyectos, tareas
+                        y leads en un solo lugar</p>
+                </div>
+                <!-- Profile Section -->
+                <div
+                    class="flex items-center gap-4 bg-white dark:bg-surface-dark p-2 pr-4 rounded-full border border-gray-200 dark:border-slate-700 shadow-sm">
+                    <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold"
+                        id="user-avatar">
+                        U
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-900 dark:text-white leading-tight" id="user-name">
+                            Cargando...</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400" id="user-tenant">Tenancy</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm group hover:border-primary/50 transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 bg-blue-500/10 rounded-lg">
+                            <span class="material-symbols-outlined text-blue-500">folder_open</span>
+                        </div>
+                        <span class="text-xs font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded-full"
+                            id="stat-projects-badge">Activos</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Proyectos</p>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="stat-projects">--</h3>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm group hover:border-primary/50 transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 bg-yellow-500/10 rounded-lg">
+                            <span class="material-symbols-outlined text-yellow-500">pending_actions</span>
+                        </div>
+                        <span class="text-xs font-bold text-yellow-500 bg-yellow-500/10 px-2 py-1 rounded-full"
+                            id="stat-todo-badge">Por hacer</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tareas Pendientes</p>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="stat-todo">--</h3>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm group hover:border-primary/50 transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 bg-red-500/10 rounded-lg">
+                            <span class="material-symbols-outlined text-red-500">warning</span>
+                        </div>
+                        <span class="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-1 rounded-full"
+                            id="stat-overdue-badge">Atrasadas</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tareas Atrasadas</p>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="stat-overdue">--</h3>
+                </div>
+
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-slate-700 p-6 rounded-2xl shadow-sm group hover:border-primary/50 transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="p-2 bg-green-500/10 rounded-lg">
+                            <span class="material-symbols-outlined text-green-500">person_add</span>
+                        </div>
+                        <span class="text-xs font-bold text-green-500 bg-green-500/10 px-2 py-1 rounded-full"
+                            id="stat-leads-badge">Abiertos</span>
+                    </div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Leads Activos</p>
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1" id="stat-leads">--</h3>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Leads Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Quick Actions -->
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col shadow-sm">
+                    <h3 class="font-bold text-lg mb-6">Acciones Rápidas</h3>
+
+                    <div class="space-y-3">
+                        <a href="/src/verticals/tasksleads/pages/projects.html"
+                            class="flex items-center gap-4 p-4 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 transition-all group">
+                            <span class="material-symbols-outlined text-blue-500">add_circle</span>
+                            <div>
+                                <p class="font-semibold text-slate-900 dark:text-white">Nuevo Proyecto</p>
+                                <p class="text-xs text-gray-500">Crear un proyecto desde cero</p>
+                            </div>
+                        </a>
+
+                        <a href="/src/verticals/tasksleads/pages/tasks.html"
+                            class="flex items-center gap-4 p-4 rounded-xl bg-yellow-500/10 hover:bg-yellow-500/20 transition-all group">
+                            <span class="material-symbols-outlined text-yellow-500">add_task</span>
+                            <div>
+                                <p class="font-semibold text-slate-900 dark:text-white">Nueva Tarea</p>
+                                <p class="text-xs text-gray-500">Añadir tarea a un proyecto</p>
+                            </div>
+                        </a>
+
+                        <a href="/src/verticals/tasksleads/pages/leads.html"
+                            class="flex items-center gap-4 p-4 rounded-xl bg-green-500/10 hover:bg-green-500/20 transition-all group">
+                            <span class="material-symbols-outlined text-green-500">person_add</span>
+                            <div>
+                                <p class="font-semibold text-slate-900 dark:text-white">Nuevo Lead</p>
+                                <p class="text-xs text-gray-500">Registrar un contacto de interés</p>
+                            </div>
+                        </a>
+
+                        <a href="/src/verticals/tasksleads/pages/chats.html"
+                            class="flex items-center gap-4 p-4 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 transition-all group">
+                            <span class="material-symbols-outlined text-purple-500">chat</span>
+                            <div>
+                                <p class="font-semibold text-slate-900 dark:text-white">Historial Chats</p>
+                                <p class="text-xs text-gray-500">Ver todas las conversaciones</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Leads -->
+                <div
+                    class="lg:col-span-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-lg">Leads Recientes</h3>
+                        <a href="/src/verticals/tasksleads/pages/leads.html"
+                            class="text-primary text-sm hover:underline">Ver todos →</a>
+                    </div>
+
+                    <div class="flex-1 overflow-auto max-h-[400px]" id="recent-leads-container">
+                        <div class="text-center py-8 text-gray-400">
+                            <span class="material-symbols-outlined text-4xl mb-2">hourglass_empty</span>
+                            <p>Cargando leads...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Overview Row -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Tasks by Status -->
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-lg">Tareas por Estado</h3>
+                        <a href="/src/verticals/tasksleads/pages/tasks.html"
+                            class="text-primary text-sm hover:underline">Ver todas →</a>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+                                <span class="text-gray-600 dark:text-gray-300">Por hacer</span>
+                            </div>
+                            <span class="font-bold" id="stat-todo-detail">--</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                <span class="text-gray-600 dark:text-gray-300">En progreso</span>
+                            </div>
+                            <span class="font-bold" id="stat-doing-detail">--</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                <span class="text-gray-600 dark:text-gray-300">Completadas</span>
+                            </div>
+                            <span class="font-bold" id="stat-done-detail">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leads by Status -->
+                <div
+                    class="bg-white dark:bg-surface-dark border border-gray-200 dark:border-slate-700 rounded-2xl p-6 flex flex-col shadow-sm">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-bold text-lg">Leads por Estado</h3>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                <span class="text-gray-600 dark:text-gray-300">Abiertos</span>
+                            </div>
+                            <span class="font-bold" id="stat-leads-open">--</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                <span class="text-gray-600 dark:text-gray-300">Ganados</span>
+                            </div>
+                            <span class="font-bold" id="stat-leads-won">--</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                                <span class="text-gray-600 dark:text-gray-300">Perdidos</span>
+                            </div>
+                            <span class="font-bold" id="stat-leads-lost">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { getSession, buildApiUrl } from '/auth.js';
+
+        let session = null;
+
+        async function init() {
+            session = await getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            loadDashboardStats();
+            loadRecentLeads();
+            displayUserProfile();
+        }
+
+        function displayUserProfile() {
+            if (session && session.user) {
+                document.getElementById('user-name').textContent = session.user.nombre || session.user.email;
+                document.getElementById('user-tenant').textContent = `Tenant: ${session.user.id_tenant}`;
+                document.getElementById('user-avatar').textContent = (session.user.nombre || session.user.email).charAt(0).toUpperCase();
+                document.getElementById('welcome-message').textContent = `¡Hola, ${session.user.nombre || 'usuario'}! Gestiona tus proyectos y leads.`;
+            }
+        }
+
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(buildApiUrl('/api/tasks-leads/dashboard'), {
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`,
+                        'X-Tenant-Id': session.user.id_tenant
+                    }
+                });
+
+                if (!response.ok) throw new Error('Error loading stats');
+
+                const { data } = await response.json();
+
+                document.getElementById('stat-projects').textContent = data.active_projects || 0;
+                document.getElementById('stat-todo').textContent = data.todo_tasks || 0;
+                document.getElementById('stat-overdue').textContent = data.overdue_tasks || 0;
+                document.getElementById('stat-leads').textContent = data.open_leads || 0;
+
+                document.getElementById('stat-todo-detail').textContent = data.todo_tasks || 0;
+                document.getElementById('stat-doing-detail').textContent = data.doing_tasks || 0;
+                document.getElementById('stat-done-detail').textContent = '--';
+
+                document.getElementById('stat-leads-open').textContent = data.open_leads || 0;
+                document.getElementById('stat-leads-won').textContent = data.won_leads || 0;
+                document.getElementById('stat-leads-lost').textContent = data.lost_leads || 0;
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        }
+
+        async function loadRecentLeads() {
+            const container = document.getElementById('recent-leads-container');
+
+            try {
+                const response = await fetch(buildApiUrl('/api/tasks-leads/leads?limit=5'), {
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`,
+                        'X-Tenant-Id': session.user.id_tenant
+                    }
+                });
+
+                if (!response.ok) throw new Error('Error loading leads');
+
+                const { data: leads } = await response.json();
+
+                if (!leads || leads.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <span class="material-symbols-outlined text-4xl mb-2">person_off</span>
+                            <p>No hay leads registrados</p>
+                            <a href="/src/verticals/tasksleads/pages/leads.html" class="text-primary text-sm hover:underline mt-2 inline-block">Crear primer lead →</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = leads.map(lead => `
+                    <div class="flex items-center justify-between p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-primary text-lg">person</span>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-slate-900 dark:text-white">${lead.full_name || lead.company || 'Sin nombre'}</p>
+                                <p class="text-xs text-gray-500">${lead.phone || lead.email || 'Sin contacto'}</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-bold ${getStatusClass(lead.status)}">${getStatusLabel(lead.status)}</span>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading leads:', error);
+                container.innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <span class="material-symbols-outlined text-4xl mb-2">error</span>
+                        <p>Error cargando leads</p>
+                    </div>
+                `;
+            }
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'new': 'bg-blue-500/10 text-blue-500',
+                'open': 'bg-green-500/10 text-green-500',
+                'followup': 'bg-yellow-500/10 text-yellow-500',
+                'won': 'bg-emerald-500/10 text-emerald-500',
+                'lost': 'bg-red-500/10 text-red-500',
+                'closed': 'bg-gray-500/10 text-gray-500'
+            };
+            return classes[status] || 'bg-gray-500/10 text-gray-500';
+        }
+
+        function getStatusLabel(status) {
+            const labels = {
+                'new': 'Nuevo',
+                'open': 'Abierto',
+                'followup': 'Seguimiento',
+                'won': 'Ganado',
+                'lost': 'Perdido',
+                'closed': 'Cerrado'
+            };
+            return labels[status] || status;
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

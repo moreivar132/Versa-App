@@ -370,6 +370,11 @@ router.get('/egresos/intakes/:id',
     egresosController.getIntake
 );
 
+router.delete('/egresos/intakes/:id',
+    requirePermission('contabilidad.write'),
+    egresosController.deleteIntake
+);
+
 // Gastos
 router.get('/egresos',
     requirePermission('contabilidad.read'),

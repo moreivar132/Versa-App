@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Proyectos | Tasks & Leads</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "background-dark": "#0f172a",
+                        "surface-dark": "#1e293b",
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <link href="/src/verticals/tasksleads/layout/TasksLeadsLayout.css" rel="stylesheet" />
+</head>
+
+<body class="font-display bg-background-dark text-white antialiased overflow-auto">
+    <div class="max-w-7xl mx-auto p-6 flex flex-col gap-6">
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                    <span class="material-symbols-outlined">folder</span>
+                </div>
+                <div>
+                    <a href="/src/verticals/tasksleads/pages/dashboard.html"
+                        class="text-primary text-sm hover:underline mb-1 inline-block">← Dashboard</a>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Proyectos</h1>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden md:block">
+                    <p class="text-sm font-bold" id="user-name">Usuario</p>
+                    <p class="text-xs text-gray-500" id="user-tenant">Tenant</p>
+                </div>
+                <button onclick="openCreateModal()"
+                    class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-all shadow-lg shadow-primary/20">
+                    <span class="material-symbols-outlined">add</span>
+                    Nuevo Proyecto
+                </button>
+            </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="projects-container">
+            <div class="col-span-full text-center py-12 text-gray-400">
+                <span class="material-symbols-outlined text-4xl mb-2 animate-spin">refresh</span>
+                <p>Cargando proyectos...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="project-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-surface-dark rounded-2xl p-6 w-full max-w-lg mx-4">
+            <h2 class="text-xl font-bold mb-6" id="modal-title">Nuevo Proyecto</h2>
+            <form id="project-form" class="space-y-4">
+                <input type="hidden" id="project-id" />
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Nombre *</label>
+                    <input type="text" id="project-name" required
+                        class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:ring-primary focus:border-primary" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Descripción</label>
+                    <textarea id="project-description" rows="3"
+                        class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:ring-primary focus:border-primary"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-1">Estado</label>
+                    <select id="project-status"
+                        class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 focus:ring-primary focus:border-primary">
+                        <option value="active">Activo</option>
+                        <option value="archived">Archivado</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 px-4 py-2 bg-slate-600 rounded-lg hover:bg-slate-500 transition-all">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-2 bg-primary rounded-lg hover:bg-primary/80 transition-all">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { getSession, buildApiUrl } from '/auth.js';
+
+        let session = null;
+        window.openCreateModal = openCreateModal;
+        window.closeModal = closeModal;
+        window.editProject = editProject;
+        window.deleteProject = deleteProject;
+
+        async function init() {
+            session = await getSession();
+            if (!session) {
+                window.location.href = '/login.html';
+                return;
+            }
+            loadProjects();
+            document.getElementById('user-name').textContent = session.user.nombre || session.user.email;
+            document.getElementById('user-tenant').textContent = `ID: ${session.user.id_tenant}`;
+            document.getElementById('project-form').addEventListener('submit', saveProject);
+        }
+
+        async function loadProjects() {
+            const container = document.getElementById('projects-container');
+            try {
+                const response = await fetch(buildApiUrl('/api/tasks-leads/projects'), {
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`,
+                        'X-Tenant-Id': session.user.id_tenant
+                    }
+                });
+                if (!response.ok) throw new Error('Error loading projects');
+                const { data: projects } = await response.json();
+
+                if (!projects || projects.length === 0) {
+                    container.innerHTML = `
+                        <div class="col-span-full text-center py-12 text-gray-400">
+                            <span class="material-symbols-outlined text-6xl mb-4">folder_off</span>
+                            <p class="text-lg">No hay proyectos creados</p>
+                            <button onclick="openCreateModal()" class="mt-4 px-4 py-2 bg-primary rounded-lg hover:bg-primary/80">
+                                Crear primer proyecto
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = projects.map(p => `
+                    <div class="bg-surface-dark border border-slate-700 rounded-2xl p-6 hover:border-primary/50 transition-all card-hover">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="p-2 bg-blue-500/10 rounded-lg">
+                                <span class="material-symbols-outlined text-blue-500">folder</span>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="editProject(${p.id})" class="p-2 hover:bg-slate-700 rounded-lg">
+                                    <span class="material-symbols-outlined text-sm">edit</span>
+                                </button>
+                                <button onclick="deleteProject(${p.id})" class="p-2 hover:bg-red-500/20 rounded-lg text-red-400">
+                                    <span class="material-symbols-outlined text-sm">delete</span>
+                                </button>
+                            </div>
+                        </div>
+                        <h3 class="font-bold text-lg mb-2">${p.name}</h3>
+                        <p class="text-gray-400 text-sm mb-4 line-clamp-2">${p.description || 'Sin descripción'}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs px-2 py-1 rounded-full ${p.status === 'active' ? 'bg-green-500/10 text-green-500' : 'bg-gray-500/10 text-gray-500'}">
+                                ${p.status === 'active' ? 'Activo' : 'Archivado'}
+                            </span>
+                            <span class="text-xs text-gray-500">${p.task_count || 0} tareas</span>
+                        </div>
+                        <a href="/src/verticals/tasksleads/pages/tasks.html?projectId=${p.id}" 
+                           class="mt-4 block w-full text-center py-2 bg-slate-700 rounded-lg hover:bg-slate-600 text-sm">
+                            Ver tareas →
+                        </a>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-red-400">Error cargando proyectos</div>`;
+            }
+        }
+
+        function openCreateModal() {
+            document.getElementById('modal-title').textContent = 'Nuevo Proyecto';
+            document.getElementById('project-id').value = '';
+            document.getElementById('project-name').value = '';
+            document.getElementById('project-description').value = '';
+            document.getElementById('project-status').value = 'active';
+            document.getElementById('project-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('project-modal').classList.add('hidden');
+        }
+
+        async function editProject(id) {
+            try {
+                const response = await fetch(buildApiUrl(`/api/tasks-leads/projects/${id}`), {
+                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                });
+                const { data: project } = await response.json();
+
+                document.getElementById('modal-title').textContent = 'Editar Proyecto';
+                document.getElementById('project-id').value = project.id;
+                document.getElementById('project-name').value = project.name;
+                document.getElementById('project-description').value = project.description || '';
+                document.getElementById('project-status').value = project.status;
+                document.getElementById('project-modal').classList.remove('hidden');
+            } catch (error) {
+                alert('Error cargando proyecto');
+            }
+        }
+
+        async function saveProject(e) {
+            e.preventDefault();
+            const id = document.getElementById('project-id').value;
+            const data = {
+                name: document.getElementById('project-name').value,
+                description: document.getElementById('project-description').value,
+                status: document.getElementById('project-status').value
+            };
+
+            try {
+                const url = id ? `/api/tasks-leads/projects/${id}` : '/api/tasks-leads/projects';
+                const method = id ? 'PATCH' : 'POST';
+
+                const response = await fetch(buildApiUrl(url), {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${session.token}`,
+                        'X-Tenant-Id': session.user.id_tenant,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error('Error saving');
+                closeModal();
+                loadProjects();
+            } catch (error) {
+                alert('Error guardando proyecto');
+            }
+        }
+
+        async function deleteProject(id) {
+            if (!confirm('¿Eliminar este proyecto y todas sus tareas?')) return;
+            try {
+                await fetch(buildApiUrl(`/api/tasks-leads/projects/${id}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                });
+                loadProjects();
+            } catch (error) {
+                alert('Error eliminando');
+            }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
