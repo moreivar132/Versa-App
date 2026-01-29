@@ -29,7 +29,7 @@ async function timelinesWebhook(req, res) {
 
     try {
         const body = req.body || {};
-        const eventType = body.event || 'unknown';
+        const eventType = body.event_type || body.event || 'unknown';
 
         // Metadata para logs
         const metadata = {
