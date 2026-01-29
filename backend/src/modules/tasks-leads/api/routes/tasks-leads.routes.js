@@ -13,6 +13,7 @@ const projectsCtrl = require('../controllers/projects.controller');
 const tasksCtrl = require('../controllers/tasks.controller');
 const leadsCtrl = require('../controllers/leads.controller');
 const webhooksCtrl = require('../controllers/webhooks.controller');
+const routingRulesCtrl = require('../controllers/routing-rules.controller');
 
 // Middleware
 const { requireVerticalAccess } = require('../../../../core/security/requireVerticalAccess');
@@ -77,5 +78,13 @@ router.post('/timeline/sync', requirePermission('tasksleads.timeline.sync'), lea
 // Timeline Full History Routes
 router.get('/timeline/chats', requirePermission('tasksleads.timeline.view'), leadsCtrl.getAllChats);
 router.get('/timeline/chats/:id/messages', requirePermission('tasksleads.timeline.view'), leadsCtrl.getChatMessages);
+
+// =========================================================
+// Routing Rules (Phase 3)
+// =========================================================
+router.get('/routing-rules', requirePermission('tasksleads.leads.view'), routingRulesCtrl.listRules);
+router.post('/routing-rules', requirePermission('tasksleads.leads.edit'), routingRulesCtrl.createRule);
+router.patch('/routing-rules/:id', requirePermission('tasksleads.leads.edit'), routingRulesCtrl.updateRule);
+router.delete('/routing-rules/:id', requirePermission('tasksleads.leads.edit'), routingRulesCtrl.deleteRule);
 
 module.exports = router;

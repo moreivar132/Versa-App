@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Enrutamiento | Tasks & Leads</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6",
+                        "background-dark": "#0f172a",
+                        "surface-dark": "#1e293b",
+                    },
+                    fontFamily: { "display": ["Manrope", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+    <link href="/src/verticals/tasksleads/layout/TasksLeadsLayout.css" rel="stylesheet" />
+</head>
+
+<body class="font-display bg-background-dark text-white antialiased overflow-auto">
+    <div class="max-w-7xl mx-auto p-6 flex flex-col gap-6">
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400">
+                    <span class="material-symbols-outlined">route</span>
+                </div>
+                <div>
+                    <a href="/src/verticals/tasksleads/pages/dashboard.html"
+                        class="text-primary text-sm hover:underline mb-1 inline-block">← Dashboard</a>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Reglas de Enrutamiento</h1>
+                    <p class="text-gray-400 text-sm">Asigna leads automáticamente según etiquetas.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="openCreateModal()"
+                    class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80 transition-all font-bold">
+                    <span class="material-symbols-outlined">add</span>
+                    Nueva Regla
+                </button>
+            </div>
+        </div>
+
+        <!-- Rules Table -->
+        <div class="bg-surface-dark border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
+            <table class="w-full text-left">
+                <thead class="bg-slate-800">
+                    <tr>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-400">Etiqueta (Tag)</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-400">Asignar a</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-400">Notificar Email</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-400">Estado</th>
+                        <th class="px-6 py-4 text-sm font-semibold text-gray-400 text-right">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="rules-table-body">
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="material-symbols-outlined animate-spin text-3xl">sync</span>
+                                <p>Cargando reglas...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Rule Modal -->
+    <div id="rule-modal"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div
+            class="bg-surface-dark rounded-2xl p-8 w-full max-w-md mx-4 shadow-2xl border border-slate-700 transform transition-all">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary" id="modal-icon">rule</span>
+                <span id="modal-title">Nueva Regla</span>
+            </h2>
+
+            <form id="rule-form" class="space-y-6">
+                <input type="hidden" id="rule-id" />
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-wider">Etiqueta
+                        Principal</label>
+                    <input type="text" id="rule-tag" required placeholder="E.g. BICI, MOTO, TALLER"
+                        class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all uppercase" />
+                    <p class="text-xs text-gray-500 mt-2">Los mensajes que contengan esta etiqueta serán asignados
+                        automáticamente.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-400 mb-2 uppercase tracking-wider">Asignar
+                        Automáticamente a</label>
+                    <select id="rule-user" required
+                        class="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                        <option value="">Seleccionar usuario...</option>
+                    </select>
+                </div>
+
+                <div
+                    class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-600/50">
+                    <div class="flex flex-col">
+                        <span class="font-bold text-sm">Notificar por Email</span>
+                        <span class="text-xs text-gray-500">Enviar aviso al usuario asignado.</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="rule-notify" class="sr-only peer" checked>
+                        <div
+                            class="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary">
+                        </div>
+                    </label>
+                </div>
+
+                <div
+                    class="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-600/50">
+                    <div class="flex flex-col">
+                        <span class="font-bold text-sm">Estado de la Regla</span>
+                        <span class="text-xs text-gray-500">¿Está activa actualmente?</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="rule-active" class="sr-only peer" checked>
+                        <div
+                            class="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500">
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeModal()"
+                        class="flex-1 px-4 py-3 bg-slate-700 text-white rounded-xl hover:bg-slate-600 transition-all font-bold">
+                        Cancelar
+                    </button>
+                    <button type="submit"
+                        class="flex-1 px-4 py-3 bg-primary text-white rounded-xl hover:bg-primary/80 transition-all font-bold shadow-lg shadow-primary/20">
+                        Guardar Regla
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Component -->
+    <div id="toast-container" class="fixed bottom-6 right-6 flex flex-col gap-2 z-[100]"></div>
+
+    <script type="module">
+        import { buildApiUrl } from '/src/core/api/apiUrl.js';
+
+        let users = [];
+        let rules = [];
+
+        async function init() {
+            await Promise.all([
+                fetchUsers(),
+                fetchRules()
+            ]);
+        }
+
+        async function fetchUsers() {
+            try {
+                const response = await fetch(buildApiUrl('/api/access/users'), {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (!response.ok) throw new Error('Error al cargar usuarios');
+                users = await response.json();
+
+                const select = document.getElementById('rule-user');
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = `${user.nombre} (${user.email})`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        async function fetchRules() {
+            try {
+                const response = await fetch(buildApiUrl('/api/tasks-leads/routing-rules'), {
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (!response.ok) throw new Error('Error al cargar reglas');
+                const data = await response.json();
+                rules = data.rules;
+                renderRules();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        function renderRules() {
+            const tbody = document.getElementById('rules-table-body');
+            if (rules.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-12 text-center text-gray-500">Aún no hay reglas configuradas.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = rules.map(rule => `
+                <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 font-bold text-xs border border-blue-500/20">
+                            ${rule.tag}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex flex-col">
+                            <span class="font-bold text-sm text-gray-200">${rule.user_name}</span>
+                            <span class="text-xs text-gray-500">${rule.user_email}</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        ${rule.notify_email
+                    ? '<span class="flex items-center gap-1 text-emerald-400 text-xs font-bold"><span class="material-symbols-outlined text-sm">mail</span> SÍ</span>'
+                    : '<span class="flex items-center gap-1 text-gray-500 text-xs font-bold"><span class="material-symbols-outlined text-sm">mail_off</span> NO</span>'}
+                    </td>
+                    <td class="px-6 py-4">
+                        ${rule.is_active
+                    ? '<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/20">Activa</span>'
+                    : '<span class="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-slate-700 text-gray-500 border border-slate-600">Inactiva</span>'}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <button onclick="window.editRule(${rule.id})" class="p-2 hover:bg-slate-600 rounded-lg text-gray-400 hover:text-white transition-all">
+                                <span class="material-symbols-outlined text-xl">edit</span>
+                            </button>
+                            <button onclick="window.deleteRule(${rule.id})" class="p-2 hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-400 transition-all">
+                                <span class="material-symbols-outlined text-xl">delete</span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.openCreateModal = function () {
+            document.getElementById('modal-title').textContent = 'Nueva Regla';
+            document.getElementById('rule-id').value = '';
+            document.getElementById('rule-form').reset();
+            document.getElementById('rule-modal').classList.remove('hidden');
+        }
+
+        window.closeModal = function () {
+            document.getElementById('rule-modal').classList.add('hidden');
+        }
+
+        window.editRule = function (id) {
+            const rule = rules.find(r => r.id === id);
+            if (!rule) return;
+
+            document.getElementById('modal-title').textContent = 'Editar Regla';
+            document.getElementById('rule-id').value = rule.id;
+            document.getElementById('rule-tag').value = rule.tag;
+            document.getElementById('rule-user').value = rule.user_id;
+            document.getElementById('rule-notify').checked = rule.notify_email;
+            document.getElementById('rule-active').checked = rule.is_active;
+
+            document.getElementById('rule-modal').classList.remove('hidden');
+        }
+
+        window.deleteRule = async function (id) {
+            if (!confirm('¿Estás seguro de eliminar esta regla?')) return;
+
+            try {
+                const response = await fetch(buildApiUrl(`/api/tasks-leads/routing-rules/${id}`), {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                if (!response.ok) throw new Error('Error al eliminar regla');
+
+                showToast('Regla eliminada', 'success');
+                fetchRules();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        }
+
+        document.getElementById('rule-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('rule-id').value;
+            const data = {
+                tag: document.getElementById('rule-tag').value.toUpperCase(),
+                user_id: parseInt(document.getElementById('rule-user').value),
+                notify_email: document.getElementById('rule-notify').checked,
+                is_active: document.getElementById('rule-active').checked
+            };
+
+            const method = id ? 'PATCH' : 'POST';
+            const url = id
+                ? buildApiUrl(`/api/tasks-leads/routing-rules/${id}`)
+                : buildApiUrl('/api/tasks-leads/routing-rules');
+
+            try {
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error al guardar regla');
+                }
+
+                showToast(id ? 'Regla actualizada' : 'Regla creada', 'success');
+                closeModal();
+                fetchRules();
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
+        };
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-emerald-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600';
+            const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+
+            toast.className = `${bgColor} text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px] animate-slide-in`;
+            toast.innerHTML = `
+                <span class="material-symbols-outlined">${icon}</span>
+                <span class="font-bold">${message}</span>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        init();
+    </script>
+
+    <style>
+        @keyframes slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-slide-in {
+            animation: slide-in 0.3s ease-out forwards;
+        }
+
+        .transition-all {
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+</body>
+
+</html>

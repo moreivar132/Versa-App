@@ -35,16 +35,23 @@ Esta vertical está diseñada para centralizar la comunicación de WhatsApp y co
 ### 5. Sistema de Notificaciones (UI/UX)
 - [x] **Toast Notifications:** Reemplazo de los `alert()` nativos por notificaciones elegantes, animadas y auto-descartables en la esquina de la pantalla.
 
-## 🛠️ Stack Tecnológico
+### 6. Fase 2: Clasificación y Webhooks (REAL) ✅
+- [x] **Clasificación por IA (Keywords):** Detección automática de etiquetas (BICI, MOTO, REPARTIDOR, COBRANZA, etc).
+- [x] **Prevención de Duplicados:** Búsqueda inteligente por teléfono antes de crear nuevos leads.
+- [x] **Sincronización en Tiempo Real:** Integración real con la API de TimelinesAI para enviar Notas y Etiquetas.
+- [x] **Enlaces Directos al Chat:** Botón � en la tabla de leads y botón en notificaciones por email para abrir el chat de TimelinesAI.
+- [x] **Resumen AI:** Generación de un resumen automático del mensaje entrante visible en el dashboard.
+
+## �🛠️ Stack Tecnológico
 - **Frontend:** Vanilla HTML5, JavaScript (ES6+), Tailwind CSS.
 - **Backend:** Node.js, Express.
-- **Base de Datos:** PostgreSQL (vía Knex).
-- **Integraciones:** TimelinesAI REST API.
+- **Base de Datos:** PostgreSQL.
+- **Integraciones:** TimelinesAI REST API (Webhooks, Labels, Notes).
 
 ---
 
 ## 📅 Próximos Pasos (Roadmap)
-1. **Webhooks de TimelinesAI:** Implementar recepción de mensajes en tiempo real para eliminar la necesidad de sincronización manual.
-2. **Respuesta desde VERSA:** Permitir enviar mensajes de WhatsApp directamente desde la interfaz de chats de VERSA.
-3. **Módulo de Tareas:** Finalizar la interfaz de Kanban para la gestión de tareas de los proyectos.
-4. **Plantillas de Mensajes:** Añadir botones de respuesta rápida para leads nuevos.
+1. **Fase 3: Reglas de Enrutamiento Automático:** Asignar leads a usuarios específicos según etiquetas (ej: MOTO -> Yaily).
+2. **Interfaz de Configuración de Reglas:** HTML para que el admin defina quién recibe cada tipo de lead.
+3. **Respuesta desde VERSA:** Permitir enviar mensajes de WhatsApp directamente desde la interfaz de chats de VERSA.
+4. **Módulo de Tareas:** Finalizar la interfaz de Kanban para la gestión de tareas de los proyectos.

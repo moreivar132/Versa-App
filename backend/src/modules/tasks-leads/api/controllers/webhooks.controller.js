@@ -1,14 +1,17 @@
 const { getTenantDb } = require('../../../../core/db/tenant-db');
-const emailService = require('../../../../services/emailService');
+const emailService = require('../../application/services/emailService');
 const classifierService = require('../../application/services/leadClassifierService');
 const timelinesService = require('../../application/services/timelinesService');
+const repo = require('../../infra/repos/tasks-leads.repo');
 
 /**
  * Webhook handler for TimelinesAI
  * Recibe mensajes entrantes, crea Leads si es necesario y dispara clasficación
  */
 async function timelinesWebhook(req, res) {
-    const db = getTenantDb({ tenantId: 1 }); // Default to tenant 1 for webhook context
+    // Intentar detectar tenant desde query param 't', sino default 1
+    let tenantId = req.query.t ? parseInt(req.query.t) : (req.query.tenantId ? parseInt(req.query.tenantId) : 1);
+    const db = getTenantDb({ tenantId });
     const payload = req.body;
 
     // console.log('[Webhook Payload]', JSON.stringify(payload, null, 2));
@@ -51,7 +54,8 @@ async function timelinesWebhook(req, res) {
         );
 
         let leadId = null;
-        let tenantId = 1;
+        // tenantId ya está definido al inicio de la función a partir de req.query
+        // let tenantId = 1; 
 
         if (linkResult.rows.length > 0) {
             // LEAD YA VINCULADO: UPDATE
@@ -218,6 +222,51 @@ Ver Chat: ${chatUrl}
                     // 2. Enviar Nota con Resumen
                     const noteContent = `🤖 [VERSA AI] Análisis:\nCategoría: ${aiProfile.categoria_principal}\nIntención: ${aiProfile.intencion}\nResumen: ${aiProfile.resumen}`;
                     await timelinesService.sendNoteToChat(externalChatId, noteContent);
+
+                    // E) AUTO-ROUTING (Phase 3)
+                    const routingTags = [...tags];
+                    if (aiProfile.categoria_principal) routingTags.push(aiProfile.categoria_principal);
+
+                    const rule = await repo.findMatchingRoutingRule({ tenantId }, routingTags);
+                    if (rule) {
+                        console.log(`[Webhook Routing] Matching rule found! Tag: ${rule.tag} -> User: ${rule.user_name}`);
+
+                        // 1. Asignar Lead en Versa
+                        await db.queryRaw(
+                            `UPDATE tasksleads_lead SET owner_user_id = $1, updated_at = NOW() WHERE id = $2`,
+                            [rule.user_id, leadId]
+                        );
+
+                        // 2. Notificar por Email (si aplica)
+                        if (rule.notify_email && rule.user_email) {
+                            const routingEmailSubject = `🎯 Lead Asignado: ${senderName} (${rule.tag})`;
+                            const routingEmailHtml = `
+                                <div style="font-family: Arial, sans-serif; color: #333;">
+                                    <h2 style="color: #3b82f6;">🎯 Lead Asignado Automáticamente</h2>
+                                    <p>Hola <strong>${rule.user_name}</strong>, se te ha asignado un nuevo lead basado en la etiqueta <strong>${rule.tag}</strong>.</p>
+                                    <hr>
+                                    <p><strong>Cliente:</strong> ${senderName}</p>
+                                    <p><strong>Teléfono:</strong> ${senderPhone}</p>
+                                    <p><strong>Mensaje:</strong></p>
+                                    <div style="background: #f3f4f6; padding: 10px; border-radius: 5px; font-style: italic;">
+                                        "${messageText}"
+                                    </div>
+                                    <p style="margin-top: 20px;">
+                                        <a href="${chatUrl}" target="_blank" style="background-color: #10b981; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                                            💬 Ver Chat en WhatsApp
+                                        </a>
+                                    </p>
+                                </div>
+                            `;
+
+                            emailService.sendLeadNotificationEmail({
+                                subject: routingEmailSubject,
+                                html: routingEmailHtml,
+                                to: rule.user_email
+                            }).then(() => console.log(`[Webhook Routing] Assignment email sent to ${rule.user_email}`))
+                                .catch(err => console.error(`[Webhook Routing] Email error:`, err.message));
+                        }
+                    }
                 }
 
             } catch (aiError) {
