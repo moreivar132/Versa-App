@@ -60,6 +60,10 @@
                         <option value="won">Ganado</option>
                         <option value="lost">Perdido</option>
                     </select>
+                    <select id="filter-tag" onchange="applyFilters()"
+                        class="bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
+                        <option value="">Todas las etiquetas</option>
+                    </select>
                     <button onclick="syncFromTimeline()"
                         class="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-500 transition-all"
                         id="sync-btn">
@@ -90,170 +94,169 @@
                             id="pending-toggle-icon">expand_more</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <select id="filter-label" onchange="filterPendingByLabel()"
-                            class="bg-slate-700 border border-slate-600 rounded-lg px-3 py-1.5 text-sm">
-                            <option value="">Todas las etiquetas</option>
-                        </select>
-                        <div class="flex items-center gap-2 text-xs">
-                            <span class="text-gray-400">Tiempo promedio:</span>
-                            <span id="avg-response-time" class="font-bold text-amber-400">--</span>
+                        <div class="flex items-center gap-3">
+                            <!-- Redundant filter removed -->
+                            <div class="flex items-center gap-2 text-xs">
+                                <span class="text-gray-400">Tiempo promedio:</span>
+                                <span id="avg-response-time" class="font-bold text-amber-400">--</span>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Metrics by Label -->
+                <div id="label-metrics" class="p-4 bg-slate-800/30 border-b border-emerald-700/30 hidden">
+                    <div class="flex flex-wrap gap-3" id="label-metrics-list"></div>
+                </div>
+
+                <!-- Chats List -->
+                <div id="pending-chats-list" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
 
-            <!-- Metrics by Label -->
-            <div id="label-metrics" class="p-4 bg-slate-800/30 border-b border-emerald-700/30 hidden">
-                <div class="flex flex-wrap gap-3" id="label-metrics-list"></div>
+            <!-- Leads Table -->
+            <div class="bg-surface-dark border border-slate-700 rounded-2xl overflow-hidden">
+                <table class="w-full">
+                    <thead class="bg-slate-800">
+                        <tr>
+                            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Nombre / Empresa</th>
+                            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Contacto</th>
+                            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Canal</th>
+                            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Estado</th>
+                            <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Interés</th>
+                            <th class="text-right px-6 py-4 text-sm font-semibold text-gray-400">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leads-table-body">
+                        <tr>
+                            <td colspan="6" class="text-center py-12 text-gray-400">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-
-            <!-- Chats List -->
-            <div id="pending-chats-list" class="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </div>
 
-        <!-- Leads Table -->
-        <div class="bg-surface-dark border border-slate-700 rounded-2xl overflow-hidden">
-            <table class="w-full">
-                <thead class="bg-slate-800">
-                    <tr>
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Nombre / Empresa</th>
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Contacto</th>
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Canal</th>
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Estado</th>
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-400">Interés</th>
-                        <th class="text-right px-6 py-4 text-sm font-semibold text-gray-400">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody id="leads-table-body">
-                    <tr>
-                        <td colspan="6" class="text-center py-12 text-gray-400">Cargando...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Create/Edit Modal -->
-    <div id="lead-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-surface-dark rounded-2xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 class="text-xl font-bold mb-6" id="modal-title">Nuevo Lead</h2>
-            <form id="lead-form" class="space-y-4">
-                <input type="hidden" id="lead-id" />
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Nombre</label>
-                        <input type="text" id="lead-name"
-                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
+        <!-- Create/Edit Modal -->
+        <div id="lead-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+            <div class="bg-surface-dark rounded-2xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+                <h2 class="text-xl font-bold mb-6" id="modal-title">Nuevo Lead</h2>
+                <form id="lead-form" class="space-y-4">
+                    <input type="hidden" id="lead-id" />
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Nombre</label>
+                            <input type="text" id="lead-name"
+                                class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Empresa</label>
+                            <input type="text" id="lead-company"
+                                class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Teléfono</label>
+                            <input type="tel" id="lead-phone"
+                                class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Email</label>
+                            <input type="email" id="lead-email"
+                                class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Canal</label>
+                            <select id="lead-channel"
+                                class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="web">Web</option>
+                                <option value="timeline">Timeline IA</option>
+                                <option value="referral">Referido</option>
+                                <option value="other">Otro</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Estado</label>
+                            <select id="lead-status"
+                                class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
+                                <option value="new">Nuevo</option>
+                                <option value="open">Abierto</option>
+                                <option value="followup">Seguimiento</option>
+                                <option value="won">Ganado</option>
+                                <option value="lost">Perdido</option>
+                                <option value="closed">Cerrado</option>
+                            </select>
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Empresa</label>
-                        <input type="text" id="lead-company"
-                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Teléfono</label>
-                        <input type="tel" id="lead-phone"
-                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Email</label>
-                        <input type="email" id="lead-email"
-                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2" />
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Canal</label>
-                        <select id="lead-channel"
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Interés en</label>
+                        <select id="lead-vertical"
                             class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
-                            <option value="whatsapp">WhatsApp</option>
-                            <option value="web">Web</option>
-                            <option value="timeline">Timeline IA</option>
-                            <option value="referral">Referido</option>
+                            <option value="">Sin especificar</option>
+                            <option value="manager">Manager (Taller)</option>
+                            <option value="saas">FinSaaS (Contabilidad)</option>
+                            <option value="marketplace">Marketplace</option>
+                            <option value="tasks_leads">Tasks & Leads</option>
                             <option value="other">Otro</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-400 mb-1">Estado</label>
-                        <select id="lead-status"
-                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
-                            <option value="new">Nuevo</option>
-                            <option value="open">Abierto</option>
-                            <option value="followup">Seguimiento</option>
-                            <option value="won">Ganado</option>
-                            <option value="lost">Perdido</option>
-                            <option value="closed">Cerrado</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-400 mb-1">Notas</label>
+                        <textarea id="lead-notes" rows="3"
+                            class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2"></textarea>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1">Interés en</label>
-                    <select id="lead-vertical" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2">
-                        <option value="">Sin especificar</option>
-                        <option value="manager">Manager (Taller)</option>
-                        <option value="saas">FinSaaS (Contabilidad)</option>
-                        <option value="marketplace">Marketplace</option>
-                        <option value="tasks_leads">Tasks & Leads</option>
-                        <option value="other">Otro</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-1">Notas</label>
-                    <textarea id="lead-notes" rows="3"
-                        class="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-2"></textarea>
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeModal()"
-                        class="flex-1 px-4 py-2 bg-slate-600 rounded-lg hover:bg-slate-500">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="flex-1 px-4 py-2 bg-primary rounded-lg hover:bg-primary/80">
-                        Guardar
-                    </button>
-                </div>
-            </form>
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" onclick="closeModal()"
+                            class="flex-1 px-4 py-2 bg-slate-600 rounded-lg hover:bg-slate-500">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-primary rounded-lg hover:bg-primary/80">
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <!-- Toast Container -->
-    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
+        <!-- Toast Container -->
+        <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
 
-    <script type="module">
-        import { getSession, buildApiUrl } from '/auth.js';
+        <script type="module">
+            import { getSession, buildApiUrl } from '/auth.js';
 
-        let session = null;
-        let allLeads = [];
-        let allPendingChats = [];
-        let pendingChatsExpanded = true;
+            let session = null;
+            let allLeads = [];
+            let allPendingChats = [];
+            let pendingChatsExpanded = true;
 
-        window.openCreateModal = openCreateModal;
-        window.closeModal = closeModal;
-        window.editLead = editLead;
-        window.deleteLead = deleteLead;
-        window.closeLead = closeLead;
-        window.applyFilters = applyFilters;
-        window.syncFromTimeline = syncFromTimeline;
-        window.togglePendingSection = togglePendingSection;
-        window.filterPendingByLabel = filterPendingByLabel;
-        window.showToast = showToast;
+            window.openCreateModal = openCreateModal;
+            window.closeModal = closeModal;
+            window.editLead = editLead;
+            window.deleteLead = deleteLead;
+            window.closeLead = closeLead;
+            window.applyFilters = applyFilters;
+            window.syncFromTimeline = syncFromTimeline;
+            window.togglePendingSection = togglePendingSection;
+            window.filterPendingByLabel = filterPendingByLabel;
+            window.showToast = showToast;
 
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
+            function showToast(message, type = 'success') {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
 
-            // Icons and colors configuration
-            const config = {
-                success: { icon: 'check_circle', bg: 'bg-slate-800', border: 'border-emerald-500/50', text: 'text-white', iconColor: 'text-emerald-400' },
-                error: { icon: 'error', bg: 'bg-slate-800', border: 'border-red-500/50', text: 'text-white', iconColor: 'text-red-400' },
-                info: { icon: 'info', bg: 'bg-slate-800', border: 'border-blue-500/50', text: 'text-white', iconColor: 'text-blue-400' }
-            };
+                // Icons and colors configuration
+                const config = {
+                    success: { icon: 'check_circle', bg: 'bg-slate-800', border: 'border-emerald-500/50', text: 'text-white', iconColor: 'text-emerald-400' },
+                    error: { icon: 'error', bg: 'bg-slate-800', border: 'border-red-500/50', text: 'text-white', iconColor: 'text-red-400' },
+                    info: { icon: 'info', bg: 'bg-slate-800', border: 'border-blue-500/50', text: 'text-white', iconColor: 'text-blue-400' }
+                };
 
-            const style = config[type] || config.info;
+                const style = config[type] || config.info;
 
-            toast.className = `transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border ${style.bg} ${style.border} shadow-lg shadow-black/20 min-w-[300px] max-w-md`;
-            toast.innerHTML = `
+                toast.className = `transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border ${style.bg} ${style.border} shadow-lg shadow-black/20 min-w-[300px] max-w-md`;
+                toast.innerHTML = `
                 <span class="material-symbols-outlined ${style.iconColor}">${style.icon}</span>
                 <p class="text-sm font-medium ${style.text} flex-1">${message}</p>
                 <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-white transition-colors">
@@ -261,144 +264,134 @@
                 </button>
             `;
 
-            container.appendChild(toast);
+                container.appendChild(toast);
 
-            // Animate in
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-10', 'opacity-0');
-            });
-
-            // Auto remove
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 300);
-            }, 5000);
-        }
-
-        async function init() {
-            session = await getSession();
-            if (!session) {
-                window.location.href = '/login.html';
-                return;
-            }
-            document.getElementById('user-name').textContent = session.user.nombre || session.user.email;
-            document.getElementById('user-tenant').textContent = `ID: ${session.user.id_tenant}`;
-            document.getElementById('lead-form').addEventListener('submit', saveLead);
-
-            loadLeads();
-            loadPendingChats();
-        }
-
-        async function loadPendingChats() {
-            try {
-                const response = await fetch(buildApiUrl('/api/tasks-leads/timeline/pending'), {
-                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                // Animate in
+                requestAnimationFrame(() => {
+                    toast.classList.remove('translate-y-10', 'opacity-0');
                 });
-                const { data: chats, ok } = await response.json();
 
-                if (ok && chats && chats.length > 0) {
-                    allPendingChats = chats;
-                    document.getElementById('pending-chats-section').classList.remove('hidden');
-                    document.getElementById('pending-count').textContent = chats.length;
-
-                    // Populate label filter
-                    populateLabelFilter(chats);
-
-                    // Calculate and display metrics
-                    calculateMetrics(chats);
-
-                    // Render chats
-                    renderPendingChats(chats);
-                } else {
-                    document.getElementById('pending-chats-section').classList.add('hidden');
-                }
-            } catch (error) {
-                console.log('Timeline not available:', error.message);
+                // Auto remove
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }, 5000);
             }
-        }
 
-        function populateLabelFilter(chats) {
-            const allLabels = new Set();
-            chats.forEach(c => (c.labels || []).forEach(l => allLabels.add(l)));
-
-            const select = document.getElementById('filter-label');
-            select.innerHTML = '<option value="">Todas las etiquetas</option>';
-
-            [...allLabels].sort().forEach(label => {
-                const count = chats.filter(c => (c.labels || []).includes(label)).length;
-                select.innerHTML += `<option value="${label}">${label} (${count})</option>`;
-            });
-        }
-
-        function calculateMetrics(chats) {
-            const now = new Date();
-            let totalMs = 0;
-            let count = 0;
-            const labelMetrics = {};
-
-            chats.forEach(chat => {
-                if (chat.last_message_at) {
-                    const lastMsg = new Date(chat.last_message_at);
-                    const waitMs = now - lastMsg;
-                    totalMs += waitMs;
-                    count++;
-
-                    // Per-label metrics
-                    (chat.labels || []).forEach(label => {
-                        if (!labelMetrics[label]) labelMetrics[label] = { total: 0, count: 0 };
-                        labelMetrics[label].total += waitMs;
-                        labelMetrics[label].count++;
-                    });
+            async function init() {
+                session = await getSession();
+                if (!session) {
+                    window.location.href = '/login.html';
+                    return;
                 }
-            });
+                document.getElementById('user-name').textContent = session.user.nombre || session.user.email;
+                document.getElementById('user-tenant').textContent = `ID: ${session.user.id_tenant}`;
+                document.getElementById('lead-form').addEventListener('submit', saveLead);
 
-            // Overall average
-            const avgMs = count > 0 ? totalMs / count : 0;
-            document.getElementById('avg-response-time').textContent = formatDuration(avgMs);
+                loadLeads();
+                loadTags();
+                loadPendingChats();
+            }
 
-            // Label metrics
-            const metricsContainer = document.getElementById('label-metrics-list');
-            const labelEntries = Object.entries(labelMetrics).sort((a, b) => b[1].count - a[1].count);
+            async function loadPendingChats() {
+                try {
+                    const response = await fetch(buildApiUrl('/api/tasks-leads/timeline/pending'), {
+                        headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                    });
+                    const { data: chats, ok } = await response.json();
 
-            if (labelEntries.length > 0) {
-                document.getElementById('label-metrics').classList.remove('hidden');
-                metricsContainer.innerHTML = labelEntries.map(([label, data]) => {
-                    const avg = data.total / data.count;
-                    const urgencyClass = avg > 86400000 ? 'text-red-400' : avg > 43200000 ? 'text-amber-400' : 'text-emerald-400';
-                    return `
+                    if (ok && chats && chats.length > 0) {
+                        allPendingChats = chats;
+                        document.getElementById('pending-chats-section').classList.remove('hidden');
+                        document.getElementById('pending-count').textContent = chats.length;
+
+                        // Populate label filter (DEPRECATED: Now using main filter)
+                        // populateLabelFilter(chats);
+
+                        // Calculate and display metrics
+                        calculateMetrics(chats);
+
+                        // Render chats
+                        renderPendingChats(chats);
+                    } else {
+                        document.getElementById('pending-chats-section').classList.add('hidden');
+                    }
+                } catch (error) {
+                    console.log('Timeline not available:', error.message);
+                }
+            }
+
+            // function populateLabelFilter(chats) { ... } // Removed
+
+            function calculateMetrics(chats) {
+                const now = new Date();
+                let totalMs = 0;
+                let count = 0;
+                const labelMetrics = {};
+
+                chats.forEach(chat => {
+                    if (chat.last_message_at) {
+                        const lastMsg = new Date(chat.last_message_at);
+                        const waitMs = now - lastMsg;
+                        totalMs += waitMs;
+                        count++;
+
+                        // Per-label metrics
+                        (chat.labels || []).forEach(label => {
+                            if (!labelMetrics[label]) labelMetrics[label] = { total: 0, count: 0 };
+                            labelMetrics[label].total += waitMs;
+                            labelMetrics[label].count++;
+                        });
+                    }
+                });
+
+                // Overall average
+                const avgMs = count > 0 ? totalMs / count : 0;
+                document.getElementById('avg-response-time').textContent = formatDuration(avgMs);
+
+                // Label metrics
+                const metricsContainer = document.getElementById('label-metrics-list');
+                const labelEntries = Object.entries(labelMetrics).sort((a, b) => b[1].count - a[1].count);
+
+                if (labelEntries.length > 0) {
+                    document.getElementById('label-metrics').classList.remove('hidden');
+                    metricsContainer.innerHTML = labelEntries.map(([label, data]) => {
+                        const avg = data.total / data.count;
+                        const urgencyClass = avg > 86400000 ? 'text-red-400' : avg > 43200000 ? 'text-amber-400' : 'text-emerald-400';
+                        return `
                         <div class="bg-slate-700/50 rounded-lg px-3 py-2 flex items-center gap-2">
                             <span class="text-xs font-semibold ${getLabelColor(label)}">${label}</span>
                             <span class="text-xs text-gray-400">(${data.count})</span>
                             <span class="text-xs font-bold ${urgencyClass}">${formatDuration(avg)}</span>
                         </div>
                     `;
-                }).join('');
-            } else {
-                document.getElementById('label-metrics').classList.add('hidden');
-            }
-        }
-
-        function filterPendingByLabel() {
-            const selectedLabel = document.getElementById('filter-label').value;
-            let filtered = allPendingChats;
-
-            if (selectedLabel) {
-                filtered = allPendingChats.filter(c => (c.labels || []).includes(selectedLabel));
+                    }).join('');
+                } else {
+                    document.getElementById('label-metrics').classList.add('hidden');
+                }
             }
 
-            renderPendingChats(filtered);
-            document.getElementById('pending-count').textContent = filtered.length;
-        }
+            function filterPendingByLabel() {
+                const selectedLabel = document.getElementById('filter-label').value;
+                let filtered = allPendingChats;
 
-        function renderPendingChats(chats) {
-            const container = document.getElementById('pending-chats-list');
-            const now = new Date();
+                if (selectedLabel) {
+                    filtered = allPendingChats.filter(c => (c.labels || []).includes(selectedLabel));
+                }
 
-            container.innerHTML = chats.map(chat => {
-                const waitMs = chat.last_message_at ? now - new Date(chat.last_message_at) : 0;
-                const waitClass = waitMs > 86400000 ? 'text-red-400' : waitMs > 43200000 ? 'text-amber-400' : 'text-gray-400';
+                renderPendingChats(filtered);
+                document.getElementById('pending-count').textContent = filtered.length;
+            }
 
-                return `
+            function renderPendingChats(chats) {
+                const container = document.getElementById('pending-chats-list');
+                const now = new Date();
+
+                container.innerHTML = chats.map(chat => {
+                    const waitMs = chat.last_message_at ? now - new Date(chat.last_message_at) : 0;
+                    const waitClass = waitMs > 86400000 ? 'text-red-400' : waitMs > 43200000 ? 'text-amber-400' : 'text-gray-400';
+
+                    return `
                 <div class="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-emerald-700/50 transition-all">
                     <div class="flex items-start gap-3">
                         <div class="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0">
@@ -434,143 +427,176 @@
                     </div>
                 </div>
             `}).join('');
-        }
+            }
 
-        function getLabelColor(label) {
-            const colors = {
-                'Lead': 'bg-blue-500/20 text-blue-400',
-                'Bicicleta': 'bg-green-500/20 text-green-400',
-                'REPARTIDOR': 'bg-purple-500/20 text-purple-400',
-                'CONTRATADO': 'bg-emerald-500/20 text-emerald-400',
-                'S/DOCUMENTOS': 'bg-orange-500/20 text-orange-400',
-                'COBRANZA': 'bg-red-500/20 text-red-400',
-                'PAQUETERIA': 'bg-cyan-500/20 text-cyan-400',
-                'TALLER/TESORO': 'bg-yellow-500/20 text-yellow-400'
-            };
-            return colors[label] || 'bg-slate-500/20 text-slate-400';
-        }
+            function getLabelColor(label) {
+                const colors = {
+                    'Lead': 'bg-blue-500/20 text-blue-400',
+                    'Bicicleta': 'bg-green-500/20 text-green-400',
+                    'REPARTIDOR': 'bg-purple-500/20 text-purple-400',
+                    'CONTRATADO': 'bg-emerald-500/20 text-emerald-400',
+                    'S/DOCUMENTOS': 'bg-orange-500/20 text-orange-400',
+                    'COBRANZA': 'bg-red-500/20 text-red-400',
+                    'PAQUETERIA': 'bg-cyan-500/20 text-cyan-400',
+                    'TALLER/TESORO': 'bg-yellow-500/20 text-yellow-400'
+                };
+                return colors[label] || 'bg-slate-500/20 text-slate-400';
+            }
 
-        function formatDuration(ms) {
-            if (!ms || ms <= 0) return '-';
-            const mins = Math.floor(ms / 60000);
-            const hours = Math.floor(ms / 3600000);
-            const days = Math.floor(ms / 86400000);
+            function formatDuration(ms) {
+                if (!ms || ms <= 0) return '-';
+                const mins = Math.floor(ms / 60000);
+                const hours = Math.floor(ms / 3600000);
+                const days = Math.floor(ms / 86400000);
 
-            if (days > 0) return `${days}d ${hours % 24}h`;
-            if (hours > 0) return `${hours}h ${mins % 60}m`;
-            return `${mins}m`;
-        }
+                if (days > 0) return `${days}d ${hours % 24}h`;
+                if (hours > 0) return `${hours}h ${mins % 60}m`;
+                return `${mins}m`;
+            }
 
-        function formatTimeAgo(dateStr) {
-            if (!dateStr) return '';
-            const date = new Date(dateStr);
-            const now = new Date();
-            const diffMs = now - date;
-            return formatDuration(diffMs);
-        }
+            function formatTimeAgo(dateStr) {
+                if (!dateStr) return '';
+                const date = new Date(dateStr);
+                const now = new Date();
+                const diffMs = now - date;
+                return formatDuration(diffMs);
+            }
 
-        function togglePendingSection() {
-            pendingChatsExpanded = !pendingChatsExpanded;
-            const list = document.getElementById('pending-chats-list');
-            const metrics = document.getElementById('label-metrics');
-            const icon = document.getElementById('pending-toggle-icon');
-            list.classList.toggle('hidden', !pendingChatsExpanded);
-            metrics.classList.toggle('hidden', !pendingChatsExpanded);
-            icon.textContent = pendingChatsExpanded ? 'expand_less' : 'expand_more';
-        }
+            function togglePendingSection() {
+                pendingChatsExpanded = !pendingChatsExpanded;
+                const list = document.getElementById('pending-chats-list');
+                const metrics = document.getElementById('label-metrics');
+                const icon = document.getElementById('pending-toggle-icon');
+                list.classList.toggle('hidden', !pendingChatsExpanded);
+                metrics.classList.toggle('hidden', !pendingChatsExpanded);
+                icon.textContent = pendingChatsExpanded ? 'expand_less' : 'expand_more';
+            }
 
-        async function syncFromTimeline() {
-            const btn = document.getElementById('sync-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Sincronizando...';
+            async function syncFromTimeline() {
+                const btn = document.getElementById('sync-btn');
+                btn.disabled = true;
+                btn.innerHTML = '<span class="material-symbols-outlined animate-spin">sync</span> Sincronizando...';
 
-            try {
-                const response = await fetch(buildApiUrl('/api/tasks-leads/timeline/sync'), {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${session.token}`,
-                        'X-Tenant-Id': session.user.id_tenant,
-                        'Content-Type': 'application/json'
+                try {
+                    const response = await fetch(buildApiUrl('/api/tasks-leads/timeline/sync'), {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${session.token}`,
+                            'X-Tenant-Id': session.user.id_tenant,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const { data, message, ok } = await response.json();
+
+                    if (ok) {
+                        showToast(message || `Sincronización completada: ${data?.created || 0} nuevos leads`, 'success');
+                        loadLeads();
+                        loadPendingChats();
+                    } else {
+                        showToast('Error en sincronización', 'error');
                     }
-                });
-                const { data, message, ok } = await response.json();
-
-                if (ok) {
-                    showToast(message || `Sincronización completada: ${data?.created || 0} nuevos leads`, 'success');
-                    loadLeads();
-                    loadPendingChats();
-                } else {
-                    showToast('Error en sincronización', 'error');
+                } catch (error) {
+                    console.error('Sync error:', error);
+                    showToast('Error sincronizando con Timeline', 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="material-symbols-outlined">sync</span> Sincronizar';
                 }
-            } catch (error) {
-                console.error('Sync error:', error);
-                showToast('Error sincronizando con Timeline', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined">sync</span> Sincronizar';
             }
-        }
 
-        async function loadLeads() {
-            const tbody = document.getElementById('leads-table-body');
-            try {
-                const response = await fetch(buildApiUrl('/api/tasks-leads/leads'), {
-                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
-                });
-                const { data: leads } = await response.json();
-                allLeads = leads || [];
-                renderLeads(allLeads);
-            } catch (error) {
-                console.error('Error:', error);
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-red-400">Error cargando leads</td></tr>';
+            async function loadTags() {
+                try {
+                    const response = await fetch(buildApiUrl('/api/tasks-leads/leads/tags'), {
+                        headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                    });
+                    const { data: tags, ok } = await response.json();
+                    if (ok) {
+                        const select = document.getElementById('filter-tag');
+                        select.innerHTML = '<option value="">Todas las etiquetas</option>';
+                        tags.forEach(tag => {
+                            select.innerHTML += `<option value="${tag}">${tag}</option>`;
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading tags:', error);
+                }
             }
-        }
 
-        function applyFilters() {
-            const status = document.getElementById('filter-status').value;
-            let filtered = [...allLeads];
-            if (status) filtered = filtered.filter(l => l.status === status);
-            renderLeads(filtered);
-        }
+            async function loadLeads() {
+                const tbody = document.getElementById('leads-table-body');
+                try {
+                    const response = await fetch(buildApiUrl('/api/tasks-leads/leads'), {
+                        headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                    });
+                    const { data: leads } = await response.json();
+                    allLeads = leads || [];
+                    renderLeads(allLeads);
+                } catch (error) {
+                    console.error('Error:', error);
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-12 text-red-400">Error cargando leads</td></tr>';
+                }
+            }
 
-        function getTagColor(tag) {
-            const colors = {
-                'BICI': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-                'TALLER': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-                'TESORO': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-                'MOTO': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-                'SAAS': 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
-                'URGENTE': 'bg-red-500/20 text-red-400 border-red-500/30 animate-pulse',
-                'SOPORTE': 'bg-slate-500/20 text-slate-400 border-slate-500/30',
-                'REPARTIDOR': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-                'COBRANZA': 'bg-rose-500/20 text-rose-400 border-rose-500/30',
-                'PAQUETERIA': 'bg-amber-600/20 text-amber-500 border-amber-600/30',
-                'CONTRATADO': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
-            };
-            return colors[tag.toUpperCase()] || 'bg-slate-700/50 text-slate-400 border-slate-600';
-        }
+            function applyFilters() {
+                const status = document.getElementById('filter-status').value;
+                const tag = document.getElementById('filter-tag').value;
 
-        function renderLeads(leads) {
-            const tbody = document.getElementById('leads-table-body');
+                // 1. Filter Leads (Main Table)
+                let filteredLeads = [...allLeads];
+                if (status) filteredLeads = filteredLeads.filter(l => l.status === status);
+                if (tag) filteredLeads = filteredLeads.filter(l => (l.tags || []).includes(tag));
+                renderLeads(filteredLeads);
 
-            if (!leads || leads.length === 0) {
-                tbody.innerHTML = `
+                // 2. Filter Pending Chats (Top Section)
+                let filteredChats = [...allPendingChats];
+                if (tag) {
+                    filteredChats = filteredChats.filter(c => (c.labels || []).includes(tag));
+                }
+                renderPendingChats(filteredChats);
+
+                // Update pending count
+                const pendingCountEl = document.getElementById('pending-count');
+                if (pendingCountEl) pendingCountEl.textContent = filteredChats.length;
+            }
+
+            function getTagColor(tag) {
+                const colors = {
+                    'BICI': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                    'TALLER': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+                    'TESORO': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+                    'MOTO': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                    'SAAS': 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30',
+                    'URGENTE': 'bg-red-500/20 text-red-400 border-red-500/30 animate-pulse',
+                    'SOPORTE': 'bg-slate-500/20 text-slate-400 border-slate-500/30',
+                    'REPARTIDOR': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+                    'COBRANZA': 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+                    'PAQUETERIA': 'bg-amber-600/20 text-amber-500 border-amber-600/30',
+                    'CONTRATADO': 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                };
+                return colors[tag.toUpperCase()] || 'bg-slate-700/50 text-slate-400 border-slate-600';
+            }
+
+            function renderLeads(leads) {
+                const tbody = document.getElementById('leads-table-body');
+
+                if (!leads || leads.length === 0) {
+                    tbody.innerHTML = `
                     <tr><td colspan="6" class="text-center py-12 text-gray-400">
                         <span class="material-symbols-outlined text-4xl mb-2">person_off</span>
                         <p>No hay leads</p>
                         <button onclick="openCreateModal()" class="mt-4 px-4 py-2 bg-primary rounded-lg">Crear primer lead</button>
                     </td></tr>
                 `;
-                return;
-            }
+                    return;
+                }
 
-            tbody.innerHTML = leads.map(lead => {
-                const tagsList = lead.tags || [];
-                const aiCategory = lead.ai_category;
-                const aiSummary = lead.ai_summary;
-                const aiUrgency = lead.ai_urgency;
+                tbody.innerHTML = leads.map(lead => {
+                    const tagsList = lead.tags || [];
+                    const aiCategory = lead.ai_category;
+                    const aiSummary = lead.ai_summary;
+                    const aiUrgency = lead.ai_urgency;
 
-                return `
+                    return `
                 <tr class="border-b border-slate-700 hover:bg-slate-800/50 transition-all group">
                     <td class="px-6 py-4">
                         <div class="font-semibold flex items-center gap-2">
@@ -606,9 +632,18 @@
                         <div class="flex flex-col gap-1">
                             <span class="text-sm text-slate-300 font-semibold">${getVerticalLabel(lead.interested_vertical || aiCategory)}</span>
                             ${aiSummary ? `
-                                <div class="flex items-start gap-1 text-[10px] text-gray-500 italic max-w-[200px] leading-tight" title="${aiSummary}">
-                                    <span class="material-symbols-outlined text-[12px] text-emerald-500 flex-shrink-0">smart_toy</span>
-                                    <span class="line-clamp-2">${aiSummary}</span>
+                                <div class="group/tooltip relative flex items-start gap-1 max-w-[200px]">
+                                    <span class="material-symbols-outlined text-[12px] text-emerald-500 flex-shrink-0 mt-0.5">smart_toy</span>
+                                    <span class="text-[10px] text-gray-500 italic line-clamp-2 leading-tight cursor-help">${aiSummary}</span>
+                                    
+                                    <!-- Custom Tooltip -->
+                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900 border border-emerald-500/30 rounded-xl shadow-xl text-xs text-gray-300 opacity-0 group-hover/tooltip:opacity-100 transition-opacity pointer-events-none z-50">
+                                        <div class="flex items-center gap-2 mb-1 text-emerald-400 font-bold border-b border-emerald-500/20 pb-1">
+                                            <span class="material-symbols-outlined text-sm">psychology</span>
+                                            Análisis IA
+                                        </div>
+                                        ${aiSummary}
+                                    </div>
                                 </div>
                             ` : ''}
                         </div>
@@ -616,7 +651,7 @@
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             ${lead.timeline_external_id ? `
-                                <a href="https://app.timelines.ai/chat/${lead.timeline_external_id}" target="_blank" class="p-2 hover:bg-blue-500/20 rounded-lg text-blue-400 border border-transparent hover:border-blue-500/30" title="Ver chat en WhatsApp">
+                                <a href="https://app.timelines.ai/chat/${lead.timeline_external_id}" target="_blank" class="p-2 hover:bg-slate-600 rounded-lg text-blue-400" title="Ver chat en WhatsApp">
                                     <span class="material-symbols-outlined text-sm">chat</span>
                                 </a>
                             ` : ''}
@@ -638,143 +673,143 @@
                     </td>
                 </tr>
             `}).join('');
-        }
+            }
 
-        function getStatusClass(status) {
-            return {
-                'new': 'bg-blue-500/10 text-blue-400',
-                'open': 'bg-green-500/10 text-green-400',
-                'followup': 'bg-yellow-500/10 text-yellow-400',
-                'won': 'bg-emerald-500/10 text-emerald-400',
-                'lost': 'bg-red-500/10 text-red-400',
-                'closed': 'bg-gray-500/10 text-gray-400'
-            }[status] || 'bg-gray-500/10 text-gray-400';
-        }
+            function getStatusClass(status) {
+                return {
+                    'new': 'bg-blue-500/10 text-blue-400',
+                    'open': 'bg-green-500/10 text-green-400',
+                    'followup': 'bg-yellow-500/10 text-yellow-400',
+                    'won': 'bg-emerald-500/10 text-emerald-400',
+                    'lost': 'bg-red-500/10 text-red-400',
+                    'closed': 'bg-gray-500/10 text-gray-400'
+                }[status] || 'bg-gray-500/10 text-gray-400';
+            }
 
-        function getStatusLabel(status) {
-            return { 'new': 'Nuevo', 'open': 'Abierto', 'followup': 'Seguimiento', 'won': 'Ganado', 'lost': 'Perdido', 'closed': 'Cerrado' }[status] || status;
-        }
+            function getStatusLabel(status) {
+                return { 'new': 'Nuevo', 'open': 'Abierto', 'followup': 'Seguimiento', 'won': 'Ganado', 'lost': 'Perdido', 'closed': 'Cerrado' }[status] || status;
+            }
 
-        function getChannelLabel(channel) {
-            return { 'whatsapp': 'WhatsApp', 'web': 'Web', 'timeline': 'Timeline', 'referral': 'Referido', 'other': 'Otro' }[channel] || channel || '-';
-        }
+            function getChannelLabel(channel) {
+                return { 'whatsapp': 'WhatsApp', 'web': 'Web', 'timeline': 'Timeline', 'referral': 'Referido', 'other': 'Otro' }[channel] || channel || '-';
+            }
 
-        function getVerticalLabel(vertical) {
-            return { 'manager': 'Manager', 'saas': 'FinSaaS', 'marketplace': 'Marketplace', 'tasks_leads': 'Tasks & Leads', 'other': 'Otro' }[vertical] || '-';
-        }
+            function getVerticalLabel(vertical) {
+                return { 'manager': 'Manager', 'saas': 'FinSaaS', 'marketplace': 'Marketplace', 'tasks_leads': 'Tasks & Leads', 'other': 'Otro' }[vertical] || '-';
+            }
 
-        function openCreateModal() {
-            document.getElementById('modal-title').textContent = 'Nuevo Lead';
-            document.getElementById('lead-id').value = '';
-            document.getElementById('lead-name').value = '';
-            document.getElementById('lead-company').value = '';
-            document.getElementById('lead-phone').value = '';
-            document.getElementById('lead-email').value = '';
-            document.getElementById('lead-channel').value = 'whatsapp';
-            document.getElementById('lead-status').value = 'new';
-            document.getElementById('lead-vertical').value = '';
-            document.getElementById('lead-notes').value = '';
-            document.getElementById('lead-modal').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('lead-modal').classList.add('hidden');
-        }
-
-        async function editLead(id) {
-            try {
-                const response = await fetch(buildApiUrl(`/api/tasks-leads/leads/${id}`), {
-                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
-                });
-                const { data: lead } = await response.json();
-
-                document.getElementById('modal-title').textContent = 'Editar Lead';
-                document.getElementById('lead-id').value = lead.id;
-                document.getElementById('lead-name').value = lead.full_name || '';
-                document.getElementById('lead-company').value = lead.company || '';
-                document.getElementById('lead-phone').value = lead.phone || '';
-                document.getElementById('lead-email').value = lead.email || '';
-                document.getElementById('lead-channel').value = lead.channel || 'other';
-                document.getElementById('lead-status').value = lead.status;
-                document.getElementById('lead-vertical').value = lead.interested_vertical || '';
-                document.getElementById('lead-notes').value = lead.notes || '';
+            function openCreateModal() {
+                document.getElementById('modal-title').textContent = 'Nuevo Lead';
+                document.getElementById('lead-id').value = '';
+                document.getElementById('lead-name').value = '';
+                document.getElementById('lead-company').value = '';
+                document.getElementById('lead-phone').value = '';
+                document.getElementById('lead-email').value = '';
+                document.getElementById('lead-channel').value = 'whatsapp';
+                document.getElementById('lead-status').value = 'new';
+                document.getElementById('lead-vertical').value = '';
+                document.getElementById('lead-notes').value = '';
                 document.getElementById('lead-modal').classList.remove('hidden');
-            } catch (error) {
-                alert('Error cargando lead');
             }
-        }
 
-        async function saveLead(e) {
-            e.preventDefault();
-            const id = document.getElementById('lead-id').value;
-            const data = {
-                full_name: document.getElementById('lead-name').value || null,
-                company: document.getElementById('lead-company').value || null,
-                phone: document.getElementById('lead-phone').value || null,
-                email: document.getElementById('lead-email').value || null,
-                channel: document.getElementById('lead-channel').value,
-                status: document.getElementById('lead-status').value,
-                interested_vertical: document.getElementById('lead-vertical').value || null,
-                notes: document.getElementById('lead-notes').value || null
-            };
-
-            try {
-                const url = id ? `/api/tasks-leads/leads/${id}` : '/api/tasks-leads/leads';
-                const method = id ? 'PATCH' : 'POST';
-
-                const response = await fetch(buildApiUrl(url), {
-                    method,
-                    headers: {
-                        'Authorization': `Bearer ${session.token}`,
-                        'X-Tenant-Id': session.user.id_tenant,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (!response.ok) throw new Error('Error saving');
-                closeModal();
-                loadLeads();
-            } catch (error) {
-                alert('Error guardando lead');
+            function closeModal() {
+                document.getElementById('lead-modal').classList.add('hidden');
             }
-        }
 
-        async function closeLead(id, status) {
-            const label = status === 'won' ? 'ganado' : 'perdido';
-            if (!confirm(`¿Marcar este lead como ${label}?`)) return;
+            async function editLead(id) {
+                try {
+                    const response = await fetch(buildApiUrl(`/api/tasks-leads/leads/${id}`), {
+                        headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                    });
+                    const { data: lead } = await response.json();
 
-            try {
-                await fetch(buildApiUrl(`/api/tasks-leads/leads/${id}/close`), {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${session.token}`,
-                        'X-Tenant-Id': session.user.id_tenant,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ status })
-                });
-                loadLeads();
-            } catch (error) {
-                alert('Error cerrando lead');
+                    document.getElementById('modal-title').textContent = 'Editar Lead';
+                    document.getElementById('lead-id').value = lead.id;
+                    document.getElementById('lead-name').value = lead.full_name || '';
+                    document.getElementById('lead-company').value = lead.company || '';
+                    document.getElementById('lead-phone').value = lead.phone || '';
+                    document.getElementById('lead-email').value = lead.email || '';
+                    document.getElementById('lead-channel').value = lead.channel || 'other';
+                    document.getElementById('lead-status').value = lead.status;
+                    document.getElementById('lead-vertical').value = lead.interested_vertical || '';
+                    document.getElementById('lead-notes').value = lead.notes || '';
+                    document.getElementById('lead-modal').classList.remove('hidden');
+                } catch (error) {
+                    alert('Error cargando lead');
+                }
             }
-        }
 
-        async function deleteLead(id) {
-            if (!confirm('¿Eliminar este lead?')) return;
-            try {
-                await fetch(buildApiUrl(`/api/tasks-leads/leads/${id}`), {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
-                });
-                loadLeads();
-            } catch (error) {
-                alert('Error eliminando');
+            async function saveLead(e) {
+                e.preventDefault();
+                const id = document.getElementById('lead-id').value;
+                const data = {
+                    full_name: document.getElementById('lead-name').value || null,
+                    company: document.getElementById('lead-company').value || null,
+                    phone: document.getElementById('lead-phone').value || null,
+                    email: document.getElementById('lead-email').value || null,
+                    channel: document.getElementById('lead-channel').value,
+                    status: document.getElementById('lead-status').value,
+                    interested_vertical: document.getElementById('lead-vertical').value || null,
+                    notes: document.getElementById('lead-notes').value || null
+                };
+
+                try {
+                    const url = id ? `/api/tasks-leads/leads/${id}` : '/api/tasks-leads/leads';
+                    const method = id ? 'PATCH' : 'POST';
+
+                    const response = await fetch(buildApiUrl(url), {
+                        method,
+                        headers: {
+                            'Authorization': `Bearer ${session.token}`,
+                            'X-Tenant-Id': session.user.id_tenant,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) throw new Error('Error saving');
+                    closeModal();
+                    loadLeads();
+                } catch (error) {
+                    alert('Error guardando lead');
+                }
             }
-        }
 
-        init();
-    </script>
+            async function closeLead(id, status) {
+                const label = status === 'won' ? 'ganado' : 'perdido';
+                if (!confirm(`¿Marcar este lead como ${label}?`)) return;
+
+                try {
+                    await fetch(buildApiUrl(`/api/tasks-leads/leads/${id}/close`), {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${session.token}`,
+                            'X-Tenant-Id': session.user.id_tenant,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ status })
+                    });
+                    loadLeads();
+                } catch (error) {
+                    alert('Error cerrando lead');
+                }
+            }
+
+            async function deleteLead(id) {
+                if (!confirm('¿Eliminar este lead?')) return;
+                try {
+                    await fetch(buildApiUrl(`/api/tasks-leads/leads/${id}`), {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${session.token}`, 'X-Tenant-Id': session.user.id_tenant }
+                    });
+                    loadLeads();
+                } catch (error) {
+                    alert('Error eliminando');
+                }
+            }
+
+            init();
+        </script>
 </body>
 
 </html>

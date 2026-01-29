@@ -5,9 +5,13 @@
 
 const repo = require('../../infra/repos/tasks-leads.repo');
 
+const { getEffectiveTenant } = require('../../../../../middleware/rbac');
+
 async function listRules(req, res) {
     try {
-        const rules = await repo.listRoutingRules(req.context);
+        const tenantId = getEffectiveTenant(req);
+        const ctx = { ...req.ctx, tenantId: tenantId || req.user?.id_tenant };
+        const rules = await repo.listRoutingRules(ctx);
         return res.json({ ok: true, rules });
     } catch (error) {
         console.error('[RoutingRules] List error:', error);
@@ -18,7 +22,9 @@ async function listRules(req, res) {
 async function getRule(req, res) {
     try {
         const { id } = req.params;
-        const rule = await repo.getRoutingRuleById(req.context, id);
+        const tenantId = getEffectiveTenant(req);
+        const ctx = { ...req.ctx, tenantId: tenantId || req.user?.id_tenant };
+        const rule = await repo.getRoutingRuleById(ctx, id);
         if (!rule) return res.status(404).json({ ok: false, error: 'Rule not found' });
         return res.json({ ok: true, rule });
     } catch (error) {
@@ -33,7 +39,9 @@ async function createRule(req, res) {
         if (!data.tag || !data.user_id) {
             return res.status(400).json({ ok: false, error: 'Tag and User ID are required' });
         }
-        const rule = await repo.createRoutingRule(req.context, data);
+        const tenantId = getEffectiveTenant(req);
+        const ctx = { ...req.ctx, tenantId: tenantId || req.user?.id_tenant };
+        const rule = await repo.createRoutingRule(ctx, data);
         return res.status(201).json({ ok: true, rule });
     } catch (error) {
         console.error('[RoutingRules] Create error:', error);
@@ -45,7 +53,9 @@ async function updateRule(req, res) {
     try {
         const { id } = req.params;
         const data = req.body;
-        const rule = await repo.updateRoutingRule(req.context, id, data);
+        const tenantId = getEffectiveTenant(req);
+        const ctx = { ...req.ctx, tenantId: tenantId || req.user?.id_tenant };
+        const rule = await repo.updateRoutingRule(ctx, id, data);
         return res.json({ ok: true, rule });
     } catch (error) {
         console.error('[RoutingRules] Update error:', error);
@@ -56,7 +66,9 @@ async function updateRule(req, res) {
 async function deleteRule(req, res) {
     try {
         const { id } = req.params;
-        await repo.deleteRoutingRule(req.context, id);
+        const tenantId = getEffectiveTenant(req);
+        const ctx = { ...req.ctx, tenantId: tenantId || req.user?.id_tenant };
+        await repo.deleteRoutingRule(ctx, id);
         return res.json({ ok: true });
     } catch (error) {
         console.error('[RoutingRules] Delete error:', error);

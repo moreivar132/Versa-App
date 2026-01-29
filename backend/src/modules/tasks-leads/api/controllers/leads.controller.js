@@ -251,6 +251,20 @@ async function getChatMessages(req, res) {
     }
 }
 
+async function listTags(req, res) {
+    try {
+        const tenantId = getEffectiveTenant(req);
+        if (!tenantId) {
+            return res.status(400).json({ ok: false, error: 'Tenant no especificado' });
+        }
+        const tags = await service.listUniqueTags({ tenantId });
+        res.json({ ok: true, data: tags });
+    } catch (error) {
+        console.error('Error listing tags:', error);
+        res.status(error.status || 500).json({ ok: false, error: error.message });
+    }
+}
+
 module.exports = {
     list,
     getById,
@@ -264,5 +278,6 @@ module.exports = {
     getPendingChats,
     syncFromTimeline,
     getAllChats,
-    getChatMessages
+    getChatMessages,
+    listTags
 };

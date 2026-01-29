@@ -25,20 +25,35 @@ async function timelinesWebhook(req, res) {
             return res.status(200).json({ ok: false, reason: 'ignored_structure' });
         }
 
-        const messageData = payload.message;
-        const chatData = payload.chat;
+        const messageData = payload.message || {};
+        const chatData = payload.chat || {};
 
         // Solo nos interesan mensajes RECIBIDOS (no enviados por nosotros)
         if (messageData.direction !== 'received') {
             return res.status(200).json({ ok: true, ignored: 'direction_sent' });
         }
 
-        const externalChatId = chatData.id || chatData.uid; // Timelines ID
-        const senderPhone = chatData.phone || chatData.whatsapp_id;
+        // --- EXTRACT CHAT ID (TIMELINES ID) ---
+        // Se intenta obtener de chat.id, chat.uid, message.chat_id o payload.chat_id
+        const externalChatId = chatData.id || chatData.uid || chatData.chat_id || messageData.chat_id || payload.chat_id;
+
+        // Normalizar teléfonos: quitar + y espacios para búsqueda consistente
+        const normalizePhone = (phone) => {
+            if (!phone) return null;
+            return String(phone).replace(/[^0-9]/g, ''); // Solo dígitos
+        };
+
+        const rawPhone = chatData.phone || chatData.whatsapp_id || messageData.phone || messageData.sender?.phone;
+        const senderPhone = normalizePhone(rawPhone);
         const senderName = chatData.full_name || chatData.name || 'Desconocido';
         const messageText = messageData.text || '';
         const timestamp = new Date();
         const isGroup = chatData.is_group || false;
+
+        if (!externalChatId) {
+            console.warn('[Webhook] Missing externalChatId in payload:', JSON.stringify(payload));
+            return res.status(200).json({ ok: false, reason: 'missing_chat_id' });
+        }
 
         if (isGroup) {
             console.log('[Webhook Skipped] Group message');
@@ -75,12 +90,16 @@ async function timelinesWebhook(req, res) {
 
         } else {
             // NO HAY LINK: Buscar si existe Lead por telefono (evitar duplicados)
-            console.log(`[Webhook] No link found for chat ${externalChatId}. Check logic...`);
+            console.log(`[Webhook] No link found for chat ${externalChatId}. Searching by phone: ${senderPhone}`);
 
             let existingLead = null;
             if (senderPhone) {
+                // Buscar coincidencia de teléfono normalizando ambos lados (quitar + y caracteres no numéricos)
                 const phoneResult = await db.queryRaw(
-                    `SELECT id, id_tenant FROM tasksleads_lead WHERE phone = $1 LIMIT 1`,
+                    `SELECT id, id_tenant FROM tasksleads_lead 
+                     WHERE REGEXP_REPLACE(phone, '[^0-9]', '', 'g') = $1 
+                       AND deleted_at IS NULL
+                     LIMIT 1`,
                     [senderPhone]
                 );
                 if (phoneResult.rows.length > 0) {
@@ -114,12 +133,15 @@ async function timelinesWebhook(req, res) {
                 leadId = newLeadResult.rows[0].id;
             }
 
-            // CREAR LINK (Siempre)
+            // CREAR LINK (Siempre) - Upsert para evitar duplicados
             await db.queryRaw(
                 `INSERT INTO tasksleads_lead_timeline_link
                  (id_tenant, lead_id, timeline_external_id, timeline_phone, last_sync_at)
                  VALUES ($1, $2, $3, $4, NOW())
-                 ON CONFLICT (timeline_external_id) DO NOTHING`,
+                 ON CONFLICT (lead_id) DO UPDATE SET
+                   timeline_external_id = EXCLUDED.timeline_external_id,
+                   timeline_phone = EXCLUDED.timeline_phone,
+                   last_sync_at = NOW()`,
                 [tenantId, leadId, externalChatId, senderPhone]
             );
         }
