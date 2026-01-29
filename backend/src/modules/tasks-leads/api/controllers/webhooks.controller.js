@@ -49,7 +49,7 @@ async function timelinesWebhook(req, res) {
         const messageData = body.message || {};
         const chatData = body.chat || {}; // A veces viene info del chat
 
-        const externalChatId = String(body.chat_id || messageData.chat_id || "");
+        const externalChatId = String(chatData.chat_id || body.chat_id || messageData.chat_id || "");
         const messageText = String(messageData.text || body.text || "");
         const senderName = messageData.sender?.full_name || chatData.full_name || "Desconocido";
         const senderPhone = messageData.sender?.phone || chatData.phone || "";
