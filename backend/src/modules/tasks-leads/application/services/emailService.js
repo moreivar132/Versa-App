@@ -1,15 +1,36 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const isProd = process.env.NODE_ENV === 'production';
 
-let transporter = null;
+// Resend client (preferred)
+let resendClient = null;
 
-function getTransporter() {
-    if (transporter) return transporter;
+// SMTP transporter (fallback)
+let smtpTransporter = null;
 
-    if (process.env.EMAIL_PROVIDER === 'smtp') {
+/**
+ * Initialize Resend client if API key is available
+ */
+function getResendClient() {
+    if (resendClient) return resendClient;
+
+    if (process.env.RESEND_API_KEY) {
+        resendClient = new Resend(process.env.RESEND_API_KEY);
+        console.log('[EmailService] Resend client initialized ✅');
+    }
+    return resendClient;
+}
+
+/**
+ * Initialize SMTP transporter (fallback)
+ */
+function getSmtpTransporter() {
+    if (smtpTransporter) return smtpTransporter;
+
+    if (process.env.EMAIL_PROVIDER === 'smtp' && process.env.SMTP_HOST) {
         const port = parseInt(process.env.SMTP_PORT || '587');
-        transporter = nodemailer.createTransport({
+        smtpTransporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: port,
             secure: port === 465,
@@ -17,26 +38,30 @@ function getTransporter() {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
             },
-            tls: {
-                rejectUnauthorized: false // Helps in some restricted networks
-            },
-            connectionTimeout: 10000, // 10s
+            tls: { rejectUnauthorized: false },
+            connectionTimeout: 10000,
             greetingTimeout: 5000,
             socketTimeout: 20000,
         });
-    } else {
-        console.warn('[EmailService] Provider not configured or not SMTP. Email sending disabled.');
     }
-    return transporter;
+    return smtpTransporter;
 }
 
 /**
- * Verifies SMTP connection on startup.
+ * Verifies email service availability on startup.
  */
 async function verifySmtp() {
-    const transport = getTransporter();
+    // Check Resend first
+    const resend = getResendClient();
+    if (resend) {
+        console.log('[EmailService] Using Resend API ✅ (no SMTP verification needed)');
+        return true;
+    }
+
+    // Fallback to SMTP
+    const transport = getSmtpTransporter();
     if (!transport) {
-        console.warn('[EmailService] Cannot verify: No transporter available.');
+        console.warn('[EmailService] No email provider configured.');
         return false;
     }
     try {
@@ -51,45 +76,62 @@ async function verifySmtp() {
 
 /**
  * Sends a notification email for a new lead.
- * @param {Object} params
- * @param {string} params.subject - Custom subject part (e.g. "Nuevo lead WhatsApp - +34...")
- * @param {string} params.text - Plain text body
- * @param {string} params.html - HTML body
- * @param {string} [params.to] - Optional override for recipient
+ * Uses Resend API if available, falls back to SMTP.
  */
 async function sendLeadNotificationEmail({ subject, text, html, to }) {
-    const transport = getTransporter();
-    if (!transport) {
-        console.warn('[EmailService] No transporter available. Skipping email.');
-        return false;
-    }
-
-    const notifyTo = to || process.env.LEADS_NOTIFY_TO || process.env.SMTP_USER;
-    if (!notifyTo) {
-        console.warn('[EmailService] No recipient defined (LEADS_NOTIFY_TO). Skipping email.');
-        return false;
-    }
+    const notifyTo = to || process.env.LEADS_NOTIFY_TO || process.env.SMTP_USER || 'info@goversa.es';
+    const fromAddress = process.env.LEADS_NOTIFY_FROM || 'Versa Leads <onboarding@resend.dev>';
 
     const prefix = isProd ? '🟠' : '[DEV] 🟠';
     const finalSubject = `${prefix} ${subject}`;
 
-    const mailOptions = {
-        from: process.env.LEADS_NOTIFY_FROM || '"Versa Leads" <noreply@versa-app.com>',
-        to: notifyTo,
-        replyTo: process.env.LEADS_NOTIFY_REPLY_TO,
-        subject: finalSubject,
-        text,
-        html
-    };
+    console.log(`[EmailService] Sending email to: ${notifyTo} | Subject: ${finalSubject}`);
 
-    console.log(`[EmailService] Attempting to send email to: ${notifyTo} | Subject: ${finalSubject}`);
+    // Try Resend first (preferred)
+    const resend = getResendClient();
+    if (resend) {
+        try {
+            const { data, error } = await resend.emails.send({
+                from: fromAddress,
+                to: [notifyTo],
+                subject: finalSubject,
+                text: text,
+                html: html,
+            });
+
+            if (error) {
+                console.error('[EmailService] Resend error:', error);
+                return false;
+            }
+
+            console.log(`[EmailService] Email sent via Resend ✅ ID: ${data.id}`);
+            return true;
+        } catch (err) {
+            console.error('[EmailService] Resend exception:', err.message);
+            return false;
+        }
+    }
+
+    // Fallback to SMTP
+    const transport = getSmtpTransporter();
+    if (!transport) {
+        console.warn('[EmailService] No email provider available. Skipping.');
+        return false;
+    }
 
     try {
-        const info = await transport.sendMail(mailOptions);
-        console.log(`[EmailService] Email sent OK. MessageID: ${info.messageId}`);
+        const info = await transport.sendMail({
+            from: fromAddress,
+            to: notifyTo,
+            replyTo: process.env.LEADS_NOTIFY_REPLY_TO,
+            subject: finalSubject,
+            text,
+            html
+        });
+        console.log(`[EmailService] Email sent via SMTP ✅ MessageID: ${info.messageId}`);
         return true;
     } catch (error) {
-        console.error('[EmailService] Email send FAILED:', error);
+        console.error('[EmailService] SMTP send FAILED:', error.message);
         return false;
     }
 }
