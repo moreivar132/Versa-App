@@ -1,4 +1,4 @@
-const { getTenantDb } = require('../../../../core/database/postgres/client');
+const { getTenantDb } = require('../../../../core/db/tenant-db');
 const emailService = require('../../../../services/emailService');
 const classifierService = require('../../application/services/leadClassifierService');
 const timelinesService = require('../../application/services/timelinesService');

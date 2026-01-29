@@ -423,6 +423,86 @@ class TasksLeadsRepository {
 
         return result.rows[0] || null;
     }
+
+    // =========================================================
+    // ROUTING RULES (Phase 3)
+    // =========================================================
+
+    async listRoutingRules(ctx) {
+        const db = getTenantDb(ctx);
+        const result = await db.query(`
+            SELECT rr.*, u.nombre as user_name, u.email as user_email
+            FROM tasksleads_routing_rule rr
+            JOIN usuario u ON rr.user_id = u.id
+            WHERE rr.id_tenant = $1
+            ORDER BY rr.tag ASC
+        `, [ctx.tenantId]);
+        return result.rows;
+    }
+
+    async getRoutingRuleById(ctx, id) {
+        const db = getTenantDb(ctx);
+        const result = await db.query(`
+            SELECT rr.*, u.nombre as user_name, u.email as user_email
+            FROM tasksleads_routing_rule rr
+            JOIN usuario u ON rr.user_id = u.id
+            WHERE rr.id = $1 AND rr.id_tenant = $2
+        `, [id, ctx.tenantId]);
+        return result.rows[0] || null;
+    }
+
+    async createRoutingRule(ctx, data) {
+        const db = getTenantDb(ctx);
+        const result = await db.query(`
+            INSERT INTO tasksleads_routing_rule (id_tenant, tag, user_id, notify_email, is_active)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING *
+        `, [ctx.tenantId, data.tag.toUpperCase(), data.user_id, data.notify_email ?? true, data.is_active ?? true]);
+        return result.rows[0];
+    }
+
+    async updateRoutingRule(ctx, id, data) {
+        const db = getTenantDb(ctx);
+        const fields = [];
+        const values = [];
+        let paramIndex = 1;
+
+        if (data.tag !== undefined) { fields.push(`tag = $${paramIndex++}`); values.push(data.tag.toUpperCase()); }
+        if (data.user_id !== undefined) { fields.push(`user_id = $${paramIndex++}`); values.push(data.user_id); }
+        if (data.notify_email !== undefined) { fields.push(`notify_email = $${paramIndex++}`); values.push(data.notify_email); }
+        if (data.is_active !== undefined) { fields.push(`is_active = $${paramIndex++}`); values.push(data.is_active); }
+
+        fields.push(`updated_at = NOW()`);
+        values.push(id, ctx.tenantId);
+
+        const result = await db.query(`
+            UPDATE tasksleads_routing_rule
+            SET ${fields.join(', ')}
+            WHERE id = $${paramIndex++} AND id_tenant = $${paramIndex++}
+            RETURNING *
+        `, values);
+        return result.rows[0];
+    }
+
+    async deleteRoutingRule(ctx, id) {
+        const db = getTenantDb(ctx);
+        await db.query(`DELETE FROM tasksleads_routing_rule WHERE id = $1 AND id_tenant = $2`, [id, ctx.tenantId]);
+    }
+
+    /**
+     * Find matching routing rule for given tags
+     */
+    async findMatchingRoutingRule(ctx, tags) {
+        const db = getTenantDb(ctx);
+        const result = await db.query(`
+            SELECT rr.*, u.nombre as user_name, u.email as user_email
+            FROM tasksleads_routing_rule rr
+            JOIN usuario u ON rr.user_id = u.id
+            WHERE rr.id_tenant = $1 AND rr.is_active = true AND rr.tag = ANY($2)
+            LIMIT 1
+        `, [ctx.tenantId, tags]);
+        return result.rows[0] || null;
+    }
 }
 
 module.exports = new TasksLeadsRepository();
