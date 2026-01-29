@@ -12,11 +12,17 @@ function getTransporter() {
         transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST,
             port: port,
-            secure: port === 465, // true for 465, false for other ports
+            secure: port === 465,
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS,
             },
+            tls: {
+                rejectUnauthorized: false // Helps in some restricted networks
+            },
+            connectionTimeout: 10000, // 10s
+            greetingTimeout: 5000,
+            socketTimeout: 20000,
         });
     } else {
         console.warn('[EmailService] Provider not configured or not SMTP. Email sending disabled.');
