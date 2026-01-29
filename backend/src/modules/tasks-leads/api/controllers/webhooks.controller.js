@@ -3,7 +3,7 @@
  */
 
 const crypto = require('crypto');
-const { getSystemDb } = require('../../../../../core/db/tenant-db');
+const { getSystemDb } = require('../../../../core/db/tenant-db');
 const emailService = require('../../application/services/emailService');
 
 /**
