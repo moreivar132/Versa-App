@@ -175,21 +175,20 @@ async function timelinesWebhook(req, res) {
             <p><small>ID: ${externalChatId}</small></p>
         `;
 
-        console.log(`[Webhook] Prepared email for ${senderName}. Sending...`);
+        console.log(`[Webhook] Prepared email for ${senderName}. Firing async...`);
 
-        // No hacemos await para no bloquear el webhook? El usuario dijo "Mantener respuesta HTTP 200".
-        // Pero si falla necesitamos logs.
-        try {
-            const sent = await emailService.sendLeadNotificationEmail({
-                subject: emailSubject,
-                text: emailBody,
-                html: emailHtml
-            });
+        // Fire-and-forget: No await! El webhook responde inmediatamente.
+        // El email se envía en background.
+        emailService.sendLeadNotificationEmail({
+            subject: emailSubject,
+            text: emailBody,
+            html: emailHtml
+        }).then(sent => {
             if (sent) console.log("[Webhook] Email notification sent OK");
             else console.error("[Webhook] Email notification FAILED (check emailService logs)");
-        } catch (emailErr) {
-            console.error("[Webhook] XMLHTTP Request Failed during email send:", emailErr);
-        }
+        }).catch(emailErr => {
+            console.error("[Webhook] Email send error:", emailErr.message);
+        });
 
         return res.status(200).json({ ok: true, lead_id: leadId, created: linkResult.rows.length === 0 });
 
