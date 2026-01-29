@@ -1,5 +1,5 @@
 ## 🚀 Descripción del Cambio
-<!-- Explicar qué se está implementando o arreglando -->
+<!--- Explicar qué se está implementando o arreglando --->
 
 ## 🛠️ Tipo de Cambio
 - [ ] ✨ Nueva funcionalidad (feat)
