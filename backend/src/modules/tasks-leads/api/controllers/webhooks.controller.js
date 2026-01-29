@@ -1,4 +1,4 @@
-const { getTenantDb } = require('../../../../core/db/tenant-db');
+const { getSystemDb } = require('../../../../core/db/tenant-db');
 const emailService = require('../../application/services/emailService');
 const classifierService = require('../../application/services/leadClassifierService');
 const timelinesService = require('../../application/services/timelinesService');
@@ -7,11 +7,13 @@ const repo = require('../../infra/repos/tasks-leads.repo');
 /**
  * Webhook handler for TimelinesAI
  * Recibe mensajes entrantes, crea Leads si es necesario y dispara clasficación
+ * NOTA: Usa getSystemDb porque webhooks no tienen contexto de usuario autenticado.
  */
 async function timelinesWebhook(req, res) {
-    // Intentar detectar tenant desde query param 't', sino default 1
+    // Webhooks usan getSystemDb (sin RLS) porque no hay usuario autenticado
+    const db = getSystemDb();
+    // Tenant por defecto o query param
     let tenantId = req.query.t ? parseInt(req.query.t) : (req.query.tenantId ? parseInt(req.query.tenantId) : 1);
-    const db = getTenantDb({ tenantId });
     const payload = req.body;
 
     // console.log('[Webhook Payload]', JSON.stringify(payload, null, 2));
@@ -126,8 +128,8 @@ async function timelinesWebhook(req, res) {
         // 6. ENVIAR EMAIL DE NOTIFICACIÓN
         // ===========================================
 
-        // Link directo al chat en Timelines
-        const chatUrl = `https://app.timelines.ai/chat/${externalChatId}`;
+        // Link directo al chat en Timelines (DEBE incluir /messages/ al final)
+        const chatUrl = `https://app.timelines.ai/chat/${externalChatId}/messages/`;
 
         const emailSubject = `Nuevo mensaje WhatsApp - ${senderName || senderPhone}`;
         const emailBody = `

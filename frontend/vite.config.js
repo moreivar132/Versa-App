@@ -103,6 +103,7 @@ export default defineConfig({
                 tasksleadsTasks: 'src/verticals/tasksleads/pages/tasks.html',
                 tasksleadsLeads: 'src/verticals/tasksleads/pages/leads.html',
                 tasksleadsChats: 'src/verticals/tasksleads/pages/chats.html',
+                tasksleadsRouting: 'src/verticals/tasksleads/pages/routing.html',
             }
         }
     },
