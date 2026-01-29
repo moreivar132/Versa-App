@@ -158,7 +158,12 @@ app.use('/api/contabilidad', privateRoute, require('./src/modules/contable/api/c
 // FinSaaS Admin RBAC (Tenant admin only)
 app.use('/api/finsaas/admin/rbac', require('./routes/finsaasRbac.routes'));
 
-// Tasks & Leads Module (Vertical 4)
+// Tasks & Leads PUBLIC Webhooks (No JWT required - validated via query token)
+const tasksLeadsWebhooks = require('./src/modules/tasks-leads/api/controllers/webhooks.controller');
+app.post('/api/tasks-leads/webhooks/timelinesai', express.json({ limit: '200kb' }), tasksLeadsWebhooks.timelinesWebhook);
+app.post('/api/tasks-leads/test-email', express.json(), tasksLeadsWebhooks.testEmail);
+
+// Tasks & Leads Module (Vertical 4) - Private routes
 app.use('/api/tasks-leads', privateRoute, require('./src/modules/tasks-leads/api/routes/tasks-leads.routes'));
 
 
