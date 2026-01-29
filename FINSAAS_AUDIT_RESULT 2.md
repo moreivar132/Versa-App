@@ -5,7 +5,7 @@
 - **DEV**: **OK** (Asumiendo backend activo)
 - **PROD**: **OK** (Asumiendo backend activo)
 
----
+-----
 
 ## 1. Archivos fuera de Vite
 Los siguientes archivos presentaban problemas de procesamiento o acceso a variables de entorno:
