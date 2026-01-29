@@ -174,11 +174,21 @@ async function timelinesWebhook(req, res) {
                 <p><small>ID: ${externalChatId}</small></p>
             `;
 
-            await emailService.sendLeadNotificationEmail({
-                subject: emailSubject,
-                text: emailBody,
-                html: emailHtml
-            });
+            console.log(`[Webhook] Prepared email for ${senderName}. Sending...`);
+
+            // No hacemos await para no bloquear el webhook? El usuario dijo "Mantener respuesta HTTP 200".
+            // Pero si falla necesitamos logs.
+            try {
+                const sent = await emailService.sendLeadNotificationEmail({
+                    subject: emailSubject,
+                    text: emailBody,
+                    html: emailHtml
+                });
+                if (sent) console.log("[Webhook] Email notification sent OK");
+                else console.error("[Webhook] Email notification FAILED (check emailService logs)");
+            } catch (emailErr) {
+                console.error("[Webhook] XMLHTTP Request Failed during email send:", emailErr);
+            }
         }
 
         return res.status(200).json({ ok: true, lead_id: leadId, created: linkResult.rows.length === 0 });
@@ -190,6 +200,38 @@ async function timelinesWebhook(req, res) {
     }
 }
 
+/**
+ * Test Endpoint for Email Debugging
+ * POST /api/tasks-leads/test-email?token=...
+ */
+async function testEmail(req, res) {
+    const providedToken = String(req.query.token || "");
+    const secretToken = process.env.TIMELINES_WEBHOOK_SECRET;
+
+    if (!secretToken || providedToken !== secretToken) {
+        return res.status(401).json({ ok: false, error: "unauthorized" });
+    }
+
+    if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({ ok: false, error: "disabled_in_production" });
+    }
+
+    console.log('[TestEmail] Starting email test...');
+
+    const success = await emailService.sendLeadNotificationEmail({
+        subject: 'Test SMTP VERSA (Manual Trigger)',
+        text: 'This is a test email to verify SMTP configuration.',
+        html: '<h3>✅ SMTP Test Successful</h3><p>If you see this, the notification system is working.</p>'
+    });
+
+    if (success) {
+        return res.status(200).json({ ok: true, message: 'Email sent successfully' });
+    } else {
+        return res.status(500).json({ ok: false, error: 'email_failed', details: 'Check logs for [EmailService] errors' });
+    }
+}
+
 module.exports = {
-    timelinesWebhook
+    timelinesWebhook,
+    testEmail
 };

@@ -279,4 +279,17 @@ app.listen(port, '0.0.0.0', async () => {
   } catch (err) {
     console.error('[Startup] RBAC Sync failed, but server is running:', err);
   }
+
+  // Verify SMTP (Hotfix Email Debug)
+  if (process.env.EMAIL_PROVIDER === 'smtp') {
+    try {
+      const { verifySmtp } = require('./src/modules/tasks-leads/application/services/emailService');
+      console.log('[Startup] Verifying SMTP connection...');
+      verifySmtp().then(ok => {
+        if (!ok) console.warn('[Startup] SMTP Verification returned FALSE. Check credentials.');
+      });
+    } catch (err) {
+      console.error('[Startup] Email Service Check Failed:', err.message);
+    }
+  }
 });

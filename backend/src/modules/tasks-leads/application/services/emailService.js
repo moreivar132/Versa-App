@@ -25,22 +25,42 @@ function getTransporter() {
 }
 
 /**
+ * Verifies SMTP connection on startup.
+ */
+async function verifySmtp() {
+    const transport = getTransporter();
+    if (!transport) {
+        console.warn('[EmailService] Cannot verify: No transporter available.');
+        return false;
+    }
+    try {
+        await transport.verify();
+        console.log('[EmailService] SMTP Connection Verified ✅');
+        return true;
+    } catch (error) {
+        console.error('[EmailService] SMTP Connection Failed ❌', error);
+        return false;
+    }
+}
+
+/**
  * Sends a notification email for a new lead.
  * @param {Object} params
  * @param {string} params.subject - Custom subject part (e.g. "Nuevo lead WhatsApp - +34...")
  * @param {string} params.text - Plain text body
  * @param {string} params.html - HTML body
+ * @param {string} [params.to] - Optional override for recipient
  */
-async function sendLeadNotificationEmail({ subject, text, html }) {
+async function sendLeadNotificationEmail({ subject, text, html, to }) {
     const transport = getTransporter();
     if (!transport) {
         console.warn('[EmailService] No transporter available. Skipping email.');
         return false;
     }
 
-    const notifyTo = process.env.LEADS_NOTIFY_TO;
+    const notifyTo = to || process.env.LEADS_NOTIFY_TO || process.env.SMTP_USER;
     if (!notifyTo) {
-        console.warn('[EmailService] LEADS_NOTIFY_TO not defined. Skipping email.');
+        console.warn('[EmailService] No recipient defined (LEADS_NOTIFY_TO). Skipping email.');
         return false;
     }
 
@@ -56,16 +76,19 @@ async function sendLeadNotificationEmail({ subject, text, html }) {
         html
     };
 
+    console.log(`[EmailService] Attempting to send email to: ${notifyTo} | Subject: ${finalSubject}`);
+
     try {
         const info = await transport.sendMail(mailOptions);
-        console.log(`[EmailService] Email sent: ${info.messageId}`);
+        console.log(`[EmailService] Email sent OK. MessageID: ${info.messageId}`);
         return true;
     } catch (error) {
-        console.error('[EmailService] Error sending email:', error);
+        console.error('[EmailService] Email send FAILED:', error);
         return false;
     }
 }
 
 module.exports = {
-    sendLeadNotificationEmail
+    sendLeadNotificationEmail,
+    verifySmtp
 };
