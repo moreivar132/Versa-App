@@ -48,6 +48,15 @@ Esta vertical está diseñada para centralizar la comunicación de WhatsApp y co
 - **Base de Datos:** PostgreSQL.
 - **Integraciones:** TimelinesAI REST API (Webhooks, Labels, Notes).
 
+## 🔧 Hotfixes Aplicados (2026-01-29)
+
+| Issue | Causa | Fix |
+|-------|-------|-----|
+| `queryRaw solo permitido...` | Webhooks usaban `getTenantDb` sin contexto de usuario | Cambiado a `getSystemDb()` |
+| Link de chat roto | URL faltaba `/messages/` al final | `https://app.timelines.ai/chat/{id}/messages/` |
+| `routing.html` 404 en prod | Faltaba en Vite config | Añadido a `rollupOptions.input` |
+| `testEmail` undefined | Función exportada sin definir | Eliminada ruta de debug |
+
 ---
 
 ## 📅 Próximos Pasos (Roadmap)
