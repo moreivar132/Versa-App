@@ -23,7 +23,6 @@ const { requirePermission } = require('../../../../../middleware/rbac');
 // Public Webhooks (Validated via Token in Query)
 // =========================================================
 router.post('/webhooks/timelinesai', require('express').json({ limit: "200kb" }), webhooksCtrl.timelinesWebhook);
-router.post('/test-email', require('express').json(), webhooksCtrl.testEmail); // DEBUG ONLY
 
 // =========================================================
 // Vertical Access Gate - All routes require tasks_leads access
