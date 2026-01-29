@@ -6,6 +6,8 @@
 const crypto = require('crypto');
 const { getSystemDb } = require('../../../../core/db/tenant-db');
 const emailService = require('../../application/services/emailService');
+const classifierService = require('../../application/services/leadClassifierService');
+const timelinesService = require('../../application/services/timelinesService');
 
 /**
  * TimelinesAI Webhooks Controller
@@ -189,6 +191,54 @@ async function timelinesWebhook(req, res) {
         }).catch(emailErr => {
             console.error("[Webhook] Email send error:", emailErr.message);
         });
+
+        // 7. FASE 2: Clasificación Automática y Sync (Async)
+        // No esperamos (await) para no bloquear webhook
+        (async () => {
+            try {
+                // A) Clasificar Mensaje
+                const classification = classifierService.classifyMessage(messageText);
+                const { tags, aiProfile } = classification;
+
+                if (tags.length > 0) {
+                    console.log(`[Webhook] Classified Lead ${leadId}:`, tags);
+
+                    // B) Guardar Tags en DB
+                    for (const tag of tags) {
+                        await db.queryRaw(`
+                            INSERT INTO tasksleads_lead_tag (lead_id, tag) 
+                            VALUES ($1, $2)
+                            ON CONFLICT (lead_id, tag) DO NOTHING`,
+                            [leadId, tag]
+                        );
+                    }
+
+                    // C) Guardar Perfil AI
+                    await db.queryRaw(`
+                        INSERT INTO tasksleads_lead_ai (lead_id, categoria_principal, verticales_interes, intencion, urgencia, resumen, confianza, updated_at)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+                        ON CONFLICT (lead_id) DO UPDATE SET
+                            categoria_principal = EXCLUDED.categoria_principal,
+                            verticales_interes = EXCLUDED.verticales_interes,
+                            intencion = EXCLUDED.intencion,
+                            urgencia = EXCLUDED.urgencia,
+                            resumen = EXCLUDED.resumen,
+                            updated_at = NOW()`,
+                        [leadId, aiProfile.categoria_principal, JSON.stringify(aiProfile.verticales_interes), aiProfile.intencion, aiProfile.urgencia, aiProfile.resumen, aiProfile.confianza]
+                    );
+
+                    // D) Sync con TimelinesAI (Mock/Log por ahora)
+                    // Solo si detectamos Intención clara o Tags nuevos
+                    await timelinesService.addLabelToChat(externalChatId, tags[0]);
+                    await timelinesService.sendNoteToChat(externalChatId,
+                        `🤖 [VERSA AI] Análisis:\nCategoría: ${aiProfile.categoria_principal}\nIntención: ${aiProfile.intencion}\nResumen: ${aiProfile.resumen}`
+                    );
+                }
+
+            } catch (classError) {
+                console.error('[Webhook] Classification Error:', classError);
+            }
+        })();
 
         return res.status(200).json({ ok: true, lead_id: leadId, created: linkResult.rows.length === 0 });
 
