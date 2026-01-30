@@ -56,12 +56,12 @@ router.delete('/tasks/:id', requirePermission('tasksleads.tasks.delete'), tasksC
 // Leads Routes
 // =========================================================
 router.get('/leads', requirePermission('tasksleads.leads.view'), leadsCtrl.list);
+router.get('/leads/tags', requirePermission('tasksleads.leads.view'), leadsCtrl.listTags); // MUST be before :id
 router.get('/leads/:id', requirePermission('tasksleads.leads.view'), leadsCtrl.getById);
 router.post('/leads', requirePermission('tasksleads.leads.create'), leadsCtrl.create);
 router.patch('/leads/:id', requirePermission('tasksleads.leads.edit'), leadsCtrl.update);
 router.post('/leads/:id/close', requirePermission('tasksleads.leads.close'), leadsCtrl.close);
 router.delete('/leads/:id', requirePermission('tasksleads.leads.close'), leadsCtrl.remove);
-router.get('/leads/tags', requirePermission('tasksleads.leads.view'), leadsCtrl.listTags);
 
 // =========================================================
 // Timeline Integration Routes
