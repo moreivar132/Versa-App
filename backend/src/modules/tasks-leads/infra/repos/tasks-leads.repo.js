@@ -503,6 +503,17 @@ class TasksLeadsRepository {
         `, [ctx.tenantId, tags]);
         return result.rows[0] || null;
     }
+
+    async listUniqueTags(ctx) {
+        const db = getTenantDb(ctx);
+        const result = await db.query(`
+            SELECT DISTINCT tag 
+            FROM tasksleads_lead_tag 
+            WHERE id_tenant = $1 
+            ORDER BY tag ASC
+        `, [ctx.tenantId]);
+        return result.rows.map(r => r.tag);
+    }
 }
 
 module.exports = new TasksLeadsRepository();

@@ -61,6 +61,7 @@ router.post('/leads', requirePermission('tasksleads.leads.create'), leadsCtrl.cr
 router.patch('/leads/:id', requirePermission('tasksleads.leads.edit'), leadsCtrl.update);
 router.post('/leads/:id/close', requirePermission('tasksleads.leads.close'), leadsCtrl.close);
 router.delete('/leads/:id', requirePermission('tasksleads.leads.close'), leadsCtrl.remove);
+router.get('/leads/tags', requirePermission('tasksleads.leads.view'), leadsCtrl.listTags);
 
 // =========================================================
 // Timeline Integration Routes

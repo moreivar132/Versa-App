@@ -336,6 +336,10 @@ class TasksLeadsService {
 
         return result;
     }
+
+    async listUniqueTags(ctx) {
+        return repo.listUniqueTags(ctx);
+    }
 }
 
 module.exports = new TasksLeadsService();
